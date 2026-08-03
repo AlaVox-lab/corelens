@@ -1,9 +1,9 @@
 # Cấu hình git-cliff — sinh CHANGELOG.md từ lịch sử commit
 #
 # Cách dùng:
-#   git cliff --output CHANGELOG.md              # toàn bộ lịch sử
-#   git cliff --tag v0.2.0 --output CHANGELOG.md # khi cắt bản phát hành
-#   git cliff --unreleased                       # xem trước phần chưa phát hành
+#   git-cliff --output CHANGELOG.md              # toàn bộ lịch sử
+#   git-cliff --tag v0.1.0 --output CHANGELOG.md # khi cắt bản phát hành
+#   git-cliff --unreleased                       # xem trước phần chưa phát hành
 #
 # Lược đồ cấu hình của git-cliff có thay đổi giữa các phiên bản lớn.
 # Nếu chạy báo lỗi, đối chiếu lại với tài liệu của phiên bản đang dùng.
@@ -30,7 +30,7 @@ body = """
 {% for commit in commits %}
 - {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
 {{ commit.message | upper_first }} \
-([{{ commit.id | truncate(length=7, end="") }}]($REPO_URL/commit/{{ commit.id }}))\
+([{{ commit.id | truncate(length=7, end="") }}](https://github.com/AlaVox-lab/dx-os-lab/commit/{{ commit.id }}))\
 {% endfor %}
 {% endfor %}\n
 """
@@ -49,6 +49,12 @@ sort_commits = "oldest"
 topo_order = false
 
 commit_parsers = [
+  # Bỏ qua các commit không mang nội dung thay đổi
+  { message = "^Merge", skip = true },
+  { message = "^Initial commit", skip = true },
+  { message = "^chore\\(release\\)", skip = true },
+
+  # Phân nhóm theo loại thay đổi
   { message = "^feat",     group = "Tính năng mới" },
   { message = "^fix",      group = "Sửa lỗi" },
   { message = "^perf",     group = "Hiệu năng" },
@@ -57,12 +63,11 @@ commit_parsers = [
   { message = "^test",     group = "Kiểm thử" },
   { message = "^build",    group = "Hệ thống build" },
   { message = "^ci",       group = "Tích hợp liên tục" },
-  { message = "^chore\\(release\\)", skip = true },
   { message = "^chore",    group = "Công việc phụ trợ" },
   { message = "^revert",   group = "Hoàn tác" },
   { body = ".*security",   group = "Bảo mật" },
 ]
 
 commit_preprocessors = [
-  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}]($REPO_URL/issues/${1}))" },
+  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/AlaVox-lab/dx-os-lab/issues/${1}))" },
 ]
