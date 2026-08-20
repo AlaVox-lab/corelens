@@ -73,6 +73,28 @@ Một issue chỉ được coi là hoàn thành khi thỏa mãn tất cả các 
 - [ ] Có ít nhất một phê duyệt từ thành viên khác
 - [ ] `docker compose up` vẫn chạy được trên máy sạch
 
+### 2.5. Quyền cập nhật tài liệu trạng thái
+
+`docs/PROJECT_STATE.md` do người điều phối kho mã cập nhật theo nhịp tuần.
+Thành viên không sửa tệp này trong các pull request công việc.
+
+Lý do: nếu nhiều người cùng sửa một tệp tổng hợp, mọi pull request đều xung đột
+ở cùng vị trí, và nội dung trở thành danh sách rời rạc thay vì bản tóm tắt mạch
+lạc. Ngoài ra, chỉ người điều phối mới có bức tranh toàn cảnh về tiến độ của cả
+nhóm, các vướng mắc đang tồn tại và thứ tự ưu tiên của tuần tiếp theo.
+
+Thông tin về việc ai làm gì không mất đi — nó đã nằm trong issue, pull request
+và lịch sử commit. Tệp trạng thái chỉ là bản tóm tắt để đọc nhanh.
+
+Quy trình cập nhật của người điều phối:
+
+1. Chờ mọi công việc trong tuần đã hợp nhất vào nhánh tích hợp
+2. Đồng bộ nhánh tích hợp về máy
+3. Tạo nhánh riêng, ví dụ `docs/state-tuan-N`
+4. Lọc danh sách issue đã đóng theo mốc công việc để làm nguồn dữ liệu
+5. Viết lại tệp trạng thái, không cộng dồn từng dòng
+6. Mở pull request như quy trình thông thường
+
 ---
 
 ## 3. Quy ước đặt tên nhánh
