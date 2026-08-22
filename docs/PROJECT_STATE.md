@@ -14,10 +14,10 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-08-03 |
+| Cập nhật lần cuối | 2026-08-21 |
 | Phiên bản hiện tại | `v0.1.0` |
-| Giai đoạn | Giai đoạn 0 — Dựng nền |
-| Mốc công việc đang chạy | Tuần 1&2 — Khởi động |
+| Giai đoạn | Giai đoạn 1 — Khảo sát và thiết kế (đang bắt đầu) |
+| Mốc công việc đang chạy | Tuần 3 — Bắt Đầu |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
 | Có mã nguồn ứng dụng chưa | **Chưa** |
 | Số ngày còn lại tới chấm kho mã | Tính từ 07/12/2026 |
@@ -46,10 +46,10 @@
 - [x] `.gitignore` — bao phủ Node, Python, Docker, tệp bí mật
 - [x] `.gitattributes` — chuẩn hóa ký tự kết thúc dòng giữa các hệ điều hành
 - [x] `scripts/setup-labels.sh` — kịch bản khởi tạo hệ thống nhãn
+- [x] Tạo hệ thống nhãn ban đầu (8 nhãn thủ công)
 
 **Vận hành**
 
-- [x] Tạo 8 nhãn thủ công (còn 14 nhãn trong kịch bản chưa chạy)
 - [x] Tạo mốc công việc `Tuần 1&2 — Khởi động`
 - [x] Chạy trọn ba vòng quy trình: issue → nhánh → commit → PR → merge
 - [x] Kiểm chứng cả hai cơ chế đóng issue: tự động bằng `Closes` và thủ công
@@ -58,11 +58,30 @@
 
 **Issue đã đóng**: #1, #4, #7
 
+### Tuần 3 — Bắt Đầu
+
+**Tài liệu bối cảnh và quy chuẩn**
+
+- [x] Bộ bảy tệp tài liệu bối cảnh: `CLAUDE.md`, `README.md` (bản đầy đủ),
+      `docs/ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, `docs/ROADMAP.md`,
+      `docs/dependencies.md`, `docs/adr/0000-mau-ban-ghi-quyet-dinh.md` (#10)
+- [x] Mục 2.5 trong `CONTRIBUTING.md` — quyền cập nhật tài liệu trạng thái (#13)
+- [x] Sơ đồ luồng nghiệp vụ bằng Mermaid tại `docs/process-flow.md` (#16)
+
+**Vận hành**
+
+- [x] Hoàn thiện hệ thống nhãn bằng `scripts/setup-labels.sh` — đủ 23 nhãn theo khung H-P-D-I
+- [x] Cài đặt GitHub CLI (`gh`)
+- [x] Mở ba issue khảo sát Open-Core cho không gian H, P, D (#19, #20, #21)
+
+**Issue đã đóng**: #10, #13, #16
+
 ---
 
 ## Đang làm
 
-Chưa có công việc nào đang dở.
+Chưa có công việc nào đang dở. Ba khảo sát Open-Core (#19, #20, #21) đã mở và gán,
+chờ bắt đầu.
 
 ---
 
@@ -72,25 +91,26 @@ Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`
 
 ### Ưu tiên cao
 
-1. **Vẽ sơ đồ luồng nghiệp vụ** bằng Mermaid, lưu vào `docs/`. Theo yêu cầu của
-   giảng viên hướng dẫn: cần có hình ảnh để cả nhóm theo dõi và để trình bày về sau
-2. **Cập nhật `README.md`** — mô tả đề tài, kiến trúc H-P-D-I, phân công thành viên,
-   mục hướng dẫn dựng từ mã nguồn
-3. **Ba issue khảo sát Open-Core** — nền tảng SSO cho `H`, workflow engine cho `P`,
-   nền tảng BI cho `D`. Kết quả ghi thành bản ghi quyết định trong `docs/adr/`
+1. **Thực hiện ba khảo sát Open-Core** đã mở: định danh tập trung cho `H` (#19),
+   tự động hóa luồng công việc cho `P` (#20), kinh doanh thông minh cho `D` (#21).
+   Mỗi khảo sát kết thúc bằng tài liệu so sánh trong `docs/` và một bản ghi quyết định
+   trong `docs/adr/`
+2. **Thiết kế nghiệp vụ** (Giai đoạn 1.3), dựa trên `docs/process-flow.md`: bảng trạng
+   thái và quy tắc chuyển, ma trận phân quyền theo vai trò, danh sách ràng buộc
+   Poka-yoke, lược đồ nhật ký sự kiện, danh mục chỉ số cho bảng điều khiển
 
 ### Ưu tiên trung bình
 
-4. Cài GitHub CLI và chạy `scripts/setup-labels.sh` để hoàn thiện hệ thống nhãn
-5. Thêm hai thành viên vào kho mã với quyền Write, thêm giảng viên với quyền Read
-   hoặc Triage
-6. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
+3. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
+4. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
+   điền bảng Đội ngũ trong `README.md`
 
 ### Chờ điều kiện
 
-7. Chuyển kho mã sang công khai — làm trước khi nộp bài, khi đó quy tắc bảo vệ
-   nhánh mới có hiệu lực
-8. Thiết lập tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
+5. Hạ tầng phát triển: `docker-compose.yml`, `.env.example`, tích hợp liên tục — cần có
+   cấu trúc thư mục mã nguồn trước
+6. Chuyển kho mã sang công khai — làm trước khi nộp bài, khi đó quy tắc bảo vệ nhánh mới
+   có hiệu lực
 
 ---
 
@@ -100,7 +120,7 @@ Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| Chưa có nền tảng Open-Core nào được chốt | Chưa bắt đầu viết mã được | Ba issue khảo sát ở mục Việc tiếp theo |
+| Chưa chốt nền tảng Open-Core nào | Chưa bắt đầu viết mã được | Ba issue khảo sát đã mở (#19, #20, #21), chờ thực hiện và ra bản ghi quyết định |
 
 ---
 
@@ -120,6 +140,8 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Thứ tự xây dựng: hoàn thiện luồng thủ công trước, gắn AI sau | Theo góp ý của giảng viên |
 | Tệp khóa phiên bản bắt buộc commit, không đưa vào `.gitignore` | Ảnh hưởng tiêu chí PoF mục 4 và 5 |
 | Toàn bộ tài liệu kỹ thuật công khai, không gitignore | Ảnh hưởng tiêu chí chấm số 10 và PoF mục 6 |
+| Luồng nghiệp vụ chốt bằng sơ đồ trạng thái | Mười trạng thái, ba lối phê duyệt, Poka-yoke khi hủy, tự leo thang SLA — xem `docs/process-flow.md` |
+| `PROJECT_STATE.md` do navigator cập nhật theo tuần | Thành viên không sửa trong PR công việc — xem `CONTRIBUTING.md` mục 2.5 |
 
 ---
 
@@ -144,6 +166,10 @@ nhóm. Cảnh báo vô hại.
 PowerShell làm hỏng ký tự có dấu khi truyền qua cờ `-m`. Giải pháp: cấu hình
 `git config --global core.editor "code --wait"` rồi dùng `git commit` **không kèm
 `-m`**. Visual Studio Code mở ra, gõ nội dung có dấu bình thường.
+
+Cách khác khi làm nhiều commit liên tiếp hoặc không muốn mở trình soạn thảo: ghi nội
+dung vào một tệp UTF-8 (không BOM) rồi `git commit -F <đường-dẫn-tệp>`. Cách này tránh
+cả việc PowerShell làm hỏng dấu lẫn tranh chấp khi mở trình soạn thảo.
 
 Khi đọc tệp có dấu bằng PowerShell, thêm `-Encoding UTF8`.
 
@@ -171,4 +197,6 @@ Cuối mỗi tuần, hoặc mỗi khi cắt bản phát hành:
 5. Bổ sung vào **Quyết định đã chốt** nếu có quyết định mới
 6. Bổ sung **Ghi chú kỹ thuật** nếu phát hiện điều gì đáng nhớ
 
-Cam kết cập nhật tệp này bằng một commit riêng với tiền tố `docs:`.
+Viết lại tệp dựa trên **danh sách issue đã đóng theo mốc công việc**, không cộng dồn
+từng dòng và không viết theo trí nhớ. Cam kết bằng một commit riêng với tiền tố
+`docs(state):`.
