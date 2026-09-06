@@ -97,8 +97,8 @@ phải có một bản ghi quyết định tương ứng trong `docs/adr/`.
 
 | Không gian | Nền tảng | Giấy phép | OSI công nhận | Cách tích hợp | Bản ghi quyết định |
 |---|---|---|---|---|---|
-| `H` | *Chờ khảo sát* | | | | |
-| `H` | *Chờ khảo sát* | | | | |
+| `H` | Keycloak `26.7.3` | Apache-2.0 | Có | Dịch vụ độc lập, giao tiếp qua OIDC. Không nhúng thư viện, không sửa mã nền tảng | [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
+| `H` | *Chờ khảo sát* — hệ thống quản trị tri thức | | | | |
 | `P` | *Chờ khảo sát* | | | | |
 | `D` | *Chờ khảo sát* | | | | |
 | `I` | *Chờ khảo sát* | | | | |

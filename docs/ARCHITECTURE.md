@@ -98,20 +98,25 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Dịch vụ ứng dụng | FastAPI (Python) | MIT | Cùng ngôn ngữ với toàn bộ tầng `I`, không phải bắc cầu sang dịch vụ khác |
 | Cơ sở dữ liệu | PostgreSQL | PostgreSQL License | Được OSI công nhận. Hỗ trợ phần mở rộng tìm kiếm véc-tơ phục vụ `I` |
 | Đóng gói | Docker + Docker Compose | Apache-2.0 | Dựng toàn hệ thống bằng một lệnh |
+| Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Cả bốn thành phần đã chốt đều dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với
+Cả năm thành phần đã chốt đều dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với
 MIT của sản phẩm.
+
+Vai trò nghiệp vụ **không khai báo trong mã nguồn**. Keycloak nạp toàn bộ realm gồm
+vai trò, ứng dụng khách và người dùng từ một tệp JSON lúc khởi động, nên việc đổi bộ
+vai trò khi đề thi công bố chỉ là thay dữ liệu. Đây là một trường hợp cụ thể của khuôn
+mẫu ở mục 5.
 
 ### 3.2. Chờ khảo sát
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Năm nhóm thành phần sau cần khảo sát và ghi kết quả vào
+yêu cầu Open-Core. Bốn nhóm thành phần sau cần khảo sát và ghi kết quả vào
 `docs/adr/`:
 
 | Không gian | Thành phần | Ghi chú khảo sát |
 |---|---|---|
-| `H` | Nền tảng định danh tập trung (SSO) | Đề bài nêu đích danh. Cần hỗ trợ chuẩn giao thức mở để tích hợp cả giao diện lẫn dịch vụ |
 | `H` | Hệ thống quản trị tri thức | Vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
 | `D` | Nền tảng kinh doanh thông minh | Đề bài nêu rõ yêu cầu BI nguồn mở. Dùng nền tảng chuyên dụng thay vì tự vẽ biểu đồ |
 | `I` | Cơ sở dữ liệu véc-tơ và khung LLM | Ưu tiên phần mở rộng véc-tơ ngay trên PostgreSQL để giảm số dịch vụ |
