@@ -103,6 +103,7 @@ phải có một bản ghi quyết định tương ứng trong `docs/adr/`.
 | `D` | *Chờ khảo sát* | | | | |
 | `I` | *Chờ khảo sát* | | | | |
 | `I` | *Chờ khảo sát* | | | | |
+| `core` | SeaweedFS `4.45` | Apache-2.0 | Có | Dịch vụ độc lập, giao tiếp qua S3 API chuẩn. Không nhúng thư viện, không dùng API riêng của nền tảng | [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
 
 Cột **Cách tích hợp** ghi rõ: nhúng thư viện, hay chạy như dịch vụ độc lập giao tiếp
 qua mạng. Với nền tảng copyleft mạnh, bắt buộc phải là phương án thứ hai.
