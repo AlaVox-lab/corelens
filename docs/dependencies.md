@@ -100,7 +100,7 @@ phải có một bản ghi quyết định tương ứng trong `docs/adr/`.
 | `H` | Keycloak `26.7.3` | Apache-2.0 | Có | Dịch vụ độc lập, giao tiếp qua OIDC. Không nhúng thư viện, không sửa mã nền tảng | [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | `H` | *Chờ khảo sát* — hệ thống quản trị tri thức | | | | |
 | `P` | *Chờ khảo sát* | | | | |
-| `D` | *Chờ khảo sát* | | | | |
+| `D` | Apache Superset `6.1.0` | Apache-2.0 | Có | Dịch vụ độc lập, chỉ đọc CSDL nghiệp vụ, nhúng vào cổng qua guest token. Cần ảnh dẫn xuất bổ sung trình điều khiển PostgreSQL | [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
 | `I` | *Chờ khảo sát* | | | | |
 | `I` | *Chờ khảo sát* | | | | |
 | `core` | SeaweedFS `4.45` | Apache-2.0 | Có | Dịch vụ độc lập, giao tiếp qua S3 API chuẩn. Không nhúng thư viện, không dùng API riêng của nền tảng | [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |

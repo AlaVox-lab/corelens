@@ -100,10 +100,16 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Đóng gói | Docker + Docker Compose | Apache-2.0 | Dựng toàn hệ thống bằng một lệnh |
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
+| Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Cả sáu thành phần đã chốt đều dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với
+Cả bảy thành phần đã chốt đều dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với
 MIT của sản phẩm.
+
+**Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
+leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết** trong cổng Next.js.
+*Bảng điều khiển phân tích* trên nhật ký sự kiện chỉ đọc, thuộc nhóm **lắp ghép** và do
+Superset đảm nhiệm. Đây là kiến trúc lai, xem ADR-0003.
 
 Vai trò nghiệp vụ **không khai báo trong mã nguồn**. Keycloak nạp toàn bộ realm gồm
 vai trò, ứng dụng khách và người dùng từ một tệp JSON lúc khởi động, nên việc đổi bộ
@@ -113,13 +119,12 @@ mẫu ở mục 5.
 ### 3.2. Chờ khảo sát
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Bốn nhóm thành phần sau cần khảo sát và ghi kết quả vào
+yêu cầu Open-Core. Ba nhóm thành phần sau cần khảo sát và ghi kết quả vào
 `docs/adr/`:
 
 | Không gian | Thành phần | Ghi chú khảo sát |
 |---|---|---|
 | `H` | Hệ thống quản trị tri thức | Vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
-| `D` | Nền tảng kinh doanh thông minh | Đề bài nêu rõ yêu cầu BI nguồn mở. Dùng nền tảng chuyên dụng thay vì tự vẽ biểu đồ |
 | `I` | Cơ sở dữ liệu véc-tơ và khung LLM | Ưu tiên phần mở rộng véc-tơ ngay trên PostgreSQL để giảm số dịch vụ |
 | `I` | Thư viện khai phá quy trình | Kiểm tra kỹ giấy phép, mảng này có thư viện dùng copyleft mạnh |
 
