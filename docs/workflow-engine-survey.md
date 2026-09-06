@@ -290,7 +290,7 @@ Khảo sát dừng ở đây. Bốn câu hỏi cần người quyết định tr
 4. **Có nên giữ nguyên lập trường của `CLAUDE.md` mục 3.2 — engine máy trạng thái thuộc nhóm
    tự viết — hay khảo sát này đủ căn cứ để sửa lại?**
 
-Sau khi có quyết định, ghi thành `docs/adr/0003-...` theo mẫu `0000`, với ô *Người quyết định*
+Sau khi có quyết định, ghi thành `docs/adr/0004-...` theo mẫu `0000`, với ô *Người quyết định*
 có tên giảng viên hướng dẫn.
 
 ---
