@@ -116,6 +116,13 @@ vai trò, ứng dụng khách và người dùng từ một tệp JSON lúc kh�
 vai trò khi đề thi công bố chỉ là thay dữ liệu. Đây là một trường hợp cụ thể của khuôn
 mẫu ở mục 5.
 
+**Không gian `P` không dùng nền tảng ngoài.** Engine máy trạng thái do nhóm tự viết, với
+trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Quyết định này được đưa ra sau khi
+khảo sát và dựng thử bốn ứng viên — xem
+[ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md). Lý do cốt lõi: nhật ký sự kiện là
+nơi tạo ra giá trị của đề tài, và không nền tảng nào sinh sẵn nhật ký đúng lược đồ mà
+`I` cần, nên nhóm phải tự viết lớp đó dù có lắp engine hay không.
+
 ### 3.2. Chờ khảo sát
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
@@ -260,6 +267,21 @@ thuật toán khai phá quy trình ở `I`.
 
 **Lưu ý về múi giờ**: lưu UTC là bắt buộc. Lưu giờ cục bộ sẽ làm sai lệch kết quả
 khai phá quy trình khi so sánh giữa các bản ghi.
+
+### 6.1. Cơ chế bảo đảm: một cửa duy nhất
+
+Nhật ký chỉ có giá trị nếu **không bao giờ thiếu bản ghi**. Một nhật ký thủng làm sai
+lệch kết quả khai phá quy trình, và khi đó điểm sáng tạo của đề tài mất giá trị.
+
+Cơ chế bảo đảm điều này: **mọi lần đổi trạng thái đi qua đúng một điểm trong mã**, và
+điểm đó lần lượt tra bảng quy tắc chuyển, kiểm quyền theo vai trò, chạy ràng buộc
+Poka-yoke, ghi nhật ký, rồi mới cập nhật trạng thái hồ sơ.
+
+Không tồn tại đường nào khác để đổi trạng thái. Bất kỳ chỗ nào cập nhật trạng thái trực
+tiếp đều là vi phạm khuôn mẫu, kể cả khi nó "chỉ sửa một trường".
+
+Quyết định tự viết engine máy trạng thái thay vì lắp ghép nền tảng có sẵn xuất phát chính
+từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md).
 
 ---
 
