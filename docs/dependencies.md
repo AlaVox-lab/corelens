@@ -99,7 +99,7 @@ phải có một bản ghi quyết định tương ứng trong `docs/adr/`.
 |---|---|---|---|---|---|
 | `H` | Keycloak `26.7.3` | Apache-2.0 | Có | Dịch vụ độc lập, giao tiếp qua OIDC. Không nhúng thư viện, không sửa mã nền tảng | [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | `H` | *Chờ khảo sát* — hệ thống quản trị tri thức | | | | |
-| `P` | *Chờ khảo sát* | | | | |
+| `P` | **Không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết | MIT (mã của dự án) | — | Không tích hợp. Trạng thái và quy tắc chuyển lưu trong bảng PostgreSQL | [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md) |
 | `D` | Apache Superset `6.1.0` | Apache-2.0 | Có | Dịch vụ độc lập, chỉ đọc CSDL nghiệp vụ, nhúng vào cổng qua guest token. Cần ảnh dẫn xuất bổ sung trình điều khiển PostgreSQL | [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
 | `I` | *Chờ khảo sát* | | | | |
 | `I` | *Chờ khảo sát* | | | | |
