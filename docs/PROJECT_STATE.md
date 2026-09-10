@@ -252,7 +252,7 @@ Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồ
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | **Chờ giảng viên xác nhận vai trò Người xét duyệt** | Ảnh hưởng số trạng thái trong #37, và #40 phụ thuộc #37 | Đã gửi câu hỏi. Nếu chưa kịp trả lời thì vẽ theo giả định hai cổng và ghi rõ là giả định |
-| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | Đang ở ~1,29 GB. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
+| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm: 1,17 GB** — thấp hơn ước tính 1,29 GB nhờ dùng một thực thể PostgreSQL thay vì ba. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
@@ -352,7 +352,7 @@ hẳn so với việc chỉ đọc tài liệu rồi phán đoán.
 **Vài cạm bẫy cấu hình đã gặp**
 
 - **SeaweedFS gửi thống kê ra ngoài theo mặc định** về `telemetry.seaweedfs.com` mỗi 24
-  giờ. Cấu hình sản phẩm bắt buộc thêm `-telemetry=false`
+  giờ. Cấu hình sản phẩm bắt buộc thêm `-master.telemetry=false`
 - **Ảnh `apache/superset` không kèm trình điều khiển PostgreSQL.** Phải cài
   `psycopg2-binary` vào `/app/.venv`, và môi trường đó **không có `pip`** — dùng `uv`.
   Bản sản phẩm cần ảnh chứa dẫn xuất

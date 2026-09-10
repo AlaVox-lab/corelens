@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "dxlab-app",
+      "credentials": [
+        {
+          "accessKey": "dxlab_access_key",
+          "secretKey": "doi_mat_khau_nay_truoc_khi_trien_khai"
+        }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

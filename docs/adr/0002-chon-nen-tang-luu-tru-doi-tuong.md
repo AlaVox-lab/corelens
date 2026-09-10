@@ -62,7 +62,7 @@ Quá trình khảo sát và số liệu đo được ghi trong
 
 **Nhược điểm**
 
-- Gửi thống kê cụm ẩn danh ra ngoài theo mặc định, phải chủ động tắt bằng `-telemetry=false`
+- Gửi thống kê cụm ẩn danh ra ngoài theo mặc định, phải chủ động tắt bằng `-master.telemetry=false`
 - Cộng đồng nhỏ hơn MinIO, ít hướng dẫn sẵn hơn khi gặp trục trặc
 - Chế độ gộp một tiến trình không phải cách triển khai ở quy mô sản xuất thật
 
@@ -210,7 +210,7 @@ Vi phạm bất kỳ điểm nào ở trên biến hai phương án dự phòng 
 - [x] Cập nhật `docs/ARCHITECTURE.md` mục 3 *(đã làm trong cùng công việc này)*
 - [x] Cập nhật `docs/dependencies.md` *(đã làm trong cùng công việc này)*
 - [ ] Bổ sung SeaweedFS vào `infra/docker-compose.yml` khi dựng hạ tầng thật, kèm
-      `-telemetry=false`
+      `-master.telemetry=false`
 - [ ] Chốt quy ước đặt tên khóa đối tượng và ghi vào `ARCHITECTURE.md`
 - [ ] Chốt giới hạn kích thước tệp và danh sách loại tệp được phép — thuộc lớp Poka-yoke
 - [ ] Đưa `boto3` vào tệp khai báo phụ thuộc của dịch vụ ứng dụng kèm ghim phiên bản
