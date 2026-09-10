@@ -56,15 +56,24 @@ Nếu buộc phải dùng một nền tảng copyleft mạnh:
 - **Không** nhúng thư viện của nó vào mã nguồn dự án
 - Ghi rõ ranh giới kiến trúc này vào `ARCHITECTURE.md` và bản ghi quyết định tương ứng
 
+### Các trường hợp đang áp dụng
+
+| Thành phần | Giấy phép | Ranh giới đang giữ |
+|---|---|---|
+| **psycopg2-binary** | LGPL kèm ngoại lệ | Chỉ cài vào **ảnh chứa của Superset**, không nằm trong mã nguồn dự án. LGPL nhẹ hơn GPL: dùng như thư viện nạp động thì không lan giấy phép sang phần mềm gọi nó. Ràng buộc phải giữ: **không sửa mã thư viện**, và người dùng phải thay thế được nó |
+| **Metabase** *(đã loại)* | AGPL-3.0 | Không dùng — xem ADR-0003 |
+| **Garage**, **MinIO** *(phương án lùi)* | AGPL-3.0 | Nếu phải dùng thì chỉ chạy như dịch vụ độc lập qua S3 API — xem ADR-0002 |
+
 ---
 
 ## Phụ thuộc hạ tầng
 
 | Thành phần | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|
-| Docker Engine | | Apache-2.0 | Có | Có | Đóng gói và dựng hệ thống |
-| Docker Compose | | Apache-2.0 | Có | Có | Dựng toàn hệ thống bằng một lệnh |
-| PostgreSQL | | PostgreSQL License | Có | Có | Cơ sở dữ liệu chính |
+| Docker Engine | 24+ | Apache-2.0 | Có | Có | Đóng gói và dựng hệ thống |
+| Docker Compose | v2 | Apache-2.0 | Có | Có | Dựng toàn hệ thống bằng một lệnh |
+| PostgreSQL | `16-alpine` | PostgreSQL License | Có | Có | Một thực thể, ba database: `dxlab`, `keycloak`, `superset` |
+| psycopg2-binary | `2.9.13` | LGPL kèm ngoại lệ | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Cài vào **ảnh dẫn xuất của Superset** vì ảnh gốc không kèm sẵn — xem `infra/superset/Dockerfile`. Không nhúng vào mã nguồn dự án, không sửa mã thư viện. Chi tiết ràng buộc ở mục Lưu ý về giấy phép copyleft |
 
 ---
 

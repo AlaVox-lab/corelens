@@ -137,10 +137,10 @@ kiểm số 8 xác nhận điều này bằng cách để URL hết hạn rồi 
 ### 5.2. Gửi số liệu thống kê ra ngoài theo mặc định
 
 Nhật ký khởi động ghi rõ SeaweedFS báo cáo thống kê cụm ẩn danh về
-`telemetry.seaweedfs.com` mỗi 24 giờ, và có thể tắt bằng cờ `-telemetry=false`.
+`telemetry.seaweedfs.com` mỗi 24 giờ, và có thể tắt bằng cờ `-master.telemetry=false`.
 
 Không phải lỗ hổng, nhưng một sản phẩm dự thi tự gọi ra Internet khi khởi động là điều cần
-biết và cần chủ động tắt. **Cấu hình sản phẩm bắt buộc thêm `-telemetry=false`.**
+biết và cần chủ động tắt. **Cấu hình sản phẩm bắt buộc thêm `-master.telemetry=false`.**
 
 ### 5.3. Một container chạy cả bốn vai trò
 

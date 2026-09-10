@@ -202,6 +202,21 @@ Hệ quả thực tế: bước tích hợp thật cần **một ảnh chứa d�
 hoặc một bước cài đặt trong quy trình dựng. Đây là chi phí có thật, phải ghi vào hướng dẫn
 dựng, và là điểm Metabase thuận hơn vì có sẵn.
 
+**Bổ sung sau khi dựng hạ tầng thật (issue #38)**: chi phí tích hợp còn lớn hơn con số ở
+trên. Hai điều nữa lộ ra khi ghép Superset vào cụm:
+
+- **Superset không đọc biến môi trường tuỳ ý.** Đặt `SQLALCHEMY_DATABASE_URI` như một biến
+  môi trường bị **bỏ qua âm thầm**, và Superset lặng lẽ quay về SQLite. Dấu hiệu duy nhất
+  là một dòng `Context impl SQLiteImpl` lẫn trong nhật ký khởi động. Phải nạp cấu hình từ
+  tệp Python trỏ bởi `SUPERSET_CONFIG_PATH`
+- **Ảnh gốc không tự khởi tạo.** Nó chỉ chạy máy chủ, không chạy `superset db upgrade` lẫn
+  `fab create-admin`. Hậu quả rất dễ bỏ sót: điểm cuối sức khoẻ vẫn trả HTTP 200 và
+  container vẫn báo `healthy`, nhưng **không ai đăng nhập được**
+
+Cả hai đều đã xử lý trong `infra/superset/`. Ghi lại ở đây vì chúng làm chi phí tích hợp
+Superset cao hơn đánh giá ban đầu — dù kết luận chọn Superset vẫn không đổi, do khả năng
+nhúng vẫn là tiêu chí quyết định và Metabase khoá đúng tính năng đó.
+
 ### 5.4. Kiểm chứng đầu cuối
 
 Sau khi có trình điều khiển, một truy vấn chỉ số được chạy **qua chính Superset** trên nhật
