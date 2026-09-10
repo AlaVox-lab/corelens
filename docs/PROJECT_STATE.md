@@ -17,9 +17,10 @@
 | Cập nhật lần cuối | 2026-09-07 |
 | Phiên bản hiện tại | `v0.1.0` |
 | Giai đoạn | Giai đoạn 1 — Khảo sát và thiết kế (**xong phần khảo sát**) |
-| Mốc công việc đang chạy | Tuần 5 — Chốt kiến trúc và dựng hạ tầng |
+| Mốc công việc đang chạy | Tuần 5 — Chốt kiến trúc và dựng hạ tầng, hạn 13/09 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Chưa** |
+| Có mã nguồn ứng dụng chưa | **Chưa** — issue #38 là việc đầu tiên tạo ra mã thật |
+| Issue đang mở | **12** (#37–#48), trong đó 4 thuộc mốc Tuần 5 |
 | Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
 | Còn chờ khảo sát | 3 — quản trị tri thức `H`, véc-tơ và LLM `I`, khai phá quy trình `I` |
 | Số ngày còn lại tới chấm kho mã | **91 ngày** (07/12/2026) |
@@ -138,8 +139,28 @@ thái đi qua đúng một điểm trong mã, điểm đó tra bảng quy tắc,
 rồi ghi nhật ký trước khi cập nhật hồ sơ. Đây là điều kiện bảo đảm nhật ký không bao giờ
 thiếu bản ghi.
 
-**Dọn dẹp kho mã**: xóa 13 nhánh cũ còn sót trên máy chủ; bật `delete_branch_on_merge`,
-tắt `allow_rebase_merge`, bật Discussions — ba cấu hình trước đó lệch với tài liệu.
+**Dọn dẹp kho mã**: xóa 13 nhánh cũ còn sót trên máy chủ; tắt `allow_rebase_merge`, bật
+Discussions — hai cấu hình trước đó lệch với tài liệu. Có bật thêm
+`delete_branch_on_merge` rồi phải tắt lại, lý do xem mục Ghi chú kỹ thuật.
+
+**Mô hình nghiệp vụ được giảng viên mở rộng** trong cùng buổi trao đổi, ba thay đổi:
+
+1. **Năm vai trò thay vì bốn** — thêm Quản trị viên. Không cần sửa ADR-0001: quyết định
+   chọn Keycloak vẫn đúng, và đây đúng là lúc tính chất *vai trò nằm trong dữ liệu* trả
+   cổ tức — thêm vai trò chỉ là sửa tệp realm JSON
+2. **Thêm chặng định tuyến phòng ban** — sau khi phân loại, yêu cầu chuyển về phòng ban
+   tương ứng, phòng ban đó xác duyệt xem có đúng việc của mình không. Nếu sai thì trả về
+   để định tuyến lại. Vòng lặp này là điểm cộng cho tầng `I`: đúng loại lệch chuẩn mà
+   khai phá quy trình sinh ra để phát hiện
+3. **Sản phẩm phải tùy biến được cho doanh nghiệp khác** — khách hàng tải về rồi tự sửa
+   phòng ban và loại yêu cầu theo đặc thù của mình. Ý này nâng nguyên tắc cấu-hình-thay-vì-
+   mã-cứng từ biện pháp đối phó đề thi tháng 11 thành **mục tiêu sản phẩm**
+
+**Chiến lược được giảng viên chốt**: đi sâu một luồng nghiệp vụ chạy hoàn chỉnh trước,
+rồi mới mở rộng bốn không gian. Ba khảo sát còn lại nên làm sớm để biết trước ràng buộc
+nhưng **chưa tích hợp** cho tới khi luồng chính ổn định.
+
+**Mở 12 issue** cho toàn bộ việc tồn đọng: #37 tới #48.
 
 **Issue đã đóng**: #20
 
@@ -147,50 +168,80 @@ tắt `allow_rebase_merge`, bật Discussions — ba cấu hình trước đó l
 
 ## Đang làm
 
-Chưa có công việc nào đang dở. Bốn quyết định Open-Core đã chốt xong, không còn gì chờ
-ý kiến giảng viên.
+Milestone *Tuần 5 — Chốt kiến trúc và dựng hạ tầng*, hạn 13/09, có bốn issue:
 
-Milestone *Tuần 5 — Chốt kiến trúc và dựng hạ tầng* đang mở nhưng **chưa có issue nào
-cho phần dựng hạ tầng** — xem mục Việc tiếp theo.
+| Issue | Ưu tiên | Việc |
+|---|---|---|
+| **#37** | **P0** | Vẽ lại sơ đồ luồng theo mô hình năm vai trò |
+| **#38** | **P0** | Dựng hạ tầng phát triển bằng Docker Compose |
+| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái |
+| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS |
+
+Hai issue P0 nằm trên đường tới hạn nhưng **độc lập nhau**, làm song song được: #37 chặn
+#40, còn #38 chặn #43 trở đi.
+
+**Đang chờ giảng viên trả lời một câu** ảnh hưởng tới #37: vai trò *Người xét duyệt* đảm
+nhiệm **hai cổng** (xác duyệt định tuyến luôn có, phê duyệt chi phí chỉ khi cần) hay chỉ
+một cổng duy nhất. Nếu chưa kịp trả lời thì vẽ theo giả định hai cổng và ghi rõ là giả
+định — sửa lại nhanh vì tất cả đều là dữ liệu.
 
 ---
 
 ## Việc tiếp theo
 
-Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`.
+Toàn bộ việc kỹ thuật đã có issue, xếp theo đường tới hạn. Chi tiết từng giai đoạn xem
+`ROADMAP.md`.
 
-### Ưu tiên cao
+### Đường tới hạn — luồng nghiệp vụ chạy hoàn chỉnh
 
-1. **Mở issue và dựng hạ tầng phát triển** (Giai đoạn 1.4): `infra/docker-compose.yml`
-   ghép ba nền tảng đã chốt, `.env.example` với giá trị chạy được ngay, ảnh chứa dẫn
-   xuất cho Superset kèm trình điều khiển PostgreSQL. Đây là việc đầu tiên tạo ra mã
-   thật trong kho, và chạm trực tiếp tiêu chí PoF mục 4 (10 điểm)
-2. **Thiết kế nghiệp vụ còn lại** (Giai đoạn 1.3): bảng trạng thái và quy tắc chuyển,
-   ma trận phân quyền theo vai trò, danh sách ràng buộc Poka-yoke. Hai mục lược đồ nhật
-   ký sự kiện và danh mục chỉ số đã xong trong tuần 4
-3. **Cắt bản phát hành `v0.2.0`** — Giai đoạn 1 đã trọn vẹn phần khảo sát: bốn tài liệu
-   khảo sát, bốn bản ghi quyết định, bốn quyết định Open-Core
+Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồi mới mở rộng.
 
-### Ưu tiên trung bình
+```
+#37 ──► #40 ──► #41 ──► #43 ──► #44 ──► #45
+        ▲
+#38 ────┘   (song song, nhưng #43 trở đi cần #38 xong)
+```
 
-4. **Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm** trong `infra/seed/`. Công cụ dựng thử
-   của #21 đã sinh được 1.000 hồ sơ bám đúng `process-flow.md`; Giai đoạn 3 cần dữ liệu
-   khởi tạo đủ lớn để bảng điều khiển có ý nghĩa khi trình diễn
-5. **Thiết kế giao diện phần tự viết** — buồng lái điều phối viên, biểu mẫu gửi yêu cầu,
-   trang tra cứu trạng thái. Mô hình nghiệp vụ đã đứng yên nên thiết kế bây giờ bám được
-   vào dữ liệu thật. Bảng điều khiển phân tích **không cần thiết kế** vì Superset tự mang
-   giao diện
-6. **Ba khảo sát Open-Core còn lại, chưa có issue**: hệ thống quản trị tri thức cho `H`,
-   cơ sở dữ liệu véc-tơ và khung LLM cho `I`, thư viện khai phá quy trình cho `I`
-7. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-8. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
-   điền bảng Đội ngũ trong `README.md`
+| Issue | Ưu tiên | Việc | Chặn bởi |
+|---|---|---|---|
+| **#37** | P0 | Vẽ lại sơ đồ luồng theo mô hình năm vai trò | — |
+| **#38** | P0 | Dựng hạ tầng Docker Compose · **PoF mục 4, 10 điểm** | — |
+| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái | #37 |
+| #41 | P1 | Điểm chuyển trạng thái duy nhất và sinh nhật ký sự kiện | #40 |
+| #43 | P1 | Tích hợp Keycloak vào dịch vụ ứng dụng và cổng | #38 |
+| #44 | P1 | Cổng gửi yêu cầu và tra cứu trạng thái | #41, #43 |
+| #45 | P2 | Buồng lái vận hành | #44 |
+| #42 | P2 | Theo dõi SLA và tự leo thang | #41 |
+
+### Không chặn ai, làm khi có khoảng trống
+
+| Issue | Ưu tiên | Việc |
+|---|---|---|
+| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS — giảng viên yêu cầu |
+| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` |
+| #47 | P3 | Khảo sát cơ sở dữ liệu véc-tơ và khung LLM cho `I` |
+| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` |
+
+### Việc vận hành, không cần issue
+
+1. **Cắt bản phát hành `v0.2.0`** — Giai đoạn 1 đã trọn phần khảo sát: bốn tài liệu khảo
+   sát, bốn bản ghi quyết định. Cần cài lại `git-cliff`; số commit bị bỏ qua phải đúng **13**
+2. Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm trong `infra/seed/`
+3. Thiết kế giao diện cho #44 và #45 trước khi viết mã. Bảng điều khiển phân tích **không
+   cần thiết kế** vì Superset tự mang giao diện
+4. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
+5. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
+   điền bảng Đội ngũ trong `README.md`. Khi đó chia lại người phụ trách: nhóm `H`
+   (#43, #44, #45) hợp với người làm giao diện, nhóm `I` (#46, #47, #48) hợp với người
+   làm dữ liệu
 
 ### Chờ điều kiện
 
-9. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
-10. Chuyển kho mã sang công khai — làm trước khi nộp bài, khi đó quy tắc bảo vệ nhánh mới
-    có hiệu lực
+6. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
+7. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
+   có hiệu lực, và **bật lại được `delete_branch_on_merge`** một cách an toàn
+8. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
+   hình máy tối thiểu** — giảng viên nhắc trước để nhóm không quên
 
 ---
 
@@ -200,7 +251,7 @@ Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| Không gian `I` chưa có issue nào | Chưa ảnh hưởng vì thứ tự bắt buộc là H→P→D→I | Mở issue khảo sát sau khi hạ tầng `H`, `P`, `D` chạy được |
+| **Chờ giảng viên xác nhận vai trò Người xét duyệt** | Ảnh hưởng số trạng thái trong #37, và #40 phụ thuộc #37 | Đã gửi câu hỏi. Nếu chưa kịp trả lời thì vẽ theo giả định hai cổng và ghi rõ là giả định |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | Đang ở ~1,29 GB. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
@@ -317,6 +368,41 @@ phạm trông như hệ thống hỏng, và chỉ số mất hết biến thiên
 Cách đúng: quyết định trước mỗi hồ sơ có vi phạm hay không, rồi **co giãn toàn bộ chuỗi
 sự kiện** cho khớp tổng thời gian mục tiêu. Kết quả 19,2 %, trung vị nằm dưới ngưỡng ở
 mọi loại yêu cầu.
+
+**Đừng bật `delete_branch_on_merge` khi còn dùng mô hình nhánh ba tầng**
+
+Cấu hình này của GitHub xóa **nhánh nguồn** sau mỗi lần hợp nhất. Với mô hình hai tầng
+(nhánh công việc → `main`) thì rất tiện. Nhưng dự án dùng ba tầng, mà ở chặng `dev → main`
+thì **nhánh nguồn chính là `dev`** — nên nó xóa luôn nhánh tích hợp.
+
+Đã xảy ra thật ngày 07/09: bật cấu hình để dọn 13 nhánh cũ, merge một đợt phát hành, và
+`dev` biến mất khỏi máy chủ. Không mất dữ liệu vì `dev` không có commit nào mà `main`
+thiếu, khôi phục bằng `git merge --ff-only main` rồi đẩy lên lại.
+
+Bật lại được **sau khi kho chuyển công khai**, vì lúc đó quy tắc bảo vệ nhánh mới có hiệu
+lực và tùy chọn *Allow deletions: Tắt* sẽ chặn được. Hiện kho còn riêng tư trên gói miễn
+phí nên quy tắc bảo vệ chưa áp dụng.
+
+**Biến thể thứ ba của lỗi mã hóa tiếng Việt trên Windows**
+
+Cùng một gốc vấn đề nhưng lộ ra ở ba chỗ khác nhau, lần nào cũng mất thời gian truy:
+
+| Chỗ hỏng | Ví dụ đã gặp |
+|---|---|
+| Tiếng Việt qua **tham số** dòng lệnh | `git commit -m "..."` làm hỏng dấu |
+| Tiếng Việt ở **đầu ra** stdout | `python -c "print(...)"` báo `UnicodeEncodeError` |
+| Tiếng Việt ở **đầu ra lệnh ngoài đọc ngược vào PowerShell** | Kịch bản tạo issue tra cứu milestone theo tiêu đề, `gh api ... \| Out-String` trả về chuỗi hỏng dấu nên tra không khớp, milestone bị bỏ qua âm thầm |
+
+**Nguyên tắc chung**: đừng để tiếng Việt đi qua ranh giới tiến trình. Ghi vào tệp UTF-8
+rồi để công cụ đọc tệp — `git commit -F`, `gh api --input`, `--body-file`. Khi buộc phải
+đọc ngược đầu ra lệnh ngoài, đặt trước:
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+Trong cả ba lần, tham chiếu tới đối tượng bằng **số** thay vì tên tiếng Việt luôn an toàn
+hơn — ví dụ gán milestone bằng `-F milestone=4` thay vì bằng tiêu đề.
 
 ---
 
