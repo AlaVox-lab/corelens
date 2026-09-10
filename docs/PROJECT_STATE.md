@@ -14,15 +14,16 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-06 |
+| Cập nhật lần cuối | 2026-09-07 |
 | Phiên bản hiện tại | `v0.1.0` |
-| Giai đoạn | Giai đoạn 1 — Khảo sát và thiết kế (đang chạy) |
-| Mốc công việc đang chạy | Tuần 5 |
+| Giai đoạn | Giai đoạn 1 — Khảo sát và thiết kế (**xong phần khảo sát**) |
+| Mốc công việc đang chạy | Tuần 5 — Chốt kiến trúc và dựng hạ tầng |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
 | Có mã nguồn ứng dụng chưa | **Chưa** |
-| Nền tảng Open-Core đã chốt | **3 / khoảng 6** — Keycloak, SeaweedFS, Superset |
-| Số ngày còn lại tới chấm kho mã | **92 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **56 ngày** (tháng 11/2026) |
+| Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
+| Còn chờ khảo sát | 3 — quản trị tri thức `H`, véc-tơ và LLM `I`, khai phá quy trình `I` |
+| Số ngày còn lại tới chấm kho mã | **91 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **55 ngày** (tháng 11/2026) |
 
 ---
 
@@ -117,17 +118,40 @@ cần theo dõi vì bảng chấm PoF mục 4 đòi `docker compose up` chạy �
 
 ---
 
+### Tuần 5 — Chốt kiến trúc
+
+**Không gian `P`: tự viết engine máy trạng thái** (#20, ADR-0004).
+
+Giảng viên hướng dẫn cho ý kiến ngày 07/09 và dời trọng tâm câu hỏi: vấn đề không phải
+*"dùng Flowable hay tự viết"* mà là *"điểm sáng tạo của đề tài nằm ở đâu"*. Ba lý do
+được ghi lại:
+
+1. Engine không phải nơi tạo ra giá trị; giá trị nằm ở vòng phản hồi tự soi quy trình,
+   nên nhóm dồn sức vào khai phá quy trình thay vì vào việc chọn công cụ
+2. Flowable không giải quyết vấn đề cốt lõi — nhật ký của nó thiếu `from_state` và
+   `to_state`, nên nhóm vẫn phải tự viết lớp sinh nhật ký dù có lắp engine hay không
+3. Tự viết cho toàn quyền kiểm soát dữ liệu, và giảm rủi ro so với việc học một khung
+   làm việc mới trong quỹ thời gian còn lại
+
+Bổ sung mục 6.1 vào `ARCHITECTURE.md`: cơ chế **một cửa duy nhất** — mọi lần đổi trạng
+thái đi qua đúng một điểm trong mã, điểm đó tra bảng quy tắc, kiểm quyền, chạy Poka-yoke
+rồi ghi nhật ký trước khi cập nhật hồ sơ. Đây là điều kiện bảo đảm nhật ký không bao giờ
+thiếu bản ghi.
+
+**Dọn dẹp kho mã**: xóa 13 nhánh cũ còn sót trên máy chủ; bật `delete_branch_on_merge`,
+tắt `allow_rebase_merge`, bật Discussions — ba cấu hình trước đó lệch với tài liệu.
+
+**Issue đã đóng**: #20
+
+---
+
 ## Đang làm
 
-**Chờ ý kiến giảng viên hướng dẫn về #20** — chọn lắp ghép workflow engine hay tự xây
-engine máy trạng thái.
+Chưa có công việc nào đang dở. Bốn quyết định Open-Core đã chốt xong, không còn gì chờ
+ý kiến giảng viên.
 
-Khảo sát đã xong và đã lên `main`; phần còn thiếu là bản ghi quyết định ADR-0004, mà
-quyết định này cần giảng viên vì nó chạm vào phạm vi sản phẩm chứ không phải chọn công
-cụ. Đây cũng là issue duy nhất giảng viên chưa cho ý kiến.
-
-Issue #20 dùng `Refs` thay vì `Closes` nên vẫn mở sau khi tài liệu đã lên nhánh chính —
-đúng ý đồ, không phải lỗi.
+Milestone *Tuần 5 — Chốt kiến trúc và dựng hạ tầng* đang mở nhưng **chưa có issue nào
+cho phần dựng hạ tầng** — xem mục Việc tiếp theo.
 
 ---
 
@@ -137,30 +161,33 @@ Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`
 
 ### Ưu tiên cao
 
-1. **Chốt #20 và viết ADR-0004** ngay khi giảng viên trả lời. Đây là quyết định kiến
-   trúc lớn nhất còn lại và đang chặn việc bắt đầu viết mã cho không gian `P`
-2. **Dựng hạ tầng phát triển** (Giai đoạn 1.4): `infra/docker-compose.yml` ghép ba nền
-   tảng đã chốt, `.env.example` với giá trị chạy được ngay, ảnh chứa dẫn xuất cho
-   Superset kèm trình điều khiển PostgreSQL. Đây là việc đầu tiên tạo ra mã thật trong
-   kho, và chạm trực tiếp tiêu chí PoF mục 4 (10 điểm)
-3. **Thiết kế nghiệp vụ còn lại** (Giai đoạn 1.3): bảng trạng thái và quy tắc chuyển,
+1. **Mở issue và dựng hạ tầng phát triển** (Giai đoạn 1.4): `infra/docker-compose.yml`
+   ghép ba nền tảng đã chốt, `.env.example` với giá trị chạy được ngay, ảnh chứa dẫn
+   xuất cho Superset kèm trình điều khiển PostgreSQL. Đây là việc đầu tiên tạo ra mã
+   thật trong kho, và chạm trực tiếp tiêu chí PoF mục 4 (10 điểm)
+2. **Thiết kế nghiệp vụ còn lại** (Giai đoạn 1.3): bảng trạng thái và quy tắc chuyển,
    ma trận phân quyền theo vai trò, danh sách ràng buộc Poka-yoke. Hai mục lược đồ nhật
    ký sự kiện và danh mục chỉ số đã xong trong tuần 4
+3. **Cắt bản phát hành `v0.2.0`** — Giai đoạn 1 đã trọn vẹn phần khảo sát: bốn tài liệu
+   khảo sát, bốn bản ghi quyết định, bốn quyết định Open-Core
 
 ### Ưu tiên trung bình
 
 4. **Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm** trong `infra/seed/`. Công cụ dựng thử
    của #21 đã sinh được 1.000 hồ sơ bám đúng `process-flow.md`; Giai đoạn 3 cần dữ liệu
    khởi tạo đủ lớn để bảng điều khiển có ý nghĩa khi trình diễn
-5. **Ba khảo sát Open-Core còn lại, chưa có issue**: hệ thống quản trị tri thức cho `H`,
+5. **Thiết kế giao diện phần tự viết** — buồng lái điều phối viên, biểu mẫu gửi yêu cầu,
+   trang tra cứu trạng thái. Mô hình nghiệp vụ đã đứng yên nên thiết kế bây giờ bám được
+   vào dữ liệu thật. Bảng điều khiển phân tích **không cần thiết kế** vì Superset tự mang
+   giao diện
+6. **Ba khảo sát Open-Core còn lại, chưa có issue**: hệ thống quản trị tri thức cho `H`,
    cơ sở dữ liệu véc-tơ và khung LLM cho `I`, thư viện khai phá quy trình cho `I`
-6. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-7. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
+7. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
+8. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
    điền bảng Đội ngũ trong `README.md`
 
 ### Chờ điều kiện
 
-8. Cắt bản phát hành `v0.2.0` — nên đợi #20 chốt xong cho trọn Giai đoạn 1
 9. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
 10. Chuyển kho mã sang công khai — làm trước khi nộp bài, khi đó quy tắc bảo vệ nhánh mới
     có hiệu lực
@@ -173,9 +200,9 @@ Xếp theo thứ tự ưu tiên. Chi tiết từng giai đoạn xem `ROADMAP.md`
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| **Chưa chốt hướng cho không gian `P`** (#20) | Chặn việc bắt đầu viết mã máy trạng thái — phần lõi của sản phẩm | Khảo sát đã xong và đã gửi giảng viên. Chờ trả lời để viết ADR-0004 |
 | Không gian `I` chưa có issue nào | Chưa ảnh hưởng vì thứ tự bắt buộc là H→P→D→I | Mở issue khảo sát sau khi hạ tầng `H`, `P`, `D` chạy được |
-| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | Đang ở ~1,29 GB. Đo lại sau mỗi quyết định Open-Core mới |
+| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | Đang ở ~1,29 GB. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
+| Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
 
@@ -200,6 +227,8 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `H` — Keycloak `26.7.3` làm nền tảng định danh | Nạp trọn realm từ tệp JSON nên đổi vai trò là đổi dữ liệu — ADR-0001 |
 | `core` — SeaweedFS `4.45` làm kho lưu trữ đối tượng | Garage là bản lùi mặc định, MinIO là bản lùi có điều kiện — ADR-0002 |
 | `D` — Apache Superset `6.1.0` làm nền tảng BI | Metabase bị loại vì khóa tính năng nhúng sau giấy phép trả phí — ADR-0003 |
+| `P` — **tự viết engine máy trạng thái**, không lắp ghép | Theo ý kiến giảng viên: engine không phải nơi tạo giá trị, và Flowable không giúp giảm việc vì nhật ký vẫn phải tự viết — ADR-0004 |
+| Mọi lần đổi trạng thái đi qua **một cửa duy nhất** | Điều kiện bảo đảm nhật ký sự kiện không thủng — `ARCHITECTURE.md` mục 6.1 |
 | Kiến trúc lai cho tầng trình bày | Buồng lái vận hành **tự viết** trong cổng; bảng điều khiển phân tích **lắp ghép** bằng Superset — ADR-0003 |
 | Định danh vai trò và trạng thái viết bằng tiếng Anh | Nhãn hiển thị và tên hoạt động trong nhật ký viết tiếng Việt — theo `ARCHITECTURE.md` mục 8.3 |
 
