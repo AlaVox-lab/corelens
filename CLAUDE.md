@@ -116,10 +116,21 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 1.3. Trạng thái hiện tại của kho mã
 
-Phiên bản `v0.1.0` — Giai đoạn 0: Dựng nền.
+Phiên bản `v0.1.0` — đang khép Giai đoạn 1: Khảo sát và thiết kế.
 
-Kho mã **chưa có mã nguồn ứng dụng**, mới chỉ có bộ quy chuẩn và tài liệu. Nếu người
-dùng yêu cầu sửa một tệp mã nguồn nào đó, kiểm tra sự tồn tại trước thay vì giả định.
+Kho mã **vẫn chưa có mã nguồn ứng dụng**, mới có bộ quy chuẩn, tài liệu bối cảnh và
+bốn bản ghi quyết định kiến trúc. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào đó,
+kiểm tra sự tồn tại trước thay vì giả định.
+
+**Bốn quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
+thứ gì thuộc bốn mảng này:
+
+| Không gian | Quyết định | Bản ghi |
+|---|---|---|
+| `H` | Keycloak `26.7.3` làm nền tảng định danh | ADR-0001 |
+| `core` | SeaweedFS `4.45` làm kho lưu trữ tệp đính kèm | ADR-0002 |
+| `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
+| `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 
 Xem `docs/PROJECT_STATE.md` để biết tiến độ cập nhật nhất.
 
@@ -268,10 +279,21 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Dịch vụ ứng dụng | FastAPI (Python) | MIT |
 | Cơ sở dữ liệu | PostgreSQL | PostgreSQL License |
 | Đóng gói | Docker + Docker Compose | Apache-2.0 |
+| Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 |
+| Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
+| Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
 
-Các thành phần Open-Core bổ sung (SSO, wiki, BI, vector store, LLM framework,
-process mining) đang trong giai đoạn khảo sát. Kết quả khảo sát được ghi trong
-`docs/adr/`. **Đọc thư mục này trước khi đề xuất công nghệ mới.**
+Ba nền tảng Open-Core cuối bảng đều **chạy như dịch vụ độc lập**, giao tiếp qua giao
+thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng.
+
+**Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
+với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.
+
+Ba mảng còn **chờ khảo sát**, chưa có issue: hệ thống quản trị tri thức cho `H`, cơ sở
+dữ liệu véc-tơ và khung LLM cho `I`, thư viện khai phá quy trình cho `I`.
+
+Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
+nghệ mới** — bốn quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
 
 ### 5.1. Header giấy phép — bắt buộc trên mọi tệp mã mới
 
