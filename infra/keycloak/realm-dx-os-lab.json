@@ -1,0 +1,113 @@
+{
+  "realm": "dx-os-lab",
+  "enabled": true,
+  "displayName": "DX-OS Lab — Cổng vận hành yêu cầu nội bộ",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "requester",
+        "description": "Người tạo yêu cầu — gửi yêu cầu và theo dõi hồ sơ của mình"
+      },
+      {
+        "name": "classifier",
+        "description": "Người phân loại yêu cầu — đọc nội dung, phân loại và chuyển về phòng ban phụ trách"
+      },
+      {
+        "name": "handler",
+        "description": "Người xử lý yêu cầu — thực hiện công việc và ghi nhận kết quả"
+      },
+      {
+        "name": "approver",
+        "description": "Người xét duyệt yêu cầu — xác duyệt định tuyến và phê duyệt khi phát sinh chi phí"
+      },
+      {
+        "name": "administrator",
+        "description": "Quản trị viên — quản lý phòng ban, loại yêu cầu, ngưỡng SLA và người dùng"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "dx-portal",
+      "name": "Cổng người dùng (Next.js)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"]
+    },
+    {
+      "clientId": "dx-api",
+      "name": "Dịch vụ ứng dụng (FastAPI)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "an.nguyen",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "An",
+      "lastName": "Nguyễn",
+      "email": "an.nguyen@dx-os-lab.test",
+      "attributes": { "department": ["ke-toan"] },
+      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
+      "realmRoles": ["requester"]
+    },
+    {
+      "username": "binh.tran",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Bình",
+      "lastName": "Trần",
+      "email": "binh.tran@dx-os-lab.test",
+      "attributes": { "department": ["hanh-chinh"] },
+      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
+      "realmRoles": ["classifier"]
+    },
+    {
+      "username": "cuong.le",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Cường",
+      "lastName": "Lê",
+      "email": "cuong.le@dx-os-lab.test",
+      "attributes": { "department": ["cong-nghe-thong-tin"] },
+      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
+      "realmRoles": ["handler"]
+    },
+    {
+      "username": "dung.pham",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dung",
+      "lastName": "Phạm",
+      "email": "dung.pham@dx-os-lab.test",
+      "attributes": { "department": ["cong-nghe-thong-tin"] },
+      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
+      "realmRoles": ["approver"]
+    },
+    {
+      "username": "khanh.vo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Khánh",
+      "lastName": "Võ",
+      "email": "khanh.vo@dx-os-lab.test",
+      "attributes": { "department": ["cong-nghe-thong-tin"] },
+      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
+      "realmRoles": ["administrator"]
+    }
+  ]
+}

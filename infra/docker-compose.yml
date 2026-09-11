@@ -1,0 +1,125 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Dựng toàn bộ hệ thống DX-OS Lab bằng một lệnh:
+#     docker compose --env-file .env up
+#
+# Bốn dịch vụ, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
+# dxlab (nghiệp vụ), keycloak, superset.
+#
+# Vì sao một thực thể thay vì mỗi dịch vụ một cơ sở dữ liệu riêng: hệ này chỉ
+# cần chạy tốt ở quy mô trình diễn — ARCHITECTURE.md mục 9 ghi rõ không tối ưu
+# cho quy mô lớn. Ba thực thể PostgreSQL sẽ tốn gấp ba bộ nhớ mà không đổi lại
+# lợi ích nào ở quy mô này, trong khi bảng chấm đòi cụm dựng được trên máy sạch.
+
+name: dx-os-lab
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — một thực thể, ba database: dxlab, keycloak, superset
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: dxlab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DXLAB_DB_NAME}
+      POSTGRES_USER: ${DXLAB_DB_USER}
+      POSTGRES_PASSWORD: ${DXLAB_DB_PASSWORD}
+      # Truyền xuống kịch bản khởi tạo để tạo hai database còn lại
+      KEYCLOAK_DB_NAME: ${KEYCLOAK_DB_NAME}
+      SUPERSET_DB_NAME: ${SUPERSET_DB_NAME}
+      SUPERSET_READONLY_USER: ${SUPERSET_READONLY_USER}
+      SUPERSET_READONLY_PASSWORD: ${SUPERSET_READONLY_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DXLAB_DB_USER} -d ${DXLAB_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # ---------------------------------------------------------------------------
+  # Keycloak — định danh tập trung, xem ADR-0001
+  # Realm nạp từ tệp JSON lúc khởi động: đổi vai trò là đổi dữ liệu, không đổi mã
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    container_name: dxlab-keycloak
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME}
+      KC_DB_USERNAME: ${DXLAB_DB_USER}
+      KC_DB_PASSWORD: ${DXLAB_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      # Giới hạn bộ nhớ JVM — Keycloak là dịch vụ nặng nhất trong cụm
+      JAVA_OPTS_APPEND: "-Xms256m -Xmx${KEYCLOAK_MAX_HEAP}"
+    volumes:
+      - ./keycloak/realm-dx-os-lab.json:/opt/keycloak/data/import/realm-dx-os-lab.json:ro
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # SeaweedFS — lưu trữ tệp đính kèm qua S3 API, xem ADR-0002
+  # Tắt telemetry: mặc định nó gửi thống kê cụm ra ngoài mỗi 24 giờ
+  # ---------------------------------------------------------------------------
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.45
+    container_name: dxlab-seaweedfs
+    restart: unless-stopped
+    command: >
+      server
+      -dir=/data
+      -s3
+      -s3.config=/etc/seaweedfs/s3-config.json
+      -master.volumeSizeLimitMB=${SEAWEEDFS_VOLUME_LIMIT_MB}
+      -master.telemetry=false
+    volumes:
+      - ./seaweedfs/s3-config.json:/etc/seaweedfs/s3-config.json:ro
+      - seaweedfs-data:/data
+    ports:
+      - "${SEAWEEDFS_S3_PORT}:8333"
+
+  # ---------------------------------------------------------------------------
+  # Apache Superset — bảng điều khiển phân tích, xem ADR-0003
+  # Dùng ảnh dẫn xuất vì ảnh gốc KHÔNG kèm trình điều khiển PostgreSQL
+  # ---------------------------------------------------------------------------
+  superset:
+    build:
+      context: ./superset
+      args:
+        SUPERSET_VERSION: ${SUPERSET_VERSION}
+    image: dxlab-superset:${SUPERSET_VERSION}
+    container_name: dxlab-superset
+    restart: unless-stopped
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      # Superset đọc chuỗi kết nối từ superset_config.py, không đọc trực tiếp
+      # biến SQLALCHEMY_DATABASE_URI. Đặt sai chỗ thì nó lặng lẽ dùng SQLite.
+      SUPERSET_DATABASE_URI: postgresql+psycopg2://${DXLAB_DB_USER}:${DXLAB_DB_PASSWORD}@postgres:5432/${SUPERSET_DB_NAME}
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+    volumes:
+      - superset-home:/app/superset_home
+    ports:
+      - "${SUPERSET_PORT}:8088"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  seaweedfs-data:
+  superset-home:

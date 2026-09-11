@@ -96,25 +96,52 @@ tiến độ và việc tiếp theo.
 
 ## Cài đặt và dựng từ mã nguồn
 
-> Mục này sẽ được hoàn thiện khi có mã nguồn ứng dụng. Hiện kho mã chỉ chứa tài liệu
-> và cấu hình quy trình.
+> Hiện đã dựng được tầng hạ tầng gồm bốn dịch vụ nền. Tầng ứng dụng (cổng người dùng và
+> dịch vụ nghiệp vụ) đang trong quá trình phát triển.
 
 ### Yêu cầu môi trường
 
-- Docker và Docker Compose
-- Git
+| Thành phần | Yêu cầu |
+|---|---|
+| Docker Engine | 24 trở lên, kèm Docker Compose v2 |
+| Git | bất kỳ phiên bản nào còn được hỗ trợ |
+| Bộ nhớ trống | khoảng **2 GB** cho toàn cụm |
+| Cổng cần trống | 5432 · 8080 · 8088 · 8333 |
 
-### Các bước dự kiến
+### Ba bước
 
 ```bash
 git clone https://github.com/AlaVox-lab/dx-os-lab.git
-cd dx-os-lab
-cp infra/.env.example infra/.env
-docker compose up
+cd dx-os-lab/infra
+cp .env.example .env
+docker compose --env-file .env up -d --build
 ```
 
-Toàn bộ hệ thống sẽ dựng được bằng **một lệnh duy nhất** trên máy sạch, không đòi hỏi
-thao tác thủ công nào. Dữ liệu khởi tạo tự nạp khi khởi động.
+Mọi giá trị trong `.env.example` **chạy được ngay**, không cần sửa gì để dựng thử. Lần
+đầu chạy mất vài phút vì phải tải ảnh chứa và dựng ảnh dẫn xuất cho Superset.
+
+### Các dịch vụ sau khi dựng xong
+
+| Dịch vụ | Địa chỉ | Tài khoản mặc định |
+|---|---|---|
+| Keycloak — định danh | `http://localhost:8080` | `admin` / `admin` |
+| Apache Superset — báo cáo | `http://localhost:8088` | `admin` / `admin` |
+| SeaweedFS — lưu trữ tệp, S3 API | `http://localhost:8333` | xem `.env` |
+| PostgreSQL | `localhost:5432` | xem `.env` |
+
+Realm `dx-os-lab` trong Keycloak tự nạp lúc khởi động, gồm **năm vai trò nghiệp vụ** và
+năm người dùng mẫu (mật khẩu `matkhau123`). Xem `infra/keycloak/realm-dx-os-lab.json`.
+
+> **Cảnh báo bảo mật**: toàn bộ mật khẩu trong `.env.example` là giá trị mẫu công khai,
+> chỉ dùng cho môi trường phát triển. Bắt buộc thay trước khi triển khai thật. Tệp `.env`
+> thật không bao giờ được commit lên kho mã.
+
+### Dừng và dọn
+
+```bash
+docker compose --env-file .env down        # dừng, giữ dữ liệu
+docker compose --env-file .env down -v     # dừng và xóa sạch dữ liệu
+```
 
 ---
 
