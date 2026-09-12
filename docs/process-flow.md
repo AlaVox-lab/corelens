@@ -1,122 +1,228 @@
 # Luồng nghiệp vụ — Cổng vận hành yêu cầu nội bộ
 
-Sơ đồ trạng thái mô tả vòng đời một yêu cầu nội bộ, từ lúc người gửi tạo yêu cầu
-tới khi đóng. Đây là bản thiết kế tham chiếu cho máy trạng thái của không gian `P`
-(Quy trình). Toàn bộ trạng thái, quy tắc chuyển và ngưỡng SLA về sau phải nằm trong
-cấu hình hoặc dữ liệu, không mã cứng trong mã nguồn.
+Sơ đồ trạng thái mô tả vòng đời một yêu cầu nội bộ, từ lúc người tạo gửi yêu cầu tới khi
+đóng. Đây là bản thiết kế tham chiếu cho máy trạng thái của không gian `P`.
 
-## Sơ đồ trạng thái
+**Toàn bộ trạng thái, quy tắc chuyển, vai trò, phòng ban và ngưỡng SLA phải nằm trong bảng
+dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 5.
+
+> **Cập nhật 10/09/2026** theo buổi trao đổi với giảng viên hướng dẫn: năm vai trò thay cho
+> bốn, thêm chặng định tuyến phòng ban, và bỏ cổng phê duyệt chi phí. Xem mục 7.
+
+---
+
+## 1. Sơ đồ trạng thái
 
 ```mermaid
 stateDiagram-v2
     direction TB
 
-    [*] --> DaGui: Người gửi tạo yêu cầu
+    [*] --> DaGui: Người tạo gửi yêu cầu
 
     DaGui: Đã gửi
-    TiepNhan: Đã tiếp nhận / phân loại
-    ChoBoSung: Chờ bổ sung thông tin
+    DaPhanLoai: Đã phân loại
+    ChoXacDuyet: Chờ phòng ban xác duyệt
     DangXuLy: Đang xử lý
-    ChoPheDuyet: Chờ phê duyệt
-    LeoThang: Đã leo thang
-    TuChoi: Bị từ chối
-    Huy: Đã hủy
     HoanTat: Hoàn tất
     Dong: Đã đóng
+    ChoBoSung: Chờ bổ sung thông tin
+    BiTuChoi: Bị phòng ban từ chối
+    LeoThang: Đã leo thang
+    Huy: Đã hủy
 
-    DaGui --> TiepNhan: Điều phối viên tiếp nhận
-    TiepNhan --> ChoBoSung: ĐPV yêu cầu bổ sung
-    ChoBoSung --> TiepNhan: Người gửi bổ sung thông tin
-    TiepNhan --> DangXuLy: ĐPV phân công người xử lý
+    DaGui --> DaPhanLoai: Người phân loại phân loại
+    DaGui --> ChoBoSung: Người phân loại hỏi thêm
+    DaGui --> Huy: Người tạo hủy
 
-    DangXuLy --> ChoBoSung: Người xử lý cần thêm thông tin
-    DangXuLy --> ChoPheDuyet: Yêu cầu phát sinh chi phí
-    ChoPheDuyet --> DangXuLy: Trưởng bộ phận duyệt
-    ChoPheDuyet --> DangXuLy: Trưởng bộ phận từ chối, yêu cầu điều chỉnh
-    ChoPheDuyet --> TuChoi: Trưởng bộ phận bác bỏ hẳn
+    DaPhanLoai --> ChoXacDuyet: Chuyển về phòng ban
+    DaPhanLoai --> Huy: Người tạo hủy
+    DaPhanLoai --> Dong: Không phòng nào nhận, đóng kèm lý do
 
-    DangXuLy --> HoanTat: Người xử lý hoàn thành
-    HoanTat --> Dong: Người gửi xác nhận đạt
-    HoanTat --> DangXuLy: Người gửi mở lại (chưa đạt)
-    TuChoi --> Dong: Đóng kèm lý do
+    ChoXacDuyet --> DangXuLy: Phòng ban XÁC DUYỆT và giao xử lý
+    ChoXacDuyet --> BiTuChoi: Phòng ban từ chối, sai chuyên môn
+    ChoXacDuyet --> Huy: Người tạo hủy
 
-    DaGui --> Huy: Người gửi hủy
-    TiepNhan --> Huy: Người gửi hủy
-    ChoBoSung --> Huy: Người gửi hủy
-    Huy --> Dong: Đóng kèm lý do hủy
+    BiTuChoi --> DaPhanLoai: Người phân loại định tuyến lại
 
+    DangXuLy --> ChoBoSung: Người xử lý hỏi thêm
     DangXuLy --> LeoThang: Quá hạn SLA — tự động
-    LeoThang --> DangXuLy: Trưởng bộ phận phân công lại
+    DangXuLy --> HoanTat: Người xử lý hoàn thành
+
+    LeoThang --> DangXuLy: Phân công lại trong cùng phòng
+
+    ChoBoSung --> DaPhanLoai: Bổ sung (người phân loại đã hỏi)
+    ChoBoSung --> DangXuLy: Bổ sung (người xử lý đã hỏi)
+    ChoBoSung --> Huy: Người tạo hủy
+
+    HoanTat --> Dong: Người tạo xác nhận đạt
+    HoanTat --> DangXuLy: Người tạo mở lại, chưa đạt
 
     Dong --> [*]
+    Huy --> [*]
 
-    note right of Huy
-        Poka-yoke: chỉ hủy được TRƯỚC khi vào Đang xử lý
-        (Đã gửi, Tiếp nhận, Chờ bổ sung). Sau đó nút hủy bị khóa.
+    note right of ChoXacDuyet
+        CỔNG DUYỆT DUY NHẤT của cả luồng.
+        Chỉ trả lời "nhận" hay "không nhận",
+        không duyệt nội dung, không duyệt chi phí.
     end note
 
-    note right of ChoPheDuyet
-        Nhánh phê duyệt chỉ bật khi yêu cầu phát sinh chi phí.
-        Từ chối để điều chỉnh quay lại Đang xử lý (giữ liên kết hồ sơ,
-        tạo vòng lặp phê duyệt cho process mining); chỉ bác bỏ hẳn
-        mới sang Bị từ chối.
+    note right of DangXuLy
+        CÁNH CỬA MỘT CHIỀU: đã nhận thì không trả về.
+        Không tồn tại cạnh nào từ đây ngược lại
+        Chờ xác duyệt hay Đã phân loại.
+        Vấn đề phát sinh do chính phòng ban đó xử lý.
+    end note
+
+    note left of BiTuChoi
+        Vòng lặp định tuyến sai CHỈ sống trước khi nhận việc.
+        Đây là nhánh lệch chuẩn đáng giá nhất cho khai phá
+        quy trình: yêu cầu bị đá qua lại giữa các phòng ban.
+    end note
+
+    note left of Huy
+        Poka-yoke: chỉ hủy được TRƯỚC khi vào Đang xử lý.
+        Sau đó nút hủy bị khóa.
     end note
 
     note left of ChoBoSung
-        Hai đường vào: từ ĐPV và từ người xử lý. Event log cần trường
-        phân biệt ai yêu cầu bổ sung để process mining tách hai nhánh.
-    end note
-
-    note left of LeoThang
-        Tự động khi vượt ngưỡng SLA cấu hình sẵn,
-        đẩy lên trưởng bộ phận để phân công lại.
-    end note
-
-    note right of Dong
-        MỌI chuyển trạng thái đều ghi một bản ghi vào nhật ký sự kiện:
-        case_id, activity, timestamp (UTC), actor, from_state, to_state.
+        Hai đường vào và hai đường ra. Nhật ký sự kiện cần
+        phân biệt ai đã hỏi, để khai phá quy trình tách
+        được hai nhánh.
     end note
 ```
 
-## Diễn giải
+---
 
-### Các trạng thái
+## 2. Mười trạng thái
 
-| Trạng thái | Ý nghĩa |
+Cột **Định danh** là giá trị thật lưu trong bảng `states` và trong hai trường `from_state`,
+`to_state` của nhật ký sự kiện. Dùng tiếng Anh vì mã nguồn so sánh với chúng; cột **Nhãn**
+là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.md` mục 8.3.
+
+| # | Định danh | Nhãn hiển thị | Ý nghĩa | Kết thúc |
+|---|---|---|---|---|
+| 1 | `submitted` | Đã gửi | Người tạo vừa gửi, chờ phân loại | |
+| 2 | `classified` | Đã phân loại | Đã xác định loại yêu cầu và phòng ban phụ trách | |
+| 3 | `awaiting-acceptance` | Chờ phòng ban xác duyệt | Đã chuyển về phòng, chờ họ nhận hoặc từ chối | |
+| 4 | `in-progress` | Đang xử lý | Phòng ban **đã nhận** và giao người xử lý | |
+| 5 | `completed` | Hoàn tất | Người xử lý báo xong, chờ người tạo xác nhận | |
+| 6 | `closed` | Đã đóng | | ✅ |
+| 7 | `awaiting-info` | Chờ bổ sung thông tin | Hỏi ngược **người tạo**, không phải trả về phòng ban | |
+| 8 | `rejected-by-department` | Bị phòng ban từ chối | Sai chuyên môn, cần định tuyến lại | |
+| 9 | `escalated` | Đã leo thang | Quá hạn SLA, đẩy lên cấp trên **trong cùng phòng ban** | |
+| 10 | `cancelled` | Đã hủy | Người tạo rút yêu cầu | ✅ |
+
+---
+
+## 3. Mười chín cạnh chuyển trạng thái
+
+Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
+là không đi được**.
+
+| Từ | Sang | Hoạt động | Vai trò được phép |
+|---|---|---|---|
+| `submitted` | `classified` | Phân loại yêu cầu | `classifier` |
+| `submitted` | `awaiting-info` | Yêu cầu bổ sung thông tin | `classifier` |
+| `submitted` | `cancelled` | Hủy yêu cầu | `requester` |
+| `classified` | `awaiting-acceptance` | Chuyển về phòng ban | `classifier` |
+| `classified` | `cancelled` | Hủy yêu cầu | `requester` |
+| `classified` | `closed` | Đóng hồ sơ, không phòng nào nhận | `classifier` |
+| `awaiting-acceptance` | `in-progress` | **Xác duyệt và giao xử lý** | `approver` |
+| `awaiting-acceptance` | `rejected-by-department` | Từ chối vì sai chuyên môn | `approver` |
+| `awaiting-acceptance` | `cancelled` | Hủy yêu cầu | `requester` |
+| `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
+| `in-progress` | `awaiting-info` | Yêu cầu bổ sung thông tin | `handler` |
+| `in-progress` | `escalated` | Leo thang do quá hạn | **hệ thống** |
+| `in-progress` | `completed` | Hoàn thành xử lý | `handler` |
+| `escalated` | `in-progress` | Phân công lại trong cùng phòng | `approver` |
+| `awaiting-info` | `classified` | Bổ sung thông tin — người phân loại đã hỏi | `requester` |
+| `awaiting-info` | `in-progress` | Bổ sung thông tin — người xử lý đã hỏi | `requester` |
+| `awaiting-info` | `cancelled` | Hủy yêu cầu | `requester` |
+| `completed` | `closed` | Xác nhận đạt | `requester` |
+| `completed` | `in-progress` | Mở lại, chưa đạt | `requester` |
+
+---
+
+## 4. Năm vai trò
+
+| Định danh | Nhãn hiển thị | Trách nhiệm |
+|---|---|---|
+| `requester` | Người tạo yêu cầu | Gửi yêu cầu, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
+| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, định tuyến lại khi bị từ chối |
+| `handler` | Người xử lý yêu cầu | Thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
+| `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, phân công lại khi leo thang |
+| `administrator` | Quản trị viên | **Không đi cạnh nào.** Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại → phòng |
+
+Vai trò `classifier` về sau sẽ được tầng `I` hỗ trợ bằng phân loại tự động. Nhưng theo
+nguyên tắc bất di dịch ở `ARCHITECTURE.md` mục 2.2, **AI chỉ ghi vào trường gợi ý**, con
+người vẫn bấm nút quyết định.
+
+---
+
+## 5. Bốn ràng buộc Poka-yoke
+
+| Ràng buộc | Cách thực thi |
 |---|---|
-| Đã gửi | Người gửi vừa tạo yêu cầu, chờ điều phối viên tiếp nhận |
-| Đã tiếp nhận / phân loại | Điều phối viên đã nhận, phân loại và chuẩn bị phân công |
-| Chờ bổ sung thông tin | Yêu cầu thiếu thông tin, chờ người gửi bổ sung |
-| Đang xử lý | Người xử lý đang thực hiện |
-| Chờ phê duyệt | Yêu cầu phát sinh chi phí, chờ trưởng bộ phận quyết định |
-| Đã leo thang | Quá hạn SLA, đã đẩy lên trưởng bộ phận |
-| Bị từ chối | Trưởng bộ phận bác bỏ hẳn |
-| Đã hủy | Người gửi rút yêu cầu (chỉ khi chưa vào Đang xử lý) |
-| Hoàn tất | Người xử lý đã hoàn thành, chờ người gửi xác nhận |
-| Đã đóng | Trạng thái kết thúc |
+| **Đã nhận là không trả về** | Không tồn tại cạnh nào từ `in-progress` ngược về `awaiting-acceptance` hay `classified`. Không phải *không nên đi*, mà là **không có đường mà đi** |
+| **Chỉ hủy trước khi vào xử lý** | Cạnh `cancelled` chỉ xuất phát từ `submitted`, `classified`, `awaiting-acceptance`, `awaiting-info` |
+| **Người tạo không tự đặt mức ưu tiên** | Ưu tiên do `classifier` đặt ở cạnh `submitted → classified` |
+| **Leo thang không đổi phòng ban** | Cạnh `escalated → in-progress` giữ nguyên phòng, chỉ đổi người phụ trách |
 
-### Bốn vai trò
+Mọi ràng buộc cài đặt ở **cả hai phía**: giao diện chặn để trải nghiệm tốt, dịch vụ chặn để
+bảo đảm toàn vẹn. Chỉ chặn ở giao diện là không đủ.
 
-- **Người gửi** — tạo yêu cầu, bổ sung thông tin, hủy (khi được phép), xác nhận hoặc mở lại.
-- **Điều phối viên** — tiếp nhận, phân loại, yêu cầu bổ sung, phân công người xử lý.
-- **Người xử lý** — thực hiện yêu cầu, yêu cầu thêm thông tin khi cần, đánh dấu hoàn thành.
-- **Trưởng bộ phận** — phê duyệt hoặc từ chối khi phát sinh chi phí, phân công lại khi leo thang.
+---
 
-### Các nhánh đáng chú ý
+## 6. Nhật ký sự kiện
 
-- **Nhánh phê duyệt** chỉ kích hoạt khi yêu cầu phát sinh chi phí. Từ chối chia hai loại:
-  *từ chối để điều chỉnh* (quay lại Đang xử lý, giữ liên kết hồ sơ và tạo vòng lặp phê
-  duyệt cho khai phá quy trình) và *bác bỏ hẳn* (sang Bị từ chối rồi Đã đóng).
-- **Nhánh chờ bổ sung** vào từ hai phía — điều phối viên hoặc người xử lý. Nhật ký sự kiện
-  cần một trường phân biệt ai yêu cầu, để khai phá quy trình tách được hai nhánh này.
-- **Ràng buộc Poka-yoke khi hủy**: chỉ hủy được trước khi vào Đang xử lý (Đã gửi, Đã tiếp
-  nhận, Chờ bổ sung). Sau đó nút hủy bị khóa để tránh hủy nhầm yêu cầu đang được xử lý.
-- **Tự leo thang theo SLA**: khi quá ngưỡng thời gian cấu hình sẵn, yêu cầu tự chuyển sang
-  Đã leo thang và đẩy lên trưởng bộ phận để phân công lại.
+Mọi lần chuyển trạng thái đều ghi một bản ghi với lược đồ `case_id`, `activity`,
+`timestamp` (UTC), `actor`, `from_state`, `to_state`. Đây là nguồn dữ liệu cho khai phá
+quy trình ở không gian `I`.
 
-### Nhật ký sự kiện
+Cơ chế bảo đảm nhật ký không bao giờ thiếu bản ghi: **một cửa duy nhất** — mọi lần đổi
+trạng thái đi qua đúng một điểm trong mã. Xem `ARCHITECTURE.md` mục 6.1.
 
-Mọi lần chuyển trạng thái đều ghi một bản ghi vào nhật ký sự kiện với lược đồ
-`case_id`, `activity`, `timestamp` (UTC), `actor`, `from_state`, `to_state`. Đây là nguồn
-dữ liệu cho khai phá quy trình ở không gian `I` — gỡ nó ra thì sản phẩm tụt xuống mức
-helpdesk thông thường.
+**Hai mẫu lệch chuẩn đáng theo dõi nhất**, đều lộ ra từ nhật ký:
+
+- **Vòng lặp định tuyến sai**: `classified → awaiting-acceptance → rejected-by-department →
+  classified` lặp nhiều lần. Cho thấy bảng ánh xạ loại yêu cầu sang phòng ban đang sai, hoặc
+  ranh giới trách nhiệm giữa các phòng chưa rõ
+- **Cạnh đi ngược sau khi đã nhận**: nếu nhật ký xuất hiện cạnh nào từ `in-progress` về phía
+  trước, đó là bằng chứng có người lách quy trình bằng đường khác
+
+---
+
+## 7. Chiều dữ liệu cấu hình được
+
+Ngoài trạng thái và quy tắc chuyển, ba nhóm sau cũng là **dữ liệu**, không mã cứng:
+
+| Nhóm | Ví dụ | Ai sửa |
+|---|---|---|
+| **Phòng ban** | Công nghệ thông tin, Nhân sự, Hành chính, Tài chính kế toán | `administrator` |
+| **Loại yêu cầu** | Sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư | `administrator` |
+| **Ánh xạ loại → phòng ban** | Sự cố thiết bị → Công nghệ thông tin | `administrator` |
+| **Ngưỡng SLA** | Theo từng loại yêu cầu | `administrator` |
+
+Yêu cầu này không chỉ để thích ứng đề thi tháng 11. Mục tiêu sản phẩm là **doanh nghiệp
+khác tải về rồi tự tùy biến phòng ban và loại yêu cầu theo đặc thù của mình** — đó là lý do
+tồn tại của vai trò `administrator`.
+
+---
+
+## 8. Những thay đổi so với bản trước
+
+Bản đầu tiên (20/08/2026) dựng theo mô hình bốn vai trò và không có chặng phòng ban. Buổi
+trao đổi với giảng viên ngày 10/09/2026 đổi ba điểm:
+
+| Thay đổi | Chi tiết |
+|---|---|
+| **Bốn → năm vai trò** | Thêm `administrator`. Điều phối viên đổi trọng tâm thành **người phân loại** |
+| **Thêm chặng định tuyến phòng ban** | `classified → awaiting-acceptance → in-progress`, kèm vòng lặp trả về khi sai chuyên môn |
+| **Bỏ cổng phê duyệt chi phí** | Trạng thái `Chờ phê duyệt` cũ **không còn**. Khi phát sinh chi phí, người phụ trách phòng lập **một phiếu yêu cầu mới** theo luồng riêng — đó là hồ sơ khác, không phải trạng thái của hồ sơ này |
+
+**Hai điểm suy luận, chưa có xác nhận của giảng viên**, cần đính chính nếu sai:
+
+1. **Cạnh `classified → closed`** cho trường hợp không phòng nào nhận. Không có cạnh này thì
+   hồ sơ có thể luẩn quẩn vô hạn giữa định tuyến và từ chối
+2. **Cạnh `completed → in-progress`** cho người tạo mở lại khi chưa đạt. Không mâu thuẫn
+   nguyên tắc *đã nhận là không trả về*, vì hồ sơ ở lại đúng phòng ban đã nhận
