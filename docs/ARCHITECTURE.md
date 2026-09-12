@@ -226,21 +226,41 @@ trình — thay vì tách thành `models/`, `services/`, `routers/` rồi rải 
 
 ## 5. Khuôn mẫu: cấu hình thay vì mã cứng
 
-Đây là khuôn mẫu quan trọng nhất của dự án, xuất phát từ ràng buộc đề thi tháng 11.
+Đây là khuôn mẫu quan trọng nhất của dự án. Ban đầu nó xuất phát từ ràng buộc đề thi
+tháng 11, nhưng từ 10/09/2026 nó được nâng thành **mục tiêu sản phẩm** — xem mục 5.1.
 
-**Quy tắc**: trạng thái, vai trò, ngưỡng SLA, danh mục chỉ số — tất cả nằm trong
-**cấu hình hoặc bảng dữ liệu**, tuyệt đối không mã cứng trong mã nguồn.
+**Quy tắc**: trạng thái, vai trò, phòng ban, loại yêu cầu, ngưỡng SLA, danh mục chỉ số —
+tất cả nằm trong **cấu hình hoặc bảng dữ liệu**, tuyệt đối không mã cứng trong mã nguồn.
 
 | Thuộc kiến trúc (giữ nguyên khi đổi đề) | Thuộc nghiệp vụ (thay được bằng dữ liệu) |
 |---|---|
 | Cơ chế máy trạng thái và quy tắc chuyển | Tên và số lượng trạng thái |
 | Hệ phân quyền theo vai trò | Danh sách vai trò |
+| Cơ chế định tuyến yêu cầu | **Danh sách phòng ban, loại yêu cầu, và bảng ánh xạ loại → phòng ban** |
 | Cơ chế theo dõi SLA và cảnh báo | Ngưỡng thời gian từng loại yêu cầu |
 | Quy trình truy xuất tri thức, cách lập chỉ mục | Nội dung kho tri thức |
 | Khung bảng điều khiển, cách truy vấn | Danh mục chỉ số cụ thể |
 | Cấu trúc nhật ký sự kiện, thuật toán khai phá | Tên các hoạt động trong quy trình |
 
 Nếu tuân thủ, việc thích ứng với đề thi mới chỉ là thay dữ liệu khởi tạo.
+
+### 5.1. Vì sao đây là mục tiêu sản phẩm, không chỉ là biện pháp đối phó
+
+Buổi trao đổi với giảng viên hướng dẫn ngày 10/09/2026 đặt thêm một yêu cầu: sản phẩm phải
+để **một doanh nghiệp bất kỳ tải về rồi tự tùy biến** phòng ban, loại yêu cầu và quy trình
+theo đặc thù của họ, mà không cần sửa mã.
+
+Điều này đổi bản chất của khuôn mẫu. Trước đây nó là cách giảm rủi ro khi đề thi công bố
+muộn; giờ nó là **một tính năng người dùng thấy được**, và là lý do tồn tại của vai trò
+`administrator` trong bộ năm vai trò.
+
+Hệ quả cụ thể khi viết mã:
+
+- Mọi danh mục nghiệp vụ đều có bảng riêng, không phải hằng số trong mã hay kiểu liệt kê
+- Có màn hình quản trị để sửa các bảng đó, không bắt người dùng đụng vào cơ sở dữ liệu
+- Dữ liệu khởi tạo chỉ là **ví dụ mẫu**, không phải phần cứng của sản phẩm
+
+Danh sách đầy đủ các chiều cấu hình được ghi ở [`process-flow.md`](process-flow.md) mục 7.
 
 **Kiểm tra nhanh**: nếu một chuỗi như `"Đang xử lý"` xuất hiện trong câu lệnh `if`
 của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
