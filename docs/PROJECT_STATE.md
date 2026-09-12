@@ -14,17 +14,18 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-07 |
-| Phiên bản hiện tại | `v0.1.0` |
-| Giai đoạn | Giai đoạn 1 — Khảo sát và thiết kế (**xong phần khảo sát**) |
+| Cập nhật lần cuối | 2026-09-12 |
+| Phiên bản hiện tại | **`v0.2.0`** — đã phát hành 12/09 |
+| Giai đoạn | **Giai đoạn 1 hoàn tất.** Đang bước vào Giai đoạn 2 — Không gian `H` và `P` |
 | Mốc công việc đang chạy | Tuần 5 — Chốt kiến trúc và dựng hạ tầng, hạn 13/09 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Chưa** — issue #38 là việc đầu tiên tạo ra mã thật |
-| Issue đang mở | **12** (#37–#48), trong đó 4 thuộc mốc Tuần 5 |
+| Có mã nguồn ứng dụng chưa | **Có hạ tầng, chưa có tầng ứng dụng.** `infra/` dựng được 4 dịch vụ; `frontend/` và `backend/` chưa tồn tại |
+| Issue đang mở | **10** (#39–#48), trong đó 2 thuộc mốc Tuần 5 |
 | Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
-| Còn chờ khảo sát | 3 — quản trị tri thức `H`, véc-tơ và LLM `I`, khai phá quy trình `I` |
-| Số ngày còn lại tới chấm kho mã | **91 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **55 ngày** (tháng 11/2026) |
+| Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48) |
+| Tổng bộ nhớ toàn cụm | **1,17 GB**, đo thật trên cụm bốn dịch vụ |
+| Số ngày còn lại tới chấm kho mã | **86 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **50 ngày** (tháng 11/2026) |
 
 ---
 
@@ -166,24 +167,54 @@ nhưng **chưa tích hợp** cho tới khi luồng chính ổn định.
 
 ---
 
+### Tuần 5 (tiếp) — Hạ tầng chạy được và khép Giai đoạn 1
+
+**Hạ tầng phát triển** (#38, `infra/`). Bốn dịch vụ ghép lại dựng được bằng một lệnh trên
+máy sạch: PostgreSQL, Keycloak, SeaweedFS, Apache Superset. **Tổng bộ nhớ đo thật 1,17 GB.**
+
+Chọn **một thực thể PostgreSQL chứa ba database** (`dxlab`, `keycloak`, `superset`) thay vì
+mỗi dịch vụ một cơ sở dữ liệu riêng — ba thực thể sẽ tốn gấp ba bộ nhớ mà không đổi lại lợi
+ích nào ở quy mô trình diễn. Superset chỉ được cấp tài khoản **chỉ đọc** trên dữ liệu
+nghiệp vụ, đúng ràng buộc ADR-0003.
+
+Ba lỗi chỉ lộ ra khi chạy thật, chi tiết ở mục Ghi chú kỹ thuật: cờ telemetry của SeaweedFS
+ghi sai trong bốn tài liệu, Superset lặng lẽ dùng SQLite, và ảnh Superset không tự khởi tạo.
+
+**Mô hình nghiệp vụ chốt xong** (#37). Giảng viên trả lời câu hỏi về vai trò *Người xét
+duyệt*: **chỉ một cổng duyệt duy nhất**, không phải hai. Cổng đó chỉ trả lời *nhận* hay
+*không nhận*; khi phát sinh chi phí thì người phụ trách phòng lập **một phiếu yêu cầu mới**
+theo luồng riêng, tính là hồ sơ khác. Trạng thái `Chờ phê duyệt` cũ bị bỏ hẳn.
+
+Nguyên tắc quan trọng nhất rút ra: **đã nhận là không trả về**. Sau khi phòng ban xác duyệt,
+hồ sơ không quay lui được; vấn đề phát sinh do chính phòng đó xử lý. Diễn đạt thành bảng
+quy tắc chứ không phải lời khuyên — đơn giản là không tồn tại cạnh nào đi ngược.
+
+Kết quả: **10 trạng thái, 19 cạnh chuyển, 5 vai trò, 4 ràng buộc Poka-yoke** trong
+`process-flow.md`. Đây là dữ liệu khởi tạo trực tiếp cho bảng `states` và `transitions` ở #40.
+
+**Bảng Đội ngũ** trong `README.md` điền đủ bốn người kèm liên kết GitHub.
+
+**Bản phát hành `v0.2.0`** cắt ngày 12/09, khép Giai đoạn 1. Nhật ký thay đổi 14 mục, sinh
+bằng `git-cliff` — cách chạy trên máy này xem mục Ghi chú kỹ thuật.
+
+**Issue đã đóng**: #37, #38
+
+---
+
 ## Đang làm
 
-Milestone *Tuần 5 — Chốt kiến trúc và dựng hạ tầng*, hạn 13/09, có bốn issue:
+Chưa có công việc nào đang dở, và **không còn gì chờ ý kiến giảng viên**.
 
-| Issue | Ưu tiên | Việc |
-|---|---|---|
-| **#37** | **P0** | Vẽ lại sơ đồ luồng theo mô hình năm vai trò |
-| **#38** | **P0** | Dựng hạ tầng phát triển bằng Docker Compose |
-| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái |
-| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS |
+Milestone *Tuần 5*, hạn 13/09, còn hai issue:
 
-Hai issue P0 nằm trên đường tới hạn nhưng **độc lập nhau**, làm song song được: #37 chặn
-#40, còn #38 chặn #43 trở đi.
+| Issue | Ưu tiên | Việc | Ghi chú |
+|---|---|---|---|
+| **#40** | **P1** | Bảng dữ liệu cho engine máy trạng thái | Đã mở khóa — `process-flow.md` mục 2 và 3 là dữ liệu khởi tạo sẵn |
+| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS | Đã giao `@NguyentimAnh`, việc đầu tiên của bạn ấy |
 
-**Đang chờ giảng viên trả lời một câu** ảnh hưởng tới #37: vai trò *Người xét duyệt* đảm
-nhiệm **hai cổng** (xác duyệt định tuyến luôn có, phê duyệt chi phí chỉ khi cần) hay chỉ
-một cổng duy nhất. Nếu chưa kịp trả lời thì vẽ theo giả định hai cổng và ghi rõ là giả
-định — sửa lại nhanh vì tất cả đều là dữ liệu.
+Hai điểm suy luận trong `process-flow.md` mục 8 **chưa được giảng viên xác nhận**, cần
+đính chính nếu sai: cạnh `classified → closed` khi không phòng nào nhận, và cạnh
+`completed → in-progress` khi người tạo mở lại.
 
 ---
 
@@ -204,14 +235,15 @@ Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồ
 
 | Issue | Ưu tiên | Việc | Chặn bởi |
 |---|---|---|---|
-| **#37** | P0 | Vẽ lại sơ đồ luồng theo mô hình năm vai trò | — |
-| **#38** | P0 | Dựng hạ tầng Docker Compose · **PoF mục 4, 10 điểm** | — |
-| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái | #37 |
+| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái | **đã mở khóa** |
 | #41 | P1 | Điểm chuyển trạng thái duy nhất và sinh nhật ký sự kiện | #40 |
-| #43 | P1 | Tích hợp Keycloak vào dịch vụ ứng dụng và cổng | #38 |
+| #43 | P1 | Tích hợp Keycloak vào dịch vụ ứng dụng và cổng | **đã mở khóa** |
 | #44 | P1 | Cổng gửi yêu cầu và tra cứu trạng thái | #41, #43 |
 | #45 | P2 | Buồng lái vận hành | #44 |
 | #42 | P2 | Theo dõi SLA và tự leo thang | #41 |
+
+Hai issue chặn đường (#37 và #38) **đã xong**, nên #40 và #43 khởi động được ngay và làm
+song song được.
 
 ### Không chặn ai, làm khi có khoảng trống
 
@@ -224,23 +256,21 @@ Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồ
 
 ### Việc vận hành, không cần issue
 
-1. **Cắt bản phát hành `v0.2.0`** — Giai đoạn 1 đã trọn phần khảo sát: bốn tài liệu khảo
-   sát, bốn bản ghi quyết định. Cần cài lại `git-cliff`; số commit bị bỏ qua phải đúng **13**
-2. Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm trong `infra/seed/`
-3. Thiết kế giao diện cho #44 và #45 trước khi viết mã. Bảng điều khiển phân tích **không
+1. Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm trong `infra/seed/`. Bản dựng thử nằm ở
+   `E:\Workspace\_scratch\dx-os-lab\sinh_du_lieu.py` trên máy của navigator — sinh 1.000 hồ
+   sơ bám đúng `process-flow.md`. **Lưu ý**: bộ sinh viết theo mô hình cũ bốn vai trò, cần
+   cập nhật theo mười trạng thái và năm vai trò mới
+2. Thiết kế giao diện cho #44 và #45 trước khi viết mã. Bảng điều khiển phân tích **không
    cần thiết kế** vì Superset tự mang giao diện
-4. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-5. Thêm hai thành viên (quyền Write) và giảng viên (quyền Read hoặc Triage) vào kho mã;
-   điền bảng Đội ngũ trong `README.md`. Khi đó chia lại người phụ trách: nhóm `H`
-   (#43, #44, #45) hợp với người làm giao diện, nhóm `I` (#46, #47, #48) hợp với người
-   làm dữ liệu
+3. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
+4. Cân nhắc gán milestone cho tám issue đang để trống (#41–#48) khi xếp lịch tuần 6
 
 ### Chờ điều kiện
 
-6. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
-7. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
+5. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
+6. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
    có hiệu lực, và **bật lại được `delete_branch_on_merge`** một cách an toàn
-8. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
+7. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
    hình máy tối thiểu** — giảng viên nhắc trước để nhóm không quên
 
 ---
@@ -251,7 +281,8 @@ Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồ
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| **Chờ giảng viên xác nhận vai trò Người xét duyệt** | Ảnh hưởng số trạng thái trong #37, và #40 phụ thuộc #37 | Đã gửi câu hỏi. Nếu chưa kịp trả lời thì vẽ theo giả định hai cổng và ghi rõ là giả định |
+| **Hai điểm suy luận trong sơ đồ luồng chưa được giảng viên xác nhận** | Nếu sai thì bảng `transitions` ở #40 phải sửa theo | Xem `process-flow.md` mục 8: cạnh `classified → closed` và cạnh `completed → in-progress`. Hỏi ở buổi trao đổi tới |
+| Tám issue chưa gắn mốc công việc (#41–#48) | Khó theo dõi tiến độ theo tuần | Gán milestone khi xếp lịch tuần 6 |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm: 1,17 GB** — thấp hơn ước tính 1,29 GB nhờ dùng một thực thể PostgreSQL thay vì ba. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
@@ -289,17 +320,44 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 
 Những phát hiện trong quá trình làm, ghi lại để không phải điều tra lại.
 
+**Cách chạy git-cliff trên máy này**
+
+`winget` bản 1.2 trên máy navigator **hỏng nguồn** (`Data required by the source is
+missing`) nên không cài được git-cliff. Máy cũng không có cargo, scoop lẫn choco.
+
+Đường vòng đã dùng thành công — chạy qua npm mà không cài cố định:
+
+```powershell
+npx --yes git-cliff@latest --tag v0.2.0 --output CHANGELOG.md
+```
+
+Bản `v0.2.0` sinh bằng `git-cliff 2.13.1` theo cách này.
+
 **Cảnh báo commit bị bỏ qua khi sinh nhật ký thay đổi**
 
-git-cliff sẽ báo `N commit(s) were skipped due to parse error(s)`. Con số `N` phải
-bằng **số merge commit cộng một** (cộng thêm một cho `Initial commit`).
+git-cliff sẽ báo `N commit(s) were skipped due to parse error(s)`. Công thức đối chiếu:
 
-Nếu `N` lớn hơn, nghĩa là có commit viết sai chuẩn và bị loại khỏi nhật ký. Kiểm tra
-bằng `git-cliff --unreleased -vv` rồi đối chiếu với `git log --oneline`.
+```
+N = số merge commit trên nhánh đang sinh
+  + 1  (Initial commit)
+  + số commit squash lỡ mang tiêu đề bắt đầu bằng "Merge"
+```
+
+**Đếm merge commit trên đúng nhánh đang sinh nhật ký.** Nhánh `main` có nhiều merge commit
+hơn `dev` vì nó tích lũy thêm mỗi lần phát hành — đếm nhầm nhánh là ra con số sai.
+
+Ở lần sinh `v0.2.0` (12/09/2026), `N = 14` = 12 merge commit trên `dev` + 1 `Initial commit`
++ 1 commit hỏng ở PR #49. Số hạng cuối là **nợ vĩnh viễn**: PR #49 bị sót bước sửa ô commit
+message nên commit squash mang tiêu đề `Merge pull request #49 from ...`, và `cliff.toml` có
+luật bỏ qua mọi commit bắt đầu bằng `Merge`. Hậu quả: mục cập nhật trạng thái tuần 5 không
+bao giờ xuất hiện trong nhật ký. Không sửa được vì commit đã lên `main`.
+
+Nếu `N` lớn hơn công thức trên thì mới là có commit viết sai chuẩn mới. Kiểm bằng
+`npx git-cliff --unreleased -vv` rồi đối chiếu `git log --oneline`.
 
 Nguyên nhân các commit này không được luật `skip` trong `cliff.toml` xử lý: tùy chọn
-`filter_unconventional` loại chúng ở giai đoạn phân tích, trước khi tới bước phân
-nhóm. Cảnh báo vô hại.
+`filter_unconventional` loại chúng ở giai đoạn phân tích, trước khi tới bước phân nhóm.
+Cảnh báo vô hại.
 
 **Gõ tiếng Việt có dấu trong commit trên Windows**
 
@@ -358,6 +416,26 @@ hẳn so với việc chỉ đọc tài liệu rồi phán đoán.
   Bản sản phẩm cần ảnh chứa dẫn xuất
 - **Metabase chạy JVM không đặt `-Xmx`** nên lấy dần bộ nhớ theo mức sẵn có: trong một
   phiên đo tăng từ 1,56 lên 1,98 GiB
+
+**Ba cạm bẫy khi ghép ba nền tảng vào một cụm Compose**
+
+Cả ba chỉ lộ ra khi dựng thật ở #38, không tài liệu nào nói trước:
+
+| Nền tảng | Cạm bẫy | Cách xử lý |
+|---|---|---|
+| **SeaweedFS** | Cờ tắt telemetry là `-master.telemetry=false`, **không phải** `-telemetry=false` như bốn tài liệu của nhóm từng ghi. Đặt sai thì container khởi động lại vô tận | Đã sửa cả bốn chỗ. Dòng gợi ý trong nhật ký của SeaweedFS ghi thiếu tiền tố `master.` — đừng chép nguyên văn |
+| **Superset** | **Không đọc biến môi trường tuỳ ý.** Đặt `SQLALCHEMY_DATABASE_URI` qua biến thì bị bỏ qua âm thầm và nó lặng lẽ dùng SQLite. Dấu hiệu duy nhất là một dòng `Context impl SQLiteImpl` lẫn trong nhật ký | Nạp cấu hình từ tệp Python trỏ bởi `SUPERSET_CONFIG_PATH` — xem `infra/superset/superset_config.py` |
+| **Superset** | **Ảnh gốc không tự khởi tạo.** Không chạy `db upgrade` lẫn `fab create-admin`. Nguy hiểm vì điểm cuối sức khoẻ vẫn trả HTTP 200 và container vẫn báo `healthy`, nhưng không ai đăng nhập được | Thêm điểm vào riêng — xem `infra/superset/docker-entrypoint.sh` |
+
+Thêm một chi tiết về môi trường ảo của Superset: nó nằm ở `/app/.venv` và **không có `pip`**
+trong đó, nên phải cài gói bằng `uv`.
+
+**JSON không mang được header giấy phép SPDX**
+
+Đã thử nhét header vào một trường `_comment` trong tệp realm của Keycloak. Kết quả: Keycloak
+**từ chối nạp realm** vì trình phân tích của nó bác mọi trường lạ. Hai tệp JSON trong
+`infra/` vì vậy không có header — JSON không có cú pháp chú thích, đây là giới hạn của định
+dạng chứ không phải sơ suất.
 
 **Sinh dữ liệu ảo: quyết định trước rồi co giãn, đừng cộng dồn ngẫu nhiên**
 
