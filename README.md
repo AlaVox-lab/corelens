@@ -160,12 +160,15 @@ Các issue gắn nhãn `good first issue` phù hợp cho người mới tham gia
 
 ## Đội ngũ
 
-| Vai trò | Thành viên | Phạm vi trách nhiệm |
+| Vai trò | Thành viên | Tài khoản |
 |---|---|---|
-| Giảng viên hướng dẫn | *chờ điền* | |
-| Điều phối kho mã và kiến trúc | *chờ điền* | Không gian `P`, lắp ghép kiến trúc, quản trị quy trình |
-| Phát triển giao diện và trải nghiệm | *chờ điền* | Không gian `H`, cổng người dùng, bảng điều khiển |
-| Dữ liệu và trí tuệ nhân tạo | *chờ điền* | Không gian `D` và `I` |
+| Giảng viên hướng dẫn | ThS. Trần Phước Đức | [`@tranphuocduc1998`](https://github.com/tranphuocduc1998) |
+| Điều phối kho mã | Nguyễn Thanh Sơn | [`@AlaVox-lab`](https://github.com/AlaVox-lab) |
+| Thành viên | Ngô Hoàng Đại | [`@Senning-Dd`](https://github.com/Senning-Dd) |
+| Thành viên | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
+
+Công việc được chia theo từng [issue](https://github.com/AlaVox-lab/dx-os-lab/issues) chứ
+không cố định người nào phụ trách không gian nào — các thành viên hỗ trợ lẫn nhau tùy việc.
 
 ---
 
