@@ -166,12 +166,27 @@ dx-os-lab/
 │   │   └── research.md
 │   └── pull_request_template.md
 ├── docs/
-│   ├── adr/
-│   │   └── README.md            # quy ước ghi bản ghi quyết định kiến trúc
+│   ├── adr/                     # năm bản ghi quyết định kiến trúc
 │   ├── ARCHITECTURE.md          # tệp này
 │   ├── PROJECT_STATE.md         # trạng thái hiện tại, cập nhật hàng tuần
 │   ├── ROADMAP.md               # lộ trình tới tháng 12
-│   └── dependencies.md          # danh mục phụ thuộc và giấy phép
+│   ├── process-flow.md          # sơ đồ trạng thái, nguồn của dữ liệu khởi tạo
+│   ├── dependencies.md          # danh mục phụ thuộc và giấy phép
+│   └── *-survey.md              # bốn tài liệu khảo sát Open-Core
+├── infra/                       # dựng cả cụm bằng một lệnh
+│   ├── docker-compose.yml
+│   ├── .env.example
+│   ├── keycloak/                # realm nạp lúc khởi động: vai trò là dữ liệu
+│   ├── seaweedfs/
+│   ├── superset/                # ảnh dẫn xuất, ảnh gốc thiếu trình điều khiển
+│   ├── postgres/init/           # LƯỢC ĐỒ — phần thuộc kiến trúc
+│   │   ├── 01-tao-cac-database.sh
+│   │   ├── 02-luoc-do-quy-trinh.sql
+│   │   └── 03-nap-du-lieu-khoi-tao.sh
+│   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa
+│       ├── 01-quy-tac-quy-trinh.sql
+│       ├── 02-co-cau-to-chuc.sql
+│       └── 99-kiem-tra-tinh-nhat-quan.sql
 ├── scripts/
 │   └── setup-labels.sh          # khởi tạo hệ thống nhãn
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
@@ -264,6 +279,43 @@ Danh sách đầy đủ các chiều cấu hình được ghi ở [`process-flow
 
 **Kiểm tra nhanh**: nếu một chuỗi như `"Đang xử lý"` xuất hiện trong câu lệnh `if`
 của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
+
+### 5.2. Lược đồ cấu hình đã hiện thực
+
+Mười một bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia ba nhóm:
+
+| Nhóm | Bảng | Vai trò |
+|---|---|---|
+| Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng |
+| Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
+| Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
+
+**Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
+vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
+mà công ty khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò
+giữa hai loại nội dung khác hẳn nhau.
+
+**Ba lớp bảo vệ, không lớp nào nằm trong mã ứng dụng:**
+
+1. **Khóa ngoại** chặn cạnh trỏ tới trạng thái không tồn tại. Thêm một mẹo nhỏ: cột kỹ
+   thuật `transitions.from_is_terminal` luôn bằng `FALSE` và tham chiếu tới
+   `states (rule_set_id, code, is_terminal)`, nên **không thể tạo cạnh rời khỏi một
+   trạng thái đóng**. Dữ liệu khởi tạo không bao giờ nhắc tới cột này
+2. **Chỉ mục duy nhất từng phần** bảo đảm mỗi bộ quy tắc có đúng một trạng thái bắt đầu,
+   mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
+3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
+   lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
+   đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được. Sai một
+   trong ba thì **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ
+   sơ thật mắc kẹt mới lộ ra
+
+Hai ràng buộc Poka-yoke quan trọng nhất **không có dòng dữ liệu nào** vì chúng được thực
+thi bằng sự vắng mặt: *đã nhận là không trả về* và *chỉ hủy trước khi vào xử lý*. Không
+phải "không nên đi", mà là "không có đường mà đi".
+
+Cột `is_initial` đáng chú ý riêng: nhờ nó mà mã nguồn hỏi *"trạng thái bắt đầu là gì"*
+thay vì viết `if state == "submitted"`. Mỗi cột kiểu này là một câu lệnh `if` không bao
+giờ phải viết.
 
 ---
 
