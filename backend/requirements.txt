@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Phụ thuộc Python của dịch vụ ứng dụng, ghim phiên bản chính xác bằng ==.
+#
+# TỆP NÀY BẮT BUỘC COMMIT LÊN KHO MÃ, tuyệt đối không đưa vào .gitignore. Không có
+# nó thì mỗi thành viên và ban giám khảo nhận một bộ phiên bản khác nhau, làm hỏng
+# khả năng dựng lại từ mã nguồn — hạng mục PoF 10 điểm. Xem CLAUDE.md mục 2.3.
+#
+# Giấy phép của từng gói ghi trong docs/dependencies.md. Thêm gói mới thì cập nhật
+# tệp đó trong cùng công việc.
+
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+sqlalchemy==2.0.53
+alembic==1.20.0
+psycopg[binary]==3.3.5
+pydantic-settings==2.15.0

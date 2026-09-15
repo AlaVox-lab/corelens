@@ -15,6 +15,10 @@ dist/
 .turbo/
 *.tsbuildinfo
 .eslintcache
+
+# Next.js sinh lại tệp này mỗi lần dựng và ghi đè mọi sửa đổi, nên nó không mang
+# được header giấy phép SPDX. Để ngoài kho mã thay vì để một tệp thiếu header.
+next-env.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
