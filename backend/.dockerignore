@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Giữ bối cảnh dựng ảnh gọn nhẹ, và tránh chép nhầm tệp bí mật vào ảnh chứa.
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Tệp bí mật không bao giờ được đi vào ảnh chứa
+.env
+.env.*
+!.env.example

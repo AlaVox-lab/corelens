@@ -1,0 +1,52 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 AlaVox-lab
+ *
+ * Kiểu trình bày tối thiểu cho bộ khung.
+ *
+ * CỐ Ý CHƯA THIẾT KẾ GÌ. Giao diện thật thuộc về #44 (cổng gửi yêu cầu) và #45
+ * (buồng lái vận hành). Tệp này chỉ đủ để trang không trông vỡ.
+ */
+
+:root {
+  --nen: #ffffff;
+  --chu: #18181b;
+  --chu-nhat: #71717a;
+  --vien: #e4e4e7;
+  --nhan-manh: #2563eb;
+  --tot: #16a34a;
+  --hong: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nen: #0a0a0b;
+    --chu: #fafafa;
+    --chu-nhat: #a1a1aa;
+    --vien: #27272a;
+    --nhan-manh: #60a5fa;
+    --tot: #4ade80;
+    --hong: #f87171;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--nen);
+  color: var(--chu);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  line-height: 1.6;
+}

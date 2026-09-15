@@ -4,7 +4,7 @@
 # Dựng toàn bộ hệ thống DX-OS Lab bằng một lệnh:
 #     docker compose --env-file .env up
 #
-# Bốn dịch vụ, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
+# Sáu dịch vụ, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
 # dxlab (nghiệp vụ), keycloak, superset.
 #
 # Vì sao một thực thể thay vì mỗi dịch vụ một cơ sở dữ liệu riêng: hệ này chỉ
@@ -120,6 +120,47 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Dịch vụ ứng dụng — FastAPI
+  # Toàn bộ nghiệp vụ nằm trong bảng dữ liệu, xem ARCHITECTURE.md mục 5.2
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ../backend
+    image: dxlab-backend:${DXLAB_VERSION}
+    container_name: dxlab-backend
+    restart: unless-stopped
+    environment:
+      # psycopg 3 dùng tiền tố postgresql+psycopg. Superset ở trên dùng psycopg2 —
+      # hai trình điều khiển khác nhau, đừng chép nhầm chuỗi của nhau.
+      DXLAB_DATABASE_URI: postgresql+psycopg://${DXLAB_DB_USER}:${DXLAB_DB_PASSWORD}@postgres:5432/${DXLAB_DB_NAME}
+      DXLAB_APP_VERSION: ${DXLAB_VERSION}
+    ports:
+      - "${BACKEND_PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Cổng người dùng — Next.js
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../frontend
+    image: dxlab-frontend:${DXLAB_VERSION}
+    container_name: dxlab-frontend
+    restart: unless-stopped
+    environment:
+      # Gọi nội bộ trong mạng của Compose, không đi vòng ra cổng công bố. Trình
+      # duyệt của người dùng không bao giờ thấy địa chỉ này.
+      BACKEND_INTERNAL_URL: http://backend:8000
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
 
 volumes:
   postgres-data:

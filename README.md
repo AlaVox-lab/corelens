@@ -55,13 +55,23 @@ quyền quyết định. Mọi kết quả từ AI đều phải qua một bư�
 
 | Tầng | Công nghệ | Giấy phép |
 |---|---|---|
-| Giao diện | Next.js (React) | MIT |
-| Dịch vụ ứng dụng | FastAPI (Python) | MIT |
-| Cơ sở dữ liệu | PostgreSQL | PostgreSQL License |
+| Giao diện | Next.js `16.3.5` (React `19.3.0`) | MIT |
+| Dịch vụ ứng dụng | FastAPI `0.141.1` (Python `3.13`) | MIT |
+| Cơ sở dữ liệu | PostgreSQL `16` | PostgreSQL License |
 | Đóng gói | Docker + Docker Compose | Apache-2.0 |
 
-Các nền tảng Open-Core cho từng không gian đang trong giai đoạn khảo sát. Kết quả
-được ghi thành bản ghi quyết định trong [`docs/adr/`](docs/adr/).
+Bốn nền tảng Open-Core đã chốt, mỗi quyết định có một bản ghi trong
+[`docs/adr/`](docs/adr/):
+
+| Không gian | Nền tảng | Giấy phép | Cách tích hợp |
+|---|---|---|---|
+| `H` | Keycloak `26.7.3` | Apache-2.0 | Dịch vụ độc lập qua OIDC |
+| `P` | **Tự viết engine máy trạng thái** | MIT | Trạng thái và quy tắc chuyển nằm trong bảng dữ liệu |
+| `D` | Apache Superset `6.1.0` | Apache-2.0 | Dịch vụ độc lập, chỉ đọc, nhúng qua guest token |
+| `core` | SeaweedFS `4.45` | Apache-2.0 | Dịch vụ độc lập qua S3 API |
+
+Ba mảng còn đang khảo sát: quản trị tri thức cho `H`, cơ sở dữ liệu véc-tơ và khung
+LLM cho `I`, thư viện khai phá quy trình cho `I`.
 
 ---
 
@@ -86,18 +96,19 @@ sử commit.
 
 ## Trạng thái hiện tại
 
-**Phiên bản `v0.1.0` — Giai đoạn 0: Dựng nền**
+**Phiên bản `v0.2.0` — Giai đoạn 2: Không gian `H` và `P`**
 
-Kho mã hiện có bộ quy chuẩn làm việc và hệ thống tài liệu đầy đủ. **Chưa có mã nguồn
-ứng dụng.** Xem [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) để biết chi tiết
-tiến độ và việc tiếp theo.
+Giai đoạn khảo sát và thiết kế đã khép. Kho mã có bộ quy chuẩn, hệ thống tài liệu,
+bốn bản ghi quyết định kiến trúc, hạ tầng dựng được bằng một lệnh, và **lược đồ cấu
+hình đầy đủ của engine máy trạng thái**. Xem
+[`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) để biết tiến độ và việc tiếp theo.
 
 ---
 
 ## Cài đặt và dựng từ mã nguồn
 
-> Hiện đã dựng được tầng hạ tầng gồm bốn dịch vụ nền. Tầng ứng dụng (cổng người dùng và
-> dịch vụ nghiệp vụ) đang trong quá trình phát triển.
+> Cụm sáu dịch vụ dựng được bằng một lệnh. Cổng người dùng hiện là bộ khung — màn hình
+> gửi yêu cầu và buồng lái vận hành đang được xây dựng.
 
 ### Yêu cầu môi trường
 
@@ -106,7 +117,7 @@ tiến độ và việc tiếp theo.
 | Docker Engine | 24 trở lên, kèm Docker Compose v2 |
 | Git | bất kỳ phiên bản nào còn được hỗ trợ |
 | Bộ nhớ trống | khoảng **2 GB** cho toàn cụm |
-| Cổng cần trống | 5432 · 8080 · 8088 · 8333 |
+| Cổng cần trống | 3000 · 5432 · 8000 · 8080 · 8088 · 8333 |
 
 ### Ba bước
 
@@ -124,10 +135,20 @@ Mọi giá trị trong `.env.example` **chạy được ngay**, không cần s�
 
 | Dịch vụ | Địa chỉ | Tài khoản mặc định |
 |---|---|---|
+| **Cổng người dùng** | `http://localhost:3000` | chưa cần đăng nhập |
+| **Dịch vụ ứng dụng** — tài liệu API | `http://localhost:8000/docs` | chưa cần đăng nhập |
 | Keycloak — định danh | `http://localhost:8080` | `admin` / `admin` |
 | Apache Superset — báo cáo | `http://localhost:8088` | `admin` / `admin` |
 | SeaweedFS — lưu trữ tệp, S3 API | `http://localhost:8333` | xem `.env` |
 | PostgreSQL | `localhost:5432` | xem `.env` |
+
+Mở `http://localhost:3000` là biết ngay cụm có khỏe không: trang chủ báo trạng thái
+từng tầng, kể cả việc bộ quy tắc quy trình đã nạp đủ mười trạng thái hay chưa.
+
+Lược đồ và dữ liệu khởi tạo của engine máy trạng thái nạp tự động lúc PostgreSQL khởi
+tạo lần đầu. Nếu bộ quy tắc sai — có ngõ cụt, có trạng thái không tới được, có cạnh
+không vai trò nào đi được — **cụm sẽ dừng khởi động** thay vì chạy với luồng hỏng.
+Xem `infra/seed/`.
 
 Realm `dx-os-lab` trong Keycloak tự nạp lúc khởi động, gồm **năm vai trò nghiệp vụ** và
 năm người dùng mẫu (mật khẩu `matkhau123`). Xem `infra/keycloak/realm-dx-os-lab.json`.
