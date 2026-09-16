@@ -208,9 +208,9 @@ dx-os-lab/
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
-│   │   ├── rules/               # [P] ràng buộc Poka-yoke kiểm tra lúc chạy
+│   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
-│   │   ├── auth/                # [H] chưa cài đặt, xem #43
+│   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor
 │   │   ├── analytics/           # [D] chưa cài đặt
 │   │   └── intelligence/        # [I] chưa cài đặt
 │   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
@@ -487,6 +487,42 @@ Ví dụ dự kiến:
 
 Ràng buộc phải cài đặt ở **cả hai phía**: giao diện chặn để trải nghiệm tốt, dịch
 vụ chặn để bảo đảm toàn vẹn. Chỉ chặn ở giao diện là không đủ.
+
+### 7.1. Đồng hồ SLA và tự leo thang
+
+**Đã cài đặt** — `backend/app/rules/sla.py` và `backend/app/workflow/escalation.py`.
+
+ADR-0004 ghi rõ: chọn tự viết engine đồng nghĩa nhận trách nhiệm tự làm bộ đếm thời
+gian, thứ mà một nền tảng workflow có sẵn sẽ cho không. Đây là món nợ đó.
+
+**Ba cột thay cho một mốc hạn chót.** `requests` giữ `sla_running_seconds`,
+`sla_paused_seconds` và `sla_segment_since`. Lý do không tính sẵn một mốc hạn chót:
+đồng hồ dừng rồi chạy lại nhiều lần trong đời một hồ sơ, nên mốc cố định sẽ sai ngay
+lần đầu người dùng bị hỏi thêm thông tin.
+
+**Trạng thái nào làm đồng hồ chạy là dữ liệu, không phải mã.** Cột `states.sla_running`
+trả lời cả hai câu — đồng hồ bắt đầu từ đâu, và dừng ở đâu — nên mã nguồn không phải
+viết `if state == "in-progress"`. Hiện chỉ `in-progress` và `escalated` bật cờ này.
+
+Hệ quả nghiệp vụ có chủ đích: **thời gian ở `awaiting-info` không tính vào SLA**, vì
+người xử lý không nên bị phạt khi người tạo chậm trả lời. Nhưng tổng thời gian dừng
+vẫn cộng dồn vào `sla_paused_seconds`, để khai phá quy trình phát hiện ai lạm dụng
+cách hỏi thêm thông tin để dừng đồng hồ. Muốn tính vào thì bật cờ cho `awaiting-info` —
+sửa một giá trị trong `infra/seed/`, không đụng mã.
+
+**Leo thang cũng đi qua điểm chuyển trạng thái duy nhất.** Bộ quét không tự đặt
+`current_state`; nó gọi `perform_transition` với tác nhân hệ thống. Nếu đi tắt cho
+nhanh thì nhật ký sẽ thiếu đúng những bản ghi thú vị nhất — các lần trễ hạn — và khai
+phá quy trình mất khả năng chỉ ra điểm nghẽn.
+
+**Trạng thái đích cũng không viết cứng.** Bộ quét tra bảng `transitions` tìm cạnh mang
+cờ `is_system` xuất phát từ trạng thái hiện tại. Nhờ vậy hồ sơ đã leo thang không bị
+nhặt lại mỗi vòng — từ `escalated` không còn cạnh hệ thống nào — mà không cần thêm một
+cột *"đã leo thang chưa"*. Cơ chế tự giới hạn bằng chính cấu trúc dữ liệu.
+
+Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
+có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
+Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
 
 ---
 

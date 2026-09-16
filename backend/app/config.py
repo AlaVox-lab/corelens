@@ -59,6 +59,17 @@ class Settings(BaseSettings):
     # Khoảng lệch đồng hồ chấp nhận được khi kiểm hạn token, tính bằng giây.
     oidc_leeway_seconds: int = 10
 
+    # --- Theo dõi SLA, xem #42 --------------------------------------------
+    #
+    # Ngưỡng SLA của từng loại yêu cầu nằm trong bảng `request_types`, và trạng thái
+    # nào làm đồng hồ chạy nằm ở cột `states.sla_running`. Ở đây chỉ có tham số vận
+    # hành: bộ quét chạy hay không, và bao lâu một lần.
+    sla_scan_enabled: bool = True
+
+    # Sáu mươi giây là đủ mịn cho ngưỡng tính bằng giờ. Giảm xuống vài giây khi cần
+    # trình diễn việc tự leo thang mà không phải ngồi chờ.
+    sla_scan_interval_seconds: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:

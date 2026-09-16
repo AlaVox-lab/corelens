@@ -12,8 +12,8 @@
 -- Những lỗi đó nếu không chặn ở đây thì chỉ lộ ra khi một hồ sơ thật mắc kẹt
 -- giữa chừng. Tệp này làm cụm Docker DỪNG KHỞI ĐỘNG thay vì chạy với luồng hỏng.
 --
--- Tệp đánh số 99 để luôn chạy sau cùng. Engine ở #41 sẽ gọi lại đúng ba phép
--- kiểm tra này mỗi khi quản trị viên sửa bộ quy tắc lúc hệ thống đang chạy.
+-- Tệp đánh số 99 để luôn chạy sau cùng. Cùng bộ phép kiểm tra này nên được gọi lại
+-- mỗi khi quản trị viên sửa bộ quy tắc lúc hệ thống đang chạy.
 
 \set ON_ERROR_STOP on
 
@@ -88,6 +88,29 @@ BEGIN
                 bo.version, danh_sach;
         END IF;
 
+        -- Phép kiểm tra 4 — đồng hồ SLA không bao giờ chạy
+        -- Không trạng thái nào bật `sla_running` thì không hồ sơ nào quá hạn được,
+        -- và cơ chế tự leo thang trở thành mã chết mà không ai biết.
+        IF NOT EXISTS (
+            SELECT 1 FROM states s WHERE s.rule_set_id = bo.id AND s.sla_running
+        ) THEN
+            RAISE EXCEPTION
+                'Bộ quy tắc %: không trạng thái nào bật sla_running — đồng hồ SLA sẽ không bao giờ chạy và cơ chế leo thang thành vô hiệu',
+                bo.version;
+        END IF;
+
+        -- Phép kiểm tra 5 — trạng thái kết thúc mà vẫn chạy đồng hồ
+        -- Mâu thuẫn: hồ sơ đã đóng thì không còn gì để trễ, và đồng hồ sẽ chạy mãi.
+        SELECT string_agg(s.code, ', ' ORDER BY s.code) INTO danh_sach
+        FROM states s
+        WHERE s.rule_set_id = bo.id AND s.is_terminal AND s.sla_running;
+
+        IF danh_sach IS NOT NULL THEN
+            RAISE EXCEPTION
+                'Bộ quy tắc %: trạng thái kết thúc nhưng vẫn bật sla_running: %',
+                bo.version, danh_sach;
+        END IF;
+
         SELECT count(*) INTO so_trang_thai FROM states      WHERE rule_set_id = bo.id;
         SELECT count(*) INTO so_canh       FROM transitions WHERE rule_set_id = bo.id;
 
@@ -96,7 +119,7 @@ BEGIN
 
     END LOOP;
 
-    -- Phép kiểm tra 4 — loại yêu cầu không có phòng ban mặc định
+    -- Phép kiểm tra 6 — loại yêu cầu không có phòng ban mặc định
     -- Ràng buộc duy nhất từng phần đã bảo đảm KHÔNG QUÁ một phòng mặc định.
     -- Còn thiếu hẳn thì phải bắt ở đây, nếu không người phân loại mở hồ sơ ra
     -- sẽ không thấy gợi ý nào.

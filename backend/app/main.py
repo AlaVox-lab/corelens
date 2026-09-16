@@ -6,20 +6,77 @@
 # Điểm cuối nghiệp vụ thuộc #44. Tệp này hiện có kiểm tra sức khỏe và điểm cuối
 # danh tính — cổng người dùng gọi nó để biết mình đang đăng nhập bằng ai.
 
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import current_actor, current_claims
+from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
-from app.db import get_session
+from app.db import SessionLocal, get_session
 from app.workflow.context import Actor
+from app.workflow.escalation import quet_va_leo_thang
+
+logger = logging.getLogger(__name__)
+
+# Cấu hình nhật ký cho chính ứng dụng.
+#
+# Uvicorn chỉ cấu hình bộ ghi của riêng nó, nên nếu không có dòng này thì mọi thông
+# điệp của dịch vụ đều biến mất — kể cả `logger.exception` trong vòng quét SLA. Một
+# tác vụ nền chạy âm thầm và không báo được lỗi là thứ chỉ phát hiện ra khi đã muộn.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s [%(name)s] %(message)s",
+)
 
 settings = get_settings()
 
+def _quet_mot_lan() -> list[int]:
+    """Một lượt quét hồ sơ quá hạn, mở và đóng giao dịch của riêng nó."""
+    with SessionLocal() as phien:
+        da_leo_thang = quet_va_leo_thang(phien)
+        phien.commit()
+        return da_leo_thang
+
+
+async def _vong_quet_sla() -> None:
+    """Chạy bộ quét theo chu kỳ cho tới khi ứng dụng dừng.
+
+    Chạy trong luồng riêng bằng `to_thread` vì bộ quét dùng SQLAlchemy đồng bộ; gọi
+    thẳng trong vòng lặp sự kiện sẽ chặn mọi yêu cầu HTTP khác trong lúc quét.
+
+    Một lượt quét hỏng không được làm chết vòng lặp — ghi nhật ký rồi đợi lượt sau.
+    """
+    while True:
+        await asyncio.sleep(settings.sla_scan_interval_seconds)
+        try:
+            await asyncio.to_thread(_quet_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt quét SLA thất bại, sẽ thử lại ở lượt sau")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Bật bộ quét SLA lúc khởi động, tắt gọn lúc dừng."""
+    tac_vu = None
+    if settings.sla_scan_enabled:
+        tac_vu = asyncio.create_task(_vong_quet_sla())
+        logger.info(
+            "Bộ quét SLA chạy mỗi %d giây", settings.sla_scan_interval_seconds
+        )
+
+    yield
+
+    if tac_vu is not None:
+        tac_vu.cancel()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
     description=(
@@ -106,4 +163,25 @@ def me(
         "email": claims.get("email"),
         "roles": sorted(actor.roles),
         "departments": sorted(actor.departments),
+    }
+
+
+@app.post("/sla/scan", tags=["Vận hành"])
+def sla_scan(
+    actor: Annotated[Actor, Depends(require_roles("administrator"))],
+) -> dict:
+    """Chạy ngay một lượt quét hồ sơ quá hạn, không đợi chu kỳ.
+
+    Có hai lý do tồn tại: kiểm chứng cơ chế mà không phải ngồi chờ, và trình diễn
+    việc tự leo thang trước người xem.
+
+    Chỉ quản trị viên gọi được. Việc leo thang vẫn đi qua điểm chuyển trạng thái duy
+    nhất, nên người bấm nút không ghi đè được luật nào — nhật ký vẫn ghi tác nhân là
+    hệ thống, không phải người này.
+    """
+    da_leo_thang = _quet_mot_lan()
+    return {
+        "escalated_count": len(da_leo_thang),
+        "escalated_case_ids": da_leo_thang,
+        "triggered_by": actor.id,
     }

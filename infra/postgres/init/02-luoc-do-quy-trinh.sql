@@ -78,6 +78,7 @@ CREATE TABLE states (
     description    TEXT,
     is_initial     BOOLEAN   NOT NULL DEFAULT FALSE,
     is_terminal    BOOLEAN   NOT NULL DEFAULT FALSE,
+    sla_running    BOOLEAN   NOT NULL DEFAULT FALSE,
     display_order  SMALLINT  NOT NULL DEFAULT 0,
 
     PRIMARY KEY (rule_set_id, code),
@@ -94,6 +95,8 @@ COMMENT ON COLUMN states.is_initial IS
     'Điểm vào của luồng. Có cột này thì mã nguồn không phải viết if state = ''submitted''.';
 COMMENT ON COLUMN states.is_terminal IS
     'Trạng thái đóng. Không cạnh nào được phép rời khỏi đây — ràng buộc ở bảng transitions.';
+COMMENT ON COLUMN states.sla_running IS
+    'Đồng hồ SLA có chạy khi hồ sơ nằm ở trạng thái này không. Một cột này trả lời cả hai câu: đồng hồ bắt đầu từ đâu, và dừng ở đâu. Nhờ nó mà mã nguồn không phải viết if state = ''in-progress''.';
 
 -- Đúng một trạng thái bắt đầu cho mỗi bộ quy tắc. Nếu không có ràng buộc này,
 -- quản trị viên tùy biến sai sẽ tạo ra luồng có hai điểm vào hoặc không có
