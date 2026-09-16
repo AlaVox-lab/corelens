@@ -16,6 +16,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Identity,
     Index,
+    Integer,
     SmallInteger,
     Text,
     func,
@@ -75,6 +76,17 @@ class Request(Base):
     suggested_department_code: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_priority_code: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_assignee_id: Mapped[str | None] = mapped_column(Text, default=None)
+
+    # --- Đồng hồ SLA -------------------------------------------------------
+    # Ba cột thay cho một cột hạn chót cố định, vì đồng hồ có thể dừng rồi chạy lại
+    # nhiều lần. Trạng thái nào làm đồng hồ chạy do cột `states.sla_running` quyết
+    # định — xem app/rules/sla.py.
+    sla_running_seconds: Mapped[int] = mapped_column(Integer, default=0)
+    sla_paused_seconds: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Mốc bắt đầu của đoạn đang tính. NULL nghĩa là đồng hồ chưa từng khởi động,
+    # hoặc hồ sơ đã đóng.
+    sla_segment_since: Mapped[dt.datetime | None] = mapped_column(default=None)
 
     # --- Mốc thời gian, luôn UTC -------------------------------------------
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())

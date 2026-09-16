@@ -22,6 +22,7 @@ from app.events.log import record_event
 from app.models.case import EventLog, Request
 from app.models.workflow_config import RuleSet, State, Transition
 from app.rules.guards import run_guards
+from app.rules.sla import cap_nhat_dong_ho
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.errors import (
     CaseNotFound,
@@ -204,6 +205,13 @@ def perform_transition(
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------
     for truong, gia_tri in thay_doi.items():
         setattr(ho_so, truong, gia_tri)
+
+    # Chốt đoạn đồng hồ SLA đang mở rồi mở đoạn mới. Phải gọi TRƯỚC khi đổi
+    # `current_state`, vì hàm cần biết hồ sơ đang rời khỏi trạng thái nào.
+    # Kế toán thời gian là một phần của việc cập nhật hồ sơ, nên nó nằm trong bước 5
+    # chứ không thành bước thứ sáu — năm bước ở ARCHITECTURE.md mục 6.1 giữ nguyên.
+    cap_nhat_dong_ho(session, ho_so, canh)
+
     ho_so.current_state = canh.to_state
 
     session.flush()

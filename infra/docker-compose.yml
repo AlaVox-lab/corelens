@@ -149,6 +149,10 @@ services:
       DXLAB_OIDC_JWKS_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       DXLAB_OIDC_AUDIENCE: ${KEYCLOAK_API_CLIENT_ID}
       DXLAB_OIDC_DEPARTMENT_GROUP_PREFIX: ${KEYCLOAK_DEPARTMENT_GROUP_PREFIX}
+      # Bộ quét hồ sơ quá hạn. Hạ chu kỳ xuống vài giây khi cần trình diễn việc
+      # tự leo thang mà không phải ngồi chờ.
+      DXLAB_SLA_SCAN_ENABLED: ${SLA_SCAN_ENABLED}
+      DXLAB_SLA_SCAN_INTERVAL_SECONDS: ${SLA_SCAN_INTERVAL_SECONDS}
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:

@@ -47,37 +47,48 @@ INSERT INTO roles (code, label, description, display_order) VALUES
 -- ---------------------------------------------------------------------------
 -- Mười trạng thái
 -- ---------------------------------------------------------------------------
+-- Cột `sla_running` quyết định đồng hồ SLA chạy ở trạng thái nào. Chỉ hai trạng
+-- thái bật: `in-progress` và `escalated` — tức đồng hồ chỉ chạy khi phòng ban đang
+-- thực sự giữ việc.
+--
+-- Hệ quả có chủ đích: thời gian hồ sơ nằm ở `awaiting-info` KHÔNG tính vào SLA, vì
+-- người xử lý không nên bị phạt khi người tạo chậm trả lời. Nhưng tổng thời gian
+-- dừng vẫn được cộng dồn vào cột `requests.sla_paused_seconds`, để khai phá quy
+-- trình phát hiện ai lạm dụng cách hỏi thêm thông tin để dừng đồng hồ.
+--
+-- Muốn tính cả thời gian chờ bổ sung vào SLA thì bật `sla_running` cho
+-- `awaiting-info` — sửa một giá trị ở đây, không đụng dòng mã nào.
 
-INSERT INTO states (rule_set_id, code, label, description, is_initial, is_terminal, display_order) VALUES
+INSERT INTO states (rule_set_id, code, label, description, is_initial, is_terminal, sla_running, display_order) VALUES
     (1, 'submitted',              'Đã gửi',
-     'Người tạo vừa gửi, chờ phân loại',                              TRUE,  FALSE,  1),
+     'Người tạo vừa gửi, chờ phân loại',                              TRUE, FALSE, FALSE, 1),
 
     (1, 'classified',             'Đã phân loại',
-     'Đã xác định loại yêu cầu và phòng ban phụ trách',               FALSE, FALSE,  2),
+     'Đã xác định loại yêu cầu và phòng ban phụ trách',               FALSE, FALSE, FALSE, 2),
 
     (1, 'awaiting-acceptance',    'Chờ phòng ban xác duyệt',
-     'Đã chuyển về phòng, chờ họ nhận hoặc từ chối',                  FALSE, FALSE,  3),
+     'Đã chuyển về phòng, chờ họ nhận hoặc từ chối',                  FALSE, FALSE, FALSE, 3),
 
     (1, 'in-progress',            'Đang xử lý',
-     'Phòng ban đã nhận và giao người xử lý',                         FALSE, FALSE,  4),
+     'Phòng ban đã nhận và giao người xử lý',                         FALSE, FALSE, TRUE,  4),
 
     (1, 'completed',              'Hoàn tất',
-     'Người xử lý báo xong, chờ người tạo xác nhận',                  FALSE, FALSE,  5),
+     'Người xử lý báo xong, chờ người tạo xác nhận',                  FALSE, FALSE, FALSE, 5),
 
     (1, 'closed',                 'Đã đóng',
-     'Hồ sơ kết thúc',                                                FALSE, TRUE,   6),
+     'Hồ sơ kết thúc',                                                FALSE, TRUE,  FALSE, 6),
 
     (1, 'awaiting-info',          'Chờ bổ sung thông tin',
-     'Hỏi ngược người tạo, không phải trả về phòng ban',              FALSE, FALSE,  7),
+     'Hỏi ngược người tạo, không phải trả về phòng ban',              FALSE, FALSE, FALSE, 7),
 
     (1, 'rejected-by-department', 'Bị phòng ban từ chối',
-     'Sai chuyên môn, cần định tuyến lại',                            FALSE, FALSE,  8),
+     'Sai chuyên môn, cần định tuyến lại',                            FALSE, FALSE, FALSE, 8),
 
     (1, 'escalated',              'Đã leo thang',
-     'Quá hạn SLA, đẩy lên cấp trên trong cùng phòng ban',            FALSE, FALSE,  9),
+     'Quá hạn SLA, đẩy lên cấp trên trong cùng phòng ban',            FALSE, FALSE, TRUE,  9),
 
     (1, 'cancelled',              'Đã hủy',
-     'Người tạo rút yêu cầu',                                         FALSE, TRUE,  10);
+     'Người tạo rút yêu cầu',                                         FALSE, TRUE,  FALSE, 10);
 
 
 -- ---------------------------------------------------------------------------
