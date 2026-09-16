@@ -3,15 +3,19 @@
 #
 # Điểm vào của dịch vụ ứng dụng.
 #
-# Bộ khung, chưa có nghiệp vụ. Máy trạng thái thuộc #41, đăng nhập thuộc #43, cổng
-# gửi yêu cầu thuộc #44. Tệp này chỉ dựng ứng dụng và một điểm cuối kiểm tra sức khỏe.
+# Điểm cuối nghiệp vụ thuộc #44. Tệp này hiện có kiểm tra sức khỏe và điểm cuối
+# danh tính — cổng người dùng gọi nó để biết mình đang đăng nhập bằng ai.
+
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import current_actor, current_claims
 from app.config import get_settings
 from app.db import get_session
+from app.workflow.context import Actor
 
 settings = get_settings()
 
@@ -78,4 +82,28 @@ def root() -> dict:
         "version": settings.app_version,
         "docs": "/docs",
         "health": "/health",
+    }
+
+
+@app.get("/me", tags=["Định danh"])
+def me(
+    actor: Annotated[Actor, Depends(current_actor)],
+    claims: Annotated[dict, Depends(current_claims)],
+) -> dict:
+    """Danh tính của người đang gọi, dịch từ token sang ngôn ngữ của engine.
+
+    Cổng người dùng gọi điểm cuối này sau khi đăng nhập để biết hiển thị những gì.
+    Nó cũng là cách nhanh nhất để kiểm tra chuỗi định danh có thông không: gọi được
+    nghĩa là chữ ký, hạn dùng, nơi phát và người nhận đều đã qua.
+
+    Chỉ trả về những claim cần cho giao diện. Không trả nguyên token lẫn các claim
+    nội bộ của Keycloak — cổng không cần chúng, và lộ ra chỉ thêm bề mặt tấn công.
+    """
+    return {
+        "id": actor.id,
+        "username": claims.get("preferred_username"),
+        "name": claims.get("name"),
+        "email": claims.get("email"),
+        "roles": sorted(actor.roles),
+        "departments": sorted(actor.departments),
     }

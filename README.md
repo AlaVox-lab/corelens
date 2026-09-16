@@ -150,8 +150,26 @@ tạo lần đầu. Nếu bộ quy tắc sai — có ngõ cụt, có trạng th�
 không vai trò nào đi được — **cụm sẽ dừng khởi động** thay vì chạy với luồng hỏng.
 Xem `infra/seed/`.
 
-Realm `dx-os-lab` trong Keycloak tự nạp lúc khởi động, gồm **năm vai trò nghiệp vụ** và
-năm người dùng mẫu (mật khẩu `matkhau123`). Xem `infra/keycloak/realm-dx-os-lab.json`.
+### Đăng nhập thử
+
+Bấm **Đăng nhập bằng Keycloak** trên trang chủ. Realm `dx-os-lab` tự nạp lúc khởi động,
+gồm năm vai trò nghiệp vụ, bốn nhóm phòng ban và sáu tài khoản mẫu — tất cả dùng mật
+khẩu `matkhau123`:
+
+| Tài khoản | Vai trò | Phòng ban |
+|---|---|---|
+| `an.nguyen` | Người tạo yêu cầu | — |
+| `binh.tran` | Người phân loại | — |
+| `dung.pham` | Người xét duyệt | Công nghệ thông tin |
+| `cuong.le` | Người xử lý | Công nghệ thông tin |
+| `ha.do` | Người xử lý | Nhân sự |
+| `khanh.vo` | Quản trị viên | — |
+
+Hai người xử lý ở hai phòng khác nhau là cố ý: nó cho thấy ràng buộc *chỉ người thuộc
+phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại không cần phòng ban.
+
+Toàn bộ khai trong `infra/keycloak/realm-dx-os-lab.json` — thêm phòng ban hay đổi vai
+trò là sửa tệp đó rồi dựng lại cụm, không đụng mã nguồn.
 
 > **Cảnh báo bảo mật**: toàn bộ mật khẩu trong `.env.example` là giá trị mẫu công khai,
 > chỉ dùng cho môi trường phát triển. Bắt buộc thay trước khi triển khai thật. Tệp `.env`

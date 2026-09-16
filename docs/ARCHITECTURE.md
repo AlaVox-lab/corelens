@@ -30,7 +30,7 @@ chạy và đối chiếu với quy trình đã thiết kế, chỉ ra điểm n
 
 Đã cài đặt: hạ tầng sáu dịch vụ dựng bằng một lệnh, lược đồ cấu hình đầy đủ của
 engine máy trạng thái, **điểm chuyển trạng thái duy nhất** và **nhật ký sự kiện**.
-Chưa cài đặt: định danh tập trung, cổng người dùng, toàn bộ không gian `I`. Những
+Chưa cài đặt: cổng gửi yêu cầu, buồng lái vận hành, toàn bộ không gian `I`. Những
 mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
 
 **Ràng buộc quan trọng**: đề thi chính thức chỉ được công bố tháng 11/2026. Mọi thứ
@@ -114,9 +114,43 @@ leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết*
 Superset đảm nhiệm. Đây là kiến trúc lai, xem ADR-0003.
 
 Vai trò nghiệp vụ **không khai báo trong mã nguồn**. Keycloak nạp toàn bộ realm gồm
-vai trò, ứng dụng khách và người dùng từ một tệp JSON lúc khởi động, nên việc đổi bộ
-vai trò khi đề thi công bố chỉ là thay dữ liệu. Đây là một trường hợp cụ thể của khuôn
-mẫu ở mục 5.
+vai trò, ứng dụng khách, nhóm và người dùng từ một tệp JSON lúc khởi động, nên việc đổi
+bộ vai trò khi đề thi công bố chỉ là thay dữ liệu. Đây là một trường hợp cụ thể của
+khuôn mẫu ở mục 5.
+
+**Cách hai không gian nối vào nhau.** Keycloak là nguồn sự thật về *ai mang vai trò gì
+và thuộc phòng nào*; bảng `transitions` là nguồn sự thật về *vai trò nào đi được cạnh
+nào*. Hàm `actor_from_claims` ở `backend/app/auth/identity.py` là chỗ duy nhất dịch
+giữa hai ngôn ngữ đó. Nhờ vậy engine ở không gian `P` không biết Keycloak tồn tại, và
+đổi nền tảng định danh sẽ không đụng tới một dòng nào của engine.
+
+Phòng ban lấy từ **nhóm** chứ không từ thuộc tính người dùng: nhóm đúng ngữ nghĩa hơn,
+có sẵn giao diện quản lý trong Keycloak, và cho phép một người thuộc nhiều phòng. Token
+mang đường dẫn đầy đủ như `/phong-ban/it`; tiền tố là **cấu hình được**, vì doanh nghiệp
+triển khai có thể tổ chức cây nhóm theo cách khác.
+
+**Dịch vụ ứng dụng tự kiểm chữ ký token, không gọi ngược sang Keycloak ở mỗi yêu cầu.**
+Khóa công khai tải một lần qua JWKS rồi giữ trong bộ nhớ; Keycloak xoay khóa thì token
+mới mang `kid` lạ và thư viện tự đi lấy lại. Keycloak vì thế nằm ngoài đường đi nóng —
+nó chậm hay khởi động lại cũng không làm cả hệ thống đứng.
+
+**Một Keycloak, hai địa chỉ — và đây là chỗ dễ mất thời gian nhất.** Trình duyệt đi qua
+`localhost:8080`, còn container đi qua `keycloak:8080`. Nếu không cố định `KC_HOSTNAME`,
+token lấy theo hai đường sẽ mang hai giá trị `iss` khác nhau và dịch vụ từ chối một nửa
+số token. Cấu hình đang dùng: `KC_HOSTNAME` cố định địa chỉ công khai, còn
+`KC_HOSTNAME_BACKCHANNEL_DYNAMIC` cho phép tài liệu discovery trả địa chỉ nội bộ cho
+các điểm cuối máy chủ gọi. Keycloak tự tách đúng hai chiều — `authorization_endpoint`
+và `end_session_endpoint` ra địa chỉ công khai cho trình duyệt, `token_endpoint` và
+`jwks_uri` ra địa chỉ nội bộ cho máy chủ.
+
+Cùng một gốc vấn đề ở phía cổng: trong container, máy chủ Next.js nghe ở `0.0.0.0`, nên
+mọi chuyển hướng dựng từ địa chỉ yêu cầu sẽ trỏ về `http://0.0.0.0:3000` và trình duyệt
+đi tới đó sẽ lạc. Địa chỉ công khai của cổng vì vậy phải khai riêng bằng biến môi trường,
+không được suy ra.
+
+**Token không bao giờ tới trình duyệt.** Cổng giữ chúng trong một cookie `httpOnly` đã
+mã hóa và tự gắn vào header khi gọi dịch vụ — khuôn mẫu cổng chặn trước. Mã lạ lọt vào
+trang cũng không đọc được token, khác hẳn với việc để token trong `localStorage`.
 
 **Không gian `P` không dùng nền tảng ngoài.** Engine máy trạng thái do nhóm tự viết, với
 trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Quyết định này được đưa ra sau khi
