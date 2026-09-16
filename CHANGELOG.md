@@ -5,6 +5,21 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.3.0] - 2026-09-16
+
+### Tài liệu
+
+- **state:** Cập nhật trạng thái sau khi khép Giai đoạn 1 ([#58](https://github.com/AlaVox-lab/dx-os-lab/issues/58)) ([9bec81a](https://github.com/AlaVox-lab/dx-os-lab/commit/9bec81a5786a7a542e6b01f10a56d7915ead9625))
+- **state:** Cập nhật trạng thái sau tuần 6 ([#70](https://github.com/AlaVox-lab/dx-os-lab/issues/70)) ([e85ab4d](https://github.com/AlaVox-lab/dx-os-lab/commit/e85ab4dd914ba8fa5665a79d8afd83f4883ff8f5))
+
+### Tính năng mới
+
+- **p-workflow:** Thêm bảng dữ liệu cho engine máy trạng thái ([#60](https://github.com/AlaVox-lab/dx-os-lab/issues/60)) ([9185c1c](https://github.com/AlaVox-lab/dx-os-lab/commit/9185c1cb1243847c87d52814bd741628441569b5))
+- **infra:** Dựng bộ khung dịch vụ ứng dụng và cổng người dùng ([#63](https://github.com/AlaVox-lab/dx-os-lab/issues/63)) ([c3631d0](https://github.com/AlaVox-lab/dx-os-lab/commit/c3631d0d80ec9f6ddf83908ddc14be1bb538907e))
+- **p-workflow:** Dựng điểm chuyển trạng thái duy nhất và nhật ký sự kiện ([#64](https://github.com/AlaVox-lab/dx-os-lab/issues/64)) ([d617775](https://github.com/AlaVox-lab/dx-os-lab/commit/d6177752c7651b67db9011e622216e9f24afc04a))
+- **h-auth:** Tích hợp Keycloak vào dịch vụ ứng dụng và cổng ([#66](https://github.com/AlaVox-lab/dx-os-lab/issues/66)) ([29fadff](https://github.com/AlaVox-lab/dx-os-lab/commit/29fadffc396326db8da420e674d6caf165f04595))
+- **p-rules:** Thêm đồng hồ SLA và cơ chế tự leo thang ([#68](https://github.com/AlaVox-lab/dx-os-lab/issues/68)) ([68fed86](https://github.com/AlaVox-lab/dx-os-lab/commit/68fed8698d19530e8a8de454a97aabfd484ada1f))
+
 ## [0.2.0] - 2026-09-12
 
 ### Công việc phụ trợ
