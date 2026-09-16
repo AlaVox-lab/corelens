@@ -171,6 +171,24 @@ phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại kh
 Toàn bộ khai trong `infra/keycloak/realm-dx-os-lab.json` — thêm phòng ban hay đổi vai
 trò là sửa tệp đó rồi dựng lại cụm, không đụng mã nguồn.
 
+### Theo dõi SLA
+
+Dịch vụ ứng dụng chạy một bộ quét nền, mặc định mỗi 60 giây, tìm hồ sơ vượt ngưỡng SLA
+rồi **tự leo thang** chúng. Ngưỡng khai theo từng loại yêu cầu trong
+`infra/seed/02-co-cau-to-chuc.sql`; trạng thái nào làm đồng hồ chạy khai ở cột
+`sla_running` trong `infra/seed/01-quy-tac-quy-trinh.sql`.
+
+Muốn xem cơ chế hoạt động mà không phải chờ, hạ chu kỳ quét trong `.env`:
+
+```bash
+SLA_SCAN_INTERVAL_SECONDS=5
+```
+
+Quản trị viên cũng chạy được một lượt quét ngay bằng `POST /sla/scan`.
+
+Thời gian hồ sơ nằm ở *Chờ bổ sung thông tin* **không** tính vào SLA — người xử lý
+không bị phạt khi người tạo chậm trả lời — nhưng tổng thời gian dừng vẫn được ghi lại.
+
 > **Cảnh báo bảo mật**: toàn bộ mật khẩu trong `.env.example` là giá trị mẫu công khai,
 > chỉ dùng cho môi trường phát triển. Bắt buộc thay trước khi triển khai thật. Tệp `.env`
 > thật không bao giờ được commit lên kho mã.

@@ -64,6 +64,11 @@ class State(Base):
     description: Mapped[str | None] = mapped_column(Text, default=None)
     is_initial: Mapped[bool] = mapped_column(Boolean, default=False)
     is_terminal: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Đồng hồ SLA có chạy khi hồ sơ nằm ở trạng thái này không. Một cột này trả lời
+    # cả hai câu: đồng hồ bắt đầu từ đâu, và dừng ở đâu.
+    sla_running: Mapped[bool] = mapped_column(Boolean, default=False)
+
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
 
