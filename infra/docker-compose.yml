@@ -62,6 +62,13 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HEALTH_ENABLED: "true"
+      # Cố định địa chỉ công khai của Keycloak. Không có dòng này, token lấy qua
+      # trình duyệt mang iss=localhost còn token lấy từ trong mạng Compose mang
+      # iss=keycloak, và dịch vụ ứng dụng sẽ từ chối một nửa số token.
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT}
+      # Nhưng tài liệu discovery phải trả về địa chỉ container cho các điểm cuối
+      # nội bộ, để cổng người dùng gọi được token endpoint từ trong mạng Compose.
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       # Giới hạn bộ nhớ JVM — Keycloak là dịch vụ nặng nhất trong cụm
       JAVA_OPTS_APPEND: "-Xms256m -Xmx${KEYCLOAK_MAX_HEAP}"
     volumes:
@@ -136,6 +143,12 @@ services:
       # hai trình điều khiển khác nhau, đừng chép nhầm chuỗi của nhau.
       DXLAB_DATABASE_URI: postgresql+psycopg://${DXLAB_DB_USER}:${DXLAB_DB_PASSWORD}@postgres:5432/${DXLAB_DB_NAME}
       DXLAB_APP_VERSION: ${DXLAB_VERSION}
+      # Hai địa chỉ cho cùng một Keycloak, cố ý khác nhau — xem app/config.py.
+      # Đối chiếu iss bằng địa chỉ công khai, đi lấy khóa bằng địa chỉ nội bộ.
+      DXLAB_OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT}/realms/${KEYCLOAK_REALM}
+      DXLAB_OIDC_JWKS_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+      DXLAB_OIDC_AUDIENCE: ${KEYCLOAK_API_CLIENT_ID}
+      DXLAB_OIDC_DEPARTMENT_GROUP_PREFIX: ${KEYCLOAK_DEPARTMENT_GROUP_PREFIX}
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:
@@ -155,6 +168,18 @@ services:
       # Gọi nội bộ trong mạng của Compose, không đi vòng ra cổng công bố. Trình
       # duyệt của người dùng không bao giờ thấy địa chỉ này.
       BACKEND_INTERNAL_URL: http://backend:8000
+      # Trình duyệt đi qua địa chỉ công khai, máy chủ Next.js đi qua địa chỉ nội bộ
+      OIDC_ISSUER_PUBLIC: http://localhost:${KEYCLOAK_PORT}/realms/${KEYCLOAK_REALM}
+      OIDC_ISSUER_INTERNAL: http://keycloak:8080/realms/${KEYCLOAK_REALM}
+      OIDC_CLIENT_ID: ${KEYCLOAK_PORTAL_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${KEYCLOAK_PORTAL_SECRET}
+      OIDC_REDIRECT_URI: http://localhost:${FRONTEND_PORT}/api/auth/callback
+      OIDC_POST_LOGOUT_REDIRECT_URI: http://localhost:${FRONTEND_PORT}
+      # Địa chỉ gốc mà trình duyệt nhìn thấy. Không suy ra từ yêu cầu được: trong
+      # container, máy chủ Next.js nghe ở 0.0.0.0 nên mọi chuyển hướng tương đối
+      # sẽ trỏ về http://0.0.0.0:3000 và trình duyệt đi tới đó sẽ lạc.
+      PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
+      PORTAL_SESSION_SECRET: ${PORTAL_SESSION_SECRET}
     ports:
       - "${FRONTEND_PORT}:3000"
     depends_on:

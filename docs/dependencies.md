@@ -104,10 +104,14 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | react | `19.3.0` | MIT | Có | Có | |
 | react-dom | `19.3.0` | MIT | Có | Có | |
 | typescript | `5.9.3` | Apache-2.0 | Có | Có | Giữ ở nhánh 5.x. Bản 7 là bản viết lại bằng Go, mới ra và chưa rõ Next 16 đã theo kịp — chưa đáng mạo hiểm |
+| openid-client | `6.8.8` | MIT | Có | Có | Luồng mã ủy quyền OIDC. **Bản cài đặt được OpenID Foundation chứng nhận** — chọn nó thay vì `next-auth` vì bản v5 của `next-auth` còn beta, và vì giao thức thì nên lắp ghép thư viện chuẩn |
+| jose | `6.2.12` | MIT | Có | Có | Mã hóa cookie phiên. Cũng là phụ thuộc của `openid-client` |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
 
-Toàn bộ cây phụ thuộc có **61 gói**. Đã rà giấy phép từng gói bằng siêu dữ liệu trong
-tệp khóa, không dựa vào trí nhớ: 24 MIT, 17 Apache-2.0, 14 gói `sharp`/`libvips` mang
+Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`.
+
+Toàn bộ cây phụ thuộc có **63 gói**. Đã rà giấy phép từng gói bằng siêu dữ liệu trong
+tệp khóa, không dựa vào trí nhớ: 27 MIT, 17 Apache-2.0, 14 gói `sharp`/`libvips` mang
 LGPL, 2 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
 Lưu ý về giấy phép copyleft.
 
@@ -126,8 +130,12 @@ phiên bản, bắt buộc commit.**
 | alembic | `1.20.0` | MIT | Có | Có | Migration. Được cấu hình **bỏ qua mười một bảng** do lược đồ khởi tạo sở hữu — xem `backend/alembic/env.py` |
 | psycopg[binary] | `3.3.5` | **LGPL-3.0-only** | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Phụ thuộc copyleft duy nhất trong mã nguồn của nhóm — ranh giới ghi ở mục Lưu ý về giấy phép copyleft |
 | pydantic-settings | `2.15.0` | MIT | Có | Có | Đọc cấu hình từ biến môi trường |
+| pyjwt[crypto] | `2.14.0` | MIT | Có | Có | Kiểm chữ ký token OIDC **cục bộ**. Keycloak không nằm trên đường đi nóng — xem ADR-0001 |
+| cryptography | `50.0.1` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause).
+
+Chỉ dùng khi phát triển: `pytest` (MIT).
 
 ---
 

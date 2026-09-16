@@ -35,11 +35,43 @@
       "name": "Cổng người dùng (Next.js)",
       "enabled": true,
       "protocol": "openid-connect",
-      "publicClient": true,
+      "publicClient": false,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"]
+      "redirectUris": [
+        "http://localhost:3000/api/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "true",
+            "claim.name": "groups",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-dx-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dx-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
     },
     {
       "clientId": "dx-api",
@@ -61,9 +93,17 @@
       "firstName": "An",
       "lastName": "Nguyễn",
       "email": "an.nguyen@dx-os-lab.test",
-      "attributes": { "department": ["ke-toan"] },
-      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
-      "realmRoles": ["requester"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "requester"
+      ],
+      "groups": []
     },
     {
       "username": "binh.tran",
@@ -72,9 +112,17 @@
       "firstName": "Bình",
       "lastName": "Trần",
       "email": "binh.tran@dx-os-lab.test",
-      "attributes": { "department": ["hanh-chinh"] },
-      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
-      "realmRoles": ["classifier"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "classifier"
+      ],
+      "groups": []
     },
     {
       "username": "cuong.le",
@@ -83,9 +131,19 @@
       "firstName": "Cường",
       "lastName": "Lê",
       "email": "cuong.le@dx-os-lab.test",
-      "attributes": { "department": ["cong-nghe-thong-tin"] },
-      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
-      "realmRoles": ["handler"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "handler"
+      ],
+      "groups": [
+        "/phong-ban/it"
+      ]
     },
     {
       "username": "dung.pham",
@@ -94,9 +152,19 @@
       "firstName": "Dung",
       "lastName": "Phạm",
       "email": "dung.pham@dx-os-lab.test",
-      "attributes": { "department": ["cong-nghe-thong-tin"] },
-      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
-      "realmRoles": ["approver"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "approver"
+      ],
+      "groups": [
+        "/phong-ban/it"
+      ]
     },
     {
       "username": "khanh.vo",
@@ -105,9 +173,82 @@
       "firstName": "Khánh",
       "lastName": "Võ",
       "email": "khanh.vo@dx-os-lab.test",
-      "attributes": { "department": ["cong-nghe-thong-tin"] },
-      "credentials": [{ "type": "password", "value": "matkhau123", "temporary": false }],
-      "realmRoles": ["administrator"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "administrator"
+      ],
+      "groups": []
+    },
+    {
+      "username": "ha.do",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Hà",
+      "lastName": "Đỗ",
+      "email": "ha.do@dx-os-lab.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "handler"
+      ],
+      "groups": [
+        "/phong-ban/hr"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "phong-ban",
+      "path": "/phong-ban",
+      "subGroups": [
+        {
+          "name": "it",
+          "path": "/phong-ban/it",
+          "attributes": {
+            "label": [
+              "Công nghệ thông tin"
+            ]
+          }
+        },
+        {
+          "name": "hr",
+          "path": "/phong-ban/hr",
+          "attributes": {
+            "label": [
+              "Nhân sự"
+            ]
+          }
+        },
+        {
+          "name": "admin-office",
+          "path": "/phong-ban/admin-office",
+          "attributes": {
+            "label": [
+              "Hành chính"
+            ]
+          }
+        },
+        {
+          "name": "finance",
+          "path": "/phong-ban/finance",
+          "attributes": {
+            "label": [
+              "Tài chính kế toán"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
