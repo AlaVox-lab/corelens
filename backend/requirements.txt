@@ -16,3 +16,9 @@ sqlalchemy==2.0.53
 alembic==1.20.0
 psycopg[binary]==3.3.5
 pydantic-settings==2.15.0
+
+# --- Chỉ dùng khi phát triển và kiểm thử ------------------------------------
+# Vẫn ghim phiên bản như mọi gói khác: kiểm thử chạy khác nhau giữa các máy thì
+# vô nghĩa. Bộ kiểm thử cần một PostgreSQL thật vì lược đồ dùng chỉ mục duy nhất
+# từng phần và kiểu TIMESTAMPTZ — SQLite không thay thế được.
+pytest==9.1.1
