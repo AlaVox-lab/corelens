@@ -17,6 +17,10 @@ alembic==1.20.0
 psycopg[binary]==3.3.5
 pydantic-settings==2.15.0
 
+# Kiểm chữ ký token OIDC cục bộ. Kèm phần `crypto` để đọc được khóa RSA từ JWKS.
+# Dịch vụ ứng dụng KHÔNG gọi ngược sang Keycloak ở mỗi yêu cầu — xem ADR-0001.
+pyjwt[crypto]==2.14.0
+
 # --- Chỉ dùng khi phát triển và kiểm thử ------------------------------------
 # Vẫn ghim phiên bản như mọi gói khác: kiểm thử chạy khác nhau giữa các máy thì
 # vô nghĩa. Bộ kiểm thử cần một PostgreSQL thật vì lược đồ dùng chỉ mục duy nhất
