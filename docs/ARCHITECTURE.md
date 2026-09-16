@@ -26,10 +26,12 @@ xác nhận nhân sự, đề xuất mua vật tư).
 nhật ký sự kiện có cấu trúc; từ đó hệ thống tự khai phá lại quy trình thực tế đang
 chạy và đối chiếu với quy trình đã thiết kế, chỉ ra điểm nghẽn và nhánh lệch chuẩn.
 
-**Giai đoạn hiện tại**: `v0.1.0` — mới có bộ khung kho mã và tài liệu chuẩn.
-**Chưa có mã nguồn ứng dụng.** Các mục 4 đến 9 dưới đây mô tả thiết kế đã thống
-nhất nhưng **chưa được cài đặt**; chúng sẽ chuyển thành mô tả hiện trạng khi mã
-nguồn tương ứng xuất hiện.
+**Giai đoạn hiện tại**: `v0.2.0` — Giai đoạn 2, không gian `H` và `P`.
+
+Đã cài đặt: hạ tầng sáu dịch vụ dựng bằng một lệnh, lược đồ cấu hình đầy đủ của
+engine máy trạng thái, **điểm chuyển trạng thái duy nhất** và **nhật ký sự kiện**.
+Chưa cài đặt: định danh tập trung, cổng người dùng, toàn bộ không gian `I`. Những
+mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
 
 **Ràng buộc quan trọng**: đề thi chính thức chỉ được công bố tháng 11/2026. Mọi thứ
 xây dựng trước thời điểm đó là **bộ khung tái sử dụng**, không phải sản phẩm cuối.
@@ -165,6 +167,24 @@ dx-os-lab/
 │   │   ├── feature_request.md
 │   │   └── research.md
 │   └── pull_request_template.md
+├── backend/                     # FastAPI — dịch vụ ứng dụng
+│   ├── app/
+│   │   ├── main.py              # điểm vào, điểm cuối kiểm tra sức khỏe
+│   │   ├── config.py            # cấu hình từ biến môi trường
+│   │   ├── db.py                # kết nối dùng chung
+│   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
+│   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
+│   │   ├── rules/               # [P] ràng buộc Poka-yoke kiểm tra lúc chạy
+│   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
+│   │   ├── auth/                # [H] chưa cài đặt, xem #43
+│   │   ├── analytics/           # [D] chưa cài đặt
+│   │   └── intelligence/        # [I] chưa cài đặt
+│   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
+│   ├── tests/
+│   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
+├── frontend/                    # Next.js — cổng người dùng
+│   ├── app/                     # hiện là bộ khung, xem #44 và #45
+│   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── docs/
 │   ├── adr/                     # năm bản ghi quyết định kiến trúc
 │   ├── ARCHITECTURE.md          # tệp này
@@ -200,7 +220,8 @@ dx-os-lab/
 
 ### 4.2. Cấu trúc dự kiến khi có mã nguồn
 
-Chưa cài đặt. Ghi ở đây để thống nhất trước, tránh mỗi người đặt một kiểu.
+Cấu trúc đầy đủ khi các không gian còn lại được xây xong. Phần đã tồn tại xem mục 4.1;
+phần dưới đây ghi trước để tránh mỗi người đặt một kiểu.
 
 ```
 dx-os-lab/
@@ -321,7 +342,8 @@ giờ phải viết.
 
 ## 6. Khuôn mẫu: nhật ký sự kiện
 
-Chưa cài đặt. Thiết kế đã thống nhất:
+**Đã cài đặt** — bảng `event_log`, mô hình ở `backend/app/models/case.py`, nơi ghi
+duy nhất ở `backend/app/events/log.py`.
 
 Mọi lần chuyển trạng thái trong không gian `P` **bắt buộc** phát sinh một bản ghi
 vào nhật ký sự kiện, với cấu trúc tối thiểu:
@@ -338,7 +360,27 @@ Nhật ký này là tài sản quý nhất của hệ thống: nó nuôi bảng 
 thuật toán khai phá quy trình ở `I`.
 
 **Lưu ý về múi giờ**: lưu UTC là bắt buộc. Lưu giờ cục bộ sẽ làm sai lệch kết quả
-khai phá quy trình khi so sánh giữa các bản ghi.
+khai phá quy trình khi so sánh giữa các bản ghi. Cột dùng kiểu `TIMESTAMPTZ` và mốc
+thời gian do PostgreSQL tự điền bằng `now()` — một đồng hồ duy nhất cho cả cụm, thay
+vì mỗi tiến trình một đồng hồ lệch nhau vài giây.
+
+Ba quyết định cài đặt đáng ghi lại:
+
+**Nhật ký chỉ ghi thêm.** Một trigger PL/pgSQL chặn mọi `UPDATE` và `DELETE` trên
+`event_log`. Ràng buộc đặt ở tầng cơ sở dữ liệu chứ không ở tầng ứng dụng, vì
+Superset, công cụ quản trị và mọi kết nối `psql` đều đi vòng qua tầng ứng dụng. Lịch
+sử sửa được thì không còn là lịch sử.
+
+**Tạo hồ sơ không sinh sự kiện.** Tạo hồ sơ không phải một lần *chuyển* trạng thái —
+không có trạng thái nào trước nó, và không có cạnh nào trong bảng `transitions` đi
+vào trạng thái đầu. Mốc bắt đầu của hồ sơ là cột `requests.created_at`. Khi xuất dữ
+liệu cho khai phá quy trình, tầng `D` dựng thêm một sự kiện mở đầu từ cột đó nếu công
+cụ phân tích cần. Cách này tránh phải bịa một mã hoạt động không có trong dữ liệu.
+
+**Thêm cột `note`** ngoài sáu trường bắt buộc, chứa lý do của những cạnh mang cờ
+`requires_note` — từ chối vì sai chuyên môn, đóng hồ sơ khi không phòng nào nhận, mở
+lại vì chưa đạt. Lý do thuộc về *lần chuyển*, không thuộc về hồ sơ: mỗi lần từ chối
+có lý do riêng của nó.
 
 ### 6.1. Cơ chế bảo đảm: một cửa duy nhất
 
@@ -352,6 +394,25 @@ Poka-yoke, ghi nhật ký, rồi mới cập nhật trạng thái hồ sơ.
 Không tồn tại đường nào khác để đổi trạng thái. Bất kỳ chỗ nào cập nhật trạng thái trực
 tiếp đều là vi phạm khuôn mẫu, kể cả khi nó "chỉ sửa một trường".
 
+**Đã cài đặt** — `backend/app/workflow/engine.py`, hàm `perform_transition`. Cách soát
+lại khuôn mẫu này khi review:
+
+```bash
+grep -rn 'current_state\s*=' backend/app --include='*.py' | grep -v '=='
+```
+
+Kết quả chỉ được có hai dòng, cả hai trong `engine.py`: một ở `create_case` đặt trạng
+thái đầu, một ở `perform_transition` đặt trạng thái đích. Dòng thứ ba ở bất kỳ tệp nào
+khác là một lần chuyển không có bản ghi nhật ký.
+
+Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
+
+- **Khóa dòng hồ sơ** bằng `SELECT ... FOR UPDATE` ngay đầu hàm. Không có nó, hai yêu
+  cầu đồng thời cùng đọc trạng thái cũ rồi cùng ghi nhật ký
+- **Danh sách trắng các trường được đặt.** Một lần chuyển chỉ đặt được bốn trường quyết
+  định; `current_state` và mọi trường `suggested_*` đều nằm ngoài. Nhờ vậy không ai
+  dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
+
 Quyết định tự viết engine máy trạng thái thay vì lắp ghép nền tảng có sẵn xuất phát chính
 từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md).
 
@@ -359,8 +420,29 @@ từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.m
 
 ## 7. Khuôn mẫu: ràng buộc Poka-yoke
 
-Chưa cài đặt. Nguyên tắc: chặn thao tác sai **tại điểm chạm đầu vào**, thay vì phát
-hiện sau khi dữ liệu đã hỏng.
+**Đã cài đặt** — `backend/app/rules/guards.py`. Nguyên tắc: chặn thao tác sai **tại
+điểm chạm đầu vào**, thay vì phát hiện sau khi dữ liệu đã hỏng.
+
+Ràng buộc chia hai loại, và loại thứ nhất mạnh hơn hẳn:
+
+**Loại cấu trúc — thực thi bằng sự VẮNG MẶT.** Không cần dòng mã nào canh cửa, vì
+không có cửa. *"Đã nhận là không trả về"* đơn giản là bảng `transitions` không có
+dòng nào đi từ `in-progress` ngược về phía trước. *"Chỉ hủy trước khi vào xử lý"*
+là cạnh hủy chỉ xuất phát từ bốn trạng thái đầu. Không phải *không nên đi*, mà là
+**không có đường mà đi**.
+
+**Loại kiểm tra lúc chạy — khai trong bảng, cài trong mã.** Bảng `guards` khai mã
+ràng buộc, bảng `transition_guards` nối mã với từng cạnh, `guards.py` cài hàm tương
+ứng. Nhờ tách như vậy, gắn thêm một ràng buộc đã có cho một cạnh khác chỉ là thêm một
+dòng dữ liệu; chỉ khi cần một *loại* ràng buộc mới mới phải viết mã.
+
+Điểm quan trọng: mã ràng buộc có trong bảng mà thiếu hàm cài đặt sẽ làm engine **từ
+chối chuyển trạng thái**, không im lặng bỏ qua. Im lặng cho qua sẽ biến một ràng buộc
+nghiệp vụ thành vô hiệu mà không ai biết.
+
+Còn một cách diễn đạt thứ ba, đặt ở tầng thấp nhất: **khóa ngoại và chỉ mục duy nhất
+từng phần** trong lược đồ — xem mục 5.2. Mỗi tầng bắt một loại sai khác nhau, và tầng
+càng thấp thì càng khó lách.
 
 Ví dụ dự kiến:
 

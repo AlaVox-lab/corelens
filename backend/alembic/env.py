@@ -17,6 +17,10 @@ from sqlalchemy import engine_from_config, pool
 from app.config import get_settings
 from app.db import Base
 
+# Nhập để mọi mô hình tự đăng ký vào Base.metadata. Thiếu dòng này thì autogenerate
+# nhìn thấy metadata rỗng và sinh ra migration xóa sạch bảng.
+import app.models  # noqa: F401  (nhập vì tác dụng phụ, không dùng trực tiếp)
+
 config = context.config
 
 if config.config_file_name is not None:
