@@ -153,7 +153,127 @@ Cần ghi rõ rằng đây **không phải cách triển khai ở quy mô sản 
 
 ---
 
-## 6. Ngân sách bộ nhớ toàn hệ thống
+## 6. Giới hạn kích thước tệp tải lên
+
+Giảng viên hướng dẫn hỏi đích danh con số này (#39). Nó quyết định ràng buộc Poka-yoke
+ở phía giao diện và cấu hình phía máy chủ khi làm chức năng đính kèm, nên phải biết
+trước khi viết dòng mã nào.
+
+Đo bằng thực nghiệm trên đúng cấu hình dự kiến dùng thật, không đọc tài liệu rồi suy.
+
+### 6.1. Số liệu đo được
+
+Ba đường tải lên được thử riêng vì chúng đi qua mã nguồn khác nhau trong SeaweedFS.
+
+| Kích thước | PUT đơn lẻ | Chia khối | Presigned URL |
+|---|---|---|---|
+| 1 MB | 0,3 s | — | — |
+| 8 MB | 0,1 s | — | — |
+| 32 MB | 0,2 s | 0,4 s | 0,1 s |
+| 64 MB | 0,3 s | — | — |
+| 128 MB | 0,6 s | — | — |
+| 256 MB | 1,1 s | 1,1 s | 0,8 s |
+| 512 MB | 2,5 s | — | — |
+| 768 MB | 3,5 s | — | — |
+| 1 GB | 4,4 s | 2,8 s | 3,3 s |
+| 2 GB | 9,2 s | — | — |
+| 4 GB | 18,7 s | — | — |
+
+**Không gặp ngưỡng lỗi nào.** Phép thử dừng ở 4 GB vì đã đủ kết luận, không phải vì
+hỏng.
+
+> **Cảnh báo về số liệu tốc độ**: các con số trên đo qua giao diện loopback trên cùng
+> một máy, tương đương khoảng 220 MB/s. Chúng **không** đại diện cho tốc độ qua mạng
+> thật. Đừng dùng chúng để hứa hẹn thời gian tải lên với người dùng.
+
+### 6.2. Tham số `volumeSizeLimitMB` KHÔNG giới hạn kích thước tệp
+
+Đây là hiểu nhầm dễ mắc nhất, và tên tham số góp phần gây ra nó.
+
+Dự án đang đặt `-master.volumeSizeLimitMB=512`, nhưng tệp 4 GB vẫn tải lên thành công.
+Kiểm chứng ngược lại bằng một thực thể thứ hai đặt giới hạn xuống **16 MB**: tệp 256 MB
+vẫn lên bình thường.
+
+Hai tham số thật sự, đọc từ `weed server -h`:
+
+| Tham số | Mặc định | Mô tả gốc | Thực sự làm gì |
+|---|---|---|---|
+| `-filer.maxMB` | 4 | *split files larger than the limit* | Kích thước mỗi **khối**. Tệp lớn hơn bị cắt nhỏ |
+| `-master.volumeSizeLimitMB` | 30720 | *Master stops directing writes to oversized volumes* | Độ lớn tối đa mỗi **tệp volume trên đĩa**, không liên quan tệp người dùng |
+
+Bằng chứng số học: tệp 4 GB được chia thành **1024 khối**, tệp 256 MB trên thực thể
+giới hạn 16 MB được chia thành **64 khối**. Cả hai đều ra đúng 4 MB mỗi khối — tức
+kích thước khối do `filer.maxMB` quyết định, và `volumeSizeLimitMB` không chạm vào.
+
+Lưu ý phụ: giá trị `512` của dự án nhỏ hơn mặc định 60 lần, nên SeaweedFS tạo nhiều
+tệp volume hơn. Ở quy mô trình diễn thì vô hại — chín GB dữ liệu thử sinh ra 35 volume.
+
+### 6.3. Presigned URL ràng buộc được kích thước, nếu ký đúng cách
+
+Phát hiện quan trọng nhất cho thiết kế Poka-yoke ở #44.
+
+| Cách ký URL | Gửi đúng cỡ đã khai | Gửi lớn hơn |
+|---|---|---|
+| Ký **kèm** `ContentLength` | chấp nhận | **bị chặn** |
+| Ký **không kèm** `ContentLength` | — | chấp nhận, bao nhiêu cũng được |
+
+Vì sao: chữ ký bao cả header `Content-Length`, nên gửi kích thước khác làm chữ ký không
+khớp và máy chủ ngừng đọc.
+
+**Hệ quả cho kiến trúc**: vì presigned URL tải **thẳng** lên kho lưu trữ, dịch vụ ứng
+dụng không nằm trên đường dữ liệu và không thể chặn giữa chừng. Nếu cấp một URL không
+ràng buộc kích thước thì người dùng tải lên bao nhiêu cũng được, và dịch vụ chỉ phát
+hiện sau khi mọi thứ đã nằm trên đĩa.
+
+Cách làm đúng: **luôn ký presigned URL kèm `ContentLength` bằng đúng kích thước tệp mà
+trình duyệt khai báo**. Khi đó giới hạn được thực thi ở tầng thấp nhất, không phải bằng
+lời khuyên.
+
+Lưu ý về trải nghiệm: khi bị chặn, kết nối treo rồi hết giờ chứ không trả về mã lỗi
+sạch sẽ. Giao diện phải tự kiểm kích thước **trước** khi xin URL, để người dùng nhận
+thông báo rõ ràng thay vì một thanh tiến trình đứng im.
+
+### 6.4. Danh tính ứng dụng không tạo được thùng chứa
+
+`infra/seaweedfs/s3-config.json` cấp cho `dxlab-app` bốn quyền `Read, Write, List,
+Tagging` — **không có `Admin`**. Hệ quả: ứng dụng liệt kê được thùng chứa nhưng
+`create_bucket` trả về `AccessDenied`.
+
+Đây là cấu hình **đúng** về mặt an toàn: ứng dụng không cần quyền tạo thùng chứa. Nhưng
+nó có nghĩa là **thùng chứa phải được tạo sẵn**, và hiện chưa có bước nào làm việc đó.
+
+Việc cần làm trước khi hiện thực đính kèm: thêm một bước khởi tạo thùng chứa vào
+`infra/`, tương tự cách `postgres/init/` tạo database. Lệnh dùng trong lúc đo:
+
+```bash
+docker exec -i dxlab-seaweedfs sh -c 'echo "s3.bucket.create -name <tên>" | weed shell'
+```
+
+### 6.5. Giới hạn đề xuất cho ứng dụng
+
+SeaweedFS không đặt trần nào đáng kể, nên **giới hạn phải do ứng dụng quyết định**.
+
+| | Giá trị | Lý do |
+|---|---|---|
+| Giới hạn kỹ thuật | không có trần thực tế | Đo tới 4 GB vẫn chạy |
+| **Giới hạn ứng dụng đề xuất** | **25 MB mỗi tệp** | Đủ rộng cho ảnh chụp màn hình, tệp PDF báo giá, nhật ký lỗi — tức toàn bộ loại đính kèm mà một cổng yêu cầu nội bộ cần |
+
+Hai mươi lăm megabyte là mức quen thuộc với người dùng vì trùng giới hạn của nhiều dịch
+vụ thư điện tử phổ biến, nên không phải giải thích.
+
+Con số này **phải nằm trong cấu hình, không mã cứng** — cùng nguyên tắc với ngưỡng SLA
+và danh mục trạng thái. Doanh nghiệp triển khai có hạ tầng khác sẽ muốn con số khác.
+
+Thực thi ở **cả ba tầng**, theo đúng khuôn mẫu Poka-yoke của dự án:
+
+1. **Giao diện** kiểm trước khi xin URL, để báo lỗi rõ ràng
+2. **Dịch vụ ứng dụng** từ chối cấp presigned URL cho kích thước vượt ngưỡng
+3. **Chữ ký URL** kèm `ContentLength`, nên ngay cả khi hai tầng trên bị lách thì kho
+   lưu trữ vẫn chặn
+
+---
+
+## 7. Ngân sách bộ nhớ toàn hệ thống
 
 Theo dõi tích lũy qua từng quyết định Open-Core, vì bảng chấm PoF mục 4 đòi `docker compose
 up` chạy được trên máy sạch vào ngày chấm:
@@ -169,7 +289,7 @@ thông minh đang khảo sát ở issue #21.
 
 ---
 
-## 7. Kết luận
+## 8. Kết luận
 
 SeaweedFS được chọn làm phương án chính. Garage là bản lùi mặc định, MinIO là bản lùi có
 điều kiện. Lập luận đầy đủ và điều kiện kích hoạt của từng phương án được ghi trong
@@ -177,9 +297,17 @@ SeaweedFS được chọn làm phương án chính. Garage là bản lùi mặc 
 
 ---
 
-## 8. Việc cần rà soát lại trước khi nộp bài
+## 9. Việc cần rà soát lại trước khi nộp bài
 
 - [ ] Kiểm tra lại giấy phép SeaweedFS vẫn là Apache-2.0
 - [ ] Kiểm tra phiên bản `4.45` còn được hỗ trợ, cân nhắc nâng cấp nếu có bản vá bảo mật
 - [ ] Xác nhận cấu hình sản phẩm đã tắt `-telemetry`
 - [ ] Xác nhận mã nguồn không dùng bất kỳ API riêng nào của SeaweedFS, chỉ dùng S3 chuẩn
+
+Phát sinh từ phần đo giới hạn ở mục 6, cần làm **trước** khi hiện thực đính kèm:
+
+- [ ] Thêm bước tạo sẵn thùng chứa vào `infra/` — danh tính ứng dụng không có quyền
+      `Admin` nên không tự tạo được, xem mục 6.4
+- [ ] Đưa giới hạn kích thước tệp vào cấu hình, không mã cứng, xem mục 6.5
+- [ ] Ký presigned URL **kèm `ContentLength`** để kho lưu trữ tự chặn tệp quá cỡ,
+      xem mục 6.3

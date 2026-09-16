@@ -209,10 +209,16 @@ Vi phạm bất kỳ điểm nào ở trên biến hai phương án dự phòng 
 
 - [x] Cập nhật `docs/ARCHITECTURE.md` mục 3 *(đã làm trong cùng công việc này)*
 - [x] Cập nhật `docs/dependencies.md` *(đã làm trong cùng công việc này)*
-- [ ] Bổ sung SeaweedFS vào `infra/docker-compose.yml` khi dựng hạ tầng thật, kèm
-      `-master.telemetry=false`
+- [x] Bổ sung SeaweedFS vào `infra/docker-compose.yml` khi dựng hạ tầng thật, kèm
+      `-master.telemetry=false` *(đã làm ở #38)*
 - [ ] Chốt quy ước đặt tên khóa đối tượng và ghi vào `ARCHITECTURE.md`
-- [ ] Chốt giới hạn kích thước tệp và danh sách loại tệp được phép — thuộc lớp Poka-yoke
+- [x] Chốt giới hạn kích thước tệp — **25 MB mỗi tệp**, đặt trong cấu hình chứ không
+      mã cứng. Đo thực nghiệm ở #39 cho thấy SeaweedFS không có trần đáng kể, nên giới
+      hạn phải do ứng dụng quyết định. Lập luận đầy đủ ở
+      [`object-storage-survey.md`](../object-storage-survey.md) mục 6.5
+- [ ] Chốt danh sách loại tệp được phép — thuộc lớp Poka-yoke, chưa làm
+- [ ] Tạo sẵn thùng chứa trong `infra/` — danh tính ứng dụng không có quyền `Admin`
+      nên không tự tạo được, phát hiện ở #39
 - [ ] Đưa `boto3` vào tệp khai báo phụ thuộc của dịch vụ ứng dụng kèm ghim phiên bản
 
 ---
