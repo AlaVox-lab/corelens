@@ -14,18 +14,25 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-12 |
-| Phiên bản hiện tại | **`v0.2.0`** — đã phát hành 12/09 |
-| Giai đoạn | **Giai đoạn 1 hoàn tất.** Đang bước vào Giai đoạn 2 — Không gian `H` và `P` |
-| Mốc công việc đang chạy | Tuần 5 — Chốt kiến trúc và dựng hạ tầng, hạn 13/09 |
+| Cập nhật lần cuối | 2026-09-16 |
+| Phiên bản hiện tại | `v0.2.0` — bản phát hành kế tiếp **chưa cắt**, `main` đã đi trước thẻ 5 commit nội dung |
+| Giai đoạn | **Giai đoạn 2 đang chạy** — không gian `H` và `P` đã thông đầu-cuối |
+| Mốc công việc đang chạy | Tuần 6 — Engine máy trạng thái và tích hợp định danh, hạn 20/09 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có hạ tầng, chưa có tầng ứng dụng.** `infra/` dựng được 4 dịch vụ; `frontend/` và `backend/` chưa tồn tại |
-| Issue đang mở | **10** (#39–#48), trong đó 2 thuộc mốc Tuần 5 |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js đều chạy; cụm gồm **sáu dịch vụ** |
+| Issue đang mở | **6** — #39, #44, #45, #46, #47, #48 |
 | Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
 | Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48) |
-| Tổng bộ nhớ toàn cụm | **1,17 GB**, đo thật trên cụm bốn dịch vụ |
-| Số ngày còn lại tới chấm kho mã | **86 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **50 ngày** (tháng 11/2026) |
+| Bộ kiểm thử tự động | **51 bài**, chạy trên PostgreSQL thật |
+| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo thật trên cụm sáu dịch vụ |
+| Số ngày còn lại tới chấm kho mã | **82 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **46 ngày** (tháng 11/2026) |
+
+**Một câu tóm tắt trạng thái**: đăng nhập bằng Keycloak → token mang vai trò và phòng
+ban → engine tra bảng quy tắc và chạy ràng buộc Poka-yoke → ghi nhật ký sự kiện → bộ
+quét nền tự leo thang khi quá hạn. Toàn bộ vòng đó chạy được trên máy sạch bằng một
+lệnh. Thứ còn thiếu là **giao diện cho người dùng thật** — hiện mới có trang báo trạng
+thái, chưa có màn hình gửi yêu cầu.
 
 ---
 
@@ -100,8 +107,8 @@ Tuần đầu tiên có kết quả kỹ thuật đo được thay vì chỉ tà
 **Một khảo sát hoàn thành nhưng chưa ra quyết định**
 
 - [x] `P` — khảo sát nền tảng tự động hóa luồng công việc (#20). Đã dựng thử bốn ứng
-      viên, tài liệu `docs/workflow-engine-survey.md` đã lên `main`. **Chưa chốt** —
-      xem mục Đang làm
+      viên, tài liệu `docs/workflow-engine-survey.md` đã lên `main`. Chưa chốt ở thời
+      điểm đó — quyết định tự viết engine đưa ra ở tuần 5, xem ADR-0004
 
 **Kết quả phụ ngoài dự kiến**
 
@@ -201,20 +208,81 @@ bằng `git-cliff` — cách chạy trên máy này xem mục Ghi chú kỹ thu�
 
 ---
 
+### Tuần 6 — Những dòng mã nghiệp vụ đầu tiên
+
+Tuần đầu tiên kho mã có **mã nguồn ứng dụng chạy được**, không chỉ tài liệu và hạ tầng.
+Năm issue khép lại trong hai ngày, và cuối tuần `main` có một vòng nghiệp vụ hoàn chỉnh.
+
+**Lược đồ cấu hình của engine** (#40). Mười một bảng trong
+`infra/postgres/init/02-luoc-do-quy-trinh.sql`, dữ liệu khởi tạo tách riêng sang
+`infra/seed/` vì đó là phần doanh nghiệp triển khai sẽ sửa. Ba lớp bảo vệ, không lớp
+nào nằm trong mã ứng dụng: khóa ngoại, chỉ mục duy nhất từng phần, và một lớp kiểm tra
+mức đồ thị làm cụm Docker **dừng khởi động** nếu bộ quy tắc hỏng.
+
+Mẹo đáng nhớ nhất: cột kỹ thuật `transitions.from_is_terminal` luôn bằng `FALSE` và
+tham chiếu tới `states (rule_set_id, code, is_terminal)`, nên **không thể tạo cạnh rời
+khỏi một trạng thái đã đóng**. Dữ liệu khởi tạo không bao giờ nhắc tới cột này.
+
+**Bộ khung ứng dụng** (#62 — issue mở bổ sung giữa tuần). Đường tới hạn cũ bỏ sót mắt
+xích này vì #40 là dữ liệu thuần SQL nên không cần tầng ứng dụng; mãi tới dòng Python
+đầu tiên vấn đề mới lộ ra. `backend/` FastAPI, `frontend/` Next.js, cụm thành sáu dịch
+vụ, và hai tệp khóa phiên bản đi vào kho mã.
+
+**Điểm chuyển trạng thái duy nhất** (#41). Trái tim của đề tài. Năm bước theo đúng thứ
+tự `ARCHITECTURE.md` mục 6.1, khóa dòng hồ sơ bằng `SELECT FOR UPDATE`, danh sách trắng
+bốn trường quyết định được phép đặt. Nhật ký sự kiện **chỉ ghi thêm** — một trigger
+PL/pgSQL chặn mọi `UPDATE` và `DELETE`, đặt ở tầng cơ sở dữ liệu vì Superset và mọi
+kết nối `psql` đều đi vòng qua tầng ứng dụng.
+
+**Tích hợp định danh** (#43). Phòng ban lấy từ **nhóm** Keycloak thay vì thuộc tính
+người dùng. Hàm `actor_from_claims` là chỗ duy nhất dịch giữa ngôn ngữ của Keycloak và
+ngôn ngữ của engine, nên engine không biết Keycloak tồn tại. Token không bao giờ tới
+trình duyệt: cổng giữ chúng trong cookie `httpOnly` đã mã hóa.
+
+**Đồng hồ SLA và tự leo thang** (#42). Ba cột thay cho một mốc hạn chót tính sẵn, vì
+đồng hồ dừng rồi chạy lại nhiều lần trong đời một hồ sơ. Leo thang **đi qua điểm chuyển
+trạng thái duy nhất**, không đi tắt — đi tắt thì nhật ký sẽ thiếu đúng những bản ghi
+thú vị nhất, các lần trễ hạn.
+
+**Bộ kiểm thử 51 bài**, chạy trên PostgreSQL thật vì lược đồ dùng chỉ mục duy nhất từng
+phần, khóa ngoại tổng hợp, `TIMESTAMPTZ` và trigger PL/pgSQL — SQLite không thay được,
+mà chính những thứ đó mới là cái cần kiểm. Chất lượng bộ kiểm thử được đo bằng **phép
+thử đột biến**: gỡ bước chạy ràng buộc làm đổ đúng sáu bài Poka-yoke, gỡ bước ghi nhật
+ký làm đổ đúng tám bài, gỡ phần kế toán đồng hồ làm đổ đúng ba bài.
+
+**Issue đã đóng**: #40, #41, #42, #43, #62
+
+---
+
 ## Đang làm
 
-Chưa có công việc nào đang dở, và **không còn gì chờ ý kiến giảng viên**.
-
-Milestone *Tuần 5*, hạn 13/09, còn hai issue:
+Không có công việc nào đang dở. Milestone *Tuần 6*, hạn 20/09, còn sáu issue:
 
 | Issue | Ưu tiên | Việc | Ghi chú |
 |---|---|---|---|
-| **#40** | **P1** | Bảng dữ liệu cho engine máy trạng thái | Đã mở khóa — `process-flow.md` mục 2 và 3 là dữ liệu khởi tạo sẵn |
+| **#44** | **P1** | Cổng gửi yêu cầu và tra cứu trạng thái | **Đã mở khóa.** Cần thiết kế giao diện trước khi viết mã |
+| #45 | P2 | Buồng lái vận hành | Chặn bởi #44, cũng cần thiết kế |
 | #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS | Đã giao `@NguyentimAnh`, việc đầu tiên của bạn ấy |
+| #46 | P2 | Khảo sát quản trị tri thức cho `H` | Độc lập với mã nguồn — giao được cho `@Senning-Dd` |
+| #47 | P3 | Khảo sát véc-tơ và khung LLM cho `I` | |
+| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
 
-Hai điểm suy luận trong `process-flow.md` mục 8 **chưa được giảng viên xác nhận**, cần
-đính chính nếu sai: cạnh `classified → closed` khi không phòng nào nhận, và cạnh
-`completed → in-progress` khi người tạo mở lại.
+**Sáu issue trong bốn ngày còn lại là quá tay.** Ba khảo sát cuối mỗi cái tương đương
+một tuần việc — nhìn lại #19, #20, #21 thì rõ: liệt kê ba ứng viên, kiểm giấy phép bên
+trong ảnh chứa phát hành, dựng thử bằng Docker, đo tài nguyên, viết tài liệu và một ADR.
+Làm vội cả ba sẽ cho ra tài liệu hời hợt, mà đây đúng là loại tài liệu ăn điểm.
+
+Giảng viên cũng đã chốt: ba khảo sát này **làm sớm để biết ràng buộc, chưa tích hợp**
+cho tới khi luồng chính ổn định. Không có gì gấp.
+
+**Hai điểm suy luận trong `process-flow.md` mục 8 vẫn chưa được giảng viên xác nhận**:
+cạnh `classified → closed` khi không phòng nào nhận, và cạnh `completed → in-progress`
+khi người tạo mở lại. Cả hai đã đi vào dữ liệu khởi tạo và đánh dấu `[CHỜ XÁC NHẬN]` —
+thầy bác thì xóa một dòng dữ liệu, không đụng mã.
+
+**Một quyết định nghiệp vụ mới cần thầy xác nhận**: thời gian hồ sơ nằm ở
+`awaiting-info` **không tính** vào SLA, nhưng tổng thời gian dừng vẫn được ghi riêng.
+Cũng là một cờ trong dữ liệu — xem `states.sla_running`.
 
 ---
 
@@ -223,36 +291,41 @@ Hai điểm suy luận trong `process-flow.md` mục 8 **chưa được giảng 
 Toàn bộ việc kỹ thuật đã có issue, xếp theo đường tới hạn. Chi tiết từng giai đoạn xem
 `ROADMAP.md`.
 
-### Đường tới hạn — luồng nghiệp vụ chạy hoàn chỉnh
+### Đường tới hạn — chỉ còn một mắt xích
 
 Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồi mới mở rộng.
 
 ```
-#37 ──► #40 ──► #41 ──► #43 ──► #44 ──► #45
-        ▲
-#38 ────┘   (song song, nhưng #43 trở đi cần #38 xong)
+#37 ─► #40 ─► #41 ─┬─► #42        (xong)
+#38 ─► #62 ────────┴─► #43        (xong)
+                       │
+                       └─► #44 ─► #45   (còn lại)
 ```
+
+Toàn bộ phần dưới bề mặt đã xong. Thứ còn thiếu là **giao diện cho người dùng thật**.
 
 | Issue | Ưu tiên | Việc | Chặn bởi |
 |---|---|---|---|
-| #40 | P1 | Bảng dữ liệu cho engine máy trạng thái | **đã mở khóa** |
-| #41 | P1 | Điểm chuyển trạng thái duy nhất và sinh nhật ký sự kiện | #40 |
-| #43 | P1 | Tích hợp Keycloak vào dịch vụ ứng dụng và cổng | **đã mở khóa** |
-| #44 | P1 | Cổng gửi yêu cầu và tra cứu trạng thái | #41, #43 |
+| #44 | P1 | Cổng gửi yêu cầu và tra cứu trạng thái | **đã mở khóa** |
 | #45 | P2 | Buồng lái vận hành | #44 |
-| #42 | P2 | Theo dõi SLA và tự leo thang | #41 |
 
-Hai issue chặn đường (#37 và #38) **đã xong**, nên #40 và #43 khởi động được ngay và làm
-song song được.
+`allowed_transitions()` trong `backend/app/workflow/engine.py` đã dựng sẵn cho hai issue
+này: nó trả về đúng những cạnh mà người đang đăng nhập đi được từ trạng thái hiện tại
+của hồ sơ, để giao diện chỉ hiện những nút bấm hợp lệ. Nhưng đó mới là **nửa đầu** của
+Poka-yoke — engine vẫn kiểm lại khi yêu cầu thật gửi lên, vì chặn ở giao diện thôi thì
+không đủ.
+
+**#44 và #45 cần thiết kế giao diện trước khi viết mã.** Đây là hai màn hình người dùng
+thật đầu tiên, và cũng là thứ ban giám khảo nhìn vào khi chấm mục *thân thiện người dùng*.
 
 ### Không chặn ai, làm khi có khoảng trống
 
-| Issue | Ưu tiên | Việc |
-|---|---|---|
-| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS — giảng viên yêu cầu |
-| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` |
-| #47 | P3 | Khảo sát cơ sở dữ liệu véc-tơ và khung LLM cho `I` |
-| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` |
+| Issue | Ưu tiên | Việc | Giao được cho |
+|---|---|---|---|
+| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS | `@NguyentimAnh` — đã giao |
+| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd` — độc lập hoàn toàn với mã nguồn |
+| #47 | P3 | Khảo sát cơ sở dữ liệu véc-tơ và khung LLM cho `I` | |
+| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
 
 ### Việc vận hành, không cần issue
 
@@ -263,14 +336,19 @@ song song được.
 2. Thiết kế giao diện cho #44 và #45 trước khi viết mã. Bảng điều khiển phân tích **không
    cần thiết kế** vì Superset tự mang giao diện
 3. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-4. Cân nhắc gán milestone cho tám issue đang để trống (#41–#48) khi xếp lịch tuần 6
+4. **Cắt bản phát hành `v0.3.0`.** `main` đã đi trước thẻ `v0.2.0` năm commit nội dung,
+   trong đó có ba tính năng lớn. Đợt này tăng MINOR vì toàn `feat`
+5. Gửi `TRO-LY-THANH-VIEN.md` cho `@NguyentimAnh` và `@Senning-Dd` — bộ luật đã cập
+   nhật ngày 16/09, có thêm mục 2.7 hướng dẫn dựng hệ thống
 
 ### Chờ điều kiện
 
-5. Tích hợp liên tục — cần có cấu trúc thư mục mã nguồn trước
-6. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
+6. Tích hợp liên tục — giờ đã có cấu trúc thư mục mã nguồn và 51 bài kiểm thử, nên
+   điều kiện đã đủ. Một quy trình chạy `pytest` và `next build` trên mỗi pull request
+   sẽ bắt được hồi quy trước khi nó vào `dev`
+7. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
    có hiệu lực, và **bật lại được `delete_branch_on_merge`** một cách an toàn
-7. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
+8. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
    hình máy tối thiểu** — giảng viên nhắc trước để nhóm không quên
 
 ---
@@ -282,8 +360,10 @@ song song được.
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | **Hai điểm suy luận trong sơ đồ luồng chưa được giảng viên xác nhận** | Nếu sai thì bảng `transitions` ở #40 phải sửa theo | Xem `process-flow.md` mục 8: cạnh `classified → closed` và cạnh `completed → in-progress`. Hỏi ở buổi trao đổi tới |
-| Tám issue chưa gắn mốc công việc (#41–#48) | Khó theo dõi tiến độ theo tuần | Gán milestone khi xếp lịch tuần 6 |
-| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm: 1,17 GB** — thấp hơn ước tính 1,29 GB nhờ dùng một thực thể PostgreSQL thay vì ba. Không gian `P` tự viết nên không cộng thêm. Đo lại sau mỗi quyết định mới |
+| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
+| **Chưa có tích hợp liên tục** | 51 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
+| **Quyết định SLA chưa được giảng viên xác nhận** | Nếu thầy muốn tính cả thời gian chờ bổ sung vào SLA thì số liệu hiện có sẽ lệch | Hiện đặt **không tính**, nhưng ghi riêng tổng thời gian dừng. Đổi ý chỉ là bật cờ `states.sla_running` trong dữ liệu khởi tạo |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/` hoặc `infra/seed/` đổi, cả nhóm phải `docker compose down -v` rồi dựng lại. Ghi trong mô tả pull request mỗi khi chạm hai thư mục đó |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
@@ -313,6 +393,15 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Mọi lần đổi trạng thái đi qua **một cửa duy nhất** | Điều kiện bảo đảm nhật ký sự kiện không thủng — `ARCHITECTURE.md` mục 6.1 |
 | Kiến trúc lai cho tầng trình bày | Buồng lái vận hành **tự viết** trong cổng; bảng điều khiển phân tích **lắp ghép** bằng Superset — ADR-0003 |
 | Định danh vai trò và trạng thái viết bằng tiếng Anh | Nhãn hiển thị và tên hoạt động trong nhật ký viết tiếng Việt — theo `ARCHITECTURE.md` mục 8.3 |
+| Lược đồ và dữ liệu khởi tạo **để tách nhau** | Lược đồ ở `infra/postgres/init/` vì thuộc kiến trúc; dữ liệu ở `infra/seed/` vì là phần doanh nghiệp triển khai sẽ sửa |
+| Nhật ký sự kiện **chỉ ghi thêm**, chặn bằng trigger ở tầng cơ sở dữ liệu | Superset và mọi kết nối `psql` đều đi vòng qua tầng ứng dụng, nên ràng buộc phải đặt dưới cùng. Lịch sử sửa được thì không còn là lịch sử |
+| **Tạo hồ sơ không sinh sự kiện** | Không phải một lần *chuyển* trạng thái, và ghi sự kiện ở đó buộc phải bịa một mã hoạt động không có trong bảng quy tắc. Mốc bắt đầu là cột `created_at` |
+| Phòng ban lấy từ **nhóm** Keycloak, không từ thuộc tính người dùng | Đúng ngữ nghĩa, có sẵn giao diện quản lý, cho phép một người thuộc nhiều phòng. Tiền tố đường dẫn nhóm là cấu hình được |
+| Dịch vụ **tự kiểm chữ ký token cục bộ** qua JWKS | Keycloak nằm ngoài đường đi nóng — ADR-0001 |
+| Token **không bao giờ tới trình duyệt** | Cổng giữ trong cookie `httpOnly` đã mã hóa, tự gắn vào header khi gọi dịch vụ. Khuôn mẫu cổng chặn trước |
+| `openid-client` thay vì `next-auth` | Bản cài đặt được OpenID Foundation chứng nhận, MIT, chạy phía máy chủ; `next-auth` v5 còn beta |
+| Thời gian ở `awaiting-info` **không tính** vào SLA, nhưng ghi riêng tổng thời gian dừng | Người xử lý không bị phạt khi người tạo chậm; tổng thời gian dừng để khai phá quy trình phát hiện lạm dụng. **Chờ giảng viên xác nhận** |
+| Trạng thái nào chạy đồng hồ SLA là **dữ liệu**, không phải mã | Cột `states.sla_running` trả lời cả hai câu: đồng hồ bắt đầu từ đâu và dừng ở đâu |
 
 ---
 
@@ -461,7 +550,7 @@ Bật lại được **sau khi kho chuyển công khai**, vì lúc đó quy tắ
 lực và tùy chọn *Allow deletions: Tắt* sẽ chặn được. Hiện kho còn riêng tư trên gói miễn
 phí nên quy tắc bảo vệ chưa áp dụng.
 
-**Biến thể thứ ba của lỗi mã hóa tiếng Việt trên Windows**
+**Năm biến thể của lỗi mã hóa tiếng Việt trên Windows**
 
 Cùng một gốc vấn đề nhưng lộ ra ở ba chỗ khác nhau, lần nào cũng mất thời gian truy:
 
@@ -470,6 +559,8 @@ Cùng một gốc vấn đề nhưng lộ ra ở ba chỗ khác nhau, lần nào
 | Tiếng Việt qua **tham số** dòng lệnh | `git commit -m "..."` làm hỏng dấu |
 | Tiếng Việt ở **đầu ra** stdout | `python -c "print(...)"` báo `UnicodeEncodeError` |
 | Tiếng Việt ở **đầu ra lệnh ngoài đọc ngược vào PowerShell** | Kịch bản tạo issue tra cứu milestone theo tiêu đề, `gh api ... \| Out-String` trả về chuỗi hỏng dấu nên tra không khớp, milestone bị bỏ qua âm thầm |
+| Tiếng Việt trong **tệp `.ini`** | `alembic.ini` và `pytest.ini` được đọc qua `configparser` với mã hóa cục bộ của hệ điều hành. Trên Windows là cp1252, nên một chữ có dấu làm mọi lệnh `alembic` chết ngay lúc khởi động. Trong container thì không lộ ra vì Linux dùng UTF-8 — lỗi chỉ đánh vào máy thành viên |
+| Tiếng Việt trong **commit message qua Bash heredoc** | Vỡ dấu. Luôn ghi nội dung vào tệp UTF-8 rồi để công cụ đọc tệp |
 
 **Nguyên tắc chung**: đừng để tiếng Việt đi qua ranh giới tiến trình. Ghi vào tệp UTF-8
 rồi để công cụ đọc tệp — `git commit -F`, `gh api --input`, `--body-file`. Khi buộc phải
@@ -479,8 +570,77 @@ rồi để công cụ đọc tệp — `git commit -F`, `gh api --input`, `--bo
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 ```
 
-Trong cả ba lần, tham chiếu tới đối tượng bằng **số** thay vì tên tiếng Việt luôn an toàn
-hơn — ví dụ gán milestone bằng `-F milestone=4` thay vì bằng tiêu đề.
+Tham chiếu tới đối tượng bằng **số** thay vì tên tiếng Việt luôn an toàn hơn — ví dụ gán
+milestone bằng `-F milestone=4` thay vì bằng tiêu đề. Với tệp `.ini` thì không có cách
+nào cứu: viết chú thích bằng tiếng Anh và để phần giải thích sang tệp `.py` bên cạnh.
+
+**Git xóa mọi dòng commit message mở đầu bằng `#`**
+
+Git coi chúng là chú thích. Dự án tham chiếu issue liên tục nên rất dễ dính: một dòng
+thân commit xuống hàng đúng chỗ số issue là mất nguyên dòng đó, để lại một câu cụt.
+
+Đã xảy ra ở commit của #62 ngày 15/09. Cách tránh: soạn lại câu sao cho không dòng nào
+mở đầu bằng `#`, ví dụ `issue #43, #44 và #45...`. Dấu `#` giữa dòng vô hại, nên
+`Closes #62` ở footer không sao. Sau khi commit, soát bằng `git log -1 --format='%b'`.
+
+**Chữ `Merge` ở đầu tiêu đề: sai ở một chặng, đúng ở chặng kia**
+
+Hai chặng hợp nhất đòi hai thứ ngược nhau, và đây là chỗ dễ lẫn nhất trong cả quy trình:
+
+| Chặng | Cách merge | Tiêu đề đúng |
+|---|---|---|
+| nhánh công việc → `dev` | Squash and merge | `<loại>(<phạm vi>): <mô tả> (#số PR)` — thấy chữ `Merge` là **sai** |
+| `dev` → `main` | Create a merge commit | `Merge pull request #N from ...` — chữ `Merge` là **đúng** |
+
+`cliff.toml` có luật `{ message = "^Merge", skip = true }`, nên commit hợp nhất ở chặng
+hai bị bỏ qua đúng như mong muốn, còn commit squash ở chặng một mang chữ đó sẽ **biến
+mất khỏi nhật ký thay đổi**.
+
+**Cách nhận ra chọn nhầm cách merge**: cấu hình kho đặt `merge_commit_title: MERGE_MESSAGE`
+và `squash_merge_commit_title: COMMIT_OR_PR_TITLE`. Nên ở chặng `dev → main`, nếu ô
+Commit message hiện tiêu đề dạng `feat(...): ... (#68) (#69)` thay vì `Merge pull request`,
+đó là đang chọn **Squash** chứ không phải merge commit — bấm Cancel và đổi lại. Nhãn nút
+"Confirm merge" không phân biệt được. Đã suýt sai ở PR #69 ngày 16/09.
+
+**Một Keycloak, hai địa chỉ**
+
+Trình duyệt đi qua `localhost:8080`, container đi qua `keycloak:8080`. Không cố định
+`KC_HOSTNAME` thì token lấy theo hai đường mang hai giá trị `iss` khác nhau, và dịch vụ
+từ chối một nửa số token tùy đường đi.
+
+Cấu hình đang dùng: `KC_HOSTNAME` cố định địa chỉ công khai, `KC_HOSTNAME_BACKCHANNEL_DYNAMIC`
+cho phép tài liệu discovery trả địa chỉ nội bộ. Keycloak tự tách đúng hai chiều —
+`authorization_endpoint` và `end_session_endpoint` ra địa chỉ công khai cho trình duyệt,
+`token_endpoint` và `jwks_uri` ra địa chỉ nội bộ cho máy chủ. Không phải viết dòng nào
+để đổi URL.
+
+Hệ quả kèm theo: `openid-client` kiểm rằng `issuer` đọc được phải khớp URL đã gọi, nên
+hàm `discovery()` sẽ báo lỗi với cặp địa chỉ lệch nhau này. Phải tự tải tài liệu rồi
+dựng `Configuration` thẳng từ siêu dữ liệu — xem `frontend/lib/oidc.ts`.
+
+**Trong container, `request.url` trỏ về `0.0.0.0`**
+
+Máy chủ Next.js nghe ở `0.0.0.0:3000`, nên `new URL("/", request.url)` cho ra
+`http://0.0.0.0:3000/` và trình duyệt đi tới đó sẽ lạc. Địa chỉ công khai của cổng phải
+khai riêng bằng `PORTAL_PUBLIC_URL`, không được suy ra. Cùng một gốc vấn đề với chuyện
+`KC_HOSTNAME` ở trên.
+
+**Bộ đếm milestone của GitHub tính cả pull request**
+
+Milestone Tuần 6 báo *10 đã đóng* trong khi chỉ có 5 issue. Năm cái còn lại là các pull
+request mang nhãn mốc. Không phải lỗi, nhưng đừng đọc con số đó thành tiến độ — lọc bằng
+`is:issue is:closed milestone:"..."` mới ra số thật.
+
+**Đo chất lượng bộ kiểm thử bằng phép thử đột biến**
+
+Bộ kiểm thử xanh không chứng minh nó có răng. Cách kiểm: cố tình gỡ một bước trong mã
+rồi xem có đúng những bài liên quan đổ không.
+
+Đã áp dụng ba lần trong tuần 6 — gỡ bước chạy ràng buộc làm đổ đúng sáu bài Poka-yoke,
+gỡ bước ghi nhật ký làm đổ đúng tám bài, gỡ phần kế toán đồng hồ làm đổ đúng ba bài.
+Lần thứ ba phát hiện một bài **đậu giả**: nó khẳng định đồng hồ đã dừng, mà khi gỡ kế
+toán thì đồng hồ vốn chưa bao giờ chạy. Đã siết lại bằng cách khẳng định trạng thái
+*trước* đã, rồi mới khẳng định trạng thái *sau*.
 
 ---
 
