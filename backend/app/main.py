@@ -20,6 +20,7 @@ from app.config import get_settings
 from app.db import SessionLocal, get_session
 from app.workflow.context import Actor
 from app.workflow.escalation import quet_va_leo_thang
+from app.workflow.routes import router as router_yeu_cau
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,9 @@ app = FastAPI(
         "dữ liệu, không mã cứng trong mã nguồn."
     ),
 )
+
+
+app.include_router(router_yeu_cau)
 
 
 @app.get("/health", tags=["Vận hành"])

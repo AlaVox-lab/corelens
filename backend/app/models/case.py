@@ -52,8 +52,16 @@ class Request(Base):
     requester_id: Mapped[str] = mapped_column(Text)
 
     # --- Trường QUYẾT ĐỊNH: chỉ con người ghi ------------------------------
-    # Rỗng cho tới khi người có thẩm quyền đi cạnh tương ứng. Người phân loại đặt
-    # loại yêu cầu, mức ưu tiên và phòng ban; người xét duyệt đặt người xử lý.
+    # Người gửi đặt loại yêu cầu ngay lúc tạo hồ sơ — họ là người biết rõ nhất mình
+    # đang cần gì, và người phân loại vẫn sửa lại được ở cạnh `submitted -> classified`
+    # nếu chọn sai. Ba trường còn lại rỗng cho tới khi người có thẩm quyền đi cạnh
+    # tương ứng: người phân loại đặt mức ưu tiên và phòng ban, người xét duyệt đặt
+    # người xử lý.
+    #
+    # Vì sao loại yêu cầu mở cho người gửi mà mức ưu tiên thì không: chọn sai loại chỉ
+    # làm hồ sơ đi chậm một nhịp và người phân loại nắn lại ngay, còn ai cũng đánh dấu
+    # yêu cầu của mình là khẩn thì thứ tự ưu tiên mất hết ý nghĩa. Đây là ràng buộc
+    # Poka-yoke *người gửi không tự đặt mức ưu tiên*.
     request_type_code: Mapped[str | None] = mapped_column(
         Text, ForeignKey("request_types.code"), default=None
     )
@@ -139,6 +147,12 @@ class EventLog(Base):
     timestamp: Mapped[dt.datetime] = mapped_column(server_default=func.now())
 
     actor: Mapped[str] = mapped_column(Text)
+
+    # Tên hiển thị của người thực hiện, ghi lại tại thời điểm hành động. Cố ý lưu
+    # kèm thay vì tra ngược từ Keycloak lúc đọc: người nghỉ việc thì tài khoản bị
+    # xóa, người đổi tên thì lịch sử sẽ kể sai.
+    actor_label: Mapped[str | None] = mapped_column(Text, default=None)
+
     from_state: Mapped[str] = mapped_column(Text)
     to_state: Mapped[str] = mapped_column(Text)
     note: Mapped[str | None] = mapped_column(Text, default=None)

@@ -51,6 +51,7 @@ def actor_from_claims(claims: dict, *, department_prefix: str | None = None) -> 
 
     return Actor(
         id=claims["sub"],
+        name=claims.get("name") or claims.get("preferred_username"),
         roles=frozenset(vai_tro),
         departments=frozenset(phong_ban),
     )

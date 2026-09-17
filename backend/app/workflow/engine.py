@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.events.log import record_event
 from app.models.case import EventLog, Request
-from app.models.workflow_config import RuleSet, State, Transition
+from app.models.workflow_config import RequestType, RuleSet, State, Transition
 from app.rules.guards import run_guards
 from app.rules.sla import cap_nhat_dong_ho
 from app.workflow.context import Actor, TransitionContext
@@ -53,17 +53,41 @@ def get_active_rule_set(session: Session) -> RuleSet:
     return bo
 
 
+def kiem_loai_yeu_cau(session: Session, ma: str | None) -> str | None:
+    """Đối chiếu một mã loại yêu cầu với danh mục đang hoạt động.
+
+    Trả lại chính mã đó khi hợp lệ, `None` khi người gọi không truyền gì. Ném
+    `ValueError` khi mã không có trong danh mục hoặc đã ngừng dùng.
+
+    Tách thành hàm riêng để điểm cuối và engine dùng chung đúng một phép kiểm. Nếu mỗi
+    nơi tự kiểm lấy, hai nơi sẽ lệch nhau ngay lần đầu danh mục đổi — mà danh mục thì
+    chắc chắn đổi, vì mỗi doanh nghiệp khai lại danh mục của họ.
+    """
+    if ma is None:
+        return None
+
+    loai = session.get(RequestType, ma)
+    if loai is None or not loai.is_active:
+        raise ValueError(f"Loại yêu cầu không có trong danh mục: {ma!r}")
+    return ma
+
+
 def create_case(
     session: Session,
     *,
     title: str,
     requester_id: str,
     description: str | None = None,
+    request_type_code: str | None = None,
 ) -> Request:
     """Tạo một hồ sơ mới ở trạng thái bắt đầu của bộ quy tắc đang kích hoạt.
 
     Trạng thái bắt đầu **tra từ bảng** qua cờ `is_initial`, không viết cứng tên trạng
     thái nào vào mã nguồn. Đổi điểm vào của luồng chỉ là sửa dữ liệu khởi tạo.
+
+    `request_type_code` là trường quyết định duy nhất người gửi tự đặt được, và vẫn
+    phải nằm trong danh mục đang hoạt động. Mức ưu tiên, phòng ban và người xử lý thì
+    không — xem chú thích ở `app/models/case.py`.
 
     **Việc tạo hồ sơ không sinh bản ghi nhật ký**, vì nó không phải một lần *chuyển*
     trạng thái — không có trạng thái nào trước nó. Mốc bắt đầu của hồ sơ là cột
@@ -85,6 +109,7 @@ def create_case(
         title=title,
         description=description,
         requester_id=requester_id,
+        request_type_code=kiem_loai_yeu_cau(session, request_type_code),
     )
     session.add(ho_so)
     session.flush()

@@ -135,7 +135,16 @@ phiên bản, bắt buộc commit.**
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause).
 
-Chỉ dùng khi phát triển: `pytest` (MIT).
+Chỉ dùng khi phát triển và kiểm thử: `pytest` `9.1.1` (MIT) và `httpx` `0.28.1`
+(BSD-3-Clause). `httpx` là thứ `TestClient` của FastAPI chạy bên dưới để gọi ứng dụng
+mà không cần dựng một máy chủ thật, nên nó không đi vào đường chạy của bản triển khai.
+Giấy phép đọc từ siêu dữ liệu của chính gói đã cài, không đọc từ tài liệu trên mạng.
+
+Trong nhánh phụ thuộc của `httpx` có `certifi` mang giấy phép **MPL-2.0**. Giấy phép
+này được OSI công nhận và là copyleft ở mức từng tệp: ràng buộc chỉ phát sinh nếu nhóm
+**sửa tệp nguồn của chính gói đó**, mà điều đó thì CLAUDE.md mục 2.3 đã cấm sẵn.
+`certifi` cũng chỉ là một bó chứng thư số CA đi kèm, không phải mã nguồn chạy trong
+sản phẩm.
 
 ---
 
