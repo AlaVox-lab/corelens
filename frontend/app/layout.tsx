@@ -1,8 +1,44 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
+//
+// Khung ngoài cùng của cổng người dùng: phông chữ và bộ kiểu trình bày.
+//
+// PHÔNG CHỮ TẢI LÚC DỰNG, KHÔNG TẢI LÚC CHẠY. `next/font/google` kéo tệp phông về
+// trong lúc `next build` rồi phục vụ chúng từ chính máy chủ của hệ thống. Ba cái lợi,
+// theo thứ tự quan trọng:
+//
+//   1. Trình duyệt người dùng không gọi sang máy chủ Google, nên địa chỉ IP của nhân
+//      viên không chảy ra ngoài mỗi lần họ mở một hồ sơ nội bộ. Với một hệ thống vận
+//      hành nội bộ doanh nghiệp, đó không phải chuyện nhỏ.
+//   2. Hệ thống chạy được trong mạng nội bộ không có đường ra Internet.
+//   3. Chữ không nhảy khi trang vừa hiện.
+//
+// Đổi lại, lệnh `next build` cần đường mạng — nhưng nó đã cần sẵn cho `npm ci` rồi,
+// nên không thêm ràng buộc mới nào lên người dựng lại từ mã nguồn.
 
 import type { Metadata } from "next";
+import { Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
+
 import "./globals.css";
+
+// Be Vietnam Pro dựng riêng cho tiếng Việt: dấu thanh đặt cân, không chồng lên dấu
+// mũ ở những chữ như "ế" hay "ộ". Phông phổ thông phương Tây đặt dấu thanh bằng cách
+// ghép cơ học nên hai dấu hay đụng nhau.
+const beVietnam = Be_Vietnam_Pro({
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-be-vietnam",
+});
+
+// Phông đều nét cho mã hồ sơ, mốc giờ và con số thời lượng. Chúng cần xếp thẳng cột
+// khi đặt cạnh nhau trong danh sách.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+  variable: "--font-plex-mono",
+});
 
 export const metadata: Metadata = {
   title: "DX-OS Lab — Cổng vận hành yêu cầu nội bộ",
@@ -14,8 +50,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi">
-      <body>{children}</body>
+    <html lang="vi" className={`${beVietnam.variable} ${plexMono.variable}`}>
+      <body
+        style={{
+          // Ghi đè hai biến phông trong globals.css bằng tên lớp mà next/font sinh ra.
+          // Phần dự phòng phía sau giữ nguyên, phòng khi tệp phông không tải được.
+          ["--font" as string]: `var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif`,
+          ["--mono" as string]: `var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace`,
+        }}
+      >
+        {children}
+      </body>
     </html>
   );
 }

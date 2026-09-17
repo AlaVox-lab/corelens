@@ -14,25 +14,28 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-16 |
-| Phiên bản hiện tại | `v0.2.0` — bản phát hành kế tiếp **chưa cắt**, `main` đã đi trước thẻ 5 commit nội dung |
-| Giai đoạn | **Giai đoạn 2 đang chạy** — không gian `H` và `P` đã thông đầu-cuối |
+| Cập nhật lần cuối | 2026-09-17 |
+| Phiên bản hiện tại | `v0.3.0`, cắt ngày 16/09. `main` đi trước thẻ một commit tài liệu |
+| Giai đoạn | **Giai đoạn 2 đang chạy** — `H` và `P` đã thông đầu-cuối, có giao diện người dùng thật |
 | Mốc công việc đang chạy | Tuần 6 — Engine máy trạng thái và tích hợp định danh, hạn 20/09 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js đều chạy; cụm gồm **sáu dịch vụ** |
-| Issue đang mở | **6** — #39, #44, #45, #46, #47, #48 |
+| Issue đang mở | **4** — #45, #46, #47, #48 (chưa kể việc tồn đọng của #44, xem mục Việc tiếp theo) |
 | Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
 | Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48) |
-| Bộ kiểm thử tự động | **51 bài**, chạy trên PostgreSQL thật |
+| Bộ kiểm thử tự động | **68 bài**, chạy trên PostgreSQL thật. Bốn bài tích hợp Keycloak tự bỏ qua nếu chưa dựng dịch vụ định danh |
 | Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo thật trên cụm sáu dịch vụ |
 | Số ngày còn lại tới chấm kho mã | **82 ngày** (07/12/2026) |
 | Số ngày còn lại tới khi công bố đề thi | khoảng **46 ngày** (tháng 11/2026) |
 
-**Một câu tóm tắt trạng thái**: đăng nhập bằng Keycloak → token mang vai trò và phòng
-ban → engine tra bảng quy tắc và chạy ràng buộc Poka-yoke → ghi nhật ký sự kiện → bộ
-quét nền tự leo thang khi quá hạn. Toàn bộ vòng đó chạy được trên máy sạch bằng một
-lệnh. Thứ còn thiếu là **giao diện cho người dùng thật** — hiện mới có trang báo trạng
-thái, chưa có màn hình gửi yêu cầu.
+**Một câu tóm tắt trạng thái**: nhân viên đăng nhập bằng Keycloak → gửi yêu cầu qua
+biểu mẫu ba bước → engine tra bảng quy tắc và chạy ràng buộc Poka-yoke → ghi nhật ký sự
+kiện → bộ quét nền tự leo thang khi quá hạn → người gửi theo dõi toàn bộ đường đi của
+hồ sơ trên dòng thời gian. Toàn bộ vòng đó chạy được trên máy sạch bằng một lệnh.
+
+Thứ còn thiếu là **phía bên kia của quy trình**: điều phối viên, người xét duyệt và
+người xử lý vẫn chưa có màn hình nào. Họ thao tác được qua API nhưng chưa qua giao diện
+— đó là #45.
 
 ---
 
@@ -252,22 +255,60 @@ ký làm đổ đúng tám bài, gỡ phần kế toán đồng hồ làm đổ 
 
 **Issue đã đóng**: #40, #41, #42, #43, #62
 
+### Tuần 6 (tiếp) — Cổng người dùng và bản phát hành `v0.3.0`
+
+**Đo giới hạn tệp tải lên SeaweedFS** (#39). Kết quả ghi trong `docs/`. Điểm đáng nhớ
+của phép đo: con số giới hạn thật chỉ tìm ra bằng cách **thử tải lên cho tới khi hỏng**,
+không đọc từ tài liệu — đúng nguyên tắc kiểm chứng bằng thực nghiệm mà nhóm đã áp dụng
+từ đợt loại Temporal.
+
+**Bản phát hành `v0.3.0`**, cắt ngày 16/09. Tăng MINOR vì đợt này toàn `feat`. Nhật ký
+thay đổi sinh bằng `git-cliff`; số commit bị bỏ qua đúng bằng số merge commit cộng một,
+nên không có commit nào viết sai chuẩn.
+
+**Cổng gửi yêu cầu** (#44). Ba màn hình cho người gửi: biểu mẫu ba bước, danh sách hồ sơ
+của mình, và trang chi tiết có dòng thời gian đầy đủ. Năm điểm cuối mới cho không gian
+`H`, cộng một điểm cuối danh mục trạng thái phục vụ bảng chú giải.
+
+Điều đáng ghi nhất của issue này **không phải mã nguồn mà là một phát hiện**: bản thiết
+kế giao diện đặt nút *"Hủy yêu cầu"* ở hai trạng thái mà dữ liệu không có cạnh đó, tức
+là bản thiết kế mâu thuẫn với chính bộ quy tắc quy trình. Cách xử lý đã thành một khuôn
+mẫu, ghi ở `ARCHITECTURE.md` mục 7.2: **giao diện dựng nút bấm thẳng từ
+`allowed_transitions` của API**, không giữ bản sao nào của bộ quy tắc. Hai cái nút sai
+tự biến mất, và không có đường nào cho chúng quay lại.
+
+Ba quyết định phụ đi kèm:
+
+- **Loại yêu cầu mở cho người gửi, mức ưu tiên thì không.** Chọn sai loại chỉ làm hồ sơ
+  đi chậm một nhịp và người phân loại nắn lại ngay; còn ai cũng đánh dấu việc của mình
+  là khẩn thì thứ tự ưu tiên mất hết ý nghĩa
+- **Dấu hiệu riêng cho từng trạng thái** (`○ ◐ ◌ ● ! ✓ ✕ ▲ ■ –`), để bản in đen trắng
+  và người không phân biệt được màu vẫn đọc được. Bản in là một khối `@media print`, tự
+  kích hoạt khi bấm Ctrl+P, không phải một nút bật tắt như trong bản thiết kế
+- **Phông chữ tải lúc dựng, tự phục vụ từ máy chủ của hệ thống.** Trình duyệt nhân viên
+  không gọi sang máy chủ Google mỗi lần mở một hồ sơ nội bộ, và hệ thống chạy được trong
+  mạng không có đường ra Internet
+
+**Bộ kiểm thử lên 68 bài.** Một lỗi chỉ lộ ra khi chạy thật chứ không khi dựng: tệp mang
+chỉ thị `"use server"` chỉ được xuất ra hàm bất đồng bộ, nên một hằng số xuất kèm làm
+trang trả 500 — mà `next build` vẫn báo thành công. Xem `frontend/app/yeu-cau/ket-qua.ts`.
+
+**Issue đã đóng**: #39, #44
+
 ---
 
 ## Đang làm
 
-Không có công việc nào đang dở. Milestone *Tuần 6*, hạn 20/09, còn sáu issue:
+Không có công việc nào đang dở. Milestone *Tuần 6*, hạn 20/09, còn bốn issue:
 
 | Issue | Ưu tiên | Việc | Ghi chú |
 |---|---|---|---|
-| **#44** | **P1** | Cổng gửi yêu cầu và tra cứu trạng thái | **Đã mở khóa.** Cần thiết kế giao diện trước khi viết mã |
-| #45 | P2 | Buồng lái vận hành | Chặn bởi #44, cũng cần thiết kế |
-| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS | Đã giao `@NguyentimAnh`, việc đầu tiên của bạn ấy |
+| **#45** | **P2** | Buồng lái vận hành | **Đã mở khóa.** Cần thiết kế giao diện riêng — dùng `khong-dung/` của #44 làm tham khảo |
 | #46 | P2 | Khảo sát quản trị tri thức cho `H` | Độc lập với mã nguồn — giao được cho `@Senning-Dd` |
 | #47 | P3 | Khảo sát véc-tơ và khung LLM cho `I` | |
 | #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
 
-**Sáu issue trong bốn ngày còn lại là quá tay.** Ba khảo sát cuối mỗi cái tương đương
+**Bốn issue trong ba ngày còn lại vẫn là quá tay.** Ba khảo sát cuối mỗi cái tương đương
 một tuần việc — nhìn lại #19, #20, #21 thì rõ: liệt kê ba ứng viên, kiểm giấy phép bên
 trong ảnh chứa phát hành, dựng thử bằng Docker, đo tài nguyên, viết tài liệu và một ADR.
 Làm vội cả ba sẽ cho ra tài liệu hời hợt, mà đây đúng là loại tài liệu ăn điểm.
@@ -299,33 +340,65 @@ Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồ
 #37 ─► #40 ─► #41 ─┬─► #42        (xong)
 #38 ─► #62 ────────┴─► #43        (xong)
                        │
-                       └─► #44 ─► #45   (còn lại)
+                       └─► #44 ─► #45   (còn #45)
 ```
 
-Toàn bộ phần dưới bề mặt đã xong. Thứ còn thiếu là **giao diện cho người dùng thật**.
+Đường tới hạn chỉ còn **một mắt xích**. Một nửa quy trình đã có giao diện — nửa của
+người gửi yêu cầu. Nửa còn lại, của điều phối viên và phòng ban, là #45.
 
 | Issue | Ưu tiên | Việc | Chặn bởi |
 |---|---|---|---|
-| #44 | P1 | Cổng gửi yêu cầu và tra cứu trạng thái | **đã mở khóa** |
-| #45 | P2 | Buồng lái vận hành | #44 |
+| #45 | P2 | Buồng lái vận hành | **đã mở khóa** |
 
-`allowed_transitions()` trong `backend/app/workflow/engine.py` đã dựng sẵn cho hai issue
-này: nó trả về đúng những cạnh mà người đang đăng nhập đi được từ trạng thái hiện tại
-của hồ sơ, để giao diện chỉ hiện những nút bấm hợp lệ. Nhưng đó mới là **nửa đầu** của
-Poka-yoke — engine vẫn kiểm lại khi yêu cầu thật gửi lên, vì chặn ở giao diện thôi thì
-không đủ.
+**#45 kế thừa được nhiều hơn tưởng.** Bộ token màu, nhãn trạng thái mang dấu hiệu, cách
+định dạng thời gian theo múi giờ Việt Nam, lớp gọi dịch vụ có xử lý lỗi — tất cả đã nằm
+trong `frontend/lib/` và `frontend/components/`. Bảng ánh xạ mã lỗi engine sang mã HTTP
+(`MA_HTTP` trong `backend/app/workflow/routes.py`) cũng viết sẵn để dùng lại.
 
-**#44 và #45 cần thiết kế giao diện trước khi viết mã.** Đây là hai màn hình người dùng
-thật đầu tiên, và cũng là thứ ban giám khảo nhìn vào khi chấm mục *thân thiện người dùng*.
+Khuôn mẫu bắt buộc giữ, ghi ở `ARCHITECTURE.md` mục 7.2: **nút bấm dựng từ
+`allowed_transitions` của API, không từ một bảng trong mã nguồn giao diện**. #44 đã
+chứng minh vì sao — bản thiết kế vẽ hai cái nút mà dữ liệu không cho phép.
+
+**Một việc phải làm TRƯỚC khi viết #45**: vá lỗ hổng `CHANGEABLE_FIELDS`, xem mục Việc
+tiếp theo bên dưới. Cổng #44 né được vì nó không nhận trường `changes`, nhưng buồng lái
+thì bắt buộc phải nhận.
 
 ### Không chặn ai, làm khi có khoảng trống
 
 | Issue | Ưu tiên | Việc | Giao được cho |
 |---|---|---|---|
-| #39 | P2 | Đo giới hạn kích thước tệp tải lên SeaweedFS | `@NguyentimAnh` — đã giao |
 | #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd` — độc lập hoàn toàn với mã nguồn |
 | #47 | P3 | Khảo sát cơ sở dữ liệu véc-tơ và khung LLM cho `I` | |
 | #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
+
+### Issue cần mở, sinh ra từ #44
+
+Ba việc phát hiện trong lúc làm #44, cố ý **không** vá lén trong cùng issue:
+
+1. **Vá lỗ hổng `CHANGEABLE_FIELDS`** — `P`, `P1`, **chặn #45**. Engine cho đặt
+   `priority_code` ở **mọi** cạnh, không chỉ cạnh mang ràng buộc `set-priority`. Cổng #44
+   né được bằng cách không nhận trường `changes`, nhưng buồng lái bắt buộc phải nhận, và
+   khi đó người xử lý sẽ tự nâng mức ưu tiên việc của mình được. Cách vá đúng: engine chỉ
+   cho đặt trường nào mà cạnh đang đi có ràng buộc tương ứng — quan hệ đó đã khai sẵn ở
+   bảng `transition_guards`, không cần thêm bảng mới
+2. **Mô hình hóa cạnh "quay về trạng thái trước"** — `P`, `P2`. Từ `awaiting-info` hiện
+   có hai cạnh về `classified` và `in-progress`, và engine chào **cả hai** vì nó chỉ nhìn
+   `from_state`. Chỉ một cái đúng: hồ sơ phải quay về nơi nó vừa rời đi. Người gửi đang
+   phải tự đoán giữa hai cái nút gần như giống hệt nhau, đoán sai thì hồ sơ đi lùi thêm
+   một nhịp. Đây là ràng buộc cần biết lịch sử, nên phải làm thành một `guard` mới chứ
+   không sửa được bằng dữ liệu
+3. **Đính kèm tệp cho yêu cầu** — `core`, `P2`. Tách khỏi #44 ngay từ đầu. SeaweedFS đã
+   dựng và giới hạn kích thước đã đo ở #39, nên phần hạ tầng sẵn sàng
+
+Hai việc nhỏ hơn, gộp vào #45 hoặc làm riêng tùy dung lượng:
+
+4. **Tra tên người từ định danh Keycloak.** Cột `assignee_id` giữ `sub` dạng UUID, và
+   dịch vụ chưa có đường tra ngược ra tên. Cổng #44 hiện không hiện trường này, vì đưa
+   một dãy ký tự vô nghĩa lên màn hình thì tệ hơn là không đưa gì
+5. **Ba nút không phải chuyển trạng thái** mà bản thiết kế #44 có: *Sửa nội dung*,
+   *Nhắn điều phối viên*, *Hỏi tiến độ*. Đã bỏ khỏi #44 vì chúng không ứng với cạnh nào
+   trong bộ quy tắc. Muốn có thì phải quyết trước: chúng là cạnh mới, hay là tính năng
+   nằm ngoài máy trạng thái
 
 ### Việc vận hành, không cần issue
 
@@ -333,22 +406,21 @@ thật đầu tiên, và cũng là thứ ban giám khảo nhìn vào khi chấm 
    `E:\Workspace\_scratch\dx-os-lab\sinh_du_lieu.py` trên máy của navigator — sinh 1.000 hồ
    sơ bám đúng `process-flow.md`. **Lưu ý**: bộ sinh viết theo mô hình cũ bốn vai trò, cần
    cập nhật theo mười trạng thái và năm vai trò mới
-2. Thiết kế giao diện cho #44 và #45 trước khi viết mã. Bảng điều khiển phân tích **không
-   cần thiết kế** vì Superset tự mang giao diện
+2. Thiết kế giao diện cho #45 trước khi viết mã. Bảng điều khiển phân tích **không cần
+   thiết kế** vì Superset tự mang giao diện
 3. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-4. **Cắt bản phát hành `v0.3.0`.** `main` đã đi trước thẻ `v0.2.0` năm commit nội dung,
-   trong đó có ba tính năng lớn. Đợt này tăng MINOR vì toàn `feat`
-5. Gửi `TRO-LY-THANH-VIEN.md` cho `@NguyentimAnh` và `@Senning-Dd` — bộ luật đã cập
+4. Gửi `TRO-LY-THANH-VIEN.md` cho `@NguyentimAnh` và `@Senning-Dd` — bộ luật đã cập
    nhật ngày 16/09, có thêm mục 2.7 hướng dẫn dựng hệ thống
 
 ### Chờ điều kiện
 
-6. Tích hợp liên tục — giờ đã có cấu trúc thư mục mã nguồn và 51 bài kiểm thử, nên
+5. Tích hợp liên tục — giờ đã có cấu trúc thư mục mã nguồn và 68 bài kiểm thử, nên
    điều kiện đã đủ. Một quy trình chạy `pytest` và `next build` trên mỗi pull request
-   sẽ bắt được hồi quy trước khi nó vào `dev`
-7. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
+   sẽ bắt được hồi quy trước khi nó vào `dev`. #44 vừa cho một lý do cụ thể: có loại lỗi
+   `next build` báo thành công nhưng trang vẫn trả 500 lúc chạy
+6. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
    có hiệu lực, và **bật lại được `delete_branch_on_merge`** một cách an toàn
-8. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
+7. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
    hình máy tối thiểu** — giảng viên nhắc trước để nhóm không quên
 
 ---
@@ -408,6 +480,45 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 ## Ghi chú kỹ thuật đáng nhớ
 
 Những phát hiện trong quá trình làm, ghi lại để không phải điều tra lại.
+
+**Tệp `"use server"` chỉ được xuất ra hàm bất đồng bộ**
+
+Xuất kèm một hằng số hay một đối tượng sẽ làm trang trả 500 với thông điệp
+`A "use server" file can only export async functions, found object`. Lý do: mọi thứ tệp
+đó xuất ra đều trở thành một điểm cuối gọi được từ trình duyệt, mà một đối tượng thì
+không phải điểm cuối.
+
+**Điểm nguy hiểm: `next build` báo thành công.** Lỗi chỉ nổ ra lúc chạy, khi một thành
+phần phía trình duyệt nạp tệp đó. Nghĩa là trang vẫn dựng xong, vẫn lên ảnh chứa, rồi
+hỏng ngay lần đầu người dùng mở. Kiểu kiểm tra duy nhất bắt được nó là mở trang thật.
+
+Cách làm đúng: để hằng số và kiểu dữ liệu ở một tệp riêng không mang chỉ thị đó — xem
+`frontend/app/yeu-cau/ket-qua.ts`.
+
+**Không tin cách `Intl` xếp ngày theo địa phương `vi-VN`**
+
+Thứ tự và dấu phân cách đổi giữa các phiên bản thư viện ICU. Bản ICU trong ảnh chứa
+`node:24` hiện cho ra `08:29 17-09` — giờ đứng trước ngày, dấu phân cách là gạch ngang,
+không phải `17/09 08:29` như người Việt quen đọc.
+
+Cách làm đúng: lấy từng phần bằng `formatToParts` rồi tự ghép. Con số sẽ không đổi chỗ
+khi ai đó nâng cấp ảnh nền — xem `frontend/lib/dinh-dang.ts`.
+
+Vẫn phải nêu `timeZone: "Asia/Ho_Chi_Minh"` tường minh ở mọi chỗ. Ảnh chứa chạy giờ UTC,
+nên bỏ tham số đó đi là mọi mốc thời gian hiện ra lệch bảy tiếng — một lỗi âm thầm, chỉ
+lộ khi có người đối chiếu với đồng hồ thật.
+
+**Chạy thử cụm mà không đụng dữ liệu của người khác**
+
+Dùng một dự án Compose tách riêng: `docker compose -p dxlab-kiem-tra ... up -d`. Volume
+của nó mang tiền tố `dxlab-kiem-tra_`, khác hẳn `dx-os-lab_` của cụm thật, nên
+`down -v` trên cụm thử không bao giờ xóa nhầm dữ liệu đang dùng.
+
+Tiếng Việt **không được đi qua cờ dòng lệnh** trên Windows — `curl -d '{"title":"Thử"}'`
+sẽ gửi lên `Th? t?o`. Đặt chuỗi vào một tệp `.py` mã hóa UTF-8 rồi chạy tệp đó.
+
+`docker exec <ảnh> python /tmp/x.py` trên Git Bash bị đổi đường dẫn thành
+`/app/C:/Users/...`. Thêm `MSYS_NO_PATHCONV=1` vào trước lệnh.
 
 **Cách chạy git-cliff trên máy này**
 

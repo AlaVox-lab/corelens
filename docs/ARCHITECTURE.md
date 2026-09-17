@@ -217,7 +217,13 @@ dx-os-lab/
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── frontend/                    # Next.js — cổng người dùng
-│   ├── app/                     # hiện là bộ khung, xem #44 và #45
+│   ├── app/
+│   │   ├── api/auth/            # [H] ba chặng của luồng đăng nhập OIDC
+│   │   ├── yeu-cau/             # [H] cổng gửi yêu cầu — ba màn hình của #44
+│   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
+│   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
+│   ├── components/              # bộ phận dùng lại giữa nhiều màn
+│   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── docs/
 │   ├── adr/                     # năm bản ghi quyết định kiến trúc
@@ -523,6 +529,37 @@ cột *"đã leo thang chưa"*. Cơ chế tự giới hạn bằng chính cấu 
 Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
 Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
+
+### 7.2. Giao diện không giữ bản sao của bộ quy tắc
+
+**Đã cài đặt** — `frontend/app/yeu-cau/`, từ #44.
+
+Một cổng người dùng bình thường sẽ có đâu đó một bảng đại loại *"trạng thái nào thì
+hiện nút nào"*. Cổng này **không có bảng đó**, và điều đó là cố ý.
+
+Điểm cuối `GET /requests/{id}` trả về `allowed_transitions` — danh sách cạnh mà chính
+người đang đăng nhập đi được từ trạng thái hiện tại của hồ sơ, do
+`allowed_transitions()` sinh ra từ bảng `transitions` và ma trận phân quyền. Giao diện
+dựng nút bấm thẳng từ danh sách đó, lấy cả nhãn chữ (`activity_label`) và cờ bắt buộc
+ghi lý do (`requires_note`). Không có cạnh thì không có nút.
+
+Đây không phải chuyện gọn mã. Bản thiết kế giao diện của #44 có một bảng như vậy, và
+nó **vẽ sai hai chỗ**: đặt nút *"Hủy yêu cầu"* ở `in-progress` và `escalated`, trong
+khi dữ liệu không có cạnh nào đi từ hai trạng thái đó tới `cancelled` — đúng ràng buộc
+Poka-yoke *"chỉ hủy được trước khi phòng ban bắt tay vào việc"*. Chép bảng ấy vào mã
+nguồn sẽ dựng ra hai cái nút bấm vào là báo lỗi. Lấy nút từ API thì hai nút sai tự
+biến mất, và không có đường nào cho chúng quay lại.
+
+Ranh giới cần giữ: giao diện **được phép** giữ siêu dữ liệu thuần thị giác — trạng
+thái nào mang dấu hiệu gì, thuộc họ màu nào (`frontend/lib/trang-thai.ts`). Bảng
+`states` mô tả quy trình, không mô tả cách vẽ quy trình, nên những thứ đó không có chỗ
+trong cơ sở dữ liệu. Nhưng bảng ấy phải có **phương án lùi** cho mã trạng thái lạ:
+doanh nghiệp thêm một trạng thái vào bộ quy tắc phải thấy nó hiện ra ngay, dù chưa ai
+gán dấu hiệu cho nó. Một giao diện vỡ vì dữ liệu hợp lệ là lỗi của giao diện.
+
+Nửa còn lại của Poka-yoke vẫn nằm ở engine: một cạnh hiện ra trên màn hình vẫn bị kiểm
+lại khi yêu cầu thật gửi lên. Chặn ở giao diện thôi thì không đủ, vì ai cũng gọi thẳng
+API được.
 
 ---
 
