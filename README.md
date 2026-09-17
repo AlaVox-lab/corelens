@@ -107,8 +107,8 @@ hình đầy đủ của engine máy trạng thái**. Xem
 
 ## Cài đặt và dựng từ mã nguồn
 
-> Cụm sáu dịch vụ dựng được bằng một lệnh. Cổng người dùng hiện là bộ khung — màn hình
-> gửi yêu cầu và buồng lái vận hành đang được xây dựng.
+> Cụm sáu dịch vụ dựng được bằng một lệnh. Cổng gửi yêu cầu đã chạy được; buồng lái
+> cho điều phối viên và người xử lý đang được xây dựng.
 
 ### Yêu cầu môi trường
 
@@ -143,7 +143,8 @@ Mọi giá trị trong `.env.example` **chạy được ngay**, không cần s�
 | PostgreSQL | `localhost:5432` | xem `.env` |
 
 Mở `http://localhost:3000` là biết ngay cụm có khỏe không: trang chủ báo trạng thái
-từng tầng, kể cả việc bộ quy tắc quy trình đã nạp đủ mười trạng thái hay chưa.
+từng tầng, kể cả việc bộ quy tắc quy trình đã nạp đủ mười trạng thái hay chưa. Cổng gửi
+yêu cầu nằm ở `http://localhost:3000/yeu-cau`.
 
 Lược đồ và dữ liệu khởi tạo của engine máy trạng thái nạp tự động lúc PostgreSQL khởi
 tạo lần đầu. Nếu bộ quy tắc sai — có ngõ cụt, có trạng thái không tới được, có cạnh
@@ -170,6 +171,32 @@ phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại kh
 
 Toàn bộ khai trong `infra/keycloak/realm-dx-os-lab.json` — thêm phòng ban hay đổi vai
 trò là sửa tệp đó rồi dựng lại cụm, không đụng mã nguồn.
+
+### Cổng gửi yêu cầu
+
+Đăng nhập bằng `an.nguyen` rồi mở `http://localhost:3000/yeu-cau`. Ba màn hình:
+
+| Màn | Địa chỉ | Việc làm được |
+|---|---|---|
+| Gửi yêu cầu | `/yeu-cau/moi` | Biểu mẫu ba bước: chọn loại, viết nội dung, xem lại rồi gửi |
+| Hồ sơ của tôi | `/yeu-cau` | Danh sách hồ sơ đã gửi, kèm chú giải mười trạng thái |
+| Chi tiết hồ sơ | `/yeu-cau/{số}` | Dòng thời gian đầy đủ và những thao tác làm được lúc này |
+
+Ba điều đáng thử, vì chúng cho thấy bộ quy tắc đang thật sự điều khiển giao diện:
+
+**Nút bấm đến từ dữ liệu, không từ mã nguồn.** Mở một hồ sơ ở trạng thái `Đang xử lý`
+sẽ thấy dòng chữ *"Không có thao tác nào dành cho bạn"* — vì bảng `transitions` không
+có cạnh nào đi từ đó tới `Đã hủy`. Thêm một dòng vào `infra/seed/01-quy-tac-quy-trinh.sql`
+rồi dựng lại cụm là nút hiện ra, không sửa một dòng TypeScript nào.
+
+**Người gửi không tự đặt mức ưu tiên.** Biểu mẫu không có ô đó, và lược đồ dữ liệu vào
+cũng không nhận trường đó — gọi thẳng API kèm `priority_code` thì giá trị bị bỏ qua.
+Ràng buộc Poka-yoke thực thi bằng sự vắng mặt, không bằng một câu cảnh báo.
+
+**In thử bằng Ctrl+P.** Mười trạng thái phân biệt nhau bằng màu, nhưng mỗi trạng thái
+còn mang một dấu hiệu riêng đặt trước nhãn (`○ ◐ ◌ ● ! ✓ ✕ ▲ ■ –`). Khi in, toàn bộ
+màu rút về đen trắng và dấu hiệu vẫn phân biệt được từng trạng thái — cũng là thứ giúp
+người không phân biệt được màu đọc được giao diện này.
 
 ### Theo dõi SLA
 

@@ -28,9 +28,23 @@ class Actor:
     roles: frozenset[str] = frozenset()
     departments: frozenset[str] = frozenset()
 
+    # Tên hiển thị tại thời điểm hành động, lấy từ claim `name` của token.
+    #
+    # Ghi vào nhật ký sự kiện chứ không tra ngược từ Keycloak lúc đọc: người nghỉ việc
+    # thì tài khoản bị xóa, người đổi tên thì lịch sử sẽ kể sai. Nhật ký kiểm toán phải
+    # giữ được sự thật của lúc đó, kể cả khi nguồn danh tính đã đổi.
+    name: str | None = None
+
     # Đánh dấu tác nhân hệ thống, ví dụ bộ đếm SLA tự leo thang ở #42. Chỉ tác nhân
     # này mới đi được cạnh `is_system`, và ngược lại nó không đi được cạnh của người.
     is_system: bool = False
+
+    @property
+    def label(self) -> str:
+        """Tên để hiển thị. Lùi về mã định danh khi token không mang tên."""
+        if self.is_system:
+            return "Hệ thống"
+        return self.name or self.id
 
     @classmethod
     def system(cls, name: str = "system") -> Actor:

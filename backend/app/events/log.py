@@ -32,6 +32,7 @@ def record_event(session: Session, ctx: TransitionContext) -> EventLog:
         case_id=ctx.case.id,
         activity=ctx.transition.activity_code,
         actor=ctx.actor.id,
+        actor_label=ctx.actor.label,
         from_state=ctx.transition.from_state,
         to_state=ctx.transition.to_state,
         note=ctx.note,

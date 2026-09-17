@@ -26,3 +26,6 @@ pyjwt[crypto]==2.14.0
 # vô nghĩa. Bộ kiểm thử cần một PostgreSQL thật vì lược đồ dùng chỉ mục duy nhất
 # từng phần và kiểu TIMESTAMPTZ — SQLite không thay thế được.
 pytest==9.1.1
+
+# TestClient của FastAPI chạy trên httpx. Chỉ dùng khi kiểm thử.
+httpx==0.28.1
