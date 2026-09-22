@@ -353,6 +353,34 @@ select {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+select.o-nhap {
+  cursor: pointer;
+}
+
+/* --- Bố cục buồng lái (#82) ------------------------------------------------
+ * Màn hẹp: một cột, bảng thao tác nằm dưới. Màn rộng: bảng thao tác sang cột phải và
+ * bám theo khi cuộn — điều phối viên xử lý hàng chục hồ sơ mỗi ngày, một nút phải
+ * cuộn xuống đáy mới thấy là một nút bị bấm chậm. Mốc 124px chừa chỗ cho thanh đầu
+ * trang đang dính ở trên. */
+.bo-cuc-buong-lai {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 14px;
+}
+
+@media (min-width: 960px) {
+  .bo-cuc-buong-lai {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+
+  .cot-thao-tac {
+    position: sticky;
+    top: 124px;
+  }
+}
+
 textarea.o-nhap {
   font-size: 14px;
   line-height: 1.65;

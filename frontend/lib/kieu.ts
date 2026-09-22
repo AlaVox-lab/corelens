@@ -43,6 +43,12 @@ export type CanhDiDuoc = {
   activity_code: string;
   activity_label: string;
   requires_note: boolean;
+  /**
+   * Trường mà cạnh này cho đặt, từ ràng buộc gắn trên cạnh (#78). Buồng lái dựng ô
+   * nhập từ đây, cùng lý do nó dựng nút bấm từ danh sách cạnh. Cạnh của người gửi
+   * luôn cho danh sách rỗng.
+   */
+  fields: string[];
 };
 
 /** Một mốc trong dòng thời gian, dựng thẳng từ bảng `event_log`. */
@@ -85,4 +91,39 @@ export type HoSoChiTiet = HoSoTomTat & {
   assignee_id: string | null;
   history: SuKien[];
   allowed_transitions: CanhDiDuoc[];
+};
+
+// ---------------------------------------------------------------------------
+// Danh mục cho ô chọn
+// ---------------------------------------------------------------------------
+
+export type MucUuTien = NhanCoMa & { is_default: boolean };
+
+export type PhongBan = NhanCoMa & { description: string | null };
+
+// ---------------------------------------------------------------------------
+// Buồng lái điều phối viên (#82)
+// ---------------------------------------------------------------------------
+
+/** Một trạng thái trong hàng đợi, kèm số hồ sơ. Danh sách suy từ bộ quy tắc. */
+export type NhomHangDoi = NhanCoMa & { count: number };
+
+export type MucHangDoi = HoSoTomTat & {
+  requester_label: string | null;
+  priority: NhanCoMa | null;
+  /** Lúc hồ sơ vào trạng thái hiện tại — mốc để tính thời gian chờ. */
+  state_entered_at: string;
+};
+
+export type HangDoi = {
+  groups: NhomHangDoi[];
+  items: MucHangDoi[];
+};
+
+export type HoSoDieuPhoi = HoSoChiTiet & {
+  requester_label: string | null;
+  priority: NhanCoMa | null;
+  state_entered_at: string;
+  /** Phòng mặc định cho loại yêu cầu, để ô chọn điền sẵn. Chỉ là gợi ý. */
+  suggested_department: NhanCoMa | null;
 };

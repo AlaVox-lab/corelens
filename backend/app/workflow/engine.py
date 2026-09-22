@@ -20,13 +20,21 @@ from sqlalchemy.orm import Session
 
 from app.events.log import record_event
 from app.models.case import EventLog, Request
-from app.models.workflow_config import RequestType, RuleSet, State, Transition
+from app.models.workflow_config import (
+    Department,
+    Priority,
+    RequestType,
+    RuleSet,
+    State,
+    Transition,
+)
 from app.rules.guards import GOVERNED_FIELDS, permitted_fields, run_guards
 from app.rules.sla import cap_nhat_dong_ho
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.errors import (
     CaseNotFound,
     FieldNotPermitted,
+    InvalidFieldValue,
     NoteRequired,
     RoleNotPermitted,
     SystemTransitionOnly,
@@ -70,6 +78,46 @@ if _VUOT_BIEN:
     )
 
 
+# Trường quyết định nào phải tra danh mục nào. Cùng bản chất với khóa ngoại trong lược
+# đồ — đây là cấu trúc dữ liệu, không phải quy tắc nghiệp vụ — nhưng kiểm ở tầng ứng
+# dụng để trả lời bằng 422 kèm tên trường, thay vì để khóa ngoại nổ thành 500.
+#
+# `assignee_id` không có mặt: nó là định danh Keycloak, chưa có danh mục để tra cho
+# tới khi dịch vụ biết đọc danh bạ (#84).
+_DANH_MUC_CUA_TRUONG = {
+    "department_code": Department,
+    "priority_code": Priority,
+    "request_type_code": RequestType,
+}
+
+
+def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict) -> None:
+    """Mọi giá trị gửi kèm phải có trong danh mục, và danh mục đó còn hoạt động.
+
+    Giá trị rỗng thì bỏ qua ở đây: ràng buộc Poka-yoke gắn trên cạnh mới là nơi quyết
+    định rỗng có được phép hay không — `set-priority` thì không, còn ở cạnh phân công
+    lại thì phòng ban vốn không được đổi.
+    """
+    for truong, gia_tri in thay_doi.items():
+        mo_hinh = _DANH_MUC_CUA_TRUONG.get(truong)
+        if mo_hinh is None or gia_tri is None or gia_tri == "":
+            continue
+
+        if not isinstance(gia_tri, str):
+            raise InvalidFieldValue(
+                truong, gia_tri, f"Giá trị của {truong} phải là một mã dạng chuỗi."
+            )
+
+        ban_ghi = session.get(mo_hinh, gia_tri)
+        # Danh mục mức ưu tiên không có cột is_active: mọi mức đều luôn dùng được.
+        if ban_ghi is None or not getattr(ban_ghi, "is_active", True):
+            raise InvalidFieldValue(
+                truong,
+                gia_tri,
+                f"'{gia_tri}' không có trong danh mục đang dùng của {truong}.",
+            )
+
+
 def get_active_rule_set(session: Session) -> RuleSet:
     """Bộ quy tắc đang kích hoạt. Hồ sơ mới luôn nhận bộ này."""
     bo = session.scalars(select(RuleSet).where(RuleSet.is_active)).one()
@@ -102,6 +150,7 @@ def create_case(
     requester_id: str,
     description: str | None = None,
     request_type_code: str | None = None,
+    requester_label: str | None = None,
 ) -> Request:
     """Tạo một hồ sơ mới ở trạng thái bắt đầu của bộ quy tắc đang kích hoạt.
 
@@ -132,6 +181,7 @@ def create_case(
         title=title,
         description=description,
         requester_id=requester_id,
+        requester_label=requester_label,
         request_type_code=kiem_loai_yeu_cau(session, request_type_code),
     )
     session.add(ho_so)
@@ -251,6 +301,8 @@ def perform_transition(
             f"Thao tác '{canh.activity_label}' không đặt được "
             f"{', '.join(sorted(ngoai_canh))}.",
         )
+
+    _kiem_gia_tri_danh_muc(session, thay_doi)
 
     ctx = TransitionContext(
         case=ho_so, transition=canh, actor=actor, note=note, changes=thay_doi

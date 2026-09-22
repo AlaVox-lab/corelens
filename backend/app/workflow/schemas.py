@@ -45,6 +45,12 @@ class CanhDiDuocRa(BaseModel):
     activity_label: str
     requires_note: bool
 
+    # Những trường mà cạnh này cho đặt, lấy thẳng từ `permitted_fields()` — tức từ
+    # ràng buộc gắn trên cạnh (#78). Giao diện dựng ô nhập từ danh sách này, cùng lý do
+    # nó dựng nút bấm từ danh sách cạnh: không có bảng nào trong mã giao diện nói
+    # "Phân loại thì hiện ô mức ưu tiên". Cạnh của người gửi luôn cho danh sách rỗng.
+    fields: list[str] = Field(default_factory=list)
+
 
 class SuKienRa(BaseModel):
     """Một mốc trong dòng thời gian, dựng thẳng từ bảng `event_log`."""
@@ -119,3 +125,69 @@ class ChuyenTrangThaiVao(BaseModel):
 
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
+
+
+# ---------------------------------------------------------------------------
+# Danh mục dùng chung cho ô chọn
+# ---------------------------------------------------------------------------
+
+
+class MucUuTienRa(NhanCoMa):
+    is_default: bool
+
+
+class PhongBanRa(NhanCoMa):
+    description: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# Buồng lái điều phối viên (#82)
+# ---------------------------------------------------------------------------
+
+
+class NhomHangDoiRa(NhanCoMa):
+    """Một trạng thái trong hàng đợi, kèm số hồ sơ đang nằm ở đó.
+
+    Danh sách trạng thái suy từ bộ quy tắc — trạng thái nào vai trò điều phối có cạnh
+    đi ra — nên giao diện dựng nút lọc từ đây, không liệt kê cứng.
+    """
+
+    count: int
+
+
+class MucHangDoiRa(HoSoTomTatRa):
+    requester_label: str | None = None
+    priority: NhanCoMa | None = None
+
+    # Lúc hồ sơ vào trạng thái hiện tại: mốc của dòng nhật ký cuối cùng, hoặc lúc tạo
+    # nếu chưa có dòng nào. Không dùng `updated_at` vì cột đó nhảy ở MỌI lần sửa dòng,
+    # không riêng lần chuyển trạng thái.
+    state_entered_at: dt.datetime
+
+
+class HangDoiRa(BaseModel):
+    groups: list[NhomHangDoiRa]
+    items: list[MucHangDoiRa]
+
+
+class HoSoDieuPhoiRa(HoSoChiTietRa):
+    requester_label: str | None = None
+    priority: NhanCoMa | None = None
+    state_entered_at: dt.datetime
+
+    # Phòng ban mặc định cho loại yêu cầu của hồ sơ, tra từ `request_type_routing`.
+    # Chỉ là gợi ý để ô chọn điền sẵn: điều phối viên được chọn khác, và chính những
+    # lần chọn khác đó là tín hiệu cho khai phá quy trình biết bảng ánh xạ đang sai.
+    suggested_department: NhanCoMa | None = None
+
+
+class ChuyenTrangThaiDieuPhoiVao(BaseModel):
+    """Thao tác của điều phối viên. Khác cổng người gửi ở chỗ CÓ nhận `changes`.
+
+    Không kiểm trường nào được phép ở đây. Engine đã kiểm theo từng cạnh (#78) và tra
+    giá trị với danh mục — kiểm lại ở tầng này sẽ thành nguồn sự thật thứ hai.
+    """
+
+    to_state: str
+    note: str | None = Field(default=None, max_length=2000)
+    changes: dict[str, str | None] = Field(default_factory=dict)

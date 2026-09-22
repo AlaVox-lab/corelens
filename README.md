@@ -153,7 +153,7 @@ Xem `infra/seed/`.
 
 ### Đăng nhập thử
 
-Bấm **Đăng nhập bằng Keycloak** trên trang chủ. Realm `dx-os-lab` tự nạp lúc khởi động,
+Bấm **Đăng nhập bằng tài khoản công ty** trên trang chủ. Realm `dx-os-lab` tự nạp lúc khởi động,
 gồm năm vai trò nghiệp vụ, bốn nhóm phòng ban và sáu tài khoản mẫu — tất cả dùng mật
 khẩu `matkhau123`:
 
@@ -197,6 +197,26 @@ Ràng buộc Poka-yoke thực thi bằng sự vắng mặt, không bằng một 
 còn mang một dấu hiệu riêng đặt trước nhãn (`○ ◐ ◌ ● ! ✓ ✕ ▲ ■ –`). Khi in, toàn bộ
 màu rút về đen trắng và dấu hiệu vẫn phân biệt được từng trạng thái — cũng là thứ giúp
 người không phân biệt được màu đọc được giao diện này.
+
+### Buồng lái điều phối viên
+
+Đăng nhập bằng `binh.tran` rồi mở mục **Điều phối** trên thanh điều hướng, hoặc thẳng
+`http://localhost:3000/dieu-phoi`. Mục đó chỉ hiện với tài khoản mang vai trò điều phối —
+đăng nhập bằng `an.nguyen` sẽ không thấy.
+
+| Màn | Địa chỉ | Việc làm được |
+|---|---|---|
+| Hàng đợi | `/dieu-phoi` | Hồ sơ đang chờ phân loại hoặc định tuyến, chờ lâu nhất lên đầu |
+| Chi tiết | `/dieu-phoi/{số}` | Phân loại, chuyển về phòng ban, hỏi thêm thông tin, định tuyến lại hồ sơ bị trả |
+
+Thử một vòng trọn vẹn với hai cửa sổ: `an.nguyen` gửi yêu cầu ở cổng người gửi,
+`binh.tran` phân loại rồi chuyển về phòng ban ở buồng lái — cửa sổ của người gửi thấy
+ngay trạng thái mới cùng tên người vừa thao tác trên dòng thời gian.
+
+**Ô nhập cũng đến từ dữ liệu, như nút bấm.** Mở bảng *Phân loại yêu cầu* sẽ thấy hai ô —
+mức ưu tiên và loại yêu cầu — vì ràng buộc gắn trên cạnh đó quản đúng hai trường ấy. Gỡ
+dòng `set-priority` của cạnh này trong `infra/seed/01-quy-tac-quy-trinh.sql` rồi dựng lại
+cụm là ô mức ưu tiên biến mất, không sửa dòng TypeScript nào.
 
 ### Theo dõi SLA
 
