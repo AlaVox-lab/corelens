@@ -14,8 +14,26 @@
 import { cookies } from "next/headers";
 import { EncryptJWT, jwtDecrypt, base64url } from "jose";
 
+import { portalBaseUrl } from "@/lib/oidc";
+
 const TEN_COOKIE = "dxlab_session";
 const TEN_COOKIE_TAM = "dxlab_oidc_dang_dang_nhap";
+
+/**
+ * Cookie chỉ gắn cờ `Secure` khi cổng thật sự chạy HTTPS.
+ *
+ * Trước đây cờ này bám theo `NODE_ENV === "production"`, với giả định bản production
+ * luôn chạy HTTPS. Giả định đó sai ngay với chính bản dựng Docker của dự án: ảnh chứa
+ * chạy ở chế độ production nhưng phục vụ qua `http://localhost:3000`. Cookie mang cờ
+ * `Secure` gửi qua HTTP thì Safari — và nhiều trình duyệt nhúng — âm thầm bỏ qua: đăng
+ * nhập xong, cookie phiên không được lưu, người dùng bị đưa về trang chủ như chưa từng
+ * đăng nhập. Chrome có ngoại lệ riêng cho `localhost` nên lỗi này lọt qua mọi lần thử
+ * từ #43 tới #82.
+ *
+ * Bám theo giao thức của địa chỉ công khai thì đúng ở mọi nơi: triển khai HTTPS thật vẫn
+ * có `Secure`, còn cụm dựng thử trên máy vẫn đăng nhập được bằng mọi trình duyệt.
+ */
+const COOKIE_AN_TOAN = portalBaseUrl.startsWith("https://");
 
 export type Phien = {
   accessToken: string;
@@ -69,30 +87,83 @@ async function giaiMa<T>(chuoi: string): Promise<T | null> {
 }
 
 // --- Phiên đăng nhập -------------------------------------------------------
+//
+// PHIÊN NẰM Ở HAI COOKIE, KHÔNG PHẢI MỘT.
+//
+// Trình duyệt vứt mọi cookie mà tên cộng giá trị vượt 4096 byte — không báo lỗi, không
+// cảnh báo, chỉ đơn giản là không lưu. Ba token của Keycloak mã hóa chung vào một
+// cookie nặng tới 4227 byte với tài khoản thường, 4311 byte với tài khoản mang nhóm
+// phòng ban. Hệ quả: đăng nhập xong, quay về cổng, cổng không thấy cookie nào, người
+// dùng bị coi như chưa từng đăng nhập. Lỗi này nằm im từ #43 tới #82 vì mọi lần thử đều
+// dùng cookie tự đúc từ loại token nhỏ hơn, chưa lần nào đăng nhập thật qua trình duyệt.
+//
+// Tách theo tần suất dùng:
+//
+//   dxlab_session   access token + refresh token — dùng ở MỌI lần gọi dịch vụ
+//   dxlab_id_token  id token — chỉ dùng đúng một lần, lúc đăng xuất, để Keycloak đóng
+//                   phiên mà không hỏi lại người dùng
+//
+// Giao diện của ba hàm dưới đây giữ nguyên — nơi gọi vẫn đọc và ghi một `Phien` đủ
+// trường. Việc tách hai cookie là chuyện riêng của tệp này.
 
-export async function luuPhien(phien: Phien): Promise<void> {
+const TEN_COOKIE_ID = "dxlab_id_token";
+
+/**
+ * Trần an toàn cho một cookie. Để dưới 4096 một khoảng, vì một số trình duyệt tính cả
+ * thuộc tính vào giới hạn.
+ */
+const TRAN_COOKIE = 4000;
+
+const SONG_GIAY = 60 * 60 * 12;
+
+async function datCookie(ten: string, du_lieu: object): Promise<void> {
+  const gia_tri = await maHoa(du_lieu, SONG_GIAY);
+
+  // Trình duyệt vứt cookie quá khổ mà KHÔNG báo gì. Nên phải tự báo, và báo to: nhật
+  // ký của cổng là nơi duy nhất lỗi này có thể lộ ra.
+  if (ten.length + 1 + gia_tri.length > TRAN_COOKIE) {
+    console.error(
+      `[phiên] Cookie ${ten} nặng ${ten.length + 1 + gia_tri.length} byte, vượt trần ` +
+        `${TRAN_COOKIE}. Trình duyệt sẽ vứt nó và người dùng không đăng nhập được. ` +
+        `Xem chú thích ở lib/session.ts.`,
+    );
+  }
+
   const kho = await cookies();
-  kho.set(TEN_COOKIE, await maHoa(phien, 60 * 60 * 12), {
+  kho.set(ten, gia_tri, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    // Bản triển khai thật chạy HTTPS thì bật `secure`. Môi trường phát triển chạy
-    // HTTP thuần nên bật ở đây sẽ làm trình duyệt bỏ qua cookie.
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 12,
+    secure: COOKIE_AN_TOAN,
+    maxAge: SONG_GIAY,
   });
+}
+
+export async function luuPhien(phien: Phien): Promise<void> {
+  const { idToken, ...conLai } = phien;
+  await datCookie(TEN_COOKIE, conLai);
+  if (idToken) await datCookie(TEN_COOKIE_ID, { idToken });
 }
 
 export async function layPhien(): Promise<Phien | null> {
   const kho = await cookies();
   const cookie = kho.get(TEN_COOKIE);
   if (!cookie) return null;
-  return await giaiMa<Phien>(cookie.value);
+
+  const phien = await giaiMa<Phien>(cookie.value);
+  if (!phien) return null;
+
+  // Thiếu cookie id token thì phiên vẫn dùng được — chỉ lúc đăng xuất Keycloak sẽ hỏi
+  // lại người dùng một câu xác nhận.
+  const cookieId = kho.get(TEN_COOKIE_ID);
+  const id = cookieId ? await giaiMa<{ idToken?: string }>(cookieId.value) : null;
+  return { ...phien, idToken: id?.idToken };
 }
 
 export async function xoaPhien(): Promise<void> {
   const kho = await cookies();
   kho.delete(TEN_COOKIE);
+  kho.delete(TEN_COOKIE_ID);
 }
 
 // --- Trạng thái tạm giữa hai chặng của luồng đăng nhập ---------------------
@@ -107,7 +178,7 @@ export async function luuTrangThaiDangNhap(
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    secure: process.env.NODE_ENV === "production",
+    secure: COOKIE_AN_TOAN,
     maxAge: 600,
   });
 }
