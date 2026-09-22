@@ -20,11 +20,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DongThoiGian, danhDauQuayLui } from "@/components/dong-thoi-gian";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { goiDichVu } from "@/lib/api";
-import { chiGio, khoaNgay, ngayGio, nhanNgay } from "@/lib/dinh-dang";
-import type { HoSoChiTiet, SuKien } from "@/lib/kieu";
+import { ngayGio } from "@/lib/dinh-dang";
+import type { HoSoChiTiet } from "@/lib/kieu";
 import { daTroiQua, docDongHo } from "@/lib/sla";
 import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
 
@@ -55,179 +56,6 @@ function O({
           {phu}
         </span>
       )}
-    </div>
-  );
-}
-
-/**
- * Đếm số lần hồ sơ quay lại một trạng thái đã đi qua.
- *
- * Con số này là dấu hiệu rõ nhất của một quy trình chạy không thẳng, nên nó đáng được
- * gọi tên ngay trên dòng thời gian thay vì để người đọc tự đếm.
- */
-function danhDauQuayLui(cacSuKien: SuKien[]): Map<number, string> {
-  const daGap = new Map<string, number>();
-  const nhan = new Map<number, string>();
-
-  cacSuKien.forEach((e, i) => {
-    const lan = (daGap.get(e.to_state) ?? 0) + 1;
-    daGap.set(e.to_state, lan);
-    if (lan > 1) nhan.set(i, `Quay lui lần ${lan - 1}`);
-  });
-
-  return nhan;
-}
-
-function MocThoiGian({
-  su_kien,
-  quayLui,
-  cuoiCung,
-}: {
-  su_kien: SuKien;
-  quayLui?: string;
-  cuoiCung: boolean;
-}) {
-  const den = trinhBayTrangThai(su_kien.to_state);
-  const tu = trinhBayTrangThai(su_kien.from_state);
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "32px minmax(0,1fr)", gap: "0 14px" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <span
-          aria-hidden="true"
-          style={{
-            ...bienHoMau(den.ho),
-            width: "30px",
-            height: "30px",
-            borderRadius: "50%",
-            display: "grid",
-            placeItems: "center",
-            fontSize: "13px",
-            lineHeight: 1,
-            background: "var(--ho-bg)",
-            color: "var(--ho-ink)",
-            border: `1px ${su_kien.is_system ? "dashed" : "solid"} var(--ho-line)`,
-          }}
-        >
-          {den.dau}
-        </span>
-        {!cuoiCung && (
-          <span
-            style={{
-              flex: "1 1 auto",
-              width: "2px",
-              minHeight: "14px",
-              background: "var(--line)",
-              marginTop: "6px",
-            }}
-          />
-        )}
-      </div>
-
-      <div style={{ paddingBottom: "20px", minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "baseline",
-            gap: "4px 11px",
-          }}
-        >
-          <span className="mono" style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
-            {chiGio(su_kien.timestamp)}
-          </span>
-          <span
-            style={{
-              fontSize: "13.5px",
-              fontWeight: 600,
-              // Tác nhân hệ thống viết khác người thật, để không ai nhầm một hành động
-              // tự động thành quyết định của đồng nghiệp.
-              fontFamily: su_kien.is_system ? "var(--mono)" : undefined,
-              letterSpacing: su_kien.is_system ? ".02em" : undefined,
-              color: su_kien.is_system ? "var(--ink-2)" : "var(--ink)",
-            }}
-          >
-            {su_kien.is_system ? su_kien.actor_label.toUpperCase() : su_kien.actor_label}
-          </span>
-          {su_kien.is_system && (
-            <span style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
-              Tự động · không phải người
-            </span>
-          )}
-        </div>
-
-        <div style={{ marginTop: "5px", fontSize: "15px", fontWeight: 600, lineHeight: 1.45 }}>
-          {su_kien.activity_label ?? su_kien.activity}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: "8px",
-            marginTop: "9px",
-          }}
-        >
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "12.5px",
-              color: "var(--ink-3)",
-            }}
-          >
-            <span aria-hidden="true">{tu.dau}</span>
-            {su_kien.from_state_label}
-          </span>
-          <span className="mono" style={{ fontSize: "13px", color: "var(--ink-3)" }}>
-            →
-          </span>
-          <NhanTrangThai ma={su_kien.to_state} nhan={su_kien.to_state_label} />
-          {quayLui && (
-            <span
-              className="mono"
-              style={{
-                ...bienHoMau("o"),
-                fontSize: "11px",
-                padding: "3px 8px",
-                borderRadius: "999px",
-                background: "var(--ho-bg)",
-                border: "1px dashed var(--ho-line)",
-                color: "var(--ho-ink)",
-              }}
-            >
-              {quayLui}
-            </span>
-          )}
-        </div>
-
-        {su_kien.note && (
-          <div
-            style={{
-              marginTop: "9px",
-              padding: "10px 12px",
-              borderRadius: "9px",
-              background: "var(--surface-2)",
-              border: "1px solid var(--line)",
-            }}
-          >
-            <span className="tua-muc">Lý do</span>
-            <span
-              style={{
-                display: "block",
-                marginTop: "4px",
-                fontSize: "13px",
-                lineHeight: 1.65,
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {su_kien.note}
-            </span>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -407,65 +235,11 @@ export default async function ChiTietHoSo({
         </div>
       )}
 
-      {/* --- Dòng thời gian ------------------------------------------------- */}
-      <div
-        style={{
-          marginTop: "24px",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px 18px",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
-          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600, letterSpacing: "-.01em" }}>
-            Dòng thời gian hồ sơ
-          </h2>
-          <p className="mono" style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--ink-3)" }}>
-            {ho_so.history.length} mốc · {quayLui.size} lần quay lui
-          </p>
-        </div>
-      </div>
-
-      <div className="the" style={{ marginTop: "14px", padding: "20px 20px 4px" }}>
-        {ho_so.history.length === 0 ? (
-          <p style={{ margin: "0 0 16px", fontSize: "13.5px", color: "var(--ink-2)", lineHeight: 1.6 }}>
-            Hồ sơ vừa được gửi và chưa đổi trạng thái lần nào. Mốc đầu tiên sẽ xuất hiện
-            ở đây ngay khi điều phối viên tiếp nhận.
-          </p>
-        ) : (
-          ho_so.history.map((e, i) => {
-            const ngayMoi =
-              i === 0 || khoaNgay(e.timestamp) !== khoaNgay(ho_so.history[i - 1].timestamp);
-
-            return (
-              <div key={`${e.timestamp}-${i}`}>
-                {ngayMoi && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      margin: i === 0 ? "0 0 14px" : "6px 0 14px",
-                    }}
-                  >
-                    <span className="mono tua-muc" style={{ whiteSpace: "nowrap" }}>
-                      {nhanNgay(e.timestamp, bayGio)}
-                    </span>
-                    <span style={{ flex: "1 1 auto", height: "1px", background: "var(--line)" }} />
-                  </div>
-                )}
-                <MocThoiGian
-                  su_kien={e}
-                  quayLui={quayLui.get(i)}
-                  cuoiCung={i === ho_so.history.length - 1}
-                />
-              </div>
-            );
-          })
-        )}
-      </div>
+      <DongThoiGian
+        cacSuKien={ho_so.history}
+        bayGio={bayGio}
+        khiTrong="Hồ sơ vừa được gửi và chưa đổi trạng thái lần nào. Mốc đầu tiên sẽ xuất hiện ở đây ngay khi điều phối viên tiếp nhận."
+      />
 
       {/* --- Thao tác ------------------------------------------------------- */}
       <div className="the khong-in" style={{ marginTop: "24px" }}>

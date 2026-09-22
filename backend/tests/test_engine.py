@@ -20,6 +20,7 @@ from sqlalchemy import func, select, text
 
 from app.models.case import EventLog
 from app.models.workflow_config import (
+    Department,
     Guard as GuardRow,
     Priority,
     RequestType,
@@ -38,6 +39,7 @@ from app.workflow.engine import (
 from app.workflow.errors import (
     FieldNotPermitted,
     GuardViolation,
+    InvalidFieldValue,
     NoteRequired,
     RoleNotPermitted,
     SystemTransitionOnly,
@@ -435,13 +437,21 @@ def test_leo_thang_khong_duoc_doi_phong_ban(session, rule_set, phong_ban):
         departments=frozenset({phong_ban}),
     )
 
+    # Phải là một phòng CÓ THẬT. Từ #82 mã phòng bịa bị phép kiểm danh mục chặn trước
+    # khi tới ràng buộc này, nên bài sẽ không còn kiểm được điều nó muốn kiểm. Dùng
+    # phòng thật thì đây mới đúng là kịch bản đáng lo: đẩy hồ sơ quá hạn sang phòng khác.
+    phong_khac = session.scalars(
+        select(Department.code).where(Department.is_active, Department.code != phong_ban)
+    ).first()
+    assert phong_khac is not None, "dữ liệu khởi tạo phải có ít nhất hai phòng ban"
+
     with pytest.raises(GuardViolation) as loi:
         perform_transition(
             session,
             case_id=ho_so.id,
             to_state="in-progress",
             actor=nguoi_duyet,
-            changes={"department_code": "phong-ban-khac"},
+            changes={"department_code": phong_khac},
         )
     assert loi.value.guard_code == "department-unchanged"
 
@@ -824,3 +834,62 @@ def test_moi_truong_quyet_dinh_deu_dat_duoc_o_it_nhat_mot_canh(session, rule_set
     }
     assert permitted_fields(cac_ma) == CHANGEABLE_FIELDS
     assert GOVERNED_FIELDS <= CHANGEABLE_FIELDS
+
+
+# ---------------------------------------------------------------------------
+# Giá trị phải có trong danh mục — #82
+# ---------------------------------------------------------------------------
+#
+# Buồng lái là nơi đầu tiên gửi `changes` qua HTTP, nên là nơi đầu tiên gặp giá trị gõ
+# sai. Không kiểm thì khóa ngoại nổ thành lỗi 500 không lời giải thích.
+
+
+def test_phong_ban_ngung_hoat_dong_bi_tu_choi(session, rule_set):
+    """Khóa ngoại không bắt được trường hợp này: dòng vẫn còn, chỉ là đã ngừng dùng."""
+    ho_so = _tao_ho_so(session)
+    perform_transition(
+        session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+        changes={"priority_code": _muc_uu_tien(session)},
+    )
+    phong = session.scalars(select(Department).where(Department.is_active)).first()
+    phong.is_active = False
+    session.flush()
+
+    with pytest.raises(InvalidFieldValue) as loi:
+        perform_transition(
+            session, case_id=ho_so.id, to_state="awaiting-acceptance", actor=PHAN_LOAI,
+            changes={"department_code": phong.code},
+        )
+    assert loi.value.code == "invalid-field-value"
+    assert loi.value.field == "department_code"
+
+
+def test_gia_tri_khong_phai_chuoi_bi_tu_choi(session, rule_set):
+    """Gửi số thay vì mã: không để nó xuống tới câu truy vấn so sánh text với integer."""
+    ho_so = _tao_ho_so(session)
+    with pytest.raises(InvalidFieldValue):
+        perform_transition(
+            session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+            changes={"priority_code": 3},
+        )
+
+
+def test_phan_cong_lai_khong_xoa_duoc_phong_ban_bang_none(session, rule_set, phong_ban):
+    """Lỗ ở `department-unchanged` từ #78, vá ở #82.
+
+    Ràng buộc cũ chỉ chặn khi giá trị khác None. Gửi `department_code: None` thì lọt
+    qua, rồi bước cập nhật hồ sơ ghi đè None — hồ sơ đang leo thang mất luôn phòng ban.
+    """
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+    perform_transition(
+        session, case_id=ho_so.id, to_state="escalated", actor=Actor.system("sla")
+    )
+    xd = Actor(id="xd-01", roles=frozenset({"approver"}), departments=frozenset({phong_ban}))
+
+    with pytest.raises(GuardViolation) as loi:
+        perform_transition(
+            session, case_id=ho_so.id, to_state="in-progress", actor=xd,
+            changes={"department_code": None},
+        )
+    assert loi.value.guard_code == "department-unchanged"
+    assert ho_so.department_code == phong_ban

@@ -19,6 +19,8 @@ from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
 from app.workflow.context import Actor
+from app.workflow.coordination import router as router_dieu_phoi
+from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.escalation import quet_va_leo_thang
 from app.workflow.routes import router as router_yeu_cau
 
@@ -88,6 +90,7 @@ app = FastAPI(
 
 
 app.include_router(router_yeu_cau)
+app.include_router(router_dieu_phoi)
 
 
 @app.get("/health", tags=["Vận hành"])
@@ -159,7 +162,15 @@ def me(
 
     Chỉ trả về những claim cần cho giao diện. Không trả nguyên token lẫn các claim
     nội bộ của Keycloak — cổng không cần chúng, và lộ ra chỉ thêm bề mặt tấn công.
+
+    `workspaces` cho giao diện biết dựng mục điều hướng nào. Dịch vụ quyết, dựa trên
+    vai trò, để mã giao diện không phải chứa tên vai trò nào cả. Đây chỉ là chuyện hiển
+    thị: mỗi điểm cuối vẫn tự gác cửa của nó.
     """
+    khong_gian = ["portal"]
+    if vao_duoc_buong_lai(actor):
+        khong_gian.append("coordination")
+
     return {
         "id": actor.id,
         "username": claims.get("preferred_username"),
@@ -167,6 +178,7 @@ def me(
         "email": claims.get("email"),
         "roles": sorted(actor.roles),
         "departments": sorted(actor.departments),
+        "workspaces": khong_gian,
     }
 
 

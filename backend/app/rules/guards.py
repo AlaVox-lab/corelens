@@ -114,8 +114,13 @@ def department_unchanged(ctx: TransitionContext) -> None:
     Leo thang là chuyện nội bộ một phòng: quá hạn thì đẩy lên cấp trên trong cùng
     phòng ban, không đá sang phòng khác.
     """
-    moi = ctx.changes.get("department_code")
-    if moi is not None and moi != ctx.case.department_code:
+    # Kiểm theo sự CÓ MẶT của khóa, không theo giá trị khác None. Gửi kèm
+    # `department_code: None` cũng là một lần đổi — thành không thuộc phòng nào — và
+    # nếu chỉ kiểm `is not None` thì nó lọt qua, rồi bước cập nhật hồ sơ ghi đè `None`.
+    if (
+        "department_code" in ctx.changes
+        and ctx.changes["department_code"] != ctx.case.department_code
+    ):
         raise GuardViolation(
             "department-unchanged",
             "Không được đổi phòng ban ở bước này, chỉ đổi người phụ trách.",
