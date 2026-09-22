@@ -21,18 +21,25 @@ from sqlalchemy.orm import Session
 from app.events.log import record_event
 from app.models.case import EventLog, Request
 from app.models.workflow_config import RequestType, RuleSet, State, Transition
-from app.rules.guards import run_guards
+from app.rules.guards import GOVERNED_FIELDS, permitted_fields, run_guards
 from app.rules.sla import cap_nhat_dong_ho
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.errors import (
     CaseNotFound,
+    FieldNotPermitted,
     NoteRequired,
     RoleNotPermitted,
     SystemTransitionOnly,
     TransitionNotAllowed,
 )
 
-# Những trường quyết định mà một lần chuyển trạng thái được phép đặt.
+# Biên NGOÀI của những trường một lần chuyển trạng thái có thể đặt: bốn trường quyết
+# định. Biên trong — trường nào đặt được ở cạnh nào — do ràng buộc gắn trên cạnh quyết
+# định, xem `permitted_fields` trong `app/rules/guards.py`.
+#
+# Biên ngoài được giữ LÚC NẠP MÔ-ĐUN chứ không lúc chạy: nếu mọi trường mà ràng buộc
+# quản đều nằm trong biên, thì mọi trường mà một cạnh cho đặt cũng nằm trong biên.
+# Cấu hình sai thì dịch vụ không khởi động; dữ liệu gửi sai thì lần chuyển bị từ chối.
 #
 # `current_state` cố ý KHÔNG có mặt: nó do engine tự đặt sau khi đã ghi nhật ký. Các
 # trường `suggested_*` cũng không: tầng I ghi vào chúng theo đường riêng, và nguyên
@@ -45,6 +52,22 @@ CHANGEABLE_FIELDS = frozenset(
         "assignee_id",
     }
 )
+
+# Kiểm ngay lúc nạp mô-đun: không ràng buộc nào được quản một trường nằm ngoài biên.
+#
+# Ai đó thêm vào `GUARD_REGISTRY` một ràng buộc quản `current_state` hay
+# `suggested_priority_code` thì dịch vụ **không khởi động được**, thay vì chạy tiếp với
+# một đường ghi lén vào trường không được phép.
+#
+# Đây là chỗ DUY NHẤT giữ biên ngoài. Đừng gỡ nó với ý nghĩ "phép kiểm theo cạnh đã
+# chặn rồi" — phép kiểm theo cạnh chỉ chặn trường mà ràng buộc không quản, còn chính
+# phép kiểm này mới bảo đảm ràng buộc không quản trường cấm.
+_VUOT_BIEN = GOVERNED_FIELDS - CHANGEABLE_FIELDS
+if _VUOT_BIEN:
+    raise RuntimeError(
+        "Ràng buộc trong app/rules/guards.py quản trường nằm ngoài CHANGEABLE_FIELDS: "
+        f"{', '.join(sorted(_VUOT_BIEN))}"
+    )
 
 
 def get_active_rule_set(session: Session) -> RuleSet:
@@ -209,12 +232,24 @@ def perform_transition(
             f"Thao tác '{canh.activity_label}' bắt buộc ghi lý do."
         )
 
+    # Trường gửi kèm phải được một ràng buộc gắn trên CẠNH NÀY quản. Mức ưu tiên chỉ
+    # đặt được ở cạnh phân loại, không ở cạnh hoàn thành xử lý. Thiếu phép kiểm này thì
+    # ai đi được một cạnh bất kỳ cũng sửa được mọi trường quyết định — người xử lý tự
+    # nâng mức ưu tiên việc của mình. Đó là lỗ hổng mà #78 vá.
+    #
+    # Không cần kiểm riêng `CHANGEABLE_FIELDS` ở đây. Trường được phép là tập con của
+    # trường được ràng buộc quản, mà tập đó đã được kiểm nằm trong `CHANGEABLE_FIELDS`
+    # ngay lúc nạp mô-đun — xem đầu tệp. Nên `current_state` hay `suggested_*` không
+    # bao giờ lọt qua phép kiểm dưới đây. Phép thử đột biến ở #78 xác nhận điều này:
+    # thêm một phép kiểm biên ngoài lúc chạy thì gỡ nó đi cũng không bài nào đổ, vì nó
+    # không bao giờ tự mình chặn được gì.
     thay_doi = dict(changes or {})
-    la_truong = set(thay_doi) - CHANGEABLE_FIELDS
-    if la_truong:
-        raise TransitionNotAllowed(
-            f"Lần chuyển trạng thái không được đặt các trường: "
-            f"{', '.join(sorted(la_truong))}."
+    ngoai_canh = set(thay_doi) - permitted_fields(canh.guard_codes)
+    if ngoai_canh:
+        raise FieldNotPermitted(
+            ngoai_canh,
+            f"Thao tác '{canh.activity_label}' không đặt được "
+            f"{', '.join(sorted(ngoai_canh))}.",
         )
 
     ctx = TransitionContext(

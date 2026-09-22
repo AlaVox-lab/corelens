@@ -58,7 +58,16 @@ def client(session):
 
 
 def _tao(client, title="Máy in phòng kế toán kẹt giấy") -> dict:
-    r = client.post("/requests", json={"title": title, "description": "Mô tả thử."})
+    """Gửi một yêu cầu CÓ chọn loại — trường hợp thường gặp trên biểu mẫu ba bước.
+
+    Có loại thì hồ sơ đi tiếp được qua cạnh phân loại, vì ràng buộc `set-request-type`
+    đòi hồ sơ phải có loại khi rời tay người phân loại (#78).
+    """
+    loai = client.get("/request-types").json()[0]["code"]
+    r = client.post(
+        "/requests",
+        json={"title": title, "description": "Mô tả thử.", "request_type_code": loai},
+    )
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -427,3 +436,17 @@ def test_danh_muc_trang_thai_du_cho_bang_chu_giai(client, session, rule_set):
 
     assert tu_api == list(tu_bang), "đúng danh sách và đúng thứ tự hiển thị"
     assert any(x["is_terminal"] for x in r.json()), "phải có ít nhất một trạng thái đóng"
+
+
+def test_loi_truong_khong_duoc_phep_dich_sang_422():
+    """Nội dung gửi kèm sai, không phải xung đột trạng thái — nên 422 chứ không 409.
+
+    Cổng #44 không nhận trường `changes` nên không kích được lỗi này qua HTTP, nhưng
+    buồng lái #45 sẽ nhận, và bảng `MA_HTTP` phải sẵn sàng từ trước.
+    """
+    from app.workflow.errors import FieldNotPermitted
+    from app.workflow.routes import _bao_loi
+
+    loi = _bao_loi(FieldNotPermitted({"priority_code"}, "không đặt được"))
+    assert loi.status_code == 422
+    assert loi.detail["code"] == "field-not-permitted"
