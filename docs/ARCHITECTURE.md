@@ -148,9 +148,18 @@ mọi chuyển hướng dựng từ địa chỉ yêu cầu sẽ trỏ về `htt
 đi tới đó sẽ lạc. Địa chỉ công khai của cổng vì vậy phải khai riêng bằng biến môi trường,
 không được suy ra.
 
-**Token không bao giờ tới trình duyệt.** Cổng giữ chúng trong một cookie `httpOnly` đã
-mã hóa và tự gắn vào header khi gọi dịch vụ — khuôn mẫu cổng chặn trước. Mã lạ lọt vào
+**Token không bao giờ tới trình duyệt.** Cổng giữ chúng trong cookie `httpOnly` đã mã
+hóa và tự gắn vào header khi gọi dịch vụ — khuôn mẫu cổng chặn trước. Mã lạ lọt vào
 trang cũng không đọc được token, khác hẳn với việc để token trong `localStorage`.
+
+Phiên nằm ở **hai** cookie, không phải một: `dxlab_session` giữ access token và refresh
+token, dùng ở mọi lần gọi dịch vụ; `dxlab_id_token` giữ id token, chỉ dùng lúc đăng xuất.
+Lý do là trần 4096 byte của trình duyệt: ba token của Keycloak mã hóa chung nặng 4227–4311
+byte, và trình duyệt âm thầm vứt cookie quá khổ nên không ai đăng nhập được (#87). Thêm
+claim vào token, hoặc thêm nhóm và vai trò cho người dùng, đều làm cookie phình ra — cổng
+ghi lỗi vào nhật ký khi một cookie vượt 4000 byte. Cờ `Secure` bám theo giao thức của
+`PORTAL_PUBLIC_URL` chứ không theo `NODE_ENV`, vì bản dựng Docker chạy chế độ production
+qua HTTP, và Safari cùng các trình duyệt nhúng bỏ cookie `Secure` gửi qua HTTP.
 
 **Không gian `P` không dùng nền tảng ngoài.** Engine máy trạng thái do nhóm tự viết, với
 trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Quyết định này được đưa ra sau khi
