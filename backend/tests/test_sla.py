@@ -100,7 +100,12 @@ def test_cot_sla_running_tra_tu_bang_khong_ma_cung(session, rule_set):
 
 def test_dong_ho_chua_chay_truoc_khi_vao_xu_ly(session, rule_set):
     """Quãng chờ phân loại không tính vào SLA của người xử lý."""
-    ho_so = create_case(session, title="Chưa phân loại", requester_id=NGUOI_TAO)
+    ho_so = create_case(
+        session,
+        title="Chưa phân loại",
+        requester_id=NGUOI_TAO,
+        request_type_code=_loai_yeu_cau(session).code,
+    )
     assert ho_so.sla_segment_since is None
     assert ho_so.sla_running_seconds == 0
 

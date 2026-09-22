@@ -73,6 +73,25 @@ class NoteRequired(TransitionError):
     code = "note-required"
 
 
+class FieldNotPermitted(TransitionError):
+    """Lần chuyển mang theo một trường mà cạnh đang đi không cho đặt.
+
+    Một trường chỉ đặt được ở cạnh có ràng buộc chịu trách nhiệm về nó — xem
+    `GUARD_REGISTRY` trong `app/rules/guards.py`. Nhờ vậy mức ưu tiên chỉ đặt được ở
+    cạnh phân loại, người xử lý chỉ giao được ở cạnh nhận việc, và không ai lợi dụng
+    một cạnh khác để sửa lén trường quyết định.
+
+    Khác `TransitionNotAllowed`: cạnh vẫn tồn tại và vẫn đi được, chỉ là nội dung gửi
+    kèm sai. Vì vậy dịch sang HTTP 422 chứ không phải 409.
+    """
+
+    code = "field-not-permitted"
+
+    def __init__(self, fields: set[str], message: str) -> None:
+        super().__init__(message)
+        self.fields = frozenset(fields)
+
+
 class CaseNotFound(TransitionError):
     """Không có hồ sơ nào mang định danh đó."""
 

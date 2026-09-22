@@ -480,6 +480,35 @@ dòng dữ liệu; chỉ khi cần một *loại* ràng buộc mới mới phả
 chối chuyển trạng thái**, không im lặng bỏ qua. Im lặng cho qua sẽ biến một ràng buộc
 nghiệp vụ thành vô hiệu mà không ai biết.
 
+**Ràng buộc còn quyết định trường nào đặt được ở cạnh nào** — từ #78. Mỗi mục trong
+`GUARD_REGISTRY` khai, cạnh hàm kiểm tra, tập trường mà ràng buộc đó chịu trách nhiệm.
+Một lần chuyển trạng thái chỉ kèm được trường mà ràng buộc gắn trên **chính cạnh đó**
+quản; gửi trường khác thì engine từ chối bằng `field-not-permitted` và không ghi dòng
+nhật ký nào.
+
+Hai biên, giữ ở hai thời điểm khác nhau:
+
+| Biên | Chặn gì | Kiểm lúc | Nằm ở |
+|---|---|---|---|
+| Ngoài | Ràng buộc quản trường không thuộc bốn trường quyết định — `current_state`, `suggested_*` | **Nạp mô-đun** — sai thì dịch vụ không khởi động | `CHANGEABLE_FIELDS` trong `engine.py` |
+| Trong | Lần chuyển gửi kèm trường mà cạnh đang đi không quản | **Mỗi lần chuyển** — sai thì bị từ chối | `permitted_fields()` trong `guards.py` |
+
+Biên ngoài không cần kiểm lại lúc chạy: trường một cạnh cho đặt luôn là tập con của
+trường được ràng buộc quản, mà tập đó đã được xác nhận nằm trong biên lúc nạp. Phép
+thử đột biến ở #78 xác nhận điều này — một phép kiểm biên ngoài lúc chạy, gỡ đi, không
+làm đổ bài nào, vì nó không bao giờ tự mình chặn được gì.
+
+Trước #78 chỉ có tầng ngoài, nên ai đi được một cạnh bất kỳ cũng sửa được mọi trường
+quyết định — người xử lý bấm *Hoàn thành xử lý* kèm `priority_code` là tự nâng được mức
+ưu tiên việc của mình. Ràng buộc Poka-yoke *người tạo không tự đặt mức ưu tiên* khi đó
+chỉ đứng được nhờ giao diện không có ô nhập, tức là đúng kiểu *chỉ chặn ở giao diện* mà
+mục này cảnh báo.
+
+Bản đồ trường nằm trong mã chứ không trong bảng, vì nó là bản chất của chính hàm:
+`set_priority` đọc `changes["priority_code"]`. Khai trong bảng thì dữ liệu và mã có thể
+âm thầm nói hai điều khác nhau. Nhưng **gắn** ràng buộc vào cạnh nào thì vẫn là dữ liệu:
+gỡ `set-priority` khỏi một cạnh trong `infra/seed/` là cạnh đó hết đặt được mức ưu tiên.
+
 Còn một cách diễn đạt thứ ba, đặt ở tầng thấp nhất: **khóa ngoại và chỉ mục duy nhất
 từng phần** trong lược đồ — xem mục 5.2. Mỗi tầng bắt một loại sai khác nhau, và tầng
 càng thấp thì càng khó lách.

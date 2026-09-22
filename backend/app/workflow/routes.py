@@ -32,6 +32,7 @@ from app.workflow.engine import (
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import (
     CaseNotFound,
+    FieldNotPermitted,
     GuardViolation,
     NoteRequired,
     RoleNotPermitted,
@@ -64,6 +65,7 @@ MA_HTTP = {
     # Dùng số trực tiếp: tên hằng 422 của Starlette đổi giữa các phiên bản
     GuardViolation: 422,
     NoteRequired: 422,
+    FieldNotPermitted: 422,
 }
 
 
@@ -383,18 +385,3 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTie
         history=[_su_kien(e, states, canh) for e in case_history(session, ho_so.id)],
         allowed_transitions=di_duoc,
     )
-
-
-# ---------------------------------------------------------------------------
-# GHI CHÚ — một lỗ hổng của engine, chưa vá
-# ---------------------------------------------------------------------------
-# `CHANGEABLE_FIELDS` trong engine cho phép đặt `priority_code` ở **mọi** cạnh, không
-# chỉ cạnh mang ràng buộc `set-priority`. Cổng này đóng lỗ đó bằng cách không nhận
-# trường `changes`, nhưng buồng lái ở #45 thì cần nhận.
-#
-# Cách vá đúng: engine chỉ cho đặt trường nào mà cạnh đang đi có ràng buộc tương ứng —
-# `set-priority` cho `priority_code`, `select-department` cho `department_code`. Dữ
-# liệu đã khai sẵn quan hệ đó ở bảng `transition_guards`, chỉ thiếu bước engine đọc nó.
-#
-# Ghi lại ở đây thay vì sửa ngay, vì sửa engine giữa lúc làm giao diện sẽ trộn hai
-# thay đổi không liên quan vào một pull request.

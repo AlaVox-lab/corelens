@@ -107,14 +107,14 @@ class TaoHoSoVao(BaseModel):
 class ChuyenTrangThaiVao(BaseModel):
     """Yêu cầu chuyển trạng thái từ cổng người dùng.
 
-    Cố ý **không** có trường `changes`. Cổng này phục vụ người tạo yêu cầu, và họ không
-    đặt loại yêu cầu, phòng ban, mức ưu tiên hay người xử lý — đó là việc của người
-    phân loại và người xét duyệt ở buồng lái (#45).
+    Cố ý **không** có trường `changes`. Cổng này phục vụ người tạo yêu cầu, và không
+    cạnh nào của vai trò `requester` cho đặt trường quyết định: ràng buộc gắn trên các
+    cạnh đó — `requester-owns-case` — không quản trường nào. Mở trường này ra thì mọi
+    giá trị gửi lên đều bị engine từ chối bằng `field-not-permitted`, nên nhận vào chỉ
+    là mời người dùng gửi thứ chắc chắn hỏng.
 
-    Không mở trường đó ra cũng đóng luôn một lỗ hổng của engine: `CHANGEABLE_FIELDS`
-    cho phép đặt `priority_code` ở **mọi** cạnh, nên nếu cổng nhận `changes` thì người
-    tạo yêu cầu có thể tự đặt mức ưu tiên khi đi một cạnh của mình. Xem ghi chú ở cuối
-    `routes.py`.
+    Hai lớp chặn độc lập nhau: lược đồ này không nhận trường, và engine không cho đặt
+    trường ở cạnh không quản nó (#78). Gỡ một lớp thì lớp kia vẫn giữ.
     """
 
     to_state: str

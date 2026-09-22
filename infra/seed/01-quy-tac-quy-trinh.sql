@@ -189,7 +189,12 @@ JOIN transitions t
 --                                 trước khi nhận việc
 --
 -- Hai ràng buộc còn lại cần đối chiếu người thao tác với hồ sơ nên phải khai
--- báo thành dòng, cùng ba ràng buộc bổ trợ.
+-- báo thành dòng, cùng năm ràng buộc bổ trợ.
+--
+-- Ràng buộc còn quyết định TRƯỜNG NÀO ĐẶT ĐƯỢC Ở CẠNH NÀO. Một lần chuyển chỉ kèm
+-- được trường mà ràng buộc trên cạnh đó quản — bản đồ nằm ở GUARD_REGISTRY trong
+-- backend/app/rules/guards.py. Gỡ set-priority khỏi một cạnh là cạnh đó hết đặt được
+-- mức ưu tiên, không cần sửa mã.
 
 INSERT INTO guards (code, label, description) VALUES
     ('requester-owns-case',
@@ -210,7 +215,15 @@ INSERT INTO guards (code, label, description) VALUES
 
     ('department-unchanged',
      'Không được đổi phòng ban',
-     'Cạnh này giữ nguyên phòng ban của hồ sơ, chỉ đổi người phụ trách. Leo thang là chuyện nội bộ một phòng.');
+     'Cạnh này giữ nguyên phòng ban của hồ sơ, chỉ đổi người phụ trách. Leo thang là chuyện nội bộ một phòng.'),
+
+    ('set-request-type',
+     'Bắt buộc có loại yêu cầu',
+     'Hồ sơ phải có loại yêu cầu khi rời khỏi tay người phân loại. Giữ loại người gửi đã chọn, hoặc đặt mới nếu người gửi bỏ trống. Không có loại thì không có ngưỡng SLA, và bộ quét quá hạn sẽ bỏ qua hồ sơ đó mà không báo gì.'),
+
+    ('assign-handler',
+     'Cho phép giao người xử lý',
+     'Cạnh này cho phép giao hồ sơ cho một người xử lý cụ thể trong phòng ban. Chưa bắt buộc: hồ sơ vẫn thuộc cả phòng, và mọi người xử lý trong phòng đều thao tác được.');
 
 INSERT INTO transition_guards (transition_id, guard_code)
 SELECT t.id, v.guard_code
@@ -232,11 +245,21 @@ FROM (VALUES
     ('in-progress',         'completed',              'actor-in-case-department'),
     ('escalated',           'in-progress',            'actor-in-case-department'),
 
-    -- Mức ưu tiên đặt đúng một lần, ở tay người phân loại
+    -- Mức ưu tiên đặt đúng một lần, ở tay người phân loại. Cùng lúc đó hồ sơ phải có
+    -- loại yêu cầu, vì loại quyết định ngưỡng SLA.
     ('submitted',           'classified',             'set-priority'),
+    ('submitted',           'classified',             'set-request-type'),
 
-    -- Phòng ban phụ trách chọn ở chặng chuyển về phòng
+    -- Phòng ban phụ trách chọn ở chặng chuyển về phòng. Loại yêu cầu kiểm thêm một lần
+    -- ở đây vì đây là cửa DUY NHẤT dẫn tới phòng ban: hồ sơ đi vòng qua awaiting-info
+    -- (người phân loại hỏi, người gửi trả lời) sẽ tới classified mà không qua cạnh
+    -- submitted -> classified, nên không gặp ràng buộc gắn ở đó.
     ('classified',          'awaiting-acceptance',    'select-department'),
+    ('classified',          'awaiting-acceptance',    'set-request-type'),
+
+    -- Người xử lý giao ở hai chặng: lúc phòng nhận việc, và lúc phân công lại sau leo thang
+    ('awaiting-acceptance', 'in-progress',            'assign-handler'),
+    ('escalated',           'in-progress',            'assign-handler'),
 
     -- Leo thang không đổi phòng
     ('escalated',           'in-progress',            'department-unchanged')
