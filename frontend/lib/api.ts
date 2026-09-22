@@ -80,6 +80,11 @@ export type DanhTinh = {
   email: string | null;
   roles: string[];
   departments: string[];
+  /**
+   * Không gian làm việc người này vào được — `portal`, `coordination`. Dịch vụ quyết
+   * dựa trên vai trò, để mã giao diện không phải chứa tên vai trò nào cả.
+   */
+  workspaces: string[];
 };
 
 /** Kết quả một lời gọi ghi: hoặc dữ liệu trả về, hoặc lỗi đã dịch sang tiếng người. */

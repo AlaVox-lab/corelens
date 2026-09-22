@@ -20,7 +20,14 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
 from app.models.case import EventLog, Request
-from app.models.workflow_config import Department, RequestType, State, Transition
+from app.models.workflow_config import (
+    Department,
+    Priority,
+    RequestType,
+    State,
+    Transition,
+)
+from app.rules.guards import permitted_fields
 from app.rules.sla import da_chay_giay, gioi_han_giay
 from app.workflow.context import Actor
 from app.workflow.engine import (
@@ -34,6 +41,7 @@ from app.workflow.errors import (
     CaseNotFound,
     FieldNotPermitted,
     GuardViolation,
+    InvalidFieldValue,
     NoteRequired,
     RoleNotPermitted,
     SystemTransitionOnly,
@@ -46,7 +54,9 @@ from app.workflow.schemas import (
     HoSoChiTietRa,
     HoSoTomTatRa,
     LoaiYeuCauRa,
+    MucUuTienRa,
     NhanCoMa,
+    PhongBanRa,
     SuKienRa,
     TaoHoSoVao,
     TrangThaiRa,
@@ -66,6 +76,7 @@ MA_HTTP = {
     GuardViolation: 422,
     NoteRequired: 422,
     FieldNotPermitted: 422,
+    InvalidFieldValue: 422,
 }
 
 
@@ -252,6 +263,34 @@ def danh_muc_trang_thai(
     ]
 
 
+@router.get("/priorities", response_model=list[MucUuTienRa])
+def danh_muc_muc_uu_tien(
+    session: Annotated[Session, Depends(get_session)],
+    _: Annotated[Actor, Depends(current_actor)],
+) -> list[MucUuTienRa]:
+    """Các mức ưu tiên, cho ô chọn ở buồng lái. Cờ `is_default` để giao diện điền sẵn."""
+    return [
+        MucUuTienRa(code=m.code, label=m.label, is_default=m.is_default)
+        for m in session.scalars(select(Priority).order_by(Priority.display_order)).all()
+    ]
+
+
+@router.get("/departments", response_model=list[PhongBanRa])
+def danh_muc_phong_ban(
+    session: Annotated[Session, Depends(get_session)],
+    _: Annotated[Actor, Depends(current_actor)],
+) -> list[PhongBanRa]:
+    """Các phòng ban đang hoạt động, cho ô chọn phòng khi định tuyến hồ sơ."""
+    return [
+        PhongBanRa(code=p.code, label=p.label, description=p.description)
+        for p in session.scalars(
+            select(Department)
+            .where(Department.is_active)
+            .order_by(Department.display_order)
+        ).all()
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Hồ sơ
 # ---------------------------------------------------------------------------
@@ -276,6 +315,7 @@ def tao_ho_so(
             title=du_lieu.title,
             description=du_lieu.description,
             requester_id=actor.id,
+            requester_label=actor.label,
             request_type_code=du_lieu.request_type_code,
         )
     except ValueError as loi:
@@ -355,6 +395,15 @@ def chuyen_trang_thai(
 
 
 def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTietRa:
+    return HoSoChiTietRa(**_du_lieu_chi_tiet(session, ho_so, actor))
+
+
+def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
+    """Phần chi tiết dùng chung giữa cổng người gửi và buồng lái điều phối.
+
+    Trả về dict thay vì lược đồ để buồng lái ghép thêm trường của nó mà không phải
+    dựng lại dòng thời gian và danh sách cạnh — hai thứ phải giống hệt nhau ở mọi nơi.
+    """
     states = _bang_trang_thai(session, ho_so.rule_set_id)
 
     # Nhãn hoạt động tra theo cặp trạng thái vì nhiều cạnh dùng chung `activity_code`
@@ -373,15 +422,16 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTie
             activity_code=t.activity_code,
             activity_label=t.activity_label,
             requires_note=t.requires_note,
+            fields=sorted(permitted_fields(t.guard_codes)),
         )
         for t in allowed_transitions(session, ho_so, actor)
     ]
 
-    return HoSoChiTietRa(
+    return {
         **_tom_tat(session, ho_so, states),
-        description=ho_so.description,
-        requester_id=ho_so.requester_id,
-        assignee_id=ho_so.assignee_id,
-        history=[_su_kien(e, states, canh) for e in case_history(session, ho_so.id)],
-        allowed_transitions=di_duoc,
-    )
+        "description": ho_so.description,
+        "requester_id": ho_so.requester_id,
+        "assignee_id": ho_so.assignee_id,
+        "history": [_su_kien(e, states, canh) for e in case_history(session, ho_so.id)],
+        "allowed_transitions": di_duoc,
+    }

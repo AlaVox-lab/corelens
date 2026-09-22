@@ -51,6 +51,12 @@ class Request(Base):
     # Định danh người dùng lấy từ claim `sub` của token Keycloak — xem #43.
     requester_id: Mapped[str] = mapped_column(Text)
 
+    # Tên người gửi tại thời điểm gửi, cùng lý do với `event_log.actor_label`: tra
+    # ngược từ Keycloak lúc đọc thì người nghỉ việc mất tên, người đổi tên thì hồ sơ cũ
+    # hiện tên mới. Việc tạo hồ sơ không sinh dòng nhật ký nào, nên tên phải nằm ở đây.
+    # NULL với hồ sơ có trước #82 — giao diện lùi về hiển thị mã định danh.
+    requester_label: Mapped[str | None] = mapped_column(Text, default=None)
+
     # --- Trường QUYẾT ĐỊNH: chỉ con người ghi ------------------------------
     # Người gửi đặt loại yêu cầu ngay lúc tạo hồ sơ — họ là người biết rõ nhất mình
     # đang cần gì, và người phân loại vẫn sửa lại được ở cạnh `submitted -> classified`

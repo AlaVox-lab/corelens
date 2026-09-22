@@ -229,6 +229,7 @@ dx-os-lab/
 │   ├── app/
 │   │   ├── api/auth/            # [H] ba chặng của luồng đăng nhập OIDC
 │   │   ├── yeu-cau/             # [H] cổng gửi yêu cầu — ba màn hình của #44
+│   │   ├── dieu-phoi/           # [H] buồng lái điều phối viên — #82
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
@@ -570,7 +571,7 @@ Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà kh�
 
 ### 7.2. Giao diện không giữ bản sao của bộ quy tắc
 
-**Đã cài đặt** — `frontend/app/yeu-cau/`, từ #44.
+**Đã cài đặt** — `frontend/app/yeu-cau/` từ #44, kéo dài sang `frontend/app/dieu-phoi/` ở #82.
 
 Một cổng người dùng bình thường sẽ có đâu đó một bảng đại loại *"trạng thái nào thì
 hiện nút nào"*. Cổng này **không có bảng đó**, và điều đó là cố ý.
@@ -598,6 +599,32 @@ gán dấu hiệu cho nó. Một giao diện vỡ vì dữ liệu hợp lệ là
 Nửa còn lại của Poka-yoke vẫn nằm ở engine: một cạnh hiện ra trên màn hình vẫn bị kiểm
 lại khi yêu cầu thật gửi lên. Chặn ở giao diện thôi thì không đủ, vì ai cũng gọi thẳng
 API được.
+
+**Từ #82, khuôn mẫu kéo dài từ nút bấm sang ô nhập.** Buồng lái điều phối viên phải cho
+nhập mức ưu tiên, loại yêu cầu, phòng ban. Mỗi cạnh trong `allowed_transitions` nay mang
+thêm `fields` — những trường cạnh đó cho đặt, lấy thẳng từ `permitted_fields()` của
+ràng buộc gắn trên cạnh (mục 7). Giao diện thấy cạnh *Phân loại yêu cầu* cho đặt
+`priority_code` và `request_type_code` thì dựng hai ô chọn; không có bảng nào trong
+TypeScript nói *"Phân loại thì hiện ô mức ưu tiên"*.
+
+Hệ quả kiểm chứng được: #78 gắn `set-request-type` thêm vào cạnh chuyển về phòng ban, và
+ô *Loại yêu cầu* tự hiện ra ở bảng thao tác của cạnh đó — không ai viết thêm dòng giao
+diện nào.
+
+Ranh giới giống hệt ranh giới của trạng thái: `frontend/lib/truong.ts` giữ nhãn hiển
+thị và nguồn danh mục của bốn trường quyết định, kèm phương án lùi cho trường lạ. Bốn
+trường đó là lược đồ của hồ sơ chứ không phải cấu hình nghiệp vụ, nên một bảng nhỏ ở đây
+không phải bản sao của bộ quy tắc.
+
+**Hai loại quyền, không trộn.** Buồng lái gác bằng vai trò ở cửa — `require_roles` trong
+`backend/app/workflow/coordination.py` — nhưng đó là quyền **nhìn thấy hồ sơ**, không phải
+quyền đi cạnh. Cạnh nào đi được vẫn do engine quyết qua `transition_roles`. Chú thích của
+`require_roles` cấm dùng nó để kiểm quyền chuyển trạng thái, vì hai nguồn quyền sẽ lệch
+nhau. Cửa nhìn thấy gác luôn điểm cuối chuyển trạng thái, để người không có quyền dò số
+định danh không đọc được từ mã lỗi của engine rằng hồ sơ nào có thật.
+
+Giao diện cũng không chứa tên vai trò nào. `/me` trả danh sách `workspaces` do dịch vụ
+tính, và thanh điều hướng dựng theo danh sách đó.
 
 ---
 

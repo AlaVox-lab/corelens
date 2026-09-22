@@ -92,6 +92,22 @@ class FieldNotPermitted(TransitionError):
         self.fields = frozenset(fields)
 
 
+class InvalidFieldValue(TransitionError):
+    """Trường được phép đặt, nhưng giá trị không có trong danh mục tương ứng.
+
+    Không có phép kiểm này thì một mã phòng ban gõ sai đi thẳng xuống cơ sở dữ liệu,
+    khóa ngoại nổ ra, và người dùng nhận lỗi 500 không kèm lời giải thích nào. Chặn ở
+    đây thì họ nhận 422 kèm tên trường và giá trị bị từ chối.
+    """
+
+    code = "invalid-field-value"
+
+    def __init__(self, field: str, value: object, message: str) -> None:
+        super().__init__(message)
+        self.field = field
+        self.value = value
+
+
 class CaseNotFound(TransitionError):
     """Không có hồ sơ nào mang định danh đó."""
 
