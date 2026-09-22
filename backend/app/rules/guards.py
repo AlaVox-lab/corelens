@@ -15,15 +15,38 @@
 #   "Chỉ hủy trước khi vào xử lý" — cạnh hủy chỉ xuất phát từ bốn trạng thái đầu
 #
 # Không có đường mà đi thì không cần hàm nào canh cửa.
+#
+# MỖI RÀNG BUỘC CÒN KHAI TRƯỜNG MÀ NÓ QUẢN — xem `GUARD_REGISTRY` cuối tệp. Một lần
+# chuyển trạng thái chỉ đặt được những trường mà ràng buộc gắn trên cạnh đó quản. Đây
+# là cách mức ưu tiên chỉ đặt được ở cạnh phân loại, chứ không ở bất kỳ cạnh nào mà
+# người thao tác tình cờ đi qua.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 
 from app.workflow.context import TransitionContext
 from app.workflow.errors import GuardViolation, UnknownGuard
 
 GuardFunc = Callable[[TransitionContext], None]
+
+
+@dataclass(frozen=True, slots=True)
+class Guard:
+    """Một ràng buộc: hàm kiểm tra, cùng tập trường mà ràng buộc đó chịu trách nhiệm.
+
+    Tập trường nằm ở đây, cạnh hàm, chứ không trong bảng dữ liệu. Lý do: mối liên hệ
+    là bản chất của chính hàm — `set_priority` đọc `changes["priority_code"]`. Nếu
+    khai trong bảng thì dữ liệu có thể nói `set-priority` quản `department_code` trong
+    khi mã lại kiểm `priority_code`, và hai nơi âm thầm nói hai điều khác nhau.
+
+    Ràng buộc chỉ đối chiếu người thao tác với hồ sơ — như `requester-owns-case` — thì
+    không quản trường nào, và tập để trống.
+    """
+
+    check: GuardFunc
+    governs: frozenset[str] = frozenset()
 
 
 def requester_owns_case(ctx: TransitionContext) -> None:
@@ -99,29 +122,107 @@ def department_unchanged(ctx: TransitionContext) -> None:
         )
 
 
+def set_request_type(ctx: TransitionContext) -> None:
+    """Hồ sơ phải có loại yêu cầu khi rời khỏi tay người phân loại.
+
+    Người gửi có thể đã chọn loại ngay trên biểu mẫu — khi đó người phân loại giữ
+    nguyên hoặc sửa lại. Nếu người gửi bỏ trống thì người phân loại bắt buộc đặt.
+
+    Gắn ở HAI cạnh: `submitted → classified`, và `classified → awaiting-acceptance` —
+    cửa duy nhất dẫn tới phòng ban. Cạnh thứ hai là cạnh bảo đảm: hồ sơ đi vòng qua
+    `awaiting-info` tới `classified` mà không qua cạnh thứ nhất, và nếu chỉ gắn ở đó
+    thì đường vòng này mang hồ sơ không có loại vào tận phòng ban.
+
+    Vì sao bắt buộc: loại yêu cầu quyết định ngưỡng SLA, và bộ quét hồ sơ quá hạn nối
+    bảng `request_types` bằng phép nối trong. Hồ sơ không có loại sẽ lọt khỏi phép
+    quét — **không bao giờ leo thang, và không báo gì cả**. Chặn ở đây là chặn tại
+    điểm chạm đầu vào, thay vì phát hiện khi hồ sơ đã trễ hạn cả tuần mà không ai hay.
+    """
+    if "request_type_code" in ctx.changes:
+        if not ctx.changes["request_type_code"]:
+            raise GuardViolation(
+                "set-request-type",
+                "Không được xóa loại yêu cầu khi phân loại.",
+            )
+        return
+
+    if not ctx.case.request_type_code:
+        raise GuardViolation(
+            "set-request-type",
+            "Người gửi chưa chọn loại yêu cầu, nên phải chọn khi phân loại.",
+        )
+
+
+def assign_handler(ctx: TransitionContext) -> None:
+    """Cạnh này cho phép giao hồ sơ cho một người xử lý cụ thể.
+
+    Chưa **bắt buộc** chọn người: hồ sơ vẫn thuộc về cả phòng ban, và mọi người xử lý
+    trong phòng đều thao tác được qua ràng buộc `actor-in-case-department`. Bắt buộc
+    chỉ có nghĩa khi buồng lái có ô chọn người dùng được — mà ô đó cần tra tên người
+    từ Keycloak, việc của #84.
+
+    Nhưng đã gửi thì phải có giá trị. Một chuỗi rỗng ghi xuống cột `assignee_id` sẽ
+    trông như "đã giao" trong khi thực ra không giao cho ai.
+    """
+    if "assignee_id" not in ctx.changes:
+        return
+
+    moi = ctx.changes["assignee_id"]
+    if not isinstance(moi, str) or not moi.strip():
+        raise GuardViolation(
+            "assign-handler",
+            "Người được giao xử lý không được để trống.",
+        )
+
+
 # Hợp đồng giữa dữ liệu và mã nguồn. Khóa phải trùng khít cột `code` của bảng `guards`.
-GUARD_REGISTRY: dict[str, GuardFunc] = {
-    "requester-owns-case": requester_owns_case,
-    "actor-in-case-department": actor_in_case_department,
-    "set-priority": set_priority,
-    "select-department": select_department,
-    "department-unchanged": department_unchanged,
+#
+# Cột thứ hai quyết định trường nào đặt được ở cạnh nào. `department-unchanged` quản
+# `department_code` dù không cho đổi nó: nó là ràng buộc phán xử trường đó ở cạnh
+# phân công lại, nên phải được nhìn thấy trường đó thì mới phán được.
+GUARD_REGISTRY: dict[str, Guard] = {
+    "requester-owns-case": Guard(requester_owns_case),
+    "actor-in-case-department": Guard(actor_in_case_department),
+    "set-priority": Guard(set_priority, frozenset({"priority_code"})),
+    "select-department": Guard(select_department, frozenset({"department_code"})),
+    "department-unchanged": Guard(department_unchanged, frozenset({"department_code"})),
+    "set-request-type": Guard(set_request_type, frozenset({"request_type_code"})),
+    "assign-handler": Guard(assign_handler, frozenset({"assignee_id"})),
 }
+
+# Mọi trường mà ít nhất một ràng buộc quản. Engine đối chiếu tập này với danh sách
+# trường quyết định của nó ngay lúc nạp mô-đun — xem `app/workflow/engine.py`.
+GOVERNED_FIELDS: frozenset[str] = frozenset().union(
+    *(g.governs for g in GUARD_REGISTRY.values())
+)
+
+
+def _tra_rang_buoc(ma: str) -> Guard:
+    """Tra một mã ràng buộc, ném `UnknownGuard` nếu mã nguồn chưa cài đặt.
+
+    Cố ý **không** bỏ qua âm thầm: một quản trị viên gắn nhầm mã ràng buộc phải biết
+    ngay, chứ không phải phát hiện sau vài tháng rằng ràng buộc đó chưa từng chạy.
+    """
+    rang_buoc = GUARD_REGISTRY.get(ma)
+    if rang_buoc is None:
+        raise UnknownGuard(
+            f"Bảng dữ liệu khai ràng buộc '{ma}' nhưng mã nguồn chưa cài đặt. "
+            f"Bổ sung hàm vào app/rules/guards.py hoặc gỡ dòng khai báo trong "
+            f"infra/seed/."
+        )
+    return rang_buoc
+
+
+def permitted_fields(guard_codes: Iterable[str]) -> frozenset[str]:
+    """Những trường mà một cạnh mang các ràng buộc này cho phép đặt.
+
+    Cạnh không mang ràng buộc nào quản trường nào thì trả tập rỗng — lần chuyển đó
+    không được kèm trường quyết định nào cả.
+    """
+    return frozenset().union(*(_tra_rang_buoc(ma).governs for ma in guard_codes))
 
 
 def run_guards(ctx: TransitionContext) -> None:
-    """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi.
-
-    Ném `UnknownGuard` nếu bảng dữ liệu khai một mã chưa được cài đặt. Cố ý **không**
-    bỏ qua âm thầm: một quản trị viên gắn nhầm mã ràng buộc phải biết ngay, chứ không
-    phải phát hiện sau vài tháng rằng ràng buộc đó chưa từng chạy.
-    """
+    """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi."""
     for ma in ctx.transition.guard_codes:
-        ham = GUARD_REGISTRY.get(ma)
-        if ham is None:
-            raise UnknownGuard(
-                f"Bảng dữ liệu khai ràng buộc '{ma}' nhưng mã nguồn chưa cài đặt. "
-                f"Bổ sung hàm vào app/rules/guards.py hoặc gỡ dòng khai báo trong "
-                f"infra/seed/."
-            )
-        ham(ctx)
+        _tra_rang_buoc(ma).check(ctx)
