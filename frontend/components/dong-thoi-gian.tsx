@@ -205,7 +205,7 @@ function MocThoiGian({
               border: "1px solid var(--line)",
             }}
           >
-            <span className="tua-muc">Lý do</span>
+            <span className="tua-muc">{su_kien.note_label ?? "Lý do"}</span>
             <span
               style={{
                 display: "block",

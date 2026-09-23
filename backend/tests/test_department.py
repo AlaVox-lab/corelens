@@ -143,6 +143,15 @@ def _da_leo_thang(session, phong: str) -> Request:
     return ho_so
 
 
+def _dem_nhom(client, duong_dan: str = "/department/queue") -> dict[str, int]:
+    """Số hồ sơ của từng nhóm trong hàng đợi phòng ban, theo người đang gọi.
+
+    Bài nào so số đếm thì so chênh lệch trước và sau, không so số tuyệt đối: cụm dùng để
+    chạy bài có thể đã sẵn hồ sơ của phòng này từ lúc thử tay.
+    """
+    return {g["code"]: g["count"] for g in client.get(duong_dan).json()["groups"]}
+
+
 def _canh_cua_vai_tro(session, rule_set, tu: str, vai_tro: str) -> set[str]:
     """Đáp án tra thẳng từ ma trận phân quyền."""
     return set(
@@ -239,6 +248,9 @@ def test_ho_so_cho_bo_sung_van_hien_trong_hang_doi(client, session, rule_set, ph
     """Định nghĩa hoàn thành của #99: người xử lý hỏi thêm xong, hồ sơ vẫn nằm trong
     hàng đợi của họ — ở nhóm theo dõi, xếp sau việc phải làm, kể cả bộ lọc "của tôi"."""
     toi = _xu_ly(phong_ban)
+    _goi_bang(client, toi)
+    duong_dan_thu = ("/department/queue", "/department/queue?mine=true")
+    truoc = {d: _dem_nhom(client, d)["awaiting-info"] for d in duong_dan_thu}
     dang_lam = _dang_xu_ly(session, phong_ban, "Việc đang làm", giao_cho=toi)
     cho_bo_sung = _dang_xu_ly(session, phong_ban, "Đã hỏi thêm", giao_cho=toi)
     perform_transition(session, case_id=cho_bo_sung.id, to_state="awaiting-info",
@@ -250,18 +262,49 @@ def test_ho_so_cho_bo_sung_van_hien_trong_hang_doi(client, session, rule_set, ph
     perform_transition(session, case_id=phong_kia.id, to_state="awaiting-info",
                        actor=_xu_ly(phong_khac), note="?")
     session.commit()
-    _goi_bang(client, toi)
 
-    for duong_dan in ("/department/queue", "/department/queue?mine=true"):
+    for duong_dan in duong_dan_thu:
         than = client.get(duong_dan).json()
         ids = [m["id"] for m in than["items"]]
         assert cho_bo_sung.id in ids, duong_dan
         assert phong_kia.id not in ids, duong_dan
         assert ids.index(dang_lam.id) < ids.index(cho_bo_sung.id), "việc phải làm lên trước"
         nhom = next(g for g in than["groups"] if g["code"] == "awaiting-info")
-        assert nhom["watch_only"] is True and nhom["count"] == 1
+        assert nhom["watch_only"] is True
+        assert nhom["count"] == truoc[duong_dan] + 1, duong_dan
 
     assert client.get("/department/queue?state=awaiting-info").status_code == 200
+
+
+def test_truong_phong_hoi_them_roi_ho_so_ve_lai_cho_nhan(client, session, rule_set, phong_ban):
+    """#79: trưởng phòng hỏi thêm trước khi nhận việc. Trong lúc chờ, hồ sơ nằm ở nhóm
+    theo dõi; người gửi trả lời xong thì hồ sơ về đúng hàng chờ nhận của phòng."""
+    _goi_bang(client, _truong_phong(phong_ban))
+    truoc = _dem_nhom(client)
+    ho_so = _cho_phong_nhan(session, phong_ban)
+    session.commit()
+
+    hoi = next(
+        c for c in client.get(f"/department/requests/{ho_so.id}").json()["allowed_transitions"]
+        if c["to_state"] == "awaiting-info"
+    )
+    assert hoi["requires_note"] is True and hoi["note_label"]
+
+    r = client.post(f"/department/requests/{ho_so.id}/transitions",
+                    json={"to_state": "awaiting-info", "note": "Máy in tầng mấy?"})
+    assert r.status_code == 200, r.text
+    nhom = {g["code"]: g for g in client.get("/department/queue").json()["groups"]}
+    assert nhom["awaiting-info"]["watch_only"] is True
+    assert _dem_nhom(client) == {
+        **truoc, "awaiting-info": truoc["awaiting-info"] + 1,
+    }
+
+    perform_transition(session, case_id=ho_so.id, to_state="awaiting-acceptance",
+                       actor=NGUOI_GUI, note="Tầng ba.")
+    session.commit()
+    assert _dem_nhom(client) == {
+        **truoc, "awaiting-acceptance": truoc["awaiting-acceptance"] + 1,
+    }
 
 
 def test_hang_doi_chi_co_ho_so_cua_phong_minh(client, session, rule_set, phong_ban, phong_khac):

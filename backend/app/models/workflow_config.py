@@ -89,6 +89,10 @@ class Transition(Base):
     activity_label: Mapped[str] = mapped_column(Text)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
     requires_note: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Tên ô ghi chú của cạnh này (#79). Trống thì giao diện gọi nó là "Lý do"; cạnh bổ
+    # sung thông tin gọi nó là "Thông tin bổ sung", vì ở đó ghi chú là câu trả lời chứ
+    # không phải lời giải thích.
+    note_label: Mapped[str | None] = mapped_column(Text, default=None)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
     # Cột kỹ thuật luôn bằng FALSE, tồn tại để khóa ngoại tổng hợp chặn việc tạo

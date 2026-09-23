@@ -398,9 +398,10 @@ giữa hai loại nội dung khác hẳn nhau.
    mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
 3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
-   đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được. Sai một
-   trong ba thì **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ
-   sơ thật mắc kẹt mới lộ ra
+   đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
+   là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng. Sai một điều thì
+   **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
+   kẹt mới lộ ra
 
 Hai ràng buộc Poka-yoke quan trọng nhất **không có dòng dữ liệu nào** vì chúng được thực
 thi bằng sự vắng mặt: *đã nhận là không trả về* và *chỉ hủy trước khi vào xử lý*. Không
@@ -444,15 +445,19 @@ Superset, công cụ quản trị và mọi kết nối `psql` đều đi vòng 
 sử sửa được thì không còn là lịch sử.
 
 **Tạo hồ sơ không sinh sự kiện.** Tạo hồ sơ không phải một lần *chuyển* trạng thái —
-không có trạng thái nào trước nó, và không có cạnh nào trong bảng `transitions` đi
-vào trạng thái đầu. Mốc bắt đầu của hồ sơ là cột `requests.created_at`. Khi xuất dữ
+không có trạng thái nào trước nó, và không có cạnh nào trong bảng `transitions` ứng với
+việc tạo. (Từ #79 có một cạnh quay *về* trạng thái đầu — bổ sung thông tin xong thì hồ
+sơ về lại tay điều phối — nhưng đó là một lần chuyển thật, có dòng nhật ký như mọi lần
+khác.) Mốc bắt đầu của hồ sơ là cột `requests.created_at`. Khi xuất dữ
 liệu cho khai phá quy trình, tầng `D` dựng thêm một sự kiện mở đầu từ cột đó nếu công
 cụ phân tích cần. Cách này tránh phải bịa một mã hoạt động không có trong dữ liệu.
 
 **Thêm cột `note`** ngoài sáu trường bắt buộc, chứa lý do của những cạnh mang cờ
 `requires_note` — từ chối vì sai chuyên môn, đóng hồ sơ khi không phòng nào nhận, mở
 lại vì chưa đạt. Lý do thuộc về *lần chuyển*, không thuộc về hồ sơ: mỗi lần từ chối
-có lý do riêng của nó.
+có lý do riêng của nó. Ghi chú không phải lúc nào cũng là lý do: ở cạnh hỏi thêm nó là
+câu hỏi, ở cạnh bổ sung thông tin nó là câu trả lời. Cột `transitions.note_label` (#79)
+đặt tên cho ô ghi chú của từng cạnh, và dòng thời gian gọi ghi chú bằng đúng tên đó.
 
 **Thêm cột `changes`** (#100): những trường quyết định mà lần chuyển này **đổi giá
 trị**, dạng `{trường: {from, to}}`, kiểu JSONB. Hồ sơ chỉ mang giá trị hiện tại; lịch
@@ -555,6 +560,24 @@ Bản đồ trường nằm trong mã chứ không trong bảng, vì nó là b�
 âm thầm nói hai điều khác nhau. Nhưng **gắn** ràng buộc vào cạnh nào thì vẫn là dữ liệu:
 gỡ `set-priority` khỏi một cạnh trong `infra/seed/` là cạnh đó hết đặt được mức ưu tiên.
 
+**Ràng buộc không cần nhập liệu chạy luôn lúc chào nút** — từ #79. Mỗi mục trong
+`GUARD_REGISTRY` khai thêm cờ `input_free`: ràng buộc chỉ đối chiếu người thao tác, hồ sơ
+và lịch sử hồ sơ, không đọc giá trị người dùng định đặt. `allowed_transitions()` chạy nhóm
+này nên cạnh chắc chắn bị từ chối không hiện thành nút — người gửi không thấy nút trên hồ
+sơ của người khác, trưởng phòng không thấy nút trên hồ sơ của phòng khác. Ràng buộc đọc
+`changes` thì chưa chạy được lúc chào nút, vì chưa ai biết người dùng sẽ chọn gì; chạy nó
+với `changes` rỗng sẽ giấu mất những cạnh hoàn toàn đi được. Lúc chào nút chỉ nuốt lỗi
+Poka-yoke: mã ràng buộc chưa cài đặt vẫn nổ, vì giấu nút đi thì cấu hình sai trông như
+"không có thao tác nào".
+
+**Ràng buộc đầu tiên đọc lịch sử hồ sơ** — `return-to-previous-state`, cũng từ #79. Nó chỉ
+cho đi cạnh về đúng trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại. Không có bảng ánh
+xạ "hỏi ở đâu thì về đâu": quy tắc chỉ là "về chỗ cũ", và chỗ cũ là `from_state` của dòng
+nhật ký mới nhất. Engine tra sẵn giá trị đó vào `TransitionContext.previous_state`, nên hàm
+ràng buộc vẫn không tự truy vấn cơ sở dữ liệu — đúng quy ước của lớp bối cảnh. Gắn ràng buộc
+này vào cạnh nào là dữ liệu; tệp kiểm tra mức đồ thị chặn khởi động nếu một đường vào trạng
+thái chờ thiếu đường về tương ứng.
+
 Còn một cách diễn đạt thứ ba, đặt ở tầng thấp nhất: **khóa ngoại và chỉ mục duy nhất
 từng phần** trong lược đồ — xem mục 5.2. Mỗi tầng bắt một loại sai khác nhau, và tầng
 càng thấp thì càng khó lách.
@@ -630,8 +653,11 @@ hiện nút nào"*. Cổng này **không có bảng đó**, và điều đó là
 Điểm cuối `GET /requests/{id}` trả về `allowed_transitions` — danh sách cạnh mà chính
 người đang đăng nhập đi được từ trạng thái hiện tại của hồ sơ, do
 `allowed_transitions()` sinh ra từ bảng `transitions` và ma trận phân quyền. Giao diện
-dựng nút bấm thẳng từ danh sách đó, lấy cả nhãn chữ (`activity_label`) và cờ bắt buộc
-ghi lý do (`requires_note`). Không có cạnh thì không có nút.
+dựng nút bấm thẳng từ danh sách đó, lấy cả nhãn chữ (`activity_label`), cờ bắt buộc
+ghi lý do (`requires_note`) và tên ô ghi chú (`note_label`, #79). Không có cạnh thì không
+có nút. Nút nào tô màu hành động chính cũng theo dữ liệu: cạnh đứng đầu theo
+`display_order`. Trước #79 cổng người gửi đoán bằng cờ `requires_note`, và đoán sai ngay
+khi cạnh bổ sung thông tin bắt đầu đòi ghi chú — nút *Hủy yêu cầu* thành nút chính.
 
 Đây không phải chuyện gọn mã. Bản thiết kế giao diện của #44 có một bảng như vậy, và
 nó **vẽ sai hai chỗ**: đặt nút *"Hủy yêu cầu"* ở `in-progress` và `escalated`, trong

@@ -200,13 +200,15 @@ def _thay_doi(e: EventLog, nhan: dict[str, dict[str, str]]) -> list[ThayDoiTruon
 def _su_kien(
     e: EventLog,
     states: dict[str, State],
-    canh: dict[str, str],
+    canh: dict[str, Transition],
     nhan: dict[str, dict[str, str]],
 ) -> SuKienRa:
+    di_qua = canh.get(f"{e.from_state}->{e.to_state}")
     return SuKienRa(
         timestamp=e.timestamp,
         activity=e.activity,
-        activity_label=canh.get(f"{e.from_state}->{e.to_state}"),
+        activity_label=di_qua.activity_label if di_qua else None,
+        note_label=di_qua.note_label if di_qua else None,
         actor=e.actor,
         actor_label=e.actor_label or e.actor,
         # Tác nhân hệ thống không có tên người. Nhận ra bằng cột đã ghi lúc hành động,
@@ -455,10 +457,10 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     # Tra một lần cho cả dòng thời gian, không tra lại ở từng mốc
     nhan = _nhan_danh_muc(session)
 
-    # Nhãn hoạt động tra theo cặp trạng thái vì nhiều cạnh dùng chung `activity_code`
-    # — bốn cạnh hủy chẳng hạn.
+    # Nhãn hoạt động và tên ô ghi chú tra theo cặp trạng thái vì nhiều cạnh dùng chung
+    # `activity_code` — bốn cạnh hủy chẳng hạn.
     canh = {
-        f"{t.from_state}->{t.to_state}": t.activity_label
+        f"{t.from_state}->{t.to_state}": t
         for t in session.scalars(
             select(Transition).where(Transition.rule_set_id == ho_so.rule_set_id)
         ).all()
@@ -474,6 +476,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             activity_code=t.activity_code,
             activity_label=t.activity_label,
             requires_note=t.requires_note,
+            note_label=t.note_label,
             fields=sorted(permitted_fields(t.guard_codes)),
         )
         for t in allowed_transitions(session, ho_so, actor)
