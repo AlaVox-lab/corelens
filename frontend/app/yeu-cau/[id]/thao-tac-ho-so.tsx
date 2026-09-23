@@ -21,9 +21,20 @@
 // Lấy nút từ API thì hai cái nút sai đó tự biến mất, và mãi mãi không quay lại được.
 //
 // Nhãn chữ trên nút cũng đến từ dữ liệu (`activity_label`), không phải hằng số ở đây.
+//
+// Nút nào bấm là gửi ngay, nút nào mở bảng xác nhận — cũng suy từ dữ liệu của cạnh:
+//
+//   bắt buộc lý do (`requires_note`)          → mở bảng, ô lý do bắt buộc
+//   dẫn tới trạng thái kết thúc (#98)         → mở bảng, cảnh báo không hoàn tác được,
+//                                               ô lý do tùy chọn
+//   còn lại                                    → bấm là gửi
+//
+// Trước #98, "Hủy yêu cầu" bấm là hủy ngay: không hỏi lại, không ghi được lý do, mà
+// *Đã hủy* thì không có đường ra — bấm nhầm là mất hồ sơ.
 
 import { useActionState, useState } from "react";
 
+import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import type { CanhDiDuoc } from "@/lib/kieu";
 import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
 import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
@@ -37,6 +48,11 @@ import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
  */
 function laDuongXuoi(canh: CanhDiDuoc, tongSo: number): boolean {
   return tongSo > 1 && !canh.requires_note;
+}
+
+/** Cạnh này cần mở bảng xác nhận trước khi gửi, thay vì bấm là gửi. */
+function canHoiLai(canh: CanhDiDuoc): boolean {
+  return canh.requires_note || canh.to_state_is_terminal;
 }
 
 export function ThaoTacHoSo({
@@ -94,11 +110,12 @@ export function ThaoTacHoSo({
         }}
       >
         {cacCanh.map((canh) =>
-          canh.requires_note ? (
+          canHoiLai(canh) ? (
             <button
               key={canh.to_state}
               type="button"
               className="nut"
+              data-loai={laDuongXuoi(canh, cacCanh.length) ? "chinh" : undefined}
               onClick={() => datDangMo(dangMo?.to_state === canh.to_state ? null : canh)}
               aria-expanded={dangMo?.to_state === canh.to_state}
             >
@@ -120,9 +137,9 @@ export function ThaoTacHoSo({
         )}
       </div>
 
-      {/* Ô ghi lý do chỉ hiện khi cạnh đang chọn bắt buộc có lý do. Cột
-          `transitions.requires_note` trong cơ sở dữ liệu quyết định điều đó, không
-          phải mã nguồn ở đây. */}
+      {/* Bảng xác nhận. Lý do bắt buộc hay tùy chọn do cột `transitions.requires_note`
+          quyết; có cảnh báo không hoàn tác được hay không do `states.is_terminal` quyết.
+          Không phải mã nguồn ở đây. */}
       {dangMo && (
         <div
           style={{
@@ -135,24 +152,36 @@ export function ThaoTacHoSo({
             gap: "9px",
           }}
         >
+          {dangMo.to_state_is_terminal && (
+            <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
+          )}
           <label style={{ display: "grid", gap: "7px" }}>
             <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
               Lý do cho “{dangMo.activity_label}”
+              {!dangMo.requires_note && (
+                <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> — không bắt buộc</span>
+              )}
             </span>
             <textarea
               name="note"
               className="o-nhap"
               rows={3}
               maxLength={2000}
-              required
-              placeholder="Nói rõ vì sao. Dòng này đi vào nhật ký hồ sơ và người xử lý sẽ đọc nó."
+              required={dangMo.requires_note}
+              placeholder={
+                dangMo.requires_note
+                  ? "Nói rõ vì sao. Dòng này đi vào nhật ký hồ sơ và người xử lý sẽ đọc nó."
+                  : "Có thể bỏ trống. Nếu ghi, dòng này đi vào nhật ký hồ sơ."
+              }
             />
           </label>
-          <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>
-            Thao tác này bắt buộc ghi lý do. Không có lý do thì người tiếp theo không
-            biết chuyện gì đã xảy ra, và bản phân tích quy trình về sau chỉ thấy một
-            nhánh lệch chuẩn không rõ nguyên nhân.
-          </span>
+          {dangMo.requires_note && (
+            <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>
+              Thao tác này bắt buộc ghi lý do. Không có lý do thì người tiếp theo không
+              biết chuyện gì đã xảy ra, và bản phân tích quy trình về sau chỉ thấy một
+              nhánh lệch chuẩn không rõ nguyên nhân.
+            </span>
+          )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
             <button
               type="submit"

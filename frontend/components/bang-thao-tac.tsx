@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
+import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import type { CanhDiDuoc, NhanCoMa } from "@/lib/kieu";
@@ -203,15 +204,26 @@ export function BangThaoTac({
             );
           })}
 
-          {dangMo.requires_note && (
+          {dangMo.to_state_is_terminal && (
+            <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
+          )}
+
+          {/* Lý do: bắt buộc khi cạnh đòi (`requires_note`); tùy chọn khi cạnh dẫn tới
+              trạng thái kết thúc — ai đóng một hồ sơ cũng nên được để lại một dòng (#98). */}
+          {(dangMo.requires_note || dangMo.to_state_is_terminal) && (
             <label style={{ display: "grid", gap: "6px" }}>
-              <span style={KIEU_NHAN}>Lý do</span>
+              <span style={KIEU_NHAN}>
+                Lý do
+                {!dangMo.requires_note && (
+                  <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> — không bắt buộc</span>
+                )}
+              </span>
               <textarea
                 name="note"
                 className="o-nhap"
                 rows={3}
                 maxLength={2000}
-                required
+                required={dangMo.requires_note}
                 placeholder="Dòng này đi vào nhật ký hồ sơ, người gửi và các bên xử lý đều đọc được."
               />
             </label>

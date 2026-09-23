@@ -426,6 +426,9 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         CanhDiDuocRa(
             to_state=t.to_state,
             to_state_label=_nhan(states.get(t.to_state), t.to_state),
+            to_state_is_terminal=bool(
+                states.get(t.to_state) and states[t.to_state].is_terminal
+            ),
             activity_code=t.activity_code,
             activity_label=t.activity_label,
             requires_note=t.requires_note,

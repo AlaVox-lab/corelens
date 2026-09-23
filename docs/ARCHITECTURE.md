@@ -639,6 +639,13 @@ Nửa còn lại của Poka-yoke vẫn nằm ở engine: một cạnh hiện ra 
 lại khi yêu cầu thật gửi lên. Chặn ở giao diện thôi thì không đủ, vì ai cũng gọi thẳng
 API được.
 
+**Nút nào phải hỏi lại cũng đến từ dữ liệu** (#98). Mỗi cạnh mang thêm cờ
+`to_state_is_terminal`, tra từ `states.is_terminal`. Cạnh dẫn tới trạng thái kết thúc thì
+giao diện mở bảng xác nhận, kèm cảnh báo không hoàn tác được và ô lý do tùy chọn; cạnh bắt
+buộc lý do (`requires_note`) thì lý do vẫn bắt buộc. Trước đó "Hủy yêu cầu" bấm là mất
+hồ sơ. Không có danh sách "thao tác nguy hiểm" nào trong mã: doanh nghiệp thêm một trạng
+thái kết thúc mới thì mọi cạnh dẫn tới nó tự được hỏi lại.
+
 **Từ #82, khuôn mẫu kéo dài từ nút bấm sang ô nhập.** Buồng lái điều phối viên phải cho
 nhập mức ưu tiên, loại yêu cầu, phòng ban. Mỗi cạnh trong `allowed_transitions` nay mang
 thêm `fields` — những trường cạnh đó cho đặt, lấy thẳng từ `permitted_fields()` của
