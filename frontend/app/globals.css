@@ -381,6 +381,16 @@ select.o-nhap {
   }
 }
 
+/* Nút trong cột thao tác được xuống dòng. Cột rộng cố định 340px, còn nhãn nút dựng
+   từ dữ liệu — "Xác nhận · Đóng hồ sơ, không phòng nào nhận" dài hơn cột. Giữ
+   `nowrap` của .nut ở đây thì nút đẩy cả bảng tràn cột, và `overflow: hidden` của thẻ
+   cắt mất phần thừa, kéo theo ô lý do (#97). */
+.cot-thao-tac .nut {
+  white-space: normal;
+  text-align: left;
+  min-width: 0;
+}
+
 textarea.o-nhap {
   font-size: 14px;
   line-height: 1.65;

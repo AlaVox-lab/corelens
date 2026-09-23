@@ -149,6 +149,10 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_paused_seconds": ho_so.sla_paused_seconds,
         "sla_limit_seconds": gioi_han,
         "sla_overdue": gioi_han is not None and da_chay > gioi_han,
+        # Đồng hồ đã từng khởi động chưa. Nó chỉ khởi động khi hồ sơ lần đầu vào một
+        # trạng thái có `sla_running` — tức khi phòng ban nhận việc. Trước đó giao diện
+        # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97).
+        "sla_started": ho_so.sla_segment_since is not None or ho_so.sla_running_seconds > 0,
         # Đồng hồ đang tạm dừng: đã khởi động nhưng trạng thái hiện tại không đếm giờ
         "sla_paused": (
             ho_so.sla_segment_since is not None and not trang_thai.sla_running

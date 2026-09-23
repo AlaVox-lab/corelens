@@ -73,7 +73,7 @@ export default async function ChiTietHoSo({
   if (!ho_so) notFound();
 
   const bayGio = new Date();
-  const dongHo = docDongHo(ho_so);
+  const dongHo = docDongHo(ho_so, "nguoi-gui");
   const kieu = trinhBayTrangThai(ho_so.state.code);
   const nhomChuGiai = CHU_GIAI_NHOM.find((n) => n.nhom === kieu.nhom);
   const quayLui = danhDauQuayLui(ho_so.history);
