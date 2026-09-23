@@ -209,11 +209,13 @@ export function BangThaoTac({
           )}
 
           {/* Lý do: bắt buộc khi cạnh đòi (`requires_note`); tùy chọn khi cạnh dẫn tới
-              trạng thái kết thúc — ai đóng một hồ sơ cũng nên được để lại một dòng (#98). */}
+              trạng thái kết thúc — ai đóng một hồ sơ cũng nên được để lại một dòng (#98).
+              Tên ô lấy từ cạnh khi có (#79): khi hỏi thêm, ô này là câu hỏi chứ không
+              phải lý do. */}
           {(dangMo.requires_note || dangMo.to_state_is_terminal) && (
             <label style={{ display: "grid", gap: "6px" }}>
               <span style={KIEU_NHAN}>
-                Lý do
+                {dangMo.note_label ?? "Lý do"}
                 {!dangMo.requires_note && (
                   <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> — không bắt buộc</span>
                 )}

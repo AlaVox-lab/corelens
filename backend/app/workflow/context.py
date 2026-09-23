@@ -67,3 +67,8 @@ class TransitionContext:
     # CHỈ chứa trường quyết định. Tầng I ghi vào trường gợi ý theo đường riêng, không
     # bao giờ đi qua đây — xem CLAUDE.md mục 4.3.
     changes: dict[str, Any] = field(default_factory=dict)
+
+    # Trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại, engine đọc từ nhật ký sự
+    # kiện (#79). `None` khi hồ sơ chưa rời trạng thái bắt đầu lần nào. Engine tra sẵn
+    # để ràng buộc vẫn không phải tự truy vấn — cùng lý do với cả lớp này.
+    previous_state: str | None = None

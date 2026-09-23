@@ -28,7 +28,12 @@ from app.models.workflow_config import (
     State,
     Transition,
 )
-from app.rules.guards import GOVERNED_FIELDS, permitted_fields, run_guards
+from app.rules.guards import (
+    GOVERNED_FIELDS,
+    input_free_guards_pass,
+    permitted_fields,
+    run_guards,
+)
 from app.rules.sla import cap_nhat_dong_ho
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.errors import (
@@ -200,8 +205,11 @@ def allowed_transitions(
     thị thứ đi được là nửa đầu của Poka-yoke; nửa sau là engine vẫn kiểm lại khi
     yêu cầu thật gửi lên. Chặn ở giao diện thôi thì không đủ.
 
-    Lưu ý: hàm này **không chạy ràng buộc Poka-yoke** vì chúng cần biết người dùng
-    định đặt giá trị gì. Một cạnh hiện ra ở đây vẫn có thể bị từ chối lúc thực hiện.
+    Hàm chạy những ràng buộc **không cần nhập liệu** (`input_free`, #79) — người thao
+    tác có phải người tạo hồ sơ không, có thuộc phòng đang giữ hồ sơ không, cạnh có
+    quay về đúng chỗ cũ không. Cạnh chắc chắn bị từ chối thì không hiện ra. Ràng buộc
+    cần biết người dùng định đặt giá trị gì thì chưa chạy được ở đây, nên một cạnh hiện
+    ra vẫn có thể bị từ chối lúc thực hiện.
     """
     cac_canh = session.scalars(
         select(Transition)
@@ -212,7 +220,15 @@ def allowed_transitions(
         .order_by(Transition.display_order)
     ).all()
 
-    return [c for c in cac_canh if _actor_can_traverse(actor, c)]
+    truoc = _trang_thai_truoc(session, case.id)
+    return [
+        c
+        for c in cac_canh
+        if _actor_can_traverse(actor, c)
+        and input_free_guards_pass(
+            TransitionContext(case=case, transition=c, actor=actor, previous_state=truoc)
+        )
+    ]
 
 
 def perform_transition(
@@ -286,8 +302,11 @@ def perform_transition(
         )
 
     if canh.requires_note and not (note and note.strip()):
+        # Ô ghi chú không phải lúc nào cũng là "lý do": ở cạnh bổ sung thông tin nó là
+        # chính thông tin người gửi trả lời. Tên ô lấy từ dữ liệu của cạnh (#79).
+        ghi_gi = f"'{canh.note_label}'" if canh.note_label else "lý do"
         raise NoteRequired(
-            f"Thao tác '{canh.activity_label}' bắt buộc ghi lý do."
+            f"Thao tác '{canh.activity_label}' bắt buộc ghi {ghi_gi}."
         )
 
     # Trường gửi kèm phải được một ràng buộc gắn trên CẠNH NÀY quản. Mức ưu tiên chỉ
@@ -313,7 +332,12 @@ def perform_transition(
     _kiem_gia_tri_danh_muc(session, thay_doi)
 
     ctx = TransitionContext(
-        case=ho_so, transition=canh, actor=actor, note=note, changes=thay_doi
+        case=ho_so,
+        transition=canh,
+        actor=actor,
+        note=note,
+        changes=thay_doi,
+        previous_state=_trang_thai_truoc(session, ho_so.id),
     )
 
     # --- Bước 3: ràng buộc Poka-yoke ---------------------------------------
@@ -353,6 +377,22 @@ def case_history(session: Session, case_id: int) -> list[EventLog]:
             .order_by(EventLog.timestamp, EventLog.id)
         ).all()
     )
+
+
+def _trang_thai_truoc(session: Session, case_id: int) -> str | None:
+    """Trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại, đọc từ nhật ký sự kiện.
+
+    Là `from_state` của dòng nhật ký mới nhất. Mọi lần đổi trạng thái ghi đúng một dòng
+    — mục 6.1 của ARCHITECTURE.md — nên dòng mới nhất luôn là lần hồ sơ bước vào trạng
+    thái hiện tại. Sắp xếp giống hệt `case_history` để hai nơi không bao giờ kể khác
+    nhau về thứ tự.
+    """
+    return session.scalars(
+        select(EventLog.from_state)
+        .where(EventLog.case_id == case_id)
+        .order_by(EventLog.timestamp.desc(), EventLog.id.desc())
+        .limit(1)
+    ).first()
 
 
 def _actor_can_traverse(actor: Actor, transition: Transition) -> bool:

@@ -111,6 +111,39 @@ BEGIN
                 bo.version, danh_sach;
         END IF;
 
+        -- Phép kiểm tra 6 — hỏi ở đâu thì phải có đường quay về đó (#79)
+        -- Trạng thái chờ nào có cạnh ra mang `return-to-previous-state` thì hồ sơ chỉ
+        -- rời được bằng cạnh về đúng chỗ đã vào. Một cạnh DẪN VÀO trạng thái đó mà
+        -- thiếu cạnh quay về tương ứng thì hồ sơ vào bằng đường ấy sẽ mắc kẹt — chỉ
+        -- còn hủy được. Ví dụ: thêm cạnh "hỏi thêm" ở Đã leo thang mà quên cạnh về.
+        SELECT string_agg(vao.from_state || ' → ' || vao.to_state, ', ' ORDER BY vao.display_order)
+        INTO danh_sach
+        FROM transitions vao
+        WHERE vao.rule_set_id = bo.id
+          AND EXISTS (
+              SELECT 1
+              FROM transitions ra
+              JOIN transition_guards g ON g.transition_id = ra.id
+              WHERE ra.rule_set_id = bo.id
+                AND ra.from_state = vao.to_state
+                AND g.guard_code = 'return-to-previous-state'
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM transitions ve
+              JOIN transition_guards g ON g.transition_id = ve.id
+              WHERE ve.rule_set_id = bo.id
+                AND ve.from_state = vao.to_state
+                AND ve.to_state = vao.from_state
+                AND g.guard_code = 'return-to-previous-state'
+          );
+
+        IF danh_sach IS NOT NULL THEN
+            RAISE EXCEPTION
+                'Bộ quy tắc %: cạnh dẫn vào trạng thái chờ nhưng không có cạnh quay về đúng chỗ — hồ sơ vào bằng đường này sẽ mắc kẹt: %',
+                bo.version, danh_sach;
+        END IF;
+
         SELECT count(*) INTO so_trang_thai FROM states      WHERE rule_set_id = bo.id;
         SELECT count(*) INTO so_canh       FROM transitions WHERE rule_set_id = bo.id;
 
@@ -119,7 +152,7 @@ BEGIN
 
     END LOOP;
 
-    -- Phép kiểm tra 6 — loại yêu cầu không có phòng ban mặc định
+    -- Phép kiểm tra 7 — loại yêu cầu không có phòng ban mặc định
     -- Ràng buộc duy nhất từng phần đã bảo đảm KHÔNG QUÁ một phòng mặc định.
     -- Còn thiếu hẳn thì phải bắt ở đây, nếu không người phân loại mở hồ sơ ra
     -- sẽ không thấy gợi ý nào.

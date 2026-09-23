@@ -47,6 +47,9 @@ class CanhDiDuocRa(BaseModel):
     activity_code: str
     activity_label: str
     requires_note: bool
+    # Tên ô ghi chú, tra từ `transitions.note_label` (#79). Rỗng thì giao diện gọi nó là
+    # "Lý do". Ở cạnh bổ sung thông tin, ô ghi chú là chính câu trả lời của người gửi.
+    note_label: str | None = None
 
     # Những trường mà cạnh này cho đặt, lấy thẳng từ `permitted_fields()` — tức từ
     # ràng buộc gắn trên cạnh (#78). Giao diện dựng ô nhập từ danh sách này, cùng lý do
@@ -82,6 +85,9 @@ class SuKienRa(BaseModel):
     to_state: str
     to_state_label: str
     note: str | None = None
+    # Tên của ghi chú, tra từ cạnh đã đi (#79) — cùng tên với ô nhập lúc ghi. Rỗng thì
+    # dòng thời gian gọi là "Lý do". Câu hỏi thêm và câu trả lời không phải lý do.
+    note_label: str | None = None
     changes: list[ThayDoiTruongRa] = Field(default_factory=list)
 
 

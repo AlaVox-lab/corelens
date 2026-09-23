@@ -123,6 +123,7 @@ CREATE TABLE transitions (
     activity_label  TEXT      NOT NULL,
     is_system       BOOLEAN   NOT NULL DEFAULT FALSE,
     requires_note   BOOLEAN   NOT NULL DEFAULT FALSE,
+    note_label      TEXT,
     display_order   SMALLINT  NOT NULL DEFAULT 0,
 
     -- Cột kỹ thuật, luôn bằng FALSE. Nó tồn tại chỉ để khóa ngoại ngay dưới
@@ -152,6 +153,8 @@ COMMENT ON COLUMN transitions.is_system IS
     'TRUE nghĩa là hệ thống tự đi, không vai trò người nào đi được. Hiện chỉ dùng cho cạnh leo thang khi quá hạn SLA.';
 COMMENT ON COLUMN transitions.requires_note IS
     'TRUE thì bắt buộc nhập lý do. Ví dụ: từ chối vì sai chuyên môn, đóng hồ sơ khi không phòng nào nhận, mở lại vì chưa đạt.';
+COMMENT ON COLUMN transitions.note_label IS
+    'Tên ô ghi chú của cạnh này trên giao diện. NULL thì gọi là lý do. Đặt khi ghi chú không phải lời giải thích mà là nội dung chính — ví dụ câu hỏi khi yêu cầu bổ sung, câu trả lời khi bổ sung thông tin.';
 
 CREATE INDEX transitions_tra_theo_trang_thai_nguon
     ON transitions (rule_set_id, from_state);
