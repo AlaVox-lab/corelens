@@ -31,6 +31,7 @@ from app.rules.guards import permitted_fields
 from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay
 from app.workflow.context import Actor
 from app.workflow.engine import (
+    DANH_MUC_CUA_TRUONG,
     allowed_transitions,
     case_history,
     create_case,
@@ -59,6 +60,7 @@ from app.workflow.schemas import (
     PhongBanRa,
     SuKienRa,
     TaoHoSoVao,
+    ThayDoiTruongRa,
     TrangThaiRa,
 )
 from app.db import get_session
@@ -163,7 +165,44 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
     }
 
 
-def _su_kien(e: EventLog, states: dict[str, State], canh: dict[str, str]) -> SuKienRa:
+def _nhan_danh_muc(session: Session) -> dict[str, dict[str, str]]:
+    """Nhãn của mọi mục trong các danh mục mà nhật ký có thể nhắc tới, theo trường.
+
+    Lấy cả mục đã ngừng dùng: một hồ sơ cũ từng mang loại yêu cầu nay đã gỡ khỏi danh
+    mục vẫn phải kể được "loại: A → B" bằng tên, không bằng mã.
+    """
+    return {
+        truong: {m.code: m.label for m in session.scalars(select(mo_hinh)).all()}
+        for truong, mo_hinh in DANH_MUC_CUA_TRUONG.items()
+    }
+
+
+def _thay_doi(e: EventLog, nhan: dict[str, dict[str, str]]) -> list[ThayDoiTruongRa]:
+    """Đọc cột `changes` thành danh sách có nhãn, theo đúng thứ tự trường đã ghi."""
+
+    def mot_ben(truong: str, muc: dict, ben: str) -> NhanCoMa | None:
+        ma = muc.get(ben)
+        if ma is None:
+            return None
+        ten = muc.get(f"{ben}_label") or nhan.get(truong, {}).get(ma) or ma
+        return NhanCoMa(code=ma, label=ten)
+
+    return [
+        ThayDoiTruongRa(
+            field=truong,
+            before=mot_ben(truong, muc, "from"),
+            after=mot_ben(truong, muc, "to"),
+        )
+        for truong, muc in (e.changes or {}).items()
+    ]
+
+
+def _su_kien(
+    e: EventLog,
+    states: dict[str, State],
+    canh: dict[str, str],
+    nhan: dict[str, dict[str, str]],
+) -> SuKienRa:
     return SuKienRa(
         timestamp=e.timestamp,
         activity=e.activity,
@@ -178,6 +217,7 @@ def _su_kien(e: EventLog, states: dict[str, State], canh: dict[str, str]) -> SuK
         to_state=e.to_state,
         to_state_label=_nhan(states.get(e.to_state), e.to_state),
         note=e.note,
+        changes=_thay_doi(e, nhan),
     )
 
 
@@ -412,6 +452,8 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     dựng lại dòng thời gian và danh sách cạnh — hai thứ phải giống hệt nhau ở mọi nơi.
     """
     states = _bang_trang_thai(session, ho_so.rule_set_id)
+    # Tra một lần cho cả dòng thời gian, không tra lại ở từng mốc
+    nhan = _nhan_danh_muc(session)
 
     # Nhãn hoạt động tra theo cặp trạng thái vì nhiều cạnh dùng chung `activity_code`
     # — bốn cạnh hủy chẳng hạn.
@@ -442,6 +484,6 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         "description": ho_so.description,
         "requester_id": ho_so.requester_id,
         "assignee_id": ho_so.assignee_id,
-        "history": [_su_kien(e, states, canh) for e in case_history(session, ho_so.id)],
+        "history": [_su_kien(e, states, canh, nhan) for e in case_history(session, ho_so.id)],
         "allowed_transitions": di_duoc,
     }

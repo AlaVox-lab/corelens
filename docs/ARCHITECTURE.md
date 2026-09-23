@@ -454,6 +454,20 @@ cụ phân tích cần. Cách này tránh phải bịa một mã hoạt động 
 lại vì chưa đạt. Lý do thuộc về *lần chuyển*, không thuộc về hồ sơ: mỗi lần từ chối
 có lý do riêng của nó.
 
+**Thêm cột `changes`** (#100): những trường quyết định mà lần chuyển này **đổi giá
+trị**, dạng `{trường: {from, to}}`, kiểu JSONB. Hồ sơ chỉ mang giá trị hiện tại; lịch
+sử đổi nằm ở đây. Trước #100, điều phối viên sửa loại yêu cầu người gửi chọn sai thì
+giá trị cũ bị ghi đè và mất dấu — mất đúng dữ liệu "người gửi hay chọn nhầm loại nào",
+"bảng ánh xạ loại sang phòng sai ở đâu" mà tầng `I` cần. Ba quy tắc:
+
+- Chỉ ghi trường thật sự đổi. Gửi lại đúng giá trị đang có không sinh ra dòng "A → A";
+  không đổi gì thì cột để NULL
+- Ghi mã, nhãn tra lúc đọc — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được bằng
+  tên. Riêng người xử lý ghi kèm tên cũ và mới tại thời điểm đổi, cùng lý do với
+  `actor_label`: định danh Keycloak không tự nói lên người nào
+- Ghi ở bước 4 của `perform_transition`, lúc hồ sơ chưa bị ghi đè — sau bước 5 thì giá
+  trị cũ mất. Cùng một giao dịch với lần chuyển, nên không có khe nào để lịch sử lệch
+
 ### 6.1. Cơ chế bảo đảm: một cửa duy nhất
 
 Nhật ký chỉ có giá trị nếu **không bao giờ thiếu bản ghi**. Một nhật ký thủng làm sai

@@ -21,6 +21,7 @@ from sqlalchemy import (
     Text,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -168,6 +169,11 @@ class EventLog(Base):
     from_state: Mapped[str] = mapped_column(Text)
     to_state: Mapped[str] = mapped_column(Text)
     note: Mapped[str | None] = mapped_column(Text, default=None)
+
+    # Trường quyết định mà lần chuyển này ĐỔI giá trị, dạng {trường: {"from", "to"}} —
+    # người xử lý kèm thêm "from_label", "to_label" là tên tại thời điểm đổi (#100).
+    # Hồ sơ chỉ mang giá trị hiện tại; lịch sử đổi nằm ở đây. NULL khi không đổi gì.
+    changes: Mapped[dict | None] = mapped_column(JSONB, default=None)
 
     case: Mapped[Request] = relationship(back_populates="events")
 

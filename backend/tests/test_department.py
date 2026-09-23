@@ -16,7 +16,7 @@ from app.auth.dependencies import current_actor
 from app.auth.directory import DirectoryUnavailable, Person, get_directory
 from app.db import get_session
 from app.main import app, me
-from app.models.case import Request
+from app.models.case import EventLog, Request
 from app.models.workflow_config import (
     Department,
     Priority,
@@ -550,6 +550,116 @@ def test_huy_kem_ly_do_tuy_chon(client, session, rule_set, ly_do):
     assert r.status_code == 200, r.text
     assert r.json()["state"]["is_terminal"] is True
     assert r.json()["history"][-1]["note"] == ly_do
+
+
+# ---------------------------------------------------------------------------
+# Nhật ký giữ lịch sử thay đổi của trường quyết định (#100)
+# ---------------------------------------------------------------------------
+
+
+def _hai_loai(session) -> tuple[RequestType, RequestType]:
+    cac_loai = session.scalars(
+        select(RequestType).where(RequestType.is_active).order_by(RequestType.display_order)
+    ).all()
+    if len(cac_loai) < 2:
+        pytest.skip("Cần ít nhất hai loại yêu cầu đang hoạt động.")
+    return cac_loai[0], cac_loai[1]
+
+
+def _moc_cuoi(session, ho_so) -> EventLog:
+    return session.scalars(
+        select(EventLog).where(EventLog.case_id == ho_so.id).order_by(EventLog.id.desc())
+    ).first()
+
+
+def test_sua_loai_yeu_cau_ghi_ca_gia_tri_cu_lan_moi(session, rule_set):
+    """Đúng tình huống của #100: người gửi chọn loại A, điều phối sửa sang B. Hồ sơ mang
+    B, nhật ký giữ "A → B" — không còn ghi đè mất dấu."""
+    a, b = _hai_loai(session)
+    ho_so = _tao(session)
+    assert ho_so.request_type_code == a.code
+    uu_tien = session.scalars(select(Priority.code).order_by(Priority.display_order)).first()
+
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+                       changes={"priority_code": uu_tien, "request_type_code": b.code})
+
+    assert ho_so.request_type_code == b.code
+    assert _moc_cuoi(session, ho_so).changes == {
+        "priority_code": {"from": None, "to": uu_tien},
+        "request_type_code": {"from": a.code, "to": b.code},
+    }
+
+
+def test_giu_nguyen_gia_tri_thi_khong_ghi_thay_doi(session, rule_set, phong_ban):
+    """Gửi lại đúng giá trị đang có không sinh ra dòng "A → A"; không đổi gì thì cột rỗng."""
+    a, _ = _hai_loai(session)
+    ho_so = _tao(session)
+    uu_tien = session.scalars(select(Priority.code).order_by(Priority.display_order)).first()
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+                       changes={"priority_code": uu_tien, "request_type_code": a.code})
+    assert set(_moc_cuoi(session, ho_so).changes) == {"priority_code"}
+
+    perform_transition(session, case_id=ho_so.id, to_state="awaiting-acceptance",
+                       actor=PHAN_LOAI, changes={"department_code": phong_ban})
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=_truong_phong(phong_ban))
+    assert _moc_cuoi(session, ho_so).changes is None
+
+
+def test_doi_phong_sau_khi_bi_tra_ghi_ca_hai_phong(session, rule_set, phong_ban, phong_khac):
+    """Hồ sơ bị phòng A trả, điều phối chọn lại phòng B: nhật ký ghi "phòng: A → B"."""
+    ho_so = _cho_phong_nhan(session, phong_ban)
+    perform_transition(session, case_id=ho_so.id, to_state="rejected-by-department",
+                       actor=_truong_phong(phong_ban), note="Sai chuyên môn")
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI)
+    perform_transition(session, case_id=ho_so.id, to_state="awaiting-acceptance",
+                       actor=PHAN_LOAI, changes={"department_code": phong_khac})
+
+    assert _moc_cuoi(session, ho_so).changes == {
+        "department_code": {"from": phong_ban, "to": phong_khac}
+    }
+
+
+def test_doi_nguoi_xu_ly_ghi_ca_ten_luc_doi(session, rule_set, phong_ban):
+    """Định danh Keycloak không tự nói lên người nào — nhật ký ghi kèm tên cũ và mới."""
+    cu, moi = _xu_ly(phong_ban), _xu_ly(phong_ban, 2)
+    ho_so = _dang_xu_ly(session, phong_ban, giao_cho=cu)
+    assert _moc_cuoi(session, ho_so).changes == {
+        "assignee_id": {"from": None, "to": cu.id, "from_label": None, "to_label": cu.name}
+    }
+
+    perform_transition(session, case_id=ho_so.id, to_state="escalated", actor=Actor.system())
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=_truong_phong(phong_ban), changes={"assignee_id": moi.id},
+                       assignee_label=moi.name)
+    assert _moc_cuoi(session, ho_so).changes == {
+        "assignee_id": {"from": cu.id, "to": moi.id, "from_label": cu.name, "to_label": moi.name}
+    }
+
+
+def test_dong_thoi_gian_hien_thay_doi_kem_nhan(client, session, rule_set):
+    """Người gửi đọc được loại của mình đã được sửa thành gì — bằng tên, không bằng mã,
+    kể cả khi loại cũ về sau bị gỡ khỏi danh mục."""
+    a, b = _hai_loai(session)
+    ho_so = _tao(session)
+    uu_tien = session.get(Priority, session.scalars(
+        select(Priority.code).order_by(Priority.display_order)).first())
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+                       changes={"priority_code": uu_tien.code, "request_type_code": b.code})
+    a.is_active = False
+    session.commit()
+    _goi_bang(client, NGUOI_GUI)
+
+    moc = client.get(f"/requests/{ho_so.id}").json()["history"][0]
+    thay_doi = {t["field"]: t for t in moc["changes"]}
+
+    assert thay_doi["request_type_code"] == {
+        "field": "request_type_code",
+        "before": {"code": a.code, "label": a.label},
+        "after": {"code": b.code, "label": b.label},
+    }
+    assert thay_doi["priority_code"]["before"] is None
+    assert thay_doi["priority_code"]["after"] == {"code": uu_tien.code, "label": uu_tien.label}
 
 
 # ---------------------------------------------------------------------------

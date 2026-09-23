@@ -56,6 +56,16 @@ export type CanhDiDuoc = {
   fields: string[];
 };
 
+/**
+ * Một trường quyết định mà lần chuyển đã đổi giá trị (#100). `before` rỗng khi trường
+ * chưa có giá trị trước đó. Nhãn do dịch vụ tra, kể cả mục đã ngừng dùng.
+ */
+export type ThayDoiTruong = {
+  field: string;
+  before: NhanCoMa | null;
+  after: NhanCoMa | null;
+};
+
 /** Một mốc trong dòng thời gian, dựng thẳng từ bảng `event_log`. */
 export type SuKien = {
   /** Chuỗi ISO 8601 theo UTC. Đổi sang giờ Việt Nam lúc hiển thị, xem lib/dinh-dang.ts. */
@@ -70,6 +80,8 @@ export type SuKien = {
   to_state: string;
   to_state_label: string;
   note: string | null;
+  /** Trường quyết định mà lần chuyển này đổi — nhật ký giữ trọn lịch sử thay đổi. */
+  changes: ThayDoiTruong[];
 };
 
 export type HoSoTomTat = {
