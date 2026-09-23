@@ -401,6 +401,27 @@ def test_nguoi_phong_khac_khong_dung_duoc_danh_ba_de_do_nguoi(
     assert danh_ba.da_hoi == []
 
 
+def test_dong_ho_chi_khoi_dong_khi_phong_ban_nhan_viec(client, session, rule_set, phong_ban):
+    """Cờ `sla_started` cho giao diện biết có được nói "còn …" hay chưa (#97): trước khi
+    phòng nhận việc thì hạn chưa đếm, dù hồ sơ đã có ngưỡng từ lúc phân loại."""
+    ho_so = _cho_phong_nhan(session, phong_ban)
+    session.commit()
+
+    truoc = client.get(f"/department/requests/{ho_so.id}").json()
+    assert truoc["sla_limit_seconds"] is not None
+    assert truoc["sla_started"] is False
+
+    sau = client.post(f"/department/requests/{ho_so.id}/transitions",
+                      json={"to_state": "in-progress"}).json()
+    assert sau["sla_started"] is True
+
+    _goi_bang(client, _xu_ly(phong_ban))
+    xong = client.post(f"/department/requests/{ho_so.id}/transitions",
+                       json={"to_state": "completed"}).json()
+    assert (xong["sla_started"], xong["sla_paused"]) == (True, True), \
+        "hoàn tất thì đồng hồ đứng, nhưng vẫn là đồng hồ đã khởi động"
+
+
 # ---------------------------------------------------------------------------
 # Leo thang và phân công lại
 # ---------------------------------------------------------------------------

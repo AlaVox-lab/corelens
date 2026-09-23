@@ -612,7 +612,9 @@ nguồn sẽ dựng ra hai cái nút bấm vào là báo lỗi. Lấy nút từ 
 biến mất, và không có đường nào cho chúng quay lại.
 
 Ranh giới cần giữ: giao diện **được phép** giữ siêu dữ liệu thuần thị giác — trạng
-thái nào mang dấu hiệu gì, thuộc họ màu nào (`frontend/lib/trang-thai.ts`). Bảng
+thái nào mang dấu hiệu gì, thuộc họ màu nào, và đồng hồ hạn xử lý đứng ở đó để chờ
+người gửi trả lời hay chờ xác nhận — thứ chỉ dùng để chọn câu chữ, còn đồng hồ có
+đứng hay không vẫn do dịch vụ quyết (`frontend/lib/trang-thai.ts`, #97). Bảng
 `states` mô tả quy trình, không mô tả cách vẽ quy trình, nên những thứ đó không có chỗ
 trong cơ sở dữ liệu. Nhưng bảng ấy phải có **phương án lùi** cho mã trạng thái lạ:
 doanh nghiệp thêm một trạng thái vào bộ quy tắc phải thấy nó hiện ra ngay, dù chưa ai
