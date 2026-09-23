@@ -83,6 +83,19 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "dx-directory",
+      "name": "Danh bạ của dịch vụ ứng dụng",
+      "description": "Tài khoản dịch vụ chỉ đọc, để dịch vụ ứng dụng tra tên người trong một phòng ban (#84). Chỉ mang đúng quyền view-users của realm-management, không quản trị được gì. Không đăng nhập người dùng qua client này.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ],
   "users": [
@@ -186,6 +199,47 @@
       "groups": []
     },
     {
+      "username": "lan.vu",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Lan",
+      "lastName": "Vũ",
+      "email": "lan.vu@dx-os-lab.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [],
+      "groups": [
+        "/phong-ban/it",
+        "/nhom-vai-tro/nguoi-xu-ly"
+      ]
+    },
+    {
+      "username": "tuan.ngo",
+      "enabled": false,
+      "emailVerified": true,
+      "firstName": "Tuấn",
+      "lastName": "Ngô",
+      "email": "tuan.ngo@dx-os-lab.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "handler"
+      ],
+      "groups": [
+        "/phong-ban/it"
+      ]
+    },
+    {
       "username": "ha.do",
       "enabled": true,
       "emailVerified": true,
@@ -205,6 +259,16 @@
       "groups": [
         "/phong-ban/hr"
       ]
+    },
+    {
+      "username": "service-account-dx-directory",
+      "enabled": true,
+      "serviceAccountClientId": "dx-directory",
+      "clientRoles": {
+        "realm-management": [
+          "view-users"
+        ]
+      }
     }
   ],
   "groups": [
@@ -247,6 +311,24 @@
               "Tài chính kế toán"
             ]
           }
+        }
+      ]
+    },
+    {
+      "name": "nhom-vai-tro",
+      "path": "/nhom-vai-tro",
+      "subGroups": [
+        {
+          "name": "nguoi-xu-ly",
+          "path": "/nhom-vai-tro/nguoi-xu-ly",
+          "attributes": {
+            "label": [
+              "Người xử lý — vai trò gán qua nhóm"
+            ]
+          },
+          "realmRoles": [
+            "handler"
+          ]
         }
       ]
     }

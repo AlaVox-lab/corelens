@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
+from app.workflow.assignment import router as router_giao_viec
 from app.workflow.context import Actor
 from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
@@ -91,6 +92,7 @@ app = FastAPI(
 
 app.include_router(router_yeu_cau)
 app.include_router(router_dieu_phoi)
+app.include_router(router_giao_viec)
 
 
 @app.get("/health", tags=["Vận hành"])

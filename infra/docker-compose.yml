@@ -149,6 +149,13 @@ services:
       DXLAB_OIDC_JWKS_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       DXLAB_OIDC_AUDIENCE: ${KEYCLOAK_API_CLIENT_ID}
       DXLAB_OIDC_DEPARTMENT_GROUP_PREFIX: ${KEYCLOAK_DEPARTMENT_GROUP_PREFIX}
+      # Danh bạ người dùng (#84) — lối duy nhất dịch vụ gọi ngược sang Keycloak, và chỉ
+      # khi trưởng phòng mở ô chọn người xử lý. Cố ý KHÔNG depends_on keycloak: Keycloak
+      # tắt thì dịch vụ vẫn lên, chỉ ô chọn người báo không nạp được danh sách.
+      DXLAB_KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      DXLAB_KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      DXLAB_DIRECTORY_CLIENT_ID: ${KEYCLOAK_DIRECTORY_CLIENT_ID}
+      DXLAB_DIRECTORY_CLIENT_SECRET: ${KEYCLOAK_DIRECTORY_SECRET}
       # Bộ quét hồ sơ quá hạn. Hạ chu kỳ xuống vài giây khi cần trình diễn việc
       # tự leo thang mà không phải ngồi chờ.
       DXLAB_SLA_SCAN_ENABLED: ${SLA_SCAN_ENABLED}

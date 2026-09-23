@@ -59,6 +59,27 @@ class Settings(BaseSettings):
     # Khoảng lệch đồng hồ chấp nhận được khi kiểm hạn token, tính bằng giây.
     oidc_leeway_seconds: int = 10
 
+    # --- Danh bạ người dùng, xem #84 ---------------------------------------
+    #
+    # Đường thứ hai sang Keycloak, khác hẳn đường kiểm token ở trên. Kiểm token chạy ở
+    # MỌI yêu cầu nên phải cục bộ; tra danh bạ chỉ chạy khi trưởng phòng mở ô chọn
+    # người xử lý, nên được phép gọi mạng. Lý do đầy đủ ở app/auth/directory.py.
+    #
+    # Chỉ dịch vụ đi đường này, trình duyệt thì không — nên dùng địa chỉ nội bộ.
+    keycloak_internal_url: str = "http://keycloak:8080"
+    keycloak_realm: str = "dx-os-lab"
+
+    # Client riêng, mang đúng một quyền chỉ đọc `view-users`. Không dùng chung với
+    # `dx-api`: client đó là nơi nhận token của người dùng, không có lý do gì để nó
+    # đọc được cả danh bạ.
+    directory_client_id: str = "dx-directory"
+    directory_client_secret: str = ""
+
+    # Trần thời gian cho CẢ một lần tra, không phải cho từng lần gọi. Một lần tra gồm
+    # vài lần gọi nối tiếp; đặt trần riêng cho từng lần thì Keycloak treo sẽ giữ trang
+    # lâu bằng mấy lần trần cộng lại.
+    directory_timeout_seconds: float = 3.0
+
     # --- Theo dõi SLA, xem #42 --------------------------------------------
     #
     # Ngưỡng SLA của từng loại yêu cầu nằm trong bảng `request_types`, và trạng thái

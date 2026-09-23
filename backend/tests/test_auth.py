@@ -291,6 +291,9 @@ def _lay_token_that(username: str, password: str = "matkhau123") -> str | None:
         ("cuong.le", "handler", {"it"}),
         ("dung.pham", "approver", {"it"}),
         ("ha.do", "handler", {"hr"}),
+        # Vai trò gán qua nhóm `/nhom-vai-tro/nguoi-xu-ly`, không gán thẳng. Token vẫn
+        # phải mang nó, và nhóm đó không được lẫn vào phòng ban vì sai tiền tố.
+        ("lan.vu", "handler", {"it"}),
         ("binh.tran", "classifier", set()),
     ],
 )
