@@ -83,6 +83,8 @@ export type HoSoTomTat = {
   sla_limit_seconds: number | null;
   sla_overdue: boolean;
   sla_paused: boolean;
+  /** Đồng hồ đã khởi động chưa — nó chỉ khởi động khi phòng ban nhận việc. */
+  sla_started: boolean;
 };
 
 export type HoSoChiTiet = HoSoTomTat & {

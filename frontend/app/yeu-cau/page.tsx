@@ -105,7 +105,7 @@ function DaiNhac({ so }: { so: number }) {
 
 function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
   const choBan = dangChoNguoiDung(ho_so.state.code);
-  const dongHo = docDongHo(ho_so);
+  const dongHo = docDongHo(ho_so, "nguoi-gui");
 
   return (
     <Link
@@ -163,8 +163,24 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
         </span>
       </span>
 
-      <span style={{ flex: "0 0 190px", display: "flex", alignItems: "center" }}>
+      {/* Lời nhắc "Cần bạn xử lý" nằm DƯỚI nhãn trạng thái, trong cùng cột. Để nó thành
+          một ô riêng ở cuối dòng thì dòng đó có năm ô trong khi tiêu đề bảng có bốn —
+          cột tiêu đề co lại và mọi cột sau lệch khỏi tiêu đề (#97). */}
+      <span
+        style={{
+          flex: "0 0 190px",
+          display: "grid",
+          gap: "6px",
+          alignContent: "center",
+          justifyItems: "start",
+        }}
+      >
         <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} />
+        {choBan && (
+          <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--f-a-ink)" }}>
+            Cần bạn xử lý →
+          </span>
+        )}
       </span>
 
       <span
@@ -186,19 +202,6 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
         </span>
       </span>
 
-      {choBan && (
-        <span
-          style={{
-            flex: "0 0 auto",
-            alignSelf: "center",
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--f-a-ink)",
-          }}
-        >
-          Cần bạn xử lý →
-        </span>
-      )}
     </Link>
   );
 }

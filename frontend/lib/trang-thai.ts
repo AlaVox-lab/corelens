@@ -42,6 +42,16 @@ export type KieuTrinhBayTrangThai = {
   /** Họ màu, ứng với bộ biến --f-<ho>-* trong globals.css. */
   ho: string;
   nhom: NhomTrangThai;
+  /**
+   * Đồng hồ hạn xử lý đứng ở trạng thái này để chờ gì, nếu có — chỉ để chọn câu chữ.
+   *
+   *   cho-tra-loi   — chờ người gửi bổ sung thông tin; việc còn dở, nên nói "còn …"
+   *   cho-xac-nhan  — việc đã xong, chờ người gửi xác nhận kết quả; nói "đã xong"
+   *
+   * Thiếu thì dùng câu chung "Tạm dừng đếm hạn". Đồng hồ có dừng hay không vẫn do cờ
+   * `sla_paused` của dịch vụ quyết, không phải bảng này (#97).
+   */
+  khiDung?: "cho-tra-loi" | "cho-xac-nhan";
 };
 
 const PHUONG_AN_LUI: KieuTrinhBayTrangThai = {
@@ -62,8 +72,8 @@ const BANG: Record<string, KieuTrinhBayTrangThai> = {
   classified: { dau: "◐", ho: "p", nhom: "dang-chay" },
   "awaiting-acceptance": { dau: "◌", ho: "b", nhom: "dang-chay" },
   "in-progress": { dau: "●", ho: "t", nhom: "dang-chay" },
-  "awaiting-info": { dau: "!", ho: "a", nhom: "cho-ban" },
-  completed: { dau: "✓", ho: "g", nhom: "cho-ban" },
+  "awaiting-info": { dau: "!", ho: "a", nhom: "cho-ban", khiDung: "cho-tra-loi" },
+  completed: { dau: "✓", ho: "g", nhom: "cho-ban", khiDung: "cho-xac-nhan" },
   "rejected-by-department": { dau: "✕", ho: "r", nhom: "can-thiep" },
   escalated: { dau: "▲", ho: "o", nhom: "can-thiep" },
   closed: { dau: "■", ho: "x", nhom: "ket-thuc" },
