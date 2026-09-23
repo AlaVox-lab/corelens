@@ -207,8 +207,61 @@ def test_nhom_hang_doi_suy_tu_bo_quy_tac(client, session, rule_set):
             )
         ).all()
     )
-    nhom = {g["code"] for g in client.get("/department/queue").json()["groups"]}
+    nhom = {g["code"] for g in client.get("/department/queue").json()["groups"] if not g["watch_only"]}
     assert nhom == mong_doi
+
+
+def test_nhom_theo_doi_suy_tu_bo_quy_tac(client, session, rule_set):
+    """Nhóm chỉ để theo dõi (#99): trạng thái mà cạnh của phòng ban dẫn tới, không phải
+    trạng thái kết thúc, và từ đó có đường quay về hàng đợi. Đáp án tra bằng truy vấn
+    riêng trên ma trận phân quyền."""
+    vai_tro = vai_tro_giao_viec(session, rule_set.id) | vai_tro_nhan_viec(session, rule_set.id)
+    canh = session.execute(
+        select(Transition.from_state, Transition.to_state, TransitionRole.role_code)
+        .outerjoin(TransitionRole, TransitionRole.transition_id == Transition.id)
+        .where(Transition.rule_set_id == rule_set.id, Transition.is_system.is_(False))
+    ).all()
+    hang_doi = {tu for tu, _, vai in canh if vai in vai_tro}
+    dich = {den for tu, den, vai in canh if tu in hang_doi and vai in vai_tro} - hang_doi
+    quay_ve = {tu for tu, den, _ in canh if den in hang_doi}
+    ket_thuc = set(session.scalars(
+        select(State.code).where(State.rule_set_id == rule_set.id, State.is_terminal)
+    ).all())
+    mong_doi = (dich & quay_ve) - ket_thuc
+
+    nhom = client.get("/department/queue").json()["groups"]
+    assert {g["code"] for g in nhom if g["watch_only"]} == mong_doi
+    assert "awaiting-info" in mong_doi, "đúng trường hợp #99 phải có mặt"
+    assert "rejected-by-department" not in mong_doi, "hồ sơ bị trả thuộc điều phối, không về phòng"
+
+
+def test_ho_so_cho_bo_sung_van_hien_trong_hang_doi(client, session, rule_set, phong_ban, phong_khac):
+    """Định nghĩa hoàn thành của #99: người xử lý hỏi thêm xong, hồ sơ vẫn nằm trong
+    hàng đợi của họ — ở nhóm theo dõi, xếp sau việc phải làm, kể cả bộ lọc "của tôi"."""
+    toi = _xu_ly(phong_ban)
+    dang_lam = _dang_xu_ly(session, phong_ban, "Việc đang làm", giao_cho=toi)
+    cho_bo_sung = _dang_xu_ly(session, phong_ban, "Đã hỏi thêm", giao_cho=toi)
+    perform_transition(session, case_id=cho_bo_sung.id, to_state="awaiting-info",
+                       actor=toi, note="Máy nào, ở phòng nào?")
+    # Quá hạn từ trước khi hỏi: thiếu quy tắc xếp nhóm theo dõi xuống sau thì hồ sơ này
+    # sẽ nhảy lên đầu vì "quá hạn lên trước"
+    cho_bo_sung.sla_running_seconds = gioi_han_giay(session, cho_bo_sung) + 60
+    phong_kia = _dang_xu_ly(session, phong_khac, "Phòng khác hỏi thêm", giao_cho=_xu_ly(phong_khac))
+    perform_transition(session, case_id=phong_kia.id, to_state="awaiting-info",
+                       actor=_xu_ly(phong_khac), note="?")
+    session.commit()
+    _goi_bang(client, toi)
+
+    for duong_dan in ("/department/queue", "/department/queue?mine=true"):
+        than = client.get(duong_dan).json()
+        ids = [m["id"] for m in than["items"]]
+        assert cho_bo_sung.id in ids, duong_dan
+        assert phong_kia.id not in ids, duong_dan
+        assert ids.index(dang_lam.id) < ids.index(cho_bo_sung.id), "việc phải làm lên trước"
+        nhom = next(g for g in than["groups"] if g["code"] == "awaiting-info")
+        assert nhom["watch_only"] is True and nhom["count"] == 1
+
+    assert client.get("/department/queue?state=awaiting-info").status_code == 200
 
 
 def test_hang_doi_chi_co_ho_so_cua_phong_minh(client, session, rule_set, phong_ban, phong_khac):

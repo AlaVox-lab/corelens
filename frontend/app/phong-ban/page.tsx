@@ -11,6 +11,11 @@
 // thấy hồ sơ đang chờ nhận — nhưng nút "Giao cho tôi" thu về đúng phần việc của mình.
 // Nút lọc trạng thái dựng từ `groups` mà dịch vụ trả về; tệp này không liệt kê trạng
 // thái nào.
+//
+// Hồ sơ phòng mình đang ở lượt người gửi — chờ bổ sung thông tin, chờ xác nhận — nằm
+// ở một khối riêng bên dưới, chỉ để theo dõi (#99). Nhóm nào là nhóm theo dõi do cờ
+// `watch_only` của dịch vụ quyết. Thiếu khối này thì người xử lý hỏi thêm xong là hồ sơ
+// biến khỏi hàng đợi, và họ quên mình đang có việc treo.
 
 import Link from "next/link";
 
@@ -129,10 +134,16 @@ export default async function HangDoiPhongBan({
   const tatCa = await goiDichVu<HangDoiPhongBan>(
     cuaToi ? "/department/queue?mine=true" : "/department/queue",
   );
-  const cacMuc = (tatCa?.items ?? []).filter((m) => !state || m.state.code === state);
-  const tong = tatCa?.items.length ?? 0;
-  const soQuaHan = (tatCa?.items ?? []).filter((m) => m.sla_overdue).length;
+  const theoDoi = new Set((tatCa?.groups ?? []).filter((g) => g.watch_only).map((g) => g.code));
+  const tatCaMuc = tatCa?.items ?? [];
+  const cacMuc = tatCaMuc.filter((m) => !state || m.state.code === state);
+  const viecPhaiLam = cacMuc.filter((m) => !theoDoi.has(m.state.code));
+  const choNguoiGui = cacMuc.filter((m) => theoDoi.has(m.state.code));
+  const tong = tatCaMuc.filter((m) => !theoDoi.has(m.state.code)).length;
+  const soCho = tatCaMuc.length - tong;
+  const soQuaHan = tatCaMuc.filter((m) => m.sla_overdue && !theoDoi.has(m.state.code)).length;
   const tenPhong = tatCa?.departments.map((p) => p.label).join(" · ");
+  const dangLocTheoDoi = state !== undefined && theoDoi.has(state);
 
   return (
     <>
@@ -156,11 +167,11 @@ export default async function HangDoiPhongBan({
           lineHeight: 1.6,
         }}
       >
-        {tong === 0
+        {tong === 0 && soCho === 0
           ? cuaToi
             ? "Chưa có hồ sơ nào đang giao cho bạn."
             : "Hồ sơ điều phối viên chuyển về phòng sẽ xuất hiện ở đây để nhận và giao người xử lý."
-          : `${tong} hồ sơ${soQuaHan > 0 ? `, ${soQuaHan} đã quá hạn` : ""}. Hồ sơ quá hạn nằm trên cùng, rồi tới hồ sơ gần hạn nhất.`}
+          : `${tong} hồ sơ cần xử lý${soQuaHan > 0 ? `, ${soQuaHan} đã quá hạn` : ""}${soCho > 0 ? ` · ${soCho} đang chờ người gửi` : ""}. Hồ sơ quá hạn nằm trên cùng, rồi tới hồ sơ gần hạn nhất.`}
       </p>
 
       {tatCa === null ? (
@@ -178,16 +189,41 @@ export default async function HangDoiPhongBan({
             className="khong-in"
             style={{ marginTop: "18px", display: "flex", flexWrap: "wrap", gap: "7px" }}
           >
-            <NutLoc href={diaChi(undefined, cuaToi)} nhan="Tất cả" so={tong} chon={!state} />
-            {tatCa.groups.map((g) => (
-              <NutLoc
-                key={g.code}
-                href={diaChi(g.code, cuaToi)}
-                nhan={g.label}
-                so={g.count}
-                chon={state === g.code}
-              />
-            ))}
+            <NutLoc href={diaChi(undefined, cuaToi)} nhan="Tất cả" so={tong + soCho} chon={!state} />
+            {tatCa.groups
+              .filter((g) => !g.watch_only)
+              .map((g) => (
+                <NutLoc
+                  key={g.code}
+                  href={diaChi(g.code, cuaToi)}
+                  nhan={g.label}
+                  so={g.count}
+                  chon={state === g.code}
+                />
+              ))}
+            {theoDoi.size > 0 && (
+              <span
+                style={{
+                  alignSelf: "center",
+                  margin: "0 2px 0 6px",
+                  fontSize: "12px",
+                  color: "var(--ink-3)",
+                }}
+              >
+                Chờ người gửi:
+              </span>
+            )}
+            {tatCa.groups
+              .filter((g) => g.watch_only)
+              .map((g) => (
+                <NutLoc
+                  key={g.code}
+                  href={diaChi(g.code, cuaToi)}
+                  nhan={g.label}
+                  so={g.count}
+                  chon={state === g.code}
+                />
+              ))}
             <Link
               href={diaChi(state, !cuaToi)}
               aria-pressed={cuaToi}
@@ -199,25 +235,44 @@ export default async function HangDoiPhongBan({
             </Link>
           </div>
 
-          <div className="the" style={{ marginTop: "14px" }}>
-            {cacMuc.length === 0 ? (
-              <p
-                style={{
-                  margin: 0,
-                  padding: "36px 24px",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  color: "var(--ink-2)",
-                }}
-              >
-                {state
-                  ? "Không có hồ sơ nào ở trạng thái này."
-                  : "Hàng đợi trống — phòng không có hồ sơ nào đang chờ."}
+          {!dangLocTheoDoi && (
+            <div className="the" style={{ marginTop: "14px" }}>
+              {viecPhaiLam.length === 0 ? (
+                <p
+                  style={{
+                    margin: 0,
+                    padding: "36px 24px",
+                    textAlign: "center",
+                    fontSize: "14px",
+                    color: "var(--ink-2)",
+                  }}
+                >
+                  {state
+                    ? "Không có hồ sơ nào ở trạng thái này."
+                    : "Không có việc nào đang chờ phòng xử lý."}
+                </p>
+              ) : (
+                viecPhaiLam.map((m, i) => <Dong key={m.id} muc={m} dauTien={i === 0} />)
+              )}
+            </div>
+          )}
+
+          {choNguoiGui.length > 0 && (
+            <section style={{ marginTop: dangLocTheoDoi ? "14px" : "26px" }}>
+              <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
+                Đang chờ người gửi
+              </h2>
+              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink-3)", lineHeight: 1.55 }}>
+                Chỉ để theo dõi — lúc này không ai trong phòng có thao tác. Hồ sơ tự quay về
+                hàng đợi khi người gửi bổ sung thông tin hoặc mở lại.
               </p>
-            ) : (
-              cacMuc.map((m, i) => <Dong key={m.id} muc={m} dauTien={i === 0} />)
-            )}
-          </div>
+              <div className="the" style={{ marginTop: "10px", opacity: 0.92 }}>
+                {choNguoiGui.map((m, i) => (
+                  <Dong key={m.id} muc={m} dauTien={i === 0} />
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
     </>

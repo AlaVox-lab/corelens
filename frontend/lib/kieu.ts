@@ -118,7 +118,14 @@ export type PhongBan = NhanCoMa & { description: string | null };
 // ---------------------------------------------------------------------------
 
 /** Một trạng thái trong hàng đợi, kèm số hồ sơ. Danh sách suy từ bộ quy tắc. */
-export type NhomHangDoi = NhanCoMa & { count: number };
+export type NhomHangDoi = NhanCoMa & {
+  count: number;
+  /**
+   * Nhóm chỉ để theo dõi: hồ sơ của phòng đang ở lượt người gửi và sẽ quay về (#99).
+   * Dịch vụ suy từ bộ quy tắc; hàng đợi điều phối luôn `false`.
+   */
+  watch_only: boolean;
+};
 
 export type MucHangDoi = HoSoTomTat & {
   requester_label: string | null;

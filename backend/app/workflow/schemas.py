@@ -160,6 +160,9 @@ class NhomHangDoiRa(NhanCoMa):
     """
 
     count: int
+    # Nhóm chỉ để theo dõi: hồ sơ của phòng đang chờ người gửi, người trong phòng không
+    # có thao tác nào lúc này nhưng hồ sơ sẽ quay về (#99). Hàng đợi điều phối luôn False.
+    watch_only: bool = False
 
 
 class MucHangDoiRa(HoSoTomTatRa):
