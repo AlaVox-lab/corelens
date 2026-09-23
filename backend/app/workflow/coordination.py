@@ -28,6 +28,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
+from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import EventLog, Request
 from app.models.workflow_config import (
@@ -38,13 +39,14 @@ from app.models.workflow_config import (
     Transition,
     TransitionRole,
 )
+from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
 from app.workflow.engine import get_active_rule_set
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.routes import _bang_trang_thai, _bao_loi, _du_lieu_chi_tiet, _tom_tat
 from app.workflow.schemas import (
-    ChuyenTrangThaiDieuPhoiVao,
+    ChuyenTrangThaiCoTruongVao,
     HangDoiRa,
     HoSoDieuPhoiRa,
     MucHangDoiRa,
@@ -245,9 +247,10 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoDieuPhoiRa:
 @router.post("/requests/{case_id}/transitions", response_model=HoSoDieuPhoiRa)
 def chuyen_trang_thai(
     case_id: int,
-    du_lieu: ChuyenTrangThaiDieuPhoiVao,
+    du_lieu: ChuyenTrangThaiCoTruongVao,
     session: _Phien,
     actor: _Cua,
+    danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
 ) -> HoSoDieuPhoiRa:
     """Thực hiện một thao tác, CÓ kèm trường quyết định.
 
@@ -257,7 +260,19 @@ def chuyen_trang_thai(
 
     Không nạp hồ sơ trước khi gọi engine — engine tự báo `case-not-found`. Nạp trước
     thì lệnh khóa dòng `SELECT FOR UPDATE` bên trong engine có nguy cơ không được phát.
+
+    Điều phối viên không giao được người xử lý — không cạnh nào của họ cho đặt trường
+    đó. Vẫn gọi phép kiểm người được giao, vì một người có thể mang cùng lúc vai trò
+    điều phối và vai trò giao việc; bỏ qua ở đây là để hở một đường vòng quanh danh bạ.
     """
+    ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
+        session,
+        danh_ba,
+        case_id=case_id,
+        to_state=du_lieu.to_state,
+        actor=actor,
+        changes=du_lieu.changes,
+    )
     try:
         ho_so = thuc_hien_chuyen(
             session,
@@ -266,6 +281,7 @@ def chuyen_trang_thai(
             actor=actor,
             note=du_lieu.note,
             changes=du_lieu.changes,
+            assignee_label=ten_nguoi_duoc_giao,
         )
     except TransitionError as loi:
         session.rollback()

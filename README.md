@@ -228,6 +228,30 @@ mức ưu tiên và loại yêu cầu — vì ràng buộc gắn trên cạnh đ
 dòng `set-priority` của cạnh này trong `infra/seed/01-quy-tac-quy-trinh.sql` rồi dựng lại
 cụm là ô mức ưu tiên biến mất, không sửa dòng TypeScript nào.
 
+### Buồng lái phòng ban
+
+Đăng nhập bằng `dung.pham` (trưởng phòng) hoặc `cuong.le` (người xử lý) rồi mở mục
+**Phòng ban**, hoặc thẳng `http://localhost:3000/phong-ban`. Cả phòng nhìn chung một hàng
+đợi; nút bấm của mỗi người khác nhau vì chúng đến từ bộ quy tắc.
+
+| Màn | Địa chỉ | Việc làm được |
+|---|---|---|
+| Hàng đợi | `/phong-ban` | Hồ sơ của phòng mình, quá hạn lên đầu rồi tới gần hạn nhất; nút *Giao cho tôi* thu về phần việc của mình |
+| Chi tiết | `/phong-ban/{số}` | Trưởng phòng nhận hồ sơ và giao người xử lý, từ chối, phân công lại hồ sơ bị leo thang; người xử lý hỏi thêm thông tin hoặc báo hoàn thành |
+
+Thử trọn vòng đời một hồ sơ với ba cửa sổ: `an.nguyen` gửi, `binh.tran` phân loại và
+chuyển về phòng Công nghệ thông tin, `dung.pham` nhận rồi giao cho `cuong.le`, `cuong.le`
+báo hoàn thành, và `an.nguyen` xác nhận đạt để đóng hồ sơ.
+
+**Ô chọn người xử lý đọc từ Keycloak.** Danh sách chỉ gồm người của đúng phòng đó và
+nhận được việc — không có trưởng phòng, không có `tuan.ngo` vì tài khoản đã khóa. Tắt
+Keycloak rồi mở lại hồ sơ: trang vẫn mở được, ô chọn người báo không nạp được danh sách,
+và trưởng phòng vẫn nhận được hồ sơ mà chưa giao cho ai.
+
+**Xem hồ sơ tự leo thang.** Hạ `SLA_SCAN_INTERVAL_SECONDS` như ở mục dưới, để một hồ sơ
+đang xử lý quá hạn: nó chuyển sang *Đã leo thang*, nổi lên đầu hàng đợi, và trưởng phòng
+phân công lại được ngay từ màn chi tiết.
+
 ### Theo dõi SLA
 
 Dịch vụ ứng dụng chạy một bộ quét nền, mặc định mỗi 60 giây, tìm hồ sơ vượt ngưỡng SLA

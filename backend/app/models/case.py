@@ -79,6 +79,12 @@ class Request(Base):
     )
     assignee_id: Mapped[str | None] = mapped_column(Text, default=None)
 
+    # Tên người được giao tại thời điểm giao, cùng lý do với `requester_label`. Không
+    # phải trường quyết định — trường quyết định là `assignee_id` ở trên — mà là nhãn
+    # đi kèm nó: engine ghi hai cột cùng lúc, và tên lấy từ danh bạ Keycloak chứ không
+    # từ trình duyệt (#83). NULL khi chưa giao cho ai.
+    assignee_label: Mapped[str | None] = mapped_column(Text, default=None)
+
     # --- Trường GỢI Ý: chỉ tầng I ghi --------------------------------------
     # NGUYÊN TẮC BẤT DI DỊCH của đề tài: AI chỉ gợi ý, con người quyết định. Tầng I
     # không bao giờ được ghi vào bốn trường quyết định ở trên — xem CLAUDE.md mục 4.3.

@@ -22,6 +22,8 @@ from app.workflow.assignment import router as router_giao_viec
 from app.workflow.context import Actor
 from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
+from app.workflow.department import router as router_phong_ban
+from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.escalation import quet_va_leo_thang
 from app.workflow.routes import router as router_yeu_cau
 
@@ -93,6 +95,7 @@ app = FastAPI(
 app.include_router(router_yeu_cau)
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
+app.include_router(router_phong_ban)
 
 
 @app.get("/health", tags=["Vận hành"])
@@ -155,6 +158,7 @@ def root() -> dict:
 def me(
     actor: Annotated[Actor, Depends(current_actor)],
     claims: Annotated[dict, Depends(current_claims)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> dict:
     """Danh tính của người đang gọi, dịch từ token sang ngôn ngữ của engine.
 
@@ -172,6 +176,8 @@ def me(
     khong_gian = ["portal"]
     if vao_duoc_buong_lai(actor):
         khong_gian.append("coordination")
+    if vao_duoc_phong_ban(session, actor):
+        khong_gian.append("department")
 
     return {
         "id": actor.id,

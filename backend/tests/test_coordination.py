@@ -122,10 +122,10 @@ def test_nguoi_khong_phai_dieu_phoi_bi_chan_o_ca_ba_diem_cuoi(client, session, r
         assert r.status_code == 403
 
 
-def test_me_bao_khong_gian_lam_viec_theo_vai_tro():
+def test_me_bao_khong_gian_lam_viec_theo_vai_tro(session, rule_set):
     """Giao diện dựng thanh điều hướng từ đây, không tự đọc tên vai trò."""
-    assert me(DIEU_PHOI, {})["workspaces"] == ["portal", "coordination"]
-    assert me(NGUOI_GUI, {})["workspaces"] == ["portal"]
+    assert me(DIEU_PHOI, {}, session)["workspaces"] == ["portal", "coordination"]
+    assert me(NGUOI_GUI, {}, session)["workspaces"] == ["portal"]
 
 
 # ---------------------------------------------------------------------------

@@ -37,6 +37,13 @@ const LOI_VAO: Record<string, LoiVao[]> = {
       moTa: "Phân loại hồ sơ mới gửi lên và chuyển về đúng phòng ban phụ trách.",
     },
   ],
+  department: [
+    {
+      duongDan: "/phong-ban",
+      nhan: "Phòng ban",
+      moTa: "Nhận hồ sơ về phòng, giao người xử lý, theo dõi hạn xử lý và hồ sơ bị leo thang.",
+    },
+  ],
 };
 
 export function loiVaoCua(khongGian: string[]): LoiVao[] {

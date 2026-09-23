@@ -16,31 +16,8 @@ import { revalidatePath } from "next/cache";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
+import { chuoi, gomThayDoi } from "@/lib/bieu-mau";
 import type { HoSoDieuPhoi } from "@/lib/kieu";
-
-/** Tiền tố tên ô nhập mang giá trị một trường quyết định, ví dụ `truong:priority_code`. */
-const TIEN_TO = "truong:";
-
-function chuoi(gia_tri: FormDataEntryValue | null): string {
-  return typeof gia_tri === "string" ? gia_tri.trim() : "";
-}
-
-/**
- * Gom các ô `truong:*` thành `changes`, BỎ QUA ô để trống.
- *
- * Bỏ ô trống thay vì gửi chuỗi rỗng là cố ý. Gửi `request_type_code: ""` thì ràng buộc
- * trên cạnh hiểu là muốn xóa loại, và báo "không được xóa loại yêu cầu" — sai câu, vì
- * người dùng chỉ quên chọn. Bỏ hẳn trường đi thì ràng buộc báo đúng "phải chọn loại".
- */
-function gomThayDoi(duLieu: FormData): Record<string, string> {
-  const thayDoi: Record<string, string> = {};
-  for (const [ten, gia_tri] of duLieu.entries()) {
-    if (!ten.startsWith(TIEN_TO)) continue;
-    const v = chuoi(gia_tri);
-    if (v) thayDoi[ten.slice(TIEN_TO.length)] = v;
-  }
-  return thayDoi;
-}
 
 export async function chuyenTrangThaiDieuPhoi(
   _truoc: KetQuaThaoTac,
@@ -66,5 +43,7 @@ export async function chuyenTrangThaiDieuPhoi(
   // Hồ sơ đổi trạng thái thì cổng người gửi cũng phải thấy ngay, không đợi bộ đệm hết hạn
   revalidatePath(`/yeu-cau/${maHoSo}`);
   revalidatePath("/yeu-cau");
+  // Hồ sơ vừa được chuyển về phòng ban thì hàng đợi phòng ban cũng phải thấy ngay
+  revalidatePath("/phong-ban");
   return CHUA_CO_LOI;
 }
