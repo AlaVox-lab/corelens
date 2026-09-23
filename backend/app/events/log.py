@@ -17,7 +17,35 @@ from app.models.case import EventLog
 from app.workflow.context import TransitionContext
 
 
-def record_event(session: Session, ctx: TransitionContext) -> EventLog:
+# Trường quyết định nào có cột tên đi kèm trên hồ sơ. Định danh Keycloak không tự nói
+# lên người nào, nên nhật ký ghi thêm tên của người cũ và người mới tại thời điểm đổi —
+# cùng lý do với `actor_label`.
+_TEN_DI_KEM = {"assignee_id": "assignee_label"}
+
+
+def _thay_doi_truong(ctx: TransitionContext, assignee_label: str | None) -> dict | None:
+    """Những trường mà lần chuyển này thật sự đổi giá trị, kèm giá trị cũ và mới (#100).
+
+    Gửi lại đúng giá trị đang có thì không tính là đổi: điều phối viên giữ nguyên loại
+    người gửi đã chọn không được sinh ra một dòng "A → A".
+    """
+    doi: dict = {}
+    for truong, moi in ctx.changes.items():
+        cu = getattr(ctx.case, truong)
+        if cu == moi:
+            continue
+        muc = {"from": cu, "to": moi}
+        cot_ten = _TEN_DI_KEM.get(truong)
+        if cot_ten:
+            muc["from_label"] = getattr(ctx.case, cot_ten)
+            muc["to_label"] = assignee_label if moi else None
+        doi[truong] = muc
+    return doi or None
+
+
+def record_event(
+    session: Session, ctx: TransitionContext, *, assignee_label: str | None = None
+) -> EventLog:
     """Ghi một bản ghi nhật ký cho lần chuyển trạng thái đang diễn ra.
 
     Sáu trường bắt buộc theo ARCHITECTURE.md mục 6 đều lấy từ bối cảnh, không trường
@@ -27,6 +55,9 @@ def record_event(session: Session, ctx: TransitionContext) -> EventLog:
     Mốc thời gian **không đặt từ phía Python**: để PostgreSQL tự điền bằng `now()`.
     Một đồng hồ duy nhất cho cả cụm, thay vì mỗi tiến trình một đồng hồ lệch nhau vài
     giây. Kiểu cột là TIMESTAMPTZ nên giá trị luôn được quy về UTC lúc lưu.
+
+    Phải gọi TRƯỚC khi hồ sơ được cập nhật: phần "từ → sang" đọc giá trị cũ từ chính
+    hồ sơ. `assignee_label` là tên người được giao mới, do phía gọi tra từ danh bạ.
     """
     su_kien = EventLog(
         case_id=ctx.case.id,
@@ -36,6 +67,7 @@ def record_event(session: Session, ctx: TransitionContext) -> EventLog:
         from_state=ctx.transition.from_state,
         to_state=ctx.transition.to_state,
         note=ctx.note,
+        changes=_thay_doi_truong(ctx, assignee_label),
     )
     session.add(su_kien)
 

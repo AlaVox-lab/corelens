@@ -10,8 +10,38 @@
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { chiGio, khoaNgay, nhanNgay } from "@/lib/dinh-dang";
-import type { SuKien } from "@/lib/kieu";
+import type { SuKien, ThayDoiTruong } from "@/lib/kieu";
 import { bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
+import { kieuTruong } from "@/lib/truong";
+
+/**
+ * Một dòng "Loại yêu cầu: Đề xuất mua vật tư → Sự cố thiết bị" (#100).
+ *
+ * Hồ sơ chỉ mang giá trị hiện tại; lịch sử đổi nằm trong nhật ký, và đây là chỗ nó hiện
+ * ra cho người đọc — người gửi thấy loại mình chọn đã được sửa thành gì, trưởng phòng
+ * thấy hồ sơ từng qua tay phòng nào, người xử lý nào.
+ */
+function DongThayDoi({ thayDoi }: { thayDoi: ThayDoiTruong }) {
+  const nhan = kieuTruong(thayDoi.field).nhan;
+  return (
+    <li style={{ fontSize: "12.5px", lineHeight: 1.55, color: "var(--ink-2)" }}>
+      <span style={{ color: "var(--ink-3)" }}>{nhan}: </span>
+      {thayDoi.before && (
+        <>
+          <span style={{ textDecoration: thayDoi.after ? "none" : "line-through" }}>
+            {thayDoi.before.label}
+          </span>
+          {thayDoi.after && (
+            <span className="mono" aria-label="đổi thành" style={{ color: "var(--ink-3)" }}>
+              {" → "}
+            </span>
+          )}
+        </>
+      )}
+      {thayDoi.after && <strong style={{ fontWeight: 600 }}>{thayDoi.after.label}</strong>}
+    </li>
+  );
+}
 
 /**
  * Đánh dấu những lần hồ sơ quay lại một trạng thái đã đi qua.
@@ -156,6 +186,14 @@ function MocThoiGian({
             </span>
           )}
         </div>
+
+        {su_kien.changes.length > 0 && (
+          <ul style={{ margin: "8px 0 0", padding: 0, listStyle: "none", display: "grid", gap: "2px" }}>
+            {su_kien.changes.map((t) => (
+              <DongThayDoi key={t.field} thayDoi={t} />
+            ))}
+          </ul>
+        )}
 
         {su_kien.note && (
           <div
