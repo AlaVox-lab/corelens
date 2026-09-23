@@ -680,7 +680,10 @@ hồ sơ tới sau khi được giao. Với bộ quy tắc hiện tại, hai t�
 xử lý; gỡ ràng buộc `assign-handler` khỏi mọi cạnh thì không ai mở được danh sách nữa, và
 có bài kiểm thử cho đúng điều đó. Trưởng phòng chỉ xem được người của phòng mình. Buồng
 lái phòng ban (#83) mở cho đúng hai tập đó, và hàng đợi của nó là những trạng thái mà hai
-vai có cạnh đi ra — cũng không có tên vai trò hay tên trạng thái nào trong mã.
+vai có cạnh đi ra — cũng không có tên vai trò hay tên trạng thái nào trong mã. Từ #99,
+hàng đợi có thêm nhóm **chỉ để theo dõi**: trạng thái mà cạnh của phòng ban dẫn tới và
+từ đó có đường quay về hàng đợi — hiện là *Chờ bổ sung thông tin* và *Hoàn tất*. Thiếu
+nhóm này thì người xử lý hỏi thêm xong là hồ sơ biến khỏi hàng đợi của họ.
 
 **Từ #83, người được giao phải đi qua danh bạ.** `assignee_id` là trường quyết định duy
 nhất có danh mục nằm ngoài cơ sở dữ liệu — trong Keycloak. Engine không gọi ra ngoài, nên
