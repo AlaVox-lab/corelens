@@ -161,6 +161,27 @@ ghi lỗi vào nhật ký khi một cookie vượt 4000 byte. Cờ `Secure` bám
 `PORTAL_PUBLIC_URL` chứ không theo `NODE_ENV`, vì bản dựng Docker chạy chế độ production
 qua HTTP, và Safari cùng các trình duyệt nhúng bỏ cookie `Secure` gửi qua HTTP.
 
+**Danh bạ là lối duy nhất dịch vụ gọi ngược sang Keycloak** — `backend/app/auth/directory.py`,
+từ #84. Trưởng phòng giao việc phải chọn người từ một danh sách có tên thật, trong khi cơ
+sở dữ liệu nghiệp vụ chỉ giữ `sub`. Dịch vụ tra thành viên nhóm `/phong-ban/<mã>` qua
+Admin API, bằng tài khoản dịch vụ của một client riêng, `dx-directory`, mang đúng một quyền
+chỉ đọc `view-users`. Quyền tối thiểu được kiểm chứ không chỉ được khai: bài kiểm thử xác
+nhận tài khoản đó bị từ chối khi đọc cấu hình client hay tạo người dùng.
+
+Điều ADR-0001 bảo vệ vẫn giữ nguyên. Danh bạ chỉ được hỏi khi mở ô chọn người, không ở
+mỗi yêu cầu, và engine không gọi tới nó. Ba quyết định đi kèm:
+
+- **Không giữ bộ đệm danh bạ.** Người vừa rời phòng phải biến khỏi danh sách ngay, vì giao
+  việc cho người đã đi là lỗi thật chứ không phải chuyện hiển thị chậm; và bộ đệm cũ sẽ che
+  mất việc Keycloak không phản hồi. Chỉ token của tài khoản dịch vụ được giữ lại
+- **Hỏng thì nói là hỏng.** Keycloak không trả lời thì điểm cuối trả 503 kèm lý do, không
+  trả danh sách rỗng — rỗng nghĩa là *phòng không có ai*, 503 nghĩa là *không biết phòng
+  có ai*. Trần 3 giây giữ ở vòng ngoài bằng một luồng riêng, vì `timeout` của urllib không
+  phủ bước tra DNS: đo thật khi tắt Keycloak trong cụm Compose, bước đó treo 8 giây
+- **Lấy vai trò hiệu lực**, kể cả vai trò nhận qua nhóm, vì đó mới là thứ có trong token.
+  Realm mẫu cố ý có `lan.vu` nhận vai trò người xử lý qua nhóm `/nhom-vai-tro/nguoi-xu-ly`
+  thay vì gán thẳng, để bài kiểm thử phân biệt được hai cách đọc
+
 **Không gian `P` không dùng nền tảng ngoài.** Engine máy trạng thái do nhóm tự viết, với
 trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Quyết định này được đưa ra sau khi
 khảo sát và dựng thử bốn ứng viên — xem
@@ -219,7 +240,7 @@ dx-os-lab/
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
-│   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor
+│   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] chưa cài đặt
 │   │   └── intelligence/        # [I] chưa cài đặt
 │   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
@@ -625,6 +646,14 @@ nhau. Cửa nhìn thấy gác luôn điểm cuối chuyển trạng thái, để
 
 Giao diện cũng không chứa tên vai trò nào. `/me` trả danh sách `workspaces` do dịch vụ
 tính, và thanh điều hướng dựng theo danh sách đó.
+
+**Từ #84, ai giao việc và ai nhận việc cũng suy từ dữ liệu.** Điểm cuối
+`GET /departments/{mã}/assignees` — nguồn của ô chọn người xử lý — không chứa tên vai trò
+nào. Người giao việc là vai trò đi được một cạnh cho đặt `assignee_id`, tức cạnh mang ràng
+buộc quản trường đó. Người nhận việc là vai trò đi được cạnh người ra khỏi trạng thái mà
+hồ sơ tới sau khi được giao. Với bộ quy tắc hiện tại, hai tập đó là trưởng phòng và người
+xử lý; gỡ ràng buộc `assign-handler` khỏi mọi cạnh thì không ai mở được danh sách nữa, và
+có bài kiểm thử cho đúng điều đó. Trưởng phòng chỉ xem được người của phòng mình.
 
 ---
 

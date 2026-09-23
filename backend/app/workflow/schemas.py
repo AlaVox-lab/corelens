@@ -191,3 +191,23 @@ class ChuyenTrangThaiDieuPhoiVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Giao việc (#84)
+# ---------------------------------------------------------------------------
+
+
+class NguoiNhanViecRa(BaseModel):
+    """Một người nhận được việc trong phòng, tra từ danh bạ Keycloak."""
+
+    # `sub` của Keycloak — đúng giá trị ghi xuống `assignee_id`. Tên bên dưới chỉ để
+    # hiển thị, không bao giờ gửi ngược lên thay cho định danh.
+    id: str
+    name: str
+    username: str
+
+
+class NguoiNhanViecTrongPhongRa(BaseModel):
+    department: PhongBanRa
+    people: list[NguoiNhanViecRa]
