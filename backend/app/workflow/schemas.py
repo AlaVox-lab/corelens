@@ -41,6 +41,9 @@ class CanhDiDuocRa(BaseModel):
 
     to_state: str
     to_state_label: str
+    # Trạng thái đích là trạng thái kết thúc — không cạnh nào đi ra, không hoàn tác được.
+    # Giao diện hỏi lại trước khi gửi (#98). Tra từ cột `states.is_terminal`.
+    to_state_is_terminal: bool = False
     activity_code: str
     activity_label: str
     requires_note: bool

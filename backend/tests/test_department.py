@@ -21,6 +21,7 @@ from app.models.workflow_config import (
     Department,
     Priority,
     RequestType,
+    State,
     Transition,
     TransitionRole,
 )
@@ -450,6 +451,52 @@ def test_phan_cong_lai_cho_nguoi_khac_doi_ca_ten(client, session, rule_set, phon
 
     assert r.status_code == 200, r.text
     assert (r.json()["assignee_id"], r.json()["assignee_label"]) == (nguoi_moi.id, "Người Xử Lý 2")
+
+
+# ---------------------------------------------------------------------------
+# Thao tác không hoàn tác được (#98)
+# ---------------------------------------------------------------------------
+
+
+def test_moi_canh_bao_dung_trang_thai_dich_co_phai_ket_thuc(client, session, rule_set, phong_ban):
+    """Giao diện hỏi lại trước thao tác không hoàn tác được dựa vào cờ này — nên nó phải
+    khớp cột `states.is_terminal`, ở cả cổng người gửi lẫn buồng lái."""
+    ket_thuc = dict(
+        session.execute(
+            select(State.code, State.is_terminal).where(State.rule_set_id == rule_set.id)
+        ).all()
+    )
+    ho_so = _tao(session)
+    uu_tien = session.scalars(select(Priority.code).order_by(Priority.display_order)).first()
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+                       changes={"priority_code": uu_tien})
+    session.commit()
+
+    da_thay_ket_thuc = False
+    for actor, duong_dan in [
+        (PHAN_LOAI, f"/coordination/requests/{ho_so.id}"),
+        (NGUOI_GUI, f"/requests/{ho_so.id}"),
+    ]:
+        _goi_bang(client, actor)
+        for canh in client.get(duong_dan).json()["allowed_transitions"]:
+            assert canh["to_state_is_terminal"] is ket_thuc[canh["to_state"]], canh["to_state"]
+            da_thay_ket_thuc |= canh["to_state_is_terminal"]
+    assert da_thay_ket_thuc, "ở Đã phân loại phải có ít nhất một cạnh kết thúc để bài có nghĩa"
+
+
+@pytest.mark.parametrize("ly_do", ["Gửi nhầm, đã tự sửa được máy", None])
+def test_huy_kem_ly_do_tuy_chon(client, session, rule_set, ly_do):
+    """Lý do khi hủy là tùy chọn: ghi thì vào nhật ký, bỏ trống vẫn hủy được."""
+    ho_so = _tao(session)
+    session.commit()
+    _goi_bang(client, NGUOI_GUI)
+
+    r = client.post(f"/requests/{ho_so.id}/transitions",
+                    json={"to_state": "cancelled", "note": ly_do})
+
+    assert r.status_code == 200, r.text
+    assert r.json()["state"]["is_terminal"] is True
+    assert r.json()["history"][-1]["note"] == ly_do
 
 
 # ---------------------------------------------------------------------------
