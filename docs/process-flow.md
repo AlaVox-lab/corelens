@@ -171,6 +171,13 @@ người vẫn bấm nút quyết định.
 Mọi ràng buộc cài đặt ở **cả hai phía**: giao diện chặn để trải nghiệm tốt, dịch vụ chặn để
 bảo đảm toàn vẹn. Chỉ chặn ở giao diện là không đủ.
 
+**Leo thang lại sau khi phân công lại hay mở lại** (quyết định ngày 23/09, #94). Hồ sơ đã
+quá hạn mà được phân công lại, được người gửi mở lại, hay vừa bổ sung thông tin xong thì
+người nhận có một **khoảng ân hạn** trước khi bị leo thang lần nữa. Đồng hồ tổng **không**
+đặt lại và **không** cấp hạn mới: hồ sơ vẫn được ghi nhận là quá hạn. Hết ân hạn mà vẫn
+chưa xong thì leo thang lại. Không có ân hạn thì bộ quét leo thang lại ngay lượt kế tiếp,
+và người được giao không có một phút nào để làm.
+
 **Một ràng buộc bổ trợ, thêm ở #78 — cần giảng viên xác nhận:** hồ sơ rời khỏi tay người
 phân loại phải có loại yêu cầu. Giữ loại người gửi đã chọn trên biểu mẫu, hoặc người phân
 loại đặt mới nếu người gửi bỏ trống. Lý do: loại yêu cầu quyết định ngưỡng SLA, và hồ sơ
@@ -207,6 +214,7 @@ Ngoài trạng thái và quy tắc chuyển, ba nhóm sau cũng là **dữ liệ
 | **Loại yêu cầu** | Sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư | `administrator` |
 | **Ánh xạ loại → phòng ban** | Sự cố thiết bị → Công nghệ thông tin | `administrator` |
 | **Ngưỡng SLA** | Theo từng loại yêu cầu | `administrator` |
+| **Ân hạn sau khi vào lại xử lý** | Theo từng loại yêu cầu, mẫu là một phần tư ngưỡng SLA | `administrator` |
 
 Yêu cầu này không chỉ để thích ứng đề thi tháng 11. Mục tiêu sản phẩm là **doanh nghiệp
 khác tải về rồi tự tùy biến phòng ban và loại yêu cầu theo đặc thù của mình** — đó là lý do

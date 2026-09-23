@@ -583,9 +583,24 @@ nhanh thì nhật ký sẽ thiếu đúng những bản ghi thú vị nhất —
 phá quy trình mất khả năng chỉ ra điểm nghẽn.
 
 **Trạng thái đích cũng không viết cứng.** Bộ quét tra bảng `transitions` tìm cạnh mang
-cờ `is_system` xuất phát từ trạng thái hiện tại. Nhờ vậy hồ sơ đã leo thang không bị
-nhặt lại mỗi vòng — từ `escalated` không còn cạnh hệ thống nào — mà không cần thêm một
-cột *"đã leo thang chưa"*. Cơ chế tự giới hạn bằng chính cấu trúc dữ liệu.
+cờ `is_system` xuất phát từ trạng thái hiện tại. Nhờ vậy hồ sơ ĐANG ở `escalated` không
+bị nhặt lại mỗi vòng — từ đó không còn cạnh hệ thống nào — mà không cần thêm một cột
+*"đã leo thang chưa"*.
+
+**Ân hạn sau mỗi lần vào lại trạng thái đếm giờ** (#94). Chỉ riêng cấu trúc dữ liệu thì
+chưa đủ: trưởng phòng phân công lại thì hồ sơ về `in-progress`, đồng hồ tổng vẫn quá
+hạn, và lượt quét kế tiếp leo thang lại ngay — đo thật được 38 giây. Mở lại một hồ sơ đã
+quá hạn, hay bổ sung thông tin xong, cũng rơi vào đúng chỗ đó. Bộ quét vì vậy đòi thêm
+một điều kiện: hồ sơ đã ở trạng thái hiện tại lâu hơn `request_types.sla_grace_hours`.
+Mốc đo là `sla_segment_since`, vốn mở lại ở mỗi lần chuyển trạng thái.
+
+Ba lựa chọn đã cân nhắc: cho ân hạn, chỉ leo thang một lần, hay đặt lại đồng hồ. Chọn
+ân hạn vì hai cái kia mỗi cái hỏng một thứ — chỉ leo thang một lần thì hồ sơ bị bỏ bê
+lần hai không ai biết, đặt lại đồng hồ thì số liệu thời gian xử lý mà tầng `I` cần bị
+xóa dấu. Với ân hạn, đồng hồ tổng giữ nguyên, hồ sơ vẫn được ghi nhận là quá hạn, và
+hết ân hạn mà vẫn chưa xong thì leo thang lại. Ân hạn không được dài hơn chính hạn xử
+lý — ràng buộc `CHECK` chặn, vì khi đó lần leo thang đầu tiên cũng bị hoãn. Giao diện
+nói "Quá hạn … · ân hạn còn …" để không ai tưởng hệ thống quên hồ sơ.
 
 Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
