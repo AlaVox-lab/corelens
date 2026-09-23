@@ -250,7 +250,8 @@ và trưởng phòng vẫn nhận được hồ sơ mà chưa giao cho ai.
 
 **Xem hồ sơ tự leo thang.** Hạ `SLA_SCAN_INTERVAL_SECONDS` như ở mục dưới, để một hồ sơ
 đang xử lý quá hạn: nó chuyển sang *Đã leo thang*, nổi lên đầu hàng đợi, và trưởng phòng
-phân công lại được ngay từ màn chi tiết.
+phân công lại được ngay từ màn chi tiết. Sau khi phân công lại, người mới có một khoảng
+**ân hạn** trước khi hồ sơ bị leo thang lần nữa — màn hình ghi "Quá hạn … · ân hạn còn …".
 
 ### Theo dõi SLA
 
@@ -269,6 +270,18 @@ Quản trị viên cũng chạy được một lượt quét ngay bằng `POST /
 
 Thời gian hồ sơ nằm ở *Chờ bổ sung thông tin* **không** tính vào SLA — người xử lý
 không bị phạt khi người tạo chậm trả lời — nhưng tổng thời gian dừng vẫn được ghi lại.
+
+Hồ sơ đã quá hạn mà được phân công lại, được mở lại, hay vừa bổ sung thông tin xong thì
+có **ân hạn** trước khi bị leo thang lần nữa: mẫu là một phần tư hạn xử lý, khai ở cột
+`sla_grace_hours` cạnh `sla_hours`. Đồng hồ tổng không đặt lại — hồ sơ vẫn được ghi nhận
+là quá hạn.
+
+Muốn thử leo thang bằng tay mà không phải chờ hết hạn thật, đẩy một hồ sơ đang xử lý sang
+quá hạn — phải lùi cả mốc vào trạng thái, nếu không hồ sơ còn nằm trong ân hạn:
+
+```bash
+docker exec dxlab-postgres psql -U dxlab -d dxlab -c "UPDATE requests SET sla_running_seconds = 999999, sla_segment_since = now() - interval '1 day' WHERE id = <số hồ sơ>"
+```
 
 > **Cảnh báo bảo mật**: toàn bộ mật khẩu trong `.env.example` là giá trị mẫu công khai,
 > chỉ dùng cho môi trường phát triển. Bắt buộc thay trước khi triển khai thật. Tệp `.env`

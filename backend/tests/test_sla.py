@@ -13,9 +13,16 @@ import datetime as dt
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.models.workflow_config import Priority, RequestType, State
-from app.rules.sla import bay_gio, da_chay_giay, gioi_han_giay, ho_so_qua_han
+from app.rules.sla import (
+    an_han_con_lai_giay,
+    bay_gio,
+    da_chay_giay,
+    gioi_han_giay,
+    ho_so_qua_han,
+)
 from app.workflow.context import Actor
 from app.workflow.engine import case_history, create_case, perform_transition
 from app.workflow.escalation import TAC_NHAN_SLA, quet_va_leo_thang
@@ -295,6 +302,8 @@ def test_doi_nguong_sla_chi_can_sua_du_lieu(session, rule_set, phong_ban):
     _lui_dong_ho(session, ho_so, gio=2)
     assert ho_so not in ho_so_qua_han(session), "Ngưỡng gốc chưa bị vượt"
 
+    # Ân hạn không được dài hơn hạn xử lý (ràng buộc CHECK, #94), nên hạ cả hai
+    loai.sla_grace_hours = 0
     loai.sla_hours = 1
     session.flush()
 
@@ -307,3 +316,112 @@ def test_da_chay_giay_gom_ca_doan_dang_mo(session, rule_set, phong_ban):
     _lui_dong_ho(session, ho_so, gio=1.5)
 
     assert 5300 < da_chay_giay(session, ho_so) < 5500
+
+
+# ---------------------------------------------------------------------------
+# Ân hạn sau khi vào lại trạng thái đếm giờ (#94)
+# ---------------------------------------------------------------------------
+
+
+def _truong_phong(phong_ban: str) -> Actor:
+    return Actor(id="xd-sla", roles=frozenset({"approver"}), departments=frozenset({phong_ban}))
+
+
+def _loai_co_an_han(session) -> RequestType:
+    loai = _loai_yeu_cau(session)
+    if loai.sla_grace_hours <= 0:
+        pytest.skip("Loại yêu cầu đầu tiên không khai ân hạn.")
+    return loai
+
+
+def _da_leo_thang_vi_qua_han(session, phong_ban: str, loai: RequestType):
+    ho_so = _den_dang_xu_ly(session, phong_ban, loai)
+    _lui_dong_ho(session, ho_so, gio=loai.sla_hours + 1)
+    quet_va_leo_thang(session)
+    assert ho_so.current_state == "escalated"
+    return ho_so
+
+
+def test_phan_cong_lai_thi_co_an_han(session, rule_set, phong_ban):
+    """Đúng lỗi của #94: phân công lại xong, lượt quét kế tiếp KHÔNG leo thang lại."""
+    loai = _loai_co_an_han(session)
+    ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
+
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=_truong_phong(phong_ban))
+
+    assert da_chay_giay(session, ho_so) > gioi_han_giay(session, ho_so),         "đồng hồ tổng không đặt lại — hồ sơ vẫn quá hạn"
+    assert ho_so not in ho_so_qua_han(session)
+    assert quet_va_leo_thang(session) == []
+    assert ho_so.current_state == "in-progress"
+
+    con = an_han_con_lai_giay(session, ho_so)
+    assert con is not None and 0 < con <= loai.sla_grace_hours * 3600
+
+    # Nửa khoảng ân hạn trôi qua vẫn phải yên — bắt lỗi nhầm đơn vị giờ với phút
+    _lui_dong_ho(session, ho_so, gio=loai.sla_grace_hours / 2)
+    assert quet_va_leo_thang(session) == []
+    assert ho_so.current_state == "in-progress"
+
+
+def test_chua_qua_han_thi_khong_noi_ve_an_han(session, rule_set, phong_ban):
+    """Ân hạn chỉ có nghĩa với hồ sơ đã quá hạn. Hồ sơ vừa được nhận việc mà hiện
+    "ân hạn còn 2 giờ" thì người đọc tưởng hạn xử lý chỉ còn 2 giờ."""
+    loai = _loai_co_an_han(session)
+    ho_so = _den_dang_xu_ly(session, phong_ban, loai)
+    assert an_han_con_lai_giay(session, ho_so) is None
+
+
+def test_het_an_han_thi_leo_thang_lai(session, rule_set, phong_ban):
+    """Ân hạn không che việc bị bỏ bê lần hai: hết ân hạn mà chưa xong thì leo thang."""
+    loai = _loai_co_an_han(session)
+    ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=_truong_phong(phong_ban))
+
+    _lui_dong_ho(session, ho_so, gio=loai.sla_grace_hours + 0.1)
+
+    assert an_han_con_lai_giay(session, ho_so) is None
+    assert ho_so.id in quet_va_leo_thang(session)
+    assert ho_so.current_state == "escalated"
+
+
+def test_mo_lai_ho_so_da_qua_han_cung_co_an_han(session, rule_set, phong_ban):
+    """Lối vào thứ hai: người gửi mở lại một hồ sơ đã quá hạn — không cấp hạn mới,
+    nhưng người xử lý có ân hạn để làm lại."""
+    loai = _loai_co_an_han(session)
+    ho_so = _den_dang_xu_ly(session, phong_ban, loai)
+    _lui_dong_ho(session, ho_so, gio=loai.sla_hours + 1)
+
+    xu_ly = Actor(id="xl-sla", roles=frozenset({"handler"}), departments=frozenset({phong_ban}))
+    perform_transition(session, case_id=ho_so.id, to_state="completed", actor=xu_ly)
+    nguoi_gui = Actor(id=NGUOI_TAO, roles=frozenset({"requester"}))
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=nguoi_gui, note="Vẫn chưa được.")
+
+    assert ho_so not in ho_so_qua_han(session)
+    assert quet_va_leo_thang(session) == []
+    assert an_han_con_lai_giay(session, ho_so) is not None
+
+
+def test_an_han_bang_khong_thi_leo_thang_ngay(session, rule_set, phong_ban):
+    """Ân hạn là dữ liệu: đặt về 0 thì hành vi cũ trở lại, không sửa mã."""
+    loai = _loai_co_an_han(session)
+    ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
+
+    loai.sla_grace_hours = 0
+    session.flush()
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress",
+                       actor=_truong_phong(phong_ban))
+
+    assert ho_so.id in quet_va_leo_thang(session)
+
+
+def test_an_han_khong_duoc_dai_hon_han_xu_ly(session, rule_set):
+    """Ân hạn dài hơn hạn thì lần leo thang ĐẦU TIÊN cũng bị hoãn — lược đồ chặn."""
+    loai = _loai_yeu_cau(session)
+    with pytest.raises(IntegrityError):
+        with session.begin_nested():
+            loai.sla_grace_hours = loai.sla_hours + 1
+            session.flush()
+    session.expire_all()

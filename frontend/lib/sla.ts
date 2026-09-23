@@ -87,7 +87,13 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
   }
 
   if (ho_so.sla_overdue) {
-    return { cau: `Quá hạn ${thoiLuong(-con_lai)}`, canhBao: true };
+    // Quá hạn mà vừa được giao lại hay mở lại: nói luôn còn bao lâu trước khi bị leo
+    // thang lần nữa, để không ai tưởng hệ thống quên hồ sơ này (#94).
+    const anHan =
+      ho_so.sla_grace_seconds !== null && ho_so.sla_grace_seconds > 0
+        ? ` · ân hạn còn ${thoiLuong(ho_so.sla_grace_seconds)}`
+        : "";
+    return { cau: `Quá hạn ${thoiLuong(-con_lai)}${anHan}`, canhBao: true };
   }
 
   if (ho_so.sla_paused) {

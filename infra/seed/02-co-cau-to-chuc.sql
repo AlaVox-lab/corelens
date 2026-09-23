@@ -37,19 +37,23 @@ INSERT INTO departments (code, label, description, display_order) VALUES
 -- ---------------------------------------------------------------------------
 -- Ngưỡng tính bằng giờ làm việc kể từ lúc hồ sơ vào trạng thái đang xử lý. Cạnh
 -- leo thang tự động ở #42 đọc cột sla_hours, không mã cứng con số nào.
+--
+-- Ân hạn (sla_grace_hours, #94): hồ sơ đã quá hạn mà được phân công lại hay mở lại
+-- thì người nhận có chừng này giờ trước khi bị leo thang lần nữa. Mẫu lấy một phần
+-- tư hạn xử lý; doanh nghiệp đổi tùy loại việc.
 
-INSERT INTO request_types (code, label, description, sla_hours, display_order) VALUES
+INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, display_order) VALUES
     ('device-incident', 'Sự cố thiết bị',
-     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  1),
+     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2,  1),
 
     ('software-access', 'Cấp quyền phần mềm',
-     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  2),
+     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6,  2),
 
     ('hr-certificate',  'Giấy xác nhận nhân sự',
-     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48,  3),
+     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12,  3),
 
     ('supply-purchase', 'Đề xuất mua vật tư',
-     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72,  4);
+     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18,  4);
 
 
 -- ---------------------------------------------------------------------------

@@ -89,19 +89,47 @@ def da_chay_giay(session: Session, case: Request) -> int:
     return tong
 
 
-def ho_so_qua_han(session: Session) -> list[Request]:
-    """Những hồ sơ đã vượt ngưỡng SLA và còn đường leo thang để đi.
+def an_han_con_lai_giay(session: Session, case: Request) -> int | None:
+    """Còn bao nhiêu giây ân hạn trước khi bộ quét được leo thang hồ sơ này (#94).
 
-    Bốn điều kiện, tất cả đều tra từ dữ liệu:
+    `None` khi ân hạn không áp: hồ sơ chưa quá hạn, không ở trạng thái đếm giờ, hoặc
+    đã hết ân hạn. Chỉ để giao diện nói cho trưởng phòng biết vì sao hồ sơ quá hạn mà
+    chưa bị leo thang — phép kiểm thật nằm trong `ho_so_qua_han`.
+    """
+    gioi_han = gioi_han_giay(session, case)
+    if gioi_han is None or case.sla_segment_since is None:
+        return None
+    if not _trang_thai(session, case.rule_set_id, case.current_state).sla_running:
+        return None
+    if da_chay_giay(session, case) <= gioi_han:
+        return None
+    loai = session.get(RequestType, case.request_type_code)
+    da_o = int((bay_gio(session) - case.sla_segment_since).total_seconds())
+    con = loai.sla_grace_hours * 3600 - da_o
+    return con if con > 0 else None
+
+
+def ho_so_qua_han(session: Session) -> list[Request]:
+    """Những hồ sơ đã vượt ngưỡng SLA, còn đường leo thang, và hết ân hạn.
+
+    Năm điều kiện, tất cả đều tra từ dữ liệu:
 
     1. Đang ở trạng thái có `sla_running` — hồ sơ đang tạm dừng thì không quá hạn được
     2. Đã phân loại, nên biết ngưỡng áp cho nó
     3. Tổng thời gian chạy vượt ngưỡng
     4. Từ trạng thái hiện tại có một cạnh hệ thống để đi
+    5. Đã ở trạng thái hiện tại lâu hơn ân hạn của loại yêu cầu (#94)
 
-    Điều kiện thứ tư quan trọng: nhờ nó mà hồ sơ đã leo thang rồi không bị bộ quét
-    nhặt lại mỗi vòng, vì từ `escalated` không có cạnh hệ thống nào nữa. Cơ chế tự
-    giới hạn bằng dữ liệu, không cần cột "đã leo thang chưa".
+    Điều kiện thứ tư khiến hồ sơ ĐANG ở `escalated` không bị nhặt lại mỗi vòng, vì từ
+    đó không có cạnh hệ thống nào. Nhưng nó không đủ: trưởng phòng phân công lại thì
+    hồ sơ về `in-progress`, đồng hồ tổng vẫn quá hạn, và thiếu điều kiện thứ năm thì
+    lượt quét kế tiếp leo thang lại ngay — người mới không có một phút nào để làm. Mở
+    lại một hồ sơ đã quá hạn, hay bổ sung thông tin xong, cũng rơi vào đúng chỗ đó.
+
+    Ân hạn đo từ `sla_segment_since` — mốc này mở lại ở MỖI lần chuyển trạng thái, nên
+    nó chính là lúc hồ sơ vào trạng thái hiện tại. Đồng hồ tổng không đặt lại: hồ sơ
+    vẫn được ghi nhận là quá hạn, và số liệu thời gian xử lý giữ đúng cho tầng `I`.
+    Hết ân hạn mà vẫn chưa xong thì leo thang lại — đó là tín hiệu đúng.
     """
     dang_chay = (
         select(Transition.id)
@@ -127,6 +155,8 @@ def ho_so_qua_han(session: Session) -> list[Request]:
             Request.sla_running_seconds
             + func.extract("epoch", func.now() - Request.sla_segment_since)
             > RequestType.sla_hours * 3600,
+            func.extract("epoch", func.now() - Request.sla_segment_since)
+            >= RequestType.sla_grace_hours * 3600,
             dang_chay,
         )
         .order_by(Request.id)

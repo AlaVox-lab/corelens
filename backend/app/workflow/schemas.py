@@ -86,6 +86,8 @@ class HoSoTomTatRa(BaseModel):
     sla_paused: bool
     # Đồng hồ đã khởi động — hồ sơ đã từng vào trạng thái đếm giờ (#97)
     sla_started: bool
+    # Ân hạn còn lại khi hồ sơ quá hạn vừa được giao lại hay mở lại (#94)
+    sla_grace_seconds: int | None = None
 
 
 class HoSoChiTietRa(HoSoTomTatRa):
