@@ -86,7 +86,7 @@ if _VUOT_BIEN:
 # Keycloak chứ không trong cơ sở dữ liệu. Engine không gọi ra ngoài, nên việc kiểm
 # người được giao nằm ở tầng điểm cuối — `kiem_nguoi_duoc_giao` trong
 # app/workflow/assignment.py — và MỌI điểm cuối nhận `changes` đều gọi qua đó (#83).
-_DANH_MUC_CUA_TRUONG = {
+DANH_MUC_CUA_TRUONG = {
     "department_code": Department,
     "priority_code": Priority,
     "request_type_code": RequestType,
@@ -101,7 +101,7 @@ def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict) -> None:
     lại thì phòng ban vốn không được đổi.
     """
     for truong, gia_tri in thay_doi.items():
-        mo_hinh = _DANH_MUC_CUA_TRUONG.get(truong)
+        mo_hinh = DANH_MUC_CUA_TRUONG.get(truong)
         if mo_hinh is None or gia_tri is None or gia_tri == "":
             continue
 
@@ -320,7 +320,9 @@ def perform_transition(
     run_guards(ctx)
 
     # --- Bước 4: ghi nhật ký TRƯỚC -----------------------------------------
-    record_event(session, ctx)
+    # Lúc này hồ sơ chưa bị ghi đè, nên nhật ký còn đọc được giá trị cũ để ghi phần
+    # "từ → sang" (#100). Sau bước 5 thì giá trị cũ mất.
+    record_event(session, ctx, assignee_label=assignee_label)
 
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------
     for truong, gia_tri in thay_doi.items():

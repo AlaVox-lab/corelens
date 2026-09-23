@@ -55,6 +55,19 @@ class CanhDiDuocRa(BaseModel):
     fields: list[str] = Field(default_factory=list)
 
 
+class ThayDoiTruongRa(BaseModel):
+    """Một trường quyết định mà lần chuyển đã đổi giá trị (#100).
+
+    `before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc
+    đọc từ danh mục — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được. Riêng người
+    xử lý thì nhãn là tên ghi lúc đổi.
+    """
+
+    field: str
+    before: NhanCoMa | None = None
+    after: NhanCoMa | None = None
+
+
 class SuKienRa(BaseModel):
     """Một mốc trong dòng thời gian, dựng thẳng từ bảng `event_log`."""
 
@@ -69,6 +82,7 @@ class SuKienRa(BaseModel):
     to_state: str
     to_state_label: str
     note: str | None = None
+    changes: list[ThayDoiTruongRa] = Field(default_factory=list)
 
 
 class HoSoTomTatRa(BaseModel):
