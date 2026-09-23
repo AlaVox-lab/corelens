@@ -127,3 +127,42 @@ export type HoSoDieuPhoi = HoSoChiTiet & {
   /** Phòng mặc định cho loại yêu cầu, để ô chọn điền sẵn. Chỉ là gợi ý. */
   suggested_department: NhanCoMa | null;
 };
+
+// ---------------------------------------------------------------------------
+// Buồng lái phòng ban (#83)
+// ---------------------------------------------------------------------------
+
+export type MucHangDoiPhongBan = MucHangDoi & {
+  /** Định danh Keycloak — để so. Tên bên dưới ghi lúc giao việc — để đọc. */
+  assignee_id: string | null;
+  assignee_label: string | null;
+  assigned_to_me: boolean;
+};
+
+export type HangDoiPhongBan = {
+  /** Phòng của người đang xem. */
+  departments: NhanCoMa[];
+  groups: NhomHangDoi[];
+  items: MucHangDoiPhongBan[];
+};
+
+export type HoSoPhongBan = HoSoChiTiet & {
+  requester_label: string | null;
+  priority: NhanCoMa | null;
+  state_entered_at: string;
+  assignee_label: string | null;
+  assigned_to_me: boolean;
+};
+
+/** Một người nhận được việc trong phòng, tra từ danh bạ Keycloak (#84). */
+export type NguoiNhanViec = {
+  /** `sub` của Keycloak — đúng giá trị gửi lên trong `assignee_id`. */
+  id: string;
+  name: string;
+  username: string;
+};
+
+export type NguoiNhanViecTrongPhong = {
+  department: PhongBan;
+  people: NguoiNhanViec[];
+};

@@ -82,8 +82,10 @@ if _VUOT_BIEN:
 # đồ — đây là cấu trúc dữ liệu, không phải quy tắc nghiệp vụ — nhưng kiểm ở tầng ứng
 # dụng để trả lời bằng 422 kèm tên trường, thay vì để khóa ngoại nổ thành 500.
 #
-# `assignee_id` không có mặt: nó là định danh Keycloak, chưa có danh mục để tra cho
-# tới khi dịch vụ biết đọc danh bạ (#84).
+# `assignee_id` không có mặt: nó là định danh Keycloak, và danh mục của nó nằm trong
+# Keycloak chứ không trong cơ sở dữ liệu. Engine không gọi ra ngoài, nên việc kiểm
+# người được giao nằm ở tầng điểm cuối — `kiem_nguoi_duoc_giao` trong
+# app/workflow/assignment.py — và MỌI điểm cuối nhận `changes` đều gọi qua đó (#83).
 _DANH_MUC_CUA_TRUONG = {
     "department_code": Department,
     "priority_code": Priority,
@@ -221,6 +223,7 @@ def perform_transition(
     actor: Actor,
     note: str | None = None,
     changes: dict | None = None,
+    assignee_label: str | None = None,
 ) -> Request:
     """Đổi trạng thái một hồ sơ. Đây là cánh cửa duy nhất.
 
@@ -237,6 +240,11 @@ def perform_transition(
 
     Hàm **không tự commit**: phía gọi quyết định ranh giới giao dịch. Nhờ vậy một
     yêu cầu HTTP gói được nhiều thao tác, và bộ kiểm thử hoàn tác sạch sau mỗi bài.
+
+    `assignee_label` là tên của người được giao, chỉ được ghi khi lần chuyển này đặt
+    `assignee_id`. Engine không tự tra tên — nó không biết Keycloak tồn tại. Phía gọi
+    tra danh bạ và kiểm người đó nhận được việc trước khi gọi vào đây (#83), cùng cách
+    `create_case` nhận `requester_label`.
     """
     # Khóa dòng hồ sơ tới cuối giao dịch. Không có bước này, hai yêu cầu đồng thời
     # cùng đọc trạng thái cũ rồi cùng ghi nhật ký — sinh ra hai bản ghi cho một lần
@@ -317,6 +325,10 @@ def perform_transition(
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------
     for truong, gia_tri in thay_doi.items():
         setattr(ho_so, truong, gia_tri)
+    # Tên đi cùng định danh: đổi người thì đổi tên, kể cả về rỗng, để hai cột không
+    # bao giờ kể hai người khác nhau.
+    if "assignee_id" in thay_doi:
+        ho_so.assignee_label = assignee_label if thay_doi["assignee_id"] else None
 
     # Chốt đoạn đồng hồ SLA đang mở rồi mở đoạn mới. Phải gọi TRƯỚC khi đổi
     # `current_state`, vì hàm cần biết hồ sơ đang rời khỏi trạng thái nào.

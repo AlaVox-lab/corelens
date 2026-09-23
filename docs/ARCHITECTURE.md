@@ -168,8 +168,8 @@ Admin API, bằng tài khoản dịch vụ của một client riêng, `dx-direct
 chỉ đọc `view-users`. Quyền tối thiểu được kiểm chứ không chỉ được khai: bài kiểm thử xác
 nhận tài khoản đó bị từ chối khi đọc cấu hình client hay tạo người dùng.
 
-Điều ADR-0001 bảo vệ vẫn giữ nguyên. Danh bạ chỉ được hỏi khi mở ô chọn người, không ở
-mỗi yêu cầu, và engine không gọi tới nó. Ba quyết định đi kèm:
+Điều ADR-0001 bảo vệ vẫn giữ nguyên. Danh bạ chỉ được hỏi khi mở ô chọn người và khi
+giao việc, không ở mỗi yêu cầu, và engine không gọi tới nó. Ba quyết định đi kèm:
 
 - **Không giữ bộ đệm danh bạ.** Người vừa rời phòng phải biến khỏi danh sách ngay, vì giao
   việc cho người đã đi là lỗi thật chứ không phải chuyện hiển thị chậm; và bộ đệm cũ sẽ che
@@ -251,6 +251,7 @@ dx-os-lab/
 │   │   ├── api/auth/            # [H] ba chặng của luồng đăng nhập OIDC
 │   │   ├── yeu-cau/             # [H] cổng gửi yêu cầu — ba màn hình của #44
 │   │   ├── dieu-phoi/           # [H] buồng lái điều phối viên — #82
+│   │   ├── phong-ban/           # [H] buồng lái phòng ban — #83
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
@@ -653,7 +654,22 @@ nào. Người giao việc là vai trò đi được một cạnh cho đặt `as
 buộc quản trường đó. Người nhận việc là vai trò đi được cạnh người ra khỏi trạng thái mà
 hồ sơ tới sau khi được giao. Với bộ quy tắc hiện tại, hai tập đó là trưởng phòng và người
 xử lý; gỡ ràng buộc `assign-handler` khỏi mọi cạnh thì không ai mở được danh sách nữa, và
-có bài kiểm thử cho đúng điều đó. Trưởng phòng chỉ xem được người của phòng mình.
+có bài kiểm thử cho đúng điều đó. Trưởng phòng chỉ xem được người của phòng mình. Buồng
+lái phòng ban (#83) mở cho đúng hai tập đó, và hàng đợi của nó là những trạng thái mà hai
+vai có cạnh đi ra — cũng không có tên vai trò hay tên trạng thái nào trong mã.
+
+**Từ #83, người được giao phải đi qua danh bạ.** `assignee_id` là trường quyết định duy
+nhất có danh mục nằm ngoài cơ sở dữ liệu — trong Keycloak. Engine không gọi ra ngoài, nên
+phép kiểm nằm ở tầng điểm cuối: `kiem_nguoi_duoc_giao` trong
+`backend/app/workflow/assignment.py`, và **mọi** điểm cuối nhận `changes` đều gọi nó —
+kể cả cửa điều phối, vì một người có thể mang cùng lúc vai trò điều phối và vai trò giao
+việc. Phép kiểm chỉ tra danh bạ khi chắc lần chuyển sẽ tới bước đặt người, và người gọi
+thuộc phòng đang giữ hồ sơ; thiếu điều kiện nào thì nhường engine báo lỗi của nó, để lỗi
+503 của danh bạ không che mất lỗi 403 thật, và để người phòng khác không dò được ai thuộc
+phòng nào. Tên người được giao lấy từ danh bạ chứ không từ trình duyệt, ghi vào
+`requests.assignee_label` cùng lúc với định danh — cùng khuôn với `requester_label` và
+`actor_label`. Danh bạ không trả lời thì không giao được người, nhưng vẫn nhận được hồ
+sơ: người xử lý là tùy chọn, và cả phòng vẫn thấy hồ sơ đó.
 
 ---
 

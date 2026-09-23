@@ -81,8 +81,8 @@ export type DanhTinh = {
   roles: string[];
   departments: string[];
   /**
-   * Không gian làm việc người này vào được — `portal`, `coordination`. Dịch vụ quyết
-   * dựa trên vai trò, để mã giao diện không phải chứa tên vai trò nào cả.
+   * Không gian làm việc người này vào được — `portal`, `coordination`, `department`.
+   * Dịch vụ quyết dựa trên vai trò, để mã giao diện không phải chứa tên vai trò nào cả.
    */
   workspaces: string[];
 };
@@ -116,6 +116,11 @@ async function docLoi(phanHoi: Response): Promise<{ ma: string; thongDiep: strin
     const than = (await phanHoi.json()) as { detail?: unknown };
     const chiTiet = than.detail;
 
+    // Cửa của các buồng lái trả một câu tiếng Việt trần, không kèm mã
+    if (typeof chiTiet === "string" && chiTiet) {
+      return { ma: `http-${phanHoi.status}`, thongDiep: chiTiet };
+    }
+
     if (chiTiet && typeof chiTiet === "object" && !Array.isArray(chiTiet)) {
       const o = chiTiet as { code?: string; message?: string };
       if (o.code) {
@@ -140,6 +145,39 @@ async function docLoi(phanHoi: Response): Promise<{ ma: string; thongDiep: strin
     ma: `http-${phanHoi.status}`,
     thongDiep: "Dịch vụ ứng dụng không xử lý được yêu cầu này.",
   };
+}
+
+/**
+ * Đọc một điểm cuối, giữ lại lý do khi hỏng.
+ *
+ * `goiDichVu` nuốt mọi lỗi thành `null` — đủ cho trang, vì trang chỉ cần biết có dữ
+ * liệu hay không. Hàm này dành cho chỗ mà LÝ DO hỏng cần tới tay người dùng: ô chọn
+ * người xử lý phải nói được "danh bạ không trả lời", khác với "phòng không có ai".
+ */
+export async function docDichVu<T>(duongDan: string): Promise<KetQua<T>> {
+  const phien = await layPhien();
+  if (!phien) return CHUA_DANG_NHAP;
+
+  const dungPhien = await lamMoiNeuSapHet(phien);
+
+  let phanHoi: Response;
+  try {
+    phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      cache: "no-store",
+    });
+  } catch {
+    return {
+      ok: false,
+      ma: "khong-ket-noi-duoc",
+      thongDiep: "Không kết nối được tới dịch vụ ứng dụng. Thử lại sau ít phút.",
+    };
+  }
+
+  if (phanHoi.status === 401) return CHUA_DANG_NHAP;
+  if (!phanHoi.ok) return { ok: false, ...(await docLoi(phanHoi)) };
+
+  return { ok: true, duLieu: (await phanHoi.json()) as T };
 }
 
 /**
