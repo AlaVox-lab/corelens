@@ -28,7 +28,7 @@ from app.models.workflow_config import (
     Transition,
 )
 from app.rules.guards import permitted_fields
-from app.rules.sla import da_chay_giay, gioi_han_giay
+from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay
 from app.workflow.context import Actor
 from app.workflow.engine import (
     allowed_transitions,
@@ -153,6 +153,9 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         # trạng thái có `sla_running` — tức khi phòng ban nhận việc. Trước đó giao diện
         # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97).
         "sla_started": ho_so.sla_segment_since is not None or ho_so.sla_running_seconds > 0,
+        # Hồ sơ quá hạn nhưng vừa vào lại trạng thái đếm giờ: còn chừng này giây trước
+        # khi bộ quét được leo thang lại (#94). None khi không áp.
+        "sla_grace_seconds": an_han_con_lai_giay(session, ho_so),
         # Đồng hồ đang tạm dừng: đã khởi động nhưng trạng thái hiện tại không đếm giờ
         "sla_paused": (
             ho_so.sla_segment_since is not None and not trang_thai.sla_running

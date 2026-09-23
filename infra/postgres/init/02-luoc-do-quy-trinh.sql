@@ -226,15 +226,22 @@ CREATE TABLE request_types (
     label          TEXT      NOT NULL,
     description    TEXT,
     sla_hours      INTEGER   NOT NULL,
+    sla_grace_hours INTEGER  NOT NULL DEFAULT 0,
     is_active      BOOLEAN   NOT NULL DEFAULT TRUE,
     display_order  SMALLINT  NOT NULL DEFAULT 0,
 
     CONSTRAINT request_types_sla_duong
-        CHECK (sla_hours > 0)
+        CHECK (sla_hours > 0),
+    -- Ân hạn dài hơn chính hạn xử lý thì lần leo thang ĐẦU TIÊN cũng bị hoãn — sai
+    CONSTRAINT request_types_an_han_hop_le
+        CHECK (sla_grace_hours >= 0 AND sla_grace_hours <= sla_hours)
 );
 
 COMMENT ON COLUMN request_types.sla_hours IS
     'Ngưỡng SLA tính bằng giờ. Cạnh leo thang tự động ở #42 đọc cột này, không mã cứng ngưỡng.';
+
+COMMENT ON COLUMN request_types.sla_grace_hours IS
+    'Ân hạn tính bằng giờ (#94): mỗi lần hồ sơ vào lại trạng thái đếm giờ — phân công lại, mở lại, bổ sung thông tin xong — người nhận có ít nhất chừng này trước khi bộ quét được leo thang lại, dù hồ sơ đã quá hạn. Đồng hồ tổng không đặt lại. 0 là không có ân hạn.';
 
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách. Nhiều-nhiều có đánh dấu mặc
 -- định: một loại yêu cầu có thể do vài phòng đảm nhận, nhưng chỉ một phòng được

@@ -85,6 +85,11 @@ export type HoSoTomTat = {
   sla_paused: boolean;
   /** Đồng hồ đã khởi động chưa — nó chỉ khởi động khi phòng ban nhận việc. */
   sla_started: boolean;
+  /**
+   * Hồ sơ quá hạn vừa được giao lại hay mở lại: còn chừng này giây trước khi bị leo
+   * thang lần nữa. `null` khi không áp.
+   */
+  sla_grace_seconds: number | null;
 };
 
 export type HoSoChiTiet = HoSoTomTat & {
