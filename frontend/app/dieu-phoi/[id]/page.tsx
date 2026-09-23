@@ -13,7 +13,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BangThaoTac } from "@/app/dieu-phoi/[id]/bang-thao-tac";
+import { chuyenTrangThaiDieuPhoi } from "@/app/dieu-phoi/thao-tac";
+import { BangThaoTac } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { goiDichVu } from "@/lib/api";
@@ -215,6 +216,11 @@ export default async function ChiTietDieuPhoi({
                   "request-types": thanhNhanCoMa(cacLoai),
                   priorities: thanhNhanCoMa(cacMuc),
                   departments: thanhNhanCoMa(cacPhong),
+                }}
+                hanhDong={chuyenTrangThaiDieuPhoi}
+                khiHet={{
+                  cau: "Hồ sơ đã rời khỏi tay điều phối viên. Không còn thao tác nào dành cho bạn ở trạng thái này.",
+                  veHangDoi: "/dieu-phoi",
                 }}
               />
             </div>

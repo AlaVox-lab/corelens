@@ -181,8 +181,9 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     suggested_department: NhanCoMa | None = None
 
 
-class ChuyenTrangThaiDieuPhoiVao(BaseModel):
-    """Thao tác của điều phối viên. Khác cổng người gửi ở chỗ CÓ nhận `changes`.
+class ChuyenTrangThaiCoTruongVao(BaseModel):
+    """Thao tác ở buồng lái — điều phối (#82) và phòng ban (#83). Khác cổng người gửi
+    ở chỗ CÓ nhận `changes`.
 
     Không kiểm trường nào được phép ở đây. Engine đã kiểm theo từng cạnh (#78) và tra
     giá trị với danh mục — kiểm lại ở tầng này sẽ thành nguồn sự thật thứ hai.
@@ -211,3 +212,30 @@ class NguoiNhanViecRa(BaseModel):
 class NguoiNhanViecTrongPhongRa(BaseModel):
     department: PhongBanRa
     people: list[NguoiNhanViecRa]
+
+
+# ---------------------------------------------------------------------------
+# Buồng lái phòng ban (#83)
+# ---------------------------------------------------------------------------
+
+
+class MucHangDoiPhongBanRa(MucHangDoiRa):
+    # Người xử lý: định danh để so, tên để đọc. Tên ghi lúc giao việc, không tra lại.
+    assignee_id: str | None = None
+    assignee_label: str | None = None
+    assigned_to_me: bool
+
+
+class HangDoiPhongBanRa(BaseModel):
+    # Phòng của người đang xem — tiêu đề hàng đợi nói rõ đây là việc của phòng nào.
+    departments: list[NhanCoMa]
+    groups: list[NhomHangDoiRa]
+    items: list[MucHangDoiPhongBanRa]
+
+
+class HoSoPhongBanRa(HoSoChiTietRa):
+    requester_label: str | None = None
+    priority: NhanCoMa | None = None
+    state_entered_at: dt.datetime
+    assignee_label: str | None = None
+    assigned_to_me: bool

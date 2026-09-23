@@ -29,8 +29,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
-from app.auth.directory import DirectoryUnavailable, KeycloakDirectory, get_directory
+from app.auth.directory import (
+    DirectoryUnavailable,
+    KeycloakDirectory,
+    Person,
+    get_directory,
+)
 from app.db import get_session
+from app.models.case import Request
 from app.models.workflow_config import Department, Transition
 from app.rules.guards import permitted_fields
 from app.workflow.context import Actor
@@ -94,6 +100,95 @@ def vai_tro_nhan_viec(session: Session, rule_set_id: int) -> frozenset[str]:
     )
 
 
+def nguoi_nhan_viec(
+    session: Session,
+    danh_ba: KeycloakDirectory,
+    rule_set_id: int,
+    department_code: str,
+) -> list[Person]:
+    """Người trong phòng nhận được việc. Ném `DirectoryUnavailable` khi danh bạ hỏng."""
+    nhan = vai_tro_nhan_viec(session, rule_set_id)
+    return [p for p in danh_ba.department_members(department_code) if p.roles & nhan]
+
+
+def kiem_nguoi_duoc_giao(
+    session: Session,
+    danh_ba: KeycloakDirectory,
+    *,
+    case_id: int,
+    to_state: str,
+    actor: Actor,
+    changes: dict,
+) -> str | None:
+    """Kiểm người được giao có nhận được việc của phòng không, trả về tên của họ.
+
+    Engine không kiểm được điều này vì danh mục người nằm trong Keycloak, mà engine
+    không gọi ra ngoài. Nên MỌI điểm cuối nhận `changes` đều phải gọi hàm này trước khi
+    gọi engine — không thì một chuỗi bất kỳ gửi lên sẽ thành người xử lý của hồ sơ.
+
+    Chỉ tra danh bạ khi chắc lần chuyển sẽ tới bước đặt người: cạnh có thật, cạnh cho
+    đặt `assignee_id`, người gọi đi được cạnh đó và thuộc phòng đang giữ hồ sơ. Thiếu
+    điều kiện nào thì trả `None` để engine báo đúng lỗi của nó — một lỗi 503 của danh
+    bạ không được che mất lỗi 403 thật.
+
+    Tên trả về lấy từ danh bạ, không từ trình duyệt: người gọi chỉ gửi định danh.
+    """
+    ma = changes.get(_TRUONG_NGUOI_XU_LY)
+    if not ma:
+        return None
+
+    # Đọc cột, không nạp đối tượng `Request`: nạp đối tượng vào phiên trước khi gọi
+    # engine thì lệnh khóa dòng bên trong engine có nguy cơ không được phát.
+    ho_so = session.execute(
+        select(
+            Request.current_state, Request.rule_set_id, Request.department_code
+        ).where(Request.id == case_id)
+    ).one_or_none()
+    if ho_so is None:
+        return None
+
+    canh = session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == ho_so.rule_set_id,
+            Transition.from_state == ho_so.current_state,
+            Transition.to_state == to_state,
+        )
+    ).one_or_none()
+    if (
+        canh is None
+        or _TRUONG_NGUOI_XU_LY not in permitted_fields(canh.guard_codes)
+        or not (actor.roles & canh.role_codes)
+        or ho_so.department_code not in actor.departments
+    ):
+        return None
+
+    try:
+        ung_vien = nguoi_nhan_viec(session, danh_ba, ho_so.rule_set_id, ho_so.department_code)
+    except DirectoryUnavailable as loi:
+        logger.warning("Không kiểm được người được giao cho hồ sơ %s: %s", case_id, loi.message)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "directory-unavailable",
+                "message": (
+                    "Không kiểm được người được giao vì danh bạ không trả lời. Vẫn nhận "
+                    f"được hồ sơ mà chưa giao cho ai. Chi tiết: {loi.message}"
+                ),
+            },
+        ) from loi
+
+    nguoi = next((p for p in ung_vien if p.id == ma), None)
+    if nguoi is None:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "invalid-field-value",
+                "message": "Người được chọn không nhận được việc của phòng đang giữ hồ sơ.",
+            },
+        )
+    return nguoi.name
+
+
 @router.get(
     "/departments/{department_code}/assignees",
     response_model=NguoiNhanViecTrongPhongRa,
@@ -103,7 +198,7 @@ def vai_tro_nhan_viec(session: Session, rule_set_id: int) -> frozenset[str]:
         503: {"description": "Danh bạ Keycloak không trả lời"},
     },
 )
-def nguoi_nhan_viec(
+def danh_sach_nguoi_nhan_viec(
     department_code: str,
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -144,7 +239,7 @@ def nguoi_nhan_viec(
         )
 
     try:
-        thanh_vien = danh_ba.department_members(department_code)
+        ung_vien = nguoi_nhan_viec(session, danh_ba, bo.id, department_code)
     except DirectoryUnavailable as loi:
         logger.warning("Không tra được danh bạ phòng %s: %s", department_code, loi.message)
         raise HTTPException(
@@ -152,14 +247,11 @@ def nguoi_nhan_viec(
             detail={"code": "directory-unavailable", "message": loi.message},
         ) from loi
 
-    nhan_viec = vai_tro_nhan_viec(session, bo.id)
     return NguoiNhanViecTrongPhongRa(
         department=PhongBanRa(
             code=phong.code, label=phong.label, description=phong.description
         ),
         people=[
-            NguoiNhanViecRa(id=p.id, name=p.name, username=p.username)
-            for p in thanh_vien
-            if p.roles & nhan_viec
+            NguoiNhanViecRa(id=p.id, name=p.name, username=p.username) for p in ung_vien
         ],
     )

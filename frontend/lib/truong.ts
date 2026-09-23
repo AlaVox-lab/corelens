@@ -15,7 +15,7 @@
 //
 // Gặp trường lạ thì hiện ô nhập chữ kèm tên trường, không vỡ trang.
 
-export type NguonDanhMuc = "priorities" | "departments" | "request-types";
+export type NguonDanhMuc = "priorities" | "departments" | "request-types" | "assignees";
 
 export type KieuTruong = {
   nhan: string;
@@ -27,8 +27,9 @@ const BANG: Record<string, KieuTruong> = {
   request_type_code: { nhan: "Loại yêu cầu", nguon: "request-types" },
   priority_code: { nhan: "Mức ưu tiên", nguon: "priorities" },
   department_code: { nhan: "Phòng ban phụ trách", nguon: "departments" },
-  // Chưa có danh mục: định danh Keycloak, phải đợi dịch vụ đọc được danh bạ (#84)
-  assignee_id: { nhan: "Người xử lý" },
+  // Danh mục tra từ danh bạ Keycloak (#84), theo phòng đang giữ hồ sơ. Giá trị gửi đi
+  // là định danh, nhãn hiển thị là tên thật.
+  assignee_id: { nhan: "Người xử lý", nguon: "assignees" },
 };
 
 export function kieuTruong(ma: string): KieuTruong {
