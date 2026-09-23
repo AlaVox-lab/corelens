@@ -113,6 +113,51 @@ def _trang_thai_hang_doi(session: Session, rule_set_id: int) -> list[State]:
     )
 
 
+def _trang_thai_theo_doi(
+    session: Session, rule_set_id: int, hang_doi: list[State]
+) -> list[State]:
+    """Trạng thái phòng ban chỉ THEO DÕI: hồ sơ đang ở lượt người gửi nhưng sẽ quay về (#99).
+
+    Thiếu nhóm này thì người xử lý bấm "Yêu cầu bổ sung thông tin" xong, hồ sơ biến khỏi
+    hàng đợi của họ — họ quên mình đang có việc treo. Suy từ bộ quy tắc, không liệt kê
+    cứng. Một trạng thái được theo dõi khi đủ hai điều:
+
+    1. Cạnh của vai trò phòng ban DẪN TỚI nó, và nó chưa nằm trong hàng đợi
+    2. Từ nó có cạnh quay về một trạng thái của hàng đợi
+
+    Không cần loại riêng trạng thái kết thúc: trạng thái kết thúc không có cạnh nào đi
+    ra, nên không bao giờ thỏa điều thứ hai. Phép thử đột biến xác nhận một phép loại
+    riêng là thừa — gỡ nó đi không bài nào đổ.
+
+    Với bộ quy tắc hiện tại: *Chờ bổ sung thông tin* (bổ sung xong thì về đang xử lý)
+    và *Hoàn tất* (mở lại thì về đang xử lý). *Bị phòng ban từ chối* bị loại tự nhiên vì
+    từ đó hồ sơ chỉ về điều phối, không về phòng.
+    """
+    ma_hang_doi = {t.code for t in hang_doi}
+    vai_tro = vai_tro_phong_ban(session, rule_set_id)
+    canh = session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == rule_set_id, Transition.is_system.is_(False)
+        )
+    ).all()
+
+    dich = {
+        t.to_state for t in canh if t.from_state in ma_hang_doi and t.role_codes & vai_tro
+    } - ma_hang_doi
+    quay_ve = {t.from_state for t in canh if t.to_state in ma_hang_doi}
+
+    return list(
+        session.scalars(
+            select(State)
+            .where(
+                State.rule_set_id == rule_set_id,
+                State.code.in_(dich & quay_ve),
+            )
+            .order_by(State.display_order)
+        ).all()
+    )
+
+
 def _khong_thay() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -155,9 +200,14 @@ def hang_doi(
 
     Chỉ hồ sơ thuộc phòng của người đang xem. Số đếm trên nút lọc đi theo cùng bộ lọc
     `mine`, để con số và danh sách không bao giờ kể hai chuyện khác nhau.
+
+    Hồ sơ đang ở lượt người gửi (nhóm theo dõi, #99) xếp sau mọi hồ sơ có việc phải làm.
     """
     bo = get_active_rule_set(session)
-    cac_trang_thai = _trang_thai_hang_doi(session, bo.id)
+    co_viec = _trang_thai_hang_doi(session, bo.id)
+    theo_doi = _trang_thai_theo_doi(session, bo.id, co_viec)
+    ma_theo_doi = {t.code for t in theo_doi}
+    cac_trang_thai = sorted(co_viec + theo_doi, key=lambda t: t.display_order)
     ma_hang_doi = [t.code for t in cac_trang_thai]
 
     if state is not None and state not in ma_hang_doi:
@@ -214,7 +264,7 @@ def hang_doi(
             if m.sla_limit_seconds is not None
             else math.inf
         )
-        return (not m.sla_overdue, con_lai, m.state_entered_at, m.id)
+        return (m.state.code in ma_theo_doi, not m.sla_overdue, con_lai, m.state_entered_at, m.id)
 
     phong = session.scalars(
         select(Department)
@@ -225,7 +275,12 @@ def hang_doi(
     return HangDoiPhongBanRa(
         departments=[NhanCoMa(code=p.code, label=p.label) for p in phong],
         groups=[
-            NhomHangDoiRa(code=t.code, label=t.label, count=dem.get(t.code, 0))
+            NhomHangDoiRa(
+                code=t.code,
+                label=t.label,
+                count=dem.get(t.code, 0),
+                watch_only=t.code in ma_theo_doi,
+            )
             for t in cac_trang_thai
         ],
         items=sorted(cac_muc, key=do_gap),
