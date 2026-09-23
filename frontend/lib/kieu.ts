@@ -40,6 +40,11 @@ export type TrangThai = NhanCoMa & {
 export type CanhDiDuoc = {
   to_state: string;
   to_state_label: string;
+  /**
+   * Trạng thái đích là trạng thái kết thúc: đi rồi không quay lại được. Giao diện hỏi
+   * lại trước khi gửi, kèm ô lý do tùy chọn (#98).
+   */
+  to_state_is_terminal: boolean;
   activity_code: string;
   activity_label: string;
   requires_note: boolean;
