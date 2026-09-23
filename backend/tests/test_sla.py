@@ -168,6 +168,7 @@ def test_cho_bo_sung_thong_tin_lam_dung_dong_ho(session, rule_set, phong_ban):
         case_id=ho_so.id,
         to_state="in-progress",
         actor=Actor(id=NGUOI_TAO, roles=frozenset({"requester"})),
+        note="Mã tài sản MI-0342.",
     )
 
     assert 7100 < ho_so.sla_running_seconds < 7300, "Đồng hồ không được chạy khi dừng"

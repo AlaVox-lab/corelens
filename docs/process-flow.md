@@ -39,6 +39,7 @@ stateDiagram-v2
     DaPhanLoai --> Dong: Không phòng nào nhận, đóng kèm lý do
 
     ChoXacDuyet --> DangXuLy: Phòng ban XÁC DUYỆT và giao xử lý
+    ChoXacDuyet --> ChoBoSung: Trưởng phòng hỏi thêm
     ChoXacDuyet --> BiTuChoi: Phòng ban từ chối, sai chuyên môn
     ChoXacDuyet --> Huy: Người tạo hủy
 
@@ -50,7 +51,8 @@ stateDiagram-v2
 
     LeoThang --> DangXuLy: Phân công lại trong cùng phòng
 
-    ChoBoSung --> DaPhanLoai: Bổ sung (người phân loại đã hỏi)
+    ChoBoSung --> DaGui: Bổ sung (người phân loại đã hỏi)
+    ChoBoSung --> ChoXacDuyet: Bổ sung (trưởng phòng đã hỏi)
     ChoBoSung --> DangXuLy: Bổ sung (người xử lý đã hỏi)
     ChoBoSung --> Huy: Người tạo hủy
 
@@ -85,9 +87,9 @@ stateDiagram-v2
     end note
 
     note left of ChoBoSung
-        Hai đường vào và hai đường ra. Nhật ký sự kiện cần
-        phân biệt ai đã hỏi, để khai phá quy trình tách
-        được hai nhánh.
+        Ba đường vào, ba đường về. Hỏi ở đâu thì
+        trả lời xong về đúng chỗ đó — người gửi chỉ
+        thấy MỘT nút, không phải đoán ai đã hỏi.
     end note
 ```
 
@@ -114,7 +116,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Mười chín cạnh chuyển trạng thái
+## 3. Hai mươi mốt cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -128,6 +130,7 @@ là không đi được**.
 | `classified` | `cancelled` | Hủy yêu cầu | `requester` |
 | `classified` | `closed` | Đóng hồ sơ, không phòng nào nhận | `classifier` |
 | `awaiting-acceptance` | `in-progress` | **Xác duyệt và giao xử lý** | `approver` |
+| `awaiting-acceptance` | `awaiting-info` | Yêu cầu bổ sung thông tin | `approver` |
 | `awaiting-acceptance` | `rejected-by-department` | Từ chối vì sai chuyên môn | `approver` |
 | `awaiting-acceptance` | `cancelled` | Hủy yêu cầu | `requester` |
 | `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
@@ -135,11 +138,24 @@ là không đi được**.
 | `in-progress` | `escalated` | Leo thang do quá hạn | **hệ thống** |
 | `in-progress` | `completed` | Hoàn thành xử lý | `handler` |
 | `escalated` | `in-progress` | Phân công lại trong cùng phòng | `approver` |
-| `awaiting-info` | `classified` | Bổ sung thông tin — người phân loại đã hỏi | `requester` |
-| `awaiting-info` | `in-progress` | Bổ sung thông tin — người xử lý đã hỏi | `requester` |
+| `awaiting-info` | `submitted` | Bổ sung thông tin | `requester` |
+| `awaiting-info` | `awaiting-acceptance` | Bổ sung thông tin | `requester` |
+| `awaiting-info` | `in-progress` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `cancelled` | Hủy yêu cầu | `requester` |
 | `completed` | `closed` | Xác nhận đạt | `requester` |
 | `completed` | `in-progress` | Mở lại, chưa đạt | `requester` |
+
+**Chờ bổ sung thông tin quay về đúng chỗ đã hỏi** (#79, navigator chốt ngày 23/09). Ba nơi
+hỏi thêm được — điều phối ở *Đã gửi*, trưởng phòng ở *Chờ phòng ban xác duyệt*, người xử lý ở
+*Đang xử lý* — và ba cạnh trả lời quay về đúng ba nơi đó. Ràng buộc `return-to-previous-state`
+đọc nhật ký sự kiện để biết hồ sơ vào *Chờ bổ sung thông tin* từ đâu, và chỉ cho đi cạnh về
+đúng chỗ đó. Người gửi thấy **một** nút *Bổ sung thông tin*, gõ câu trả lời vào ô bắt buộc,
+và hồ sơ tự về tay người đã hỏi.
+
+Hệ quả đáng chú ý: hỏi ở *Đã gửi* thì trả lời xong hồ sơ về lại *Đã gửi*, chứ không nhảy sang
+*Đã phân loại* như trước. Hồ sơ vì thế phải đi qua đúng cạnh phân loại cùng ràng buộc mức ưu
+tiên của nó — lối vòng phát hiện ở #78, nơi hồ sơ vào tận phòng ban mà chưa có mức ưu tiên,
+đã đóng.
 
 ---
 
@@ -148,9 +164,9 @@ là không đi được**.
 | Định danh | Nhãn hiển thị | Trách nhiệm |
 |---|---|---|
 | `requester` | Người tạo yêu cầu | Gửi yêu cầu, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
-| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, định tuyến lại khi bị từ chối |
+| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, định tuyến lại khi bị từ chối |
 | `handler` | Người xử lý yêu cầu | Thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
-| `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, phân công lại khi leo thang |
+| `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang |
 | `administrator` | Quản trị viên | **Không đi cạnh nào.** Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại → phòng |
 
 Vai trò `classifier` về sau sẽ được tầng `I` hỗ trợ bằng phân loại tự động. Nhưng theo

@@ -43,10 +43,17 @@ class Guard:
 
     Ràng buộc chỉ đối chiếu người thao tác với hồ sơ — như `requester-owns-case` — thì
     không quản trường nào, và tập để trống.
+
+    `input_free` đánh dấu ràng buộc KHÔNG cần biết người dùng định nhập gì: nó chỉ đối
+    chiếu người thao tác, hồ sơ và lịch sử hồ sơ. Loại này chạy được ngay lúc dựng danh
+    sách nút (`allowed_transitions`), nên cạnh chắc chắn bị từ chối không hiện ra (#79).
+    Ràng buộc đọc `changes` thì để False — lúc chào nút chưa ai biết người dùng sẽ chọn
+    gì, và chạy nó với `changes` rỗng sẽ giấu mất những cạnh hoàn toàn đi được.
     """
 
     check: GuardFunc
     governs: frozenset[str] = frozenset()
+    input_free: bool = False
 
 
 def requester_owns_case(ctx: TransitionContext) -> None:
@@ -134,9 +141,10 @@ def set_request_type(ctx: TransitionContext) -> None:
     nguyên hoặc sửa lại. Nếu người gửi bỏ trống thì người phân loại bắt buộc đặt.
 
     Gắn ở HAI cạnh: `submitted → classified`, và `classified → awaiting-acceptance` —
-    cửa duy nhất dẫn tới phòng ban. Cạnh thứ hai là cạnh bảo đảm: hồ sơ đi vòng qua
-    `awaiting-info` tới `classified` mà không qua cạnh thứ nhất, và nếu chỉ gắn ở đó
-    thì đường vòng này mang hồ sơ không có loại vào tận phòng ban.
+    cửa duy nhất dẫn tới phòng ban. Cạnh thứ hai là lưới an toàn: trước #79, hồ sơ đi
+    vòng qua `awaiting-info` tới `classified` mà không qua cạnh thứ nhất. Từ #79 đường
+    vòng đó quay về `submitted` nên phải đi lại cạnh phân loại, nhưng bộ quy tắc là dữ
+    liệu — doanh nghiệp thêm một đường mới vào `classified` thì lưới này vẫn đứng.
 
     Vì sao bắt buộc: loại yêu cầu quyết định ngưỡng SLA, và bộ quét hồ sơ quá hạn nối
     bảng `request_types` bằng phép nối trong. Hồ sơ không có loại sẽ lọt khỏi phép
@@ -180,19 +188,40 @@ def assign_handler(ctx: TransitionContext) -> None:
         )
 
 
+def return_to_previous_state(ctx: TransitionContext) -> None:
+    """Hồ sơ chỉ quay về đúng trạng thái nó đã ở ngay trước trạng thái hiện tại.
+
+    Gắn vào mọi cạnh "trả lời" ra khỏi một trạng thái chờ (#79): ai hỏi thêm thì hồ sơ
+    về lại đúng người đó. Hỏi ở *Đã gửi* thì về điều phối để phân loại, hỏi ở *Đang xử
+    lý* thì về người xử lý. Không có bảng ánh xạ nào — quy tắc chỉ là "về chỗ cũ", và
+    chỗ cũ đọc từ nhật ký sự kiện qua `ctx.previous_state`.
+
+    Không cần giá trị người dùng nhập, nên ràng buộc chạy luôn lúc chào nút: người gửi
+    chỉ thấy đúng một nút "Bổ sung thông tin" thay vì phải đoán ai đã hỏi mình. Trước
+    #79 họ thấy hai nút gần như giống hệt nhau, và đoán sai là đẩy một hồ sơ đang xử lý
+    ngược về hàng đợi phân loại.
+    """
+    if ctx.transition.to_state != ctx.previous_state:
+        raise GuardViolation(
+            "return-to-previous-state",
+            "Hồ sơ chỉ quay về được đúng bước trước đó, nơi vừa chuyển nó sang đây.",
+        )
+
+
 # Hợp đồng giữa dữ liệu và mã nguồn. Khóa phải trùng khít cột `code` của bảng `guards`.
 #
 # Cột thứ hai quyết định trường nào đặt được ở cạnh nào. `department-unchanged` quản
 # `department_code` dù không cho đổi nó: nó là ràng buộc phán xử trường đó ở cạnh
 # phân công lại, nên phải được nhìn thấy trường đó thì mới phán được.
 GUARD_REGISTRY: dict[str, Guard] = {
-    "requester-owns-case": Guard(requester_owns_case),
-    "actor-in-case-department": Guard(actor_in_case_department),
+    "requester-owns-case": Guard(requester_owns_case, input_free=True),
+    "actor-in-case-department": Guard(actor_in_case_department, input_free=True),
     "set-priority": Guard(set_priority, frozenset({"priority_code"})),
     "select-department": Guard(select_department, frozenset({"department_code"})),
     "department-unchanged": Guard(department_unchanged, frozenset({"department_code"})),
     "set-request-type": Guard(set_request_type, frozenset({"request_type_code"})),
     "assign-handler": Guard(assign_handler, frozenset({"assignee_id"})),
+    "return-to-previous-state": Guard(return_to_previous_state, input_free=True),
 }
 
 # Mọi trường mà ít nhất một ràng buộc quản. Engine đối chiếu tập này với danh sách
@@ -231,3 +260,19 @@ def run_guards(ctx: TransitionContext) -> None:
     """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi."""
     for ma in ctx.transition.guard_codes:
         _tra_rang_buoc(ma).check(ctx)
+
+
+def input_free_guards_pass(ctx: TransitionContext) -> bool:
+    """Cạnh có qua được mọi ràng buộc không cần nhập liệu không. Dùng lúc chào nút.
+
+    Chỉ nuốt `GuardViolation`. Mã ràng buộc chưa cài đặt vẫn ném `UnknownGuard` như ở
+    `run_guards`: giấu nút đi thì cấu hình sai sẽ trông như "không có thao tác nào".
+    """
+    try:
+        for ma in ctx.transition.guard_codes:
+            rang_buoc = _tra_rang_buoc(ma)
+            if rang_buoc.input_free:
+                rang_buoc.check(ctx)
+    except GuardViolation:
+        return False
+    return True

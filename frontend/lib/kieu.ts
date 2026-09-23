@@ -49,6 +49,11 @@ export type CanhDiDuoc = {
   activity_label: string;
   requires_note: boolean;
   /**
+   * Tên ô ghi chú của cạnh (#79). `null` thì gọi là "Lý do". Ở cạnh bổ sung thông tin,
+   * ô ghi chú là chính câu trả lời của người gửi chứ không phải lời giải thích.
+   */
+  note_label: string | null;
+  /**
    * Trường mà cạnh này cho đặt, từ ràng buộc gắn trên cạnh (#78). Buồng lái dựng ô
    * nhập từ đây, cùng lý do nó dựng nút bấm từ danh sách cạnh. Cạnh của người gửi
    * luôn cho danh sách rỗng.
@@ -80,6 +85,8 @@ export type SuKien = {
   to_state: string;
   to_state_label: string;
   note: string | null;
+  /** Tên của ghi chú, cùng tên với ô nhập lúc ghi (#79). `null` thì gọi là "Lý do". */
+  note_label: string | null;
   /** Trường quyết định mà lần chuyển này đổi — nhật ký giữ trọn lịch sử thay đổi. */
   changes: ThayDoiTruong[];
 };

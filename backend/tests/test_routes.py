@@ -336,6 +336,52 @@ def test_canh_bat_buoc_ly_do_bi_chan_khi_thieu(client, session, rule_set, phong_
     assert du.json()["history"][-1]["note"] == "Máy vẫn kẹt giấy như cũ."
 
 
+def test_cho_bo_sung_chi_hien_mot_nut_tra_loi(client, session, rule_set, phong_ban):
+    """Định nghĩa hoàn thành của #79 nhìn từ cổng người gửi: một nút trả lời, mang tên ô
+    ghi chú từ dữ liệu; gọi thẳng đích còn lại thì bị từ chối."""
+    ho_so = _tao(client)
+    uu_tien = session.scalars(select(Priority.code).where(Priority.is_default)).one()
+    pl = Actor(id="pl-01", roles=frozenset({"classifier"}))
+    xd = Actor(id="xd-01", roles=frozenset({"approver"}), departments=frozenset({phong_ban}))
+    xl = Actor(id="xl-01", roles=frozenset({"handler"}), departments=frozenset({phong_ban}))
+
+    for den, ai, doi, ghi in (
+        ("classified", pl, {"priority_code": uu_tien}, None),
+        ("awaiting-acceptance", pl, {"department_code": phong_ban}, None),
+        ("in-progress", xd, None, None),
+        ("awaiting-info", xl, None, "Máy in nào, ở tầng mấy?"),
+    ):
+        perform_transition(session, case_id=ho_so["id"], to_state=den, actor=ai,
+                           changes=doi, note=ghi)
+    session.commit()
+
+    cac_canh = client.get(f"/requests/{ho_so['id']}").json()["allowed_transitions"]
+    tra_loi = [c for c in cac_canh if not c["to_state_is_terminal"]]
+    assert [c["to_state"] for c in tra_loi] == ["in-progress"]
+    assert tra_loi[0]["requires_note"] is True
+    assert tra_loi[0]["note_label"], "ô ghi chú mang tên riêng, không phải 'Lý do'"
+
+    nham = client.post(
+        f"/requests/{ho_so['id']}/transitions",
+        json={"to_state": "submitted", "note": "Tầng ba."},
+    )
+    assert nham.status_code == 422
+    assert nham.json()["detail"]["code"] == "guard-violation"
+
+    dung = client.post(
+        f"/requests/{ho_so['id']}/transitions",
+        json={"to_state": "in-progress", "note": "Tầng ba, máy cạnh cửa sổ."},
+    )
+    assert dung.status_code == 200, dung.text
+    assert dung.json()["state"]["code"] == "in-progress"
+
+    # Dòng thời gian gọi ghi chú bằng đúng tên ô lúc ghi: câu hỏi và câu trả lời
+    hoi, tra_loi_ghi = dung.json()["history"][-2:]
+    assert hoi["note"] == "Máy in nào, ở tầng mấy?" and hoi["note_label"]
+    assert tra_loi_ghi["note"] == "Tầng ba, máy cạnh cửa sổ."
+    assert tra_loi_ghi["note_label"] == tra_loi[0]["note_label"]
+
+
 def test_dong_thoi_gian_giu_ca_doan_quay_lui(client, session, rule_set, phong_ban):
     """Dòng thời gian phải kể được cả những lần hồ sơ đi vòng.
 
@@ -369,6 +415,7 @@ def test_dong_thoi_gian_giu_ca_doan_quay_lui(client, session, rule_set, phong_ba
         ("rejected-by-department", "classified"),
     ]
     assert lich_su[2]["note"].startswith("Sai chuyên môn")
+    assert lich_su[2]["note_label"] is None, "cạnh không đặt tên ô thì ghi chú là lý do"
     assert lich_su[3]["activity_label"] == "Định tuyến lại phòng khác"
 
     # Hồ sơ quay lại `classified` lần thứ hai — đoạn quay lui nằm nguyên trong nhật ký

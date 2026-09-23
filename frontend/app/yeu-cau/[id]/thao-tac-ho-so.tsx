@@ -40,14 +40,18 @@ import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
 import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
 
 /**
- * Cạnh nào nên trông như hành động chính.
+ * Cạnh nào nên trông như hành động chính: cạnh đứng đầu, khi có từ hai nút trở lên.
  *
- * Suy từ dữ liệu chứ không tra bảng: cạnh dẫn tới trạng thái kết thúc và không đòi
- * ghi lý do thường là đường đi xuôi (“Xác nhận đạt”, “Đóng hồ sơ”), còn cạnh đòi lý
- * do thì bao giờ cũng là ngoại lệ. Đoán sai cũng chỉ sai màu nút, không sai hành vi.
+ * Danh sách đã xếp theo `transitions.display_order`, và dữ liệu khởi tạo đặt đường
+ * xuôi lên trước — nên đây vẫn là dữ liệu quyết, không phải bảng trong tệp này.
+ *
+ * Trước #79 tệp này đoán bằng cờ: cạnh không đòi lý do là đường xuôi. Đoán vậy hỏng
+ * ngay khi cạnh “Bổ sung thông tin” bắt đầu đòi ghi chú — nút “Hủy yêu cầu” thành nút
+ * chính. Cờ không phân biệt được hai trường hợp: ở *Chờ bổ sung thông tin* và ở *Hoàn
+ * tất*, hai cạnh mang y hệt cờ nhưng đường xuôi nằm ở hai phía ngược nhau.
  */
-function laDuongXuoi(canh: CanhDiDuoc, tongSo: number): boolean {
-  return tongSo > 1 && !canh.requires_note;
+function laDuongXuoi(chiSo: number, tongSo: number): boolean {
+  return tongSo > 1 && chiSo === 0;
 }
 
 /** Cạnh này cần mở bảng xác nhận trước khi gửi, thay vì bấm là gửi. */
@@ -109,13 +113,13 @@ export function ThaoTacHoSo({
           alignItems: "center",
         }}
       >
-        {cacCanh.map((canh) =>
+        {cacCanh.map((canh, chiSo) =>
           canHoiLai(canh) ? (
             <button
               key={canh.to_state}
               type="button"
               className="nut"
-              data-loai={laDuongXuoi(canh, cacCanh.length) ? "chinh" : undefined}
+              data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
               onClick={() => datDangMo(dangMo?.to_state === canh.to_state ? null : canh)}
               aria-expanded={dangMo?.to_state === canh.to_state}
             >
@@ -128,7 +132,7 @@ export function ThaoTacHoSo({
               name="to_state"
               value={canh.to_state}
               className="nut"
-              data-loai={laDuongXuoi(canh, cacCanh.length) ? "chinh" : undefined}
+              data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
               disabled={dangChay}
             >
               {canh.activity_label}
@@ -155,9 +159,11 @@ export function ThaoTacHoSo({
           {dangMo.to_state_is_terminal && (
             <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
           )}
+          {/* Tên ô từ `transitions.note_label` (#79): ở cạnh bổ sung thông tin, ô này là
+              câu trả lời của người gửi chứ không phải lý do. */}
           <label style={{ display: "grid", gap: "7px" }}>
             <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
-              Lý do cho “{dangMo.activity_label}”
+              {dangMo.note_label ?? `Lý do cho “${dangMo.activity_label}”`}
               {!dangMo.requires_note && (
                 <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> — không bắt buộc</span>
               )}
@@ -169,17 +175,19 @@ export function ThaoTacHoSo({
               maxLength={2000}
               required={dangMo.requires_note}
               placeholder={
-                dangMo.requires_note
-                  ? "Nói rõ vì sao. Dòng này đi vào nhật ký hồ sơ và người xử lý sẽ đọc nó."
-                  : "Có thể bỏ trống. Nếu ghi, dòng này đi vào nhật ký hồ sơ."
+                !dangMo.requires_note
+                  ? "Có thể bỏ trống. Nếu ghi, dòng này đi vào nhật ký hồ sơ."
+                  : dangMo.note_label
+                    ? "Dòng này đi vào nhật ký hồ sơ, và người đã hỏi bạn sẽ đọc nó."
+                    : "Nói rõ vì sao. Dòng này đi vào nhật ký hồ sơ và người xử lý sẽ đọc nó."
               }
             />
           </label>
           {dangMo.requires_note && (
             <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>
-              Thao tác này bắt buộc ghi lý do. Không có lý do thì người tiếp theo không
-              biết chuyện gì đã xảy ra, và bản phân tích quy trình về sau chỉ thấy một
-              nhánh lệch chuẩn không rõ nguyên nhân.
+              Ô này bắt buộc. Để trống thì người tiếp theo không biết chuyện gì đã xảy ra,
+              và bản phân tích quy trình về sau chỉ thấy một nhánh lệch chuẩn không rõ
+              nguyên nhân.
             </span>
           )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
