@@ -13,7 +13,7 @@ import datetime as dt
 
 from pydantic import BaseModel, Field
 
-from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU
+from app.models.case import LOI_NHAN_TOI_DA, MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU
 
 
 class NhanCoMa(BaseModel):
@@ -121,6 +121,43 @@ class HoSoTomTatRa(BaseModel):
     # Ân hạn còn lại khi hồ sơ quá hạn vừa được giao lại hay mở lại (#94)
     sla_grace_seconds: int | None = None
 
+    # Lời nhắn sau cùng là của người gửi hồ sơ (True), của nhân viên (False), hay chưa
+    # có lời nhắn nào (None) — nguồn của dấu hiệu "đang chờ trả lời" trên hàng đợi (#128)
+    last_message_from_requester: bool | None = None
+
+
+class LoiNhanRa(BaseModel):
+    """Một lời nhắn trên hồ sơ (#128).
+
+    Không phải mốc chuyển trạng thái: dòng thời gian trộn lời nhắn với `history` theo
+    thời gian, nhưng số lần đổi trạng thái chỉ đếm `history`.
+    """
+
+    id: int
+    kind: str
+    kind_label: str
+    author: str
+    author_label: str
+    # Tác giả là người gửi của chính hồ sơ — so định danh, không lưu thêm cột
+    from_requester: bool
+    body: str | None = None
+    created_at: dt.datetime
+
+
+class LoaiLoiNhanRa(BaseModel):
+    """Một loại lời nhắn người đang xem gửi được trên hồ sơ lúc này (#128).
+
+    Danh sách do bảng `message_kinds` và cửa nhìn thấy quyết, giống `allowed_transitions`
+    — giao diện dựng nút từ đây. `retry_at` có giá trị thì loại đó đang chờ luật hỏi lại:
+    hiện nút mờ kèm mốc, chưa gửi được trước mốc đó.
+    """
+
+    code: str
+    label: str
+    description: str | None = None
+    body_required: bool
+    retry_at: dt.datetime | None = None
+
 
 class HoSoChiTietRa(HoSoTomTatRa):
     description: str | None = None
@@ -128,6 +165,8 @@ class HoSoChiTietRa(HoSoTomTatRa):
     assignee_id: str | None = None
     history: list[SuKienRa]
     allowed_transitions: list[CanhDiDuocRa]
+    messages: list[LoiNhanRa] = Field(default_factory=list)
+    message_kinds: list[LoaiLoiNhanRa] = Field(default_factory=list)
 
 
 class TaoHoSoVao(BaseModel):
@@ -161,6 +200,13 @@ class ChuyenTrangThaiVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+class GuiLoiNhanVao(BaseModel):
+    """Gửi một lời nhắn (#128). Nội dung trống được ở loại không bắt buộc nội dung."""
+
+    kind: str = Field(max_length=64)
+    body: str | None = Field(default=None, max_length=LOI_NHAN_TOI_DA)
 
 
 # ---------------------------------------------------------------------------

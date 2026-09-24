@@ -19,6 +19,7 @@
 
 import Link from "next/link";
 
+import { DauLoiNhan } from "@/components/dau-loi-nhan";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { NutLoc } from "@/components/nut-loc";
 import { goiDichVu } from "@/lib/api";
@@ -88,6 +89,7 @@ function Dong({ muc, dauTien }: { muc: MucHangDoiPhongBan; dauTien: boolean }) {
               {muc.request_type.label}
             </span>
           )}
+          <DauLoiNhan hoSo={muc} gocNhin="nhan-vien" />
         </span>
         <span style={{ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.4 }}>
           {muc.title}

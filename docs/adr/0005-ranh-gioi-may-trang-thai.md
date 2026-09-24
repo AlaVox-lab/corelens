@@ -195,15 +195,15 @@ trên nội dung mới.
       với một ràng buộc mới quản `title`, `description`, `request_type_code`. Biên ngoài
       `CHANGEABLE_FIELDS` của engine thêm `title`, `description`; các trường `suggested_*`
       vẫn nằm ngoài biên (#127)
-- [ ] Bảng lời nhắn do Alembic sở hữu, chỉ thêm như `event_log`; loại lời nhắn và vai trò
+- [x] Bảng lời nhắn do Alembic sở hữu, chỉ thêm như `event_log`; loại lời nhắn và vai trò
       gửi được khai trong dữ liệu (#128)
 - [x] Loại ràng buộc tự đặt người xử lý bằng người thao tác, chỉ đi được khi hồ sơ chưa
       giao ai; không biến người xử lý thành vai trò giao việc (#127)
 - [x] `return-to-previous-state` bỏ qua dòng nhật ký tự trỏ; phép kiểm đồ thị cấm cạnh tự trỏ
       ở trạng thái chờ (#127)
 - [x] Dòng thời gian không gắn nhãn "Quay lui" cho mốc tự trỏ (#127)
-- [x] Bổ sung mục ranh giới vào `docs/ARCHITECTURE.md`, cập nhật `docs/process-flow.md` (#127;
-      phần lời nhắn bổ sung ở #128)
+- [x] Bổ sung mục ranh giới vào `docs/ARCHITECTURE.md`, cập nhật `docs/process-flow.md` (#127,
+      phần lời nhắn ở #128)
 
 ---
 

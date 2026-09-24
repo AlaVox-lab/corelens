@@ -378,13 +378,14 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 5.2. Lược đồ cấu hình đã hiện thực
 
-Mười một bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia ba nhóm:
+Mười ba bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia bốn nhóm:
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
 | Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
 | Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
+| Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128) — xem mục 6.2 |
 
 **Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
 vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
@@ -403,7 +404,7 @@ giữa hai loại nội dung khác hẳn nhau.
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
    là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
-   ở trạng thái chờ. Sai một điều thì
+   ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được. Sai một điều thì
    **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
    kẹt mới lộ ra
 
@@ -521,7 +522,7 @@ từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.m
 
 ### 6.2. Ranh giới: thao tác nào đi qua cửa chuyển trạng thái
 
-**Đã cài đặt phần cạnh** (#127); phần lời nhắn ở #128. Quyết định ở
+**Đã cài đặt** — phần cạnh ở #127, phần lời nhắn ở #128. Quyết định ở
 [ADR-0005](adr/0005-ranh-gioi-may-trang-thai.md), giảng viên duyệt ngày 24/09/2026.
 
 Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác không đổi gì thì không.**
@@ -530,7 +531,7 @@ Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác kh�
 |---|---|---|
 | Chuyển trạng thái | `current_state`, có thể kèm trường quyết định | Cạnh thường |
 | Nhận việc về mình, sửa nội dung ở *Đã gửi* | Người xử lý; tiêu đề, mô tả, loại | **Cạnh tự trỏ** — trạng thái giữ nguyên |
-| Nhắn điều phối viên, hỏi tiến độ | Không đổi gì | Bảng lời nhắn riêng (#128) — không phải cạnh, không vào `event_log` |
+| Lời nhắn hai chiều, hỏi tiến độ | Không đổi gì | Bảng lời nhắn `case_messages` (#128) — không phải cạnh, không vào `event_log` |
 
 Vì sao thao tác đổi hồ sơ mà không đổi trạng thái vẫn phải là cạnh: mọi thay đổi trên hồ
 sơ cần một dòng nhật ký giữ giá trị cũ (cột `changes`), cần qua kiểm quyền và ràng buộc
@@ -549,6 +550,31 @@ Bốn hệ quả mã nguồn phải giữ:
   bị sửa tại chỗ thì câu hỏi mất nghĩa. Phép kiểm đồ thị số 7 chặn khởi động nếu có
 - Mỗi cạnh trong `allowed_transitions` mang cờ `keeps_state`, để giao diện nói "trạng
   thái giữ nguyên" thay cho "hồ sơ sẽ chuyển sang" — suy từ cặp trạng thái, không tra bảng
+
+**Phần lời nhắn** (#128, `backend/app/workflow/messages.py`). Bảng `case_messages` do
+Alembic sở hữu và chỉ ghi thêm như `event_log` — trigger chặn UPDATE và DELETE. Loại lời
+nhắn là cấu hình: `message_kinds` và `message_kind_roles` của lược đồ khởi tạo, chốt với
+navigator ngày 24/09/2026. Luật gửi:
+
+1. **Ai mở được hồ sơ thì nhắn được.** Không thêm quyền nhìn thấy nào: mỗi buồng lái dùng
+   lại đúng cửa của trang chi tiết — người gửi trên hồ sơ của mình, điều phối viên trên
+   mọi hồ sơ, người của phòng trên hồ sơ của phòng mình. Bảng chỉ thu hẹp thêm theo vai trò
+2. Hồ sơ ở trạng thái kết thúc thì lời nhắn chỉ đọc
+3. `owner_only` — chỉ người gửi của chính hồ sơ. `department_stage_only` — chỉ khi hồ sơ
+   nằm trong hàng đợi phòng ban, tập trạng thái suy bằng đúng hàm của hàng đợi
+   (`trang_thai_hang_doi_phong_ban`), nên "hồ sơ đang ở phòng ban" nghĩa là một thứ ở mọi nơi
+4. `reask_after_hours` — luật hỏi lại: gửi lại loại đó chỉ khi phía bên kia đã nhắn sau
+   lần gửi trước, hoặc đã quá chừng ấy giờ. "Hỏi tiến độ" vì vậy không bấm dồn được, và
+   số lần phòng ban bị hối mà tầng `I` đếm là số thật. Loại đang chờ vẫn có trong danh sách
+   loại gửi được, kèm mốc `retry_at`, để giao diện nói rõ vì sao nút mờ
+
+Ghi lời nhắn **không chạm dòng `requests`** — không trạng thái, không trường, không
+`updated_at`, không đồng hồ. Bài kiểm thử so cả `ctid` của dòng: mọi lệnh UPDATE, kể cả
+ghi lại đúng giá trị cũ, đều đổi `ctid`, còn so giá trị thì bỏ lọt, vì trong cùng một giao
+dịch `now()` không đổi. Hàng đợi biết hồ sơ nào đang chờ trả lời nhờ cờ
+`last_message_from_requester`, suy từ tác giả của lời nhắn sau cùng — không theo dõi đã đọc
+hay chưa. Dòng thời gian trộn lời nhắn với mốc theo thời gian, hai loại trông khác nhau, và
+số lần đổi trạng thái chỉ đếm mốc.
 
 ---
 
@@ -804,6 +830,13 @@ phòng nào. Tên người được giao lấy từ danh bạ chứ không từ 
 `requests.assignee_label` cùng lúc với định danh — cùng khuôn với `requester_label` và
 `actor_label`. Danh bạ không trả lời thì không giao được người, nhưng vẫn nhận được hồ
 sơ: người xử lý là tùy chọn, và cả phòng vẫn thấy hồ sơ đó.
+
+**Khung lời nhắn (#128) cùng khuôn với bảng thao tác.** Nút dựng từ `message_kinds` mà
+dịch vụ trả kèm chi tiết hồ sơ, như nút chuyển trạng thái dựng từ `allowed_transitions`.
+Không có bảng "vai trò nào gửi được loại nào" hay "trạng thái nào được hỏi tiến độ" trong
+TypeScript. Loại không cần nội dung thì nút của nó bỏ qua phép kiểm của trình duyệt
+(`formNoValidate`), nên "Hỏi tiến độ" bấm là gửi được ngay. Khung nằm dưới dòng thời gian
+chứ không ở cột thao tác: cột đó dính khi cuộn, thêm thẻ là cao quá màn hình.
 
 ---
 

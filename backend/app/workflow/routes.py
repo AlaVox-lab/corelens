@@ -23,6 +23,7 @@ from app.auth.directory import KeycloakDirectory, get_directory
 from app.models.case import EventLog, Request
 from app.models.workflow_config import (
     Department,
+    MessageKind,
     Priority,
     RequestType,
     State,
@@ -51,12 +52,22 @@ from app.workflow.errors import (
     TransitionError,
     TransitionNotAllowed,
 )
+from app.workflow.messages import (
+    MessageRejected,
+    cac_loi_nhan,
+    loai_gui_duoc,
+    loi_nhan_cuoi_tu_nguoi_gui,
+)
+from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
 from app.workflow.schemas import (
     CanhDiDuocRa,
     ChuyenTrangThaiVao,
+    GuiLoiNhanVao,
     HoSoChiTietRa,
     HoSoTomTatRa,
+    LoaiLoiNhanRa,
     LoaiYeuCauRa,
+    LoiNhanRa,
     MucUuTienRa,
     NhanCoMa,
     PhongBanRa,
@@ -89,6 +100,13 @@ def _bao_loi(loi: TransitionError) -> HTTPException:
     return HTTPException(
         status_code=MA_HTTP.get(type(loi), status.HTTP_400_BAD_REQUEST),
         detail={"code": loi.code, "message": loi.message},
+    )
+
+
+def _bao_loi_nhan(loi: MessageRejected) -> HTTPException:
+    """Dịch lỗi lời nhắn thành phản hồi HTTP, cùng khuôn `{code, message}` với `_bao_loi`."""
+    return HTTPException(
+        status_code=loi.http_status, detail={"code": loi.code, "message": loi.message}
     )
 
 
@@ -164,6 +182,8 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_paused": (
             ho_so.sla_segment_since is not None and not trang_thai.sla_running
         ),
+        # Ai nhắn sau cùng — dấu hiệu "đang chờ trả lời" trên hàng đợi (#128)
+        "last_message_from_requester": loi_nhan_cuoi_tu_nguoi_gui(session, ho_so),
     }
 
 
@@ -461,6 +481,30 @@ def chuyen_trang_thai(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
+@router.post("/requests/{case_id}/messages", response_model=HoSoChiTietRa)
+def gui_loi_nhan(
+    case_id: int,
+    du_lieu: GuiLoiNhanVao,
+    session: Annotated[Session, Depends(get_session)],
+    actor: Annotated[Actor, Depends(current_actor)],
+) -> HoSoChiTietRa:
+    """Gửi một lời nhắn trên hồ sơ của mình (#128).
+
+    Không đổi hồ sơ: không trạng thái, không trường, không đồng hồ, không dòng nhật ký —
+    xem app/workflow/messages.py. Cửa nhìn thấy giống hệt trang chi tiết: hồ sơ của
+    người khác trả 404.
+    """
+    ho_so = _lay_ho_so_cua_toi(session, case_id, actor)
+    try:
+        ghi_loi_nhan(session, ho_so, actor, du_lieu.kind, du_lieu.body)
+    except MessageRejected as loi:
+        session.rollback()
+        raise _bao_loi_nhan(loi) from loi
+
+    session.commit()
+    return _dung_chi_tiet(session, ho_so, actor)
+
+
 def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTietRa:
     return HoSoChiTietRa(**_du_lieu_chi_tiet(session, ho_so, actor))
 
@@ -501,6 +545,32 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         for t in allowed_transitions(session, ho_so, actor)
     ]
 
+    # Lời nhắn (#128) đi riêng khỏi `history`: nhật ký chỉ ghi những lần hồ sơ đổi
+    ten_loai = {k.code: k.label for k in session.scalars(select(MessageKind)).all()}
+    loi_nhan = [
+        LoiNhanRa(
+            id=m.id,
+            kind=m.kind,
+            kind_label=ten_loai.get(m.kind, m.kind),
+            author=m.author,
+            author_label=m.author_label,
+            from_requester=m.author == ho_so.requester_id,
+            body=m.body,
+            created_at=m.created_at,
+        )
+        for m in cac_loi_nhan(session, ho_so.id)
+    ]
+    loai_nhan_duoc = [
+        LoaiLoiNhanRa(
+            code=g.loai.code,
+            label=g.loai.label,
+            description=g.loai.description,
+            body_required=g.loai.body_required,
+            retry_at=g.gui_lai_tu,
+        )
+        for g in loai_gui_duoc(session, ho_so, actor)
+    ]
+
     return {
         **_tom_tat(session, ho_so, states),
         "description": ho_so.description,
@@ -508,4 +578,6 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         "assignee_id": ho_so.assignee_id,
         "history": [_su_kien(e, states, canh, nhan) for e in case_history(session, ho_so.id)],
         "allowed_transitions": di_duoc,
+        "messages": loi_nhan,
+        "message_kinds": loai_nhan_duoc,
     }

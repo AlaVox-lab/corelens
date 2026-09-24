@@ -258,6 +258,23 @@ Dòng của cạnh tự trỏ có `from_state` bằng `to_state`. Với khai ph�
 hoạt động có thật: khoảng từ lúc hồ sơ vào *Đang xử lý* tới lúc có người *Nhận việc về
 mình* đo đúng thời gian hồ sơ nằm chờ không ai cầm.
 
+**Lời nhắn không vào nhật ký sự kiện** (#128, ADR-0005). Lời nhắn không đổi hồ sơ nên không
+phải cạnh, và nằm ở bảng riêng `case_messages`, cũng chỉ ghi thêm. Luật chốt với navigator
+ngày 24/09/2026:
+
+- **Hai chiều.** Người gửi và nhân viên đều nhắn được; ai mở được hồ sơ thì nhắn được
+- **Hồ sơ kết thúc thì chỉ đọc**
+- **Hỏi tiến độ** là loại riêng của người gửi, chỉ khi hồ sơ nằm ở phòng ban — hiện là *Chờ
+  phòng ban xác duyệt*, *Đang xử lý*, *Đã leo thang*, suy từ bộ quy tắc. Hỏi lại chỉ được
+  khi phòng ban đã trả lời, hoặc đã quá bốn giờ mà chưa ai trả lời
+- Hàng đợi hiện dấu *Người gửi đang chờ trả lời* khi lời nhắn sau cùng là của người gửi
+
+Khác *Yêu cầu bổ sung thông tin*: cạnh đó đổi trạng thái, dừng đồng hồ và bắt người gửi phải
+trả lời thì hồ sơ mới đi tiếp. Lời nhắn thì không đổi gì và không bắt ai làm gì. Với khai
+phá quy trình, bảng lời nhắn là nguồn thứ hai: số lần hỏi tiến độ và thời gian chờ trả lời
+chỉ ra điểm nghẽn mà nhật ký trạng thái không thấy — trước đây là những cuộc gọi không để lại
+dấu vết.
+
 **Hai mẫu lệch chuẩn đáng theo dõi nhất**, đều lộ ra từ nhật ký:
 
 - **Vòng lặp định tuyến sai**: `classified → awaiting-acceptance → rejected-by-department →

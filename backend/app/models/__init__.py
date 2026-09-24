@@ -9,18 +9,20 @@ trình. Logic của từng không gian nằm trong thư mục riêng của nó.
 
 Hai nhóm bảng, hai chủ sở hữu khác nhau:
 
-- `workflow_config` — mười một bảng cấu hình, do lược đồ khởi tạo trong `infra/` tạo
+- `workflow_config` — mười ba bảng cấu hình, do lược đồ khởi tạo trong `infra/` tạo
   và nạp. Alembic được cấu hình bỏ qua chúng
-- `case` — hồ sơ yêu cầu và nhật ký sự kiện, do Alembic sở hữu
+- `case` — hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ, do Alembic sở hữu
 
 Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên `alembic/env.py` chỉ cần
 một dòng import.
 """
 
-from app.models.case import EventLog, Request
+from app.models.case import CaseMessage, EventLog, Request
 from app.models.workflow_config import (
     Department,
     Guard,
+    MessageKind,
+    MessageKindRole,
     Priority,
     RequestType,
     RequestTypeRouting,
@@ -33,9 +35,12 @@ from app.models.workflow_config import (
 )
 
 __all__ = [
+    "CaseMessage",
     "Department",
     "EventLog",
     "Guard",
+    "MessageKind",
+    "MessageKindRole",
     "Priority",
     "Request",
     "RequestType",

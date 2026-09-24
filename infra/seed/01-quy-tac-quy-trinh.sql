@@ -338,3 +338,35 @@ INSERT INTO priorities (code, label, is_default, display_order) VALUES
     ('normal', 'Bình thường', TRUE,  2),
     ('high',   'Cao',         FALSE, 3),
     ('urgent', 'Khẩn',        FALSE, 4);
+
+
+-- ---------------------------------------------------------------------------
+-- Loại lời nhắn trên hồ sơ (#128, ADR-0005)
+-- ---------------------------------------------------------------------------
+-- Lời nhắn không đổi hồ sơ nên không phải cạnh: không đổi trạng thái, không dừng
+-- đồng hồ, không bắt ai phải trả lời. Hỏi chính thức — dừng đồng hồ, bắt buộc trả lời
+-- — vẫn là cạnh "Yêu cầu bổ sung thông tin" ở trên.
+--
+-- Chốt với navigator ngày 24/09/2026: lời nhắn hai chiều, ai mở được hồ sơ thì nhắn
+-- được; hồ sơ kết thúc thì chỉ đọc. "Hỏi tiến độ" là loại riêng của người gửi, chỉ khi
+-- hồ sơ ở phòng ban, và hỏi lại chỉ khi phòng ban đã trả lời hoặc đã quá bốn giờ — để
+-- số lần phòng ban bị hối mà tầng I đếm không bị thổi phồng.
+
+INSERT INTO message_kinds
+    (code, label, description, owner_only, department_stage_only,
+     reask_after_hours, body_required, display_order) VALUES
+    ('message',          'Gửi lời nhắn',
+     'Trao đổi thêm trên hồ sơ, hai chiều giữa người gửi và nhân viên đang giữ hồ sơ.',
+     FALSE, FALSE, NULL, TRUE,  1),
+
+    ('progress-inquiry', 'Hỏi tiến độ',
+     'Người gửi hỏi phòng ban đang giữ hồ sơ việc đã tới đâu. Hỏi lại được khi phòng ban đã trả lời, hoặc đã quá bốn giờ mà chưa ai trả lời.',
+     TRUE,  TRUE,  4,    FALSE, 2);
+
+-- Quản trị viên không có mặt: họ không mở hồ sơ nào ở buồng lái nào
+INSERT INTO message_kind_roles (kind_code, role_code) VALUES
+    ('message',          'requester'),
+    ('message',          'classifier'),
+    ('message',          'approver'),
+    ('message',          'handler'),
+    ('progress-inquiry', 'requester');

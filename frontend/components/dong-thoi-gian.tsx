@@ -7,10 +7,14 @@
 // cùng một câu chuyện theo cùng một cách: nếu người gửi và điều phối viên nhìn cùng
 // một hồ sơ mà thấy hai dòng thời gian trình bày khác nhau, họ sẽ nghĩ dữ liệu khác
 // nhau, và cuộc trao đổi giữa hai bên bắt đầu bằng một hiểu lầm.
+//
+// Từ #128 dòng thời gian trộn thêm lời nhắn theo thời gian. Hai nguồn khác nhau về bản
+// chất — mốc là lần hồ sơ ĐỔI, lời nhắn thì không đổi gì (ADR-0005) — nên chúng trông
+// khác nhau, và mọi con số về trạng thái chỉ đếm mốc.
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { chiGio, khoaNgay, nhanNgay } from "@/lib/dinh-dang";
-import type { SuKien, ThayDoiTruong } from "@/lib/kieu";
+import type { LoiNhan, SuKien, ThayDoiTruong } from "@/lib/kieu";
 import { bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
 import { kieuTruong } from "@/lib/truong";
 
@@ -289,6 +293,87 @@ function MocThoiGian({
   );
 }
 
+/** Một lời nhắn trên dòng thời gian (#128): không mang trạng thái, vì không đổi trạng thái. */
+function MocLoiNhan({ loi_nhan, cuoiCung }: { loi_nhan: LoiNhan; cuoiCung: boolean }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "32px minmax(0,1fr)", gap: "0 14px" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: "30px",
+            height: "30px",
+            borderRadius: "50%",
+            display: "grid",
+            placeItems: "center",
+            fontSize: "13px",
+            lineHeight: 1,
+            background: "var(--surface-2)",
+            color: "var(--ink-2)",
+            border: "1px dashed var(--line-2)",
+          }}
+        >
+          ✉
+        </span>
+        {!cuoiCung && (
+          <span
+            style={{
+              flex: "1 1 auto",
+              width: "2px",
+              minHeight: "14px",
+              background: "var(--line)",
+              marginTop: "6px",
+            }}
+          />
+        )}
+      </div>
+
+      <div style={{ paddingBottom: "20px", minWidth: 0 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 11px" }}>
+          <span className="mono" style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
+            {chiGio(loi_nhan.created_at)}
+          </span>
+          <span style={{ fontSize: "13.5px", fontWeight: 600 }}>{loi_nhan.author_label}</span>
+          <span style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
+            {loi_nhan.from_requester ? "Người gửi hồ sơ" : "Nhân viên"} · {loi_nhan.kind_label}
+          </span>
+        </div>
+        {loi_nhan.body && (
+          <div
+            style={{
+              marginTop: "7px",
+              padding: "10px 12px",
+              borderRadius: "9px",
+              background: loi_nhan.from_requester ? "var(--surface-2)" : "var(--surface-3)",
+              border: "1px solid var(--line)",
+              fontSize: "13.5px",
+              lineHeight: 1.65,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {loi_nhan.body}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type MucDong =
+  | { loai: "su-kien"; luc: string; su_kien: SuKien; chiSo: number }
+  | { loai: "loi-nhan"; luc: string; loi_nhan: LoiNhan };
+
+/**
+ * Trộn mốc chuyển trạng thái với lời nhắn theo thời gian. `sort` của JavaScript ổn định,
+ * nên cùng một thời điểm thì giữ thứ tự gốc: mốc trước, lời nhắn theo thứ tự dịch vụ trả.
+ */
+function tronTheoThoiGian(cacSuKien: SuKien[], cacLoiNhan: LoiNhan[]): MucDong[] {
+  return [
+    ...cacSuKien.map((e, chiSo) => ({ loai: "su-kien" as const, luc: e.timestamp, su_kien: e, chiSo })),
+    ...cacLoiNhan.map((m) => ({ loai: "loi-nhan" as const, luc: m.created_at, loi_nhan: m })),
+  ].sort((a, b) => Date.parse(a.luc) - Date.parse(b.luc));
+}
+
 /**
  * Tiêu đề, thống kê và thẻ chứa toàn bộ dòng thời gian, gộp theo ngày.
  *
@@ -297,15 +382,19 @@ function MocThoiGian({
  */
 export function DongThoiGian({
   cacSuKien,
+  cacLoiNhan = [],
   bayGio,
   khiTrong,
 }: {
   cacSuKien: SuKien[];
+  /** Lời nhắn trên hồ sơ (#128), trộn vào theo thời gian. */
+  cacLoiNhan?: LoiNhan[];
   bayGio: Date;
   /** Câu hiện ra khi hồ sơ chưa đổi trạng thái lần nào — mỗi cổng nói theo góc nhìn của mình. */
   khiTrong: string;
 }) {
   const quayLui = danhDauQuayLui(cacSuKien);
+  const cacMuc = tronTheoThoiGian(cacSuKien, cacLoiNhan);
 
   return (
     <>
@@ -314,12 +403,13 @@ export function DongThoiGian({
           Dòng thời gian hồ sơ
         </h2>
         <p className="mono" style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--ink-3)" }}>
-          {cacSuKien.length} mốc · {quayLui.size} lần quay lui
+          {cacSuKien.length} mốc
+          {cacLoiNhan.length > 0 && <> · {cacLoiNhan.length} lời nhắn</>} · {quayLui.size} lần quay lui
         </p>
       </div>
 
       <div className="the" style={{ marginTop: "14px", padding: "20px 20px 4px" }}>
-        {cacSuKien.length === 0 ? (
+        {cacMuc.length === 0 ? (
           <p
             style={{
               margin: "0 0 16px",
@@ -331,12 +421,12 @@ export function DongThoiGian({
             {khiTrong}
           </p>
         ) : (
-          cacSuKien.map((e, i) => {
-            const ngayMoi =
-              i === 0 || khoaNgay(e.timestamp) !== khoaNgay(cacSuKien[i - 1].timestamp);
+          cacMuc.map((muc, i) => {
+            const ngayMoi = i === 0 || khoaNgay(muc.luc) !== khoaNgay(cacMuc[i - 1].luc);
+            const cuoiCung = i === cacMuc.length - 1;
 
             return (
-              <div key={`${e.timestamp}-${i}`}>
+              <div key={muc.loai === "su-kien" ? `e-${muc.chiSo}` : `m-${muc.loi_nhan.id}`}>
                 {ngayMoi && (
                   <div
                     style={{
@@ -347,18 +437,22 @@ export function DongThoiGian({
                     }}
                   >
                     <span className="mono tua-muc" style={{ whiteSpace: "nowrap" }}>
-                      {nhanNgay(e.timestamp, bayGio)}
+                      {nhanNgay(muc.luc, bayGio)}
                     </span>
                     <span
                       style={{ flex: "1 1 auto", height: "1px", background: "var(--line)" }}
                     />
                   </div>
                 )}
-                <MocThoiGian
-                  su_kien={e}
-                  quayLui={quayLui.get(i)}
-                  cuoiCung={i === cacSuKien.length - 1}
-                />
+                {muc.loai === "su-kien" ? (
+                  <MocThoiGian
+                    su_kien={muc.su_kien}
+                    quayLui={quayLui.get(muc.chiSo)}
+                    cuoiCung={cuoiCung}
+                  />
+                ) : (
+                  <MocLoiNhan loi_nhan={muc.loi_nhan} cuoiCung={cuoiCung} />
+                )}
               </div>
             );
           })

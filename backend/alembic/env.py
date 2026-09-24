@@ -36,11 +36,11 @@ target_metadata = Base.metadata
 # ---------------------------------------------------------------------------
 # HÀNG RÀO QUAN TRỌNG NHẤT CỦA TỆP NÀY
 # ---------------------------------------------------------------------------
-# Mười một bảng cấu hình của engine máy trạng thái do PostgreSQL tạo lúc khởi tạo
+# Mười ba bảng cấu hình của engine máy trạng thái do PostgreSQL tạo lúc khởi tạo
 # thực thể, từ infra/postgres/init/02-luoc-do-quy-trinh.sql. Alembic KHÔNG sở hữu
 # chúng.
 #
-# Không có hàng rào này thì `alembic revision --autogenerate` nhìn thấy mười một
+# Không có hàng rào này thì `alembic revision --autogenerate` nhìn thấy mười ba
 # bảng trong cơ sở dữ liệu mà không thấy trong target_metadata, và sinh ra một
 # migration DROP sạch toàn bộ cấu hình quy trình. Chạy migration đó là mất trắng
 # bộ quy tắc.
@@ -59,6 +59,9 @@ TABLES_OWNED_BY_INIT_SQL = frozenset(
         "request_types",
         "request_type_routing",
         "priorities",
+        # Loại lời nhắn trên hồ sơ (#128) — bản thân lời nhắn thì Alembic sở hữu
+        "message_kinds",
+        "message_kind_roles",
     }
 )
 

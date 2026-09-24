@@ -42,3 +42,17 @@ export function gomThayDoi(duLieu: FormData): Record<string, string | null> {
   }
   return thayDoi;
 }
+
+/**
+ * Đọc biểu mẫu lời nhắn (#128) thành phần thân gửi cho dịch vụ. `null` khi thiếu thông
+ * tin. Loại lời nhắn là giá trị của nút đã bấm, mà nút dựng từ `message_kinds` của dịch
+ * vụ — không có mã loại nào viết ở giao diện.
+ */
+export function docLoiNhan(
+  duLieu: FormData,
+): { maHoSo: string; than: { kind: string; body: string | null } } | null {
+  const maHoSo = chuoi(duLieu.get("case_id"));
+  const kind = chuoi(duLieu.get("kind"));
+  if (!maHoSo || !kind) return null;
+  return { maHoSo, than: { kind, body: chuoi(duLieu.get("body")) || null } };
+}
