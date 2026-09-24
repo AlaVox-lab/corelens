@@ -40,83 +40,94 @@ Mục tiêu: kho mã có bộ quy chuẩn đầy đủ, cả nhóm nắm đượ
 
 ## Giai đoạn 1 — Khảo sát và thiết kế
 
-**Trạng thái**: Đang bắt đầu · **Phiên bản dự kiến**: `v0.2.0`
+**Trạng thái**: Hoàn thành, trừ ba khảo sát và hai việc lẻ ghi dưới · **Phiên bản**: `v0.2.0`
 
 Mục tiêu: chốt toàn bộ nền tảng Open-Core và thiết kế nghiệp vụ, đủ để bắt đầu viết
 mã mà không phải quay lại bàn lại.
 
 ### 1.1. Tài liệu nền
 
-- [ ] Vẽ sơ đồ luồng nghiệp vụ bằng Mermaid, lưu vào `docs/`
-- [ ] Cập nhật `README.md`: mô tả đề tài, kiến trúc, phân công, hướng dẫn dựng
+- [x] Vẽ sơ đồ luồng nghiệp vụ bằng Mermaid, lưu vào `docs/` — `docs/process-flow.md`
+- [x] Cập nhật `README.md`: mô tả đề tài, kiến trúc, phân công, hướng dẫn dựng
 - [ ] `CODE_OF_CONDUCT.md`
-- [ ] Hoàn thiện hệ thống nhãn bằng kịch bản tự động
+- [x] Hoàn thiện hệ thống nhãn bằng kịch bản tự động — `scripts/setup-labels.sh`
 
 ### 1.2. Khảo sát nền tảng Open-Core
 
 Mỗi khảo sát kết thúc bằng một bản ghi quyết định trong `docs/adr/`, có bảng so sánh
 kèm **kiểm tra giấy phép** theo danh sách OSI.
 
-- [ ] `[H]` Nền tảng định danh tập trung (SSO)
-- [ ] `[H]` Hệ thống quản trị tri thức nội bộ
-- [ ] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
-      máy trạng thái
-- [ ] `[D]` Nền tảng kinh doanh thông minh nguồn mở
-- [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn
-- [ ] `[I]` Thư viện khai phá quy trình
+- [x] `[H]` Nền tảng định danh tập trung (SSO) — Keycloak, ADR-0001
+- [ ] `[H]` Hệ thống quản trị tri thức nội bộ — #46, đang làm
+- [x] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
+      máy trạng thái — chọn tự viết, ADR-0004
+- [x] `[D]` Nền tảng kinh doanh thông minh nguồn mở — Apache Superset, ADR-0003
+- [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — #47
+- [ ] `[I]` Thư viện khai phá quy trình — #48, đang làm
 
 ### 1.3. Thiết kế nghiệp vụ
 
-- [ ] Danh sách trạng thái và bảng quy tắc chuyển đổi
-- [ ] Ma trận phân quyền: vai trò nào làm được gì ở trạng thái nào
-- [ ] Danh sách ràng buộc Poka-yoke
-- [ ] Lược đồ nhật ký sự kiện
-- [ ] Danh mục chỉ số cho bảng điều khiển
+- [x] Danh sách trạng thái và bảng quy tắc chuyển đổi — `docs/process-flow.md`
+- [x] Ma trận phân quyền: vai trò nào làm được gì ở trạng thái nào
+- [x] Danh sách ràng buộc Poka-yoke
+- [x] Lược đồ nhật ký sự kiện — `ARCHITECTURE.md` mục 6
+- [x] Danh mục chỉ số cho bảng điều khiển — bốn chỉ số, tính thử qua Superset ở #21
 
 ### 1.4. Hạ tầng phát triển
 
-- [ ] `docker-compose.yml` dựng được toàn bộ hệ thống bằng một lệnh
-- [ ] `.env.example` với giá trị mặc định chạy được ngay
+- [x] `docker-compose.yml` dựng được toàn bộ hệ thống bằng một lệnh
+- [x] `.env.example` với giá trị mặc định chạy được ngay
 - [ ] Tích hợp liên tục: chạy lệnh dựng ảnh chứa trên mỗi đề nghị hợp nhất
-- [ ] `docs/dependencies.md` với giấy phép từng phụ thuộc
+- [x] `docs/dependencies.md` với giấy phép từng phụ thuộc
 
 ---
 
 ## Giai đoạn 2 — Không gian H và P
 
-**Phiên bản dự kiến**: `v0.3.0`
+**Trạng thái**: Đang chạy — luồng chính đã thông cho cả bốn vai trò · **Phiên bản**:
+`v0.3.0` có cổng người gửi; `v0.4.0` khép luồng thủ công với hai buồng lái
 
 Mục tiêu: luồng nghiệp vụ chạy được **hoàn toàn thủ công**, không có AI. Đây là nền
 tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 
 ### 2.1. Không gian H — Nhân sự
 
-- [ ] Tích hợp nền tảng định danh, đăng nhập một lần
-- [ ] Phân quyền theo bốn vai trò: người gửi, điều phối viên, người xử lý, trưởng bộ phận
-- [ ] Cổng tự phục vụ: gửi yêu cầu, tra cứu trạng thái
-- [ ] Kho tri thức nội bộ
+- [x] Tích hợp nền tảng định danh, đăng nhập một lần
+- [x] Phân quyền theo vai trò — năm vai trò từ buổi trao đổi với giảng viên ngày 10/09
+- [x] Cổng tự phục vụ: gửi yêu cầu, tra cứu trạng thái — #44
+- [x] Buồng lái điều phối viên và buồng lái phòng ban — #45
+- [ ] Kho tri thức nội bộ — chờ khảo sát #46
 
 ### 2.2. Không gian P — Quy trình
 
-- [ ] Máy trạng thái với trạng thái và quy tắc chuyển **lưu trong cơ sở dữ liệu**
-- [ ] Nhánh điều kiện: yêu cầu phát sinh chi phí rẽ sang luồng phê duyệt
-- [ ] Theo dõi SLA và tự leo thang khi quá hạn
-- [ ] Ràng buộc Poka-yoke ở cả giao diện lẫn dịch vụ
-- [ ] Sinh nhật ký sự kiện ở mọi điểm chuyển trạng thái
+- [x] Máy trạng thái với trạng thái và quy tắc chuyển **lưu trong cơ sở dữ liệu**
+- ~~Nhánh điều kiện: yêu cầu phát sinh chi phí rẽ sang luồng phê duyệt~~ — bỏ theo giảng
+  viên ngày 10/09: phát sinh chi phí thì lập một phiếu yêu cầu mới
+- [x] Theo dõi SLA và tự leo thang khi quá hạn, có ân hạn sau khi phân công lại
+- [x] Ràng buộc Poka-yoke ở cả giao diện lẫn dịch vụ
+- [x] Sinh nhật ký sự kiện ở mọi điểm chuyển trạng thái, kèm lịch sử thay đổi trường
+      quyết định
+- [ ] Thao tác không đổi trạng thái: nhắn, hỏi tiến độ, nhận việc, sửa nội dung — #81,
+      thiết kế ở ADR-0005
+- [ ] Đính kèm tệp — #80
+- [ ] Điều phối viên chỉnh hạn từng hồ sơ — #101, chờ giảng viên
 
 **Tiêu chí hoàn thành giai đoạn**: một yêu cầu đi được trọn vòng từ lúc gửi tới lúc
 hoàn tất, qua đủ các nhánh, hoàn toàn bằng thao tác của người.
+
+Vòng chính đã đạt ngày 23/09: navigator chạy tay trọn một hồ sơ qua bốn vai trò trên giao
+diện thật. Còn lại là các nhánh phụ ở trên và một lượt kiểm thử tổng thể.
 
 ---
 
 ## Giai đoạn 3 — Không gian D
 
-**Phiên bản dự kiến**: `v0.4.0`
+**Phiên bản dự kiến**: `v0.5.0`
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.
 
-- [ ] Chuẩn hóa bảng nhật ký sự kiện
+- [x] Chuẩn hóa bảng nhật ký sự kiện — sáu trường bắt buộc, cộng lý do và lịch sử thay đổi
 - [ ] Tích hợp nền tảng kinh doanh thông minh
 - [ ] Bảng điều khiển: tồn đọng theo bộ phận, thời gian xử lý trung vị, tỷ lệ vi
       phạm SLA, phân bố loại yêu cầu
@@ -130,7 +141,7 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.5.0`
+**Phiên bản dự kiến**: `v0.6.0`
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. Ba tác vụ theo thứ tự
 tăng dần độ khó.

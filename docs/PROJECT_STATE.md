@@ -14,28 +14,30 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-17 |
-| Phiên bản hiện tại | `v0.3.0`, cắt ngày 16/09. `main` đi trước thẻ một commit tài liệu |
-| Giai đoạn | **Giai đoạn 2 đang chạy** — `H` và `P` đã thông đầu-cuối, có giao diện người dùng thật |
-| Mốc công việc đang chạy | Tuần 6 — Engine máy trạng thái và tích hợp định danh, hạn 20/09 |
+| Cập nhật lần cuối | 2026-09-24 |
+| Phiên bản hiện tại | `v0.3.0`, cắt ngày 16/09. `main` đi trước thẻ **16 commit nội dung** — đủ điều kiện cắt `v0.4.0` |
+| Giai đoạn | **Giai đoạn 2 đang chạy** — `H` và `P` thông đầu-cuối cho **cả bốn vai trò** trên giao diện thật |
+| Mốc công việc đang chạy | Tuần 7 — Buồng lái vận hành và khảo sát Open-Core, hạn 27/09 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js đều chạy; cụm gồm **sáu dịch vụ** |
-| Issue đang mở | **4** — #45, #46, #47, #48 (chưa kể việc tồn đọng của #44, xem mục Việc tiếp theo) |
-| Quyết định kiến trúc đã chốt | **4** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` |
-| Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48) |
-| Bộ kiểm thử tự động | **68 bài**, chạy trên PostgreSQL thật. Bốn bài tích hợp Keycloak tự bỏ qua nếu chưa dựng dịch vụ định danh |
-| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo thật trên cụm sáu dịch vụ |
-| Số ngày còn lại tới chấm kho mã | **82 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **46 ngày** (tháng 11/2026) |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với ba màn hình: cổng người gửi, buồng lái điều phối, buồng lái phòng ban. Cụm gồm **sáu dịch vụ** |
+| Issue đang mở | **7** — #46, #47, #48, #80, #81, #101, #102 |
+| Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
+| Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46, đang làm), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48, đang làm) |
+| Bộ kiểm thử tự động | **171 bài**, chạy trên PostgreSQL thật. Mọi issue từ #78 đều qua phép thử đột biến |
+| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo ngày 16/09. Chưa đo lại — hai buồng lái không thêm dịch vụ nào |
+| Số ngày còn lại tới chấm kho mã | **74 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **38 ngày** (đầu tháng 11/2026) |
 
-**Một câu tóm tắt trạng thái**: nhân viên đăng nhập bằng Keycloak → gửi yêu cầu qua
-biểu mẫu ba bước → engine tra bảng quy tắc và chạy ràng buộc Poka-yoke → ghi nhật ký sự
-kiện → bộ quét nền tự leo thang khi quá hạn → người gửi theo dõi toàn bộ đường đi của
-hồ sơ trên dòng thời gian. Toàn bộ vòng đó chạy được trên máy sạch bằng một lệnh.
+**Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
+mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
+từ danh bạ Keycloak → người xử lý làm, hỏi thêm người gửi khi cần → quá hạn thì tự leo
+thang, có ân hạn sau khi phân công lại → người gửi xác nhận đạt hoặc mở lại. Mọi bước
+ghi nhật ký sự kiện, kèm lịch sử thay đổi của trường quyết định. Chạy được trên máy
+sạch bằng một lệnh.
 
-Thứ còn thiếu là **phía bên kia của quy trình**: điều phối viên, người xét duyệt và
-người xử lý vẫn chưa có màn hình nào. Họ thao tác được qua API nhưng chưa qua giao diện
-— đó là #45.
+Thứ còn thiếu trong luồng thủ công: **thao tác không đổi trạng thái** — nhắn, hỏi tiến
+độ, nhận việc, sửa nội dung (#81, thiết kế đã chốt ở ADR-0005), **đính kèm tệp** (#80),
+**chỉnh hạn từng hồ sơ** (#101, chờ giảng viên). Tầng `D` và `I` chưa cài đặt.
 
 ---
 
@@ -297,131 +299,113 @@ trang trả 500 — mà `next build` vẫn báo thành công. Xem `frontend/app/
 
 ---
 
+### Tuần 7 — Buồng lái vận hành, và một lượt duyệt kịch bản kiểm thử
+
+**Vá lỗ `CHANGEABLE_FIELDS` trước khi mở buồng lái** (#78). Engine cũ cho đặt mọi trường
+quyết định ở mọi cạnh — người xử lý bấm *Hoàn thành* kèm `priority_code` là tự nâng được
+mức ưu tiên việc của mình. Giờ mỗi ràng buộc khai trường nó quản, và một lần chuyển chỉ
+đặt được trường mà ràng buộc trên **chính cạnh đó** quản. Xem `ARCHITECTURE.md` mục 7.
+
+**Đăng nhập bằng trình duyệt thật không giữ được phiên** (#87, `P0`). Cookie phiên chứa
+cả bộ token vượt trần 4096 byte, trình duyệt lặng lẽ bỏ nó. Bộ kiểm thử không bắt được vì
+nó tự đúc cookie thay vì đi đường đăng nhập thật. Sửa bằng cách tách thành hai cookie; từ
+đó mọi lần kiểm trang đều đi trọn luồng OIDC.
+
+**Buồng lái vận hành — khép #45** bằng ba issue con:
+
+- **Buồng lái điều phối viên** (#82): phân loại, đặt mức ưu tiên, sửa loại người gửi chọn
+  sai, chuyển phòng với gợi ý từ bảng ánh xạ, định tuyến lại khi bị trả
+- **Danh bạ Keycloak** (#84): client `dx-directory` đọc thành viên từng phòng qua Admin API,
+  để ô chọn người xử lý hiện tên thật. Danh bạ không trả lời thì vẫn nhận được hồ sơ, chỉ
+  không giao được người
+- **Buồng lái phòng ban** (#83): trưởng phòng nhận hoặc trả, giao người, phân công lại khi
+  leo thang; người xử lý làm và hỏi thêm. Ai giao việc, ai nhận việc đều suy từ dữ liệu
+
+**Lượt duyệt kịch bản kiểm thử bằng tay.** Navigator chạy từng bước một vòng đời hồ sơ,
+hỏi "chuyện gì xảy ra nếu…" ở mỗi nút, và ghi chín phát hiện. Mỗi phát hiện thành một
+issue, sửa và lên `main` ngay trong ngày thay vì gom tới cuối:
+
+| Issue | Phát hiện | Cách sửa |
+|---|---|---|
+| #97 | Bốn lỗi hiển thị: câu đồng hồ khi chưa chạy, bảng thao tác bị cắt, danh sách lệch cột | Sửa giao diện |
+| #94 | Trưởng phòng phân công lại xong, hồ sơ bị leo thang lại ngay lượt quét sau | **Khoảng ân hạn** theo loại yêu cầu — cột `request_types.sla_grace_hours` |
+| #98 | "Hủy yêu cầu" bấm là mất hồ sơ, không hỏi lại | Cạnh dẫn tới trạng thái kết thúc mở bảng xác nhận, suy từ `states.is_terminal` |
+| #99 | Người xử lý hỏi thêm xong, hồ sơ biến khỏi hàng đợi của họ | Nhóm *chỉ để theo dõi* trong hàng đợi phòng ban |
+| #100 | Điều phối sửa loại người gửi chọn sai, giá trị cũ mất dấu | Cột `event_log.changes` ghi mọi lần đổi trường quyết định dạng "từ → sang" |
+| #79 | Người gửi thấy hai nút "Bổ sung thông tin", phải đoán ai đã hỏi mình | Ràng buộc `return-to-previous-state`: hồ sơ về đúng chỗ đã hỏi. Trưởng phòng cũng hỏi thêm được |
+
+#79 kéo theo hai thay đổi đáng nhớ. **Ràng buộc không cần nhập liệu chạy luôn lúc chào
+nút**, nên cạnh chắc chắn bị từ chối không hiện ra. Và tệp kiểm tra đồ thị có **phép kiểm
+thứ sáu**: một nơi hỏi thêm mà thiếu đường quay về thì cụm dừng khởi động.
+
+**ADR-0005 — ranh giới của máy trạng thái** (#81). Bốn thao tác người dùng cần lại không
+đổi trạng thái: nhắn điều phối viên, hỏi tiến độ, nhận việc về mình, sửa nội dung. Bản ghi
+so ba phương án trên dữ kiện đọc từ mã nguồn; giảng viên duyệt ngày 24/09 kèm một điều
+chỉnh — người gửi được sửa nội dung khi hồ sơ chưa tới phòng ban. Chưa viết mã.
+
+**Chuẩn bị cho thành viên dùng trợ lý AI** (#117). `AGENTS.md` ở gốc kho cho Antigravity và
+Codex — hai công cụ không đọc `CLAUDE.md` — để quy tắc không tự commit áp dụng cho mọi trợ
+lý. `CLAUDE.md` bỏ các câu đã lỗi thời về hiện trạng kho.
+
+**Nhịp phát hành đổi**: từ 22/09, mỗi issue một pull request `dev → main` ngay sau khi
+squash. Issue đóng ngay, `main` luôn có bản mới nhất để thử.
+
+**Bộ kiểm thử lên 171 bài.** Mọi issue từ #78 đều qua phép thử đột biến trên một cụm thử
+cách ly; phép đột biến nào sống sót thì hoặc thêm bài, hoặc gỡ đoạn mã thừa mà nó chỉ ra.
+
+**Issue đã đóng**: #45, #78, #79, #82, #83, #84, #87, #94, #97, #98, #99, #100, #117
+
+---
+
 ## Đang làm
 
-Không có công việc nào đang dở. Milestone *Tuần 6*, hạn 20/09, còn bốn issue:
-
-| Issue | Ưu tiên | Việc | Ghi chú |
+| Issue | Ưu tiên | Việc | Người làm |
 |---|---|---|---|
-| **#45** | **P2** | Buồng lái vận hành | **Đã mở khóa.** Cần thiết kế giao diện riêng — dùng `khong-dung/` của #44 làm tham khảo |
-| #46 | P2 | Khảo sát quản trị tri thức cho `H` | Độc lập với mã nguồn — giao được cho `@Senning-Dd` |
-| #47 | P3 | Khảo sát véc-tơ và khung LLM cho `I` | |
-| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
+| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd`, navigator cùng theo — bản ghi giữ chỗ **ADR-0006** |
+| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | `@NguyentimAnh`, navigator cùng theo — bản ghi giữ chỗ **ADR-0007** |
 
-**Bốn issue trong ba ngày còn lại vẫn là quá tay.** Ba khảo sát cuối mỗi cái tương đương
-một tuần việc — nhìn lại #19, #20, #21 thì rõ: liệt kê ba ứng viên, kiểm giấy phép bên
-trong ảnh chứa phát hành, dựng thử bằng Docker, đo tài nguyên, viết tài liệu và một ADR.
-Làm vội cả ba sẽ cho ra tài liệu hời hợt, mà đây đúng là loại tài liệu ăn điểm.
+Hai issue khảo sát là việc đầu tiên của thành viên trên kho mã: không đụng mã nguồn, sản
+phẩm là tài liệu khảo sát cộng bản ghi quyết định ở trạng thái *Đề xuất*. Bình luận giao
+việc trên từng issue ghi đủ đầu vào, các bước, đầu ra và điều kiện hoàn thành.
 
-Giảng viên cũng đã chốt: ba khảo sát này **làm sớm để biết ràng buộc, chưa tích hợp**
-cho tới khi luồng chính ổn định. Không có gì gấp.
-
-**Hai điểm suy luận trong `process-flow.md` mục 8 vẫn chưa được giảng viên xác nhận**:
-cạnh `classified → closed` khi không phòng nào nhận, và cạnh `completed → in-progress`
-khi người tạo mở lại. Cả hai đã đi vào dữ liệu khởi tạo và đánh dấu `[CHỜ XÁC NHẬN]` —
-thầy bác thì xóa một dòng dữ liệu, không đụng mã.
-
-**Một quyết định nghiệp vụ mới cần thầy xác nhận**: thời gian hồ sơ nằm ở
-`awaiting-info` **không tính** vào SLA, nhưng tổng thời gian dừng vẫn được ghi riêng.
-Cũng là một cờ trong dữ liệu — xem `states.sla_running`.
+**#81 đã chốt thiết kế** ở ADR-0005 nhưng chưa bắt đầu viết mã.
 
 ---
 
 ## Việc tiếp theo
 
-Toàn bộ việc kỹ thuật đã có issue, xếp theo đường tới hạn. Chi tiết từng giai đoạn xem
-`ROADMAP.md`.
+### Theo thứ tự
 
-### Đường tới hạn — chỉ còn một mắt xích
+1. **#81 — thao tác không đổi trạng thái**, theo ADR-0005. Tách thành ba issue con khi bắt
+   tay: bảng lời nhắn, nhận việc về mình, sửa nội dung trước khi tới phòng ban. Đổi lược đồ
+   khởi tạo — gỡ ràng buộc cấm cạnh tự trỏ — nên cả nhóm phải `down -v`
+2. **#102 — tài liệu**: gỡ nhãn `[CHỜ XÁC NHẬN]` ở hai cạnh đã được giữ, ghi quy tắc mở lại
+3. **Lượt kiểm thử tổng thể** theo tệp kịch bản kiểm thử, gồm các điểm chỉ kiểm được bằng
+   mắt đã hẹn ở #97, #98, #79
+4. **Cắt `v0.4.0`** — đợt này có `feat`, tăng MINOR
+5. **#80 — đính kèm tệp**. SeaweedFS đã dựng và giới hạn kích thước đã đo ở #39
+6. **#47 — khảo sát véc-tơ và khung LLM**, sau khi #46 và #48 xong
 
-Theo chiến lược giảng viên chốt: đi sâu một luồng trước, rồi mới mở rộng.
+### Chờ giảng viên
 
-```
-#37 ─► #40 ─► #41 ─┬─► #42        (xong)
-#38 ─► #62 ────────┴─► #43        (xong)
-                       │
-                       └─► #44 ─► #45   (còn #45)
-```
-
-Đường tới hạn chỉ còn **một mắt xích**. Một nửa quy trình đã có giao diện — nửa của
-người gửi yêu cầu. Nửa còn lại, của điều phối viên và phòng ban, là #45.
-
-| Issue | Ưu tiên | Việc | Chặn bởi |
-|---|---|---|---|
-| #45 | P2 | Buồng lái vận hành | **đã mở khóa** |
-
-**#45 kế thừa được nhiều hơn tưởng.** Bộ token màu, nhãn trạng thái mang dấu hiệu, cách
-định dạng thời gian theo múi giờ Việt Nam, lớp gọi dịch vụ có xử lý lỗi — tất cả đã nằm
-trong `frontend/lib/` và `frontend/components/`. Bảng ánh xạ mã lỗi engine sang mã HTTP
-(`MA_HTTP` trong `backend/app/workflow/routes.py`) cũng viết sẵn để dùng lại.
-
-Khuôn mẫu bắt buộc giữ, ghi ở `ARCHITECTURE.md` mục 7.2: **nút bấm dựng từ
-`allowed_transitions` của API, không từ một bảng trong mã nguồn giao diện**. #44 đã
-chứng minh vì sao — bản thiết kế vẽ hai cái nút mà dữ liệu không cho phép.
-
-**Một việc phải làm TRƯỚC khi viết #45**: vá lỗ hổng `CHANGEABLE_FIELDS`, xem mục Việc
-tiếp theo bên dưới. Cổng #44 né được vì nó không nhận trường `changes`, nhưng buồng lái
-thì bắt buộc phải nhận.
-
-### Không chặn ai, làm khi có khoảng trống
-
-| Issue | Ưu tiên | Việc | Giao được cho |
-|---|---|---|---|
-| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd` — độc lập hoàn toàn với mã nguồn |
-| #47 | P3 | Khảo sát cơ sở dữ liệu véc-tơ và khung LLM cho `I` | |
-| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | |
-
-### Issue cần mở, sinh ra từ #44
-
-Ba việc phát hiện trong lúc làm #44, cố ý **không** vá lén trong cùng issue:
-
-1. **Vá lỗ hổng `CHANGEABLE_FIELDS`** — `P`, `P1`, **chặn #45**. Engine cho đặt
-   `priority_code` ở **mọi** cạnh, không chỉ cạnh mang ràng buộc `set-priority`. Cổng #44
-   né được bằng cách không nhận trường `changes`, nhưng buồng lái bắt buộc phải nhận, và
-   khi đó người xử lý sẽ tự nâng mức ưu tiên việc của mình được. Cách vá đúng: engine chỉ
-   cho đặt trường nào mà cạnh đang đi có ràng buộc tương ứng — quan hệ đó đã khai sẵn ở
-   bảng `transition_guards`, không cần thêm bảng mới
-2. **Mô hình hóa cạnh "quay về trạng thái trước"** — `P`, `P2`. Từ `awaiting-info` hiện
-   có hai cạnh về `classified` và `in-progress`, và engine chào **cả hai** vì nó chỉ nhìn
-   `from_state`. Chỉ một cái đúng: hồ sơ phải quay về nơi nó vừa rời đi. Người gửi đang
-   phải tự đoán giữa hai cái nút gần như giống hệt nhau, đoán sai thì hồ sơ đi lùi thêm
-   một nhịp. Đây là ràng buộc cần biết lịch sử, nên phải làm thành một `guard` mới chứ
-   không sửa được bằng dữ liệu
-3. **Đính kèm tệp cho yêu cầu** — `core`, `P2`. Tách khỏi #44 ngay từ đầu. SeaweedFS đã
-   dựng và giới hạn kích thước đã đo ở #39, nên phần hạ tầng sẵn sàng
-
-Hai việc nhỏ hơn, gộp vào #45 hoặc làm riêng tùy dung lượng:
-
-4. **Tra tên người từ định danh Keycloak.** Cột `assignee_id` giữ `sub` dạng UUID, và
-   dịch vụ chưa có đường tra ngược ra tên. Cổng #44 hiện không hiện trường này, vì đưa
-   một dãy ký tự vô nghĩa lên màn hình thì tệ hơn là không đưa gì
-5. **Ba nút không phải chuyển trạng thái** mà bản thiết kế #44 có: *Sửa nội dung*,
-   *Nhắn điều phối viên*, *Hỏi tiến độ*. Đã bỏ khỏi #44 vì chúng không ứng với cạnh nào
-   trong bộ quy tắc. Muốn có thì phải quyết trước: chúng là cạnh mới, hay là tính năng
-   nằm ngoài máy trạng thái
+- **#101 — điều phối viên chỉnh hạn xử lý từng hồ sơ**: ba câu hỏi ghi trong issue
+- **Thời gian ở *Chờ bổ sung thông tin* có tính vào SLA không** — hiện không tính, là một
+  cờ trong dữ liệu
+- **Người gửi có được đổi mức ưu tiên không** — ví dụ của giảng viên ở #81 có nhắc; nhóm giữ
+  ràng buộc Poka-yoke và đã báo lại
 
 ### Việc vận hành, không cần issue
 
-1. Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm trong `infra/seed/`. Bản dựng thử nằm ở
-   `E:\Workspace\_scratch\dx-os-lab\sinh_du_lieu.py` trên máy của navigator — sinh 1.000 hồ
-   sơ bám đúng `process-flow.md`. **Lưu ý**: bộ sinh viết theo mô hình cũ bốn vai trò, cần
-   cập nhật theo mười trạng thái và năm vai trò mới
-2. Thiết kế giao diện cho #45 trước khi viết mã. Bảng điều khiển phân tích **không cần
-   thiết kế** vì Superset tự mang giao diện
-3. Thêm `CODE_OF_CONDUCT.md` — chuẩn cộng đồng nguồn mở
-4. Gửi `TRO-LY-THANH-VIEN.md` cho `@NguyentimAnh` và `@Senning-Dd` — bộ luật đã cập
-   nhật ngày 16/09, có thêm mục 2.7 hướng dẫn dựng hệ thống
-
-### Chờ điều kiện
-
-5. Tích hợp liên tục — giờ đã có cấu trúc thư mục mã nguồn và 68 bài kiểm thử, nên
-   điều kiện đã đủ. Một quy trình chạy `pytest` và `next build` trên mỗi pull request
-   sẽ bắt được hồi quy trước khi nó vào `dev`. #44 vừa cho một lý do cụ thể: có loại lỗi
-   `next build` báo thành công nhưng trang vẫn trả 500 lúc chạy
-6. Chuyển kho mã sang công khai — làm trước khi nộp bài. Khi đó quy tắc bảo vệ nhánh mới
-   có hiệu lực, và **bật lại được `delete_branch_on_merge`** một cách an toàn
-7. Giai đoạn đóng gói: hướng dẫn cài đặt trong `README.md`, đo hiệu năng, công bố **cấu
-   hình máy tối thiểu** — giảng viên nhắc trước để nhóm không quên
+1. Tạo mốc *Tuần 8*, dời các issue còn mở sang
+2. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
+   từ lâu — 171 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
+3. Cập nhật bộ sinh dữ liệu ảo theo mười trạng thái, năm vai trò, 21 cạnh, rồi đưa vào kho.
+   Bản hiện nằm ở máy navigator và vẫn theo mô hình cũ; #48 cần dùng nó
+4. Thêm `CODE_OF_CONDUCT.md`
+5. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
+   `delete_branch_on_merge` an toàn
+6. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
+   trước để nhóm không quên
 
 ---
 
@@ -431,11 +415,10 @@ Hai việc nhỏ hơn, gộp vào #45 hoặc làm riêng tùy dung lượng:
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| **Hai điểm suy luận trong sơ đồ luồng chưa được giảng viên xác nhận** | Nếu sai thì bảng `transitions` ở #40 phải sửa theo | Xem `process-flow.md` mục 8: cạnh `classified → closed` và cạnh `completed → in-progress`. Hỏi ở buổi trao đổi tới |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Chưa có tích hợp liên tục** | 51 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
+| **Chưa có tích hợp liên tục** | 171 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
 | **Quyết định SLA chưa được giảng viên xác nhận** | Nếu thầy muốn tính cả thời gian chờ bổ sung vào SLA thì số liệu hiện có sẽ lệch | Hiện đặt **không tính**, nhưng ghi riêng tổng thời gian dừng. Đổi ý chỉ là bật cờ `states.sla_running` trong dữ liệu khởi tạo |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/` hoặc `infra/seed/` đổi, cả nhóm phải `docker compose down -v` rồi dựng lại. Ghi trong mô tả pull request mỗi khi chạm hai thư mục đó |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 đã có ba lần như vậy: #84 đổi realm, #94 và #79 đổi lược đồ và dữ liệu khởi tạo |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
@@ -474,6 +457,17 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `openid-client` thay vì `next-auth` | Bản cài đặt được OpenID Foundation chứng nhận, MIT, chạy phía máy chủ; `next-auth` v5 còn beta |
 | Thời gian ở `awaiting-info` **không tính** vào SLA, nhưng ghi riêng tổng thời gian dừng | Người xử lý không bị phạt khi người tạo chậm; tổng thời gian dừng để khai phá quy trình phát hiện lạm dụng. **Chờ giảng viên xác nhận** |
 | Trạng thái nào chạy đồng hồ SLA là **dữ liệu**, không phải mã | Cột `states.sla_running` trả lời cả hai câu: đồng hồ bắt đầu từ đâu và dừng ở đâu |
+| Trường quyết định chỉ đặt được ở cạnh có ràng buộc quản nó | Người xử lý không tự nâng được mức ưu tiên việc của mình — #78, `ARCHITECTURE.md` mục 7 |
+| Giao người xử lý là **tùy chọn** | Ngoài đời người trong phòng hay tự chia việc; hồ sơ chưa giao ai vẫn thuộc cả phòng. Navigator chốt 23/09 |
+| Leo thang lại có **khoảng ân hạn**, không cấp hạn mới | Hồ sơ vẫn được ghi nhận quá hạn; người vừa được giao lại có ân hạn trước khi bị leo thang lần nữa. Ân hạn là dữ liệu theo loại yêu cầu — #94 |
+| Bổ sung thông tin xong thì **về đúng chỗ đã hỏi** | Hỏi ở *Đã gửi* về *Đã gửi*, trưởng phòng hỏi thì về *Chờ phòng ban xác duyệt*, người xử lý hỏi thì về *Đang xử lý* — #79 |
+| Mở lại khi chưa đạt: **không giới hạn số lần, không cấp hạn mới** | Navigator chốt 23/09. Giữ hai cạnh từng đánh dấu `[CHỜ XÁC NHẬN]` — `classified → closed` và `completed → in-progress`; gỡ nhãn ở #102 |
+| Hồ sơ bị phòng ban trả **giữ phòng cũ** tới khi điều phối chọn lại | Nhật ký ghi đủ lần đổi phòng nhờ cột `changes` — #100 |
+| Lý do *Từ chối vì sai chuyên môn* **bắt buộc** | Là cờ `requires_note` trong dữ liệu |
+| **Ranh giới máy trạng thái** — ADR-0005 | Thao tác đổi hồ sơ — trạng thái, trường quyết định, nội dung — đi qua cửa chuyển trạng thái; lời nhắn đi bảng riêng. Người gửi sửa được nội dung khi hồ sơ chưa tới phòng ban. Giảng viên duyệt 24/09 |
+| Mức ưu tiên vẫn chỉ điều phối viên đặt | Ví dụ của giảng viên ở #81 có nhắc người gửi đổi mức ưu tiên; nhóm giữ ràng buộc Poka-yoke và đã báo lại |
+| Nhịp phát hành: **mỗi issue một pull request `dev → main`** | Từ 22/09. Issue đóng ngay; nhật ký thay đổi vẫn tách đúng từng mục |
+| Mọi trợ lý AI đọc chung một bộ quy tắc | `AGENTS.md` trỏ về `CLAUDE.md`, để Antigravity và Codex cũng không tự commit — #117 |
 
 ---
 
@@ -752,6 +746,40 @@ gỡ bước ghi nhật ký làm đổ đúng tám bài, gỡ phần kế toán 
 Lần thứ ba phát hiện một bài **đậu giả**: nó khẳng định đồng hồ đã dừng, mà khi gỡ kế
 toán thì đồng hồ vốn chưa bao giờ chạy. Đã siết lại bằng cách khẳng định trạng thái
 *trước* đã, rồi mới khẳng định trạng thái *sau*.
+
+Tuần 7 đưa phép thử này thành thói quen: mọi issue từ #78 chạy đột biến trên một cụm thử
+cách ly, dựng bằng tên dự án Compose riêng để không đụng dữ liệu của ai. Phép đột biến
+sống sót thì hoặc thêm bài, hoặc **gỡ đoạn mã mà nó chỉ ra là thừa** — ví dụ ở #99, một
+phép loại trạng thái kết thúc gỡ đi không bài nào đổ, vì trạng thái kết thúc vốn không
+bao giờ thỏa điều kiện còn lại. Một điều kiện: kết quả đột biến chỉ có giá trị khi bản
+gốc xanh ngay trước đó. Để sót dữ liệu thử trong cơ sở dữ liệu làm bài đỏ sẵn, và mọi
+phép đột biến sau đó đều "bị bắt" giả.
+
+**Trình duyệt lặng lẽ bỏ cookie vượt 4096 byte** (#87)
+
+Cookie phiên chứa cả bộ token của Keycloak vượt trần, và trình duyệt không báo lỗi gì —
+nó chỉ không lưu. Người dùng đăng nhập xong vẫn bị coi là chưa đăng nhập. Bộ kiểm thử
+không bắt được vì nó tự đúc cookie thay vì đi đường đăng nhập thật. Bài học rộng hơn:
+**kiểm tính năng cần đăng nhập bằng đúng luồng OIDC thật**, không bằng phiên tự dựng.
+
+**`timeout` của `urllib` không bao gồm phân giải tên miền** (#84)
+
+Gọi Admin API của Keycloak với `timeout=3` mà treo tám giây khi tên máy không phân giải
+được. Hạn chót thật phải đặt bên ngoài lời gọi — chạy trong `ThreadPoolExecutor` rồi chờ
+kết quả có hạn. Xem `backend/app/auth/directory.py`.
+
+**Bài kiểm thử đếm số lượng phải so chênh lệch, không so tuyệt đối**
+
+Cụm dùng để chạy bài thường đã có sẵn hồ sơ từ lúc thử tay. Bài khẳng định "nhóm này có
+đúng một hồ sơ" sẽ đỏ trên cụm của navigator dù mã đúng. Đếm trước khi dựng cảnh, rồi
+khẳng định số tăng thêm — xem `_dem_nhom` trong `backend/tests/test_department.py`.
+
+**Lỡ commit lên `dev` ở máy thay vì nhánh công việc**
+
+Gặp ngày 24/09 ở #98: chạy `git checkout dev` để đồng bộ rồi quên quay lại. Chưa push
+`dev` thì không mất gì — chuyển commit sang nhánh công việc bằng `merge --ff-only`, rồi
+dời `dev` ở máy về `origin/dev`. Phòng từ đầu: kiểm `git branch --show-current` ngay trước
+lệnh commit. Cả hai bộ luật trợ lý đều đã ghi cách cứu.
 
 ---
 
