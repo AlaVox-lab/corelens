@@ -37,7 +37,7 @@ from app.auth.directory import (
 )
 from app.db import get_session
 from app.models.case import Request
-from app.models.workflow_config import Department, Transition
+from app.models.workflow_config import Department, State, Transition, TransitionRole
 from app.rules.guards import permitted_fields
 from app.workflow.context import Actor
 from app.workflow.engine import get_active_rule_set
@@ -97,6 +97,40 @@ def vai_tro_nhan_viec(session: Session, rule_set_id: int) -> frozenset[str]:
                 )
             ).all()
         )
+    )
+
+
+def vai_tro_phong_ban(session: Session, rule_set_id: int) -> frozenset[str]:
+    """Vai trò làm việc trong buồng lái phòng ban: người giao việc và người nhận việc."""
+    return vai_tro_giao_viec(session, rule_set_id) | vai_tro_nhan_viec(session, rule_set_id)
+
+
+def trang_thai_hang_doi_phong_ban(session: Session, rule_set_id: int) -> list[State]:
+    """Trạng thái mà vai trò phòng ban có cạnh đi ra — theo thứ tự hiển thị.
+
+    Người nhận việc cũng thấy hồ sơ đang chờ trưởng phòng nhận, và trưởng phòng cũng
+    thấy hồ sơ đang xử lý: cả phòng nhìn chung một hàng đợi. Nút bấm thì vẫn riêng
+    từng người, vì chúng đến từ `allowed_transitions`.
+
+    Dùng chung cho hàng đợi của buồng lái phòng ban (#83) và cho loại lời nhắn chỉ gửi
+    được khi hồ sơ ở phòng ban (#128) — "hồ sơ đang ở phòng ban" nghĩa là đúng một thứ ở
+    mọi nơi.
+    """
+    nguon = (
+        select(Transition.from_state)
+        .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+        .where(
+            Transition.rule_set_id == rule_set_id,
+            Transition.is_system.is_(False),
+            TransitionRole.role_code.in_(vai_tro_phong_ban(session, rule_set_id)),
+        )
+    )
+    return list(
+        session.scalars(
+            select(State)
+            .where(State.rule_set_id == rule_set_id, State.code.in_(nguon))
+            .order_by(State.display_order)
+        ).all()
     )
 
 

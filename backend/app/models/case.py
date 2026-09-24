@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Hồ sơ yêu cầu và nhật ký sự kiện.
+# Hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ.
 #
-# Khác với các bảng cấu hình ở workflow_config.py, hai bảng này do Alembic sở hữu
+# Khác với các bảng cấu hình ở workflow_config.py, ba bảng này do Alembic sở hữu
 # và chứa dữ liệu vận hành thật.
 
 from __future__ import annotations
@@ -32,6 +32,10 @@ from app.db import Base
 TIEU_DE_TOI_THIEU = 3
 TIEU_DE_TOI_DA = 200
 MO_TA_TOI_DA = 5000
+
+# Cùng giới hạn với ô ghi chú của lần chuyển trạng thái. Bảng `case_messages` giữ cùng
+# con số ở ràng buộc CHECK (migration 0007).
+LOI_NHAN_TOI_DA = 2000
 
 
 class Request(Base):
@@ -195,3 +199,34 @@ class EventLog(Base):
             f"<EventLog {self.case_id} {self.activity}: "
             f"{self.from_state} -> {self.to_state}>"
         )
+
+
+class CaseMessage(Base):
+    """Một lời nhắn trên hồ sơ (#128, ADR-0005).
+
+    Lời nhắn **không đổi hồ sơ**: không đổi trạng thái, không đổi trường nào, không chạm
+    đồng hồ SLA. Vì vậy nó không đi qua `perform_transition` và không vào nhật ký sự
+    kiện — nhật ký chỉ ghi những lần hồ sơ đổi. Ghi lời nhắn cũng không được đụng tới
+    dòng `requests`, kể cả cột `updated_at`.
+
+    **Chỉ ghi thêm**, như `event_log`: trigger ở tầng cơ sở dữ liệu chặn UPDATE và
+    DELETE — xem migration 0007. Tác giả là người gửi hồ sơ hay nhân viên thì so `author`
+    với `requests.requester_id`, không lưu thêm cột.
+    """
+
+    __tablename__ = "case_messages"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    case_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("requests.id"))
+    kind: Mapped[str] = mapped_column(Text, ForeignKey("message_kinds.code"))
+
+    author: Mapped[str] = mapped_column(Text)
+    author_label: Mapped[str] = mapped_column(Text)
+    body: Mapped[str | None] = mapped_column(Text, default=None)
+
+    created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
+
+    __table_args__ = (Index("case_messages_tra_theo_ho_so", "case_id", "created_at"),)
+
+    def __repr__(self) -> str:
+        return f"<CaseMessage {self.case_id} {self.kind} by {self.author}>"

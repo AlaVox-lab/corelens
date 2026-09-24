@@ -18,6 +18,7 @@
 
 import Link from "next/link";
 
+import { DauLoiNhan } from "@/components/dau-loi-nhan";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { goiDichVu } from "@/lib/api";
 import { khoangCach, ngayGio } from "@/lib/dinh-dang";
@@ -148,6 +149,7 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
               {ho_so.request_type.label}
             </span>
           )}
+          <DauLoiNhan hoSo={ho_so} gocNhin="nguoi-gui" />
         </span>
         <span style={{ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.4 }}>
           {ho_so.title}

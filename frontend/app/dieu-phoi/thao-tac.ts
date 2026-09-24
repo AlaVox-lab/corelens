@@ -16,7 +16,7 @@ import { revalidatePath } from "next/cache";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
-import { chuoi, gomThayDoi } from "@/lib/bieu-mau";
+import { chuoi, docLoiNhan, gomThayDoi } from "@/lib/bieu-mau";
 import type { HoSoDieuPhoi } from "@/lib/kieu";
 
 export async function chuyenTrangThaiDieuPhoi(
@@ -44,6 +44,28 @@ export async function chuyenTrangThaiDieuPhoi(
   revalidatePath(`/yeu-cau/${maHoSo}`);
   revalidatePath("/yeu-cau");
   // Hồ sơ vừa được chuyển về phòng ban thì hàng đợi phòng ban cũng phải thấy ngay
+  revalidatePath("/phong-ban");
+  return CHUA_CO_LOI;
+}
+
+/** Gửi một lời nhắn trên hồ sơ (#128). Điều phối viên nhắn được trên mọi hồ sơ. */
+export async function guiLoiNhanDieuPhoi(
+  _truoc: KetQuaThaoTac,
+  duLieu: FormData,
+): Promise<KetQuaThaoTac> {
+  const doc = docLoiNhan(duLieu);
+  if (!doc) return { loi: "Thiếu thông tin lời nhắn. Tải lại trang rồi thử lại." };
+
+  const ketQua = await guiDichVu<HoSoDieuPhoi>(
+    `/coordination/requests/${doc.maHoSo}/messages`,
+    doc.than,
+  );
+  if (!ketQua.ok) return { loi: ketQua.thongDiep };
+
+  revalidatePath("/dieu-phoi");
+  revalidatePath(`/dieu-phoi/${doc.maHoSo}`);
+  revalidatePath(`/yeu-cau/${doc.maHoSo}`);
+  revalidatePath("/yeu-cau");
   revalidatePath("/phong-ban");
   return CHUA_CO_LOI;
 }

@@ -32,20 +32,28 @@ from app.auth.dependencies import current_actor
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import EventLog, Request
-from app.models.workflow_config import Department, Priority, State, Transition, TransitionRole
+from app.models.workflow_config import Department, Priority, State, Transition
 from app.workflow.assignment import (
     kiem_nguoi_duoc_giao,
-    vai_tro_giao_viec,
-    vai_tro_nhan_viec,
+    trang_thai_hang_doi_phong_ban,
+    vai_tro_phong_ban,
 )
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
 from app.workflow.engine import get_active_rule_set
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
-from app.workflow.routes import _bang_trang_thai, _bao_loi, _du_lieu_chi_tiet, _tom_tat
+from app.workflow.messages import MessageRejected, gui_loi_nhan
+from app.workflow.routes import (
+    _bang_trang_thai,
+    _bao_loi,
+    _bao_loi_nhan,
+    _du_lieu_chi_tiet,
+    _tom_tat,
+)
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
+    GuiLoiNhanVao,
     HangDoiPhongBanRa,
     HoSoPhongBanRa,
     MucHangDoiPhongBanRa,
@@ -56,11 +64,6 @@ from app.workflow.schemas import (
 router = APIRouter(prefix="/department", tags=["Buồng lái phòng ban"])
 
 _Phien = Annotated[Session, Depends(get_session)]
-
-
-def vai_tro_phong_ban(session: Session, rule_set_id: int) -> frozenset[str]:
-    """Vai trò làm việc trong buồng lái phòng ban: người giao việc và người nhận việc."""
-    return vai_tro_giao_viec(session, rule_set_id) | vai_tro_nhan_viec(session, rule_set_id)
 
 
 def vao_duoc_phong_ban(session: Session, actor: Actor) -> bool:
@@ -86,31 +89,6 @@ def _cua(
 
 
 _Cua = Annotated[Actor, Depends(_cua)]
-
-
-def _trang_thai_hang_doi(session: Session, rule_set_id: int) -> list[State]:
-    """Trạng thái mà vai trò phòng ban có cạnh đi ra — theo thứ tự hiển thị.
-
-    Người nhận việc cũng thấy hồ sơ đang chờ trưởng phòng nhận, và trưởng phòng cũng
-    thấy hồ sơ đang xử lý: cả phòng nhìn chung một hàng đợi. Nút bấm thì vẫn riêng
-    từng người, vì chúng đến từ `allowed_transitions`.
-    """
-    nguon = (
-        select(Transition.from_state)
-        .join(TransitionRole, TransitionRole.transition_id == Transition.id)
-        .where(
-            Transition.rule_set_id == rule_set_id,
-            Transition.is_system.is_(False),
-            TransitionRole.role_code.in_(vai_tro_phong_ban(session, rule_set_id)),
-        )
-    )
-    return list(
-        session.scalars(
-            select(State)
-            .where(State.rule_set_id == rule_set_id, State.code.in_(nguon))
-            .order_by(State.display_order)
-        ).all()
-    )
 
 
 def _trang_thai_theo_doi(
@@ -204,7 +182,7 @@ def hang_doi(
     Hồ sơ đang ở lượt người gửi (nhóm theo dõi, #99) xếp sau mọi hồ sơ có việc phải làm.
     """
     bo = get_active_rule_set(session)
-    co_viec = _trang_thai_hang_doi(session, bo.id)
+    co_viec = trang_thai_hang_doi_phong_ban(session, bo.id)
     theo_doi = _trang_thai_theo_doi(session, bo.id, co_viec)
     ma_theo_doi = {t.code for t in theo_doi}
     cac_trang_thai = sorted(co_viec + theo_doi, key=lambda t: t.display_order)
@@ -350,4 +328,26 @@ def chuyen_trang_thai(
 
     session.commit()
     session.refresh(ho_so)
+    return _dung_chi_tiet(session, ho_so, actor)
+
+
+@router.post("/requests/{case_id}/messages", response_model=HoSoPhongBanRa)
+def nhan_tin(
+    case_id: int, du_lieu: GuiLoiNhanVao, session: _Phien, actor: _Cua
+) -> HoSoPhongBanRa:
+    """Gửi một lời nhắn trên hồ sơ của phòng mình (#128).
+
+    Cùng cửa nhìn thấy với trang chi tiết: hồ sơ của phòng khác trả 404. Lời nhắn không
+    đổi hồ sơ — kể cả khi trả lời một câu "Hỏi tiến độ"; xem app/workflow/messages.py.
+    """
+    ho_so = session.get(Request, case_id)
+    if ho_so is None or ho_so.department_code not in actor.departments:
+        raise _khong_thay()
+    try:
+        gui_loi_nhan(session, ho_so, actor, du_lieu.kind, du_lieu.body)
+    except MessageRejected as loi:
+        session.rollback()
+        raise _bao_loi_nhan(loi) from loi
+
+    session.commit()
     return _dung_chi_tiet(session, ho_so, actor)
