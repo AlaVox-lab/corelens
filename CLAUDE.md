@@ -3,6 +3,9 @@
 Tệp này cung cấp bối cảnh dự án cho Claude Code. Đọc kỹ trước khi thực hiện
 bất kỳ thao tác nào trong kho mã này.
 
+Các trợ lý khác — Antigravity, Codex — vào tệp này qua `AGENTS.md`. Mọi quy tắc dưới đây
+áp dụng y hệt cho chúng: chỗ nào ghi "Claude Code" là ghi cho mọi trợ lý AI.
+
 ---
 
 ## QUY TẮC TUYỆT ĐỐI — ĐỌC TRƯỚC TIÊN
@@ -27,7 +30,9 @@ danh tính thật của họ. Commit mang dấu vết công cụ tự động l�
 
 ### Được phép
 
-- `git status`, `git diff`, `git log`, `git show`, `git branch --list`
+- `git status`, `git diff`, `git log`, `git show`, `git branch --list`, `git fetch`
+- Lệnh `gh` chỉ đọc: `gh issue view`, `gh issue list`, `gh pr view`, `gh pr list`. Người
+  dùng đưa số issue thì tự đọc bằng `gh issue view <số> --comments`
 - Đọc, tạo, sửa tệp trong thư mục làm việc
 - Chạy lệnh build, test, lint, chạy thử ứng dụng
 
@@ -116,11 +121,15 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 1.3. Trạng thái hiện tại của kho mã
 
-Phiên bản `v0.1.0` — đang khép Giai đoạn 1: Khảo sát và thiết kế.
+Kho mã **đã có ứng dụng chạy được**: dịch vụ FastAPI trong `backend/` (máy trạng thái,
+ràng buộc Poka-yoke, đồng hồ SLA, nhật ký sự kiện), cổng Next.js trong `frontend/` (cổng
+người gửi, buồng lái điều phối, buồng lái phòng ban), cả cụm dựng bằng Docker Compose
+trong `infra/`. Tầng `D` và `I` chưa cài đặt.
 
-Kho mã **vẫn chưa có mã nguồn ứng dụng**, mới có bộ quy chuẩn, tài liệu bối cảnh và
-bốn bản ghi quyết định kiến trúc. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào đó,
-kiểm tra sự tồn tại trước thay vì giả định.
+Phiên bản phát hành mới nhất xem bằng `git tag` hoặc trang Releases — tệp này không ghi
+số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/PROJECT_STATE.md`; việc mới hơn
+thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
+đó, kiểm tra sự tồn tại trước thay vì giả định.
 
 **Bốn quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
 thứ gì thuộc bốn mảng này:
@@ -132,7 +141,8 @@ thứ gì thuộc bốn mảng này:
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 
-Xem `docs/PROJECT_STATE.md` để biết tiến độ cập nhật nhất.
+Bản ghi mang trạng thái *Đề xuất* — ví dụ ADR-0005 về ranh giới máy trạng thái — **chưa
+phải quyết định**. Không viết mã theo nó cho tới khi nó chuyển sang *Đã chấp nhận*.
 
 ---
 
@@ -289,8 +299,8 @@ thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không s�
 **Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
 với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.
 
-Ba mảng còn **chờ khảo sát**, chưa có issue: hệ thống quản trị tri thức cho `H`, cơ sở
-dữ liệu véc-tơ và khung LLM cho `I`, thư viện khai phá quy trình cho `I`.
+Ba mảng còn **chờ khảo sát**: hệ thống quản trị tri thức cho `H` (#46), cơ sở dữ liệu
+véc-tơ và khung LLM cho `I` (#47), thư viện khai phá quy trình cho `I` (#48).
 
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
 nghệ mới** — bốn quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.

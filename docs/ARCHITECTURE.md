@@ -258,7 +258,7 @@ dx-os-lab/
 │   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── docs/
-│   ├── adr/                     # năm bản ghi quyết định kiến trúc
+│   ├── adr/                     # bản ghi quyết định kiến trúc, kèm mẫu 0000
 │   ├── ARCHITECTURE.md          # tệp này
 │   ├── PROJECT_STATE.md         # trạng thái hiện tại, cập nhật hàng tuần
 │   ├── ROADMAP.md               # lộ trình tới tháng 12
@@ -283,7 +283,9 @@ dx-os-lab/
 │   └── setup-labels.sh          # khởi tạo hệ thống nhãn
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
+├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
 ├── CHANGELOG.md                 # sinh tự động bằng git-cliff
+├── CLAUDE.md                    # quy tắc cho mọi trợ lý AI làm việc trên kho
 ├── CONTRIBUTING.md              # quy trình làm việc và quy ước mã nguồn
 ├── LICENSE                      # MIT toàn văn
 ├── README.md
