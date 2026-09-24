@@ -25,11 +25,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from typing import Any
 
+from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU
 from app.workflow.context import TransitionContext
 from app.workflow.errors import GuardViolation, UnknownGuard
 
 GuardFunc = Callable[[TransitionContext], None]
+EffectFunc = Callable[[TransitionContext], dict[str, Any]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,11 +52,20 @@ class Guard:
     sách nút (`allowed_transitions`), nên cạnh chắc chắn bị từ chối không hiện ra (#79).
     Ràng buộc đọc `changes` thì để False — lúc chào nút chưa ai biết người dùng sẽ chọn
     gì, và chạy nó với `changes` rỗng sẽ giấu mất những cạnh hoàn toàn đi được.
+
+    `effect` là **tác động** của ràng buộc (ADR-0005, #127): những trường nó TỰ ĐẶT sau
+    khi mọi ràng buộc đã qua, với giá trị suy từ bối cảnh chứ không do người dùng gửi —
+    ví dụ tự nhận việc đặt người xử lý bằng chính người thao tác. `sets` khai những
+    trường đó. Trường trong `sets` KHÔNG nằm trong `governs`: người dùng không gửi được
+    chúng, nên cạnh mang ràng buộc này không có ô nhập, và không biến người đi cạnh
+    thành "vai trò giao việc" (#84 suy vai trò đó từ những cạnh cho đặt người xử lý).
     """
 
     check: GuardFunc
     governs: frozenset[str] = frozenset()
     input_free: bool = False
+    sets: frozenset[str] = frozenset()
+    effect: EffectFunc | None = None
 
 
 def requester_owns_case(ctx: TransitionContext) -> None:
@@ -208,6 +220,72 @@ def return_to_previous_state(ctx: TransitionContext) -> None:
         )
 
 
+def edit_content(ctx: TransitionContext) -> None:
+    """Người gửi sửa nội dung hồ sơ khi hồ sơ chưa tới phòng ban (#127, ADR-0005).
+
+    Chỉ ĐƯỢC sửa ở đâu là chuyện của dữ liệu: ràng buộc này gắn vào cạnh nào thì sửa
+    được ở đó. Tới phòng ban rồi thì không còn cạnh sửa nào — khóa bằng sự vắng mặt, như
+    ràng buộc "chỉ hủy trước khi vào xử lý".
+
+    Nội dung gốc không bị ghi đè: hồ sơ mang giá trị mới, còn cột `changes` của nhật ký
+    giữ giá trị cũ (#100) — tầng `I` vẫn dựng lại được văn bản lúc điều phối viên phân
+    loại.
+
+    Cùng giới hạn độ dài với lúc gửi, để một hồ sơ không lọt qua bằng đường sửa những gì
+    biểu mẫu gửi đã chặn. Và phải thật sự đổi một thứ gì đó: một dòng nhật ký "sửa nội
+    dung" mà không có gì đổi chỉ là nhiễu cho khai phá quy trình. Không gửi trường nào
+    cũng rơi vào đúng phép kiểm đó, vì `all()` của một tập rỗng là đúng.
+    """
+    if "title" in ctx.changes:
+        tieu_de = ctx.changes["title"]
+        if not isinstance(tieu_de, str) or not (
+            TIEU_DE_TOI_THIEU <= len(tieu_de.strip()) and len(tieu_de) <= TIEU_DE_TOI_DA
+        ):
+            raise GuardViolation(
+                "edit-content",
+                f"Tiêu đề phải dài từ {TIEU_DE_TOI_THIEU} tới {TIEU_DE_TOI_DA} ký tự.",
+            )
+
+    if "description" in ctx.changes:
+        mo_ta = ctx.changes["description"]
+        if mo_ta is not None and (not isinstance(mo_ta, str) or len(mo_ta) > MO_TA_TOI_DA):
+            raise GuardViolation(
+                "edit-content", f"Mô tả dài tối đa {MO_TA_TOI_DA} ký tự."
+            )
+
+    # Cùng lý do với set-request-type: hồ sơ không có loại thì không có ngưỡng SLA
+    if "request_type_code" in ctx.changes and not ctx.changes["request_type_code"]:
+        raise GuardViolation("edit-content", "Không được xóa loại yêu cầu khi sửa nội dung.")
+
+    if all(ctx.changes[truong] == getattr(ctx.case, truong) for truong in ctx.changes):
+        raise GuardViolation(
+            "edit-content", "Chưa có gì thay đổi so với nội dung đang có."
+        )
+
+
+def assign_self(ctx: TransitionContext) -> None:
+    """Người xử lý nhận về mình một hồ sơ chưa giao cho ai (#127, ADR-0005).
+
+    Giữ việc giao người là tùy chọn — ngoài đời người trong phòng hay tự chia việc — mà
+    vẫn cho hồ sơ một người giữ: có tên trong bộ lọc "Giao cho tôi", không hai người làm
+    trùng, leo thang biết hỏi ai.
+
+    Chỉ khi hồ sơ CHƯA giao ai. Hồ sơ đã có người thì phải nhờ trưởng phòng phân công lại
+    — tự nhận không phải cách giành việc của đồng nghiệp. Không cần nhập liệu nên chạy
+    luôn lúc chào nút: hồ sơ đã có người giữ thì nút không hiện.
+    """
+    if ctx.case.assignee_id:
+        raise GuardViolation(
+            "assign-self",
+            "Hồ sơ đã giao cho người khác. Muốn đổi người thì nhờ trưởng phòng phân công lại.",
+        )
+
+
+def _giao_cho_nguoi_thao_tac(ctx: TransitionContext) -> dict[str, Any]:
+    """Tác động của `assign-self`: người xử lý là chính người thao tác."""
+    return {"assignee_id": ctx.actor.id}
+
+
 # Hợp đồng giữa dữ liệu và mã nguồn. Khóa phải trùng khít cột `code` của bảng `guards`.
 #
 # Cột thứ hai quyết định trường nào đặt được ở cạnh nào. `department-unchanged` quản
@@ -222,12 +300,21 @@ GUARD_REGISTRY: dict[str, Guard] = {
     "set-request-type": Guard(set_request_type, frozenset({"request_type_code"})),
     "assign-handler": Guard(assign_handler, frozenset({"assignee_id"})),
     "return-to-previous-state": Guard(return_to_previous_state, input_free=True),
+    "edit-content": Guard(
+        edit_content, frozenset({"title", "description", "request_type_code"})
+    ),
+    "assign-self": Guard(
+        assign_self,
+        input_free=True,
+        sets=frozenset({"assignee_id"}),
+        effect=_giao_cho_nguoi_thao_tac,
+    ),
 }
 
-# Mọi trường mà ít nhất một ràng buộc quản. Engine đối chiếu tập này với danh sách
-# trường quyết định của nó ngay lúc nạp mô-đun — xem `app/workflow/engine.py`.
+# Mọi trường mà ít nhất một ràng buộc quản hoặc tự đặt. Engine đối chiếu tập này với
+# biên ngoài của nó ngay lúc nạp mô-đun — xem `app/workflow/engine.py`.
 GOVERNED_FIELDS: frozenset[str] = frozenset().union(
-    *(g.governs for g in GUARD_REGISTRY.values())
+    *(g.governs | g.sets for g in GUARD_REGISTRY.values())
 )
 
 
@@ -260,6 +347,28 @@ def run_guards(ctx: TransitionContext) -> None:
     """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi."""
     for ma in ctx.transition.guard_codes:
         _tra_rang_buoc(ma).check(ctx)
+
+
+def apply_effects(ctx: TransitionContext) -> dict[str, Any]:
+    """Những trường mà ràng buộc trên cạnh này tự đặt. Gọi SAU `run_guards`.
+
+    Tác động chỉ được đặt đúng trường nó đã khai ở `sets`. Khai một đằng làm một nẻo thì
+    biên ngoài kiểm lúc nạp mô-đun trở nên vô nghĩa, nên lệch là nổ ngay.
+    """
+    tac_dong: dict[str, Any] = {}
+    for ma in ctx.transition.guard_codes:
+        rang_buoc = _tra_rang_buoc(ma)
+        if rang_buoc.effect is None:
+            continue
+        ket_qua = rang_buoc.effect(ctx)
+        ngoai_khai_bao = set(ket_qua) - rang_buoc.sets
+        if ngoai_khai_bao:
+            raise RuntimeError(
+                f"Ràng buộc '{ma}' đặt trường chưa khai trong `sets`: "
+                f"{', '.join(sorted(ngoai_khai_bao))}"
+            )
+        tac_dong.update(ket_qua)
+    return tac_dong
 
 
 def input_free_guards_pass(ctx: TransitionContext) -> bool:

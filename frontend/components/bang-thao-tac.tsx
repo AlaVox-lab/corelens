@@ -46,7 +46,11 @@ type Props = {
 
 const KIEU_NHAN: React.CSSProperties = { fontSize: "13px", fontWeight: 600 };
 
-function OTruong({
+/**
+ * Một ô nhập cho một trường mà cạnh cho đặt. Dùng chung cho buồng lái và cho cổng người
+ * gửi — ở cổng, chỉ thao tác sửa nội dung có trường (#127).
+ */
+export function OTruong({
   truong,
   giaTriDau,
   goiY,
@@ -81,7 +85,11 @@ function OTruong({
     return (
       <label style={{ display: "grid", gap: "6px" }}>
         <span style={KIEU_NHAN}>{kieu.nhan}</span>
-        <input name={ten} defaultValue={giaTriDau} className="o-nhap" />
+        {kieu.dai ? (
+          <textarea name={ten} defaultValue={giaTriDau} className="o-nhap" rows={5} />
+        ) : (
+          <input name={ten} defaultValue={giaTriDau} className="o-nhap" />
+        )}
       </label>
     );
   }
@@ -186,7 +194,8 @@ export function BangThaoTac({
                 color: "var(--ink-3)",
               }}
             >
-              Hồ sơ sẽ chuyển sang
+              {/* Cạnh tự trỏ đổi hồ sơ mà không đổi trạng thái (ADR-0005) */}
+              {dangMo.keeps_state ? "Trạng thái giữ nguyên" : "Hồ sơ sẽ chuyển sang"}
               <NhanTrangThai ma={dangMo.to_state} nhan={dangMo.to_state_label} />
             </span>
           </div>

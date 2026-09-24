@@ -27,6 +27,7 @@
 //   bắt buộc lý do (`requires_note`)          → mở bảng, ô lý do bắt buộc
 //   dẫn tới trạng thái kết thúc (#98)         → mở bảng, cảnh báo không hoàn tác được,
 //                                               ô lý do tùy chọn
+//   cho đặt trường (`fields`, #127)            → mở bảng, ô nhập điền sẵn giá trị đang có
 //   còn lại                                    → bấm là gửi
 //
 // Trước #98, "Hủy yêu cầu" bấm là hủy ngay: không hỏi lại, không ghi được lý do, mà
@@ -34,8 +35,10 @@
 
 import { useActionState, useState } from "react";
 
+import { OTruong, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import type { CanhDiDuoc } from "@/lib/kieu";
+import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
 import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
 
@@ -54,17 +57,22 @@ function laDuongXuoi(chiSo: number, tongSo: number): boolean {
   return tongSo > 1 && chiSo === 0;
 }
 
-/** Cạnh này cần mở bảng xác nhận trước khi gửi, thay vì bấm là gửi. */
+/** Cạnh này cần mở bảng trước khi gửi, thay vì bấm là gửi. */
 function canHoiLai(canh: CanhDiDuoc): boolean {
-  return canh.requires_note || canh.to_state_is_terminal;
+  return canh.requires_note || canh.to_state_is_terminal || canh.fields.length > 0;
 }
 
 export function ThaoTacHoSo({
   maHoSo,
   cacCanh,
+  giaTriDau = {},
+  danhMuc = {},
 }: {
   maHoSo: number;
   cacCanh: CanhDiDuoc[];
+  /** Nội dung hồ sơ đang có, điền sẵn vào ô nhập của thao tác sửa nội dung (#127). */
+  giaTriDau?: Record<string, string>;
+  danhMuc?: Partial<Record<NguonDanhMuc, NguonLuaChon>>;
 }) {
   const [ketQua, thucHien, dangChay] = useActionState(chuyenTrangThai, CHUA_CO_LOI);
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
@@ -158,6 +166,28 @@ export function ThaoTacHoSo({
         >
           {dangMo.to_state_is_terminal && (
             <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
+          )}
+          {/* Ô nhập dựng từ `fields` của cạnh — chỉ thao tác sửa nội dung có (#127). Sửa
+              ở Đã phân loại thì hồ sơ về Đã gửi; nói trước để người gửi không bất ngờ. */}
+          {dangMo.fields.length > 0 && (
+            <>
+              <span style={{ fontSize: "12.5px", color: "var(--ink-3)", lineHeight: 1.55 }}>
+                {dangMo.keeps_state
+                  ? "Trạng thái giữ nguyên. Bản cũ vẫn nằm trong dòng thời gian."
+                  : `Hồ sơ sẽ chuyển sang “${dangMo.to_state_label}”. Bản cũ vẫn nằm trong dòng thời gian.`}
+              </span>
+              {dangMo.fields.map((truong) => {
+                const nguonMa = kieuTruong(truong).nguon;
+                return (
+                  <OTruong
+                    key={truong}
+                    truong={truong}
+                    giaTriDau={giaTriDau[truong] ?? ""}
+                    nguon={nguonMa ? danhMuc[nguonMa] : undefined}
+                  />
+                );
+              })}
+            </>
           )}
           {/* Tên ô từ `transitions.note_label` (#79): ở cạnh bổ sung thông tin, ô này là
               câu trả lời của người gửi chứ không phải lý do. */}

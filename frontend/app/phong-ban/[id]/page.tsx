@@ -234,8 +234,10 @@ export default async function ChiTietPhongBan({
               </p>
             </div>
             <div style={{ padding: "15px 17px" }}>
+              {/* Khóa có `updated_at`: nhận việc giữ nguyên trạng thái (#127), nên chỉ mã
+                  trạng thái thì bảng không dựng lại sau khi nhận. */}
               <BangThaoTac
-                key={ho_so.state.code}
+                key={`${ho_so.state.code}-${ho_so.updated_at}`}
                 maHoSo={ho_so.id}
                 cacCanh={ho_so.allowed_transitions}
                 // Giá trị hồ sơ đang có, cho cả bốn trường quyết định. Ô phòng ban ở

@@ -140,11 +140,14 @@ CREATE TABLE transitions (
     FOREIGN KEY (rule_set_id, to_state)
         REFERENCES states (rule_set_id, code),
 
-    -- Giữa hai trạng thái chỉ có tối đa một cạnh theo mỗi chiều
-    UNIQUE (rule_set_id, from_state, to_state),
+    -- Giữa hai trạng thái chỉ có tối đa một cạnh theo mỗi chiều, và mỗi trạng thái tối
+    -- đa một cạnh tự trỏ. Engine, API và giao diện đều nhận diện một cạnh bằng cặp
+    -- (trạng thái nguồn, trạng thái đích) — gỡ ràng buộc này là phải đổi cả ba.
+    UNIQUE (rule_set_id, from_state, to_state)
 
-    CONSTRAINT transitions_khong_tu_tro_ve_minh
-        CHECK (from_state <> to_state)
+    -- Cạnh tự trỏ (from_state = to_state) ĐƯỢC PHÉP từ ADR-0005: thao tác đổi hồ sơ mà
+    -- không đổi trạng thái — nhận việc về mình, sửa nội dung — vẫn phải đi qua cửa
+    -- chuyển trạng thái để có dòng nhật ký. Tệp 99 cấm cạnh tự trỏ ở trạng thái chờ.
 );
 
 COMMENT ON COLUMN transitions.activity_code IS

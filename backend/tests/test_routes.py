@@ -197,14 +197,19 @@ def test_khong_chuyen_duoc_trang_thai_ho_so_nguoi_khac(client, session, rule_set
 
 
 def test_nut_bam_khop_voi_du_lieu_o_trang_thai_dau(client, rule_set):
-    """Ở `Đã gửi`, người tạo chỉ hủy được — đúng một cạnh trong dữ liệu."""
+    """Ở `Đã gửi`, người tạo sửa nội dung hoặc hủy — đúng hai cạnh trong dữ liệu (#127)."""
     ho_so = _tao(client)
-    di_duoc = {t["to_state"] for t in ho_so["allowed_transitions"]}
-    assert di_duoc == {"cancelled"}
+    cac_canh = {t["to_state"]: t for t in ho_so["allowed_transitions"]}
+    assert set(cac_canh) == {"submitted", "cancelled"}
 
-    canh = ho_so["allowed_transitions"][0]
-    assert canh["to_state_label"] == "Đã hủy"
-    assert canh["activity_label"] == "Hủy yêu cầu"
+    huy = cac_canh["cancelled"]
+    assert huy["to_state_label"] == "Đã hủy"
+    assert huy["activity_label"] == "Hủy yêu cầu"
+    assert huy["keeps_state"] is False
+
+    sua = cac_canh["submitted"]
+    assert sua["keeps_state"] is True, "sửa nội dung ở Đã gửi là cạnh tự trỏ"
+    assert set(sua["fields"]) == {"title", "description", "request_type_code"}
 
 
 def test_khong_hien_nut_huy_khi_dang_xu_ly(client, session, rule_set, phong_ban):
@@ -380,6 +385,40 @@ def test_cho_bo_sung_chi_hien_mot_nut_tra_loi(client, session, rule_set, phong_b
     assert hoi["note"] == "Máy in nào, ở tầng mấy?" and hoi["note_label"]
     assert tra_loi_ghi["note"] == "Tầng ba, máy cạnh cửa sổ."
     assert tra_loi_ghi["note_label"] == tra_loi[0]["note_label"]
+
+
+def test_nguoi_gui_sua_noi_dung_qua_cong(client, session, rule_set):
+    """#127 nhìn từ cổng người gửi: gửi `changes`, hồ sơ giữ trạng thái, dòng thời gian
+    kể lại bản cũ và bản mới."""
+    ho_so = _tao(client)
+
+    r = client.post(
+        f"/requests/{ho_so['id']}/transitions",
+        json={"to_state": "submitted", "changes": {"title": "Máy in tầng ba kẹt giấy liên tục"}},
+    )
+    assert r.status_code == 200, r.text
+    than = r.json()
+    assert than["state"]["code"] == "submitted"
+    assert than["title"] == "Máy in tầng ba kẹt giấy liên tục"
+    thay_doi = than["history"][-1]["changes"]
+    assert thay_doi == [{
+        "field": "title",
+        "before": {"code": "Máy in phòng kế toán kẹt giấy", "label": "Máy in phòng kế toán kẹt giấy"},
+        "after": {"code": "Máy in tầng ba kẹt giấy liên tục", "label": "Máy in tầng ba kẹt giấy liên tục"},
+    }]
+
+
+def test_cong_nguoi_gui_van_khong_dat_duoc_muc_uu_tien(client, session, rule_set):
+    """Cổng nhận `changes` từ #127, nhưng engine vẫn chặn trường cạnh không quản."""
+    ho_so = _tao(client)
+    uu_tien = session.scalars(select(Priority.code).where(Priority.is_default)).one()
+
+    r = client.post(
+        f"/requests/{ho_so['id']}/transitions",
+        json={"to_state": "submitted", "changes": {"priority_code": uu_tien}},
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "field-not-permitted"
 
 
 def test_dong_thoi_gian_giu_ca_doan_quay_lui(client, session, rule_set, phong_ban):

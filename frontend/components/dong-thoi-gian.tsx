@@ -22,7 +22,28 @@ import { kieuTruong } from "@/lib/truong";
  * thấy hồ sơ từng qua tay phòng nào, người xử lý nào.
  */
 function DongThayDoi({ thayDoi }: { thayDoi: ThayDoiTruong }) {
-  const nhan = kieuTruong(thayDoi.field).nhan;
+  const { nhan, dai } = kieuTruong(thayDoi.field);
+
+  // Trường đoạn văn như mô tả (#127): nhãn là chính nội dung, dài tới vài nghìn chữ, nên
+  // không nhét lên một dòng "A → B". Thu vào một khối mở ra được — bản người gửi viết
+  // lúc đầu vẫn đọc trọn, mà dòng thời gian không bị một đoạn văn chiếm hết chỗ.
+  if (dai) {
+    return (
+      <li style={{ fontSize: "12.5px", lineHeight: 1.55, color: "var(--ink-2)" }}>
+        <details>
+          <summary style={{ cursor: "pointer" }}>
+            <span style={{ color: "var(--ink-3)" }}>{nhan}: </span>
+            {!thayDoi.after ? "đã xóa" : thayDoi.before ? "đã sửa" : "đã thêm"}
+          </summary>
+          <div style={{ display: "grid", gap: "6px", marginTop: "6px" }}>
+            {thayDoi.before && <DoanVan tua="Bản trước" noiDung={thayDoi.before.label} />}
+            {thayDoi.after && <DoanVan tua="Bản mới" noiDung={thayDoi.after.label} />}
+          </div>
+        </details>
+      </li>
+    );
+  }
+
   return (
     <li style={{ fontSize: "12.5px", lineHeight: 1.55, color: "var(--ink-2)" }}>
       <span style={{ color: "var(--ink-3)" }}>{nhan}: </span>
@@ -43,17 +64,49 @@ function DongThayDoi({ thayDoi }: { thayDoi: ThayDoiTruong }) {
   );
 }
 
+function DoanVan({ tua, noiDung }: { tua: string; noiDung: string }) {
+  return (
+    <div
+      style={{
+        padding: "8px 10px",
+        borderRadius: "8px",
+        background: "var(--surface-2)",
+        border: "1px solid var(--line)",
+      }}
+    >
+      <span className="tua-muc">{tua}</span>
+      <span style={{ display: "block", marginTop: "3px", whiteSpace: "pre-wrap" }}>
+        {noiDung}
+      </span>
+    </div>
+  );
+}
+
+/** Mốc tự trỏ (ADR-0005): đổi hồ sơ — nhận việc, sửa nội dung — mà không đổi trạng thái. */
+function laTuTro(e: SuKien): boolean {
+  return e.from_state === e.to_state;
+}
+
+/** Số lần hồ sơ thật sự đổi trạng thái — không tính mốc tự trỏ. */
+export function soLanDoiTrangThai(cacSuKien: SuKien[]): number {
+  return cacSuKien.filter((e) => !laTuTro(e)).length;
+}
+
 /**
  * Đánh dấu những lần hồ sơ quay lại một trạng thái đã đi qua.
  *
  * Con số này là dấu hiệu rõ nhất của một quy trình chạy không thẳng, nên nó đáng được
  * gọi tên ngay trên dòng thời gian thay vì để người đọc tự đếm.
+ *
+ * Mốc tự trỏ không đưa hồ sơ vào trạng thái nào, nên không bao giờ là quay lui: người xử
+ * lý nhận việc ở *Đang xử lý* không phải là hồ sơ quay lại *Đang xử lý*.
  */
 export function danhDauQuayLui(cacSuKien: SuKien[]): Map<number, string> {
   const daGap = new Map<string, number>();
   const nhan = new Map<number, string>();
 
   cacSuKien.forEach((e, i) => {
+    if (laTuTro(e)) return;
     const lan = (daGap.get(e.to_state) ?? 0) + 1;
     daGap.set(e.to_state, lan);
     if (lan > 1) nhan.set(i, `Quay lui lần ${lan - 1}`);
@@ -153,22 +206,34 @@ function MocThoiGian({
             marginTop: "9px",
           }}
         >
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "12.5px",
-              color: "var(--ink-3)",
-            }}
-          >
-            <span aria-hidden="true">{tu.dau}</span>
-            {su_kien.from_state_label}
-          </span>
-          <span className="mono" style={{ fontSize: "13px", color: "var(--ink-3)" }}>
-            →
-          </span>
-          <NhanTrangThai ma={su_kien.to_state} nhan={su_kien.to_state_label} />
+          {/* Mốc tự trỏ hiện "A → A" thì người đọc tưởng hồ sơ vừa đi đâu đó rồi về */}
+          {laTuTro(su_kien) ? (
+            <>
+              <NhanTrangThai ma={su_kien.to_state} nhan={su_kien.to_state_label} />
+              <span style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
+                Giữ nguyên trạng thái
+              </span>
+            </>
+          ) : (
+            <>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "12.5px",
+                  color: "var(--ink-3)",
+                }}
+              >
+                <span aria-hidden="true">{tu.dau}</span>
+                {su_kien.from_state_label}
+              </span>
+              <span className="mono" style={{ fontSize: "13px", color: "var(--ink-3)" }}>
+                →
+              </span>
+              <NhanTrangThai ma={su_kien.to_state} nhan={su_kien.to_state_label} />
+            </>
+          )}
           {quayLui && (
             <span
               className="mono"
