@@ -23,6 +23,7 @@ import { redirect } from "next/navigation";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
+import { gomThayDoi } from "@/lib/bieu-mau";
 import type { HoSoChiTiet } from "@/lib/kieu";
 
 function chuoiHoacRong(gia_tri: FormDataEntryValue | null): string {
@@ -78,9 +79,11 @@ export async function chuyenTrangThai(
     return { loi: "Thiếu thông tin thao tác. Tải lại trang rồi thử lại." };
   }
 
+  // Ô `truong:*` chỉ có ở thao tác sửa nội dung (#127); các thao tác khác gửi `changes`
+  // rỗng. Trường nào cạnh không cho đặt thì engine từ chối — không lọc lại ở đây.
   const ketQua = await guiDichVu<HoSoChiTiet>(
     `/requests/${maHoSo}/transitions`,
-    { to_state: den, note: lyDo || null },
+    { to_state: den, note: lyDo || null, changes: gomThayDoi(duLieu) },
   );
 
   if (!ketQua.ok) return { loi: ketQua.thongDiep };

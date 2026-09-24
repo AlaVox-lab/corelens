@@ -307,6 +307,36 @@ def test_truong_phong_hoi_them_roi_ho_so_ve_lai_cho_nhan(client, session, rule_s
     }
 
 
+def test_nguoi_xu_ly_tu_nhan_ho_so_chua_giao_ai(client, session, rule_set, phong_ban):
+    """#127 nhìn từ buồng lái: nút tự nhận không có ô chọn người, giữ nguyên trạng thái;
+    nhận xong thì hồ sơ vào bộ lọc "Giao cho tôi" và nút biến mất."""
+    ho_so = _dang_xu_ly(session, phong_ban, "Chưa giao ai")
+    session.commit()
+    toi = _xu_ly(phong_ban)
+    _goi_bang(client, toi)
+    truoc = {m["id"] for m in client.get("/department/queue?mine=true").json()["items"]}
+    assert ho_so.id not in truoc
+
+    nhan = next(
+        c for c in client.get(f"/department/requests/{ho_so.id}").json()["allowed_transitions"]
+        if c["keeps_state"]
+    )
+    assert nhan["to_state"] == "in-progress" and nhan["fields"] == []
+
+    r = client.post(f"/department/requests/{ho_so.id}/transitions",
+                    json={"to_state": "in-progress"})
+    assert r.status_code == 200, r.text
+    than = r.json()
+    assert than["state"]["code"] == "in-progress"
+    assert than["assignee_id"] == toi.id
+    assert than["assignee_label"] == "Người Xử Lý 1"
+    assert not any(c["keeps_state"] for c in than["allowed_transitions"])
+    sau = {m["id"] for m in client.get("/department/queue?mine=true").json()["items"]}
+    assert ho_so.id in sau
+    # Tự nhận không tra danh bạ: người được giao là chính người đã qua cửa phòng ban
+    assert client.trang_thai["danh_ba"].da_hoi == []
+
+
 def test_hang_doi_chi_co_ho_so_cua_phong_minh(client, session, rule_set, phong_ban, phong_khac):
     cua_minh = _cho_phong_nhan(session, phong_ban, "Hồ sơ của phòng mình")
     cua_nguoi = _cho_phong_nhan(session, phong_khac, "Hồ sơ của phòng khác")

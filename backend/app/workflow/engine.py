@@ -30,6 +30,7 @@ from app.models.workflow_config import (
 )
 from app.rules.guards import (
     GOVERNED_FIELDS,
+    apply_effects,
     input_free_guards_pass,
     permitted_fields,
     run_guards,
@@ -47,8 +48,12 @@ from app.workflow.errors import (
 )
 
 # Biên NGOÀI của những trường một lần chuyển trạng thái có thể đặt: bốn trường quyết
-# định. Biên trong — trường nào đặt được ở cạnh nào — do ràng buộc gắn trên cạnh quyết
-# định, xem `permitted_fields` trong `app/rules/guards.py`.
+# định, và từ #127 hai trường nội dung mà người gửi sửa được khi hồ sơ chưa tới phòng
+# ban (ADR-0005). Biên trong — trường nào đặt được ở cạnh nào — do ràng buộc gắn trên
+# cạnh quyết định, xem `permitted_fields` trong `app/rules/guards.py`.
+#
+# Nội dung đi qua đúng cửa này, không qua một điểm cuối "sửa hồ sơ" riêng, để mọi lần
+# sửa đều có dòng nhật ký giữ giá trị cũ — nội dung gốc không bị ghi đè mất dấu.
 #
 # Biên ngoài được giữ LÚC NẠP MÔ-ĐUN chứ không lúc chạy: nếu mọi trường mà ràng buộc
 # quản đều nằm trong biên, thì mọi trường mà một cạnh cho đặt cũng nằm trong biên.
@@ -63,6 +68,8 @@ CHANGEABLE_FIELDS = frozenset(
         "department_code",
         "priority_code",
         "assignee_id",
+        "title",
+        "description",
     }
 )
 
@@ -343,6 +350,17 @@ def perform_transition(
     # --- Bước 3: ràng buộc Poka-yoke ---------------------------------------
     run_guards(ctx)
 
+    # Tác động của ràng buộc — ví dụ tự nhận việc đặt người xử lý bằng chính người thao
+    # tác (#127). Làm sau khi MỌI ràng buộc đã qua, và trước bước ghi nhật ký, để dòng
+    # nhật ký có đủ phần "từ → sang" như mọi thay đổi khác. `ctx.changes` là chính dict
+    # `thay_doi`, nên bước 4 và bước 5 cùng thấy trường vừa đặt.
+    tac_dong = apply_effects(ctx)
+    if tac_dong:
+        thay_doi.update(tac_dong)
+        # Người tự nhận việc thì tên người xử lý là tên của chính họ trong token
+        if "assignee_id" in tac_dong and assignee_label is None:
+            assignee_label = actor.label
+
     # --- Bước 4: ghi nhật ký TRƯỚC -----------------------------------------
     # Lúc này hồ sơ chưa bị ghi đè, nên nhật ký còn đọc được giá trị cũ để ghi phần
     # "từ → sang" (#100). Sau bước 5 thì giá trị cũ mất.
@@ -382,14 +400,15 @@ def case_history(session: Session, case_id: int) -> list[EventLog]:
 def _trang_thai_truoc(session: Session, case_id: int) -> str | None:
     """Trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại, đọc từ nhật ký sự kiện.
 
-    Là `from_state` của dòng nhật ký mới nhất. Mọi lần đổi trạng thái ghi đúng một dòng
-    — mục 6.1 của ARCHITECTURE.md — nên dòng mới nhất luôn là lần hồ sơ bước vào trạng
-    thái hiện tại. Sắp xếp giống hệt `case_history` để hai nơi không bao giờ kể khác
-    nhau về thứ tự.
+    Là `from_state` của dòng nhật ký mới nhất **có đổi trạng thái**. Mọi lần đổi trạng
+    thái ghi đúng một dòng — mục 6.1 của ARCHITECTURE.md — nên dòng đó là lần hồ sơ bước
+    vào trạng thái hiện tại. Dòng tự trỏ (ADR-0005) — nhận việc, sửa nội dung — không đưa
+    hồ sơ vào trạng thái nào, nên bị bỏ qua. Sắp xếp giống hệt `case_history` để hai nơi
+    không bao giờ kể khác nhau về thứ tự.
     """
     return session.scalars(
         select(EventLog.from_state)
-        .where(EventLog.case_id == case_id)
+        .where(EventLog.case_id == case_id, EventLog.from_state != EventLog.to_state)
         .order_by(EventLog.timestamp.desc(), EventLog.id.desc())
         .limit(1)
     ).first()

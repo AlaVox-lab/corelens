@@ -50,6 +50,8 @@ RB_UU_TIEN = "set-priority"
 RB_LOAI = "set-request-type"
 RB_PHONG = "select-department"
 RB_GIAO_NGUOI = "assign-handler"
+RB_SUA_NOI_DUNG = "edit-content"
+RB_TU_NHAN = "assign-self"
 
 # Tác nhân hệ thống khi leo thang — cùng giá trị với TAC_NHAN_SLA trong
 # backend/app/workflow/escalation.py, và nhãn "Hệ thống" giao diện dùng để nhận ra nó.
@@ -75,7 +77,10 @@ KICH_BAN_MAC_DINH: dict = {
         "confirm": 18,
         "reroute": 20,
         "reassign": 20,
+        # Hồ sơ chưa giao ai thì người xử lý hay tự nhận trước khi làm (#127)
+        "claim": 8,
         "request-info": 2,
+        "edit-content": 0.8,
         "reopen": 1.5,
         "cancel": 0.35,
         "reject": 0.5,
@@ -189,6 +194,7 @@ class HoSo:
     loai: str | None
     tao_luc: datetime
     trang_thai: str
+    mo_ta: str = ""
     phong: str | None = None
     uu_tien: str | None = None
     nguoi_xu_ly: str | None = None
@@ -284,13 +290,16 @@ class BoSinh:
             trung_binh = self.kb["gio_cho_mac_dinh"]
         return max(60.0, self.rng.expovariate(1 / trung_binh) * 3600)
 
-    def _di_duoc(self, c: Canh, truoc: str | None) -> bool:
+    def _di_duoc(self, c: Canh, truoc: str | None, hs: HoSo) -> bool:
         """Ràng buộc không cần nhập liệu — cùng phần engine chạy lúc chào nút (#79).
 
         Hai ràng buộc về người thao tác luôn thỏa vì người được chọn theo đúng chúng ở
-        `_tac_nhan`. Chỉ còn luật quay về chỗ cũ là phải lọc.
+        `_tac_nhan`. Còn lại luật quay về chỗ cũ, và luật chỉ tự nhận hồ sơ chưa giao ai
+        (#127).
         """
-        return not (RB_VE_CHO_CU in c.rang_buoc and c.den != truoc)
+        if RB_VE_CHO_CU in c.rang_buoc and c.den != truoc:
+            return False
+        return not (RB_TU_NHAN in c.rang_buoc and hs.nguoi_xu_ly)
 
     def _chon_canh(self, ung_vien: list[Canh], hs: HoSo) -> Canh:
         phong_dung = self.phong_mac_dinh.get(hs.loai_that)
@@ -324,8 +333,8 @@ class BoSinh:
             ma = self._nguoi(vai)
         return ma, ma
 
-    def _dat_truong(self, hs: HoSo, c: Canh) -> dict:
-        """Trường quyết định mà cạnh này đặt, ghi theo khuôn cột `changes` của #100."""
+    def _dat_truong(self, hs: HoSo, c: Canh, tac_nhan: str) -> dict:
+        """Trường mà cạnh này đặt, ghi theo khuôn cột `changes` của #100."""
         thay_doi: dict = {}
 
         def ghi(truong: str, cu: str | None, moi: str | None, co_nhan: bool = False) -> None:
@@ -340,6 +349,22 @@ class BoSinh:
         if RB_LOAI in c.rang_buoc and hs.loai != hs.loai_that:
             ghi("request_type_code", hs.loai, hs.loai_that)
             hs.loai = hs.loai_that
+
+        # Người gửi sửa nội dung trước khi tới phòng ban (#127): bổ sung mô tả, và tự sửa
+        # loại nếu lúc gửi chọn nhầm. Engine đòi phải thật sự đổi một thứ gì đó, nên mô
+        # tả luôn đổi.
+        if RB_SUA_NOI_DUNG in c.rang_buoc:
+            mo_ta_moi = f"{hs.mo_ta} Bổ sung thêm chi tiết."
+            ghi("description", hs.mo_ta, mo_ta_moi)
+            hs.mo_ta = mo_ta_moi
+            if hs.loai != hs.loai_that:
+                ghi("request_type_code", hs.loai, hs.loai_that)
+                hs.loai = hs.loai_that
+
+        # Tự nhận việc (#127): tác động của ràng buộc, người xử lý là chính người thao tác
+        if RB_TU_NHAN in c.rang_buoc:
+            ghi("assignee_id", hs.nguoi_xu_ly, tac_nhan, co_nhan=True)
+            hs.nguoi_xu_ly = tac_nhan
 
         if RB_UU_TIEN in c.rang_buoc and self.muc_uu_tien:
             if self.uu_tien_mac_dinh and self.rng.random() < self.kb["ty_le_uu_tien_mac_dinh"]:
@@ -416,7 +441,7 @@ class BoSinh:
         loai = loai_that if chon_dung else self.rng.choice(khac)
         so = self.rng.randint(1, self.kb["so_nguoi_gui"])
         hs = HoSo(ma, f"{self.vai_tro_nguoi_gui}-{so:03d}", loai_that, loai, tao_luc,
-                  self.trang_thai_dau)
+                  self.trang_thai_dau, mo_ta=f"Mô tả ảo của hồ sơ số {ma}.")
 
         su_kien: list[dict] = []
         luc = tao_luc
@@ -429,7 +454,7 @@ class BoSinh:
                 break
             ung_vien = [
                 c for c in self.canh_ra[hs.trang_thai]
-                if not c.he_thong and self._di_duoc(c, truoc)
+                if not c.he_thong and self._di_duoc(c, truoc, hs)
             ]
             canh = self._chon_canh(ung_vien, hs) if ung_vien else None
             cho = self._gio_cho(hs)
@@ -447,8 +472,9 @@ class BoSinh:
                 break
 
             self._cap_nhat_dong_ho(hs, canh, luc_moi)
-            thay_doi = self._dat_truong(hs, canh)
+            # Người thao tác chọn trước, vì tác động tự nhận việc đặt người xử lý bằng họ
             tac_nhan, nhan = self._tac_nhan(hs, canh)
+            thay_doi = self._dat_truong(hs, canh, tac_nhan)
             su_kien.append({
                 "case_id": ma,
                 "activity": canh.hoat_dong,
@@ -460,7 +486,11 @@ class BoSinh:
                 "note": f"(ghi chú ảo cho {canh.hoat_dong})" if canh.can_ghi_chu else "",
                 "changes": json.dumps(thay_doi, ensure_ascii=False) if thay_doi else "",
             })
-            truoc, hs.trang_thai, luc = hs.trang_thai, canh.den, luc_moi
+            # Dòng tự trỏ không đưa hồ sơ vào trạng thái nào, nên không đổi "chỗ cũ" —
+            # đúng như engine bỏ qua nó (#127)
+            if canh.tu != canh.den:
+                truoc = hs.trang_thai
+            hs.trang_thai, luc = canh.den, luc_moi
         else:
             hs.cham_tran_buoc = True
 
@@ -499,6 +529,7 @@ def tu_kiem(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> list[str]:
     loi: list[str] = []
     for hs in ho_so:
         hien_tai, truoc, luc = bo.trang_thai_dau, None, hs.tao_luc
+        nguoi_giu: str | None = None
         for e in theo_ho_so[hs.ma]:
             c = canh.get((e["from_state"], e["to_state"]))
             noi = f"hồ sơ {hs.ma}, {e['from_state']} → {e['to_state']}"
@@ -515,7 +546,23 @@ def tu_kiem(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> list[str]:
                 loi.append(f"{noi}: cạnh hệ thống và tác nhân hệ thống lệch nhau")
             if e["timestamp"] < luc:
                 loi.append(f"{noi}: thời điểm đi lùi")
-            truoc, hien_tai, luc = hien_tai, e["to_state"], e["timestamp"]
+
+            thay_doi = json.loads(e["changes"]) if e["changes"] else {}
+            # Hai ràng buộc của #127: sửa nội dung phải đổi một thứ gì đó, và tự nhận chỉ
+            # khi hồ sơ chưa ai giữ, người được giao là chính người bấm
+            if RB_SUA_NOI_DUNG in c.rang_buoc and not thay_doi:
+                loi.append(f"{noi}: sửa nội dung mà không đổi gì")
+            if RB_TU_NHAN in c.rang_buoc:
+                if nguoi_giu:
+                    loi.append(f"{noi}: tự nhận hồ sơ đã có {nguoi_giu} giữ")
+                if thay_doi.get("assignee_id", {}).get("to") != e["actor"]:
+                    loi.append(f"{noi}: tự nhận mà người được giao không phải người bấm")
+            if "assignee_id" in thay_doi:
+                nguoi_giu = thay_doi["assignee_id"]["to"]
+
+            if e["from_state"] != e["to_state"]:
+                truoc = hien_tai
+            hien_tai, luc = e["to_state"], e["timestamp"]
         if hien_tai != hs.trang_thai:
             loi.append(f"hồ sơ {hs.ma}: nhật ký dừng ở {hien_tai}, hồ sơ ghi {hs.trang_thai}")
     return loi

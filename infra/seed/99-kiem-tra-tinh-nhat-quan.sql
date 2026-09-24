@@ -120,6 +120,9 @@ BEGIN
         INTO danh_sach
         FROM transitions vao
         WHERE vao.rule_set_id = bo.id
+          -- Cạnh tự trỏ không đưa hồ sơ VÀO trạng thái nào, nên không cần đường về.
+          -- Cạnh tự trỏ ở trạng thái chờ là việc của phép kiểm tra 7.
+          AND vao.from_state <> vao.to_state
           AND EXISTS (
               SELECT 1
               FROM transitions ra
@@ -144,6 +147,30 @@ BEGIN
                 bo.version, danh_sach;
         END IF;
 
+        -- Phép kiểm tra 7 — không có cạnh tự trỏ ở trạng thái chờ (#127)
+        -- Cạnh tự trỏ (ADR-0005) ghi một dòng nhật ký mà không đổi trạng thái. Engine bỏ
+        -- qua dòng đó khi tìm "chỗ cũ", nhưng một thao tác đổi hồ sơ trong lúc hồ sơ
+        -- đang chờ người khác trả lời là dấu hiệu bộ quy tắc khai sai chỗ — chặn từ đầu.
+        SELECT string_agg(t.from_state || ' → ' || t.to_state, ', ' ORDER BY t.display_order)
+        INTO danh_sach
+        FROM transitions t
+        WHERE t.rule_set_id = bo.id
+          AND t.from_state = t.to_state
+          AND EXISTS (
+              SELECT 1
+              FROM transitions ra
+              JOIN transition_guards g ON g.transition_id = ra.id
+              WHERE ra.rule_set_id = bo.id
+                AND ra.from_state = t.from_state
+                AND g.guard_code = 'return-to-previous-state'
+          );
+
+        IF danh_sach IS NOT NULL THEN
+            RAISE EXCEPTION
+                'Bộ quy tắc %: cạnh tự trỏ ở trạng thái chờ — thao tác này phải đặt ở trạng thái khác: %',
+                bo.version, danh_sach;
+        END IF;
+
         SELECT count(*) INTO so_trang_thai FROM states      WHERE rule_set_id = bo.id;
         SELECT count(*) INTO so_canh       FROM transitions WHERE rule_set_id = bo.id;
 
@@ -152,7 +179,7 @@ BEGIN
 
     END LOOP;
 
-    -- Phép kiểm tra 7 — loại yêu cầu không có phòng ban mặc định
+    -- Phép kiểm tra 8 — loại yêu cầu không có phòng ban mặc định
     -- Ràng buộc duy nhất từng phần đã bảo đảm KHÔNG QUÁ một phòng mặc định.
     -- Còn thiếu hẳn thì phải bắt ở đây, nếu không người phân loại mở hồ sơ ra
     -- sẽ không thấy gợi ý nào.

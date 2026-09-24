@@ -8,10 +8,10 @@
 // cạnh (#78). Tệp này chỉ trả lời: một trường đã được phép thì gọi nó là gì, và lấy
 // lựa chọn từ danh mục nào.
 //
-// Vì sao chấp nhận một bảng nhỏ ở đây: bốn trường quyết định là LƯỢC ĐỒ của hồ sơ —
-// cột trong bảng `requests` — chứ không phải cấu hình nghiệp vụ. Doanh nghiệp khai lại
-// trạng thái, vai trò, phòng ban mà không đụng tới chúng. Đổi chúng là đổi lược đồ, và
-// khi đó `lib/kieu.ts` cũng phải đổi theo.
+// Vì sao chấp nhận một bảng nhỏ ở đây: bốn trường quyết định và hai trường nội dung là
+// LƯỢC ĐỒ của hồ sơ — cột trong bảng `requests` — chứ không phải cấu hình nghiệp vụ.
+// Doanh nghiệp khai lại trạng thái, vai trò, phòng ban mà không đụng tới chúng. Đổi
+// chúng là đổi lược đồ, và khi đó `lib/kieu.ts` cũng phải đổi theo.
 //
 // Gặp trường lạ thì hiện ô nhập chữ kèm tên trường, không vỡ trang.
 
@@ -21,6 +21,8 @@ export type KieuTruong = {
   nhan: string;
   /** Danh mục để dựng ô chọn. Không có thì hiện ô nhập chữ. */
   nguon?: NguonDanhMuc;
+  /** Ô nhập nhiều dòng thay vì một dòng — cho đoạn văn như mô tả. */
+  dai?: boolean;
 };
 
 const BANG: Record<string, KieuTruong> = {
@@ -30,6 +32,9 @@ const BANG: Record<string, KieuTruong> = {
   // Danh mục tra từ danh bạ Keycloak (#84), theo phòng đang giữ hồ sơ. Giá trị gửi đi
   // là định danh, nhãn hiển thị là tên thật.
   assignee_id: { nhan: "Người xử lý", nguon: "assignees" },
+  // Hai trường nội dung người gửi sửa được khi hồ sơ chưa tới phòng ban (#127)
+  title: { nhan: "Tiêu đề" },
+  description: { nhan: "Mô tả", dai: true },
 };
 
 export function kieuTruong(ma: string): KieuTruong {

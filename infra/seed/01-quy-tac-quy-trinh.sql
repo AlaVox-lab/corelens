@@ -4,7 +4,7 @@
 -- Dữ liệu khởi tạo: bộ quy tắc quy trình v1.
 --
 -- Nội dung tệp này là bản sao chạy được của docs/process-flow.md mục 2 tới 5 —
--- mười trạng thái, hai mươi mốt cạnh, năm vai trò, các ràng buộc Poka-yoke. Sửa
+-- mười trạng thái, hai mươi bốn cạnh, năm vai trò, các ràng buộc Poka-yoke. Sửa
 -- luồng nghiệp vụ nghĩa là sửa tệp này, không phải sửa mã nguồn.
 --
 -- Hai tệp phải khớp nhau. Khi đổi một bên, đổi cả bên kia trong cùng công việc.
@@ -17,9 +17,9 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO rule_sets (id, version, label, effective_from, is_active, note) VALUES
-    (1, 'v1', 'Bộ quy tắc ban đầu — mười trạng thái, hai mươi mốt cạnh',
+    (1, 'v1', 'Bộ quy tắc ban đầu — mười trạng thái, hai mươi bốn cạnh',
      TIMESTAMPTZ '2026-09-10 00:00:00+00', TRUE,
-     'Chốt trong buổi trao đổi với giảng viên hướng dẫn ngày 10/09/2026: năm vai trò, thêm chặng định tuyến phòng ban, bỏ cổng phê duyệt chi phí. Bổ sung ngày 24/09/2026 (#79): chờ bổ sung thông tin quay về đúng chỗ đã hỏi, trưởng phòng hỏi thêm được trước khi nhận việc.');
+     'Chốt trong buổi trao đổi với giảng viên hướng dẫn ngày 10/09/2026: năm vai trò, thêm chặng định tuyến phòng ban, bỏ cổng phê duyệt chi phí. Bổ sung ngày 24/09/2026 (#79): chờ bổ sung thông tin quay về đúng chỗ đã hỏi, trưởng phòng hỏi thêm được trước khi nhận việc. Bổ sung ngày 24/09/2026 (#127, ADR-0005): người gửi sửa nội dung khi hồ sơ chưa tới phòng ban, người xử lý tự nhận hồ sơ chưa giao ai.');
 
 
 -- ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ INSERT INTO rule_sets (id, version, label, effective_from, is_active, note) VALU
 
 INSERT INTO roles (code, label, description, display_order) VALUES
     ('requester',     'Người tạo yêu cầu',
-     'Gửi yêu cầu, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1),
+     'Gửi yêu cầu, sửa nội dung trước khi tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1),
 
     ('classifier',    'Người phân loại yêu cầu',
      'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, định tuyến lại khi bị từ chối', 2),
@@ -38,7 +38,7 @@ INSERT INTO roles (code, label, description, display_order) VALUES
      'Quyết định phòng ban nhận hay không nhận, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang', 3),
 
     ('handler',       'Người xử lý yêu cầu',
-     'Thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành', 4),
+     'Nhận việc về mình khi hồ sơ chưa giao ai, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành', 4),
 
     ('administrator', 'Quản trị viên',
      'Không đi cạnh nào. Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại sang phòng', 5);
@@ -92,7 +92,7 @@ INSERT INTO states (rule_set_id, code, label, description, is_initial, is_termin
 
 
 -- ---------------------------------------------------------------------------
--- Hai mươi mốt cạnh chuyển trạng thái
+-- Hai mươi bốn cạnh chuyển trạng thái
 -- ---------------------------------------------------------------------------
 -- Cột activity_code đi thẳng vào trường activity của nhật ký sự kiện. Nhiều
 -- cạnh dùng chung một mã khi chúng là cùng một hành vi nghiệp vụ — ví dụ bốn
@@ -107,6 +107,9 @@ INSERT INTO states (rule_set_id, code, label, description, is_initial, is_termin
 -- đã hỏi, nên người gửi chỉ thấy MỘT nút "Bổ sung thông tin". Thêm một nơi hỏi mới
 -- thì phải thêm cạnh quay về tương ứng — tệp 99 chặn khởi động nếu thiếu.
 --
+-- Cạnh tự trỏ (#127, ADR-0005) là thao tác đổi hồ sơ mà giữ nguyên trạng thái: vẫn đi
+-- qua cửa chuyển trạng thái để có dòng nhật ký. Mỗi trạng thái tối đa một cạnh tự trỏ.
+--
 -- Hai cạnh đánh dấu [CHỜ XÁC NHẬN] là suy luận của nhóm, chưa được giảng viên
 -- duyệt. Xem docs/process-flow.md mục 8. Nếu thầy bác thì xóa đúng một dòng ở
 -- đây và một dòng ma trận phân quyền tương ứng — không đụng tới mã nguồn.
@@ -116,36 +119,43 @@ INSERT INTO transitions
 VALUES
     (1, 'submitted',           'classified',             'classify',            'Phân loại yêu cầu',                   FALSE, FALSE, NULL,                     1),
     (1, 'submitted',           'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung',  2),
-    (1, 'submitted',           'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                     3),
+    -- Sửa nội dung trước khi tới phòng ban (#127, ADR-0005). Ở Đã gửi là cạnh tự trỏ;
+    -- ở Đã phân loại thì hồ sơ về Đã gửi, vì phân loại cũ dựa trên nội dung cũ.
+    (1, 'submitted',           'submitted',              'edit-content',        'Sửa nội dung',                        FALSE, FALSE, NULL,                     3),
+    (1, 'submitted',           'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                     4),
 
-    (1, 'classified',          'awaiting-acceptance',    'route-to-department', 'Chuyển về phòng ban',                 FALSE, FALSE, NULL,                     4),
-    (1, 'classified',          'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                     5),
+    (1, 'classified',          'awaiting-acceptance',    'route-to-department', 'Chuyển về phòng ban',                 FALSE, FALSE, NULL,                     5),
+    (1, 'classified',          'submitted',              'edit-content',        'Sửa nội dung',                        FALSE, FALSE, NULL,                     6),
+    (1, 'classified',          'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                     7),
     -- [CHỜ XÁC NHẬN] lối thoát khi không phòng nào nhận, tránh luẩn quẩn vô hạn
-    (1, 'classified',          'closed',                 'close-unrouted',      'Đóng hồ sơ, không phòng nào nhận',    FALSE, TRUE,  NULL,                     6),
+    (1, 'classified',          'closed',                 'close-unrouted',      'Đóng hồ sơ, không phòng nào nhận',    FALSE, TRUE,  NULL,                     8),
 
-    (1, 'awaiting-acceptance', 'in-progress',            'accept',              'Xác duyệt và giao xử lý',             FALSE, FALSE, NULL,                     7),
-    (1, 'awaiting-acceptance', 'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung',  8),
-    (1, 'awaiting-acceptance', 'rejected-by-department', 'reject',              'Từ chối vì sai chuyên môn',           FALSE, TRUE,  NULL,                     9),
-    (1, 'awaiting-acceptance', 'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    10),
+    (1, 'awaiting-acceptance', 'in-progress',            'accept',              'Xác duyệt và giao xử lý',             FALSE, FALSE, NULL,                     9),
+    (1, 'awaiting-acceptance', 'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 10),
+    (1, 'awaiting-acceptance', 'rejected-by-department', 'reject',              'Từ chối vì sai chuyên môn',           FALSE, TRUE,  NULL,                    11),
+    (1, 'awaiting-acceptance', 'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    12),
 
-    (1, 'rejected-by-department', 'classified',          'reroute',             'Định tuyến lại phòng khác',           FALSE, FALSE, NULL,                    11),
+    (1, 'rejected-by-department', 'classified',          'reroute',             'Định tuyến lại phòng khác',           FALSE, FALSE, NULL,                    13),
 
-    (1, 'in-progress',         'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 12),
-    (1, 'in-progress',         'escalated',              'escalate',            'Leo thang do quá hạn',                TRUE,  FALSE, NULL,                    13),
-    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, NULL,                    14),
+    -- Nhận việc về mình (#127, ADR-0005): cạnh tự trỏ, đổi người xử lý mà không đổi
+    -- trạng thái. Chỉ đi được khi hồ sơ chưa giao ai.
+    (1, 'in-progress',         'in-progress',            'claim',               'Nhận việc về mình',                   FALSE, FALSE, NULL,                    14),
+    (1, 'in-progress',         'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 15),
+    (1, 'in-progress',         'escalated',              'escalate',            'Leo thang do quá hạn',                TRUE,  FALSE, NULL,                    16),
+    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, NULL,                    17),
 
-    (1, 'escalated',           'in-progress',            'reassign',            'Phân công lại trong cùng phòng',      FALSE, FALSE, NULL,                    15),
+    (1, 'escalated',           'in-progress',            'reassign',            'Phân công lại trong cùng phòng',      FALSE, FALSE, NULL,                    18),
 
     -- Ba cạnh trả lời, cùng một hoạt động. Người gửi chỉ thấy một trong ba — cạnh về
     -- đúng chỗ đã hỏi — nên cả ba mang chung một nhãn.
-    (1, 'awaiting-info',       'submitted',              'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     16),
-    (1, 'awaiting-info',       'awaiting-acceptance',    'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     17),
-    (1, 'awaiting-info',       'in-progress',            'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     18),
-    (1, 'awaiting-info',       'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    19),
+    (1, 'awaiting-info',       'submitted',              'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     19),
+    (1, 'awaiting-info',       'awaiting-acceptance',    'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     20),
+    (1, 'awaiting-info',       'in-progress',            'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     21),
+    (1, 'awaiting-info',       'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    22),
 
-    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    20),
+    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
-    (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    21);
+    (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24);
 
 
 -- ---------------------------------------------------------------------------
@@ -160,9 +170,11 @@ SELECT t.id, v.role_code
 FROM (VALUES
     ('submitted',              'classified',             'classifier'),
     ('submitted',              'awaiting-info',          'classifier'),
+    ('submitted',              'submitted',              'requester'),
     ('submitted',              'cancelled',              'requester'),
 
     ('classified',             'awaiting-acceptance',    'classifier'),
+    ('classified',             'submitted',              'requester'),
     ('classified',             'cancelled',              'requester'),
     ('classified',             'closed',                 'classifier'),
 
@@ -173,6 +185,7 @@ FROM (VALUES
 
     ('rejected-by-department', 'classified',             'classifier'),
 
+    ('in-progress',            'in-progress',            'handler'),
     ('in-progress',            'awaiting-info',          'handler'),
     ('in-progress',            'completed',              'handler'),
 
@@ -242,7 +255,15 @@ INSERT INTO guards (code, label, description) VALUES
 
     ('return-to-previous-state',
      'Quay về đúng chỗ đã hỏi',
-     'Cạnh này chỉ đi được khi đích chính là trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại, đọc từ nhật ký sự kiện. Gắn vào mọi cạnh trả lời ra khỏi Chờ bổ sung thông tin: ai hỏi thì hồ sơ về đúng người đó, và người gửi chỉ thấy một nút thay vì phải đoán.');
+     'Cạnh này chỉ đi được khi đích chính là trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại, đọc từ nhật ký sự kiện. Gắn vào mọi cạnh trả lời ra khỏi Chờ bổ sung thông tin: ai hỏi thì hồ sơ về đúng người đó, và người gửi chỉ thấy một nút thay vì phải đoán.'),
+
+    ('edit-content',
+     'Cho sửa nội dung',
+     'Cạnh này cho người gửi sửa tiêu đề, mô tả, loại yêu cầu. Chỉ gắn vào cạnh xuất phát từ trạng thái hồ sơ chưa tới phòng ban — tới phòng ban rồi thì không còn cạnh sửa nào. Nội dung cũ không mất: cột changes của nhật ký giữ giá trị cũ. Phải thật sự đổi một thứ gì đó, và giữ cùng giới hạn độ dài với lúc gửi.'),
+
+    ('assign-self',
+     'Tự nhận việc',
+     'Cạnh này chỉ đi được khi hồ sơ chưa giao cho ai, và tự đặt người xử lý là chính người thao tác — không có ô chọn người. Hồ sơ đã có người giữ thì phải nhờ trưởng phòng phân công lại.');
 
 INSERT INTO transition_guards (transition_id, guard_code)
 SELECT t.id, v.guard_code
@@ -255,6 +276,8 @@ FROM (VALUES
     ('awaiting-info',       'submitted',              'requester-owns-case'),
     ('awaiting-info',       'awaiting-acceptance',    'requester-owns-case'),
     ('awaiting-info',       'in-progress',            'requester-owns-case'),
+    ('submitted',           'submitted',              'requester-owns-case'),
+    ('classified',          'submitted',              'requester-owns-case'),
     ('completed',           'closed',                 'requester-owns-case'),
     ('completed',           'in-progress',            'requester-owns-case'),
 
@@ -263,10 +286,16 @@ FROM (VALUES
     ('awaiting-info',       'awaiting-acceptance',    'return-to-previous-state'),
     ('awaiting-info',       'in-progress',            'return-to-previous-state'),
 
+    -- Sửa nội dung chỉ trước khi tới phòng ban (#127). Khóa sau đó bằng sự vắng mặt:
+    -- không cạnh sửa nào xuất phát từ trạng thái của phòng ban
+    ('submitted',           'submitted',              'edit-content'),
+    ('classified',          'submitted',              'edit-content'),
+
     -- Phòng ban chỉ thao tác được trên hồ sơ của phòng mình
     ('awaiting-acceptance', 'in-progress',            'actor-in-case-department'),
     ('awaiting-acceptance', 'awaiting-info',          'actor-in-case-department'),
     ('awaiting-acceptance', 'rejected-by-department', 'actor-in-case-department'),
+    ('in-progress',         'in-progress',            'actor-in-case-department'),
     ('in-progress',         'awaiting-info',          'actor-in-case-department'),
     ('in-progress',         'completed',              'actor-in-case-department'),
     ('escalated',           'in-progress',            'actor-in-case-department'),
@@ -286,6 +315,10 @@ FROM (VALUES
     -- Người xử lý giao ở hai chặng: lúc phòng nhận việc, và lúc phân công lại sau leo thang
     ('awaiting-acceptance', 'in-progress',            'assign-handler'),
     ('escalated',           'in-progress',            'assign-handler'),
+
+    -- Người xử lý tự nhận hồ sơ chưa giao ai (#127): người được giao là chính họ, nên
+    -- không có ô chọn người, và họ không thành vai trò giao việc
+    ('in-progress',         'in-progress',            'assign-self'),
 
     -- Leo thang không đổi phòng
     ('escalated',           'in-progress',            'department-unchanged')

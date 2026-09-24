@@ -20,16 +20,49 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { DongThoiGian, danhDauQuayLui } from "@/components/dong-thoi-gian";
+import type { NguonLuaChon } from "@/components/bang-thao-tac";
+import {
+  DongThoiGian,
+  danhDauQuayLui,
+  soLanDoiTrangThai,
+} from "@/components/dong-thoi-gian";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { goiDichVu } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
-import type { HoSoChiTiet } from "@/lib/kieu";
+import type { HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
 import { daTroiQua, docDongHo } from "@/lib/sla";
 import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
+import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Danh mục cho ô chọn của các thao tác đang đi được — ở cổng này chỉ có ô loại yêu cầu
+ * của thao tác sửa nội dung (#127). Nạp theo `fields` giống buồng lái phòng ban: hồ sơ
+ * không có thao tác sửa thì trang không gọi thêm lần nào.
+ */
+async function danhMucCan(
+  ho_so: HoSoChiTiet,
+): Promise<Partial<Record<NguonDanhMuc, NguonLuaChon>>> {
+  const can = new Set<NguonDanhMuc>();
+  for (const canh of ho_so.allowed_transitions) {
+    for (const truong of canh.fields) {
+      const nguon = kieuTruong(truong).nguon;
+      if (nguon) can.add(nguon);
+    }
+  }
+  const cap = await Promise.all(
+    [...can].map(async (nguon) => {
+      const ds = await goiDichVu<NhanCoMa[]>(`/${nguon}`);
+      const luaChon: NguonLuaChon = ds
+        ? ds.map(({ code, label }) => ({ code, label }))
+        : { loi: "Không nạp được danh mục." };
+      return [nguon, luaChon] as const;
+    }),
+  );
+  return Object.fromEntries(cap);
+}
 
 function O({
   tua,
@@ -72,6 +105,7 @@ export default async function ChiTietHoSo({
   // người dò số định danh không xác nhận được hồ sơ nào có thật.
   if (!ho_so) notFound();
 
+  const danhMuc = await danhMucCan(ho_so);
   const bayGio = new Date();
   const dongHo = docDongHo(ho_so, "nguoi-gui");
   const kieu = trinhBayTrangThai(ho_so.state.code);
@@ -166,7 +200,7 @@ export default async function ChiTietHoSo({
             />
             <O
               tua="Số lần đổi trạng thái"
-              chinh={`${ho_so.history.length}`}
+              chinh={`${soLanDoiTrangThai(ho_so.history)}`}
               phu={
                 quayLui.size > 0
                   ? `${quayLui.size} lần quay lui`
@@ -254,10 +288,18 @@ export default async function ChiTietHoSo({
           </p>
         </div>
         <div style={{ padding: "17px 20px" }}>
+          {/* Khóa có `updated_at`: sửa nội dung giữ nguyên trạng thái (#127), nên chỉ mã
+              trạng thái thì bảng không dựng lại, và bảng sửa vẫn mở sau khi đã lưu. */}
           <ThaoTacHoSo
-            key={ho_so.state.code}
+            key={`${ho_so.state.code}-${ho_so.updated_at}`}
             maHoSo={ho_so.id}
             cacCanh={ho_so.allowed_transitions}
+            giaTriDau={{
+              title: ho_so.title,
+              description: ho_so.description ?? "",
+              request_type_code: ho_so.request_type?.code ?? "",
+            }}
+            danhMuc={danhMuc}
           />
         </div>
       </div>

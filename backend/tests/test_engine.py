@@ -31,12 +31,16 @@ from app.models.workflow_config import (
 from app.rules.guards import (
     GOVERNED_FIELDS,
     GUARD_REGISTRY,
+    Guard,
+    apply_effects,
     input_free_guards_pass,
     permitted_fields,
 )
+from app.workflow.assignment import vai_tro_giao_viec
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.engine import (
     CHANGEABLE_FIELDS,
+    _trang_thai_truoc,
     allowed_transitions,
     case_history,
     create_case,
@@ -249,7 +253,8 @@ def test_liet_ke_canh_di_duoc_theo_vai_tro(session, rule_set):
     cua_nguoi_tao = allowed_transitions(
         session, ho_so, Actor(id=NGUOI_TAO, roles=frozenset({"requester"}))
     )
-    assert {c.to_state for c in cua_nguoi_tao} == {"cancelled"}
+    # Sửa nội dung (cạnh tự trỏ, #127) hoặc hủy
+    assert {c.to_state for c in cua_nguoi_tao} == {"submitted", "cancelled"}
 
     # Quản trị viên không đi cạnh nào — họ sửa cấu hình, không đẩy hồ sơ
     cua_quan_tri = allowed_transitions(
@@ -972,6 +977,24 @@ def test_quay_ve_khi_chua_co_lich_su_thi_tu_choi():
         GUARD_REGISTRY["return-to-previous-state"].check(ctx)
 
 
+def test_tac_dong_dat_truong_chua_khai_thi_no_ngay(monkeypatch):
+    """Tác động chỉ được đặt đúng trường đã khai ở `sets` — khai một đằng làm một nẻo thì
+    biên ngoài kiểm lúc nạp mô-đun thành vô nghĩa (#127)."""
+    monkeypatch.setitem(
+        GUARD_REGISTRY,
+        "tac-dong-sai",
+        Guard(lambda ctx: None, sets=frozenset({"assignee_id"}),
+              effect=lambda ctx: {"priority_code": "urgent"}),
+    )
+    ctx = TransitionContext(
+        case=None,
+        transition=SimpleNamespace(to_state="in-progress", guard_codes=["tac-dong-sai"]),
+        actor=NGUOI_GUI,
+    )
+    with pytest.raises(RuntimeError):
+        apply_effects(ctx)
+
+
 def test_ma_rang_buoc_chua_cai_dat_khong_bi_giau_luc_chao_nut():
     """Chào nút chỉ nuốt lỗi Poka-yoke. Mã ràng buộc chưa cài đặt phải nổ như lúc chuyển
     thật — giấu nút đi thì cấu hình sai trông như "không có thao tác nào"."""
@@ -982,6 +1005,206 @@ def test_ma_rang_buoc_chua_cai_dat_khong_bi_giau_luc_chao_nut():
     )
     with pytest.raises(UnknownGuard):
         input_free_guards_pass(ctx)
+
+
+# --- Đổi hồ sơ mà giữ nguyên trạng thái — #127, ADR-0005 ----------------------
+#
+# Hai thao tác đổi hồ sơ nên đi qua cửa chuyển trạng thái và có dòng nhật ký, dù trạng
+# thái có thể không đổi: tự nhận việc, và sửa nội dung trước khi tới phòng ban.
+
+
+def _nguoi_xu_ly(phong_ban: str, so: int = 1, ten: str | None = None) -> Actor:
+    return Actor(
+        id=f"handler-0{so}",
+        name=ten or f"Người Xử Lý {so}",
+        roles=frozenset({"handler"}),
+        departments=frozenset({phong_ban}),
+    )
+
+
+def _canh(session, rule_set, tu: str, den: str) -> Transition:
+    return session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == rule_set.id,
+            Transition.from_state == tu,
+            Transition.to_state == den,
+        )
+    ).one()
+
+
+def test_nhan_viec_ve_minh_dat_nguoi_xu_ly_giu_trang_thai(session, rule_set, phong_ban):
+    """Định nghĩa hoàn thành của #127, nửa nhận việc: hồ sơ thành của người bấm, trạng
+    thái giữ nguyên, nhật ký có đúng một dòng ghi người xử lý "trống → họ"."""
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+    toi = _nguoi_xu_ly(phong_ban, ten="Cường Lê")
+    truoc = _so_dong_nhat_ky(session, ho_so.id)
+
+    assert "in-progress" in {c.to_state for c in allowed_transitions(session, ho_so, toi)}
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=toi)
+
+    assert ho_so.current_state == "in-progress"
+    assert ho_so.assignee_id == toi.id
+    assert ho_so.assignee_label == "Cường Lê", "tên lấy từ chính token của người nhận"
+    assert _so_dong_nhat_ky(session, ho_so.id) == truoc + 1
+    dong = case_history(session, ho_so.id)[-1]
+    assert (dong.from_state, dong.to_state) == ("in-progress", "in-progress")
+    assert dong.changes == {
+        "assignee_id": {
+            "from": None, "to": toi.id, "from_label": None, "to_label": "Cường Lê",
+        }
+    }
+
+
+def test_ho_so_da_co_nguoi_giu_thi_khong_tu_nhan_duoc(session, rule_set, phong_ban):
+    """Tự nhận không phải cách giành việc của đồng nghiệp."""
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+    nguoi_dau = _nguoi_xu_ly(phong_ban, so=1)
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=nguoi_dau)
+    nguoi_sau = _nguoi_xu_ly(phong_ban, so=2)
+
+    assert "in-progress" not in {
+        c.to_state for c in allowed_transitions(session, ho_so, nguoi_sau)
+    }, "ràng buộc không cần nhập liệu chạy luôn lúc chào nút"
+    with pytest.raises(GuardViolation) as loi:
+        perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=nguoi_sau)
+    assert loi.value.guard_code == "assign-self"
+    assert ho_so.assignee_id == nguoi_dau.id
+
+
+def test_tu_nhan_viec_khong_co_o_chon_nguoi(session, rule_set, phong_ban):
+    """Người được giao là chính người bấm. Gửi kèm người khác thì bị từ chối — cạnh này
+    không cho đặt trường nào."""
+    assert permitted_fields(_canh(session, rule_set, "in-progress", "in-progress").guard_codes) \
+        == frozenset()
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+
+    with pytest.raises(FieldNotPermitted):
+        perform_transition(
+            session, case_id=ho_so.id, to_state="in-progress",
+            actor=_nguoi_xu_ly(phong_ban), changes={"assignee_id": "handler-09"},
+        )
+    assert ho_so.assignee_id is None
+
+
+def test_nguoi_phong_khac_khong_tu_nhan_duoc(session, rule_set, phong_ban):
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+    nguoi_la = _nguoi_xu_ly(_phong_khac(session, phong_ban))
+
+    assert allowed_transitions(session, ho_so, nguoi_la) == []
+    with pytest.raises(GuardViolation) as loi:
+        perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=nguoi_la)
+    assert loi.value.guard_code == "actor-in-case-department"
+
+
+def test_tu_nhan_viec_khong_bien_nguoi_xu_ly_thanh_vai_tro_giao_viec(session, rule_set):
+    """Người xử lý không mở được ô chọn người của cả phòng chỉ vì có nút tự nhận (#84)."""
+    assert "handler" not in vai_tro_giao_viec(session, rule_set.id)
+
+
+def test_dong_tu_tro_khong_lam_lech_cho_cu_cua_79(session, rule_set, phong_ban):
+    """"Chỗ cũ" là trạng thái hồ sơ đã ở trước khi VÀO trạng thái hiện tại. Dòng tự trỏ
+    không đưa hồ sơ vào đâu, nên bị bỏ qua."""
+    ho_so = _den_dang_xu_ly(session, phong_ban)
+    perform_transition(
+        session, case_id=ho_so.id, to_state="in-progress", actor=_nguoi_xu_ly(phong_ban)
+    )
+    assert _trang_thai_truoc(session, ho_so.id) == "awaiting-acceptance"
+
+
+def test_sua_noi_dung_o_da_gui_giu_trang_thai_va_giu_ban_cu(session, rule_set):
+    """Định nghĩa hoàn thành của #127, nửa sửa nội dung: hồ sơ mang nội dung mới, nhật
+    ký giữ bản cũ. Trường gửi lại y nguyên thì không sinh dòng "A → A"."""
+    ho_so = _tao_ho_so(session)
+    tieu_de_cu = ho_so.title
+
+    perform_transition(
+        session, case_id=ho_so.id, to_state="submitted", actor=NGUOI_GUI,
+        changes={"title": "Máy in tầng ba kẹt giấy", "description": ho_so.description},
+    )
+
+    assert ho_so.current_state == "submitted"
+    assert ho_so.title == "Máy in tầng ba kẹt giấy"
+    dong = case_history(session, ho_so.id)[-1]
+    assert (dong.from_state, dong.to_state) == ("submitted", "submitted")
+    assert dong.changes == {"title": {"from": tieu_de_cu, "to": "Máy in tầng ba kẹt giấy"}}
+
+
+def test_sua_noi_dung_o_da_phan_loai_thi_ve_phan_loai_lai(session, rule_set):
+    """Phân loại cũ dựa trên nội dung cũ, nên sửa xong phải phân loại lại."""
+    ho_so = _tao_ho_so(session)
+    perform_transition(
+        session, case_id=ho_so.id, to_state="classified", actor=PHAN_LOAI,
+        changes={"priority_code": _muc_uu_tien(session)},
+    )
+
+    perform_transition(
+        session, case_id=ho_so.id, to_state="submitted", actor=NGUOI_GUI,
+        changes={"description": "Máy in ở tầng ba, đèn báo lỗi nhấp nháy màu cam."},
+    )
+
+    assert ho_so.current_state == "submitted"
+    assert "classified" in {
+        c.to_state for c in allowed_transitions(session, ho_so, PHAN_LOAI)
+    }
+
+
+def test_toi_phong_ban_roi_thi_khong_sua_duoc(session, rule_set, phong_ban):
+    """Khóa bằng sự vắng mặt: không cạnh sửa nào xuất phát từ trạng thái của phòng ban."""
+    for ho_so in (_den_cho_phong_nhan(session, phong_ban), _den_dang_xu_ly(session, phong_ban)):
+        assert "submitted" not in {
+            c.to_state for c in allowed_transitions(session, ho_so, NGUOI_GUI)
+        }
+        with pytest.raises(TransitionNotAllowed):
+            perform_transition(
+                session, case_id=ho_so.id, to_state="submitted", actor=NGUOI_GUI,
+                changes={"title": "Tiêu đề sửa sau khi tới phòng"},
+            )
+
+
+def test_sua_noi_dung_khong_dat_duoc_muc_uu_tien(session, rule_set):
+    """Ràng buộc Poka-yoke "người tạo không tự đặt mức ưu tiên" vẫn đứng (ADR-0005)."""
+    ho_so = _tao_ho_so(session)
+    with pytest.raises(FieldNotPermitted):
+        perform_transition(
+            session, case_id=ho_so.id, to_state="submitted", actor=NGUOI_GUI,
+            changes={"priority_code": _muc_uu_tien(session)},
+        )
+
+
+@pytest.mark.parametrize(
+    "thay_doi",
+    [
+        {},
+        {"title": "  ab  "},
+        {"title": "x" * 201},
+        {"description": "x" * 5001},
+        {"request_type_code": ""},
+        {"title": "Máy in phòng kế toán không nhận lệnh"},
+    ],
+    ids=["khong-gui-gi", "tieu-de-ngan", "tieu-de-dai", "mo-ta-dai", "xoa-loai", "khong-doi-gi"],
+)
+def test_sua_noi_dung_sai_bi_tu_choi(session, rule_set, thay_doi):
+    ho_so = _tao_ho_so(session)
+    truoc = _so_dong_nhat_ky(session, ho_so.id)
+
+    with pytest.raises(GuardViolation) as loi:
+        perform_transition(
+            session, case_id=ho_so.id, to_state="submitted", actor=NGUOI_GUI,
+            changes=thay_doi,
+        )
+    assert loi.value.guard_code == "edit-content"
+    assert _so_dong_nhat_ky(session, ho_so.id) == truoc
+
+
+def test_nguoi_gui_khac_khong_sua_duoc(session, rule_set):
+    ho_so = _tao_ho_so(session)
+    nguoi_khac = Actor(id=NGUOI_KHAC, roles=frozenset({"requester"}))
+    with pytest.raises(GuardViolation) as loi:
+        perform_transition(
+            session, case_id=ho_so.id, to_state="submitted", actor=nguoi_khac,
+            changes={"title": "Sửa hồ sơ của người khác"},
+        )
+    assert loi.value.guard_code == "requester-owns-case"
 
 
 # --- assign-handler --------------------------------------------------------

@@ -13,6 +13,8 @@ import datetime as dt
 
 from pydantic import BaseModel, Field
 
+from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU
+
 
 class NhanCoMa(BaseModel):
     """Một giá trị danh mục: mã để mã nguồn so sánh, nhãn để người đọc."""
@@ -50,20 +52,27 @@ class CanhDiDuocRa(BaseModel):
     # Tên ô ghi chú, tra từ `transitions.note_label` (#79). Rỗng thì giao diện gọi nó là
     # "Lý do". Ở cạnh bổ sung thông tin, ô ghi chú là chính câu trả lời của người gửi.
     note_label: str | None = None
+    # Cạnh tự trỏ — thao tác đổi hồ sơ mà giữ nguyên trạng thái, như nhận việc về mình
+    # hay sửa nội dung (ADR-0005). Giao diện nói "giữ nguyên trạng thái" thay cho "chuyển
+    # sang" chính trạng thái hồ sơ đang ở.
+    keeps_state: bool = False
 
     # Những trường mà cạnh này cho đặt, lấy thẳng từ `permitted_fields()` — tức từ
     # ràng buộc gắn trên cạnh (#78). Giao diện dựng ô nhập từ danh sách này, cùng lý do
     # nó dựng nút bấm từ danh sách cạnh: không có bảng nào trong mã giao diện nói
-    # "Phân loại thì hiện ô mức ưu tiên". Cạnh của người gửi luôn cho danh sách rỗng.
+    # "Phân loại thì hiện ô mức ưu tiên". Cạnh của người gửi chỉ có trường ở thao tác
+    # sửa nội dung (#127).
     fields: list[str] = Field(default_factory=list)
 
 
 class ThayDoiTruongRa(BaseModel):
-    """Một trường quyết định mà lần chuyển đã đổi giá trị (#100).
+    """Một trường quyết định, hay từ #127 một trường nội dung, mà lần chuyển đã đổi giá
+    trị (#100).
 
     `before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc
     đọc từ danh mục — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được. Riêng người
-    xử lý thì nhãn là tên ghi lúc đổi.
+    xử lý thì nhãn là tên ghi lúc đổi. Tiêu đề và mô tả không có danh mục, nên nhãn là
+    chính nội dung — nhờ vậy bản gốc người gửi viết vẫn đọc được sau khi họ sửa.
     """
 
     field: str
@@ -132,26 +141,26 @@ class TaoHoSoVao(BaseModel):
     người phân loại vẫn nắn lại được ở cạnh kế tiếp. Xem `app/models/case.py`.
     """
 
-    title: str = Field(min_length=3, max_length=200)
-    description: str | None = Field(default=None, max_length=5000)
+    title: str = Field(min_length=TIEU_DE_TOI_THIEU, max_length=TIEU_DE_TOI_DA)
+    description: str | None = Field(default=None, max_length=MO_TA_TOI_DA)
     request_type_code: str | None = Field(default=None, max_length=64)
 
 
 class ChuyenTrangThaiVao(BaseModel):
     """Yêu cầu chuyển trạng thái từ cổng người dùng.
 
-    Cố ý **không** có trường `changes`. Cổng này phục vụ người tạo yêu cầu, và không
-    cạnh nào của vai trò `requester` cho đặt trường quyết định: ràng buộc gắn trên các
-    cạnh đó — `requester-owns-case` — không quản trường nào. Mở trường này ra thì mọi
-    giá trị gửi lên đều bị engine từ chối bằng `field-not-permitted`, nên nhận vào chỉ
-    là mời người dùng gửi thứ chắc chắn hỏng.
+    Có nhận `changes` từ #127: cạnh *Sửa nội dung* cho người gửi đặt tiêu đề, mô tả,
+    loại yêu cầu khi hồ sơ chưa tới phòng ban (ADR-0005). Trước đó cổng này cố ý không
+    nhận, vì không cạnh nào của người gửi cho đặt trường nào.
 
-    Hai lớp chặn độc lập nhau: lược đồ này không nhận trường, và engine không cho đặt
-    trường ở cạnh không quản nó (#78). Gỡ một lớp thì lớp kia vẫn giữ.
+    Không kiểm trường nào được phép ở đây: engine kiểm theo từng cạnh (#78), nên mức ưu
+    tiên hay phòng ban gửi lên từ cổng này vẫn bị từ chối bằng `field-not-permitted` —
+    không cạnh nào của người gửi quản hai trường đó.
     """
 
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
+    changes: dict[str, str | None] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
