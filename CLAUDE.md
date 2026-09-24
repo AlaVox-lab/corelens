@@ -141,8 +141,9 @@ thứ gì thuộc bốn mảng này:
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 
-Bản ghi mang trạng thái *Đề xuất* — ví dụ ADR-0005 về ranh giới máy trạng thái — **chưa
-phải quyết định**. Không viết mã theo nó cho tới khi nó chuyển sang *Đã chấp nhận*.
+Bản ghi mang trạng thái *Đề xuất* **chưa phải quyết định**. Không viết mã theo nó cho tới
+khi nó chuyển sang *Đã chấp nhận*. ADR-0005 — ranh giới máy trạng thái với thao tác không
+đổi trạng thái — đã được chấp nhận: đọc nó trước khi thêm bất kỳ thao tác nào trên hồ sơ.
 
 ---
 

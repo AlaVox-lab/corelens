@@ -2,11 +2,11 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | **Đề xuất** — chờ giảng viên hướng dẫn |
+| Trạng thái | **Đã chấp nhận** — có điều chỉnh của giảng viên về sửa nội dung |
 | Ngày | 2026-09-24 |
 | Không gian kiến trúc | `P` — ranh giới máy trạng thái; chạm `D` ở nhật ký sự kiện |
 | Issue liên quan | #81 |
-| Người quyết định | **Giảng viên hướng dẫn** (chờ); navigator (`AlaVox-lab`) đề xuất và ghi bản ghi |
+| Người quyết định | **Giảng viên hướng dẫn**; navigator (`AlaVox-lab`) đề xuất và ghi bản ghi |
 
 ---
 
@@ -104,18 +104,23 @@ Một bảng lời nhắn riêng, không đi qua `perform_transition`. Nhận vi
   loại đường vòng mà #81 cảnh báo — và là tiền lệ cho mọi thao tác sửa trường quyết định
   sau này
 
-### Phương án C — Chia theo câu hỏi "thao tác có đổi hồ sơ không" (đề xuất)
+### Phương án C — Chia theo câu hỏi "thao tác có đổi hồ sơ không" (được chọn)
 
 | Thao tác | Đi đường nào |
 |---|---|
 | Nhắn điều phối viên, hỏi tiến độ | **Bảng lời nhắn riêng.** Chỉ thêm dòng; không bao giờ ghi vào `requests`, không chạm đồng hồ SLA |
-| Nhận việc về mình | **Cạnh tự trỏ** `in-progress → in-progress`, đi qua `perform_transition`, vào nhật ký kèm `changes` của `assignee_id` |
-| Sửa nội dung | **Không sửa bản gốc.** Người gửi bổ sung bằng lời nhắn |
+| Nhận việc về mình | **Cạnh tự trỏ** `in-progress → in-progress`, đi qua `perform_transition`, vào nhật ký kèm `changes` của `assignee_id`. Không đổi trạng thái |
+| Sửa nội dung, **trước khi hồ sơ tới phòng ban** | **Qua cửa chuyển trạng thái**, nhật ký giữ giá trị cũ. Ở *Đã gửi*: cạnh tự trỏ `submitted → submitted`. Ở *Đã phân loại*: cạnh `classified → submitted` — hồ sơ về tay điều phối để phân loại lại, vì phân loại cũ dựa trên nội dung cũ |
+| Sửa nội dung, **sau khi hồ sơ tới phòng ban** | **Khóa.** Người gửi bổ sung bằng lời nhắn |
+
+Sửa nội dung gồm tiêu đề, mô tả và loại yêu cầu. **Mức ưu tiên thì không**: ràng buộc
+Poka-yoke *người tạo không tự đặt mức ưu tiên* (`docs/process-flow.md` mục 5) vẫn giữ
+nguyên — xem mục *Ý kiến của giảng viên*.
 
 Ranh giới gói trong một câu:
 
-> Thứ gì đổi hồ sơ — trạng thái hay trường quyết định — đi qua cửa chuyển trạng thái và vào
-> nhật ký. Thứ gì không đổi hồ sơ thì vào bảng lời nhắn, và bảng đó không bao giờ được ghi
+> Thứ gì đổi hồ sơ — trạng thái, trường quyết định hay nội dung — đi qua cửa chuyển trạng
+> thái và vào nhật ký. Thứ gì không đổi hồ sơ thì vào bảng lời nhắn, và bảng đó không bao giờ được ghi
 > vào `requests`.
 
 **Ưu điểm**
@@ -125,7 +130,10 @@ Ranh giới gói trong một câu:
 - Lời nhắn không chạm đồng hồ, nên không lách được ân hạn leo thang
 - Chỉ gỡ ràng buộc cấm tự trỏ, **giữ `UNIQUE`**: mỗi trạng thái tối đa một cạnh tự trỏ, cặp
   *(nguồn, đích)* vẫn chỉ ra đúng một cạnh, hợp đồng API và giao diện không đổi
-- Sơ đồ khai phá chỉ thêm đúng một hoạt động có nghĩa — lúc hồ sơ có người nhận
+- Sơ đồ khai phá chỉ thêm hoạt động có nghĩa — lúc hồ sơ có người nhận, lúc người gửi sửa
+  nội dung
+- Sửa nội dung không ghi đè mất bản gốc: hồ sơ mang giá trị hiện tại, cột `changes` của
+  nhật ký giữ mọi giá trị cũ — cùng cơ chế #100 đã dựng cho trường quyết định
 
 **Nhược điểm**
 
@@ -142,7 +150,8 @@ Ranh giới gói trong một câu:
 
 ## Quyết định
 
-**Đề xuất phương án C**, chờ giảng viên hướng dẫn chấp thuận.
+**Chọn phương án C**, với điều chỉnh của giảng viên: người gửi **được sửa nội dung trước
+khi hồ sơ tới phòng ban**, mọi lần sửa đều vào nhật ký; tới phòng ban rồi thì khóa sửa.
 
 ---
 
@@ -153,10 +162,12 @@ kể quá nhiều — mỗi lời nhắn thành một lần chuyển, và điề
 leo thang, và làm hỏng luồng bổ sung thông tin vừa làm ở #79. Phương án B kể quá ít — mất
 lúc hồ sơ đổi người giữ. Phương án C kể đúng: đổi hồ sơ thì có dòng, không đổi thì không.
 
-*Sửa nội dung* bị loại vì một lý do riêng: văn bản người gửi viết lúc gửi là dữ liệu cho
-phân loại tự động ở tầng `I`. Cặp *"văn bản → loại mà điều phối viên chốt"* chỉ đúng khi
-văn bản là bản điều phối viên đã đọc. Sửa sau khi phân loại làm lệch cặp đó, và xóa dấu
-kiểm toán của những gì người gửi đã thực sự viết.
+Bản đề xuất ban đầu cấm hẳn *sửa nội dung*, với lý do văn bản người gửi viết là dữ liệu
+cho phân loại tự động ở tầng `I`: cặp *"văn bản → loại mà điều phối viên chốt"* chỉ đúng
+khi văn bản là bản điều phối viên đã đọc. Giảng viên cho sửa trước khi tới phòng ban, và
+lý do đó vẫn được giữ bằng hai cách: nhật ký giữ mọi phiên bản nên tầng `I` dựng lại được
+văn bản lúc phân loại, và sửa ở *Đã phân loại* đưa hồ sơ về *Đã gửi* để phân loại lại
+trên nội dung mới.
 
 ---
 
@@ -176,10 +187,14 @@ kiểm toán của những gì người gửi đã thực sự viết.
 - Có hai nơi ghi dữ liệu hồ sơ; ranh giới phải được canh bằng kiểm thử, không chỉ bằng
   tài liệu
 
-**Việc phải làm tiếp nếu phương án C được chấp thuận**
+**Việc phải làm tiếp**
 
 - [ ] Gỡ `CHECK (from_state <> to_state)`, giữ `UNIQUE` — đổi lược đồ khởi tạo, cả nhóm
       `down -v`
+- [ ] Cạnh *Sửa nội dung* `submitted → submitted` và `classified → submitted` cho người gửi,
+      với một ràng buộc mới quản `title`, `description`, `request_type_code`. Biên ngoài
+      `CHANGEABLE_FIELDS` của engine thêm `title`, `description`; các trường `suggested_*`
+      vẫn nằm ngoài biên
 - [ ] Bảng lời nhắn do Alembic sở hữu, chỉ thêm như `event_log`; loại lời nhắn và vai trò
       gửi được khai trong dữ liệu
 - [ ] Loại ràng buộc tự đặt người xử lý bằng người thao tác, chỉ đi được khi hồ sơ chưa
@@ -188,16 +203,26 @@ kiểm toán của những gì người gửi đã thực sự viết.
       ở trạng thái chờ
 - [ ] Dòng thời gian không gắn nhãn "Quay lui" cho mốc tự trỏ
 - [ ] Bổ sung mục ranh giới vào `docs/ARCHITECTURE.md`, cập nhật `docs/process-flow.md`
-- [ ] Đổi trạng thái bản ghi này thành *Đã chấp nhận*, ghi người quyết định
 
 ---
 
-## Câu hỏi cho giảng viên
+## Ý kiến của giảng viên (24/09/2026)
 
-1. Chấp thuận ranh giới của phương án C không?
-2. Không cho sửa nội dung đã gửi, chỉ cho bổ sung bằng lời nhắn — có được không?
-3. *Nhận việc về mình* chỉ làm được khi hồ sơ chưa giao ai. Hồ sơ đã giao người khác thì
-   phải nhờ trưởng phòng phân công lại — đúng ý không?
+Bản đề xuất gửi giảng viên ba câu hỏi. Trả lời, tóm lại:
+
+1. **Đồng ý tách lời nhắn khỏi thay đổi nghiệp vụ.** Tự nhận việc phải có dòng nhật ký vì
+   đổi người xử lý, và chỉ đổi trạng thái khi thật sự bắt đầu xử lý. Nội dung gốc sau khi
+   gửi không được ghi đè
+2. **Điều chỉnh về sửa nội dung.** Mọi thay đổi nội dung đều ghi nhật ký. Hồ sơ chưa tới bộ
+   phận nào thì người gửi vẫn được sửa; tới phòng ban rồi thì không sửa được, chỉ trao đổi
+   để bổ sung. Bản ghi đã sửa phương án C theo đúng ý này
+3. Câu *nhận việc chỉ khi hồ sơ chưa giao ai* giảng viên chưa nêu ý kiến; nhóm giữ theo đề
+   xuất
+
+Ví dụ của giảng viên nhắc người gửi đổi được cả *độ ưu tiên*. Nhóm **giữ** ràng buộc
+Poka-yoke *người tạo không tự đặt mức ưu tiên* — mức ưu tiên do điều phối viên đặt lúc phân
+loại — và đã báo lại giảng viên. Nếu giảng viên muốn người gửi đổi được mức ưu tiên thì
+đó là một quyết định riêng, sửa ràng buộc ở `docs/process-flow.md` mục 5.
 
 ---
 
@@ -205,5 +230,6 @@ kiểm toán của những gì người gửi đã thực sự viết.
 
 - Hai hướng gốc được nêu trong thân #81, cùng lời nhắc rằng đây là quyết định kiến trúc cần
   giảng viên và cả nhóm đồng ý. Dữ kiện lược đồ bổ sung ở bình luận ngày 24/09 trên #81
-- Nếu giảng viên chọn A hoặc B, bản ghi này được sửa theo lựa chọn đó trước khi chuyển sang
-  *Đã chấp nhận* — bản ghi còn ở trạng thái *Đề xuất* thì chưa ban hành
+- Bản ghi ra đời ở trạng thái *Đề xuất* (PR #115), được sửa theo ý kiến giảng viên rồi mới
+  chuyển sang *Đã chấp nhận*. Từ đây nội dung không sửa nữa; quyết định đổi thì ghi bản
+  ghi mới
