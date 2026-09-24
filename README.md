@@ -96,19 +96,22 @@ sử commit.
 
 ## Trạng thái hiện tại
 
-**Phiên bản `v0.2.0` — Giai đoạn 2: Không gian `H` và `P`**
+**Giai đoạn 2: Không gian `H` và `P`** — phiên bản phát hành mới nhất xem ở trang
+[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases).
 
-Giai đoạn khảo sát và thiết kế đã khép. Kho mã có bộ quy chuẩn, hệ thống tài liệu,
-bốn bản ghi quyết định kiến trúc, hạ tầng dựng được bằng một lệnh, và **lược đồ cấu
-hình đầy đủ của engine máy trạng thái**. Xem
+Luồng thủ công đã chạy đầu-cuối cho cả bốn vai trò trên giao diện thật: người gửi gửi
+và theo dõi yêu cầu, điều phối viên phân loại và định tuyến, trưởng phòng nhận việc và
+giao người, người xử lý làm và hỏi thêm khi cần. Engine máy trạng thái tự viết chạy ràng
+buộc Poka-yoke, đếm hạn SLA và tự leo thang, và ghi nhật ký sự kiện cho mọi lần chuyển
+trạng thái. Tầng `D` và `I` chưa cài đặt. Xem
 [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) để biết tiến độ và việc tiếp theo.
 
 ---
 
 ## Cài đặt và dựng từ mã nguồn
 
-> Cụm sáu dịch vụ dựng được bằng một lệnh. Cổng gửi yêu cầu đã chạy được; buồng lái
-> cho điều phối viên và người xử lý đang được xây dựng.
+> Cụm sáu dịch vụ dựng được bằng một lệnh. Cổng gửi yêu cầu, buồng lái điều phối và
+> buồng lái phòng ban đều chạy được với các tài khoản mẫu bên dưới.
 
 ### Yêu cầu môi trường
 
