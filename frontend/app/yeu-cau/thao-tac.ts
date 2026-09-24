@@ -23,7 +23,7 @@ import { redirect } from "next/navigation";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
-import { gomThayDoi } from "@/lib/bieu-mau";
+import { docLoiNhan, gomThayDoi } from "@/lib/bieu-mau";
 import type { HoSoChiTiet } from "@/lib/kieu";
 
 function chuoiHoacRong(gia_tri: FormDataEntryValue | null): string {
@@ -90,5 +90,27 @@ export async function chuyenTrangThai(
 
   revalidatePath("/yeu-cau");
   revalidatePath(`/yeu-cau/${maHoSo}`);
+  return CHUA_CO_LOI;
+}
+
+/**
+ * Gửi một lời nhắn trên hồ sơ (#128). Lời nhắn không đổi hồ sơ: không trạng thái, không
+ * đồng hồ — dịch vụ bảo đảm điều đó, và cũng tự kiểm ai gửi được loại nào lúc nào.
+ */
+export async function guiLoiNhan(
+  _truoc: KetQuaThaoTac,
+  duLieu: FormData,
+): Promise<KetQuaThaoTac> {
+  const doc = docLoiNhan(duLieu);
+  if (!doc) return { loi: "Thiếu thông tin lời nhắn. Tải lại trang rồi thử lại." };
+
+  const ketQua = await guiDichVu<HoSoChiTiet>(`/requests/${doc.maHoSo}/messages`, doc.than);
+  if (!ketQua.ok) return { loi: ketQua.thongDiep };
+
+  revalidatePath("/yeu-cau");
+  revalidatePath(`/yeu-cau/${doc.maHoSo}`);
+  // Hai hàng đợi hiện dấu "người gửi đang chờ trả lời"
+  revalidatePath("/dieu-phoi");
+  revalidatePath("/phong-ban");
   return CHUA_CO_LOI;
 }

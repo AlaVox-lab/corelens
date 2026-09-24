@@ -28,6 +28,8 @@ import {
 } from "@/components/dong-thoi-gian";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
+import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
+import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { goiDichVu } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
 import type { HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
@@ -271,9 +273,31 @@ export default async function ChiTietHoSo({
 
       <DongThoiGian
         cacSuKien={ho_so.history}
+        cacLoiNhan={ho_so.messages}
         bayGio={bayGio}
         khiTrong="Hồ sơ vừa được gửi và chưa đổi trạng thái lần nào. Mốc đầu tiên sẽ xuất hiện ở đây ngay khi điều phối viên tiếp nhận."
       />
+
+      {/* --- Lời nhắn (#128) — ngay dưới dòng thời gian, vì lời nhắn nằm trong đó --- */}
+      <div className="the khong-in" style={{ marginTop: "16px" }}>
+        <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
+          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Lời nhắn</h2>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
+            Nhắn cho điều phối viên hay phòng ban đang giữ hồ sơ, thay cho gọi điện: câu hỏi và
+            câu trả lời đều nằm lại trên hồ sơ. Lời nhắn không đổi trạng thái và không dừng
+            đồng hồ hạn xử lý.
+          </p>
+        </div>
+        <div style={{ padding: "17px 20px" }}>
+          <KhungLoiNhan
+            key={ho_so.messages.length}
+            maHoSo={ho_so.id}
+            cacLoai={ho_so.message_kinds}
+            daKetThuc={ho_so.state.is_terminal}
+            hanhDong={guiLoiNhan}
+          />
+        </div>
+      </div>
 
       {/* --- Thao tác ------------------------------------------------------- */}
       <div className="the khong-in" style={{ marginTop: "24px" }}>

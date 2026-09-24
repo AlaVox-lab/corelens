@@ -119,6 +119,40 @@ export type HoSoTomTat = {
    * thang lần nữa. `null` khi không áp.
    */
   sla_grace_seconds: number | null;
+  /**
+   * Lời nhắn sau cùng là của người gửi hồ sơ (`true`), của nhân viên (`false`), hay chưa
+   * có lời nhắn nào (`null`) — nguồn của dấu hiệu "đang chờ trả lời" trên danh sách (#128).
+   */
+  last_message_from_requester: boolean | null;
+};
+
+/**
+ * Một lời nhắn trên hồ sơ (#128). Không phải mốc chuyển trạng thái: dòng thời gian trộn
+ * nó với `history`, nhưng số lần đổi trạng thái chỉ đếm `history`.
+ */
+export type LoiNhan = {
+  id: number;
+  kind: string;
+  kind_label: string;
+  author: string;
+  author_label: string;
+  /** Tác giả là người gửi của chính hồ sơ. */
+  from_requester: boolean;
+  /** Trống được ở loại không bắt buộc nội dung, như "Hỏi tiến độ". */
+  body: string | null;
+  /** Chuỗi ISO 8601 theo UTC. */
+  created_at: string;
+};
+
+/**
+ * Một loại lời nhắn người đang xem gửi được lúc này. Giao diện dựng nút từ đây, cùng lý
+ * do nó dựng nút chuyển trạng thái từ `allowed_transitions`.
+ */
+export type LoaiLoiNhan = NhanCoMa & {
+  description: string | null;
+  body_required: boolean;
+  /** Có giá trị thì loại này đang chờ luật hỏi lại: nút mờ tới mốc đó, hoặc tới khi có trả lời. */
+  retry_at: string | null;
 };
 
 export type HoSoChiTiet = HoSoTomTat & {
@@ -127,6 +161,8 @@ export type HoSoChiTiet = HoSoTomTat & {
   assignee_id: string | null;
   history: SuKien[];
   allowed_transitions: CanhDiDuoc[];
+  messages: LoiNhan[];
+  message_kinds: LoaiLoiNhan[];
 };
 
 // ---------------------------------------------------------------------------

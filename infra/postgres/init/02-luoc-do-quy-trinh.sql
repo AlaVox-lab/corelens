@@ -283,3 +283,47 @@ CREATE TABLE priorities (
 
 CREATE UNIQUE INDEX priorities_chi_mot_mac_dinh
     ON priorities (is_default) WHERE is_default;
+
+
+-- ===========================================================================
+-- 9. LOẠI LỜI NHẮN TRÊN HỒ SƠ (#128, ADR-0005)
+-- ===========================================================================
+-- Lời nhắn là thao tác KHÔNG đổi hồ sơ: không đổi trạng thái, không đổi trường nào,
+-- không chạm đồng hồ SLA. Vì vậy nó không đi qua cửa chuyển trạng thái và không vào
+-- nhật ký sự kiện. Bản thân lời nhắn nằm ở bảng `case_messages` do Alembic sở hữu,
+-- chỉ ghi thêm như `event_log`. Hai bảng dưới đây khai LOẠI lời nhắn và vai trò gửi
+-- được từng loại — cấu hình, không phải dữ liệu vận hành.
+--
+-- Ai nhắn được trên hồ sơ nào thì KHÔNG khai ở đây: ai mở được hồ sơ thì nhắn được,
+-- theo đúng cửa nhìn thấy của từng buồng lái. Hai bảng này chỉ thu hẹp thêm — theo vai
+-- trò, và theo các cờ của từng loại.
+
+CREATE TABLE message_kinds (
+    code                   TEXT      PRIMARY KEY,
+    label                  TEXT      NOT NULL,
+    description            TEXT,
+    -- Chỉ người gửi của CHÍNH hồ sơ gửi được loại này, như ràng buộc
+    -- requester-owns-case trên các cạnh của người gửi
+    owner_only             BOOLEAN   NOT NULL DEFAULT FALSE,
+    -- Chỉ gửi được khi hồ sơ nằm trong hàng đợi phòng ban. Tập trạng thái đó SUY từ
+    -- bộ quy tắc — trạng thái mà vai trò phòng ban có cạnh đi ra — không liệt kê ở đây
+    department_stage_only  BOOLEAN   NOT NULL DEFAULT FALSE,
+    -- Gửi lại loại này chỉ được khi phía bên kia đã trả lời lần gửi trước, hoặc đã quá
+    -- chừng này giờ. NULL là không giới hạn.
+    reask_after_hours      SMALLINT,
+    body_required          BOOLEAN   NOT NULL DEFAULT TRUE,
+    display_order          SMALLINT  NOT NULL DEFAULT 0,
+
+    CONSTRAINT message_kinds_hoi_lai_duong
+        CHECK (reask_after_hours IS NULL OR reask_after_hours > 0)
+);
+
+CREATE TABLE message_kind_roles (
+    kind_code  TEXT  NOT NULL REFERENCES message_kinds (code) ON DELETE CASCADE,
+    role_code  TEXT  NOT NULL REFERENCES roles (code)         ON DELETE RESTRICT,
+
+    PRIMARY KEY (kind_code, role_code)
+);
+
+COMMENT ON TABLE message_kinds IS
+    'Loại lời nhắn trên hồ sơ (#128). Lời nhắn không đổi hồ sơ nên không phải cạnh chuyển trạng thái — xem ADR-0005.';

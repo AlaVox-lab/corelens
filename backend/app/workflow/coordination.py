@@ -44,9 +44,17 @@ from app.workflow.context import Actor
 from app.workflow.engine import get_active_rule_set
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
-from app.workflow.routes import _bang_trang_thai, _bao_loi, _du_lieu_chi_tiet, _tom_tat
+from app.workflow.messages import MessageRejected, gui_loi_nhan
+from app.workflow.routes import (
+    _bang_trang_thai,
+    _bao_loi,
+    _bao_loi_nhan,
+    _du_lieu_chi_tiet,
+    _tom_tat,
+)
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
+    GuiLoiNhanVao,
     HangDoiRa,
     HoSoDieuPhoiRa,
     MucHangDoiRa,
@@ -289,4 +297,30 @@ def chuyen_trang_thai(
 
     session.commit()
     session.refresh(ho_so)
+    return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
+
+
+@router.post("/requests/{case_id}/messages", response_model=HoSoDieuPhoiRa)
+def nhan_tin(
+    case_id: int, du_lieu: GuiLoiNhanVao, session: _Phien, actor: _Cua
+) -> HoSoDieuPhoiRa:
+    """Gửi một lời nhắn trên hồ sơ (#128).
+
+    Cùng cửa nhìn thấy với trang chi tiết: điều phối viên mở được mọi hồ sơ, nên nhắn
+    được trên mọi hồ sơ — kể cả hồ sơ đã chuyển về phòng ban. Lời nhắn không đổi hồ sơ;
+    xem app/workflow/messages.py.
+    """
+    ho_so = session.get(Request, case_id)
+    if ho_so is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
+        )
+    try:
+        gui_loi_nhan(session, ho_so, actor, du_lieu.kind, du_lieu.body)
+    except MessageRejected as loi:
+        session.rollback()
+        raise _bao_loi_nhan(loi) from loi
+
+    session.commit()
     return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)

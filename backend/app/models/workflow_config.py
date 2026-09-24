@@ -3,7 +3,7 @@
 #
 # Ánh xạ các bảng cấu hình của engine máy trạng thái.
 #
-# CHỈ ĐỌC từ phía mã nguồn. Mười một bảng này do
+# CHỈ ĐỌC từ phía mã nguồn. Mười ba bảng này do
 # infra/postgres/init/02-luoc-do-quy-trinh.sql tạo và infra/seed/ nạp dữ liệu,
 # nên Alembic được cấu hình bỏ qua chúng — xem alembic/env.py.
 #
@@ -221,3 +221,46 @@ class RequestTypeRouting(Base):
         String, ForeignKey("departments.code"), primary_key=True
     )
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class MessageKind(Base):
+    """Một loại lời nhắn trên hồ sơ (#128, ADR-0005).
+
+    Lời nhắn không đổi hồ sơ nên không phải cạnh. Ai nhắn được trên hồ sơ nào do cửa
+    nhìn thấy của từng buồng lái quyết — ai mở được hồ sơ thì nhắn được. Bảng này chỉ thu
+    hẹp thêm, theo vai trò và theo ba cờ dưới đây.
+    """
+
+    __tablename__ = "message_kinds"
+
+    code: Mapped[str] = mapped_column(Text, primary_key=True)
+    label: Mapped[str] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    # Chỉ người gửi của chính hồ sơ gửi được — như ràng buộc requester-owns-case
+    owner_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Chỉ gửi được khi hồ sơ nằm trong hàng đợi phòng ban, tập trạng thái suy từ bộ quy tắc
+    department_stage_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Gửi lại chỉ được khi phía bên kia đã trả lời, hoặc đã quá chừng này giờ
+    reask_after_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+    body_required: Mapped[bool] = mapped_column(Boolean, default=True)
+    display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+
+    allowed_roles: Mapped[list[MessageKindRole]] = relationship(lazy="selectin")
+
+    @property
+    def role_codes(self) -> set[str]:
+        """Tập vai trò gửi được loại lời nhắn này."""
+        return {r.role_code for r in self.allowed_roles}
+
+
+class MessageKindRole(Base):
+    """Vai trò nào gửi được loại lời nhắn nào."""
+
+    __tablename__ = "message_kind_roles"
+
+    kind_code: Mapped[str] = mapped_column(
+        Text, ForeignKey("message_kinds.code"), primary_key=True
+    )
+    role_code: Mapped[str] = mapped_column(
+        Text, ForeignKey("roles.code"), primary_key=True
+    )

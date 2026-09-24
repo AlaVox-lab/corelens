@@ -20,9 +20,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { chuyenTrangThaiPhongBan } from "@/app/phong-ban/thao-tac";
+import { chuyenTrangThaiPhongBan, guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
 import { BangThaoTac, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
+import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { docDichVu, goiDichVu } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
@@ -212,9 +213,37 @@ export default async function ChiTietPhongBan({
 
           <DongThoiGian
             cacSuKien={ho_so.history}
+            cacLoiNhan={ho_so.messages}
             bayGio={bayGio}
             khiTrong="Hồ sơ chưa đổi trạng thái lần nào."
           />
+
+          {/* Lời nhắn (#128): ngay dưới dòng thời gian, vì lời nhắn nằm trong đó. Không đặt ở
+              cột thao tác bên phải — cột đó dính khi cuộn, thêm thẻ là cao quá màn hình. */}
+          <div className="the khong-in" style={{ marginTop: "16px" }}>
+            <div
+              style={{
+                padding: "15px 17px",
+                borderBottom: "1px solid var(--line)",
+                display: "grid",
+                gap: "4px",
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Lời nhắn</h2>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "var(--ink-3)", lineHeight: 1.55 }}>
+                Trả lời người gửi ngay trên hồ sơ — kể cả câu hỏi tiến độ. Không đổi trạng thái, không dừng đồng hồ.
+              </p>
+            </div>
+            <div style={{ padding: "15px 17px" }}>
+              <KhungLoiNhan
+                key={ho_so.messages.length}
+                maHoSo={ho_so.id}
+                cacLoai={ho_so.message_kinds}
+                daKetThuc={ho_so.state.is_terminal}
+                hanhDong={guiLoiNhanPhongBan}
+              />
+            </div>
+          </div>
         </div>
 
         {/* --- Cột phải: làm ------------------------------------------------- */}

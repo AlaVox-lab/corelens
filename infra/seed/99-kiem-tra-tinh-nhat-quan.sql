@@ -198,4 +198,18 @@ BEGIN
     END IF;
 
     RAISE NOTICE 'Cơ cấu tổ chức hợp lệ: mọi loại yêu cầu đều có phòng ban mặc định';
+
+    -- Phép kiểm tra 9 — loại lời nhắn không vai trò nào gửi được (#128)
+    -- Cùng lý do với phép kiểm tra 3: một loại không ai gửi được là cấu hình chết,
+    -- không bao giờ hiện nút nào, và không ai biết vì sao.
+    SELECT string_agg(k.code, ', ' ORDER BY k.code) INTO danh_sach
+    FROM message_kinds k
+    WHERE NOT EXISTS (SELECT 1 FROM message_kind_roles r WHERE r.kind_code = k.code);
+
+    IF danh_sach IS NOT NULL THEN
+        RAISE EXCEPTION
+            'Loại lời nhắn không vai trò nào gửi được: %', danh_sach;
+    END IF;
+
+    RAISE NOTICE 'Loại lời nhắn hợp lệ: mọi loại đều có vai trò gửi được';
 END $$;
