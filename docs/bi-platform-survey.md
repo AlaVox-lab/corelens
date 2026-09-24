@@ -47,6 +47,12 @@ không có gì để vẽ. Nên bước đầu tiên là sinh dữ liệu.
 
 ### 2.1. Cách sinh
 
+> **Bộ sinh ở mục này đã được thay** (#124). Nó viết theo mô hình trước buổi trao đổi với
+> giảng viên ngày 10/09 — còn cổng phê duyệt chi phí, chưa có chặng phòng ban — và không
+> nằm trong kho. Bộ sinh hiện hành là `scripts/sinh_nhat_ky_ao.py`: đọc bộ quy tắc đang
+> chạy từ cơ sở dữ liệu, xuất đúng các cột của bảng `event_log` thật. Phần dưới giữ nguyên
+> làm hồ sơ của khảo sát #21.
+
 Bộ sinh bám theo [`process-flow.md`](process-flow.md): mười trạng thái, bốn vai trò, các
 nhánh phê duyệt, chờ bổ sung, leo thang, hủy và từ chối. Lược đồ đúng như
 `ARCHITECTURE.md` mục 6 quy định.
