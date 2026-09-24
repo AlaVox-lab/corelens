@@ -362,7 +362,7 @@ cách ly; phép đột biến nào sống sót thì hoặc thêm bài, hoặc g�
 | Issue | Ưu tiên | Việc | Người làm |
 |---|---|---|---|
 | #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd`, navigator cùng theo — bản ghi giữ chỗ **ADR-0006** |
-| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | `@NguyentimAnh`, navigator cùng theo — bản ghi giữ chỗ **ADR-0007** |
+| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | `@NguyentimAnh`, navigator cùng theo — bản ghi giữ chỗ **ADR-0007**. Dữ liệu thử sinh bằng `scripts/sinh_nhat_ky_ao.py` (#124) |
 
 Hai issue khảo sát là việc đầu tiên của thành viên trên kho mã: không đụng mã nguồn, sản
 phẩm là tài liệu khảo sát cộng bản ghi quyết định ở trạng thái *Đề xuất*. Bình luận giao
@@ -399,12 +399,10 @@ việc trên từng issue ghi đủ đầu vào, các bước, đầu ra và đi
 1. Tạo mốc *Tuần 8*, dời các issue còn mở sang
 2. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
    từ lâu — 171 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
-3. Cập nhật bộ sinh dữ liệu ảo theo mười trạng thái, năm vai trò, 21 cạnh, rồi đưa vào kho.
-   Bản hiện nằm ở máy navigator và vẫn theo mô hình cũ; #48 cần dùng nó
-4. Thêm `CODE_OF_CONDUCT.md`
-5. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
+3. Thêm `CODE_OF_CONDUCT.md`
+4. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
    `delete_branch_on_merge` an toàn
-6. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
+5. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
    trước để nhóm không quên
 
 ---

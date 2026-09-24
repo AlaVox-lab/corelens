@@ -280,7 +280,8 @@ dx-os-lab/
 │       ├── 02-co-cau-to-chuc.sql
 │       └── 99-kiem-tra-tinh-nhat-quan.sql
 ├── scripts/
-│   └── setup-labels.sh          # khởi tạo hệ thống nhãn
+│   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
+│   └── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
 ├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
