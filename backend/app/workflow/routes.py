@@ -19,6 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
+from app.auth.directory import KeycloakDirectory, get_directory
 from app.models.case import EventLog, Request
 from app.models.workflow_config import (
     Department,
@@ -29,6 +30,7 @@ from app.models.workflow_config import (
 )
 from app.rules.guards import permitted_fields
 from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay
+from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
 from app.workflow.engine import (
     DANH_MUC_CUA_TRUONG,
@@ -417,15 +419,29 @@ def chuyen_trang_thai(
     du_lieu: ChuyenTrangThaiVao,
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
+    danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
 ) -> HoSoChiTietRa:
     """Thực hiện một thao tác trên hồ sơ.
 
     Điểm cuối này **không tự kiểm quyền**. Engine đã tra bảng `transitions` và ma trận
     phân quyền rồi; kiểm thêm một lớp ở đây sẽ tạo ra nguồn sự thật thứ hai, và hai
     nguồn sẽ lệch nhau. Việc duy nhất ở đây là dịch lỗi engine sang mã HTTP.
+
+    Từ #127 điểm cuối nhận `changes`, nên nó gọi phép kiểm người được giao như MỌI điểm
+    cuối nhận `changes` (#83). Không cạnh nào của người gửi cho đặt người xử lý, nên
+    phép kiểm dừng ngay mà không tra danh bạ — nhưng bỏ qua ở đây là để hở một đường
+    vòng quanh danh bạ cho người mang cùng lúc vai trò người gửi và vai trò giao việc.
     """
     _kiem_chu_so_huu(session, case_id, actor)
 
+    ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
+        session,
+        danh_ba,
+        case_id=case_id,
+        to_state=du_lieu.to_state,
+        actor=actor,
+        changes=du_lieu.changes,
+    )
     try:
         ho_so = thuc_hien_chuyen(
             session,
@@ -433,6 +449,8 @@ def chuyen_trang_thai(
             to_state=du_lieu.to_state,
             actor=actor,
             note=du_lieu.note,
+            changes=du_lieu.changes,
+            assignee_label=ten_nguoi_duoc_giao,
         )
     except TransitionError as loi:
         session.rollback()
@@ -477,6 +495,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             activity_label=t.activity_label,
             requires_note=t.requires_note,
             note_label=t.note_label,
+            keeps_state=t.from_state == t.to_state,
             fields=sorted(permitted_fields(t.guard_codes)),
         )
         for t in allowed_transitions(session, ho_so, actor)

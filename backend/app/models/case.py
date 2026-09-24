@@ -26,6 +26,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 
+# Giới hạn nội dung hồ sơ. Một nơi duy nhất cho cả lúc gửi (lược đồ biểu mẫu ở
+# app/workflow/schemas.py) lẫn lúc người gửi sửa nội dung (ràng buộc `edit-content` ở
+# app/rules/guards.py, #127) — hai nơi tự đặt số riêng thì sớm muộn sẽ lệch nhau.
+TIEU_DE_TOI_THIEU = 3
+TIEU_DE_TOI_DA = 200
+MO_TA_TOI_DA = 5000
+
 
 class Request(Base):
     """Một hồ sơ yêu cầu nội bộ.

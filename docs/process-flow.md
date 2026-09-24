@@ -7,7 +7,11 @@ Sơ đồ trạng thái mô tả vòng đời một yêu cầu nội bộ, từ 
 dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 5.
 
 > **Cập nhật 10/09/2026** theo buổi trao đổi với giảng viên hướng dẫn: năm vai trò thay cho
-> bốn, thêm chặng định tuyến phòng ban, và bỏ cổng phê duyệt chi phí. Xem mục 7.
+> bốn, thêm chặng định tuyến phòng ban, và bỏ cổng phê duyệt chi phí. Xem mục 8.
+>
+> **Cập nhật 24/09/2026** theo ADR-0005, giảng viên đã duyệt: người tạo sửa được nội dung
+> trước khi hồ sơ tới phòng ban, người xử lý tự nhận được hồ sơ chưa giao ai. Hai thao tác
+> này là cạnh — hai trong số đó tự trỏ — nên luồng có hai mươi bốn cạnh. Xem mục 3.
 
 ---
 
@@ -32,9 +36,11 @@ stateDiagram-v2
 
     DaGui --> DaPhanLoai: Người phân loại phân loại
     DaGui --> ChoBoSung: Người phân loại hỏi thêm
+    DaGui --> DaGui: Người tạo sửa nội dung
     DaGui --> Huy: Người tạo hủy
 
     DaPhanLoai --> ChoXacDuyet: Chuyển về phòng ban
+    DaPhanLoai --> DaGui: Người tạo sửa nội dung
     DaPhanLoai --> Huy: Người tạo hủy
     DaPhanLoai --> Dong: Không phòng nào nhận, đóng kèm lý do
 
@@ -45,6 +51,7 @@ stateDiagram-v2
 
     BiTuChoi --> DaPhanLoai: Người phân loại định tuyến lại
 
+    DangXuLy --> DangXuLy: Người xử lý nhận việc về mình
     DangXuLy --> ChoBoSung: Người xử lý hỏi thêm
     DangXuLy --> LeoThang: Quá hạn SLA — tự động
     DangXuLy --> HoanTat: Người xử lý hoàn thành
@@ -86,6 +93,12 @@ stateDiagram-v2
         Sau đó nút hủy bị khóa.
     end note
 
+    note left of DaGui
+        Sửa nội dung chỉ TRƯỚC khi tới phòng ban.
+        Sửa ở Đã phân loại thì về Đã gửi, vì phân loại
+        cũ dựa trên nội dung cũ. Sau đó: lời nhắn.
+    end note
+
     note left of ChoBoSung
         Ba đường vào, ba đường về. Hỏi ở đâu thì
         trả lời xong về đúng chỗ đó — người gửi chỉ
@@ -116,7 +129,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Hai mươi mốt cạnh chuyển trạng thái
+## 3. Hai mươi bốn cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -125,8 +138,10 @@ là không đi được**.
 |---|---|---|---|
 | `submitted` | `classified` | Phân loại yêu cầu | `classifier` |
 | `submitted` | `awaiting-info` | Yêu cầu bổ sung thông tin | `classifier` |
+| `submitted` | `submitted` | Sửa nội dung | `requester` |
 | `submitted` | `cancelled` | Hủy yêu cầu | `requester` |
 | `classified` | `awaiting-acceptance` | Chuyển về phòng ban | `classifier` |
+| `classified` | `submitted` | Sửa nội dung | `requester` |
 | `classified` | `cancelled` | Hủy yêu cầu | `requester` |
 | `classified` | `closed` | Đóng hồ sơ, không phòng nào nhận | `classifier` |
 | `awaiting-acceptance` | `in-progress` | **Xác duyệt và giao xử lý** | `approver` |
@@ -134,6 +149,7 @@ là không đi được**.
 | `awaiting-acceptance` | `rejected-by-department` | Từ chối vì sai chuyên môn | `approver` |
 | `awaiting-acceptance` | `cancelled` | Hủy yêu cầu | `requester` |
 | `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
+| `in-progress` | `in-progress` | Nhận việc về mình | `handler` |
 | `in-progress` | `awaiting-info` | Yêu cầu bổ sung thông tin | `handler` |
 | `in-progress` | `escalated` | Leo thang do quá hạn | **hệ thống** |
 | `in-progress` | `completed` | Hoàn thành xử lý | `handler` |
@@ -157,15 +173,32 @@ Hệ quả đáng chú ý: hỏi ở *Đã gửi* thì trả lời xong hồ sơ
 tiên của nó — lối vòng phát hiện ở #78, nơi hồ sơ vào tận phòng ban mà chưa có mức ưu tiên,
 đã đóng.
 
+**Cạnh tự trỏ: đổi hồ sơ mà giữ nguyên trạng thái** (ADR-0005, #127). *Sửa nội dung* ở *Đã
+gửi* và *Nhận việc về mình* ở *Đang xử lý* đi từ một trạng thái về chính nó. Chúng vẫn là
+cạnh, vì chúng đổi hồ sơ — nội dung, người xử lý — và mọi thay đổi trên hồ sơ phải để lại
+một dòng nhật ký kèm giá trị cũ. Thao tác **không** đổi gì trên hồ sơ, như nhắn điều phối
+viên hay hỏi tiến độ, không phải cạnh: chúng vào bảng lời nhắn riêng (#128). Ba điều giữ cho
+cạnh tự trỏ không làm rối đồ thị:
+
+- Mỗi trạng thái **tối đa một** cạnh tự trỏ — lược đồ giữ `UNIQUE (bộ quy tắc, từ, sang)`
+- **Không có** cạnh tự trỏ ở trạng thái chờ người khác, như *Chờ bổ sung thông tin* — phép
+  kiểm đồ thị số 7 trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` từ chối dữ liệu như vậy
+- Dòng nhật ký tự trỏ không đưa hồ sơ vào trạng thái nào, nên ràng buộc
+  `return-to-previous-state` bỏ qua nó khi tìm chỗ cũ, và dòng thời gian không gọi nó là
+  quay lui
+
+**Sửa nội dung ở *Đã phân loại* thì hồ sơ về *Đã gửi***, không tự trỏ: phân loại, mức ưu
+tiên, phòng ban dự kiến đều dựa trên nội dung cũ, nên người phân loại phải xem lại.
+
 ---
 
 ## 4. Năm vai trò
 
 | Định danh | Nhãn hiển thị | Trách nhiệm |
 |---|---|---|
-| `requester` | Người tạo yêu cầu | Gửi yêu cầu, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
+| `requester` | Người tạo yêu cầu | Gửi yêu cầu, sửa nội dung trước khi hồ sơ tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
 | `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, định tuyến lại khi bị từ chối |
-| `handler` | Người xử lý yêu cầu | Thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
+| `handler` | Người xử lý yêu cầu | Tự nhận hồ sơ chưa giao ai trong phòng, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
 | `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang |
 | `administrator` | Quản trị viên | **Không đi cạnh nào.** Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại → phòng |
 
@@ -199,6 +232,17 @@ phân loại phải có loại yêu cầu. Giữ loại người gửi đã ch�
 loại đặt mới nếu người gửi bỏ trống. Lý do: loại yêu cầu quyết định ngưỡng SLA, và hồ sơ
 không có loại sẽ không bao giờ bị bộ quét đánh dấu quá hạn.
 
+**Hai ràng buộc thêm ở #127** (ADR-0005, giảng viên duyệt ngày 24/09):
+
+- **Chỉ sửa nội dung trước khi tới phòng ban.** Cạnh *Sửa nội dung* chỉ xuất phát từ
+  `submitted` và `classified` — khóa bằng sự vắng mặt của cạnh, như ràng buộc chỉ hủy trước
+  khi vào xử lý. Phòng ban đã cầm hồ sơ thì người tạo muốn nói thêm phải dùng lời nhắn.
+  Sửa là thay giá trị trên hồ sơ, còn bản gốc nằm lại trong nhật ký, nên tầng `I` vẫn dựng
+  lại được văn bản lúc người phân loại quyết định. Người tạo vẫn không đặt được mức ưu tiên
+- **Không giành việc đã giao.** *Nhận việc về mình* chỉ đi được khi hồ sơ chưa giao ai, và
+  người nhận luôn là chính người bấm — không gửi kèm được người khác. Muốn đổi người thì
+  trưởng phòng phân công lại
+
 ---
 
 ## 6. Nhật ký sự kiện
@@ -209,6 +253,10 @@ quy trình ở không gian `I`.
 
 Cơ chế bảo đảm nhật ký không bao giờ thiếu bản ghi: **một cửa duy nhất** — mọi lần đổi
 trạng thái đi qua đúng một điểm trong mã. Xem `ARCHITECTURE.md` mục 6.1.
+
+Dòng của cạnh tự trỏ có `from_state` bằng `to_state`. Với khai phá quy trình, đó vẫn là một
+hoạt động có thật: khoảng từ lúc hồ sơ vào *Đang xử lý* tới lúc có người *Nhận việc về
+mình* đo đúng thời gian hồ sơ nằm chờ không ai cầm.
 
 **Hai mẫu lệch chuẩn đáng theo dõi nhất**, đều lộ ra từ nhật ký:
 

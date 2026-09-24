@@ -402,13 +402,20 @@ giữa hai loại nội dung khác hẳn nhau.
 3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
-   là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng. Sai một điều thì
+   là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
+   ở trạng thái chờ. Sai một điều thì
    **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
    kẹt mới lộ ra
 
 Hai ràng buộc Poka-yoke quan trọng nhất **không có dòng dữ liệu nào** vì chúng được thực
 thi bằng sự vắng mặt: *đã nhận là không trả về* và *chỉ hủy trước khi vào xử lý*. Không
-phải "không nên đi", mà là "không có đường mà đi".
+phải "không nên đi", mà là "không có đường mà đi". Khóa sửa nội dung sau khi hồ sơ tới
+phòng ban (#127) cũng thực thi theo đúng cách đó.
+
+**Cạnh tự trỏ được phép từ ADR-0005** (#127) — lược đồ gỡ ràng buộc `CHECK (from_state <>
+to_state)` nhưng giữ `UNIQUE (rule_set_id, from_state, to_state)`, nên mỗi trạng thái có
+tối đa một cạnh tự trỏ, và engine, API, giao diện vẫn nhận diện một cạnh bằng cặp trạng
+thái như trước. Vì sao cần cạnh tự trỏ: mục 6.2.
 
 Cột `is_initial` đáng chú ý riêng: nhờ nó mà mã nguồn hỏi *"trạng thái bắt đầu là gì"*
 thay vì viết `if state == "submitted"`. Mỗi cột kiểu này là một câu lệnh `if` không bao
@@ -462,8 +469,9 @@ có lý do riêng của nó. Ghi chú không phải lúc nào cũng là lý do: 
 câu hỏi, ở cạnh bổ sung thông tin nó là câu trả lời. Cột `transitions.note_label` (#79)
 đặt tên cho ô ghi chú của từng cạnh, và dòng thời gian gọi ghi chú bằng đúng tên đó.
 
-**Thêm cột `changes`** (#100): những trường quyết định mà lần chuyển này **đổi giá
-trị**, dạng `{trường: {from, to}}`, kiểu JSONB. Hồ sơ chỉ mang giá trị hiện tại; lịch
+**Thêm cột `changes`** (#100): những trường quyết định — từ #127 cả hai trường nội dung
+`title`, `description` — mà lần chuyển này **đổi giá trị**, dạng `{trường: {from, to}}`,
+kiểu JSONB. Hồ sơ chỉ mang giá trị hiện tại; lịch
 sử đổi nằm ở đây. Trước #100, điều phối viên sửa loại yêu cầu người gửi chọn sai thì
 giá trị cũ bị ghi đè và mất dấu — mất đúng dữ liệu "người gửi hay chọn nhầm loại nào",
 "bảng ánh xạ loại sang phòng sai ở đâu" mà tầng `I` cần. Ba quy tắc:
@@ -504,11 +512,43 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
 - **Khóa dòng hồ sơ** bằng `SELECT ... FOR UPDATE` ngay đầu hàm. Không có nó, hai yêu
   cầu đồng thời cùng đọc trạng thái cũ rồi cùng ghi nhật ký
 - **Danh sách trắng các trường được đặt.** Một lần chuyển chỉ đặt được bốn trường quyết
-  định; `current_state` và mọi trường `suggested_*` đều nằm ngoài. Nhờ vậy không ai
+  định và, từ #127, hai trường nội dung; `current_state` và mọi trường `suggested_*` đều
+  nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
 
 Quyết định tự viết engine máy trạng thái thay vì lắp ghép nền tảng có sẵn xuất phát chính
 từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md).
+
+### 6.2. Ranh giới: thao tác nào đi qua cửa chuyển trạng thái
+
+**Đã cài đặt phần cạnh** (#127); phần lời nhắn ở #128. Quyết định ở
+[ADR-0005](adr/0005-ranh-gioi-may-trang-thai.md), giảng viên duyệt ngày 24/09/2026.
+
+Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác không đổi gì thì không.**
+
+| Thao tác | Đổi gì trên hồ sơ | Đi đường nào |
+|---|---|---|
+| Chuyển trạng thái | `current_state`, có thể kèm trường quyết định | Cạnh thường |
+| Nhận việc về mình, sửa nội dung ở *Đã gửi* | Người xử lý; tiêu đề, mô tả, loại | **Cạnh tự trỏ** — trạng thái giữ nguyên |
+| Nhắn điều phối viên, hỏi tiến độ | Không đổi gì | Bảng lời nhắn riêng (#128) — không phải cạnh, không vào `event_log` |
+
+Vì sao thao tác đổi hồ sơ mà không đổi trạng thái vẫn phải là cạnh: mọi thay đổi trên hồ
+sơ cần một dòng nhật ký giữ giá trị cũ (cột `changes`), cần qua kiểm quyền và ràng buộc
+Poka-yoke, và chỉ `perform_transition` làm đủ cả ba. Một điểm cuối "chỉ sửa một trường"
+là đúng loại cửa sau mà mục 6.1 cấm. Ngược lại, lời nhắn mà đi qua cửa chuyển trạng thái
+thì nhật ký — nguồn của khai phá quy trình — lẫn đầy những hoạt động không đổi gì, và mỗi
+trạng thái cần nhiều cạnh tự trỏ, phá chỉ mục duy nhất ở mục 5.2.
+
+Bốn hệ quả mã nguồn phải giữ:
+
+- Dòng nhật ký tự trỏ có `from_state = to_state`. Nó không đưa hồ sơ **vào** trạng thái
+  nào, nên ràng buộc `return-to-previous-state` bỏ qua nó khi tìm chỗ cũ (mục 7)
+- Số lần đổi trạng thái và nhãn *Quay lui* trên dòng thời gian không đếm mốc tự trỏ; mốc
+  đó hiện là *Giữ nguyên trạng thái*
+- Không có cạnh tự trỏ ở trạng thái chờ người khác — hồ sơ đang chờ người gửi trả lời mà
+  bị sửa tại chỗ thì câu hỏi mất nghĩa. Phép kiểm đồ thị số 7 chặn khởi động nếu có
+- Mỗi cạnh trong `allowed_transitions` mang cờ `keeps_state`, để giao diện nói "trạng
+  thái giữ nguyên" thay cho "hồ sơ sẽ chuyển sang" — suy từ cặp trạng thái, không tra bảng
 
 ---
 
@@ -544,7 +584,7 @@ Hai biên, giữ ở hai thời điểm khác nhau:
 
 | Biên | Chặn gì | Kiểm lúc | Nằm ở |
 |---|---|---|---|
-| Ngoài | Ràng buộc quản trường không thuộc bốn trường quyết định — `current_state`, `suggested_*` | **Nạp mô-đun** — sai thì dịch vụ không khởi động | `CHANGEABLE_FIELDS` trong `engine.py` |
+| Ngoài | Ràng buộc quản hay tự đặt trường không thuộc bốn trường quyết định và hai trường nội dung — `current_state`, `suggested_*` | **Nạp mô-đun** — sai thì dịch vụ không khởi động | `CHANGEABLE_FIELDS` trong `engine.py` |
 | Trong | Lần chuyển gửi kèm trường mà cạnh đang đi không quản | **Mỗi lần chuyển** — sai thì bị từ chối | `permitted_fields()` trong `guards.py` |
 
 Biên ngoài không cần kiểm lại lúc chạy: trường một cạnh cho đặt luôn là tập con của
@@ -576,10 +616,27 @@ Poka-yoke: mã ràng buộc chưa cài đặt vẫn nổ, vì giấu nút đi th
 **Ràng buộc đầu tiên đọc lịch sử hồ sơ** — `return-to-previous-state`, cũng từ #79. Nó chỉ
 cho đi cạnh về đúng trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại. Không có bảng ánh
 xạ "hỏi ở đâu thì về đâu": quy tắc chỉ là "về chỗ cũ", và chỗ cũ là `from_state` của dòng
-nhật ký mới nhất. Engine tra sẵn giá trị đó vào `TransitionContext.previous_state`, nên hàm
-ràng buộc vẫn không tự truy vấn cơ sở dữ liệu — đúng quy ước của lớp bối cảnh. Gắn ràng buộc
-này vào cạnh nào là dữ liệu; tệp kiểm tra mức đồ thị chặn khởi động nếu một đường vào trạng
-thái chờ thiếu đường về tương ứng.
+nhật ký mới nhất **có đổi trạng thái** — dòng tự trỏ bị bỏ qua (mục 6.2). Engine tra sẵn
+giá trị đó vào `TransitionContext.previous_state`, nên hàm ràng buộc vẫn không tự truy vấn
+cơ sở dữ liệu — đúng quy ước của lớp bối cảnh. Gắn ràng buộc này vào cạnh nào là dữ liệu;
+tệp kiểm tra mức đồ thị chặn khởi động nếu một đường vào trạng thái chờ thiếu đường về
+tương ứng.
+
+**Ràng buộc có tác động — tự đặt trường thay người dùng** (#127). Ngoài tập trường nó
+*quản* (`governs` — người dùng được gửi), một mục trong `GUARD_REGISTRY` có thể khai tập
+trường nó *tự đặt* (`sets`) cùng hàm tác động (`effect`). *Nhận việc về mình* là ví dụ đầu
+tiên: ràng buộc `assign-self` kiểm hồ sơ chưa giao ai, rồi tự đặt `assignee_id` bằng chính
+người bấm. Ba quy tắc:
+
+- Trường tự đặt **không** nằm trong `permitted_fields()`, nên người dùng không gửi kèm được
+  — nhận việc mà gửi `assignee_id` của người khác thì bị từ chối bằng `field-not-permitted`.
+  Cũng vì thế người xử lý **không** thành vai trò giao việc: tập đó suy từ cạnh *cho đặt*
+  `assignee_id` (mục 7.2), và cạnh nhận việc không cho đặt, chỉ tự đặt
+- Tác động chạy **sau** khi mọi ràng buộc đã qua, **trước** khi ghi nhật ký: lần chuyển bị
+  từ chối không đặt gì, và cột `changes` vẫn có đủ phần "từ → sang" như mọi thay đổi khác
+- Hàm tác động trả trường chưa khai trong `sets` thì `apply_effects()` ném lỗi lập trình,
+  không lặng lẽ ghi. Và `governs ∪ sets` của mọi ràng buộc phải nằm trong biên ngoài
+  `CHANGEABLE_FIELDS` — kiểm lúc nạp mô-đun như trước
 
 Còn một cách diễn đạt thứ ba, đặt ở tầng thấp nhất: **khóa ngoại và chỉ mục duy nhất
 từng phần** trong lược đồ — xem mục 5.2. Mỗi tầng bắt một loại sai khác nhau, và tầng
@@ -701,9 +758,16 @@ Hệ quả kiểm chứng được: #78 gắn `set-request-type` thêm vào cạ
 diện nào.
 
 Ranh giới giống hệt ranh giới của trạng thái: `frontend/lib/truong.ts` giữ nhãn hiển
-thị và nguồn danh mục của bốn trường quyết định, kèm phương án lùi cho trường lạ. Bốn
-trường đó là lược đồ của hồ sơ chứ không phải cấu hình nghiệp vụ, nên một bảng nhỏ ở đây
-không phải bản sao của bộ quy tắc.
+thị và nguồn danh mục của bốn trường quyết định và hai trường nội dung, kèm phương án lùi
+cho trường lạ. Các trường đó là lược đồ của hồ sơ chứ không phải cấu hình nghiệp vụ, nên
+một bảng nhỏ ở đây không phải bản sao của bộ quy tắc.
+
+**Từ #127, cổng người gửi cũng dựng ô nhập từ `fields`.** Cạnh *Sửa nội dung* cho đặt tiêu
+đề, mô tả, loại yêu cầu, nên bảng thao tác của người gửi hiện ba ô điền sẵn nội dung đang
+có — cùng một thành phần ô nhập với buồng lái. Đọc biểu mẫu theo đúng loại ô đã vẽ
+(`frontend/lib/bieu-mau.ts`): ô chọn để trống nghĩa là chưa chọn, nên bỏ qua; ô chữ để trống
+nghĩa là xóa, nên gửi `null`. Loại ô tra từ cùng bảng `truong.ts` quyết định vẽ ô chọn hay
+ô chữ, nên cách đọc không lệch được với cách vẽ.
 
 **Hai loại quyền, không trộn.** Buồng lái gác bằng vai trò ở cửa — `require_roles` trong
 `backend/app/workflow/coordination.py` — nhưng đó là quyền **nhìn thấy hồ sơ**, không phải

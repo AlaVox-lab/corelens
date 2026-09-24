@@ -54,9 +54,14 @@ export type CanhDiDuoc = {
    */
   note_label: string | null;
   /**
-   * Trường mà cạnh này cho đặt, từ ràng buộc gắn trên cạnh (#78). Buồng lái dựng ô
-   * nhập từ đây, cùng lý do nó dựng nút bấm từ danh sách cạnh. Cạnh của người gửi
-   * luôn cho danh sách rỗng.
+   * Cạnh tự trỏ: đổi hồ sơ mà giữ nguyên trạng thái — nhận việc về mình, sửa nội dung
+   * (ADR-0005). Giao diện nói "giữ nguyên trạng thái" thay cho "chuyển sang".
+   */
+  keeps_state: boolean;
+  /**
+   * Trường mà cạnh này cho đặt, từ ràng buộc gắn trên cạnh (#78). Giao diện dựng ô
+   * nhập từ đây, cùng lý do nó dựng nút bấm từ danh sách cạnh. Cạnh của người gửi chỉ
+   * có trường ở thao tác sửa nội dung (#127).
    */
   fields: string[];
 };
