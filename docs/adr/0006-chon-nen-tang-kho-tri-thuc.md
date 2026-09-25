@@ -1,0 +1,177 @@
+# ADR-0006: Nền tảng kho tri thức cho không gian H
+
+| Mục | Giá trị |
+|---|---|
+| Trạng thái | Đề xuất |
+| Ngày | 2026-09-25 |
+| Không gian kiến trúc | `H` |
+| Issue liên quan | #46 |
+| Người quyết định | Navigator (`AlaVox-lab`) và giảng viên hướng dẫn chưa chốt |
+
+## Bối cảnh
+
+Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn tự giải quyết trước khi gửi yêu cầu. Về sau, tầng `I` cần lấy nội dung wiki qua API để lập chỉ mục và gợi ý câu trả lời.
+
+Đây là thành phần lắp ghép, phải chạy như dịch vụ độc lập và không được sửa mã nguồn nền tảng. Các ràng buộc chính là:
+
+- Giấy phép của mã nguồn và ảnh Docker phải được kiểm tra tận gốc và thuộc danh sách OSI.
+- Phải hỗ trợ đăng nhập một lần qua Keycloak `26.7.3`.
+- Phải có API lấy nội dung cho việc lập chỉ mục.
+- Phải có cách dựng bằng container và mức tài nguyên phù hợp với cụm hiện tại.
+- Không được đưa mã hoặc tệp dựng thử của ứng viên vào kho DX-OS Lab.
+
+## Các phương án đã cân nhắc
+
+### Phương án A — Wiki.js `2.5.315`
+
+| Mục | Nội dung |
+|---|---|
+| Giấy phép | AGPL-3.0 |
+| Được OSI công nhận | Có |
+| Tương thích với MIT | Có khi chạy như dịch vụ độc lập, không nhúng mã AGPL |
+| Tài nguyên khi chạy | Wiki.js `67.54 MiB`; PostgreSQL `53.02 MiB`, đo thật |
+| Khả năng đóng gói bằng container | Ảnh `requarks/wiki:2.5`, dựng thật thành công |
+| Chất lượng tài liệu | Có tài liệu Docker, OIDC và GraphQL API |
+| Mức độ hoạt động của dự án | Bản phát hành `v2.5.315` ngày 2026-09-21 |
+| Độ khó tích hợp | Thấp đến vừa; OIDC hoạt động sau khi cấu hình đúng hai địa chỉ và cấp nhóm |
+
+**Ưu điểm**
+
+- Đã dựng thật trong project Compose riêng `thu46` với cổng `3100`.
+- Đăng nhập `an.nguyen / matkhau123` qua Keycloak thành công.
+- GraphQL tạo được ba trang và đọc lại được danh sách cùng nội dung trang.
+- API và OIDC phù hợp trực tiếp với hai nhu cầu của issue.
+
+**Nhược điểm**
+
+- AGPL-3.0 là copyleft mạnh hơn MIT; phải giữ ranh giới dịch vụ độc lập và không nhúng mã.
+- Cần cấp nhóm Wiki.js cho người dùng mới; bật tự đăng ký một mình chưa đủ quyền xem nội dung.
+- Có PostgreSQL riêng trong cụm dịch vụ.
+
+### Phương án B — BookStack `v26.09`
+
+| Mục | Nội dung |
+|---|---|
+| Giấy phép | MIT ở mã nguồn BookStack; kho ảnh LinuxServer có LICENSE riêng cho lớp đóng gói |
+| Được OSI công nhận | Có; MIT và giấy phép OSI của lớp đóng gói |
+| Tương thích với MIT | Có |
+| Tài nguyên khi chạy | Chưa đo |
+| Khả năng đóng gói bằng container | Ảnh `lscr.io/linuxserver/bookstack` |
+| Chất lượng tài liệu | Tốt; có hướng dẫn Docker và cấu hình ứng dụng |
+| Mức độ hoạt động của dự án | Bản phát hành `v26.09` ngày 2026-09-24 |
+| Độ khó tích hợp | Vừa; ảnh yêu cầu MariaDB và chưa được dựng trong issue này |
+
+**Ưu điểm**
+
+- Giấy phép ứng dụng dễ dãi, phù hợp với MIT của sản phẩm.
+- Giao diện tài liệu và phân cấp nội dung phù hợp wiki nội bộ.
+
+**Nhược điểm**
+
+- Chưa có số đo tài nguyên hoặc phép kiểm SSO/API trong khảo sát này.
+- Cần thêm MariaDB và phải kiểm tra chi phí bộ nhớ của cả ứng dụng lẫn cơ sở dữ liệu.
+- Nguồn chính đã chuyển sang Codeberg, làm quy trình kiểm phiên bản khác với GitHub.
+
+### Phương án C — DokuWiki `release-2026-07-14c`
+
+| Mục | Nội dung |
+|---|---|
+| Giấy phép | GPL-2.0 ở mã nguồn DokuWiki; kho ảnh LinuxServer có LICENSE riêng cho lớp đóng gói |
+| Được OSI công nhận | Có; GPL-2.0 và giấy phép OSI của lớp đóng gói |
+| Tương thích với MIT | Chỉ dùng an toàn như dịch vụ độc lập; không nhúng mã GPL |
+| Tài nguyên khi chạy | Chưa đo |
+| Khả năng đóng gói bằng container | Ảnh `lscr.io/linuxserver/dokuwiki` |
+| Chất lượng tài liệu | Tốt cho cài đặt và vận hành cơ bản |
+| Mức độ hoạt động của dự án | Bản phát hành `release-2026-07-14c` ngày 2026-09-02 |
+| Độ khó tích hợp | Vừa đến cao; OIDC và API phụ thuộc connector/plugin cần kiểm chứng |
+
+**Ưu điểm**
+
+- Mô hình đơn giản, không cần cơ sở dữ liệu riêng theo ảnh Docker.
+- Có hệ thống plugin và connector phong phú.
+
+**Nhược điểm**
+
+- Chưa dựng thử, chưa đo bộ nhớ và chưa kiểm chứng OIDC/API trong issue này.
+- Tích hợp cần thêm plugin, làm tăng rủi ro tương thích và vận hành.
+- GPL-2.0 yêu cầu giữ ranh giới dịch vụ độc lập nếu có dùng mã nền tảng.
+
+### Phương án D — Outline `v1.10.1`
+
+| Mục | Nội dung |
+|---|---|
+| Giấy phép | BSL 1.1 ở mã nguồn và ảnh Docker |
+| Được OSI công nhận | **Không** |
+| Tương thích với MIT | Không đạt tiêu chí giấy phép của dự án |
+| Tài nguyên khi chạy | Chưa đo |
+| Khả năng đóng gói bằng container | Ảnh `outlinewiki/outline` |
+| Chất lượng tài liệu | Tốt; có API REST chính thức |
+| Mức độ hoạt động của dự án | Bản phát hành `v1.10.1` ngày 2026-09-09 |
+| Độ khó tích hợp | Vừa; có API nhưng không được xem xét tiếp vì giấy phép |
+
+**Ưu điểm**
+
+- API REST rõ ràng và phù hợp lập chỉ mục.
+- Giao diện cộng tác tốt cho kho tri thức.
+
+**Nhược điểm**
+
+- BSL 1.1 không nằm trong danh sách giấy phép OSI.
+- Bị loại dù có khả năng kỹ thuật phù hợp; không được chọn làm thành phần của sản phẩm dự thi.
+
+## Quyết định
+
+Đề xuất chọn **Wiki.js `2.5.315`** làm nền tảng kho tri thức cho không gian `H`, chạy như một dịch vụ độc lập và giao tiếp với DX-OS Lab qua OIDC/HTTP.
+
+Đây chưa phải quyết định đã chấp nhận. Navigator và giảng viên cần xem xét trước khi đổi trạng thái ADR.
+
+## Lý do
+
+Wiki.js là ứng viên duy nhất đã được dựng và đo trong issue này. Cấu hình OIDC với Keycloak hoạt động sau khi tách đúng địa chỉ trình duyệt và địa chỉ container. GraphQL API tạo được ba trang và trả nội dung trang qua `pages.single`, nên đáp ứng trực tiếp yêu cầu chuẩn bị dữ liệu cho tầng `I`.
+
+AGPL-3.0 là giấy phép OSI nhưng có copyleft mạnh. Ranh giới được đề xuất là chạy Wiki.js như dịch vụ độc lập, không nhúng thư viện hoặc sao chép mã vào backend/frontend MIT. Đây là cách tích hợp được nêu rõ trong [AGPL-3.0](https://opensource.org/license/agpl-3.0/) và phù hợp kiến trúc Open-Core.
+
+BookStack là phương án lùi đáng xem xét nếu nhóm ưu tiên giấy phép MIT và chấp nhận thêm MariaDB, nhưng issue này chưa có phép đo để so sánh công bằng. DokuWiki có footprint tiềm năng nhỏ hơn nhưng cần kiểm chứng connector OIDC và API. Outline bị loại dứt khoát vì BSL 1.1 không được OSI công nhận.
+
+## Cách tích hợp
+
+Chạy Wiki.js như một dịch vụ độc lập trong cụm triển khai, không nhúng mã Wiki.js vào mã nguồn DX-OS Lab.
+
+- Người dùng đăng nhập qua client OIDC của Wiki.js trong Keycloak.
+- Trình duyệt dùng địa chỉ Keycloak có thể truy cập là `http://localhost:8080` trong môi trường thử.
+- Wiki.js gọi token và UserInfo từ container qua `http://host.docker.internal:8080`.
+- Tầng `I` lấy nội dung qua GraphQL `/graphql` bằng API token có scope tối thiểu cần thiết.
+- API token không lưu trong kho, không ghi vào tài liệu, và phải thu hồi khi kết thúc phép thử.
+
+Nếu dùng bản triển khai AGPL thật, cần cung cấp thông báo và mã nguồn tương ứng theo nghĩa vụ của AGPL; không dùng Wiki.js như thư viện nhúng.
+
+## Hệ quả
+
+**Điều gì trở nên dễ hơn**
+
+- Có OIDC và API đã kiểm chứng để nối vào Keycloak và tầng `I`.
+- Có thể thay đổi nội dung wiki mà không sửa mã ứng dụng.
+- Mức đo Wiki.js cộng PostgreSQL của cụm thử là `120.56 MiB`, có thể cộng vào ngân sách hệ thống.
+
+**Điều gì trở nên khó hơn**
+
+- Phải duy trì dịch vụ AGPL độc lập và không nhúng mã nền tảng.
+- Phải quản lý quyền nhóm Wiki.js, không chỉ ánh xạ danh tính từ Keycloak.
+- Cần thiết kế lưu trữ dữ liệu, backup và giới hạn tài nguyên khi tích hợp thật.
+
+**Việc phải làm tiếp sau quyết định này**
+
+- [ ] Navigator và giảng viên chấp nhận hoặc yêu cầu sửa ADR.
+- [ ] Nếu chấp nhận, cập nhật `docs/ARCHITECTURE.md` mục 3.
+- [ ] Nếu chấp nhận, cập nhật `docs/dependencies.md` với Wiki.js, AGPL-3.0 và ranh giới dịch vụ.
+- [ ] Tạo issue riêng cho tích hợp Wiki.js vào Compose chính; không tích hợp trong #46.
+- [ ] Chốt chính sách cấp nhóm và quyền đọc/ghi từ dữ liệu cấu hình.
+- [ ] Đo lại tổng bộ nhớ khi nền tảng được đưa vào cụm thật.
+
+## Ghi chú
+
+- Cụm thử nằm ngoài kho tại `D:\thu-46\`, project Compose là `thu46`.
+- Wiki.js chạy thực tế phiên bản `2.5.315`; bộ nhớ đo bằng `docker stats --no-stream`.
+- SSO dùng tài khoản mẫu `an.nguyen / matkhau123`, không dùng tài khoản thật.
+- API token thử đã được thu hồi; cụm thử đã dọn bằng `docker compose -p thu46 ... down -v`.
+- Tài liệu so sánh chi tiết và toàn bộ nguồn tham khảo nằm trong [knowledge-base-survey.md](../knowledge-base-survey.md).
