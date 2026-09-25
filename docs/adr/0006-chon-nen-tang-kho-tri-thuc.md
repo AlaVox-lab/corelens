@@ -28,7 +28,7 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 |---|---|
 | Giấy phép | AGPL-3.0 |
 | Được OSI công nhận | Có |
-| Tương thích với MIT | Có khi chạy như dịch vụ độc lập, không nhúng mã AGPL |
+| Tương thích với MIT | Có điều kiện — chạy như dịch vụ độc lập… |
 | Tài nguyên khi chạy | Wiki.js `67.54 MiB`; PostgreSQL `53.02 MiB`, đo thật |
 | Khả năng đóng gói bằng container | Ảnh `requarks/wiki:2.5`, dựng thật thành công |
 | Chất lượng tài liệu | Có tài liệu Docker, OIDC và GraphQL API |
@@ -40,6 +40,7 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 - Đã dựng thật trong project Compose riêng `thu46` với cổng `3100`.
 - Đăng nhập `an.nguyen / matkhau123` qua Keycloak thành công.
 - GraphQL tạo được ba trang và đọc lại được danh sách cùng nội dung trang.
+- Đã xác minh hỗ trợ tiếng Việt có dấu đầy đủ qua GraphQL (`pages.create`, `pages.single`, `pages.search` từ khóa "mật khẩu") và có gói locale `vi`.
 - API và OIDC phù hợp trực tiếp với hai nhu cầu của issue.
 
 **Nhược điểm**
@@ -78,7 +79,7 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 |---|---|
 | Giấy phép | GPL-2.0 ở mã nguồn DokuWiki; kho ảnh LinuxServer có LICENSE riêng cho lớp đóng gói |
 | Được OSI công nhận | Có; GPL-2.0 và giấy phép OSI của lớp đóng gói |
-| Tương thích với MIT | Chỉ dùng an toàn như dịch vụ độc lập; không nhúng mã GPL |
+| Tương thích với MIT | Có điều kiện — chạy như dịch vụ độc lập… |
 | Tài nguyên khi chạy | Chưa đo |
 | Khả năng đóng gói bằng container | Ảnh `lscr.io/linuxserver/dokuwiki` |
 | Chất lượng tài liệu | Tốt cho cài đặt và vận hành cơ bản |
@@ -127,23 +128,26 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 
 ## Lý do
 
-Wiki.js là ứng viên duy nhất đã được dựng và đo trong issue này. Cấu hình OIDC với Keycloak hoạt động sau khi tách đúng địa chỉ trình duyệt và địa chỉ container. GraphQL API tạo được ba trang và trả nội dung trang qua `pages.single`, nên đáp ứng trực tiếp yêu cầu chuẩn bị dữ liệu cho tầng `I`.
+Wiki.js là ứng viên duy nhất đã được dựng và đo trong issue này. Cấu hình OIDC với Keycloak hoạt động sau khi tách đúng địa chỉ trình duyệt và địa chỉ container. GraphQL API tạo được ba trang, đọc lại nguyên văn tiếng Việt có dấu qua `pages.single`, và tìm kiếm tiếng Việt thành công qua `pages.search`, nên đáp ứng trực tiếp yêu cầu chuẩn bị dữ liệu cho tầng `I`.
 
-AGPL-3.0 là giấy phép OSI nhưng có copyleft mạnh. Ranh giới được đề xuất là chạy Wiki.js như dịch vụ độc lập, không nhúng thư viện hoặc sao chép mã vào backend/frontend MIT. Đây là cách tích hợp được nêu rõ trong [AGPL-3.0](https://opensource.org/license/agpl-3.0/) và phù hợp kiến trúc Open-Core.
+AGPL-3.0 là giấy phép OSI có copyleft mạnh. Căn cứ pháp lý cụ thể để việc sử dụng Wiki.js không ảnh hưởng đến mã nguồn MIT của DX-OS Lab theo [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) gồm:
+- **Điều 5, đoạn cuối (*aggregate*)**: Wiki.js và sản phẩm DX-OS Lab là các tác phẩm riêng biệt, không kết hợp thành một chương trình lớn hơn, chỉ tương tác qua giao thức mạng HTTP/OIDC. Do đó, điều khoản copyleft của AGPL-3.0 không lan sang mã nguồn MIT của dự án.
+- **Điều 13 (Tương tác mạng)**: Nghĩa vụ cung cấp mã nguồn cho người dùng qua mạng chỉ phát sinh khi có **sửa đổi** Wiki.js. Khi sử dụng nguyên bản ảnh chính thức `requarks/wiki:2.5` và không sửa đổi mã nền tảng, dự án chỉ cần giữ nguyên các thông báo bản quyền và giấy phép theo quy định.
 
 BookStack là phương án lùi đáng xem xét nếu nhóm ưu tiên giấy phép MIT và chấp nhận thêm MariaDB, nhưng issue này chưa có phép đo để so sánh công bằng. DokuWiki có footprint tiềm năng nhỏ hơn nhưng cần kiểm chứng connector OIDC và API. Outline bị loại dứt khoát vì BSL 1.1 không được OSI công nhận.
 
 ## Cách tích hợp
 
-Chạy Wiki.js như một dịch vụ độc lập trong cụm triển khai, không nhúng mã Wiki.js vào mã nguồn DX-OS Lab.
+Chạy Wiki.js như một dịch vụ độc lập trong cụm triển khai, chỉ giao tiếp qua OIDC và HTTP/GraphQL, không nhúng mã Wiki.js vào mã nguồn DX-OS Lab.
 
+Căn cứ theo điều 5 (về tác phẩm riêng biệt *aggregate*) và điều 13 (về tương tác mạng) của [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html):
+- Giữ ranh giới dịch vụ độc lập, sử dụng nguyên bản ảnh Docker chính thức `requarks/wiki:2.5` và không sửa đổi mã nguồn nền tảng.
 - Người dùng đăng nhập qua client OIDC của Wiki.js trong Keycloak.
 - Trình duyệt dùng địa chỉ Keycloak có thể truy cập là `http://localhost:8080` trong môi trường thử.
 - Wiki.js gọi token và UserInfo từ container qua `http://host.docker.internal:8080`.
 - Tầng `I` lấy nội dung qua GraphQL `/graphql` bằng API token có scope tối thiểu cần thiết.
 - API token không lưu trong kho, không ghi vào tài liệu, và phải thu hồi khi kết thúc phép thử.
-
-Nếu dùng bản triển khai AGPL thật, cần cung cấp thông báo và mã nguồn tương ứng theo nghĩa vụ của AGPL; không dùng Wiki.js như thư viện nhúng.
+- Giữ nguyên thông báo bản quyền và giấy phép của Wiki.js trong dịch vụ độc lập.
 
 ## Hệ quả
 

@@ -16,6 +16,7 @@ Các tiêu chí được dùng:
 4. Chạy được như dịch vụ độc lập bằng Docker, không sửa mã nguồn nền tảng.
 5. Tài nguyên và độ khó vận hành phù hợp với ngân sách bộ nhớ toàn cụm.
 6. Có khả năng quản lý nội dung, phân quyền và cấu trúc trang đủ cho wiki nội bộ.
+7. Hỗ trợ tiếng Việt có dấu trong lưu trữ, đọc lại nguyên văn qua API, tìm kiếm nội dung và giao diện quản trị hệ thống.
 
 Giấy phép AGPL vẫn được xem xét ở dạng dịch vụ độc lập. Không nhúng mã AGPL vào mã MIT của dự án và không sửa mã nền tảng.
 
@@ -25,12 +26,32 @@ Phiên bản mới nhất được đọc từ GitHub Releases ngày 2026-09-25.
 
 | Ứng viên | Phiên bản mới nhất | Giấy phép mã nguồn | Kiểm trong kho mã | Kiểm trong ảnh Docker | OSI | Kết luận giấy phép |
 |---|---|---|---|---|---|---|
-| **Wiki.js** | `v2.5.315` | AGPL-3.0 | [LICENSE của Wiki.js](https://github.com/requarks/wiki/blob/main/LICENSE) ghi GNU Affero GPL v3 | [Ảnh `requarks/wiki`](https://hub.docker.com/r/requarks/wiki) ghi AGPLv3 và liên kết về LICENSE | Có, [AGPL-3.0](https://opensource.org/license/agpl-3.0/) | Đạt khi chạy độc lập qua HTTP/OIDC |
-| **BookStack** | `v26.09` | MIT | [LICENSE của BookStack](https://codeberg.org/bookstack/bookstack/src/branch/development/LICENSE.md) | [Kho ảnh LinuxServer](https://github.com/linuxserver/docker-bookstack) có tệp LICENSE; ảnh `lscr.io/linuxserver/bookstack` đóng gói ứng dụng và được phát hành như OSS | Có; MIT và GPL-3.0 của kho đóng gói đều nằm trong [danh sách OSI](https://opensource.org/licenses) | Đạt; cần ghi rõ ranh giới giữa ứng dụng và ảnh đóng gói |
-| **DokuWiki** | `release-2026-07-14c` | GPL-2.0 | [LICENSE của DokuWiki](https://github.com/dokuwiki/dokuwiki/blob/master/LICENSE) | [Kho ảnh LinuxServer](https://github.com/linuxserver/docker-dokuwiki) có tệp LICENSE; ảnh `lscr.io/linuxserver/dokuwiki` dẫn về kho đóng gói | Có; GPL-2.0 và GPL-3.0 đều nằm trong [danh sách OSI](https://opensource.org/licenses) | Đạt về giấy phép; tính năng OIDC/API cần plugin hoặc cấu hình thêm |
-| **Outline** | `v1.10.1` | BSL 1.1 | [LICENSE của Outline](https://github.com/outline/outline/blob/main/LICENSE.md) ghi BSL 1.1 | [Ảnh `outlinewiki/outline`](https://hub.docker.com/r/outlinewiki/outline) ghi lại giấy phép BSL 1.1 | **Không** | **Loại**: BSL 1.1 không nằm trong danh sách OSI, không đạt tiêu chí giấy phép của dự án |
+| **Wiki.js** | `v2.5.315` | AGPL-3.0 | [LICENSE của Wiki.js](https://github.com/requarks/wiki/blob/main/LICENSE) (Dòng 1: `GNU AFFERO GENERAL PUBLIC LICENSE`) | [Ảnh `requarks/wiki`](https://hub.docker.com/r/requarks/wiki) ghi AGPLv3 và chứa tệp `/wiki/LICENSE` | Có, [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) | Đạt khi chạy độc lập qua HTTP/OIDC |
+| **BookStack** | `v26.09` | MIT | [LICENSE của BookStack](https://codeberg.org/bookstack/bookstack/src/branch/development/LICENSE) (Dòng 1: `The MIT License (MIT)`) | [Kho ảnh LinuxServer](https://github.com/linuxserver/docker-bookstack) có tệp LICENSE; ảnh `lscr.io/linuxserver/bookstack` đóng gói ứng dụng và được phát hành như OSS | Có; MIT và GPL-3.0 của kho đóng gói đều nằm trong [danh sách OSI](https://opensource.org/licenses) | Đạt; cần ghi rõ ranh giới giữa ứng dụng và ảnh đóng gói |
+| **DokuWiki** | `release-2026-07-14c` | GPL-2.0 | [COPYING của DokuWiki](https://github.com/dokuwiki/dokuwiki/blob/master/COPYING) (Dòng 1: `GNU GENERAL PUBLIC LICENSE`) | [Kho ảnh LinuxServer](https://github.com/linuxserver/docker-dokuwiki) có tệp LICENSE; ảnh `lscr.io/linuxserver/dokuwiki` dẫn về kho đóng gói | Có; GPL-2.0 và GPL-3.0 đều nằm trong [danh sách OSI](https://opensource.org/licenses) | Đạt về giấy phép; tính năng OIDC/API cần plugin hoặc cấu hình thêm |
+| **Outline** | `v1.10.1` | BSL 1.1 | [LICENSE của Outline](https://github.com/outline/outline/blob/main/LICENSE) (Dòng 1: `Business Source License 1.1`) | [Ảnh `outlinewiki/outline`](https://hub.docker.com/r/outlinewiki/outline) ghi lại giấy phép BSL 1.1 | **Không** | **Loại**: BSL 1.1 không nằm trong danh sách OSI, không đạt tiêu chí giấy phép của dự án |
 
 Outline vẫn giữ trong bảng để ghi lại phương án bị loại, tránh đề xuất lại sau này. Không coi một nhãn “open source” trên trang sản phẩm là đủ nếu tệp LICENSE của mã nguồn hoặc ảnh Docker không đạt.
+
+### 2.1. Kiểm tra giấy phép bên trong ảnh Docker của Wiki.js
+
+Đã kiểm tra trực tiếp tệp giấy phép và nhãn (label) bên trong ảnh Docker `requarks/wiki:2.5`:
+
+1. Đọc tệp `/wiki/LICENSE` bên trong container:
+   ```bash
+   docker run --rm --entrypoint sh requarks/wiki:2.5 -c "ls /wiki; head -3 /wiki/LICENSE"
+   ```
+   Kết quả: tệp `/wiki/LICENSE` tồn tại trong thư mục ứng dụng; 3 dòng đầu của tệp là:
+   ```text
+                       GNU AFFERO GENERAL PUBLIC LICENSE
+                          Version 3, 19 November 2007
+   ```
+
+2. Kiểm tra nhãn siêu dữ liệu của ảnh Docker:
+   ```bash
+   docker inspect --format "{{json .Config.Labels}}" requarks/wiki:2.5
+   ```
+   Kết quả: `{"maintainer":"requarks.io"}`.
 
 ## 3. Kết quả dựng thử Wiki.js
 
@@ -116,6 +137,33 @@ API token đã được thu hồi trước khi dọn cụm thử. Token, dữ li
 
 Đây là một ảnh chụp đo trên máy phát triển, không phải giới hạn cố định của nền tảng.
 
+### 3.5. Kiểm thử hỗ trợ Tiếng Việt
+
+Phép thử kiểm tra khả năng lưu trữ, đọc lại nguyên văn có dấu qua GraphQL API và tìm kiếm tiếng Việt:
+
+1. **Tạo trang có dấu qua GraphQL API**: Gửi yêu cầu `pages.create` với tiêu đề `"Hướng dẫn đổi mật khẩu"` và nội dung:
+   ```markdown
+   # Hướng dẫn đổi mật khẩu
+
+   Đây là nội dung hướng dẫn đổi mật khẩu cho người dùng hệ thống DX-OS Lab.
+   Quy trình thực hiện gồm các bước xác thực qua Keycloak và cập nhật mật khẩu mới.
+   ```
+   Trong PowerShell, thân yêu cầu JSON phải gửi dạng mảng byte UTF-8 (`[System.Text.Encoding]::UTF8.GetBytes($json)`) kèm header `Content-Type: application/json; charset=utf-8` để tránh ký tự bị hỏng trước khi tới Wiki.js.
+
+2. **Đọc lại bằng `pages.single`**: Truy vấn `pages.single(id: 2)` trả về tiêu đề và nội dung có dấu khớp **NGUYÊN VĂN** với dữ liệu đã gửi, không bị lỗi font hay mất dấu:
+   ```json
+   {
+     "id": 2,
+     "path": "huong-dan-doi-mat-khau",
+     "title": "Hướng dẫn đổi mật khẩu",
+     "content": "# Hướng dẫn đổi mật khẩu\n\nĐây là nội dung hướng dẫn đổi mật khẩu cho người dùng hệ thống DX-OS Lab.\nQuy trình thực hiện gồm các bước xác thực qua Keycloak và cập nhật mật khẩu mới."
+   }
+   ```
+
+3. **Tìm kiếm tiếng Việt có dấu**: Thử tìm kiếm từ khóa `"mật khẩu"` qua GraphQL API `pages.search(query: "mật khẩu")`. Kết quả tìm kiếm tìm thấy trang `"Hướng dẫn đổi mật khẩu"` (`path: huong-dan-doi-mat-khau`) với `totalHits: 2`.
+
+4. **Kiểm tra ngôn ngữ hệ thống**: Truy vấn GraphQL `localization.locales` cho thấy hệ thống có sẵn gói ngôn ngữ Tiếng Việt (`code: "vi"`, `name: "Vietnamese"`, `nativeName: "Tiếng Việt"`, độ sẵn sàng 100%).
+
 ## 4. So sánh
 
 | Tiêu chí | Wiki.js | BookStack | DokuWiki | Outline |
@@ -125,15 +173,16 @@ API token đã được thu hồi trước khi dọn cụm thử. Token, dữ li
 | Docker | Ảnh chính thức `requarks/wiki` | `lscr.io/linuxserver/bookstack` | `lscr.io/linuxserver/dokuwiki` | `outlinewiki/outline` |
 | SSO/OIDC | Có Generic OpenID Connect; đã thử với Keycloak | Có cơ chế OIDC theo tài liệu; chưa dựng thử | Có connector/plugin xác thực; chưa dựng thử OIDC | Có tích hợp đăng nhập, nhưng không xét tiếp vì giấy phép |
 | API nội dung | GraphQL; đã tạo và đọc ba trang | Có API/khả năng tích hợp theo tài liệu; chưa đo | Có thể mở rộng qua plugin/API; chưa đo | REST API chính thức; chưa đo |
+| Hỗ trợ tiếng Việt | Đạt: Tạo/đọc lại nguyên văn có dấu qua GraphQL, tìm kiếm "mật khẩu" thành công, Locale có Tiếng Việt (`vi`, 100%) | Chưa kiểm | Chưa kiểm | Chưa kiểm |
 | Bộ nhớ | Wiki `67.54 MiB`, PostgreSQL `53.02 MiB` đo thật | Chưa đo | Chưa đo | Chưa đo |
 | Dựng thử | Đạt, project `thu46`, cổng `3100` | Chưa dựng | Chưa dựng | Chưa dựng |
 | Rủi ro tích hợp | AGPL yêu cầu giữ dịch vụ độc lập; OIDC và GraphQL rõ ràng | Cần MariaDB và thêm dịch vụ lưu trữ dữ liệu | Không có database mặc định nhưng phụ thuộc plugin cho OIDC/API | Không đạt giấy phép, loại khỏi lựa chọn |
 
-Các ô “chưa đo” không phải ước lượng. Chưa dựng ứng viên thì không ghi số liệu tài nguyên như dữ kiện.
+Các ô “chưa đo” và “chưa kiểm” không phải ước lượng. Chưa dựng ứng viên thì không ghi số liệu tài nguyên hay kết quả kiểm thử như dữ kiện.
 
 ## 5. Đề xuất và nguồn
 
-Đề xuất chọn **Wiki.js `2.5.315`** cho kho tri thức, triển khai như một dịch vụ độc lập và giao tiếp với hệ thống qua OIDC/HTTP. Đây là ứng viên duy nhất đã được dựng thật trong khảo sát, có kết quả SSO với Keycloak và có API GraphQL đọc được nội dung trang.
+Đề xuất chọn **Wiki.js `2.5.315`** cho kho tri thức, triển khai như một dịch vụ độc lập và giao tiếp với hệ thống qua OIDC/HTTP. Đây là ứng viên duy nhất đã được dựng thật trong khảo sát, có kết quả SSO với Keycloak, hỗ trợ tiếng Việt có dấu đầy đủ và có API GraphQL đọc được nội dung trang.
 
 Lý do chọn:
 
@@ -150,14 +199,15 @@ Nguồn chính:
 - [Wiki.js LICENSE](https://github.com/requarks/wiki/blob/main/LICENSE)
 - [Wiki.js Docker Hub](https://hub.docker.com/r/requarks/wiki)
 - [Wiki.js API](https://docs.requarks.io/dev/api)
-- [BookStack LICENSE](https://codeberg.org/bookstack/bookstack/src/branch/development/LICENSE.md)
+- [BookStack LICENSE](https://codeberg.org/bookstack/bookstack/src/branch/development/LICENSE)
 - [BookStack Docker image repository](https://github.com/linuxserver/docker-bookstack)
-- [DokuWiki LICENSE](https://github.com/dokuwiki/dokuwiki/blob/master/LICENSE)
+- [DokuWiki COPYING](https://github.com/dokuwiki/dokuwiki/blob/master/COPYING)
 - [DokuWiki Docker image repository](https://github.com/linuxserver/docker-dokuwiki)
-- [Outline LICENSE](https://github.com/outline/outline/blob/main/LICENSE.md)
+- [Outline LICENSE](https://github.com/outline/outline/blob/main/LICENSE)
 - [Outline Docker Hub](https://hub.docker.com/r/outlinewiki/outline)
 - [Outline API](https://www.getoutline.com/developers)
 - [Danh sách giấy phép OSI](https://opensource.org/licenses)
+- [Giấy phép GNU AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)
 
 ## Dọn dẹp
 
@@ -168,3 +218,4 @@ docker compose -p thu46 -f D:\thu-46\compose.yml down -v
 ```
 
 Cụm chính `dx-os-lab` không bị dừng hoặc xóa dữ liệu trong quá trình khảo sát.
+
