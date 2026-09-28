@@ -101,7 +101,9 @@ sử commit.
 
 Luồng thủ công đã chạy đầu-cuối cho cả bốn vai trò trên giao diện thật: người gửi gửi
 và theo dõi yêu cầu, điều phối viên phân loại và định tuyến, trưởng phòng nhận việc và
-giao người, người xử lý làm và hỏi thêm khi cần. Engine máy trạng thái tự viết chạy ràng
+giao người, người xử lý làm và hỏi thêm khi cần. Người gửi sửa được nội dung khi hồ sơ
+chưa tới phòng ban, người xử lý tự nhận việc về mình, và hai bên nhắn qua lại ngay trên
+hồ sơ. Engine máy trạng thái tự viết chạy ràng
 buộc Poka-yoke, đếm hạn SLA và tự leo thang, và ghi nhật ký sự kiện cho mọi lần chuyển
 trạng thái. Tầng `D` và `I` chưa cài đặt. Xem
 [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) để biết tiến độ và việc tiếp theo.
