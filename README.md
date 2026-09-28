@@ -332,4 +332,4 @@ Dự án phát hành theo giấy phép [MIT](LICENSE).
 
 Mọi tệp mã nguồn đều mang định danh giấy phép SPDX ở đầu tệp. Danh mục phụ thuộc kèm
 giấy phép của từng thành phần được ghi tại
-[`docs/dependencies.md`](docs/dependencies.md).
+[`docs/dependencies.md`](docs/dependencies.md)..

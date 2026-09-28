@@ -295,3 +295,4 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 Dùng các mẫu có sẵn trong mục Issues. Trước khi tạo mới, tìm xem đã có
 issue tương tự chưa. Với lỗi, cung cấp đủ các bước tái hiện và thông tin
 môi trường để người khác dựng lại được tình huống.
+
