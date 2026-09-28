@@ -14,30 +14,33 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-09-24 |
-| Phiên bản hiện tại | `v0.3.0`, cắt ngày 16/09. `main` đi trước thẻ **16 commit nội dung** — đủ điều kiện cắt `v0.4.0` |
-| Giai đoạn | **Giai đoạn 2 đang chạy** — `H` và `P` thông đầu-cuối cho **cả bốn vai trò** trên giao diện thật |
-| Mốc công việc đang chạy | Tuần 7 — Buồng lái vận hành và khảo sát Open-Core, hạn 27/09 |
+| Cập nhật lần cuối | 2026-09-28 |
+| Phiên bản hiện tại | `v0.3.0`, cắt ngày 16/09. `main` đi trước thẻ **22 commit nội dung** — 11 `feat`, 4 `fix`, 7 `docs` — đủ điều kiện cắt `v0.4.0` |
+| Giai đoạn | **Giai đoạn 2 gần khép** — `H` và `P` thông đầu-cuối cho cả bốn vai trò, đủ thao tác ngoài máy trạng thái. Còn đính kèm tệp, chỉnh hạn từng hồ sơ, thông tin liên hệ người gửi và một lượt kiểm thử tổng thể |
+| Mốc công việc đang chạy | Tuần 8 — Khép luồng thủ công và phát hành v0.4.0, hạn 04/10 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với ba màn hình: cổng người gửi, buồng lái điều phối, buồng lái phòng ban. Cụm gồm **sáu dịch vụ** |
-| Issue đang mở | **7** — #46, #47, #48, #80, #81, #101, #102 |
+| Issue đang mở | **5** — #47, #80, #101, #102, #131 |
 | Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
-| Còn chờ khảo sát | 3 — quản trị tri thức `H` (#46, đang làm), véc-tơ và LLM `I` (#47), khai phá quy trình `I` (#48, đang làm) |
-| Bộ kiểm thử tự động | **171 bài**, chạy trên PostgreSQL thật. Mọi issue từ #78 đều qua phép thử đột biến |
-| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo ngày 16/09. Chưa đo lại — hai buồng lái không thêm dịch vụ nào |
-| Số ngày còn lại tới chấm kho mã | **74 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **38 ngày** (đầu tháng 11/2026) |
+| Bản ghi chờ duyệt | **2** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`. Cả hai ở trạng thái *Đề xuất*, chờ giảng viên |
+| Còn chờ khảo sát | 1 — véc-tơ và LLM `I` (#47) |
+| Bộ kiểm thử tự động | **211 bài**, chạy trên PostgreSQL thật. Mọi issue từ #78 đều qua phép thử đột biến |
+| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo ngày 16/09. Chưa đo lại — tuần 7 không thêm dịch vụ nào |
+| Số ngày còn lại tới chấm kho mã | **70 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **34 ngày** (đầu tháng 11/2026) |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
 từ danh bạ Keycloak → người xử lý làm, hỏi thêm người gửi khi cần → quá hạn thì tự leo
-thang, có ân hạn sau khi phân công lại → người gửi xác nhận đạt hoặc mở lại. Mọi bước
-ghi nhật ký sự kiện, kèm lịch sử thay đổi của trường quyết định. Chạy được trên máy
-sạch bằng một lệnh.
+thang, có ân hạn sau khi phân công lại → người gửi xác nhận đạt hoặc mở lại. Dọc đường,
+người gửi sửa được nội dung khi hồ sơ chưa tới phòng ban, người xử lý tự nhận việc về
+mình, và hai bên nhắn qua lại trên hồ sơ — người gửi hỏi tiến độ được khi hồ sơ nằm ở
+phòng ban. Mọi bước đổi hồ sơ ghi nhật ký sự kiện, kèm lịch sử thay đổi của trường quyết
+định. Chạy được trên máy sạch bằng một lệnh.
 
-Thứ còn thiếu trong luồng thủ công: **thao tác không đổi trạng thái** — nhắn, hỏi tiến
-độ, nhận việc, sửa nội dung (#81, thiết kế đã chốt ở ADR-0005), **đính kèm tệp** (#80),
-**chỉnh hạn từng hồ sơ** (#101, chờ giảng viên). Tầng `D` và `I` chưa cài đặt.
+Thứ còn thiếu trong luồng thủ công: **đính kèm tệp** (#80), **thông tin liên hệ người gửi**
+cho nhân viên (#131), **chỉnh hạn từng hồ sơ** (#101, chờ giảng viên). Tầng `D` và `I` chưa
+cài đặt, nhưng cả hai khảo sát còn lại của giai đoạn đầu đã có bản ghi đề xuất.
 
 ---
 
@@ -355,20 +358,58 @@ cách ly; phép đột biến nào sống sót thì hoặc thêm bài, hoặc g�
 
 **Issue đã đóng**: #45, #78, #79, #82, #83, #84, #87, #94, #97, #98, #99, #100, #117
 
+### Tuần 7 (tiếp) — Thao tác ngoài máy trạng thái và hai khảo sát Open-Core
+
+**Bộ sinh nhật ký sự kiện ảo** (#124, `scripts/sinh_nhat_ky_ao.py`). Khảo sát khai phá quy
+trình cần khoảng một nghìn hồ sơ, mà bộ sinh của khảo sát #21 viết theo mô hình trước ngày
+10/09 — không có chặng phòng ban nên không có vòng lặp định tuyến sai cần tìm, và xuất ra
+tệp SQL xóa bảng nhật ký. Bộ sinh mới **đọc bộ quy tắc đang chạy** bằng một câu `SELECT`,
+đi đúng luật của engine, xuất CSV đúng các cột của bảng thật ra thư mục ngoài kho, rồi tự
+kiểm từng sự kiện với bộ quy tắc. Tỷ lệ rẽ nhánh là kịch bản thay được, không lẫn vào logic.
+
+**Khép #81 bằng hai issue con**, theo đúng phương án C của ADR-0005:
+
+- **Nhận việc về mình và sửa nội dung** (#127) — hai thao tác đổi hồ sơ mà giữ nguyên
+  trạng thái, nên là **cạnh tự trỏ** đi qua cửa chuyển trạng thái để nhật ký giữ giá trị
+  cũ. Lược đồ gỡ ràng buộc cấm cạnh tự trỏ nhưng giữ `UNIQUE`, nên mỗi trạng thái có tối
+  đa một cạnh như vậy; phép kiểm đồ thị thứ bảy cấm cạnh tự trỏ ở trạng thái chờ người
+  khác. Sửa ở *Đã phân loại* đưa hồ sơ về *Đã gửi*, vì phân loại cũ dựa trên nội dung cũ
+- **Lời nhắn hai chiều và hỏi tiến độ** (#128) — thao tác không đổi hồ sơ thì **không phải
+  cạnh**. Lời nhắn nằm ở bảng `case_messages` chỉ ghi thêm, không vào nhật ký sự kiện,
+  không chạm dòng hồ sơ hay đồng hồ SLA. Loại lời nhắn khai trong dữ liệu, cùng khuôn với
+  `allowed_transitions`: giao diện dựng nút từ danh sách API trả về
+
+#127 đưa quy trình thiết kế lên **24 cạnh**. Cả hai issue đổi lược đồ khởi tạo, nên cả nhóm
+phải `down -v` hai lần.
+
+**Hai khảo sát Open-Core có bản ghi đề xuất**, cả hai chờ giảng viên:
+
+- **Kho tri thức `H`** (#46, ADR-0006) — đề xuất **Wiki.js `2.5.315`** chạy như dịch vụ
+  độc lập, đăng nhập qua Keycloak đã thử được, GraphQL tạo và đọc lại nguyên văn trang
+  tiếng Việt. Outline bị loại vì BSL 1.1 không thuộc danh sách OSI. Đây là **pull request
+  đầu tiên của thành viên** được hợp nhất (`@Senning-Dd`), qua một lượt yêu cầu sửa bốn
+  điểm — trong đó ba đường dẫn giấy phép trỏ tới trang không tồn tại
+- **Khai phá quy trình `I`** (#48, ADR-0007) — navigator tiếp quản vì máy thành viên thiếu
+  dung lượng dựng cụm. PM4Py và pm4js chạy thử trên 1.000 hồ sơ ảo: cả hai vẽ lại đúng 24
+  cạnh thiết kế và bắt đúng tám hồ sơ cài lệch có chủ đích. **Nhật ký hiện tại dùng được
+  ngay, không cần thêm trường.** Đề xuất PM4Py trong một dịch vụ khai phá tách riêng vì
+  giấy phép AGPL; pm4js là phương án lùi
+
+**Issue mới từ buổi xem demo của giảng viên**: #131 — nhân viên thấy tên người gửi nhưng
+không có cách liên hệ nhanh. Chốt làm riêng, sau #128.
+
+**Bộ kiểm thử lên 211 bài.**
+
+**Issue đã đóng**: #46, #48, #81, #124, #127, #128
+
 ---
 
 ## Đang làm
 
-| Issue | Ưu tiên | Việc | Người làm |
-|---|---|---|---|
-| #46 | P2 | Khảo sát hệ thống quản trị tri thức cho `H` | `@Senning-Dd`, navigator cùng theo — bản ghi giữ chỗ **ADR-0006** |
-| #48 | P3 | Khảo sát thư viện khai phá quy trình cho `I` | `@NguyentimAnh`, navigator cùng theo — bản ghi giữ chỗ **ADR-0007**. Dữ liệu thử sinh bằng `scripts/sinh_nhat_ky_ao.py` (#124) |
+Không có issue nào đang làm dở. Mốc Tuần 8 bắt đầu từ #131.
 
-Hai issue khảo sát là việc đầu tiên của thành viên trên kho mã: không đụng mã nguồn, sản
-phẩm là tài liệu khảo sát cộng bản ghi quyết định ở trạng thái *Đề xuất*. Bình luận giao
-việc trên từng issue ghi đủ đầu vào, các bước, đầu ra và điều kiện hoàn thành.
-
-**#81 đã chốt thiết kế** ở ADR-0005 nhưng chưa bắt đầu viết mã.
+Hai bản ghi ADR-0006 và ADR-0007 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp nhận thì
+mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và mở issue tích hợp.
 
 ---
 
@@ -376,33 +417,37 @@ việc trên từng issue ghi đủ đầu vào, các bước, đầu ra và đi
 
 ### Theo thứ tự
 
-1. **#81 — thao tác không đổi trạng thái**, theo ADR-0005. Tách thành ba issue con khi bắt
-   tay: bảng lời nhắn, nhận việc về mình, sửa nội dung trước khi tới phòng ban. Đổi lược đồ
-   khởi tạo — gỡ ràng buộc cấm cạnh tự trỏ — nên cả nhóm phải `down -v`
+1. **#131 — thông tin liên hệ người gửi** cho nhân viên mở được hồ sơ: email và số điện
+   thoại tra từ danh bạ Keycloak. Realm mẫu phải thêm số điện thoại, nên cả nhóm phải
+   `down -v`
 2. **#102 — tài liệu**: gỡ nhãn `[CHỜ XÁC NHẬN]` ở hai cạnh đã được giữ, ghi quy tắc mở lại
 3. **Lượt kiểm thử tổng thể** theo tệp kịch bản kiểm thử, gồm các điểm chỉ kiểm được bằng
-   mắt đã hẹn ở #97, #98, #79
-4. **Cắt `v0.4.0`** — đợt này có `feat`, tăng MINOR
+   mắt đã hẹn ở #97, #98, #79, cùng hai nhóm mới cho #127 và #128
+4. **Cắt `v0.4.0`** — 22 commit nội dung từ `v0.3.0`, có `feat`, tăng MINOR
 5. **#80 — đính kèm tệp**. SeaweedFS đã dựng và giới hạn kích thước đã đo ở #39
-6. **#47 — khảo sát véc-tơ và khung LLM**, sau khi #46 và #48 xong
+6. **#47 — khảo sát véc-tơ và khung LLM**. Tầng `I` chỉ tích hợp sau khi `P` và `D` ổn định
 
 ### Chờ giảng viên
 
+- **Chấp nhận ADR-0006 và ADR-0007**. Riêng ADR-0007: chấp nhận thì câu *"không nhúng thư
+  viện vào mã nguồn dự án"* ở `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3.3 và
+  `dependencies.md` phải sửa thành "chỉ trong dịch vụ tách riêng" — PM4Py là thư viện, không
+  phải ứng dụng chạy nguyên ảnh như Wiki.js
 - **#101 — điều phối viên chỉnh hạn xử lý từng hồ sơ**: ba câu hỏi ghi trong issue
+- **"Khung chat" giảng viên nhắc lúc xem demo** là trò chuyện chung không gắn hồ sơ — khác
+  lời nhắn trên hồ sơ của #128. Nếu làm thì lắp ghép, qua một issue khảo sát riêng
+- **Mọi nhân viên có vai trò người gửi không** — ảnh hưởng realm mẫu và #131
 - **Thời gian ở *Chờ bổ sung thông tin* có tính vào SLA không** — hiện không tính, là một
   cờ trong dữ liệu
-- **Người gửi có được đổi mức ưu tiên không** — ví dụ của giảng viên ở #81 có nhắc; nhóm giữ
-  ràng buộc Poka-yoke và đã báo lại
 
 ### Việc vận hành, không cần issue
 
-1. Tạo mốc *Tuần 8*, dời các issue còn mở sang
-2. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
-   từ lâu — 171 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
-3. Thêm `CODE_OF_CONDUCT.md`
-4. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
+1. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
+   từ lâu — 211 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
+2. Thêm `CODE_OF_CONDUCT.md`
+3. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
    `delete_branch_on_merge` an toàn
-5. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
+4. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
    trước để nhóm không quên
 
 ---
@@ -414,9 +459,10 @@ việc trên từng issue ghi đủ đầu vào, các bước, đầu ra và đi
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Chưa có tích hợp liên tục** | 171 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
+| **Chưa có tích hợp liên tục** | 211 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
 | **Quyết định SLA chưa được giảng viên xác nhận** | Nếu thầy muốn tính cả thời gian chờ bổ sung vào SLA thì số liệu hiện có sẽ lệch | Hiện đặt **không tính**, nhưng ghi riêng tổng thời gian dừng. Đổi ý chỉ là bật cờ `states.sla_running` trong dữ liệu khởi tạo |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 đã có ba lần như vậy: #84 đổi realm, #94 và #79 đổi lược đồ và dữ liệu khởi tạo |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 đã có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo |
+| **Máy thành viên không đủ tài nguyên dựng cụm** | #48 phải chuyển người làm: bản dựng ảnh chứa hỏng giữa chừng (`EOF`) khi ổ gần đầy — máy còn khoảng 7,5 GB trống, ước cần 15 GB. Con số 15 GB chưa đo | Giao cho máy đó việc không cần dựng cụm — tài liệu, review pull request — cho tới khi giải phóng được ổ đĩa. Con số này cũng là dữ liệu cho mục **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
@@ -466,6 +512,11 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Mức ưu tiên vẫn chỉ điều phối viên đặt | Ví dụ của giảng viên ở #81 có nhắc người gửi đổi mức ưu tiên; nhóm giữ ràng buộc Poka-yoke và đã báo lại |
 | Nhịp phát hành: **mỗi issue một pull request `dev → main`** | Từ 22/09. Issue đóng ngay; nhật ký thay đổi vẫn tách đúng từng mục |
 | Mọi trợ lý AI đọc chung một bộ quy tắc | `AGENTS.md` trỏ về `CLAUDE.md`, để Antigravity và Codex cũng không tự commit — #117 |
+| Đổi hồ sơ mà giữ trạng thái là **cạnh tự trỏ** | Nhận việc về mình, sửa nội dung — đi qua cửa chuyển trạng thái để nhật ký giữ giá trị cũ. Mỗi trạng thái tối đa một cạnh tự trỏ, không có ở trạng thái chờ người khác — #127 |
+| Lời nhắn **không phải cạnh** | Bảng riêng chỉ ghi thêm, không vào nhật ký sự kiện, không chạm dòng hồ sơ. Hai chiều; ai mở được hồ sơ thì nhắn được; hồ sơ kết thúc thì chỉ đọc — #128 |
+| *Hỏi tiến độ* chỉ của người gửi, chỉ khi hồ sơ ở phòng ban | Hỏi lại khi đã có trả lời hoặc quá bốn giờ, để số lần phòng ban bị hối mà tầng `I` đếm là số thật. Dấu hiệu hàng đợi suy từ ai nhắn sau cùng, không theo dõi đã đọc — #128 |
+| Thông tin liên hệ người gửi là **issue riêng** | Email và số điện thoại cho nhân viên mở được hồ sơ, tra từ danh bạ Keycloak lúc mở trang — #131, làm sau #128 |
+| Thành viên làm khảo sát **không cần `pull` giữa chừng** | Pull request khảo sát chỉ thêm tệp trong `docs/`, không xung đột với mã đang đổi |
 
 ---
 
@@ -778,6 +829,36 @@ Gặp ngày 24/09 ở #98: chạy `git checkout dev` để đồng bộ rồi qu
 `dev` thì không mất gì — chuyển commit sang nhánh công việc bằng `merge --ff-only`, rồi
 dời `dev` ở máy về `origin/dev`. Phòng từ đầu: kiểm `git branch --show-current` ngay trước
 lệnh commit. Cả hai bộ luật trợ lý đều đã ghi cách cứu.
+
+**Kiểm "không chạm dòng hồ sơ" phải so cả `ctid`** (#128)
+
+Bài kiểm muốn chứng minh gửi lời nhắn không ghi gì vào `requests`. So giá trị các cột là
+chưa đủ: bài kiểm dựng hồ sơ và gửi lời nhắn trong cùng một giao dịch, mà `now()` trả cùng
+một mốc suốt giao dịch, nên một lệnh `UPDATE ... SET updated_at = now()` ghi ra đúng giá trị
+cũ và lọt qua. PostgreSQL tạo phiên bản dòng mới mỗi lần `UPDATE`, nên `ctid` đổi — so
+thêm `ctid` trước và sau mới bắt được.
+
+**Squash giữ người mở pull request làm tác giả**
+
+Navigator sửa thêm một commit trên nhánh của thành viên (#135) rồi squash: commit trên
+`dev` vẫn đứng tên thành viên. Nên sửa lỗi nhỏ thay thành viên trước khi hợp nhất không
+làm mất phần đóng góp của họ. Xóa sạch ô Extended description tự sinh, kể cả các dòng
+`Co-authored-by`, như mọi lần squash.
+
+**Luôn mở thử đường dẫn nguồn, kể cả khi trợ lý AI viết**
+
+Ở #135, ba trên bốn đường dẫn tới tệp giấy phép trỏ tới trang không tồn tại — trợ lý của
+thành viên đoán đường dẫn theo khuôn quen thuộc thay vì mở tệp. Soát khảo sát thì mở từng
+đường dẫn, và ghi dòng đầu của tệp giấy phép vào bảng để người đọc thấy tệp đã được mở
+thật.
+
+**Phép thử phải có đáp án biết trước**
+
+Ở #48, dữ liệu ảo do bộ sinh tạo ra luôn đi đúng thiết kế, nên "không tìm thấy cạnh lệch"
+không chứng minh thư viện bắt được lệch. Cách làm: cài lệch có chủ đích vào vài hồ sơ đã
+biết số, rồi đòi thư viện chỉ ra đúng những hồ sơ đó. Bản đầu của chính phép thử cũng sai —
+chọn trúng một hồ sơ không có bước cần bỏ, nên không có gì lệch — và chỉ lộ ra vì đáp án
+biết trước không khớp.
 
 ---
 

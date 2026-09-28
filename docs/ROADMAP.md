@@ -58,12 +58,14 @@ Mỗi khảo sát kết thúc bằng một bản ghi quyết định trong `docs
 kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 - [x] `[H]` Nền tảng định danh tập trung (SSO) — Keycloak, ADR-0001
-- [ ] `[H]` Hệ thống quản trị tri thức nội bộ — #46, đang làm
+- [ ] `[H]` Hệ thống quản trị tri thức nội bộ — khảo sát xong (#46), ADR-0006 đề xuất
+      Wiki.js, chờ giảng viên duyệt
 - [x] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
       máy trạng thái — chọn tự viết, ADR-0004
 - [x] `[D]` Nền tảng kinh doanh thông minh nguồn mở — Apache Superset, ADR-0003
 - [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — #47
-- [ ] `[I]` Thư viện khai phá quy trình — #48, đang làm
+- [ ] `[I]` Thư viện khai phá quy trình — khảo sát xong (#48), ADR-0007 đề xuất PM4Py
+      trong dịch vụ tách riêng, chờ giảng viên duyệt
 
 ### 1.3. Thiết kế nghiệp vụ
 
@@ -96,7 +98,8 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Phân quyền theo vai trò — năm vai trò từ buổi trao đổi với giảng viên ngày 10/09
 - [x] Cổng tự phục vụ: gửi yêu cầu, tra cứu trạng thái — #44
 - [x] Buồng lái điều phối viên và buồng lái phòng ban — #45
-- [ ] Kho tri thức nội bộ — chờ khảo sát #46
+- [ ] Thông tin liên hệ của người gửi cho nhân viên xử lý hồ sơ — #131
+- [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006, rồi tích hợp
 
 ### 2.2. Không gian P — Quy trình
 
@@ -107,8 +110,8 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Ràng buộc Poka-yoke ở cả giao diện lẫn dịch vụ
 - [x] Sinh nhật ký sự kiện ở mọi điểm chuyển trạng thái, kèm lịch sử thay đổi trường
       quyết định
-- [ ] Thao tác không đổi trạng thái: nhắn, hỏi tiến độ, nhận việc, sửa nội dung — #81,
-      thiết kế ở ADR-0005
+- [x] Thao tác không đổi trạng thái: nhắn, hỏi tiến độ, nhận việc, sửa nội dung — #81,
+      thiết kế ở ADR-0005, làm ở #127 và #128
 - [ ] Đính kèm tệp — #80
 - [ ] Điều phối viên chỉnh hạn từng hồ sơ — #101, chờ giảng viên
 
