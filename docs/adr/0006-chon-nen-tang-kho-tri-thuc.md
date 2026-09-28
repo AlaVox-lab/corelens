@@ -28,7 +28,7 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 |---|---|
 | Giấy phép | AGPL-3.0 |
 | Được OSI công nhận | Có |
-| Tương thích với MIT | Có điều kiện — chạy như dịch vụ độc lập… |
+| Tương thích với MIT | Có, **có điều kiện** — chỉ khi chạy như dịch vụ độc lập |
 | Tài nguyên khi chạy | Wiki.js `67.54 MiB`; PostgreSQL `53.02 MiB`, đo thật |
 | Khả năng đóng gói bằng container | Ảnh `requarks/wiki:2.5`, dựng thật thành công |
 | Chất lượng tài liệu | Có tài liệu Docker, OIDC và GraphQL API |
@@ -79,7 +79,7 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 |---|---|
 | Giấy phép | GPL-2.0 ở mã nguồn DokuWiki; kho ảnh LinuxServer có LICENSE riêng cho lớp đóng gói |
 | Được OSI công nhận | Có; GPL-2.0 và giấy phép OSI của lớp đóng gói |
-| Tương thích với MIT | Có điều kiện — chạy như dịch vụ độc lập… |
+| Tương thích với MIT | Có, **có điều kiện** — chỉ khi chạy như dịch vụ độc lập |
 | Tài nguyên khi chạy | Chưa đo |
 | Khả năng đóng gói bằng container | Ảnh `lscr.io/linuxserver/dokuwiki` |
 | Chất lượng tài liệu | Tốt cho cài đặt và vận hành cơ bản |
