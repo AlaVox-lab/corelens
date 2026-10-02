@@ -34,6 +34,7 @@ from app.config import get_settings
 from app.db import get_session
 from app.main import app
 from app.models.workflow_config import (
+    Department,
     Role,
     Transition,
     TransitionGuard,
@@ -342,11 +343,23 @@ def test_danh_ba_that_tra_dung_nguoi_cua_tung_phong(danh_ba_that):
 
     assert "tuan.ngo" not in it, "tài khoản đã khóa — người đã nghỉ việc — không được giao việc"
     assert set(it) == {"cuong.le", "dung.pham", "lan.vu"}
-    assert set(hr) == {"ha.do"}
+    assert set(hr) == {"giang.hoang", "ha.do"}
     assert it["cuong.le"].name == "Cường Lê"
     assert "handler" in it["cuong.le"].roles
     assert "approver" in it["dung.pham"].roles
     assert len(it["cuong.le"].id) == 36, "định danh là sub dạng UUID, không phải tên"
+
+
+def test_danh_ba_that_moi_phong_co_nguoi_nhan_va_nguoi_lam(danh_ba_that, session):
+    """Mỗi phòng đang hoạt động trong dữ liệu khởi tạo có người nhận hồ sơ và người làm
+    trong realm mẫu (#145) — thiếu một trong hai là hồ sơ chuyển về phòng đó kẹt ở *Chờ
+    phòng ban xác duyệt*. Danh sách phòng tra từ bảng, không chép vào đây."""
+    cac_phong = session.scalars(select(Department.code).where(Department.is_active)).all()
+    assert cac_phong
+    for phong in cac_phong:
+        nguoi = danh_ba_that.department_members(phong)
+        assert any("approver" in p.roles for p in nguoi), f"phòng {phong} thiếu trưởng phòng"
+        assert any("handler" in p.roles for p in nguoi), f"phòng {phong} thiếu người xử lý"
 
 
 def test_danh_ba_that_phong_chua_co_nhom_thi_rong(danh_ba_that):
