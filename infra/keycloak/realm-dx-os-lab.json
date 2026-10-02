@@ -310,6 +310,141 @@
       ]
     },
     {
+      "username": "giang.hoang",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Giang",
+      "lastName": "Hoàng",
+      "email": "giang.hoang@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 009"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "approver",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/hr"
+      ]
+    },
+    {
+      "username": "minh.dang",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Minh",
+      "lastName": "Đặng",
+      "email": "minh.dang@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 010"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "approver",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/admin-office"
+      ]
+    },
+    {
+      "username": "nam.bui",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Nam",
+      "lastName": "Bùi",
+      "email": "nam.bui@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 011"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "handler",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/admin-office"
+      ]
+    },
+    {
+      "username": "phuong.ly",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Phương",
+      "lastName": "Lý",
+      "email": "phuong.ly@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 012"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "approver",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/finance"
+      ]
+    },
+    {
+      "username": "quang.trinh",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Quang",
+      "lastName": "Trịnh",
+      "email": "quang.trinh@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 013"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "matkhau123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "handler",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/finance"
+      ]
+    },
+    {
       "username": "service-account-dx-directory",
       "enabled": true,
       "serviceAccountClientId": "dx-directory",

@@ -159,7 +159,7 @@ Xem `infra/seed/`.
 ### Đăng nhập thử
 
 Bấm **Đăng nhập bằng tài khoản công ty** trên trang chủ. Realm `dx-os-lab` tự nạp lúc khởi động,
-gồm năm vai trò nghiệp vụ, bốn nhóm phòng ban và tám tài khoản mẫu — tất cả dùng mật
+gồm năm vai trò nghiệp vụ, bốn nhóm phòng ban và mười ba tài khoản mẫu — tất cả dùng mật
 khẩu `matkhau123`:
 
 | Tài khoản | Vai trò | Phòng ban | Số điện thoại |
@@ -171,14 +171,20 @@ khẩu `matkhau123`:
 | `lan.vu` | Người xử lý, nhận qua nhóm | Công nghệ thông tin | `0900 000 006` |
 | `tuan.ngo` | Người xử lý — **đã khóa** | Công nghệ thông tin | `0900 000 007` |
 | `ha.do` | Người xử lý | Nhân sự | `0900 000 008` |
+| `giang.hoang` | Người xét duyệt | Nhân sự | `0900 000 009` |
+| `minh.dang` | Người xét duyệt | Hành chính | `0900 000 010` |
+| `nam.bui` | Người xử lý | Hành chính | `0900 000 011` |
+| `phuong.ly` | Người xét duyệt | Tài chính kế toán | `0900 000 012` |
+| `quang.trinh` | Người xử lý | Tài chính kế toán | `0900 000 013` |
 | `khanh.vo` | Quản trị viên | — | `0900 000 005` |
 
 Số điện thoại là số giả, theo một dãy dễ nhận ra. Điều phối viên và nhân viên phòng ban thấy
 email và số của người gửi ngay dưới tên họ trên trang chi tiết hồ sơ (#131). Mỗi người tự
 sửa số của mình ở trang tài khoản `http://localhost:8080/realms/dx-os-lab/account`.
 
-Hai người xử lý ở hai phòng khác nhau là cố ý: nó cho thấy ràng buộc *chỉ người thuộc
-phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại không cần phòng ban.
+Mỗi phòng có ít nhất một người xét duyệt và một người xử lý (#145), nên hồ sơ chuyển về
+phòng nào cũng có người nhận. Người ở các phòng khác nhau cũng cho thấy ràng buộc *chỉ
+người thuộc phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại không cần phòng ban.
 
 Hai tài khoản cuối của phòng Công nghệ thông tin cũng cố ý. `lan.vu` nhận vai trò người
 xử lý qua nhóm `/nhom-vai-tro/nguoi-xu-ly` chứ không gán thẳng — cách doanh nghiệp thật
