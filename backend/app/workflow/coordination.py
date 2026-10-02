@@ -40,6 +40,7 @@ from app.models.workflow_config import (
     TransitionRole,
 )
 from app.workflow.assignment import kiem_nguoi_duoc_giao
+from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.engine import get_active_rule_set
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
@@ -57,6 +58,7 @@ from app.workflow.schemas import (
     GuiLoiNhanVao,
     HangDoiRa,
     HoSoDieuPhoiRa,
+    LienHeNguoiGuiRa,
     MucHangDoiRa,
     NhanCoMa,
     NhomHangDoiRa,
@@ -250,6 +252,34 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoDieuPhoiRa:
             detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
         )
     return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
+
+
+@router.get(
+    "/requests/{case_id}/requester-contact",
+    response_model=LienHeNguoiGuiRa,
+    responses={
+        404: {"description": "Không có hồ sơ này"},
+        503: {"description": "Danh bạ Keycloak không trả lời"},
+    },
+)
+def lien_he(
+    case_id: int,
+    session: _Phien,
+    _: _Cua,
+    danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+) -> LienHeNguoiGuiRa:
+    """Email và số điện thoại của người gửi, tra từ danh bạ lúc gọi (#131).
+
+    Cùng cửa với trang chi tiết: điều phối viên mở được mọi hồ sơ nên tra được liên hệ
+    của mọi người gửi. Lý do tách thành điểm cuối riêng ở `app/workflow/contact.py`.
+    """
+    ho_so = session.get(Request, case_id)
+    if ho_so is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
+        )
+    return lien_he_nguoi_gui(danh_ba, ho_so)
 
 
 @router.post("/requests/{case_id}/transitions", response_model=HoSoDieuPhoiRa)

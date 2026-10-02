@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Danh bạ: tra người trong một phòng ban từ Keycloak (#84).
+# Danh bạ: tra người trong một phòng ban (#84), và liên hệ của một người (#131), từ
+# Keycloak.
 #
 # Đây là chỗ DUY NHẤT dịch vụ ứng dụng gọi ngược sang Keycloak. ADR-0001 giữ Keycloak
 # ngoài đường đi nóng — kiểm token ở mỗi yêu cầu chạy cục bộ bằng khóa công khai — và
-# điều đó vẫn đúng: danh bạ chỉ được hỏi khi trưởng phòng mở ô chọn người xử lý, vài
-# lần cho mỗi hồ sơ, không phải ở mỗi yêu cầu. Máy trạng thái cũng không gọi tới đây:
-# engine vẫn chạy được khi Keycloak tắt.
+# điều đó vẫn đúng: danh bạ chỉ được hỏi khi trưởng phòng mở ô chọn người xử lý, hay
+# khi nhân viên mở trang chi tiết hồ sơ để xem liên hệ người gửi — vài lần cho mỗi hồ
+# sơ, không phải ở mỗi yêu cầu. Máy trạng thái cũng không gọi tới đây: engine vẫn chạy
+# được khi Keycloak tắt.
 #
 # KHÔNG GIỮ BỘ ĐỆM DANH BẠ, cố ý:
 #
@@ -32,6 +34,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as HetGio
 from dataclasses import dataclass
@@ -83,6 +86,19 @@ class Person:
     roles: frozenset[str]
 
 
+@dataclass(frozen=True, slots=True)
+class Contact:
+    """Cách liên hệ một người, đọc từ hồ sơ người dùng của Keycloak (#131).
+
+    Cả hai trường đều có thể trống: số điện thoại không bắt buộc, người dùng tự điền ở
+    trang tài khoản. Trống nghĩa là *chưa điền*, khác với danh bạ không trả lời — trường
+    hợp đó là `DirectoryUnavailable`.
+    """
+
+    email: str | None
+    phone: str | None
+
+
 def _ten_hien_thi(nguoi: dict) -> str:
     """Ghép tên y như claim `name` của token, để danh bạ và nhật ký gọi một người bằng
     cùng một tên. Keycloak dựng claim đó bằng tên riêng, dấu cách, rồi họ."""
@@ -91,7 +107,8 @@ def _ten_hien_thi(nguoi: dict) -> str:
 
 
 class KeycloakDirectory:
-    """Máy khách Admin API của Keycloak, chỉ làm đúng một việc: đọc thành viên phòng ban."""
+    """Máy khách Admin API của Keycloak, chỉ đọc: thành viên phòng ban, và liên hệ của
+    một người."""
 
     def __init__(
         self,
@@ -102,6 +119,7 @@ class KeycloakDirectory:
         client_secret: str,
         department_prefix: str,
         timeout_seconds: float,
+        phone_attribute: str = "phoneNumber",
     ) -> None:
         self._goc = base_url.rstrip("/")
         self._realm = realm
@@ -109,6 +127,7 @@ class KeycloakDirectory:
         self._bi_mat = client_secret
         self._tien_to = department_prefix
         self._tran_giay = timeout_seconds
+        self._thuoc_tinh_so = phone_attribute
 
         self._khoa = threading.Lock()
         self._token: str | None = None
@@ -124,7 +143,21 @@ class KeycloakDirectory:
         Nhóm không tồn tại trong Keycloak thì trả danh sách rỗng: phòng ban có trong
         bảng dữ liệu nhưng chưa ai được xếp vào. Đó là dữ liệu, không phải sự cố.
         """
-        tuong_lai = _LUONG_TRA.submit(self._tra_phong, department_code)
+        return self._trong_tran(self._tra_phong, department_code)
+
+    def contact(self, user_id: str) -> Contact | None:
+        """Email và số điện thoại của một người, tra theo `sub` (#131).
+
+        Không còn tài khoản — người đã bị xóa khỏi Keycloak — thì trả `None`, không coi
+        là sự cố: hồ sơ cũ vẫn mang tên người gửi, chỉ không còn cách liên hệ. Tài khoản
+        bị khóa thì vẫn trả: người đã nghỉ việc vẫn có thể cần được liên hệ về hồ sơ cũ.
+        """
+        return self._trong_tran(self._tra_lien_he, user_id)
+
+    def _trong_tran(self, ham: Callable[..., Any], *tham_so: Any) -> Any:
+        """Chạy một lần tra trong luồng riêng, giữ đúng trần thời gian — lý do ở chú thích
+        của `_LUONG_TRA`."""
+        tuong_lai = _LUONG_TRA.submit(ham, *tham_so)
         try:
             return tuong_lai.result(timeout=self._tran_giay)
         except HetGio:
@@ -132,6 +165,19 @@ class KeycloakDirectory:
             raise DirectoryUnavailable(
                 f"Keycloak không trả lời xong trong {self._tran_giay:g} giây."
             ) from None
+
+    def _tra_lien_he(self, user_id: str) -> Contact | None:
+        thoi_han = time.monotonic() + self._tran_giay
+        nguoi = self._goi(
+            f"/users/{urllib.parse.quote(user_id, safe='')}", thoi_han, cho_phep_404=True
+        )
+        if nguoi is None:
+            return None
+        so = [s.strip() for s in (nguoi.get("attributes") or {}).get(self._thuoc_tinh_so, [])]
+        return Contact(
+            email=nguoi.get("email") or None,
+            phone=next((s for s in so if s), None),
+        )
 
     def _tra_phong(self, department_code: str) -> list[Person]:
         thoi_han = time.monotonic() + self._tran_giay
@@ -287,4 +333,5 @@ def get_directory() -> KeycloakDirectory:
         client_secret=cau_hinh.directory_client_secret,
         department_prefix=cau_hinh.oidc_department_group_prefix,
         timeout_seconds=cau_hinh.directory_timeout_seconds,
+        phone_attribute=cau_hinh.directory_phone_attribute,
     )

@@ -162,16 +162,20 @@ Bấm **Đăng nhập bằng tài khoản công ty** trên trang chủ. Realm `d
 gồm năm vai trò nghiệp vụ, bốn nhóm phòng ban và tám tài khoản mẫu — tất cả dùng mật
 khẩu `matkhau123`:
 
-| Tài khoản | Vai trò | Phòng ban |
-|---|---|---|
-| `an.nguyen` | Người tạo yêu cầu | — |
-| `binh.tran` | Người phân loại | — |
-| `dung.pham` | Người xét duyệt | Công nghệ thông tin |
-| `cuong.le` | Người xử lý | Công nghệ thông tin |
-| `lan.vu` | Người xử lý, nhận qua nhóm | Công nghệ thông tin |
-| `tuan.ngo` | Người xử lý — **đã khóa** | Công nghệ thông tin |
-| `ha.do` | Người xử lý | Nhân sự |
-| `khanh.vo` | Quản trị viên | — |
+| Tài khoản | Vai trò | Phòng ban | Số điện thoại |
+|---|---|---|---|
+| `an.nguyen` | Người tạo yêu cầu | — | `0900 000 001` |
+| `binh.tran` | Người phân loại | — | `0900 000 002` |
+| `dung.pham` | Người xét duyệt | Công nghệ thông tin | `0900 000 004` |
+| `cuong.le` | Người xử lý | Công nghệ thông tin | `0900 000 003` |
+| `lan.vu` | Người xử lý, nhận qua nhóm | Công nghệ thông tin | `0900 000 006` |
+| `tuan.ngo` | Người xử lý — **đã khóa** | Công nghệ thông tin | `0900 000 007` |
+| `ha.do` | Người xử lý | Nhân sự | `0900 000 008` |
+| `khanh.vo` | Quản trị viên | — | `0900 000 005` |
+
+Số điện thoại là số giả, theo một dãy dễ nhận ra. Điều phối viên và nhân viên phòng ban thấy
+email và số của người gửi ngay dưới tên họ trên trang chi tiết hồ sơ (#131). Mỗi người tự
+sửa số của mình ở trang tài khoản `http://localhost:8080/realms/dx-os-lab/account`.
 
 Hai người xử lý ở hai phòng khác nhau là cố ý: nó cho thấy ràng buộc *chỉ người thuộc
 phòng đang giữ hồ sơ mới thao tác được*. Ba vai trò còn lại không cần phòng ban.

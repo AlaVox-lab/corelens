@@ -38,6 +38,7 @@ from app.workflow.assignment import (
     trang_thai_hang_doi_phong_ban,
     vai_tro_phong_ban,
 )
+from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
 from app.workflow.engine import get_active_rule_set
@@ -56,6 +57,7 @@ from app.workflow.schemas import (
     GuiLoiNhanVao,
     HangDoiPhongBanRa,
     HoSoPhongBanRa,
+    LienHeNguoiGuiRa,
     MucHangDoiPhongBanRa,
     NhanCoMa,
     NhomHangDoiRa,
@@ -281,6 +283,31 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoPhongBanRa:
     if ho_so is None or ho_so.department_code not in actor.departments:
         raise _khong_thay()
     return _dung_chi_tiet(session, ho_so, actor)
+
+
+@router.get(
+    "/requests/{case_id}/requester-contact",
+    response_model=LienHeNguoiGuiRa,
+    responses={
+        404: {"description": "Không có hồ sơ này trong phòng của người gọi"},
+        503: {"description": "Danh bạ Keycloak không trả lời"},
+    },
+)
+def lien_he(
+    case_id: int,
+    session: _Phien,
+    actor: _Cua,
+    danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+) -> LienHeNguoiGuiRa:
+    """Email và số điện thoại của người gửi, tra từ danh bạ lúc gọi (#131).
+
+    Cùng cửa với trang chi tiết: hồ sơ của phòng khác trả 404 — không lộ ra hồ sơ đó có
+    tồn tại, càng không lộ liên hệ của người gửi nó.
+    """
+    ho_so = session.get(Request, case_id)
+    if ho_so is None or ho_so.department_code not in actor.departments:
+        raise _khong_thay()
+    return lien_he_nguoi_gui(danh_ba, ho_so)
 
 
 @router.post("/requests/{case_id}/transitions", response_model=HoSoPhongBanRa)

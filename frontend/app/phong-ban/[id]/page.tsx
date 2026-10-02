@@ -24,10 +24,16 @@ import { chuyenTrangThaiPhongBan, guiLoiNhanPhongBan } from "@/app/phong-ban/tha
 import { BangThaoTac, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
+import { LienHeNguoiGui } from "@/components/lien-he-nguoi-gui";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { docDichVu, goiDichVu } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
-import type { HoSoPhongBan, NhanCoMa, NguoiNhanViecTrongPhong } from "@/lib/kieu";
+import type {
+  HoSoPhongBan,
+  LienHeNguoiGui as LienHe,
+  NhanCoMa,
+  NguoiNhanViecTrongPhong,
+} from "@/lib/kieu";
 import { docDongHo } from "@/lib/sla";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
@@ -106,7 +112,11 @@ export default async function ChiTietPhongBan({
   const ho_so = await goiDichVu<HoSoPhongBan>(`/department/requests/${id}`);
   if (!ho_so) notFound();
 
-  const danhMuc = await danhMucCan(ho_so);
+  // Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ ô đó báo lỗi.
+  const [danhMuc, lienHe] = await Promise.all([
+    danhMucCan(ho_so),
+    docDichVu<LienHe>(`/department/requests/${id}/requester-contact`),
+  ]);
   const bayGio = new Date();
   const giayCho = Math.max(
     0,
@@ -187,7 +197,9 @@ export default async function ChiTietPhongBan({
                     ? (ho_so.assignee_label ?? "Một người trong phòng")
                     : "Chưa giao cho ai"}
               </O>
-              <O tua="Người gửi">{ho_so.requester_label ?? "Không rõ"}</O>
+              <O tua="Người gửi" phu={<LienHeNguoiGui ketQua={lienHe} />}>
+                {ho_so.requester_label ?? "Không rõ"}
+              </O>
               <O tua="Mức ưu tiên">{ho_so.priority?.label ?? "—"}</O>
               <O tua="Phòng ban">{ho_so.department?.label ?? "—"}</O>
             </div>

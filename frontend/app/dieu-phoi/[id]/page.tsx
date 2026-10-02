@@ -17,11 +17,13 @@ import { chuyenTrangThaiDieuPhoi, guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/tha
 import { BangThaoTac } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
+import { LienHeNguoiGui } from "@/components/lien-he-nguoi-gui";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
-import { goiDichVu } from "@/lib/api";
+import { docDichVu, goiDichVu } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
 import type {
   HoSoDieuPhoi,
+  LienHeNguoiGui as LienHe,
   LoaiYeuCau,
   MucUuTien,
   NhanCoMa,
@@ -58,11 +60,13 @@ export default async function ChiTietDieuPhoi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [ho_so, cacLoai, cacMuc, cacPhong] = await Promise.all([
+  // Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ ô đó báo lỗi.
+  const [ho_so, cacLoai, cacMuc, cacPhong, lienHe] = await Promise.all([
     goiDichVu<HoSoDieuPhoi>(`/coordination/requests/${id}`),
     goiDichVu<LoaiYeuCau[]>("/request-types"),
     goiDichVu<MucUuTien[]>("/priorities"),
     goiDichVu<PhongBan[]>("/departments"),
+    docDichVu<LienHe>(`/coordination/requests/${id}/requester-contact`),
   ]);
 
   if (!ho_so) notFound();
@@ -145,7 +149,9 @@ export default async function ChiTietDieuPhoi({
               <O tua="Trạng thái" phu={`đã chờ ${thoiLuong(giayCho)}`}>
                 <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} />
               </O>
-              <O tua="Người gửi">{ho_so.requester_label ?? "Không rõ"}</O>
+              <O tua="Người gửi" phu={<LienHeNguoiGui ketQua={lienHe} />}>
+                {ho_so.requester_label ?? "Không rõ"}
+              </O>
               <O
                 tua="Mức ưu tiên"
                 phu={ho_so.priority ? undefined : "Đặt khi phân loại"}
