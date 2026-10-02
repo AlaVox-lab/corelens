@@ -168,15 +168,33 @@ Admin API, bằng tài khoản dịch vụ của một client riêng, `dx-direct
 chỉ đọc `view-users`. Quyền tối thiểu được kiểm chứ không chỉ được khai: bài kiểm thử xác
 nhận tài khoản đó bị từ chối khi đọc cấu hình client hay tạo người dùng.
 
-Điều ADR-0001 bảo vệ vẫn giữ nguyên. Danh bạ chỉ được hỏi khi mở ô chọn người và khi
-giao việc, không ở mỗi yêu cầu, và engine không gọi tới nó. Ba quyết định đi kèm:
+Từ #131 danh bạ làm thêm một việc: tra **email và số điện thoại của người gửi** khi điều
+phối viên hay nhân viên phòng ban mở trang chi tiết hồ sơ. Số điện thoại là thuộc tính
+`phoneNumber` khai trong user profile của realm, không bắt buộc; người dùng tự sửa ở trang
+tài khoản của Keycloak, quản trị viên cũng sửa được. Mỗi buồng lái có điểm cuối riêng
+`/requests/{id}/requester-contact`, phần dùng chung ở `backend/app/workflow/contact.py`, đi
+đúng cửa nhìn thấy hồ sơ của buồng lái đó — hồ sơ
+phòng khác trả 404 trước khi danh bạ bị hỏi. Cổng người gửi không có điểm cuối nào như vậy.
+Cơ sở dữ liệu nghiệp vụ không chép thông tin liên hệ: tra lúc mở trang, nên người gửi đổi
+số thì lần mở sau thấy ngay số mới.
+
+Bẫy gặp khi làm #131: tài khoản **nạp từ tệp realm** mà khai sẵn `realmRoles` thì chỉ nhận
+đúng các vai trò đó, không tự nhận vai trò mặc định `default-roles-dx-os-lab` như tài khoản
+tạo trên giao diện quản trị. Thiếu nó là thiếu `manage-account` và `view-profile`, nên trang
+tài khoản trả 401 — tám tài khoản mẫu chưa từng vào được trang này cho tới #131. Tài khoản
+mẫu thêm về sau phải khai cả vai trò mặc định trong `realmRoles`.
+
+Điều ADR-0001 bảo vệ vẫn giữ nguyên. Danh bạ chỉ được hỏi khi mở ô chọn người, khi giao
+việc và khi mở trang chi tiết hồ sơ ở hai buồng lái, không ở mỗi yêu cầu, và engine không
+gọi tới nó. Ba quyết định đi kèm:
 
 - **Không giữ bộ đệm danh bạ.** Người vừa rời phòng phải biến khỏi danh sách ngay, vì giao
   việc cho người đã đi là lỗi thật chứ không phải chuyện hiển thị chậm; và bộ đệm cũ sẽ che
   mất việc Keycloak không phản hồi. Chỉ token của tài khoản dịch vụ được giữ lại
 - **Hỏng thì nói là hỏng.** Keycloak không trả lời thì điểm cuối trả 503 kèm lý do, không
   trả danh sách rỗng — rỗng nghĩa là *phòng không có ai*, 503 nghĩa là *không biết phòng
-  có ai*. Trần 3 giây giữ ở vòng ngoài bằng một luồng riêng, vì `timeout` của urllib không
+  có ai*. Liên hệ người gửi đi điểm cuối riêng cũng vì vậy: danh bạ hỏng thì chỉ ô liên hệ
+  báo lỗi, trang chi tiết vẫn mở. Trần 3 giây giữ ở vòng ngoài bằng một luồng riêng, vì `timeout` của urllib không
   phủ bước tra DNS: đo thật khi tắt Keycloak trong cụm Compose, bước đó treo 8 giây
 - **Lấy vai trò hiệu lực**, kể cả vai trò nhận qua nhóm, vì đó mới là thứ có trong token.
   Realm mẫu cố ý có `lan.vu` nhận vai trò người xử lý qua nhóm `/nhom-vai-tro/nguoi-xu-ly`

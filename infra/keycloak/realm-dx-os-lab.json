@@ -106,6 +106,11 @@
       "firstName": "An",
       "lastName": "Nguyễn",
       "email": "an.nguyen@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 001"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -114,7 +119,8 @@
         }
       ],
       "realmRoles": [
-        "requester"
+        "requester",
+        "default-roles-dx-os-lab"
       ],
       "groups": []
     },
@@ -125,6 +131,11 @@
       "firstName": "Bình",
       "lastName": "Trần",
       "email": "binh.tran@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 002"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -133,7 +144,8 @@
         }
       ],
       "realmRoles": [
-        "classifier"
+        "classifier",
+        "default-roles-dx-os-lab"
       ],
       "groups": []
     },
@@ -144,6 +156,11 @@
       "firstName": "Cường",
       "lastName": "Lê",
       "email": "cuong.le@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 003"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -152,7 +169,8 @@
         }
       ],
       "realmRoles": [
-        "handler"
+        "handler",
+        "default-roles-dx-os-lab"
       ],
       "groups": [
         "/phong-ban/it"
@@ -165,6 +183,11 @@
       "firstName": "Dung",
       "lastName": "Phạm",
       "email": "dung.pham@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 004"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -173,7 +196,8 @@
         }
       ],
       "realmRoles": [
-        "approver"
+        "approver",
+        "default-roles-dx-os-lab"
       ],
       "groups": [
         "/phong-ban/it"
@@ -186,6 +210,11 @@
       "firstName": "Khánh",
       "lastName": "Võ",
       "email": "khanh.vo@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 005"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -194,7 +223,8 @@
         }
       ],
       "realmRoles": [
-        "administrator"
+        "administrator",
+        "default-roles-dx-os-lab"
       ],
       "groups": []
     },
@@ -205,6 +235,11 @@
       "firstName": "Lan",
       "lastName": "Vũ",
       "email": "lan.vu@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 006"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -212,7 +247,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": [],
+      "realmRoles": [
+        "default-roles-dx-os-lab"
+      ],
       "groups": [
         "/phong-ban/it",
         "/nhom-vai-tro/nguoi-xu-ly"
@@ -225,6 +262,11 @@
       "firstName": "Tuấn",
       "lastName": "Ngô",
       "email": "tuan.ngo@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 007"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -233,7 +275,8 @@
         }
       ],
       "realmRoles": [
-        "handler"
+        "handler",
+        "default-roles-dx-os-lab"
       ],
       "groups": [
         "/phong-ban/it"
@@ -246,6 +289,11 @@
       "firstName": "Hà",
       "lastName": "Đỗ",
       "email": "ha.do@dx-os-lab.test",
+      "attributes": {
+        "phoneNumber": [
+          "0900 000 008"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
@@ -254,7 +302,8 @@
         }
       ],
       "realmRoles": [
-        "handler"
+        "handler",
+        "default-roles-dx-os-lab"
       ],
       "groups": [
         "/phong-ban/hr"
@@ -332,5 +381,18 @@
         }
       ]
     }
-  ]
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"phoneNumber\",\"displayName\":\"Số điện thoại\",\"validations\":{\"length\":{\"max\":20},\"pattern\":{\"pattern\":\"^[0-9+() .-]{8,20}$\",\"error-message\":\"Số điện thoại chỉ gồm chữ số, dấu cách và các ký tự + ( ) . -\"}},\"annotations\":{\"inputType\":\"html5-tel\"},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  }
 }

@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import json
-import os
 import socket
 import threading
 import time
@@ -333,28 +332,6 @@ def test_thieu_bi_mat_thi_bao_ro_ma_khong_goi_mang():
 # ---------------------------------------------------------------------------
 # Tích hợp với Keycloak thật
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def danh_ba_that() -> KeycloakDirectory:
-    cau_hinh = get_settings()
-    goc = cau_hinh.keycloak_internal_url.rstrip("/")
-    try:
-        urllib.request.urlopen(f"{goc}/realms/{cau_hinh.keycloak_realm}", timeout=3).close()
-    except (urllib.error.URLError, OSError):
-        pytest.skip(
-            "Không gọi được Keycloak. Dựng cụm bằng: "
-            "cd infra && docker compose --env-file .env up -d keycloak"
-        )
-    return KeycloakDirectory(
-        base_url=goc,
-        realm=cau_hinh.keycloak_realm,
-        client_id=cau_hinh.directory_client_id,
-        client_secret=cau_hinh.directory_client_secret
-        or os.environ.get("KEYCLOAK_DIRECTORY_SECRET", "doi_bi_mat_nay_truoc_khi_trien_khai"),
-        department_prefix=cau_hinh.oidc_department_group_prefix,
-        timeout_seconds=cau_hinh.directory_timeout_seconds,
-    )
 
 
 def test_danh_ba_that_tra_dung_nguoi_cua_tung_phong(danh_ba_that):

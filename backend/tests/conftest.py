@@ -19,11 +19,15 @@
 from __future__ import annotations
 
 import os
+import urllib.error
+import urllib.request
 
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from app.auth.directory import KeycloakDirectory
+from app.config import get_settings
 from app.models.workflow_config import Department, RuleSet
 
 DIA_CHI_MAC_DINH = "postgresql+psycopg://dxlab:doi_mat_khau_nay_truoc_khi_trien_khai@localhost:5432/dxlab"
@@ -93,3 +97,28 @@ def phong_ban(session) -> str:
     if ma is None:
         pytest.skip("Chưa khai phòng ban nào trong dữ liệu khởi tạo.")
     return ma
+
+
+@pytest.fixture
+def danh_ba_that() -> KeycloakDirectory:
+    """Danh bạ trỏ vào Keycloak thật của cụm, cho bài kiểm thử tích hợp (#84, #131).
+    Không gọi được Keycloak thì bỏ qua bài, không đánh trượt."""
+    cau_hinh = get_settings()
+    goc = cau_hinh.keycloak_internal_url.rstrip("/")
+    try:
+        urllib.request.urlopen(f"{goc}/realms/{cau_hinh.keycloak_realm}", timeout=3).close()
+    except (urllib.error.URLError, OSError):
+        pytest.skip(
+            "Không gọi được Keycloak. Dựng cụm bằng: "
+            "cd infra && docker compose --env-file .env up -d keycloak"
+        )
+    return KeycloakDirectory(
+        base_url=goc,
+        realm=cau_hinh.keycloak_realm,
+        client_id=cau_hinh.directory_client_id,
+        client_secret=cau_hinh.directory_client_secret
+        or os.environ.get("KEYCLOAK_DIRECTORY_SECRET", "doi_bi_mat_nay_truoc_khi_trien_khai"),
+        department_prefix=cau_hinh.oidc_department_group_prefix,
+        timeout_seconds=cau_hinh.directory_timeout_seconds,
+        phone_attribute=cau_hinh.directory_phone_attribute,
+    )

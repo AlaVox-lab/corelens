@@ -245,3 +245,14 @@ export type NguoiNhanViecTrongPhong = {
   department: PhongBan;
   people: NguoiNhanViec[];
 };
+
+/**
+ * Cách liên hệ người gửi, tra từ danh bạ Keycloak lúc mở trang (#131). Hai trường liên
+ * hệ trống nghĩa là người gửi chưa điền; `found` sai nghĩa là tài khoản không còn.
+ */
+export type LienHeNguoiGui = {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  found: boolean;
+};

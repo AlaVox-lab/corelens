@@ -299,6 +299,19 @@ class NguoiNhanViecTrongPhongRa(BaseModel):
     people: list[NguoiNhanViecRa]
 
 
+class LienHeNguoiGuiRa(BaseModel):
+    """Cách liên hệ người gửi một hồ sơ, tra từ danh bạ Keycloak lúc mở trang (#131).
+
+    Hai trường liên hệ trống nghĩa là người gửi chưa điền. `found` sai nghĩa là tài khoản
+    không còn trong Keycloak — hồ sơ cũ vẫn mang tên, chỉ không còn cách liên hệ.
+    """
+
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    found: bool
+
+
 # ---------------------------------------------------------------------------
 # Buồng lái phòng ban (#83)
 # ---------------------------------------------------------------------------
