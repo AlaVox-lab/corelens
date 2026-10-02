@@ -7,12 +7,14 @@ Keycloak là nguồn sự thật về danh tính; gói này chỉ kiểm chữ k
 claim thành `Actor` mà không gian `P` hiểu được. Không lưu mật khẩu, không lưu phiên
 làm việc, không gọi ngược sang Keycloak ở mỗi yêu cầu — xem ADR-0001.
 
-Ngoại lệ duy nhất là danh bạ (`directory.py`, #84): tra tên người trong một phòng ban
-khi trưởng phòng mở ô chọn người xử lý. Chỉ chạy lúc đó, không ở mỗi yêu cầu.
+Ngoại lệ duy nhất là danh bạ (`directory.py`): tra tên người trong một phòng ban khi
+trưởng phòng mở ô chọn người xử lý (#84), và liên hệ của người gửi khi nhân viên mở
+trang chi tiết hồ sơ (#131). Chỉ chạy lúc đó, không ở mỗi yêu cầu.
 """
 
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.auth.directory import (
+    Contact,
     DirectoryUnavailable,
     KeycloakDirectory,
     Person,
@@ -22,6 +24,7 @@ from app.auth.identity import actor_from_claims
 from app.auth.tokens import TokenInvalid, verify_token
 
 __all__ = [
+    "Contact",
     "DirectoryUnavailable",
     "KeycloakDirectory",
     "Person",
