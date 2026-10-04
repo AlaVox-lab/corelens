@@ -161,6 +161,16 @@ ghi lỗi vào nhật ký khi một cookie vượt 4000 byte. Cờ `Secure` bám
 `PORTAL_PUBLIC_URL` chứ không theo `NODE_ENV`, vì bản dựng Docker chạy chế độ production
 qua HTTP, và Safari cùng các trình duyệt nhúng bỏ cookie `Secure` gửi qua HTTP.
 
+**Làm mới token lúc dựng trang không ghi được cookie** (#150). Access token sống năm phút
+(mặc định của Keycloak); `frontend/lib/api.ts` làm mới khi nó sắp hết hạn. Nhưng Next chỉ
+cho ghi cookie trong Server Action và Route Handler, không cho ghi lúc dựng trang. Nên
+làm mới xong mà không lưu được thì lời gọi vẫn đi bằng token **mới**, còn cookie giữ
+refresh token cũ — dùng lại được vì realm không bật `revokeRefreshToken` — tới lần bấm
+thao tác kế tiếp mới được thay. Bật `revokeRefreshToken` thì phải chuyển việc làm mới
+sang lớp `proxy` của Next, nơi ghi được cookie trước khi trang dựng. Phiên hết hạn thật
+thì trang chi tiết mời đăng nhập lại và quay về đúng trang; trang 404 chỉ dành cho hồ sơ
+không có hoặc không được xem.
+
 **Danh bạ là lối duy nhất dịch vụ gọi ngược sang Keycloak** — `backend/app/auth/directory.py`,
 từ #84. Trưởng phòng giao việc phải chọn người từ một danh sách có tên thật, trong khi cơ
 sở dữ liệu nghiệp vụ chỉ giữ `sub`. Dịch vụ tra thành viên nhóm `/phong-ban/<mã>` qua

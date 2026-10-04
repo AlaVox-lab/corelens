@@ -30,7 +30,8 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
-import { goiDichVu } from "@/lib/api";
+import { MoiDangNhap } from "@/components/khung-lam-viec";
+import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
 import type { HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
 import { daTroiQua, docDongHo } from "@/lib/sla";
@@ -101,11 +102,14 @@ export default async function ChiTietHoSo({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ho_so = await goiDichVu<HoSoChiTiet>(`/requests/${id}`);
+  const ket_qua = await docDichVu<HoSoChiTiet>(`/requests/${id}`);
 
+  // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
+  if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
   // Dịch vụ trả 404 cho cả hồ sơ không tồn tại lẫn hồ sơ của người khác — cố ý, để
   // người dò số định danh không xác nhận được hồ sơ nào có thật.
-  if (!ho_so) notFound();
+  if (!ket_qua.ok) notFound();
+  const ho_so = ket_qua.duLieu;
 
   const danhMuc = await danhMucCan(ho_so);
   const bayGio = new Date();
