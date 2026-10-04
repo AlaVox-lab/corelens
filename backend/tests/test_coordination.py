@@ -37,6 +37,7 @@ from app.rules.guards import permitted_fields
 from app.workflow.context import Actor
 from app.workflow.coordination import VAI_TRO_DIEU_PHOI
 from app.workflow.engine import create_case
+from app.workflow.routes import xep_o_nhap
 
 NGUOI_GUI = Actor(id="nd-gui-001", name="An Nguyễn", roles=frozenset({"requester"}))
 DIEU_PHOI = Actor(id="nd-dp-001", name="Bình Trần", roles=frozenset({VAI_TRO_DIEU_PHOI}))
@@ -240,12 +241,13 @@ def test_moi_canh_mang_dung_truong_ma_rang_buoc_cua_no_cho_dat(client, session, 
     di_duoc = r.json()["allowed_transitions"]
     assert di_duoc, "điều phối viên phải có việc để làm ở trạng thái đầu"
     for canh in di_duoc:
-        mong_doi = sorted(permitted_fields(canh_trong_bang[canh["to_state"]].guard_codes))
+        mong_doi = xep_o_nhap(permitted_fields(canh_trong_bang[canh["to_state"]].guard_codes))
         assert canh["fields"] == mong_doi, canh["to_state"]
 
-    # Và cụ thể, để người đọc bài kiểm thử thấy ngay nghĩa của nó
+    # Và cụ thể, để người đọc bài kiểm thử thấy ngay nghĩa của nó. Loại đứng trước mức
+    # ưu tiên như trên biểu mẫu tạo hồ sơ (#152), không theo chữ cái
     phan_loai = next(c for c in di_duoc if "priority_code" in c["fields"])
-    assert "request_type_code" in phan_loai["fields"]
+    assert phan_loai["fields"] == ["request_type_code", "priority_code"]
 
 
 def test_chi_tiet_goi_y_phong_ban_theo_loai_yeu_cau(client, session, rule_set):
