@@ -5,6 +5,49 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.4.0] - 2026-10-04
+
+### Công việc phụ trợ
+
+- **h-auth:** Thêm tài khoản mẫu cho ba phòng chưa có trưởng phòng ([#148](https://github.com/AlaVox-lab/dx-os-lab/issues/148)) ([0fb26a2](https://github.com/AlaVox-lab/dx-os-lab/commit/0fb26a2091af95e67e6050fde0b554b3bac103b0))
+
+### Sửa lỗi
+
+- **p-rules:** Chỉ cho đặt trường ở cạnh có ràng buộc quản nó ([#85](https://github.com/AlaVox-lab/dx-os-lab/issues/85)) ([c7e6b0e](https://github.com/AlaVox-lab/dx-os-lab/commit/c7e6b0e3f299f713840cbb338f3f7b948559c18b))
+- **h-auth:** Tách phiên thành hai cookie cho vừa trần 4096 byte ([#88](https://github.com/AlaVox-lab/dx-os-lab/issues/88)) ([6820ee7](https://github.com/AlaVox-lab/dx-os-lab/commit/6820ee76d783ef6cfd651bf5e00e6232fc4eecfb))
+- **h-portal:** Sửa bốn lỗi hiển thị lộ ra khi chạy kịch bản kiểm thử ([#103](https://github.com/AlaVox-lab/dx-os-lab/issues/103)) ([112814b](https://github.com/AlaVox-lab/dx-os-lab/commit/112814b0dcb7bc928115bc5e879dce22fce98bf5))
+- **p-rules:** Cho ân hạn trước khi leo thang lại hồ sơ được giao lại ([#105](https://github.com/AlaVox-lab/dx-os-lab/issues/105)) ([3a2afe4](https://github.com/AlaVox-lab/dx-os-lab/commit/3a2afe44c1750ff27d20202d7fea63faeee33cac))
+- **h-portal:** Xếp ô nhập theo thứ tự biểu mẫu tạo hồ sơ ([#159](https://github.com/AlaVox-lab/dx-os-lab/issues/159)) ([3bb6646](https://github.com/AlaVox-lab/dx-os-lab/commit/3bb66467864eadb60209ca7df2c6f30ee074685a))
+- **h-portal:** Bỏ hai câu chú giải khẳng định sai trên cổng ([#161](https://github.com/AlaVox-lab/dx-os-lab/issues/161)) ([5fd7056](https://github.com/AlaVox-lab/dx-os-lab/commit/5fd7056a22ca15ad57268e2f3df77e8d95079697))
+- **h-auth:** Giữ token vừa làm mới, hết phiên thì mời đăng nhập ([#163](https://github.com/AlaVox-lab/dx-os-lab/issues/163)) ([4187c9e](https://github.com/AlaVox-lab/dx-os-lab/commit/4187c9e3666cb4b1b21eb96328cd58284cad87d1))
+
+### Tài liệu
+
+- **infra:** Đo giới hạn kích thước tệp tải lên của SeaweedFS ([#74](https://github.com/AlaVox-lab/dx-os-lab/issues/74)) ([c1793cf](https://github.com/AlaVox-lab/dx-os-lab/commit/c1793cf0693b02d62f294816413a1882418a16a4))
+- **p-workflow:** Đề xuất ranh giới máy trạng thái cho thao tác phụ ([#115](https://github.com/AlaVox-lab/dx-os-lab/issues/115)) ([ec565db](https://github.com/AlaVox-lab/dx-os-lab/commit/ec565dbece180d644e4dc9970aaff74c47a4e9be))
+- Thêm AGENTS.md cho trợ lý AI ngoài Claude Code ([#118](https://github.com/AlaVox-lab/dx-os-lab/issues/118)) ([cdbdda8](https://github.com/AlaVox-lab/dx-os-lab/commit/cdbdda8b1ca880b77dfe8ce13c07a7a1b97746da))
+- **p-workflow:** Chấp nhận ADR-0005 theo ý kiến giảng viên ([#120](https://github.com/AlaVox-lab/dx-os-lab/issues/120)) ([e8e4b39](https://github.com/AlaVox-lab/dx-os-lab/commit/e8e4b39c46fccdc6b3b826792a6af0cc6cad9528))
+- **state:** Cập nhật trạng thái sau tuần 7 ([#122](https://github.com/AlaVox-lab/dx-os-lab/issues/122)) ([d1c3600](https://github.com/AlaVox-lab/dx-os-lab/commit/d1c360044691ee33d71f18133bf05280ff2904e2))
+- **h-portal:** Khảo sát nền tảng kho tri thức ([#135](https://github.com/AlaVox-lab/dx-os-lab/issues/135)) ([692852e](https://github.com/AlaVox-lab/dx-os-lab/commit/692852ead610e503b338fcfd833179d9fdedab55))
+- **i-mining:** Khảo sát thư viện khai phá quy trình ([#138](https://github.com/AlaVox-lab/dx-os-lab/issues/138)) ([7fb61af](https://github.com/AlaVox-lab/dx-os-lab/commit/7fb61af0ff650af39c72723739ef3e394268742a))
+- **state:** Cập nhật trạng thái cuối tuần 7 ([#140](https://github.com/AlaVox-lab/dx-os-lab/issues/140)) ([6136850](https://github.com/AlaVox-lab/dx-os-lab/commit/6136850efd4899c2f37d863dc86630f468539faa))
+- **state:** Cập nhật trạng thái cuối tuần 8 ([#165](https://github.com/AlaVox-lab/dx-os-lab/issues/165)) ([e303936](https://github.com/AlaVox-lab/dx-os-lab/commit/e3039368c79dd9450b9687bcda85df52ca3afcd9))
+
+### Tính năng mới
+
+- **h-portal:** Cổng gửi yêu cầu nội bộ ([#76](https://github.com/AlaVox-lab/dx-os-lab/issues/76)) ([95361dc](https://github.com/AlaVox-lab/dx-os-lab/commit/95361dc67f94137984873e82c56c405846aa8b22))
+- **h-portal:** Buồng lái điều phối viên ([#90](https://github.com/AlaVox-lab/dx-os-lab/issues/90)) ([d47e92c](https://github.com/AlaVox-lab/dx-os-lab/commit/d47e92c87de15c24994cd044cc405ee84e5ca031))
+- **h-auth:** Tra danh bạ phòng ban từ Keycloak cho ô chọn người xử lý ([#92](https://github.com/AlaVox-lab/dx-os-lab/issues/92)) ([337f59b](https://github.com/AlaVox-lab/dx-os-lab/commit/337f59bc49063deb53e14c36cac5c75d602a1696))
+- **h-portal:** Buồng lái phòng ban cho trưởng phòng và người xử lý ([#95](https://github.com/AlaVox-lab/dx-os-lab/issues/95)) ([015f760](https://github.com/AlaVox-lab/dx-os-lab/commit/015f760996a6b1436dc8ad9d62350692743766f7))
+- **h-portal:** Hỏi lại trước thao tác không hoàn tác được ([#107](https://github.com/AlaVox-lab/dx-os-lab/issues/107)) ([7422ee3](https://github.com/AlaVox-lab/dx-os-lab/commit/7422ee30aee99ebf4ec6a325a6415f0e3dd40069))
+- **h-portal:** Hàng đợi phòng ban theo dõi hồ sơ đang chờ người gửi ([#109](https://github.com/AlaVox-lab/dx-os-lab/issues/109)) ([3e4fb23](https://github.com/AlaVox-lab/dx-os-lab/commit/3e4fb2311a9112e7239cf4a024a56a53b41f2b59))
+- **d-schema:** Nhật ký sự kiện ghi lịch sử thay đổi trường quyết định ([#111](https://github.com/AlaVox-lab/dx-os-lab/issues/111)) ([1920a2a](https://github.com/AlaVox-lab/dx-os-lab/commit/1920a2af39cc4c78a728386c932541f1bbb3b142))
+- **p-workflow:** Bổ sung thông tin quay về đúng chỗ đã hỏi ([#113](https://github.com/AlaVox-lab/dx-os-lab/issues/113)) ([077eb7e](https://github.com/AlaVox-lab/dx-os-lab/commit/077eb7e0a221514df2af355f33e3fd1e1d82f90e))
+- **d-analytics:** Sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy ([#125](https://github.com/AlaVox-lab/dx-os-lab/issues/125)) ([b2df486](https://github.com/AlaVox-lab/dx-os-lab/commit/b2df48622021dcea1a8a4d9541bf42f027094d44))
+- **p-workflow:** Nhận việc về mình và sửa nội dung trước phòng ban ([#129](https://github.com/AlaVox-lab/dx-os-lab/issues/129)) ([cfe86fb](https://github.com/AlaVox-lab/dx-os-lab/commit/cfe86fb3222be0b07945506d9d6b156e6cdc61a9))
+- **p-workflow:** Lời nhắn hai chiều trên hồ sơ và hỏi tiến độ ([#132](https://github.com/AlaVox-lab/dx-os-lab/issues/132)) ([b4ebf70](https://github.com/AlaVox-lab/dx-os-lab/commit/b4ebf70de3806f560130d887a671c2bd90319f89))
+- **h-auth:** Hiện liên hệ người gửi cho nhân viên xử lý hồ sơ ([#146](https://github.com/AlaVox-lab/dx-os-lab/issues/146)) ([c093ec2](https://github.com/AlaVox-lab/dx-os-lab/commit/c093ec2c4aa076c9a442d98dd1d29244afed9b38))
+
 ## [0.3.0] - 2026-09-16
 
 ### Tài liệu
