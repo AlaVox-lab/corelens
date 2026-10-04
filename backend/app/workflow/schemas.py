@@ -61,7 +61,8 @@ class CanhDiDuocRa(BaseModel):
     # ràng buộc gắn trên cạnh (#78). Giao diện dựng ô nhập từ danh sách này, cùng lý do
     # nó dựng nút bấm từ danh sách cạnh: không có bảng nào trong mã giao diện nói
     # "Phân loại thì hiện ô mức ưu tiên". Cạnh của người gửi chỉ có trường ở thao tác
-    # sửa nội dung (#127).
+    # sửa nội dung (#127). Thứ tự là thứ tự ô trên giao diện, theo biểu mẫu tạo hồ sơ
+    # (#152) — xem `THU_TU_O_NHAP` trong `routes.py`.
     fields: list[str] = Field(default_factory=list)
 
 
