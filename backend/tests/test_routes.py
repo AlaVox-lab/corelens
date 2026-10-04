@@ -408,6 +408,16 @@ def test_nguoi_gui_sua_noi_dung_qua_cong(client, session, rule_set):
     }]
 
 
+def test_o_sua_noi_dung_theo_thu_tu_bieu_mau_tao_ho_so(client, rule_set):
+    """#152: bảng Sửa nội dung xếp ô Loại yêu cầu, Tiêu đề, Mô tả — như biểu mẫu tạo hồ
+    sơ. Trước đây dịch vụ trả theo chữ cái nên Mô tả đứng trên Tiêu đề, và người dùng
+    gõ nhầm mô tả vào ô tiêu đề ở kịch bản H1."""
+    ho_so = _tao(client)
+    chi_tiet = client.get(f"/requests/{ho_so['id']}").json()
+    canh = {t["to_state"]: t for t in chi_tiet["allowed_transitions"]}
+    assert canh["submitted"]["fields"] == ["request_type_code", "title", "description"]
+
+
 def test_cong_nguoi_gui_van_khong_dat_duoc_muc_uu_tien(client, session, rule_set):
     """Cổng nhận `changes` từ #127, nhưng engine vẫn chặn trường cạnh không quản."""
     ho_so = _tao(client)

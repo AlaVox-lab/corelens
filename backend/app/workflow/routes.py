@@ -34,6 +34,7 @@ from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
 from app.workflow.engine import (
+    CHANGEABLE_FIELDS,
     DANH_MUC_CUA_TRUONG,
     allowed_transitions,
     case_history,
@@ -93,6 +94,37 @@ MA_HTTP = {
     FieldNotPermitted: 422,
     InvalidFieldValue: 422,
 }
+
+
+# Thứ tự ô nhập trong bảng thao tác (#152). Ràng buộc trên cạnh chỉ nói cạnh được đặt
+# TRƯỜNG NÀO — một tập, không có thứ tự — nên thứ tự hiển thị khai ở đây, theo đúng
+# biểu mẫu tạo hồ sơ: loại, tiêu đề, mô tả, rồi tới các trường người điều phối và
+# phòng ban đặt. Trước đây trả theo chữ cái, nên bảng Sửa nội dung ra Mô tả đứng trên
+# Tiêu đề và người dùng gõ nhầm ô.
+#
+# Đây là sáu cột của bảng `requests`, tức lược đồ, không phải cấu hình nghiệp vụ.
+THU_TU_O_NHAP: tuple[str, ...] = (
+    "request_type_code",
+    "title",
+    "description",
+    "priority_code",
+    "department_code",
+    "assignee_id",
+)
+
+# Kiểm ngay lúc nạp mô-đun, cùng khuôn với biên ngoài trong engine: thêm một trường vào
+# `CHANGEABLE_FIELDS` mà quên khai thứ tự thì dịch vụ không khởi động.
+if set(THU_TU_O_NHAP) != CHANGEABLE_FIELDS or len(THU_TU_O_NHAP) != len(CHANGEABLE_FIELDS):
+    raise RuntimeError(
+        "THU_TU_O_NHAP phải liệt kê đúng mỗi trường của CHANGEABLE_FIELDS một lần. "
+        f"Thiếu: {sorted(CHANGEABLE_FIELDS - set(THU_TU_O_NHAP))}; "
+        f"thừa: {sorted(set(THU_TU_O_NHAP) - CHANGEABLE_FIELDS)}."
+    )
+
+
+def xep_o_nhap(truong: frozenset[str] | set[str]) -> list[str]:
+    """Xếp các trường một cạnh cho phép đặt theo thứ tự ô nhập trên giao diện."""
+    return [ma for ma in THU_TU_O_NHAP if ma in truong]
 
 
 def _bao_loi(loi: TransitionError) -> HTTPException:
@@ -540,7 +572,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             requires_note=t.requires_note,
             note_label=t.note_label,
             keeps_state=t.from_state == t.to_state,
-            fields=sorted(permitted_fields(t.guard_codes)),
+            fields=xep_o_nhap(permitted_fields(t.guard_codes)),
         )
         for t in allowed_transitions(session, ho_so, actor)
     ]
