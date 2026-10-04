@@ -26,7 +26,8 @@ import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { LienHeNguoiGui } from "@/components/lien-he-nguoi-gui";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
-import { docDichVu, goiDichVu } from "@/lib/api";
+import { MoiDangNhap } from "@/components/khung-lam-viec";
+import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
 import type {
   HoSoPhongBan,
@@ -109,8 +110,11 @@ export default async function ChiTietPhongBan({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ho_so = await goiDichVu<HoSoPhongBan>(`/department/requests/${id}`);
-  if (!ho_so) notFound();
+  const ket_qua = await docDichVu<HoSoPhongBan>(`/department/requests/${id}`);
+  // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
+  if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
+  if (!ket_qua.ok) notFound();
+  const ho_so = ket_qua.duLieu;
 
   // Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ ô đó báo lỗi.
   const [danhMuc, lienHe] = await Promise.all([

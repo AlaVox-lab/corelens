@@ -25,26 +25,41 @@ async function lamMoiNeuSapHet(phien: Phien): Promise<Phien> {
     return phien;
   }
 
+  let moi: Phien;
   try {
     const cauHinh = await layCauHinh();
     const token = await client.refreshTokenGrant(cauHinh, phien.refreshToken);
 
-    const moi: Phien = {
+    moi = {
       accessToken: token.access_token,
-      // Keycloak xoay cả refresh token theo mặc định, nên phải lưu cái mới. Giữ cái
-      // cũ sẽ làm lần làm mới kế tiếp thất bại.
+      // Keycloak gửi kèm refresh token mới, nên lưu cái mới khi lưu được.
       refreshToken: token.refresh_token ?? phien.refreshToken,
       idToken: token.id_token ?? phien.idToken,
       expiresAt: Math.floor(Date.now() / 1000) + (token.expires_in ?? 300),
     };
-
-    await luuPhien(moi);
-    return moi;
   } catch {
     // Refresh token cũng hết hạn. Trả về phiên cũ để lời gọi nhận 401 và giao diện
     // mời đăng nhập lại — đúng hành vi mong muốn.
     return phien;
   }
+
+  // Next chỉ cho ghi cookie trong Server Action và Route Handler. Lúc DỰNG TRANG thì
+  // ghi là ném lỗi — mà dựng trang lại là lúc hay làm mới nhất. Trước #150 lỗi đó rơi
+  // vào cùng khối `catch` với lỗi làm mới, nên token MỚI vừa lấy được bị vứt, lời gọi
+  // đi bằng token đã hết hạn và nhận 401: cứ năm phút (hạn access token mặc định của
+  // Keycloak) là trang chi tiết hiện "không tìm thấy" một lần.
+  //
+  // Không lưu được thì vẫn dùng token mới cho lần dựng này. Cookie giữ refresh token
+  // cũ, vẫn dùng được vì realm không bật `revokeRefreshToken`, và được thay bằng cái
+  // mới ở lần bấm thao tác kế tiếp — thao tác là Server Action, ghi được cookie. Chỉ xem
+  // trang mà không bấm gì lâu hơn hạn rỗi của phiên Keycloak (mặc định 30 phút) thì
+  // refresh token cũ hết hạn, và trang mời đăng nhập lại như một phiên hết hạn thật.
+  try {
+    await luuPhien(moi);
+  } catch {
+    // Đang dựng trang — xem chú thích ngay trên
+  }
+  return moi;
 }
 
 /**
@@ -98,6 +113,14 @@ const CHUA_DANG_NHAP = {
   ma: "chua-dang-nhap",
   thongDiep: "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục.",
 };
+
+/**
+ * Lời gọi hỏng vì phiên — chưa đăng nhập hay token không còn dùng được — chứ không phải
+ * vì hồ sơ không có. Trang chi tiết dùng để mời đăng nhập lại thay vì hiện 404 (#150).
+ */
+export function laHetPhien(ketQua: KetQua<unknown>): boolean {
+  return !ketQua.ok && ketQua.ma === CHUA_DANG_NHAP.ma;
+}
 
 /**
  * Đọc mã lỗi máy đọc được từ thân phản hồi.

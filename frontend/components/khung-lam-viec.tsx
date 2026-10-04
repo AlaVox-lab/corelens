@@ -20,6 +20,7 @@ import { DieuHuong } from "@/components/dieu-huong";
 import { NutDangNhap } from "@/components/nut-dang-nhap";
 import { goiDichVu, type DanhTinh } from "@/lib/api";
 import { loiVaoCua } from "@/lib/khong-gian";
+import { layPhien } from "@/lib/session";
 
 function chuCaiDau(ten: string): string {
   const tu = ten.trim().split(/\s+/).filter(Boolean);
@@ -31,14 +32,22 @@ function chuCaiDau(ten: string): string {
   return (dau + cuoi).toUpperCase();
 }
 
-function MoiDangNhap() {
+/**
+ * Lời mời đăng nhập. Nút quay về đúng trang đang mở sau khi đăng nhập xong.
+ *
+ * `hetPhien`: người dùng ĐÃ đăng nhập nhưng phiên vừa hết hạn giữa chừng — trang chi
+ * tiết dùng thay cho trang 404, để người dùng không tưởng hồ sơ đã mất (#150).
+ */
+export function MoiDangNhap({ hetPhien = false }: { hetPhien?: boolean }) {
   return (
     <main className="khung" style={{ padding: "96px 20px", maxWidth: "36rem" }}>
       <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 600, letterSpacing: "-.02em" }}>
-        Cổng yêu cầu nội bộ
+        {hetPhien ? "Phiên đăng nhập đã hết hạn" : "Cổng yêu cầu nội bộ"}
       </h1>
       <p style={{ marginTop: "10px", color: "var(--ink-2)", fontSize: "14.5px" }}>
-        Đăng nhập bằng tài khoản công ty để gửi yêu cầu và theo dõi hồ sơ của bạn.
+        {hetPhien
+          ? "Đăng nhập lại để mở tiếp trang này. Hồ sơ và mọi thao tác trước đó vẫn còn nguyên."
+          : "Đăng nhập bằng tài khoản công ty để gửi yêu cầu và theo dõi hồ sơ của bạn."}
       </p>
       {/* Suspense vì nút đọc tham số trên địa chỉ phía trình duyệt */}
       <Suspense>
@@ -72,7 +81,8 @@ export async function KhungLamViec({
 }>) {
   const danhTinh = await goiDichVu<DanhTinh>("/me");
 
-  if (!danhTinh) return <MoiDangNhap />;
+  // Còn cookie phiên mà dịch vụ vẫn từ chối thì phiên đã hết hạn giữa chừng (#150)
+  if (!danhTinh) return <MoiDangNhap hetPhien={(await layPhien()) !== null} />;
 
   const ten = danhTinh.name ?? danhTinh.username ?? danhTinh.id;
   const khongGian = danhTinh.workspaces ?? ["portal"];
