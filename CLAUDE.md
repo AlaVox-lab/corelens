@@ -300,8 +300,10 @@ thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không s�
 **Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
 với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.
 
-Ba mảng còn **chờ khảo sát**: hệ thống quản trị tri thức cho `H` (#46), cơ sở dữ liệu
-véc-tơ và khung LLM cho `I` (#47), thư viện khai phá quy trình cho `I` (#48).
+Ba mảng khảo sát còn lại của giai đoạn đầu: hệ thống quản trị tri thức cho `H` (#46) và
+thư viện khai phá quy trình cho `I` (#48) đã có bản ghi ở trạng thái *Đề xuất* — ADR-0006,
+ADR-0007, chờ giảng viên; cơ sở dữ liệu véc-tơ và khung LLM cho `I` (#47) còn **chờ khảo
+sát**.
 
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
 nghệ mới** — bốn quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
