@@ -115,7 +115,8 @@ export const CHU_GIAI_NHOM: {
   {
     nhom: "dang-chay",
     tieuDe: "Đang chạy bình thường",
-    moTa: "Hồ sơ đang đi trong quy trình. Bạn không cần làm gì, sẽ có thông báo khi đổi trạng thái.",
+    // Hệ thống chưa có kênh thông báo nào (#143), nên không hứa "sẽ có thông báo" (#151)
+    moTa: "Hồ sơ đang đi trong quy trình. Bạn không cần làm gì; mở lại trang này để xem trạng thái mới nhất.",
   },
   {
     nhom: "cho-ban",
@@ -125,7 +126,10 @@ export const CHU_GIAI_NHOM: {
   {
     nhom: "can-thiep",
     tieuDe: "Có can thiệp",
-    moTa: "Phòng ban trả lại hồ sơ, hoặc hệ thống tự đánh dấu quá hạn. Điều phối viên đang xử lý.",
+    // Một câu dùng chung cho cả "Bị phòng ban từ chối" lẫn "Đã leo thang", nên không nêu
+    // tên vai trò nào đang giữ hồ sơ: ở hai trạng thái đó người giữ khác nhau, và ai giữ
+    // là chuyện của bộ quy tắc, không viết cứng ở đây (#151)
+    moTa: "Phòng ban trả hồ sơ về để chọn lại phòng phụ trách, hoặc hồ sơ đã quá hạn nên được đẩy lên cấp trên. Hồ sơ vẫn đang được xử lý, bạn chưa cần làm gì.",
   },
   {
     nhom: "ket-thuc",
