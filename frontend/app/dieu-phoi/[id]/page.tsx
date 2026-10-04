@@ -19,7 +19,8 @@ import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { LienHeNguoiGui } from "@/components/lien-he-nguoi-gui";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
-import { docDichVu, goiDichVu } from "@/lib/api";
+import { MoiDangNhap } from "@/components/khung-lam-viec";
+import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
 import type {
   HoSoDieuPhoi,
@@ -61,15 +62,18 @@ export default async function ChiTietDieuPhoi({
 }) {
   const { id } = await params;
   // Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ ô đó báo lỗi.
-  const [ho_so, cacLoai, cacMuc, cacPhong, lienHe] = await Promise.all([
-    goiDichVu<HoSoDieuPhoi>(`/coordination/requests/${id}`),
+  const [ket_qua, cacLoai, cacMuc, cacPhong, lienHe] = await Promise.all([
+    docDichVu<HoSoDieuPhoi>(`/coordination/requests/${id}`),
     goiDichVu<LoaiYeuCau[]>("/request-types"),
     goiDichVu<MucUuTien[]>("/priorities"),
     goiDichVu<PhongBan[]>("/departments"),
     docDichVu<LienHe>(`/coordination/requests/${id}/requester-contact`),
   ]);
 
-  if (!ho_so) notFound();
+  // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
+  if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
+  if (!ket_qua.ok) notFound();
+  const ho_so = ket_qua.duLieu;
 
   const bayGio = new Date();
   const giayCho = Math.max(
