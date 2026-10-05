@@ -250,6 +250,10 @@ class MucHangDoiRa(HoSoTomTatRa):
     # không riêng lần chuyển trạng thái.
     state_entered_at: dt.datetime
 
+    # Hồ sơ do chính người đang xem gửi (#154): ở hàng đợi điều phối, người khác phải
+    # điều phối nó. Chỉ hàng đợi điều phối đặt cờ này.
+    requested_by_me: bool = False
+
 
 class HangDoiRa(BaseModel):
     groups: list[NhomHangDoiRa]
@@ -265,6 +269,10 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     # Chỉ là gợi ý để ô chọn điền sẵn: điều phối viên được chọn khác, và chính những
     # lần chọn khác đó là tín hiệu cho khai phá quy trình biết bảng ánh xạ đang sai.
     suggested_department: NhanCoMa | None = None
+
+    # Hồ sơ do chính người đang xem gửi (#154): bảng thao tác trống vì ràng buộc
+    # `actor-not-requester`, không phải vì hồ sơ đã rời hàng đợi.
+    requested_by_me: bool = False
 
 
 class ChuyenTrangThaiCoTruongVao(BaseModel):

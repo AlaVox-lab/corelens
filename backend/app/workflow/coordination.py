@@ -156,6 +156,7 @@ def _dung_chi_tiet_dieu_phoi(
         priority=_nhan_co_ma(uu_tien),
         state_entered_at=luc_vao or ho_so.created_at,
         suggested_department=_nhan_co_ma(_phong_goi_y(session, ho_so)),
+        requested_by_me=ho_so.requester_id == actor.id,
     )
 
 
@@ -167,7 +168,7 @@ def _dung_chi_tiet_dieu_phoi(
 @router.get("/queue", response_model=HangDoiRa)
 def hang_doi(
     session: _Phien,
-    _: _Cua,
+    actor: _Cua,
     state: Annotated[str | None, Query(description="Chỉ lấy một trạng thái")] = None,
 ) -> HangDoiRa:
     """Hồ sơ đang chờ điều phối viên, chờ lâu nhất lên đầu.
@@ -219,6 +220,7 @@ def hang_doi(
                 session.get(Priority, ho_so.priority_code) if ho_so.priority_code else None
             ),
             state_entered_at=vao,
+            requested_by_me=ho_so.requester_id == actor.id,
         )
         for ho_so, vao in dong
     ]

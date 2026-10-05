@@ -349,3 +349,107 @@ def test_truong_canh_khong_cho_dat_bi_tu_choi_qua_http(client, session, rule_set
     )
     assert r.status_code == 422
     assert r.json()["detail"]["code"] == "field-not-permitted"
+
+
+# ---------------------------------------------------------------------------
+# Không tự điều phối hồ sơ của mình (#154)
+# ---------------------------------------------------------------------------
+
+# Một người mang cả hai vai: gửi yêu cầu và điều phối — như binh.tran ở kịch bản E8
+GUI_KIEM_DIEU_PHOI = Actor(
+    id="nd-dp-002", name="Bình Trần", roles=frozenset({"requester", VAI_TRO_DIEU_PHOI})
+)
+
+
+def _tao_boi(session, nguoi: Actor) -> Request:
+    ho_so = create_case(
+        session, title="Xin giấy xác nhận công tác", requester_id=nguoi.id,
+        requester_label=nguoi.label, request_type_code=_loai(session).code,
+    )
+    session.commit()
+    return ho_so
+
+
+def test_dieu_phoi_khong_dieu_phoi_ho_so_cua_minh(client, session, rule_set):
+    ho_so = _tao_boi(session, GUI_KIEM_DIEU_PHOI)
+    mac_dinh = session.scalar(select(Priority.code).where(Priority.is_default))
+    _goi_bang(client, GUI_KIEM_DIEU_PHOI)
+
+    # Không còn nút nào của vai điều phối — chỉ còn nút của chủ hồ sơ (sửa, hủy)
+    cua_dieu_phoi = set(
+        session.scalars(
+            select(Transition.activity_code)
+            .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+            .where(Transition.rule_set_id == rule_set.id, Transition.from_state == "submitted",
+                   TransitionRole.role_code == VAI_TRO_DIEU_PHOI)
+        ).all()
+    )
+    chi_tiet = client.get(f"/coordination/requests/{ho_so.id}").json()
+    assert cua_dieu_phoi
+    assert not cua_dieu_phoi & {c["activity_code"] for c in chi_tiet["allowed_transitions"]}
+    assert chi_tiet["requested_by_me"] is True
+    muc = next(m for m in client.get("/coordination/queue").json()["items"] if m["id"] == ho_so.id)
+    assert muc["requested_by_me"] is True
+
+    # Gửi thẳng thì bị từ chối bằng đúng ràng buộc, hồ sơ đứng yên
+    r = client.post(
+        f"/coordination/requests/{ho_so.id}/transitions",
+        json={"to_state": "classified", "changes": {"priority_code": mac_dinh}},
+    )
+    assert r.status_code == 422, r.text
+    assert "điều phối viên khác" in r.json()["detail"]["message"]
+    session.expire_all()
+    assert session.get(Request, ho_so.id).current_state == "submitted"
+
+
+def test_nguoi_khac_dieu_phoi_ho_so_do_binh_thuong(client, session, rule_set):
+    ho_so = _tao_boi(session, GUI_KIEM_DIEU_PHOI)
+    _goi_bang(client, DIEU_PHOI)
+    chi_tiet = client.get(f"/coordination/requests/{ho_so.id}").json()
+    assert chi_tiet["allowed_transitions"], "điều phối viên khác phải có thao tác"
+    assert chi_tiet["requested_by_me"] is False
+
+    # Và người kiêm hai vai vẫn điều phối được hồ sơ của người khác
+    cua_nguoi_khac = _tao_boi(session, NGUOI_GUI)
+    _goi_bang(client, GUI_KIEM_DIEU_PHOI)
+    assert client.get(f"/coordination/requests/{cua_nguoi_khac.id}").json()["allowed_transitions"]
+
+
+def test_rang_buoc_gan_dung_moi_canh_cua_vai_dieu_phoi(session, rule_set):
+    """Đáp án tra từ dữ liệu: mọi cạnh vai điều phối đi được mang ràng buộc, không cạnh
+    nào khác mang — phòng ban tự làm việc của mình vẫn được."""
+    from app.models.workflow_config import TransitionGuard
+
+    cua_dieu_phoi = set(
+        session.scalars(
+            select(Transition.id)
+            .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+            .where(Transition.rule_set_id == rule_set.id, TransitionRole.role_code == VAI_TRO_DIEU_PHOI)
+        ).all()
+    )
+    mang_rang_buoc = set(
+        session.scalars(
+            select(TransitionGuard.transition_id)
+            .join(Transition, Transition.id == TransitionGuard.transition_id)
+            .where(Transition.rule_set_id == rule_set.id, TransitionGuard.guard_code == "actor-not-requester")
+        ).all()
+    )
+    assert cua_dieu_phoi
+    assert mang_rang_buoc == cua_dieu_phoi
+
+
+def test_phong_ban_van_tu_nhan_viec_cua_minh(session, rule_set, phong_ban):
+    """Ràng buộc chỉ ở bước điều phối: trưởng phòng gửi yêu cầu cho chính phòng mình thì
+    vẫn tự xác duyệt được."""
+    from app.workflow.engine import perform_transition
+
+    truong_phong = Actor(id="nd-tp-002", name="Dung Phạm",
+                         roles=frozenset({"requester", "approver"}), departments=frozenset({phong_ban}))
+    ho_so = _tao_boi(session, truong_phong)
+    mac_dinh = session.scalar(select(Priority.code).where(Priority.is_default))
+    perform_transition(session, case_id=ho_so.id, to_state="classified", actor=DIEU_PHOI,
+                       changes={"priority_code": mac_dinh})
+    perform_transition(session, case_id=ho_so.id, to_state="awaiting-acceptance", actor=DIEU_PHOI,
+                       changes={"department_code": phong_ban})
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=truong_phong)
+    assert session.get(Request, ho_so.id).current_state == "in-progress"
