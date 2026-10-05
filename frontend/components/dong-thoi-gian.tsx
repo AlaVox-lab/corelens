@@ -97,25 +97,23 @@ export function soLanDoiTrangThai(cacSuKien: SuKien[]): number {
 }
 
 /**
- * Đánh dấu những lần hồ sơ quay lại một trạng thái đã đi qua.
+ * Đánh dấu những lần hồ sơ bị đẩy ngược để làm lại.
  *
  * Con số này là dấu hiệu rõ nhất của một quy trình chạy không thẳng, nên nó đáng được
  * gọi tên ngay trên dòng thời gian thay vì để người đọc tự đếm.
  *
- * Mốc tự trỏ không đưa hồ sơ vào trạng thái nào, nên không bao giờ là quay lui: người xử
- * lý nhận việc ở *Đang xử lý* không phải là hồ sơ quay lại *Đang xử lý*.
+ * Từ #153 đếm theo **cạnh làm lại khai trong dữ liệu** (`is_rework` của mốc, tra từ bảng
+ * `transitions`) — từ chối vì sai chuyên môn, mở lại vì chưa đạt, sửa nội dung sau khi đã
+ * phân loại. Trước đó đếm mọi lần vào lại một trạng thái cũ, nên hỏi đáp bổ sung thông tin
+ * hay phân công lại sau leo thang cũng thành "quay lui" — đi vòng rồi về chỗ cũ không phải
+ * là làm lại. Tệp này không biết tên hoạt động nào: cạnh nào là làm lại do dữ liệu quyết.
  */
 export function danhDauQuayLui(cacSuKien: SuKien[]): Map<number, string> {
-  const daGap = new Map<string, number>();
   const nhan = new Map<number, string>();
-
+  let lan = 0;
   cacSuKien.forEach((e, i) => {
-    if (laTuTro(e)) return;
-    const lan = (daGap.get(e.to_state) ?? 0) + 1;
-    daGap.set(e.to_state, lan);
-    if (lan > 1) nhan.set(i, `Quay lui lần ${lan - 1}`);
+    if (e.is_rework) nhan.set(i, `Quay lui lần ${++lan}`);
   });
-
   return nhan;
 }
 
