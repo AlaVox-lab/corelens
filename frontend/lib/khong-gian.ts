@@ -11,7 +11,7 @@
 // diện kịp có trang cho nó là chuyện bình thường.
 
 /** Tên icon của mục trên thanh bên. Thanh bên tra icon theo tên này (#158). */
-export type TenIcon = "trang-chu" | "gui" | "ho-so" | "dieu-phoi" | "phong-ban";
+export type TenIcon = "trang-chu" | "gui" | "ho-so" | "dieu-phoi" | "phong-ban" | "hop-thu";
 
 export type LoiVao = {
   duongDan: string;

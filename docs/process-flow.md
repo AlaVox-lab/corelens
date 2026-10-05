@@ -269,6 +269,14 @@ ngày 24/09/2026:
   khi phòng ban đã trả lời, hoặc đã quá bốn giờ mà chưa ai trả lời
 - Hàng đợi hiện dấu *Người gửi đang chờ trả lời* khi lời nhắn sau cùng là của người gửi
 
+**Hộp thư chung** (#155) gom lời nhắn của mọi hồ sơ một người đang giữ — không phải kho tin
+nhắn thứ hai, mỗi cuộc trò chuyện là lời nhắn của một hồ sơ. Phạm vi theo việc đang giữ,
+chốt với navigator ngày 05/10/2026: người gửi thấy hồ sơ của mình, phòng ban thấy mọi hồ sơ
+của phòng có lời nhắn — người mới được giao lại đọc được trao đổi cũ —, điều phối viên thấy
+hồ sơ đang ở hàng đợi điều phối và hồ sơ mình đã từng nhắn. Đánh dấu *đã đọc* nằm ở bảng
+`case_message_reads`, cũng **không vào nhật ký sự kiện** và không chạm dòng hồ sơ: đọc không
+phải là một hoạt động của quy trình.
+
 Khác *Yêu cầu bổ sung thông tin*: cạnh đó đổi trạng thái, dừng đồng hồ và bắt người gửi phải
 trả lời thì hồ sơ mới đi tiếp. Lời nhắn thì không đổi gì và không bắt ai làm gì. Với khai
 phá quy trình, bảng lời nhắn là nguồn thứ hai: số lần hỏi tiến độ và thời gian chờ trả lời

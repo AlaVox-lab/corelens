@@ -256,3 +256,40 @@ export type LienHeNguoiGui = {
   phone: string | null;
   found: boolean;
 };
+
+// ---------------------------------------------------------------------------
+// Hộp thư chung (#155)
+// ---------------------------------------------------------------------------
+
+/** Cửa người đang xem mở hồ sơ — quyết điểm cuối đọc chi tiết và gửi lời nhắn. */
+export type CuaMoHoSo = "portal" | "department" | "coordination";
+
+export type LoiNhanCuoi = {
+  author_label: string;
+  kind_label: string;
+  body: string | null;
+  created_at: string;
+  /** Của chính người đang xem. */
+  mine: boolean;
+  from_requester: boolean;
+};
+
+/** Một cuộc trò chuyện: lời nhắn của MỘT hồ sơ. */
+export type CuocTroChuyen = {
+  case_id: number;
+  code: string;
+  title: string;
+  state: TrangThai;
+  requester_id: string;
+  requester_label: string | null;
+  workspace: CuaMoHoSo;
+  last_message: LoiNhanCuoi;
+  unread: number;
+  /** Phía bên kia nhắn sau cùng: đang chờ người đang xem trả lời. */
+  waiting_on_me: boolean;
+};
+
+export type HopThu = {
+  items: CuocTroChuyen[];
+  unread: number;
+};

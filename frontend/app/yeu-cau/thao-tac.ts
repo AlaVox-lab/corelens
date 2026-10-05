@@ -112,5 +112,7 @@ export async function guiLoiNhan(
   // Hai hàng đợi hiện dấu "người gửi đang chờ trả lời"
   revalidatePath("/dieu-phoi");
   revalidatePath("/phong-ban");
+  // Hộp thư chung (#155) đọc cùng lời nhắn
+  revalidatePath("/hop-thu");
   return CHUA_CO_LOI;
 }

@@ -230,3 +230,19 @@ class CaseMessage(Base):
 
     def __repr__(self) -> str:
         return f"<CaseMessage {self.case_id} {self.kind} by {self.author}>"
+
+
+class CaseMessageRead(Base):
+    """Một người đã đọc lời nhắn của một hồ sơ tới đâu — cho hộp thư chung (#155).
+
+    Khác `CaseMessage`, dòng này được sửa: đọc thêm thì `last_read_id` dời lên. Nó là
+    trạng thái hiển thị của từng người, không phải dấu vết của cuộc trao đổi, nên không vào
+    nhật ký sự kiện và không chạm `requests` (ADR-0005). Xem migration 0008.
+    """
+
+    __tablename__ = "case_message_reads"
+
+    case_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("requests.id"), primary_key=True)
+    reader: Mapped[str] = mapped_column(Text, primary_key=True)
+    last_read_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("case_messages.id"))
+    read_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())

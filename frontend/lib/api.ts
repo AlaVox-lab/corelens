@@ -240,6 +240,8 @@ export async function guiDichVu<T>(
 
   if (phanHoi.status === 401) return CHUA_DANG_NHAP;
   if (!phanHoi.ok) return { ok: false, ...(await docLoi(phanHoi)) };
+  // 204: thao tác thành công mà không trả gì — như đánh dấu đã đọc (#155)
+  if (phanHoi.status === 204) return { ok: true, duLieu: undefined as T };
 
   return { ok: true, duLieu: (await phanHoi.json()) as T };
 }
