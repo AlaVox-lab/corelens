@@ -99,7 +99,7 @@ export function ThaoTacHoSo({
             border: "1px dashed var(--line-2)",
             display: "grid",
             placeItems: "center",
-            fontSize: "11px",
+            fontSize: "12px",
           }}
         >
           –

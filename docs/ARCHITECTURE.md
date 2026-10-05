@@ -833,6 +833,18 @@ nhau. Cửa nhìn thấy gác luôn điểm cuối chuyển trạng thái, để
 Giao diện cũng không chứa tên vai trò nào. `/me` trả danh sách `workspaces` do dịch vụ
 tính, và thanh điều hướng dựng theo danh sách đó.
 
+**Từ #158, khung ứng dụng là thanh bên.** `frontend/components/khung-lam-viec.tsx` (máy chủ)
+lấy `/me`, dựng mục theo `workspaces` qua `lib/khong-gian.ts` — mỗi mục mang icon và nhóm
+ngay trong dữ liệu đó — rồi đếm hồ sơ còn mở cho từng mục bằng **chính điểm cuối trang của
+mục dùng** (`/requests` bỏ trạng thái `is_terminal`, `/coordination/queue`, `/department/queue`
+bỏ nhóm chỉ theo dõi). Không có điểm cuối đếm riêng, nên dịch vụ không đổi; một điểm cuối
+lỗi thì mục đó mất số, trang vẫn hiện. `components/khung-ung-dung.tsx` (trình duyệt) giữ
+phần thuộc về trình duyệt: ngăn kéo dưới 768px, tiêu đề thanh đầu trang và nút sáng/tối.
+Lựa chọn sáng/tối lưu ở `localStorage` khóa `dxlab-theme`; một đoạn mã trong `<head>` của
+`app/layout.tsx` đặt `data-theme` trước khi trang vẽ để không nháy màu, chưa chọn thì vẫn
+theo hệ điều hành. Token màu, chuyển động (150–300 ms, tắt khi máy bật giảm chuyển động) và
+kiểu khung nằm trong `app/globals.css`.
+
 **Từ #84, ai giao việc và ai nhận việc cũng suy từ dữ liệu.** Điểm cuối
 `GET /departments/{mã}/assignees` — nguồn của ô chọn người xử lý — không chứa tên vai trò
 nào. Người giao việc là vai trò đi được một cạnh cho đặt `assignee_id`, tức cạnh mang ràng

@@ -45,7 +45,7 @@ export function NutLoc({
           minWidth: "20px",
           padding: "0 6px",
           borderRadius: "999px",
-          fontSize: "11.5px",
+          fontSize: "12px",
           textAlign: "center",
           background: chon ? "var(--accent)" : "var(--surface-3)",
           color: chon ? "var(--accent-on)" : "var(--ink-3)",

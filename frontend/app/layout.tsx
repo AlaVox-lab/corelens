@@ -46,11 +46,21 @@ export const metadata: Metadata = {
     "Tiếp nhận và điều phối tập trung mọi loại yêu cầu nội bộ trong doanh nghiệp.",
 };
 
+// Đọc lựa chọn sáng/tối đã lưu và đặt lên <html> TRƯỚC KHI trình duyệt vẽ trang (#158).
+// Đặt muộn hơn — trong một component React — thì người chọn tối thấy trang trắng nháy
+// lên rồi mới tối lại. Khóa lưu trùng với `KHOA_CHE_DO` trong khung-ung-dung.tsx.
+const DOC_CHE_DO = `try{var t=localStorage.getItem("dxlab-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} ${plexMono.variable}`}>
+    // suppressHydrationWarning: đoạn mã đầu trang đặt `data-theme` trước khi React nhận
+    // trang, nên thuộc tính đó khác bản dựng ở máy chủ là đúng ý, không phải lỗi.
+    <html lang="vi" className={`${beVietnam.variable} ${plexMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: DOC_CHE_DO }} />
+      </head>
       <body
         style={{
           // Ghi đè hai biến phông trong globals.css bằng tên lớp mà next/font sinh ra.

@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 AlaVox-lab -->
+<!-- Biểu tượng tab trình duyệt: cùng dấu "YC" với thanh bên (#158). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="9" fill="#2f4fa0"/>
+  <text x="16" y="20.5" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#fff">YC</text>
+</svg>

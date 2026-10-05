@@ -243,7 +243,7 @@ function MocThoiGian({
               className="mono"
               style={{
                 ...bienHoMau("o"),
-                fontSize: "11px",
+                fontSize: "12px",
                 padding: "3px 8px",
                 borderRadius: "999px",
                 background: "var(--ho-bg)",

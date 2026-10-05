@@ -69,7 +69,7 @@ function Dong({ muc, dauTien }: { muc: MucHangDoiPhongBan; dauTien: boolean }) {
             flexWrap: "wrap",
             gap: "4px 10px",
             alignItems: "center",
-            fontSize: "11.5px",
+            fontSize: "12px",
             color: "var(--ink-3)",
           }}
         >
@@ -82,7 +82,7 @@ function Dong({ muc, dauTien }: { muc: MucHangDoiPhongBan; dauTien: boolean }) {
                 borderRadius: "999px",
                 background: "var(--surface-3)",
                 border: "1px solid var(--line-2)",
-                fontSize: "11px",
+                fontSize: "12px",
                 color: "var(--ink-2)",
               }}
             >

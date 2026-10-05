@@ -35,17 +35,28 @@
   --surface: oklch(100% 0 0);
   --surface-2: oklch(97.4% 0.004 255);
   --surface-3: oklch(95.4% 0.006 255);
-  --line: oklch(91.5% 0.007 255);
+  /* Viền thẻ, vạch chia: bậc xám nhạt nhất, ~1,19:1 trên trắng. Đậm hơn thì cái hộp nổi
+   * hơn nội dung bên trong nó (#158). Ô nhập và nút có viền dùng --line-2. */
+  --line: oklch(94% 0.005 255);
   --line-2: oklch(86% 0.009 255);
   --ink: oklch(26% 0.015 258);
   --ink-2: oklch(46% 0.013 258);
-  --ink-3: oklch(60% 0.011 258);
+  /* 52% chứ không phải 60%: ở 60% chữ phụ trên nền trắng chỉ đạt 3,93:1, dưới ngưỡng
+   * 4,5:1 cho chữ thường (#158). */
+  --ink-3: oklch(52% 0.012 258);
   --accent: oklch(47% 0.13 262);
   --accent-2: oklch(40% 0.12 262);
   --accent-soft: oklch(96.4% 0.018 262);
   --accent-line: oklch(89% 0.04 262);
   --accent-on: #fff;
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 8px rgba(15, 23, 42, 0.035);
+
+  /* Nền khi rê chuột qua một mục, và nền của mục đang chọn — đậm hơn rê một bậc để
+   * mục đang đứng vẫn nhận ra được khi chuột đang nằm trên mục khác (#158). */
+  --hover: oklch(96.2% 0.005 255);
+  --chon: oklch(94.2% 0.008 255);
+  /* Đường cong chung của mọi chuyển động: vào nhanh, dừng êm. */
+  --nhanh: cubic-bezier(0.2, 0.7, 0.2, 1);
 
   /* Tám họ màu cho nhãn trạng thái. Đặt tên theo chữ cái chứ không theo nghĩa
    * ("n" thay vì "trung tính") vì cùng một họ dùng cho nhiều trạng thái khác nhau,
@@ -75,13 +86,16 @@
     --line-2: oklch(41% 0.018 258);
     --ink: oklch(96% 0.004 255);
     --ink-2: oklch(78% 0.01 255);
-    --ink-3: oklch(64% 0.012 255);
+    /* 68%: ở 64% chữ phụ trên nền --surface-3 chỉ đạt 4,14:1 (#158) */
+    --ink-3: oklch(68% 0.012 255);
     --accent: oklch(74% 0.12 262);
     --accent-2: oklch(84% 0.09 262);
     --accent-soft: oklch(28% 0.045 262);
     --accent-line: oklch(38% 0.06 262);
     --accent-on: oklch(19% 0.03 262);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.22);
+    --hover: oklch(27% 0.014 258);
+    --chon: oklch(30.5% 0.016 258);
 
     --f-n-bg: oklch(31% 0.014 255); --f-n-ink: oklch(83% 0.02 255); --f-n-line: oklch(40% 0.02 255); --f-n-solid: oklch(66% 0.03 255); --f-n-on: oklch(20% 0.015 255);
     --f-p-bg: oklch(31% 0.04 288);  --f-p-ink: oklch(85% 0.09 288); --f-p-line: oklch(41% 0.06 288); --f-p-solid: oklch(71% 0.13 288); --f-p-on: oklch(20% 0.03 288);
@@ -108,13 +122,15 @@
   --line-2: oklch(41% 0.018 258);
   --ink: oklch(96% 0.004 255);
   --ink-2: oklch(78% 0.01 255);
-  --ink-3: oklch(64% 0.012 255);
+  --ink-3: oklch(68% 0.012 255);
   --accent: oklch(74% 0.12 262);
   --accent-2: oklch(84% 0.09 262);
   --accent-soft: oklch(28% 0.045 262);
   --accent-line: oklch(38% 0.06 262);
   --accent-on: oklch(19% 0.03 262);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.22);
+  --hover: oklch(27% 0.014 258);
+  --chon: oklch(30.5% 0.016 258);
 
   --f-n-bg: oklch(31% 0.014 255); --f-n-ink: oklch(83% 0.02 255); --f-n-line: oklch(40% 0.02 255); --f-n-solid: oklch(66% 0.03 255); --f-n-on: oklch(20% 0.015 255);
   --f-p-bg: oklch(31% 0.04 288);  --f-p-ink: oklch(85% 0.09 288); --f-p-line: oklch(41% 0.06 288); --f-p-solid: oklch(71% 0.13 288); --f-p-on: oklch(20% 0.03 288);
@@ -215,7 +231,7 @@ select {
 }
 
 .tua-muc {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -289,8 +305,10 @@ select {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 18px;
-  border-radius: 9px;
+  /* Cao tối thiểu chứ không cao cố định: nút trong cột thao tác được xuống dòng (#97) */
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 10px;
   font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -298,22 +316,38 @@ select {
   color: var(--ink);
   border: 1px solid var(--line-2);
   text-decoration: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    transform 0.15s var(--nhanh);
 }
 
 .nut:hover {
   text-decoration: none;
-  border-color: var(--ink-3);
+  background: var(--hover);
+  color: var(--ink);
 }
 
+.nut:active {
+  transform: scale(0.98);
+}
+
+.nut svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Nút chính không viền: rê chuột chỉ đổi nền, như mọi nút khác (#158) */
 .nut[data-loai="chinh"] {
   background: var(--accent);
   color: var(--accent-on);
-  border-color: var(--accent);
+  border-color: transparent;
 }
 
 .nut[data-loai="chinh"]:hover {
   background: var(--accent-2);
-  border-color: var(--accent-2);
   color: var(--accent-on);
 }
 
@@ -323,7 +357,19 @@ select {
 }
 
 .nut[data-loai="nguy"]:hover {
-  border-color: var(--f-r-solid);
+  background: var(--f-r-bg);
+  color: var(--f-r-ink);
+}
+
+.nut[data-loai="ma"] {
+  border-color: transparent;
+  background: none;
+  color: var(--ink-2);
+}
+
+.nut[data-loai="ma"]:hover {
+  background: var(--hover);
+  color: var(--ink);
 }
 
 .nut:disabled {
@@ -331,10 +377,41 @@ select {
   cursor: not-allowed;
 }
 
+.nut:disabled:active {
+  transform: none;
+}
+
 .nut-nho {
-  padding: 7px 13px;
+  min-height: 32px;
+  padding: 5px 12px;
   font-size: 12.5px;
   border-radius: 8px;
+}
+
+/* Nút chỉ có icon: mở menu, đăng xuất. Nhãn nằm ở aria-label. */
+.nut-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--ink-2);
+  position: relative;
+  flex: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.nut-icon:hover {
+  background: var(--hover);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nut-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* --- Ô nhập --- */
@@ -346,6 +423,9 @@ select {
   background: var(--surface);
   font-size: 14.5px;
   outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .o-nhap:focus {
@@ -360,8 +440,8 @@ select.o-nhap {
 /* --- Bố cục buồng lái (#82) ------------------------------------------------
  * Màn hẹp: một cột, bảng thao tác nằm dưới. Màn rộng: bảng thao tác sang cột phải và
  * bám theo khi cuộn — điều phối viên xử lý hàng chục hồ sơ mỗi ngày, một nút phải
- * cuộn xuống đáy mới thấy là một nút bị bấm chậm. Mốc 124px chừa chỗ cho thanh đầu
- * trang đang dính ở trên. */
+ * cuộn xuống đáy mới thấy là một nút bị bấm chậm. Mốc 84px = thanh đầu trang 60px
+ * đang dính ở trên + 24px khoảng thở (#158). */
 .bo-cuc-buong-lai {
   display: grid;
   gap: 24px;
@@ -377,7 +457,7 @@ select.o-nhap {
 
   .cot-thao-tac {
     position: sticky;
-    top: 124px;
+    top: 84px;
   }
 }
 
@@ -395,6 +475,368 @@ textarea.o-nhap {
   font-size: 14px;
   line-height: 1.65;
   resize: vertical;
+}
+
+/* --- Khung ứng dụng (#158) --------------------------------------------------
+ * Thanh bên trái thay cho thanh điều hướng trên. Lý do: số mục tăng theo vai trò
+ * (người gửi ba mục, người kiêm điều phối và phòng ban năm mục, sắp có hộp thư), thanh
+ * trên phải cuộn ngang ở màn hẹp; thanh bên còn chứa được số đếm cạnh mỗi mục.
+ *
+ * Màn dưới 768px: thanh bên thành ngăn kéo, mở bằng nút menu ở thanh đầu trang. Lúc
+ * đóng, ngăn kéo `visibility: hidden` để phím Tab không lạc vào mục đã khuất. */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sb {
+  width: 248px;
+  flex: none;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sb-dau {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 60px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-on);
+  display: grid;
+  place-items: center;
+  font: 500 11.5px var(--mono);
+  flex: none;
+}
+
+.sb-ten {
+  display: grid;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.sb-ten b {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sb-ten span {
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.sb-nav {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.sb-nhom {
+  margin: 12px 0 2px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.sb-muc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: color-mix(in oklab, var(--ink) 72%, transparent);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.sb-muc:hover {
+  background: var(--hover);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sb-muc[aria-current="page"] {
+  background: var(--chon);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.sb-muc svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.sb-muc .so {
+  margin-left: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+.sb-muc[aria-current="page"] .so {
+  color: var(--ink);
+}
+
+.sb-chan {
+  border-top: 1px solid var(--line);
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  flex: none;
+}
+
+/* Nút sáng/tối mang sẵn cả hai nhãn; CSS chọn nhãn theo chế độ đang hiện. Nhờ vậy máy
+ * chủ dựng đúng nhãn mà không cần biết người dùng chọn gì, và chữ không nháy lúc tải. */
+.nut-mau > span {
+  display: contents;
+}
+
+.nut-mau .khi-toi {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .nut-mau .khi-sang {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .nut-mau .khi-toi {
+    display: contents;
+  }
+}
+
+:root[data-theme="dark"] .nut-mau .khi-sang {
+  display: none;
+}
+
+:root[data-theme="dark"] .nut-mau .khi-toi {
+  display: contents;
+}
+
+.nguoi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px 6px 8px;
+}
+
+.av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex: none;
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+
+/* Năm màu nền cho ô chữ cái, mượn họ màu trạng thái. Màu chọn theo định danh người
+ * dùng nên mỗi người luôn một màu, ở mọi trang. */
+.av[data-c="1"] { background: var(--f-b-bg); color: var(--f-b-ink); }
+.av[data-c="2"] { background: var(--f-g-bg); color: var(--f-g-ink); }
+.av[data-c="3"] { background: var(--f-o-bg); color: var(--f-o-ink); }
+.av[data-c="4"] { background: var(--f-p-bg); color: var(--f-p-ink); }
+.av[data-c="5"] { background: var(--f-t-bg); color: var(--f-t-ink); }
+
+.nguoi .ten {
+  display: grid;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1;
+}
+
+.nguoi .ten b {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nguoi .ten span {
+  font-size: 12px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noi-dung {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.thanh-dau {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.thanh-dau .tieu,
+.thanh-dau .cha {
+  margin: 0;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.thanh-dau .cha {
+  color: var(--ink-3);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thanh-dau .cha a {
+  color: var(--ink-2);
+}
+
+.thanh-dau .cha svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.vung {
+  width: 100%;
+  max-width: 1240px;
+  padding: 24px 24px 80px;
+}
+
+.nut-menu,
+.phu-mo {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .sb {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    translate: -100% 0;
+    visibility: hidden;
+    box-shadow: 0 10px 40px rgb(0 0 0 / 0.2);
+    transition:
+      translate 0.3s var(--nhanh),
+      visibility 0s 0.3s;
+  }
+
+  .app[data-menu-mo] .sb {
+    translate: 0 0;
+    visibility: visible;
+    transition: translate 0.3s var(--nhanh);
+  }
+
+  .phu-mo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgb(0 0 0 / 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+
+  .app[data-menu-mo] .phu-mo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nut-menu {
+    display: inline-grid;
+  }
+
+  .thanh-dau {
+    padding: 0 12px;
+  }
+
+  .vung {
+    padding: 16px 16px 64px;
+  }
+}
+
+/* --- Chuyển động (#158) -----------------------------------------------------
+ * Ngắn, 150–300 ms, chỉ để mắt theo kịp chỗ vừa đổi: nội dung trang hiện lên, ngăn kéo
+ * trượt, màu đổi khi chuyển sáng/tối. Máy bật "giảm chuyển động" thì tắt hết. */
+@keyframes vao {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vao {
+  animation: vao 0.24s var(--nhanh) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Chỉ bật trong lúc vừa bấm nút sáng/tối, để màu chuyển êm thay vì giật. */
+html.doi-mau,
+html.doi-mau * {
+  transition:
+    background-color 0.22s,
+    color 0.22s,
+    border-color 0.22s,
+    fill 0.22s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -425,6 +867,8 @@ textarea.o-nhap {
     --accent-line: oklch(80% 0 0);
     --accent-on: #fff;
     --shadow: none;
+    --hover: #fff;
+    --chon: #fff;
 
     --f-n-bg: #fff; --f-n-ink: oklch(20% 0 0); --f-n-line: oklch(45% 0 0); --f-n-solid: oklch(20% 0 0); --f-n-on: #fff;
     --f-p-bg: #fff; --f-p-ink: oklch(20% 0 0); --f-p-line: oklch(45% 0 0); --f-p-solid: oklch(20% 0 0); --f-p-on: #fff;
@@ -444,5 +888,18 @@ textarea.o-nhap {
 
   .the {
     break-inside: avoid;
+  }
+
+  .app {
+    display: block;
+  }
+
+  .vung {
+    padding: 0;
+    max-width: none;
+  }
+
+  .vao {
+    animation: none;
   }
 }

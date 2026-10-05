@@ -158,7 +158,7 @@ export default async function ChiTietPhongBan({
                     borderRadius: "999px",
                     background: "var(--surface-3)",
                     border: "1px solid var(--line-2)",
-                    fontSize: "11.5px",
+                    fontSize: "12px",
                     color: "var(--ink-2)",
                   }}
                 >
