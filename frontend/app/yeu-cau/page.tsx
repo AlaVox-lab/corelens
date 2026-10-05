@@ -129,7 +129,7 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
             flexWrap: "wrap",
             gap: "4px 10px",
             alignItems: "center",
-            fontSize: "11.5px",
+            fontSize: "12px",
             color: "var(--ink-3)",
           }}
         >
@@ -142,7 +142,7 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
                 borderRadius: "999px",
                 background: "var(--surface-3)",
                 border: "1px solid var(--line)",
-                fontSize: "11px",
+                fontSize: "12px",
                 color: "var(--ink-2)",
               }}
             >
@@ -199,7 +199,7 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
         <span className="mono" style={{ fontSize: "12.5px", color: "var(--ink-2)" }}>
           {ngayGio(ho_so.created_at)}
         </span>
-        <span style={{ fontSize: "11.5px", color: "var(--ink-3)" }}>
+        <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>
           {khoangCach(ho_so.created_at, bayGio)}
         </span>
       </span>
