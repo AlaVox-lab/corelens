@@ -94,6 +94,9 @@ class Transition(Base):
     # không phải lời giải thích.
     note_label: Mapped[str | None] = mapped_column(Text, default=None)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    # Cạnh làm lại (#153): đi qua là hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm
+    # quay lui theo cờ này — xem lược đồ khởi tạo.
+    is_rework: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Cột kỹ thuật luôn bằng FALSE, tồn tại để khóa ngoại tổng hợp chặn việc tạo
     # cạnh rời khỏi một trạng thái kết thúc. Mã nguồn không bao giờ đọc hay ghi nó.

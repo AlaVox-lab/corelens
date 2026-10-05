@@ -99,6 +99,9 @@ class SuKienRa(BaseModel):
     # dòng thời gian gọi là "Lý do". Câu hỏi thêm và câu trả lời không phải lý do.
     note_label: str | None = None
     changes: list[ThayDoiTruongRa] = Field(default_factory=list)
+    # Mốc đi qua cạnh làm lại (#153), tra từ cột `transitions.is_rework` — dòng thời gian
+    # đếm "quay lui" theo cờ này
+    is_rework: bool = False
 
 
 class HoSoTomTatRa(BaseModel):

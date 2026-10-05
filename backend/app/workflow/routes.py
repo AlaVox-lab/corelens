@@ -274,6 +274,7 @@ def _su_kien(
         to_state_label=_nhan(states.get(e.to_state), e.to_state),
         note=e.note,
         changes=_thay_doi(e, nhan),
+        is_rework=bool(di_qua and di_qua.is_rework),
     )
 
 

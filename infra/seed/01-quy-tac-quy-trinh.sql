@@ -157,6 +157,20 @@ VALUES
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24);
 
+-- Cạnh làm lại (#153): hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm "quay lui" theo
+-- đúng các cạnh này — hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính.
+-- Doanh nghiệp đổi cạnh nào là làm lại thì sửa danh sách này, không sửa mã.
+UPDATE transitions t
+   SET is_rework = TRUE
+  FROM (VALUES
+    ('awaiting-acceptance', 'rejected-by-department'),   -- phòng từ chối vì sai chuyên môn
+    ('completed',           'in-progress'),              -- người gửi mở lại vì chưa đạt
+    ('classified',          'submitted')                 -- sửa nội dung sau khi đã phân loại
+  ) AS v (from_state, to_state)
+ WHERE t.rule_set_id = 1
+   AND t.from_state  = v.from_state
+   AND t.to_state    = v.to_state;
+
 
 -- ---------------------------------------------------------------------------
 -- Ma trận phân quyền
