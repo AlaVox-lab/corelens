@@ -9,7 +9,8 @@
 //   Cửa đăng nhập — chưa đăng nhập thì không trang nào có gì để hiển thị.
 //   Cửa không gian — trang thuộc buồng lái mà người dùng không vào được thì báo rõ,
 //                    thay vì để từng điểm cuối trả 403 thành một trang trống.
-//   Số đếm — mỗi mục trên thanh bên mang số hồ sơ còn mở ở đó (#158).
+//   Số đếm — mỗi mục trên thanh bên mang số hồ sơ còn mở ở đó (#158), mục Hộp thư mang
+//            số tin chưa đọc (#155).
 //
 // Thanh bên dựng từ `workspaces` mà `/me` trả về. Khung này không biết tên vai trò nào:
 // dịch vụ quyết ai vào được đâu, giao diện chỉ vẽ theo. Phần chạy ở trình duyệt — ngăn
@@ -115,13 +116,17 @@ export async function KhungLamViec({
   const khongGian = danhTinh.workspaces ?? ["portal"];
   const loiVao = loiVaoCua(khongGian);
 
-  const soDem = new Map(
-    await Promise.all(
+  const [soDem, hopThu] = await Promise.all([
+    Promise.all(
       loiVao
         .filter((l) => DEM[l.duongDan])
         .map(async (l) => [l.duongDan, await DEM[l.duongDan]()] as const),
-    ),
-  );
+    ).then((cap) => new Map(cap)),
+    goiDichVu<{ unread: number }>("/inbox/unread"),
+  ]);
+  // Nhân viên: hộp thư là chỗ làm việc, cuối nhóm "Làm việc" như wireframe. Người chỉ gửi
+  // yêu cầu không có nhóm đó, nên hộp thư nằm cùng các mục chung.
+  const laNhanVien = loiVao.some((l) => l.nhom === "lam-viec");
 
   const cacMuc: MucDieuHuong[] = [
     { duongDan: "/", nhan: "Trang chủ", icon: "trang-chu", nhom: "chung" },
@@ -132,6 +137,13 @@ export async function KhungLamViec({
       nhom: l.nhom,
       dem: soDem.get(l.duongDan)?.dem ?? undefined,
     })),
+    {
+      duongDan: "/hop-thu",
+      nhan: "Hộp thư",
+      icon: "hop-thu",
+      nhom: laNhanVien ? "lam-viec" : "chung",
+      dem: hopThu?.unread,
+    },
   ];
 
   // Dòng phụ dưới tên: tên phòng nếu người dùng thuộc phòng ban, không thì thư điện tử.

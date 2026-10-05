@@ -1059,6 +1059,22 @@ textarea.o-nhap {
   color: var(--surface);
 }
 
+/* Ở chế độ tối --ink gần như trắng: chip đang chọn thành mảng sáng giữa màn tối. Dùng nền
+ * tối nổi một bậc thay vì đảo màu */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .chip[aria-pressed="true"] {
+    background: var(--surface-3);
+    border-color: var(--line-2);
+    color: var(--ink);
+  }
+}
+
+:root[data-theme="dark"] .chip[aria-pressed="true"] {
+  background: var(--surface-3);
+  border-color: var(--line-2);
+  color: var(--ink);
+}
+
 .chip svg {
   width: 16px;
   height: 16px;
@@ -1395,6 +1411,298 @@ textarea.o-nhap {
   }
 }
 
+/* --- Hộp thư chung (#155) -----------------------------------------------------
+ * Hai cột kiểu Messenger: danh sách cuộc trò chuyện gom theo người bên trái, khung chat
+ * bên phải. Trang chiếm trọn chiều cao dưới thanh đầu, mỗi cột tự cuộn. Dưới 768px chỉ
+ * hiện một bên: danh sách, hoặc cuộc trò chuyện đang mở kèm nút quay lại. */
+.vung:has(> .hop-thu) {
+  padding: 0;
+  max-width: none;
+}
+
+.hop-thu {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  height: calc(100vh - 60px);
+  background: var(--surface);
+}
+
+.ht-ds {
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ht-tim {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ht-tim .o-tim {
+  width: auto;
+}
+
+.chip-hang {
+  display: flex;
+  gap: 6px;
+}
+
+.chip-hang .chip {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+}
+
+.ht-cuon {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 2px;
+}
+
+.nhom-nguoi {
+  padding: 10px 8px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.nhom-nguoi .phai {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.cuoc {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  border-radius: 12px;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cuoc:hover {
+  background: var(--hover);
+  color: inherit;
+  text-decoration: none;
+}
+
+.cuoc[aria-current="true"] {
+  background: var(--chon);
+}
+
+.icon-o {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  flex: none;
+}
+
+.icon-o svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cuoc .than {
+  flex: 1;
+  min-width: 0;
+}
+
+.cuoc .d1 {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.cuoc .d1 b {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.cuoc .d1 time {
+  font-size: 12px;
+  color: var(--ink-3);
+  flex: none;
+}
+
+.cuoc .d2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.cuoc .d2 p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cuoc[data-chua-doc] .d1 b,
+.cuoc[data-chua-doc] .d2 p {
+  color: var(--ink);
+}
+
+.cuoc[data-chua-doc] .d2 p {
+  font-weight: 500;
+}
+
+.dem-chua-doc {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.ht-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.ht-chat .chat {
+  flex: 1;
+  min-height: 0;
+}
+
+.ht-chat .chat-cuon {
+  max-height: none;
+  flex: 1;
+}
+
+.ht-dau {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ht-dau .than {
+  flex: 1;
+  min-width: 0;
+}
+
+.ht-dau b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ht-dau .phu {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.the-hs {
+  margin: 12px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface-2);
+}
+
+.the-hs .than {
+  flex: 1;
+  min-width: 0;
+}
+
+.the-hs b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.the-hs small {
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nut-lui {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .hop-thu {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hop-thu[data-dang-xem="chat"] .ht-ds {
+    display: none;
+  }
+
+  .hop-thu:not([data-dang-xem="chat"]) .ht-chat {
+    display: none;
+  }
+
+  .nut-lui {
+    display: inline-grid;
+  }
+
+  .ht-dau {
+    padding: 10px 12px;
+  }
+
+  .the-hs {
+    margin: 10px 12px 0;
+  }
+
+  .the-hs .nhan-tt {
+    display: none;
+  }
+}
+
 /* --- Khung ứng dụng (#158) --------------------------------------------------
  * Thanh bên trái thay cho thanh điều hướng trên. Lý do: số mục tăng theo vai trò
  * (người gửi ba mục, người kiêm điều phối và phòng ban năm mục, sắp có hộp thư), thanh
@@ -1522,6 +1830,20 @@ textarea.o-nhap {
 
 .sb-muc[aria-current="page"] .so {
   color: var(--ink);
+}
+
+/* Số tin chưa đọc của Hộp thư: viên đặc màu nhấn — việc đang chờ mình, khác số đếm hồ sơ */
+.sb-muc .so[data-moi],
+.sb-muc[aria-current="page"] .so[data-moi] {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-weight: 600;
 }
 
 .sb-chan {
@@ -1653,6 +1975,13 @@ textarea.o-nhap {
   align-items: center;
   min-height: 32px;
   color: var(--ink-2);
+}
+
+.thanh-dau .phai {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .thanh-dau .cha .mono {

@@ -106,7 +106,16 @@ export function KhungLoiNhan({
   if (kieu === "chat") {
     const [chinh, ...khac] = cacLoai;
     return (
-      <form action={thucHien} style={{ display: "grid", gap: "8px" }}>
+      <form
+        action={thucHien}
+        // React xóa ô sau khi gửi xong; đưa nút gửi và chiều cao ô về như lúc chưa gõ
+        onReset={(e) => {
+          datCoChu(false);
+          const o = e.currentTarget.querySelector("textarea");
+          if (o) o.style.height = "";
+        }}
+        style={{ display: "grid", gap: "8px" }}
+      >
         <input type="hidden" name="case_id" value={maHoSo} />
         {(khac.length > 0 || dangCho.length > 0 || ketQua.loi) && (
           <div style={{ display: "grid", gap: "8px", margin: "0 16px" }}>

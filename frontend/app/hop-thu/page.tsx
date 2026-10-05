@@ -1,0 +1,253 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 AlaVox-lab
+//
+// Hộp thư chung (#155): mọi cuộc trò chuyện người này đang giữ, mỗi cuộc là lời nhắn của
+// MỘT hồ sơ. Không phải kho tin nhắn thứ hai — đọc đúng lời nhắn trên hồ sơ (#128).
+//
+// Cột trái gom theo người gửi hồ sơ (nhân viên xem), hoặc một danh sách theo hồ sơ (người
+// chỉ gửi yêu cầu). Cột phải mở cuộc đang chọn qua ĐÚNG cửa dịch vụ trả về cho hồ sơ đó —
+// cổng người gửi, buồng lái phòng ban hay điều phối — và gửi lời nhắn bằng thao tác của
+// chính cửa đó, nên mọi luật của #128 chỉ có một nơi.
+
+import { ArrowLeft, ArrowRight, MessagesSquare } from "lucide-react";
+import Link from "next/link";
+
+import { guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
+import { guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
+import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
+import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
+import { DanhSachHopThu, type MucCuoc, type NhomCuoc } from "@/components/danh-sach-hop-thu";
+import { KhungChat } from "@/components/khung-chat";
+import { KhungLoiNhan } from "@/components/khung-loi-nhan";
+import { NutThanhDau } from "@/components/khung-ung-dung";
+import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { TuLamMoi } from "@/components/tu-lam-moi";
+import { docDichVu, goiDichVu } from "@/lib/api";
+import { chiGio, khoaNgay } from "@/lib/dinh-dang";
+import type { CuaMoHoSo, CuocTroChuyen, HoSoChiTiet, HopThu } from "@/lib/kieu";
+import { chuCaiDau, mauTheo } from "@/lib/nguoi";
+import { docDongHo } from "@/lib/sla";
+
+export const dynamic = "force-dynamic";
+
+/** Mỗi cửa: đọc chi tiết ở đâu, gửi lời nhắn bằng thao tác nào, trang hồ sơ nằm đâu. */
+const CUA: Record<
+  CuaMoHoSo,
+  { chiTiet: string; trang: string; gui: typeof guiLoiNhan }
+> = {
+  portal: { chiTiet: "/requests", trang: "/yeu-cau", gui: guiLoiNhan },
+  department: { chiTiet: "/department/requests", trang: "/phong-ban", gui: guiLoiNhanPhongBan },
+  coordination: { chiTiet: "/coordination/requests", trang: "/dieu-phoi", gui: guiLoiNhanDieuPhoi },
+};
+
+/** Giờ ở danh sách: "11:02" hôm nay, "Hôm qua", hoặc ngày tháng. */
+function lucNgan(iso: string, bayGio: Date): string {
+  if (khoaNgay(iso) === khoaNgay(bayGio.toISOString())) return chiGio(iso);
+  const homQua = new Date(bayGio.getTime() - 86_400_000);
+  if (khoaNgay(iso) === khoaNgay(homQua.toISOString())) return "Hôm qua";
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function thanhMuc(c: CuocTroChuyen, bayGio: Date): MucCuoc {
+  const tin = c.last_message;
+  const noiDung = tin.body ?? tin.kind_label;
+  // Nhân viên xem cuộc với người gửi: tin của người gửi khỏi ghi tên — nhóm đã mang tên đó
+  const bo = c.workspace !== "portal" && tin.from_requester;
+  return {
+    maHoSo: c.case_id,
+    tieuDe: c.title,
+    ma: c.code,
+    xemTruoc: tin.mine ? `Bạn: ${noiDung}` : bo ? noiDung : `${tin.author_label}: ${noiDung}`,
+    luc: lucNgan(tin.created_at, bayGio),
+    chuaDoc: c.unread,
+    choBan: c.waiting_on_me,
+    tim: `${c.requester_label ?? ""} ${c.code} ${c.title}`,
+  };
+}
+
+/** Gom theo người gửi hồ sơ; hồ sơ của chính mình vào một nhóm riêng. */
+function gomNhom(cacCuoc: CuocTroChuyen[], bayGio: Date): NhomCuoc[] {
+  const chiCuaMinh = cacCuoc.every((c) => c.workspace === "portal");
+  const nhom = new Map<string, NhomCuoc>();
+  for (const c of cacCuoc) {
+    const cuaMinh = c.workspace === "portal";
+    const ma = cuaMinh ? "cua-toi" : c.requester_id;
+    if (!nhom.has(ma)) {
+      const ten = c.requester_label ?? "Không rõ người gửi";
+      nhom.set(ma, {
+        ma,
+        ten: chiCuaMinh ? null : cuaMinh ? "Hồ sơ bạn gửi" : ten,
+        anh: cuaMinh ? undefined : { chuCai: chuCaiDau(ten), mau: mauTheo(c.requester_id) },
+        cuoc: [],
+      });
+    }
+    nhom.get(ma)!.cuoc.push(thanhMuc(c, bayGio));
+  }
+  // Dịch vụ đã xếp cuộc mới nhất lên đầu, nên Map giữ thứ tự nhóm theo tin mới nhất
+  return [...nhom.values()];
+}
+
+function Rong({ tieuDe, cau }: { tieuDe: string; cau: string }) {
+  return (
+    <div className="rong" style={{ alignSelf: "center" }}>
+      <span className="icon-to">
+        <MessagesSquare aria-hidden />
+      </span>
+      <h2>{tieuDe}</h2>
+      <p>{cau}</p>
+    </div>
+  );
+}
+
+async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date }) {
+  const cua = CUA[cuoc.workspace];
+  const ketQua = await docDichVu<HoSoChiTiet>(`${cua.chiTiet}/${cuoc.case_id}`);
+  if (!ketQua.ok) {
+    return <Rong tieuDe="Không mở được cuộc trò chuyện" cau={ketQua.thongDiep} />;
+  }
+  const ho_so = ketQua.duLieu;
+  const laNguoiGui = cuoc.workspace === "portal";
+  const ten = laNguoiGui ? "Các bên xử lý hồ sơ" : (cuoc.requester_label ?? "Người gửi");
+  const dongHo = docDongHo(ho_so, laNguoiGui ? "nguoi-gui" : "noi-bo");
+
+  return (
+    <>
+      <div className="ht-dau">
+        <Link className="nut-icon nut-lui" href="/hop-thu" aria-label="Quay lại danh sách">
+          <ArrowLeft aria-hidden />
+        </Link>
+        {laNguoiGui ? (
+          <span className="icon-o" aria-hidden>
+            <MessagesSquare />
+          </span>
+        ) : (
+          <span className="av" data-c={mauTheo(cuoc.requester_id)} aria-hidden>
+            {chuCaiDau(ten)}
+          </span>
+        )}
+        <div className="than">
+          <b>{ten}</b>
+          <span className="phu">
+            {laNguoiGui ? "Điều phối và phòng ban đang giữ hồ sơ trả lời ở đây" : "Người gửi"}
+          </span>
+        </div>
+      </div>
+
+      <div className="the-hs">
+        <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} />
+        <div className="than">
+          <b title={ho_so.title}>{ho_so.title}</b>
+          <small>
+            <span className="mono">{ho_so.code}</span>· Hạn:{" "}
+            <span className="chu-han" data-muc={dongHo.canhBao ? "qua" : undefined}>
+              {dongHo.cau}
+            </span>
+          </small>
+        </div>
+        <Link className="nut nut-nho" href={`${cua.trang}/${ho_so.id}`}>
+          Mở hồ sơ
+          <ArrowRight aria-hidden />
+        </Link>
+      </div>
+
+      <KhungChat
+        cacLoiNhan={ho_so.messages}
+        bayGio={bayGio}
+        phiaMinh={laNguoiGui ? "nguoi-gui" : "nhan-vien"}
+        soan={
+          <KhungLoiNhan
+            // Khóa theo hồ sơ, không theo số lời nhắn: tin mới tới trong lúc đang gõ thì ô
+            // soạn không bị dựng lại, chữ gõ dở không mất
+            key={ho_so.id}
+            maHoSo={ho_so.id}
+            cacLoai={ho_so.message_kinds}
+            daKetThuc={ho_so.state.is_terminal}
+            hanhDong={cua.gui}
+            kieu="chat"
+            goiY={laNguoiGui ? "Nhắn cho bên xử lý" : `Nhắn cho ${ten}`}
+          />
+        }
+      />
+      <DanhDauDaDoc maHoSo={ho_so.id} soTin={ho_so.messages.length} />
+      <TuLamMoi key={ho_so.id} soTin={ho_so.messages.length} />
+    </>
+  );
+}
+
+export default async function TrangHopThu({
+  searchParams,
+}: {
+  searchParams: Promise<{ "ho-so"?: string }>;
+}) {
+  const { "ho-so": hoSo } = await searchParams;
+  const hopThu = await goiDichVu<HopThu>("/inbox");
+  const bayGio = new Date();
+  const tieuDe = <h1 className="an-di">Hộp thư</h1>;
+
+  if (hopThu === null) {
+    return (
+      <>
+        {tieuDe}
+        <div className="the" style={{ margin: "24px" }}>
+          <div className="rong" data-loi="">
+            <h2>Không tải được hộp thư</h2>
+            <p>Dịch vụ ứng dụng không trả lời. Lời nhắn đã gửi vẫn còn nguyên trên hồ sơ.</p>
+            <Link href="/hop-thu" className="nut nut-nho">
+              Thử lại
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (hopThu.items.length === 0) {
+    return (
+      <>
+        {tieuDe}
+        <div className="hop-thu" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+          <Rong
+            tieuDe="Chưa có cuộc trò chuyện nào"
+            cau="Lời nhắn trên hồ sơ bạn đang giữ sẽ hiện ở đây. Mở một hồ sơ để nhắn cho các bên."
+          />
+          <TuLamMoi soTin={0} />
+        </div>
+      </>
+    );
+  }
+
+  // Có `?ho-so=` thì mở đúng cuộc đó; không có thì mở cuộc mới nhất (trên màn rộng)
+  const chon = hoSo
+    ? (hopThu.items.find((c) => String(c.case_id) === hoSo) ?? null)
+    : hopThu.items[0];
+
+  return (
+    <>
+      {tieuDe}
+      {hopThu.unread > 0 && (
+        <NutThanhDau>
+          <span className="nhat" style={{ fontSize: "12.5px" }}>
+            {hopThu.unread} chưa đọc
+          </span>
+        </NutThanhDau>
+      )}
+      <div className="hop-thu" data-dang-xem={hoSo ? "chat" : "ds"}>
+        <DanhSachHopThu nhom={gomNhom(hopThu.items, bayGio)} chon={chon?.case_id ?? null} />
+        <section className="ht-chat" aria-label="Cuộc trò chuyện">
+          {chon ? (
+            <CuocDangMo cuoc={chon} bayGio={bayGio} />
+          ) : (
+            <>
+              <Rong
+                tieuDe="Không mở được cuộc trò chuyện này"
+                cau="Hồ sơ không còn trong hộp thư của bạn, hoặc chưa có lời nhắn nào."
+              />
+              <TuLamMoi soTin={0} />
+            </>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}

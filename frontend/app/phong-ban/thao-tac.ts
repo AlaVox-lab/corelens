@@ -66,5 +66,7 @@ export async function guiLoiNhanPhongBan(
   revalidatePath(`/yeu-cau/${doc.maHoSo}`);
   revalidatePath("/yeu-cau");
   revalidatePath("/dieu-phoi");
+  // Hộp thư chung (#155) đọc cùng lời nhắn
+  revalidatePath("/hop-thu");
   return CHUA_CO_LOI;
 }

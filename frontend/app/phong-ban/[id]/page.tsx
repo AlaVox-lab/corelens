@@ -18,7 +18,8 @@
 // Người xử lý mở hồ sơ thì không có thao tác nào như vậy, và Keycloak không bị hỏi tới —
 // danh bạ chỉ nằm trên đường đi của đúng cái ô cần nó (#84).
 
-import { Building2, Flag, Tag, User } from "lucide-react";
+import { Building2, Flag, MessagesSquare, Tag, User } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { chuyenTrangThaiPhongBan, guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
@@ -27,7 +28,7 @@ import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { MoiDangNhap } from "@/components/khung-lam-viec";
-import { TenCapCon } from "@/components/khung-ung-dung";
+import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
@@ -109,6 +110,14 @@ export default async function ChiTietPhongBan({
   return (
     <>
       <TenCapCon ten={ho_so.code} />
+      {ho_so.messages.length > 0 && (
+        <NutThanhDau>
+          <Link className="nut nut-nho" data-loai="ma" href={`/hop-thu?ho-so=${ho_so.id}`}>
+            <MessagesSquare aria-hidden />
+            Mở trong hộp thư
+          </Link>
+        </NutThanhDau>
+      )}
       <DauHoSo
         ho_so={ho_so}
         meta={[
@@ -134,6 +143,7 @@ export default async function ChiTietPhongBan({
           )}
 
           <TheLichSu
+            maHoSo={ho_so.id}
             soLoiNhan={ho_so.messages.length}
             dongThoiGian={
               <DongThoiGian

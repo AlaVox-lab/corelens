@@ -14,6 +14,7 @@ import { ChevronRight, LogOut, Menu, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huong";
 
@@ -57,6 +58,19 @@ export function TenCapCon({ ten }: { ten: string }) {
     return () => dat(null);
   }, [ten, dat]);
   return null;
+}
+
+/** Chỗ bên phải thanh đầu trang, nơi trang con đặt nút riêng của nó. */
+const ID_THANH_DAU_PHAI = "thanh-dau-phai";
+
+/**
+ * Đặt nút lên bên phải thanh đầu trang — ví dụ "Mở trong hộp thư" ở trang hồ sơ (#155).
+ * Dùng portal: nút vẫn thuộc trang (rời trang là mất), chỉ hiện ở thanh đầu.
+ */
+export function NutThanhDau({ children }: { children: React.ReactNode }) {
+  const [cho, datCho] = useState<HTMLElement | null>(null);
+  useEffect(() => datCho(document.getElementById(ID_THANH_DAU_PHAI)), []);
+  return cho ? createPortal(children, cho) : null;
 }
 
 export type NguoiDung = {
@@ -157,6 +171,7 @@ export function KhungUngDung({
             // Ở trang của mục, tên con là phần nói rõ thêm: "Phòng ban · Công nghệ thông tin"
             <p className="tieu">{tenCon ? `${dang.nhan} · ${tenCon}` : dang.nhan}</p>
           )}
+          <div className="phai" id={ID_THANH_DAU_PHAI} />
         </header>
 
         <main className="vung vao">

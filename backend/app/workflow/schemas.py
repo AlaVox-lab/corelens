@@ -338,3 +338,51 @@ class HoSoPhongBanRa(HoSoChiTietRa):
     state_entered_at: dt.datetime
     assignee_label: str | None = None
     assigned_to_me: bool
+
+
+# ---------------------------------------------------------------------------
+# Hộp thư chung (#155)
+# ---------------------------------------------------------------------------
+
+
+class LoiNhanCuoiRa(BaseModel):
+    """Lời nhắn sau cùng của một cuộc trò chuyện — dòng xem trước trong danh sách."""
+
+    author_label: str
+    kind_label: str
+    body: str | None = None
+    created_at: dt.datetime
+    # Của chính người đang xem — giao diện ghi "Bạn: …"
+    mine: bool
+    from_requester: bool
+
+
+class CuocTroChuyenRa(BaseModel):
+    """Một cuộc trò chuyện trong hộp thư: lời nhắn của MỘT hồ sơ.
+
+    `workspace` là cửa người đang xem mở hồ sơ này — `portal`, `department` hay
+    `coordination` — để giao diện biết đọc chi tiết và gửi lời nhắn qua điểm cuối nào. Mỗi
+    điểm cuối đó vẫn tự gác cửa của nó; trường này chỉ chỉ đường.
+    """
+
+    case_id: int
+    code: str
+    title: str
+    state: TrangThaiRa
+    requester_id: str
+    requester_label: str | None = None
+    workspace: str
+    last_message: LoiNhanCuoiRa
+    unread: int
+    # Lời nhắn cuối là của phía bên kia: người gửi đang chờ nhân viên, hoặc ngược lại
+    waiting_on_me: bool
+
+
+class HopThuRa(BaseModel):
+    items: list[CuocTroChuyenRa]
+    # Tổng số lời nhắn chưa đọc — con số trên thanh bên
+    unread: int
+
+
+class SoChuaDocRa(BaseModel):
+    unread: int

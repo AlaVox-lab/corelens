@@ -11,7 +11,8 @@
 // Dòng thời gian dùng chung thành phần với cổng người gửi, để hai bên nhìn cùng một hồ
 // sơ thì thấy cùng một câu chuyện.
 
-import { Building2, Flag, Tag } from "lucide-react";
+import { Building2, Flag, MessagesSquare, Tag } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { chuyenTrangThaiDieuPhoi, guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
@@ -20,7 +21,7 @@ import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { MoiDangNhap } from "@/components/khung-lam-viec";
-import { TenCapCon } from "@/components/khung-ung-dung";
+import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
@@ -80,6 +81,14 @@ export default async function ChiTietDieuPhoi({
   return (
     <>
       <TenCapCon ten={ho_so.code} />
+      {ho_so.messages.length > 0 && (
+        <NutThanhDau>
+          <Link className="nut nut-nho" data-loai="ma" href={`/hop-thu?ho-so=${ho_so.id}`}>
+            <MessagesSquare aria-hidden />
+            Mở trong hộp thư
+          </Link>
+        </NutThanhDau>
+      )}
       <DauHoSo
         ho_so={ho_so}
         meta={[
@@ -109,6 +118,7 @@ export default async function ChiTietDieuPhoi({
           )}
 
           <TheLichSu
+            maHoSo={ho_so.id}
             soLoiNhan={ho_so.messages.length}
             dongThoiGian={
               <DongThoiGian
