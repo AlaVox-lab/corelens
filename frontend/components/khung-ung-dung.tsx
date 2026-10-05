@@ -45,7 +45,8 @@ function doiCheDo() {
 const DatTenCon = createContext<(ten: string | null) => void>(() => {});
 
 /**
- * Đặt tên cấp con cho thanh đầu trang — "Phòng ban › YC-2026-0005". Trang chạy ở máy chủ
+ * Đặt tên cấp con cho thanh đầu trang — "Phòng ban › YC-2026-0005" ở trang một hồ sơ,
+ * "Phòng ban · Công nghệ thông tin" ở trang của chính mục (#170). Trang chạy ở máy chủ
  * nên không chạm được thanh đầu; thành phần rỗng này chuyển tên lên qua context, và trả
  * tên về mặc định khi rời trang.
  */
@@ -153,7 +154,8 @@ export function KhungUngDung({
               {tenCon ? <span className="mono">{tenCon}</span> : <span>Hồ sơ</span>}
             </p>
           ) : (
-            <p className="tieu">{dang.nhan}</p>
+            // Ở trang của mục, tên con là phần nói rõ thêm: "Phòng ban · Công nghệ thông tin"
+            <p className="tieu">{tenCon ? `${dang.nhan} · ${tenCon}` : dang.nhan}</p>
           )}
         </header>
 

@@ -886,7 +886,15 @@ cùng điểm cuối, chỉ khác cách trình bày; trang người gửi vẫn 
 `display_order`, tính tới và gồm trạng thái kết thúc đầu tiên; hồ sơ ở trạng thái nhánh thì
 thanh dừng ở bước đường chính cuối cùng nó đã vào. Đổi đường chính là đổi thứ tự trong dữ
 liệu khởi tạo, không sửa mã. Thẻ hạn chỉ phân hai mức trong hạn và quá hạn theo cờ dịch vụ
-trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao diện không tự đặt.
+trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao diện không tự đặt (#175).
+
+**Từ #170, hai hàng đợi dùng chung một bảng** (`components/bang-hang-doi.tsx`). Trang ở máy
+chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng ở trình duyệt chỉ lọc theo ô tìm (không
+phân biệt dấu, không gọi dịch vụ) và thu gọn nhóm. Hàng đợi phòng ban chia nhóm theo mức gấp
+suy từ cờ của dịch vụ: Quá hạn (`sla_overdue`), Trong hạn (đồng hồ đang chạy), mỗi trạng thái
+đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo dõi
+(`watch_only`). Hàng đợi điều phối lọc bằng hàng tab dựng từ `groups`, bộ lọc nằm trên địa
+chỉ trang. Không tệp nào liệt kê tên trạng thái.
 
 ---
 
