@@ -229,6 +229,10 @@ INSERT INTO guards (code, label, description) VALUES
      'Phải là người tạo hồ sơ',
      'Người thao tác phải chính là người đã gửi yêu cầu. Không có ràng buộc này thì bất kỳ ai mang vai trò requester cũng hủy được hồ sơ của người khác.'),
 
+    ('actor-not-requester',
+     'Không tự điều phối hồ sơ của mình',
+     'Người thao tác không được là người đã gửi hồ sơ. Gắn vào các cạnh của vai điều phối: một người vừa gửi yêu cầu vừa là điều phối viên thì không tự phân loại, tự đặt mức ưu tiên, tự chuyển phòng hay tự đóng hồ sơ của chính mình. Phòng ban không gắn — nhân viên tự làm việc của chính mình là bình thường.'),
+
     ('actor-in-case-department',
      'Phải thuộc phòng ban đang giữ hồ sơ',
      'Người thao tác phải thuộc phòng ban mà hồ sơ đang được giao. Chặn việc phòng này can thiệp vào hồ sơ của phòng khác.'),
@@ -290,6 +294,14 @@ FROM (VALUES
     -- không cạnh sửa nào xuất phát từ trạng thái của phòng ban
     ('submitted',           'submitted',              'edit-content'),
     ('classified',          'submitted',              'edit-content'),
+
+    -- Điều phối viên không tự điều phối hồ sơ do chính mình gửi (#154): mọi cạnh của vai
+    -- điều phối. Cạnh của phòng ban không gắn — tự làm việc của mình là bình thường
+    ('submitted',           'classified',             'actor-not-requester'),
+    ('submitted',           'awaiting-info',          'actor-not-requester'),
+    ('classified',          'awaiting-acceptance',    'actor-not-requester'),
+    ('classified',          'closed',                 'actor-not-requester'),
+    ('rejected-by-department', 'classified',          'actor-not-requester'),
 
     -- Phòng ban chỉ thao tác được trên hồ sơ của phòng mình
     ('awaiting-acceptance', 'in-progress',            'actor-in-case-department'),

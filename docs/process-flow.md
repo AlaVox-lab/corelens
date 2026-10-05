@@ -243,6 +243,15 @@ không có loại sẽ không bao giờ bị bộ quét đánh dấu quá hạn.
   người nhận luôn là chính người bấm — không gửi kèm được người khác. Muốn đổi người thì
   trưởng phòng phân công lại
 
+**Không tự điều phối hồ sơ của mình** (#154, navigator chốt ngày 02/10). Ràng buộc
+`actor-not-requester` gắn vào **mọi cạnh của vai điều phối** — phân loại, hỏi thêm ở *Đã
+gửi*, chuyển phòng ban, định tuyến lại, đóng hồ sơ không phòng nào nhận. Một người vừa gửi
+yêu cầu vừa là điều phối viên thì không tự phân loại, tự đặt mức ưu tiên cho yêu cầu của
+mình: ràng buộc *người tạo không tự đặt mức ưu tiên* ở trên sẽ bị vòng qua nếu thiếu nó.
+Trên hồ sơ của chính mình các nút đó không hiện, hàng đợi ghi *Bạn gửi — người khác điều
+phối*, và dịch vụ từ chối nếu gửi thẳng. **Chỉ ở bước điều phối**: cạnh của phòng ban không
+gắn — nhân viên CNTT gửi yêu cầu sửa máy mình rồi tự sửa là bình thường.
+
 ---
 
 ## 6. Nhật ký sự kiện

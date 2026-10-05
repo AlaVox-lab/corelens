@@ -192,6 +192,8 @@ export type MucHangDoi = HoSoTomTat & {
   priority: NhanCoMa | null;
   /** Lúc hồ sơ vào trạng thái hiện tại — mốc để tính thời gian chờ. */
   state_entered_at: string;
+  /** Hồ sơ do chính người đang xem gửi — chỉ hàng đợi điều phối đặt (#154). */
+  requested_by_me?: boolean;
 };
 
 export type HangDoi = {
@@ -205,6 +207,8 @@ export type HoSoDieuPhoi = HoSoChiTiet & {
   state_entered_at: string;
   /** Phòng mặc định cho loại yêu cầu, để ô chọn điền sẵn. Chỉ là gợi ý. */
   suggested_department: NhanCoMa | null;
+  /** Hồ sơ do chính người đang xem gửi: người khác phải điều phối nó (#154). */
+  requested_by_me: boolean;
 };
 
 // ---------------------------------------------------------------------------
