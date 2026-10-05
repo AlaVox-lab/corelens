@@ -1,282 +1,153 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Hàng đợi của buồng lái phòng ban (#83).
+// Hàng đợi của buồng lái phòng ban (#83, bố cục #170).
 //
 // Câu hỏi màn này trả lời: **hồ sơ nào của phòng sắp trễ, hay đã trễ?** Khác hàng đợi
 // điều phối — xếp theo thời gian chờ — vì ở đây đồng hồ SLA đang chạy, nên thời hạn còn
 // lại mới là con số cần nhìn. Thứ tự do dịch vụ xếp: quá hạn lên đầu, rồi gần hạn nhất.
 //
-// Cả phòng nhìn chung một hàng đợi — trưởng phòng thấy hồ sơ đang xử lý, người xử lý
-// thấy hồ sơ đang chờ nhận — nhưng nút "Giao cho tôi" thu về đúng phần việc của mình.
-// Nút lọc trạng thái dựng từ `groups` mà dịch vụ trả về; tệp này không liệt kê trạng
-// thái nào.
+// Hàng đợi chia nhóm theo mức gấp (#170), nhóm gấp nhất trên cùng:
 //
-// Hồ sơ phòng mình đang ở lượt người gửi — chờ bổ sung thông tin, chờ xác nhận — nằm
-// ở một khối riêng bên dưới, chỉ để theo dõi (#99). Nhóm nào là nhóm theo dõi do cờ
-// `watch_only` của dịch vụ quyết. Thiếu khối này thì người xử lý hỏi thêm xong là hồ sơ
-// biến khỏi hàng đợi, và họ quên mình đang có việc treo.
+//   Quá hạn        — cờ `sla_overdue` của dịch vụ
+//   Trong hạn      — đồng hồ đang chạy, chưa quá hạn
+//   <trạng thái>   — mỗi trạng thái đồng hồ chưa chạy một nhóm, tên lấy từ dữ liệu
+//                    (bộ quy tắc hiện tại: "Chờ phòng ban xác duyệt")
+//   Chờ người gửi  — nhóm chỉ để theo dõi (#99), do cờ `watch_only` của dịch vụ quyết
+//
+// Chưa có nhóm "Sắp hết hạn": dữ liệu chưa có ngưỡng nào cho nó (#175), và giao diện
+// không tự đặt. Tệp này không liệt kê trạng thái nào.
+//
+// Cả phòng nhìn chung một hàng đợi, nhưng nút "Giao cho tôi" thu về đúng phần việc của
+// mình — bộ lọc gửi sang dịch vụ để số đếm đi cùng bộ lọc, và nằm trên địa chỉ trang.
 
+import { User } from "lucide-react";
 import Link from "next/link";
 
-import { DauLoiNhan } from "@/components/dau-loi-nhan";
-import { NhanTrangThai } from "@/components/nhan-trang-thai";
-import { NutLoc } from "@/components/nut-loc";
+import { BangHangDoi, type DongHangDoi, type NhomHangDoi } from "@/components/bang-hang-doi";
+import { TenCapCon } from "@/components/khung-ung-dung";
 import { goiDichVu } from "@/lib/api";
 import type { HangDoiPhongBan, MucHangDoiPhongBan } from "@/lib/kieu";
+import { chuCaiDau, mauTheo } from "@/lib/nguoi";
 import { docDongHo } from "@/lib/sla";
+import { trinhBayTrangThai } from "@/lib/trang-thai";
 
 export const dynamic = "force-dynamic";
 
-function diaChi(state?: string, mine?: boolean): string {
-  const q = new URLSearchParams();
-  if (state) q.set("state", state);
-  if (mine) q.set("mine", "1");
-  const chuoi = q.toString();
-  return chuoi ? `/phong-ban?${chuoi}` : "/phong-ban";
-}
-
-function nguoiXuLy(muc: MucHangDoiPhongBan): string {
-  if (muc.assigned_to_me) return "Giao cho bạn";
-  if (muc.assignee_id) return `Giao cho ${muc.assignee_label ?? "một người trong phòng"}`;
-  return "Chưa giao cho ai";
-}
-
-function Dong({ muc, dauTien }: { muc: MucHangDoiPhongBan; dauTien: boolean }) {
-  const dongHo = docDongHo(muc);
-  return (
-    <Link
-      href={`/phong-ban/${muc.id}`}
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px 16px",
-        alignItems: "center",
-        padding: "14px 16px",
-        borderTop: dauTien ? "none" : "1px solid var(--line)",
-        // Hồ sơ quá hạn mang một vạch đỏ ở mép trái. Không chỉ dựa vào màu: câu bên
-        // phải nói rõ "Quá hạn …", để người không phân biệt được màu vẫn đọc được.
-        boxShadow: muc.sla_overdue ? "inset 3px 0 0 var(--f-r-ink)" : "none",
-        color: "inherit",
-        textDecoration: "none",
-      }}
-    >
-      <span style={{ flex: "1 1 300px", minWidth: 0, display: "grid", gap: "4px" }}>
-        <span
-          className="mono"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "4px 10px",
-            alignItems: "center",
-            fontSize: "12px",
-            color: "var(--ink-3)",
-          }}
-        >
-          {muc.code}
-          {muc.request_type && (
-            <span
-              style={{
-                fontFamily: "var(--font)",
-                padding: "1px 7px",
-                borderRadius: "999px",
-                background: "var(--surface-3)",
-                border: "1px solid var(--line-2)",
-                fontSize: "12px",
-                color: "var(--ink-2)",
-              }}
-            >
-              {muc.request_type.label}
-            </span>
-          )}
-          <DauLoiNhan hoSo={muc} gocNhin="nhan-vien" />
-        </span>
-        <span style={{ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.4 }}>
-          {muc.title}
-        </span>
-        <span style={{ fontSize: "12.5px", color: "var(--ink-3)" }}>
-          {muc.requester_label ?? "Không rõ người gửi"}
-          {muc.priority && <> · Ưu tiên {muc.priority.label.toLowerCase()}</>}
-          {" · "}
-          <span style={{ color: muc.assigned_to_me ? "var(--ink)" : undefined, fontWeight: muc.assigned_to_me ? 600 : undefined }}>
-            {nguoiXuLy(muc)}
-          </span>
-        </span>
-      </span>
-
-      <span style={{ flex: "0 0 auto" }}>
-        <NhanTrangThai ma={muc.state.code} nhan={muc.state.label} />
-      </span>
-
-      <span
-        style={{
-          flex: "0 0 auto",
-          minWidth: "150px",
-          textAlign: "right",
-          fontSize: "12.5px",
-          fontWeight: dongHo.canhBao ? 600 : 500,
-          color: dongHo.canhBao ? "var(--f-r-ink)" : "var(--ink-2)",
-        }}
-      >
-        {dongHo.cau}
-      </span>
-    </Link>
-  );
+function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
+  const dongHo = docDongHo(m);
+  const tenGiao = m.assigned_to_me ? "Bạn" : (m.assignee_label ?? "Một người trong phòng");
+  return {
+    id: m.id,
+    href: `/phong-ban/${m.id}`,
+    ma: m.code,
+    tieuDe: m.title,
+    phu: m.request_type?.label ?? "Chưa rõ loại",
+    choTraLoi: m.last_message_from_requester === true && !m.state.is_terminal,
+    nguoiGui: m.requester_label ?? "Không rõ",
+    giao: m.assignee_id
+      ? { ten: tenGiao, mau: mauTheo(m.assignee_id), chuCai: chuCaiDau(m.assignee_label ?? "?") }
+      : null,
+    cuoi: {
+      chu: dongHo.cau,
+      // Quá hạn đỏ; đồng hồ đứng (chưa nhận việc, đang chờ người gửi) thì nhạt
+      muc: dongHo.canhBao ? "qua" : !m.sla_started || m.sla_paused ? "dung" : undefined,
+    },
+  };
 }
 
 export default async function HangDoiPhongBan({
   searchParams,
 }: {
-  searchParams: Promise<{ state?: string; mine?: string }>;
+  searchParams: Promise<{ mine?: string }>;
 }) {
-  const { state, mine } = await searchParams;
+  const { mine } = await searchParams;
   const cuaToi = mine === "1";
-  // Bộ lọc "của tôi" gửi sang dịch vụ để số đếm trên nút lọc đi cùng bộ lọc; bộ lọc
-  // trạng thái thì lọc ở đây, vì một lần gọi đã đủ số đếm cho mọi nút.
   const tatCa = await goiDichVu<HangDoiPhongBan>(
     cuaToi ? "/department/queue?mine=true" : "/department/queue",
   );
-  const theoDoi = new Set((tatCa?.groups ?? []).filter((g) => g.watch_only).map((g) => g.code));
-  const tatCaMuc = tatCa?.items ?? [];
-  const cacMuc = tatCaMuc.filter((m) => !state || m.state.code === state);
-  const viecPhaiLam = cacMuc.filter((m) => !theoDoi.has(m.state.code));
-  const choNguoiGui = cacMuc.filter((m) => theoDoi.has(m.state.code));
-  const tong = tatCaMuc.filter((m) => !theoDoi.has(m.state.code)).length;
-  const soCho = tatCaMuc.length - tong;
-  const soQuaHan = tatCaMuc.filter((m) => m.sla_overdue && !theoDoi.has(m.state.code)).length;
   const tenPhong = tatCa?.departments.map((p) => p.label).join(" · ");
-  const dangLocTheoDoi = state !== undefined && theoDoi.has(state);
+
+  const tieuDe = (
+    <>
+      {tenPhong && <TenCapCon ten={tenPhong} />}
+      <h1 className="an-di">{tenPhong ? `Hàng đợi phòng ${tenPhong}` : "Hàng đợi phòng ban"}</h1>
+    </>
+  );
+
+  if (tatCa === null) {
+    return (
+      <>
+        {tieuDe}
+        <div className="the">
+          <div className="rong" data-loi="">
+            <h2>Không tải được dữ liệu</h2>
+            <p>Dịch vụ ứng dụng không trả lời. Thử lại sau ít phút.</p>
+            <Link href={cuaToi ? "/phong-ban?mine=1" : "/phong-ban"} className="nut nut-nho">
+              Thử lại
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const theoDoi = new Set(tatCa.groups.filter((g) => g.watch_only).map((g) => g.code));
+  const viec = tatCa.items.filter((m) => !theoDoi.has(m.state.code));
+  const nhom: NhomHangDoi[] = [
+    {
+      ma: "qua-han",
+      ten: "Quá hạn",
+      mau: "var(--f-r-solid)",
+      dong: viec.filter((m) => m.sla_overdue).map(thanhDong),
+    },
+    {
+      ma: "trong-han",
+      ten: "Trong hạn",
+      mau: "var(--f-t-solid)",
+      dong: viec.filter((m) => !m.sla_overdue && m.sla_started).map(thanhDong),
+    },
+    // Đồng hồ chưa chạy: mỗi trạng thái một nhóm, theo thứ tự nhóm dịch vụ trả về
+    ...tatCa.groups
+      .filter((g) => !g.watch_only)
+      .map((g) => ({
+        ma: g.code,
+        ten: g.label,
+        mau: `var(--f-${trinhBayTrangThai(g.code).ho}-solid)`,
+        dong: viec
+          .filter((m) => m.state.code === g.code && !m.sla_overdue && !m.sla_started)
+          .map(thanhDong),
+      })),
+    {
+      ma: "cho-nguoi-gui",
+      ten: "Chờ người gửi",
+      mau: "var(--ink-3)",
+      dong: tatCa.items.filter((m) => theoDoi.has(m.state.code)).map(thanhDong),
+    },
+  ];
 
   return (
     <>
-      <h1
-        style={{
-          margin: 0,
-          fontSize: "clamp(22px,3.4vw,28px)",
-          fontWeight: 600,
-          letterSpacing: "-.02em",
-          lineHeight: 1.25,
-        }}
-      >
-        {tenPhong ? `Hàng đợi phòng ${tenPhong}` : "Hàng đợi phòng ban"}
-      </h1>
-      <p
-        style={{
-          margin: "7px 0 0",
-          fontSize: "14.5px",
-          color: "var(--ink-2)",
-          maxWidth: "68ch",
-          lineHeight: 1.6,
-        }}
-      >
-        {tong === 0 && soCho === 0
-          ? cuaToi
-            ? "Chưa có hồ sơ nào đang giao cho bạn."
-            : "Hồ sơ điều phối viên chuyển về phòng sẽ xuất hiện ở đây để nhận và giao người xử lý."
-          : `${tong} hồ sơ cần xử lý${soQuaHan > 0 ? `, ${soQuaHan} đã quá hạn` : ""}${soCho > 0 ? ` · ${soCho} đang chờ người gửi` : ""}. Hồ sơ quá hạn nằm trên cùng, rồi tới hồ sơ gần hạn nhất.`}
-      </p>
-
-      {tatCa === null ? (
-        <div className="the" style={{ marginTop: "20px", padding: "24px", textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: "14.5px", fontWeight: 600 }}>
-            Chưa nạp được hàng đợi
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: "13.5px", color: "var(--ink-2)" }}>
-            Dịch vụ ứng dụng không phản hồi. Tải lại trang sau ít phút.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div
-            className="khong-in"
-            style={{ marginTop: "18px", display: "flex", flexWrap: "wrap", gap: "7px" }}
-          >
-            <NutLoc href={diaChi(undefined, cuaToi)} nhan="Tất cả" so={tong + soCho} chon={!state} />
-            {tatCa.groups
-              .filter((g) => !g.watch_only)
-              .map((g) => (
-                <NutLoc
-                  key={g.code}
-                  href={diaChi(g.code, cuaToi)}
-                  nhan={g.label}
-                  so={g.count}
-                  chon={state === g.code}
-                />
-              ))}
-            {theoDoi.size > 0 && (
-              <span
-                style={{
-                  alignSelf: "center",
-                  margin: "0 2px 0 6px",
-                  fontSize: "12px",
-                  color: "var(--ink-3)",
-                }}
-              >
-                Chờ người gửi:
-              </span>
-            )}
-            {tatCa.groups
-              .filter((g) => g.watch_only)
-              .map((g) => (
-                <NutLoc
-                  key={g.code}
-                  href={diaChi(g.code, cuaToi)}
-                  nhan={g.label}
-                  so={g.count}
-                  chon={state === g.code}
-                />
-              ))}
-            <Link
-              href={diaChi(state, !cuaToi)}
-              aria-pressed={cuaToi}
-              className="nut nut-nho"
-              data-loai={cuaToi ? "chinh" : undefined}
-              style={{ marginLeft: "auto" }}
-            >
-              {cuaToi ? "✓ Giao cho tôi" : "Giao cho tôi"}
-            </Link>
-          </div>
-
-          {!dangLocTheoDoi && (
-            <div className="the" style={{ marginTop: "14px" }}>
-              {viecPhaiLam.length === 0 ? (
-                <p
-                  style={{
-                    margin: 0,
-                    padding: "36px 24px",
-                    textAlign: "center",
-                    fontSize: "14px",
-                    color: "var(--ink-2)",
-                  }}
-                >
-                  {state
-                    ? "Không có hồ sơ nào ở trạng thái này."
-                    : "Không có việc nào đang chờ phòng xử lý."}
-                </p>
-              ) : (
-                viecPhaiLam.map((m, i) => <Dong key={m.id} muc={m} dauTien={i === 0} />)
-              )}
-            </div>
-          )}
-
-          {choNguoiGui.length > 0 && (
-            <section style={{ marginTop: dangLocTheoDoi ? "14px" : "26px" }}>
-              <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
-                Đang chờ người gửi
-              </h2>
-              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink-3)", lineHeight: 1.55 }}>
-                Chỉ để theo dõi — lúc này không ai trong phòng có thao tác. Hồ sơ tự quay về
-                hàng đợi khi người gửi bổ sung thông tin hoặc mở lại.
-              </p>
-              <div className="the" style={{ marginTop: "10px", opacity: 0.92 }}>
-                {choNguoiGui.map((m, i) => (
-                  <Dong key={m.id} muc={m} dauTien={i === 0} />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
+      {tieuDe}
+      <BangHangDoi
+        nhom={nhom}
+        cot={{ nguoiGui: true, nguoiXuLy: true, cuoi: "Hạn" }}
+        goiYTim="Tìm mã, tiêu đề, người gửi"
+        phai={
+          <Link href={cuaToi ? "/phong-ban" : "/phong-ban?mine=1"} className="chip" aria-pressed={cuaToi}>
+            <User aria-hidden />
+            Giao cho tôi
+          </Link>
+        }
+        khiTrong={
+          cuaToi
+            ? { tieuDe: "Chưa có hồ sơ nào giao cho bạn", cau: "Hồ sơ trưởng phòng giao cho bạn sẽ hiện ở đây." }
+            : {
+                tieuDe: "Phòng chưa có hồ sơ nào",
+                cau: "Hồ sơ điều phối viên chuyển về phòng sẽ hiện ở đây để nhận và giao người xử lý.",
+              }
+        }
+      />
     </>
   );
 }
