@@ -385,6 +385,7 @@ export function DongThoiGian({
   cacLoiNhan = [],
   bayGio,
   khiTrong,
+  trongThe = false,
 }: {
   cacSuKien: SuKien[];
   /** Lời nhắn trên hồ sơ (#128), trộn vào theo thời gian. */
@@ -392,23 +393,42 @@ export function DongThoiGian({
   bayGio: Date;
   /** Câu hiện ra khi hồ sơ chưa đổi trạng thái lần nào — mỗi cổng nói theo góc nhìn của mình. */
   khiTrong: string;
+  /**
+   * Đã nằm trong một thẻ có tiêu đề riêng — thẻ "Dòng thời gian" của trang hồ sơ nhân viên
+   * (#169): bỏ tiêu đề và khung của chính nó, giữ dòng thống kê và từng mốc như cũ.
+   */
+  trongThe?: boolean;
 }) {
   const quayLui = danhDauQuayLui(cacSuKien);
   const cacMuc = tronTheoThoiGian(cacSuKien, cacLoiNhan);
 
+  const thongKe = (
+    <p
+      className="mono"
+      style={{ margin: trongThe ? "0 0 16px" : "6px 0 0", fontSize: "12px", color: "var(--ink-3)" }}
+    >
+      {cacSuKien.length} mốc
+      {cacLoiNhan.length > 0 && <> · {cacLoiNhan.length} lời nhắn</>} · {quayLui.size} lần quay lui
+    </p>
+  );
+
   return (
     <>
-      <div style={{ marginTop: "24px" }}>
-        <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600, letterSpacing: "-.01em" }}>
-          Dòng thời gian hồ sơ
-        </h2>
-        <p className="mono" style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--ink-3)" }}>
-          {cacSuKien.length} mốc
-          {cacLoiNhan.length > 0 && <> · {cacLoiNhan.length} lời nhắn</>} · {quayLui.size} lần quay lui
-        </p>
-      </div>
+      {trongThe ? (
+        thongKe
+      ) : (
+        <div style={{ marginTop: "24px" }}>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600, letterSpacing: "-.01em" }}>
+            Dòng thời gian hồ sơ
+          </h2>
+          {thongKe}
+        </div>
+      )}
 
-      <div className="the" style={{ marginTop: "14px", padding: "20px 20px 4px" }}>
+      <div
+        className={trongThe ? undefined : "the"}
+        style={trongThe ? undefined : { marginTop: "14px", padding: "20px 20px 4px" }}
+      >
         {cacMuc.length === 0 ? (
           <p
             style={{
