@@ -878,6 +878,16 @@ TypeScript. Loại không cần nội dung thì nút của nó bỏ qua phép ki
 (`formNoValidate`), nên "Hỏi tiến độ" bấm là gửi được ngay. Khung nằm dưới dòng thời gian
 chứ không ở cột thao tác: cột đó dính khi cuộn, thêm thẻ là cao quá màn hình.
 
+**Từ #169, trang hồ sơ phía nhân viên tách mốc và lời nhắn thành hai thẻ.** Thẻ "Dòng
+thời gian" chỉ còn các mốc đổi hồ sơ; thẻ "Trao đổi" hiện lời nhắn dạng hội thoại
+(`components/khung-chat.tsx`) với ô soạn kiểu chat của cùng khung lời nhắn — cùng dữ liệu,
+cùng điểm cuối, chỉ khác cách trình bày; trang người gửi vẫn trộn như #128. Thanh "hồ sơ
+đang ở đâu" suy từ dữ liệu (`lib/buoc.ts`): đường chính là các trạng thái theo
+`display_order`, tính tới và gồm trạng thái kết thúc đầu tiên; hồ sơ ở trạng thái nhánh thì
+thanh dừng ở bước đường chính cuối cùng nó đã vào. Đổi đường chính là đổi thứ tự trong dữ
+liệu khởi tạo, không sửa mã. Thẻ hạn chỉ phân hai mức trong hạn và quá hạn theo cờ dịch vụ
+trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao diện không tự đặt.
+
 ---
 
 ## 8. Quy ước đặt tên và mã nguồn

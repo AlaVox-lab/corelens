@@ -13,7 +13,7 @@
 import { ChevronRight, LogOut, Menu, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huong";
 
@@ -41,6 +41,23 @@ function doiCheDo() {
   window.setTimeout(() => html.classList.remove("doi-mau"), 260);
 }
 
+/** Trang con đặt tên cấp con lên thanh đầu, ví dụ mã hồ sơ (#169). */
+const DatTenCon = createContext<(ten: string | null) => void>(() => {});
+
+/**
+ * Đặt tên cấp con cho thanh đầu trang — "Phòng ban › YC-2026-0005". Trang chạy ở máy chủ
+ * nên không chạm được thanh đầu; thành phần rỗng này chuyển tên lên qua context, và trả
+ * tên về mặc định khi rời trang.
+ */
+export function TenCapCon({ ten }: { ten: string }) {
+  const dat = useContext(DatTenCon);
+  useEffect(() => {
+    dat(ten);
+    return () => dat(null);
+  }, [ten, dat]);
+  return null;
+}
+
 export type NguoiDung = {
   ten: string;
   chuCai: string;
@@ -62,6 +79,7 @@ export function KhungUngDung({
   const duongDan = usePathname();
   const dang = mucDangDung(duongDan, cacMuc);
   const [moMenu, setMoMenu] = useState(false);
+  const [tenCon, setTenCon] = useState<string | null>(null);
 
   // Bấm một mục trong ngăn kéo là sang trang khác: đóng ngăn kéo lại
   useEffect(() => setMoMenu(false), [duongDan]);
@@ -132,14 +150,16 @@ export function KhungUngDung({
             <p className="cha">
               <Link href={dang.duongDan}>{dang.nhan}</Link>
               <ChevronRight aria-hidden />
-              <span>Hồ sơ</span>
+              {tenCon ? <span className="mono">{tenCon}</span> : <span>Hồ sơ</span>}
             </p>
           ) : (
             <p className="tieu">{dang.nhan}</p>
           )}
         </header>
 
-        <main className="vung vao">{children}</main>
+        <main className="vung vao">
+          <DatTenCon.Provider value={setTenCon}>{children}</DatTenCon.Provider>
+        </main>
       </div>
     </div>
   );
