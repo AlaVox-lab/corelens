@@ -94,6 +94,8 @@ export type SuKien = {
   note_label: string | null;
   /** Trường quyết định mà lần chuyển này đổi — nhật ký giữ trọn lịch sử thay đổi. */
   changes: ThayDoiTruong[];
+  /** Mốc đi qua cạnh làm lại, khai trong dữ liệu (#153). */
+  is_rework: boolean;
 };
 
 export type HoSoTomTat = {

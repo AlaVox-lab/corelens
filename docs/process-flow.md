@@ -190,6 +190,13 @@ cạnh tự trỏ không làm rối đồ thị:
 **Sửa nội dung ở *Đã phân loại* thì hồ sơ về *Đã gửi***, không tự trỏ: phân loại, mức ưu
 tiên, phòng ban dự kiến đều dựa trên nội dung cũ, nên người phân loại phải xem lại.
 
+**Cạnh làm lại** (#153, navigator chốt ngày 02/10). Ba cạnh mang cờ `is_rework` trong dữ
+liệu: *Từ chối vì sai chuyên môn*, *Mở lại, chưa đạt*, và *Sửa nội dung* từ *Đã phân loại*
+về *Đã gửi*. Dòng thời gian đếm "quay lui" là số lần hồ sơ đi qua các cạnh này — hồ sơ bị
+đẩy ngược để làm lại. Hỏi đáp bổ sung thông tin hay phân công lại sau leo thang thì không
+tính: hồ sơ đi vòng rồi về đúng chỗ cũ, không ai phải làm lại gì. Đổi cạnh nào là làm lại
+thì sửa dữ liệu khởi tạo.
+
 ---
 
 ## 4. Năm vai trò

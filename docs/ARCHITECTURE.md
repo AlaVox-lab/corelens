@@ -573,8 +573,10 @@ Bốn hệ quả mã nguồn phải giữ:
 
 - Dòng nhật ký tự trỏ có `from_state = to_state`. Nó không đưa hồ sơ **vào** trạng thái
   nào, nên ràng buộc `return-to-previous-state` bỏ qua nó khi tìm chỗ cũ (mục 7)
-- Số lần đổi trạng thái và nhãn *Quay lui* trên dòng thời gian không đếm mốc tự trỏ; mốc
-  đó hiện là *Giữ nguyên trạng thái*
+- Số lần đổi trạng thái trên dòng thời gian không đếm mốc tự trỏ; mốc đó hiện là *Giữ
+  nguyên trạng thái*. Nhãn *Quay lui* từ #153 đếm theo **cạnh làm lại khai trong dữ liệu**
+  — cột `transitions.is_rework`, dịch vụ trả kèm từng mốc lịch sử — chứ không theo trạng
+  thái lặp: hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính
 - Không có cạnh tự trỏ ở trạng thái chờ người khác — hồ sơ đang chờ người gửi trả lời mà
   bị sửa tại chỗ thì câu hỏi mất nghĩa. Phép kiểm đồ thị số 7 chặn khởi động nếu có
 - Mỗi cạnh trong `allowed_transitions` mang cờ `keeps_state`, để giao diện nói "trạng

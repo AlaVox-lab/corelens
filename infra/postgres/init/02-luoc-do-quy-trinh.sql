@@ -126,6 +126,12 @@ CREATE TABLE transitions (
     note_label      TEXT,
     display_order   SMALLINT  NOT NULL DEFAULT 0,
 
+    -- Cạnh làm lại (#153): đi qua nó là hồ sơ bị đẩy ngược để làm lại — từ chối vì sai
+    -- chuyên môn, mở lại vì chưa đạt. Số lần quay lui trên dòng thời gian đếm số lần đi qua
+    -- cạnh mang cờ này, không đếm mọi lần vào lại một trạng thái cũ: hỏi đáp bổ sung
+    -- thông tin hay phân công lại sau leo thang là đi vòng rồi về, không phải làm lại.
+    is_rework       BOOLEAN   NOT NULL DEFAULT FALSE,
+
     -- Cột kỹ thuật, luôn bằng FALSE. Nó tồn tại chỉ để khóa ngoại ngay dưới
     -- chặn được việc tạo cạnh xuất phát từ một trạng thái kết thúc. Dữ liệu
     -- khởi tạo không bao giờ cần nhắc tới cột này — giá trị mặc định lo hết.
