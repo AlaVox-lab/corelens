@@ -28,6 +28,8 @@ export type DongHangDoi = {
   phu: string;
   /** Lời nhắn cuối là của người gửi (#128): người gửi đang chờ trả lời. */
   choTraLoi: boolean;
+  /** Hồ sơ do chính người đang xem gửi — ở hàng đợi điều phối, người khác phải lo (#154). */
+  cuaMinh?: boolean;
   nguoiGui?: string;
   /** `null`: chưa giao ai. Không có khóa: bảng không có cột người xử lý. */
   giao?: { ten: string; mau: number; chuCai: string } | null;
@@ -72,6 +74,12 @@ function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: numbe
           <b title={d.tieuDe}>{d.tieuDe}</b>
           <span>
             <span className="mono">{d.ma}</span> · {d.phu}
+            {d.cuaMinh && (
+              <>
+                {" · "}
+                <span style={{ color: "var(--f-p-ink)", fontWeight: 600 }}>Bạn gửi — người khác điều phối</span>
+              </>
+            )}
             {d.choTraLoi && (
               <>
                 {" · "}

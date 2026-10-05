@@ -152,6 +152,13 @@ export default async function ChiTietDieuPhoi({
         <div className="cot-dinh">
           <TheHan ho_so={ho_so} />
           <TheThaoTac>
+            {/* Hồ sơ của chính mình: không có nút điều phối nào, chỉ còn nút của chủ hồ sơ
+                nếu có — nói rõ vì sao (#154) */}
+            {ho_so.requested_by_me && ho_so.allowed_transitions.length > 0 && (
+              <p style={{ margin: "0 0 10px", fontSize: "13px", color: "var(--f-p-ink)", lineHeight: 1.55 }}>
+                Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng.
+              </p>
+            )}
             <BangThaoTac
               key={ho_so.state.code}
               maHoSo={ho_so.id}
@@ -165,7 +172,10 @@ export default async function ChiTietDieuPhoi({
               }}
               hanhDong={chuyenTrangThaiDieuPhoi}
               khiHet={{
-                cau: "Hồ sơ đã rời khỏi tay điều phối viên. Không còn thao tác nào dành cho bạn ở trạng thái này.",
+                // Bảng trống vì hai lý do khác hẳn nhau — nói đúng lý do (#154)
+                cau: ho_so.requested_by_me
+                  ? "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng."
+                  : "Hồ sơ đã rời khỏi tay điều phối viên. Không còn thao tác nào dành cho bạn ở trạng thái này.",
                 veHangDoi: "/dieu-phoi",
               }}
             />

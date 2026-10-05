@@ -81,6 +81,22 @@ def requester_owns_case(ctx: TransitionContext) -> None:
         )
 
 
+def actor_not_requester(ctx: TransitionContext) -> None:
+    """Người thao tác không được là người đã gửi hồ sơ (#154).
+
+    Gắn vào các cạnh của vai điều phối. Một người vừa gửi yêu cầu vừa là điều phối viên
+    thì không tự phân loại, tự đặt mức ưu tiên, tự chuyển phòng hay tự đóng hồ sơ của
+    chính mình — ràng buộc "người tạo không tự đặt mức ưu tiên" sẽ bị vòng qua nếu một
+    người giữ cả hai vai. Phòng ban thì không gắn: nhân viên tự sửa máy của mình là
+    chuyện bình thường. Cạnh nào mang ràng buộc này là chuyện của dữ liệu khởi tạo.
+    """
+    if ctx.actor.id == ctx.case.requester_id:
+        raise GuardViolation(
+            "actor-not-requester",
+            "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng.",
+        )
+
+
 def actor_in_case_department(ctx: TransitionContext) -> None:
     """Người thao tác phải thuộc phòng ban đang giữ hồ sơ.
 
@@ -294,6 +310,7 @@ def _giao_cho_nguoi_thao_tac(ctx: TransitionContext) -> dict[str, Any]:
 GUARD_REGISTRY: dict[str, Guard] = {
     "requester-owns-case": Guard(requester_owns_case, input_free=True),
     "actor-in-case-department": Guard(actor_in_case_department, input_free=True),
+    "actor-not-requester": Guard(actor_not_requester, input_free=True),
     "set-priority": Guard(set_priority, frozenset({"priority_code"})),
     "select-department": Guard(select_department, frozenset({"department_code"})),
     "department-unchanged": Guard(department_unchanged, frozenset({"department_code"})),

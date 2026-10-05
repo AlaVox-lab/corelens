@@ -30,6 +30,7 @@ function thanhDong(m: MucHangDoi, bayGio: Date): DongHangDoi {
     tieuDe: m.title,
     phu: m.requester_label ?? "Không rõ người gửi",
     choTraLoi: m.last_message_from_requester === true && !m.state.is_terminal,
+    cuaMinh: m.requested_by_me === true,
     nguoiGui: m.requester_label ?? undefined,
     loai: m.request_type?.label ?? null,
     trangThai: { code: m.state.code, label: m.state.label },
