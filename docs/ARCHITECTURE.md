@@ -560,6 +560,7 @@ Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác kh�
 | Chuyển trạng thái | `current_state`, có thể kèm trường quyết định | Cạnh thường |
 | Nhận việc về mình, sửa nội dung ở *Đã gửi* | Người xử lý; tiêu đề, mô tả, loại | **Cạnh tự trỏ** — trạng thái giữ nguyên |
 | Lời nhắn hai chiều, hỏi tiến độ | Không đổi gì | Bảng lời nhắn `case_messages` (#128) — không phải cạnh, không vào `event_log` |
+| Đánh dấu đã đọc lời nhắn | Không đổi gì | Bảng `case_message_reads` (#155) — mốc đã đọc của từng người, không vào `event_log` |
 
 Vì sao thao tác đổi hồ sơ mà không đổi trạng thái vẫn phải là cạnh: mọi thay đổi trên hồ
 sơ cần một dòng nhật ký giữ giá trị cũ (cột `changes`), cần qua kiểm quyền và ràng buộc
@@ -895,6 +896,19 @@ suy từ cờ của dịch vụ: Quá hạn (`sla_overdue`), Trong hạn (đồn
 đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo dõi
 (`watch_only`). Hàng đợi điều phối lọc bằng hàng tab dựng từ `groups`, bộ lọc nằm trên địa
 chỉ trang. Không tệp nào liệt kê tên trạng thái.
+
+**Từ #155, hộp thư chung gom lời nhắn theo người** (`backend/app/workflow/inbox.py`,
+`frontend/app/hop-thu/`). Không có kho tin nhắn thứ hai: mỗi cuộc trò chuyện là lời nhắn
+`case_messages` của một hồ sơ. Hộp thư không viết lại cửa nhìn thấy — một hồ sơ vào hộp
+thư khi người đó mở được nó qua cổng người gửi, buồng lái phòng ban hay điều phối, rồi thu
+hẹp theo việc đang giữ (điều phối viên chỉ thấy hồ sơ ở hàng đợi điều phối và hồ sơ mình đã
+nhắn). Dịch vụ trả kèm `workspace` cho từng cuộc; giao diện đọc chi tiết và gửi lời nhắn qua
+đúng điểm cuối, đúng Server Action của cửa đó, nên luật của #128 chỉ có một nơi. Mốc đã đọc
+nằm ở bảng `case_message_reads` (migration 0008, không cần `down -v`), chỉ dời lên, ghi từ
+trình duyệt khi lời nhắn thật sự đang hiện — không ghi lúc dựng trang, để tải trước không
+đánh dấu nhầm. Trang hộp thư tự tải lại khoảng 12 giây một lần bằng `router.refresh()`;
+thanh bên hỏi riêng con số qua `app/api/hop-thu/chua-doc` — không thêm dịch vụ nào vào
+Compose.
 
 ---
 

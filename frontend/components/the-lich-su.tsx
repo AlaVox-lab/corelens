@@ -13,13 +13,17 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
+
 type Tab = "dong-thoi-gian" | "trao-doi";
 
 export function TheLichSu({
+  maHoSo,
   dongThoiGian,
   traoDoi,
   soLoiNhan,
 }: {
+  maHoSo: number;
   dongThoiGian: React.ReactNode;
   traoDoi: React.ReactNode;
   soLoiNhan: number;
@@ -90,6 +94,8 @@ export function TheLichSu({
       >
         {traoDoi}
       </div>
+      {/* Mở thẻ Trao đổi là đã đọc lời nhắn của hồ sơ (#155) */}
+      <DanhDauDaDoc maHoSo={maHoSo} soTin={soLoiNhan} bat={tab === "trao-doi"} />
     </div>
   );
 }

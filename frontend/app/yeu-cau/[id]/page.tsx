@@ -17,6 +17,7 @@
 // nghĩa là thứ người dùng đọc để yên tâm và thứ hệ thống đọc để tự cải tiến là **một**.
 // Xem CLAUDE.md mục 4.1.
 
+import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -29,7 +30,9 @@ import {
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
+import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
+import { NutThanhDau } from "@/components/khung-ung-dung";
 import { MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
@@ -120,6 +123,16 @@ export default async function ChiTietHoSo({
 
   return (
     <>
+      {/* Trang người gửi chưa có thẻ Trao đổi: mở trang là đã đọc lời nhắn (#155) */}
+      <DanhDauDaDoc maHoSo={ho_so.id} soTin={ho_so.messages.length} />
+      {ho_so.messages.length > 0 && (
+        <NutThanhDau>
+          <Link className="nut nut-nho" data-loai="ma" href={`/hop-thu?ho-so=${ho_so.id}`}>
+            <MessagesSquare aria-hidden />
+            Mở trong hộp thư
+          </Link>
+        </NutThanhDau>
+      )}
       <Link href="/yeu-cau" className="nut nut-nho khong-in">
         ← Hồ sơ của tôi
       </Link>

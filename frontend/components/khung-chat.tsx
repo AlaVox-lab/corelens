@@ -5,8 +5,8 @@
 // nhân viên. Cùng dữ liệu `messages` mà dòng thời gian từng trộn vào (#128); lời nhắn
 // vẫn không đổi trạng thái, không dừng đồng hồ (ADR-0005).
 //
-// Người gửi hồ sơ nằm bên trái, nhân viên bên phải — người đang xem trang là nhân viên,
-// nên phía phải là "phía mình" như mọi ứng dụng chat. Trên mỗi bong bóng của nhân viên
+// Phía phải là "phía mình" như mọi ứng dụng chat: nhân viên xem thì nhân viên bên phải,
+// người gửi bên trái; người gửi xem trong hộp thư (#155) thì ngược lại. Trên mỗi bong bóng
 // ghi tên người viết, vì nhiều người cùng giữ một hồ sơ: điều phối, trưởng phòng, người
 // xử lý. Lời nhắn không có nội dung (như "Hỏi tiến độ") hiện thành một dòng sự kiện ở
 // giữa, không thành bong bóng rỗng.
@@ -21,9 +21,12 @@ export function KhungChat({
   cacLoiNhan,
   bayGio,
   soan,
+  phiaMinh = "nhan-vien",
 }: {
   cacLoiNhan: LoiNhan[];
   bayGio: Date;
+  /** Người đang xem đứng phía nào — phía đó nằm bên phải. */
+  phiaMinh?: "nhan-vien" | "nguoi-gui";
   /** Ô soạn đặt dưới khung — thành phần phía trình duyệt của nơi đang dùng. */
   soan: React.ReactNode;
 }) {
@@ -47,8 +50,11 @@ export function KhungChat({
                     {m.author_label} · {m.kind_label} · {chiGio(m.created_at)}
                   </span>
                 ) : (
-                  <div className="bong-hang" data-minh={m.from_requester ? undefined : ""}>
-                    {m.from_requester && (
+                  <div
+                    className="bong-hang"
+                    data-minh={m.from_requester === (phiaMinh === "nguoi-gui") ? "" : undefined}
+                  >
+                    {m.from_requester !== (phiaMinh === "nguoi-gui") && (
                       <span className="av av-nho" data-c={mauTheo(m.author)} aria-hidden>
                         {chuCaiDau(m.author_label)}
                       </span>

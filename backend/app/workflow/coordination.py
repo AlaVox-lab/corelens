@@ -84,7 +84,7 @@ def vao_duoc_buong_lai(actor: Actor) -> bool:
     return VAI_TRO_DIEU_PHOI in actor.roles
 
 
-def _trang_thai_hang_doi(session: Session, rule_set_id: int) -> list[State]:
+def trang_thai_hang_doi_dieu_phoi(session: Session, rule_set_id: int) -> list[State]:
     """Những trạng thái mà vai trò điều phối có cạnh đi ra — theo thứ tự hiển thị.
 
     Suy từ `transitions` và `transition_roles`, không liệt kê cứng. Doanh nghiệp giao
@@ -180,7 +180,7 @@ def hang_doi(
     sơ cũ vẫn chạy theo bộ cũ, và hàng đợi của chúng sẽ cần xử lý riêng.
     """
     bo = get_active_rule_set(session)
-    cac_trang_thai = _trang_thai_hang_doi(session, bo.id)
+    cac_trang_thai = trang_thai_hang_doi_dieu_phoi(session, bo.id)
     ma_hang_doi = [t.code for t in cac_trang_thai]
 
     if state is not None and state not in ma_hang_doi:

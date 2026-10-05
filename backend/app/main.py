@@ -25,6 +25,7 @@ from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import router as router_phong_ban
 from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.escalation import quet_va_leo_thang
+from app.workflow.inbox import router as router_hop_thu
 from app.workflow.routes import router as router_yeu_cau
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,7 @@ app.include_router(router_yeu_cau)
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
 app.include_router(router_phong_ban)
+app.include_router(router_hop_thu)
 
 
 @app.get("/health", tags=["Vận hành"])
