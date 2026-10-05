@@ -23,24 +23,8 @@ import { NutDangNhap } from "@/components/nut-dang-nhap";
 import { goiDichVu, type DanhTinh } from "@/lib/api";
 import { loiVaoCua } from "@/lib/khong-gian";
 import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
+import { chuCaiDau, mauTheo } from "@/lib/nguoi";
 import { layPhien } from "@/lib/session";
-
-function chuCaiDau(ten: string): string {
-  const tu = ten.trim().split(/\s+/).filter(Boolean);
-  if (tu.length === 0) return "?";
-  // Tên Việt Nam đọc họ trước, tên gọi sau cùng. "Nguyễn Minh Anh" → "NA": chữ đầu
-  // của họ và chữ đầu của tên gọi, giống cách người ta tự viết tắt.
-  const dau = tu[0][0];
-  const cuoi = tu.length > 1 ? tu[tu.length - 1][0] : "";
-  return (dau + cuoi).toUpperCase();
-}
-
-/** Màu ô chữ cái, 1–5, tính từ định danh: cùng người luôn cùng màu (#158). */
-function mauTheo(dinhDanh: string): number {
-  let tong = 0;
-  for (const kyTu of dinhDanh) tong = (tong + kyTu.charCodeAt(0)) % 5;
-  return tong + 1;
-}
 
 /**
  * Lời mời đăng nhập. Nút quay về đúng trang đang mở sau khi đăng nhập xong.

@@ -109,6 +109,20 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
   return { cau: `Còn ${thoiLuong(con_lai)} trong cam kết`, canhBao: false };
 }
 
+/**
+ * Vạch hạn trên trang hồ sơ (#169): đã dùng bao nhiêu phần trăm cam kết, có quá hạn
+ * chưa. `null` khi chưa có gì để vẽ — chưa có ngưỡng, đồng hồ chưa chạy, hồ sơ đã kết
+ * thúc. Chỉ hai mức, trong hạn và quá hạn, theo đúng cờ dịch vụ trả về: chưa có ngưỡng
+ * "sắp hạn" nào trong dữ liệu, nên giao diện không tự đặt.
+ */
+export function vachHan(ho_so: HoSoTomTat): { phan: number; qua: boolean } | null {
+  if (ho_so.state.is_terminal || ho_so.sla_limit_seconds === null || !ho_so.sla_started) {
+    return null;
+  }
+  const phan = (ho_so.sla_running_seconds / ho_so.sla_limit_seconds) * 100;
+  return { phan: Math.min(100, Math.max(0, phan)), qua: ho_so.sla_overdue };
+}
+
 /** Tổng thời gian hồ sơ đã nằm trong hệ thống, kể cả những đoạn đồng hồ dừng. */
 export function daTroiQua(ho_so: HoSoTomTat, bayGio: Date): string {
   const giay = (bayGio.getTime() - new Date(ho_so.created_at).getTime()) / 1000;
