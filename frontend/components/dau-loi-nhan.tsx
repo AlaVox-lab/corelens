@@ -33,7 +33,7 @@ export function DauLoiNhan({
         background: "var(--accent-soft)",
         border: "1px solid var(--accent-line)",
         color: "var(--accent-2)",
-        fontSize: "11px",
+        fontSize: "12px",
         fontWeight: 600,
       }}
     >

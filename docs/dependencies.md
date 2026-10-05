@@ -106,6 +106,7 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | typescript | `5.9.3` | Apache-2.0 | Có | Có | Giữ ở nhánh 5.x. Bản 7 là bản viết lại bằng Go, mới ra và chưa rõ Next 16 đã theo kịp — chưa đáng mạo hiểm |
 | openid-client | `6.8.8` | MIT | Có | Có | Luồng mã ủy quyền OIDC. **Bản cài đặt được OpenID Foundation chứng nhận** — chọn nó thay vì `next-auth` vì bản v5 của `next-auth` còn beta, và vì giao thức thì nên lắp ghép thư viện chuẩn |
 | jose | `6.2.12` | MIT | Có | Có | Mã hóa cookie phiên. Cũng là phụ thuộc của `openid-client` |
+| lucide-react | `1.52.0` | ISC | Có | Có | Bộ icon của thanh bên và nút bấm (#158). Không kéo phụ thuộc nào khác; chỉ icon được `import` mới vào bản dựng. Dùng qua gói chứ không chép đường vẽ SVG vào kho |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
 
 Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`.

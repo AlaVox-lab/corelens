@@ -98,7 +98,7 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
                   borderRadius: "6px",
                   display: "grid",
                   placeItems: "center",
-                  fontSize: "11px",
+                  fontSize: "12px",
                   background: dang
                     ? "var(--accent)"
                     : qua
@@ -224,7 +224,7 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
                 <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
                   Tiêu đề ngắn
                 </span>
-                <span className="mono nhat" style={{ fontSize: "11.5px" }}>
+                <span className="mono nhat" style={{ fontSize: "12px" }}>
                   {tieuDe.length}/200
                 </span>
               </span>
@@ -430,7 +430,7 @@ function TheLoai({
               {moTa}
             </span>
           )}
-          <span className="mono" style={{ fontSize: "11.5px", color: "var(--ink-3)" }}>
+          <span className="mono" style={{ fontSize: "12px", color: "var(--ink-3)" }}>
             {phu}
           </span>
         </span>

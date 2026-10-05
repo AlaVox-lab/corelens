@@ -121,7 +121,7 @@ export default async function ChiTietDieuPhoi({
                   borderRadius: "999px",
                   background: "var(--surface-3)",
                   border: `1px ${ho_so.request_type ? "solid" : "dashed"} var(--line-2)`,
-                  fontSize: "11.5px",
+                  fontSize: "12px",
                   color: "var(--ink-2)",
                 }}
               >

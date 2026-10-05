@@ -49,7 +49,7 @@ function Dong({ muc, bayGio, dauTien }: { muc: MucHangDoi; bayGio: Date; dauTien
             flexWrap: "wrap",
             gap: "4px 10px",
             alignItems: "center",
-            fontSize: "11.5px",
+            fontSize: "12px",
             color: "var(--ink-3)",
           }}
         >
@@ -61,7 +61,7 @@ function Dong({ muc, bayGio, dauTien }: { muc: MucHangDoi; bayGio: Date; dauTien
               borderRadius: "999px",
               background: "var(--surface-3)",
               border: `1px ${muc.request_type ? "solid" : "dashed"} var(--line-2)`,
-              fontSize: "11px",
+              fontSize: "12px",
               color: muc.request_type ? "var(--ink-2)" : "var(--ink-3)",
             }}
           >
@@ -98,7 +98,7 @@ function Dong({ muc, bayGio, dauTien }: { muc: MucHangDoi; bayGio: Date; dauTien
         >
           {thoiLuong(giayCho(muc, bayGio))}
         </span>
-        <span style={{ fontSize: "11.5px", color: "var(--ink-3)" }}>đã chờ</span>
+        <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>đã chờ</span>
       </span>
     </Link>
   );

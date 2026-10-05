@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Khung trang dùng chung cho mọi không gian làm việc: cổng người gửi (#44) và buồng
-// lái điều phối (#82).
+// Khung trang dùng chung cho mọi không gian làm việc: cổng người gửi (#44), buồng lái
+// điều phối (#82) và buồng lái phòng ban (#83).
 //
-// Hai việc đặt ở đây chứ không lặp lại trong từng trang:
+// Ba việc đặt ở đây chứ không lặp lại trong từng trang:
 //
 //   Cửa đăng nhập — chưa đăng nhập thì không trang nào có gì để hiển thị.
 //   Cửa không gian — trang thuộc buồng lái mà người dùng không vào được thì báo rõ,
 //                    thay vì để từng điểm cuối trả 403 thành một trang trống.
+//   Số đếm — mỗi mục trên thanh bên mang số hồ sơ còn mở ở đó (#158).
 //
-// Thanh điều hướng dựng từ `workspaces` mà `/me` trả về. Khung này không biết tên vai
-// trò nào: dịch vụ quyết ai vào được đâu, giao diện chỉ vẽ theo.
+// Thanh bên dựng từ `workspaces` mà `/me` trả về. Khung này không biết tên vai trò nào:
+// dịch vụ quyết ai vào được đâu, giao diện chỉ vẽ theo. Phần chạy ở trình duyệt — ngăn
+// kéo, nút sáng/tối — nằm ở `khung-ung-dung.tsx`.
 
-import Link from "next/link";
 import { Suspense } from "react";
 
-import { DieuHuong } from "@/components/dieu-huong";
+import type { MucDieuHuong } from "@/components/dieu-huong";
+import { KhungUngDung } from "@/components/khung-ung-dung";
 import { NutDangNhap } from "@/components/nut-dang-nhap";
 import { goiDichVu, type DanhTinh } from "@/lib/api";
 import { loiVaoCua } from "@/lib/khong-gian";
+import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
 import { layPhien } from "@/lib/session";
 
 function chuCaiDau(ten: string): string {
@@ -30,6 +33,13 @@ function chuCaiDau(ten: string): string {
   const dau = tu[0][0];
   const cuoi = tu.length > 1 ? tu[tu.length - 1][0] : "";
   return (dau + cuoi).toUpperCase();
+}
+
+/** Màu ô chữ cái, 1–5, tính từ định danh: cùng người luôn cùng màu (#158). */
+function mauTheo(dinhDanh: string): number {
+  let tong = 0;
+  for (const kyTu of dinhDanh) tong = (tong + kyTu.charCodeAt(0)) % 5;
+  return tong + 1;
 }
 
 /**
@@ -71,6 +81,39 @@ function KhongVaoDuoc() {
   );
 }
 
+type SoDem = { dem: number | null; phongBan?: NhanCoMa[] };
+
+/**
+ * Số hồ sơ còn mở ở từng mục, đếm bằng chính điểm cuối mà trang của mục đó dùng — không
+ * thêm điểm cuối riêng cho việc đếm, để dịch vụ không phải đổi gì (#158). Cùng cách đếm
+ * với câu tóm tắt đầu mỗi trang:
+ *
+ *   Hồ sơ của tôi — hồ sơ chưa ở trạng thái kết thúc (`is_terminal` tra từ dữ liệu)
+ *   Điều phối     — mọi hồ sơ trong hàng đợi
+ *   Phòng ban     — hồ sơ phòng phải làm, không tính nhóm chỉ để theo dõi
+ *
+ * Lỗi thì trả `null` và mục đó không hiện số — thanh bên không được làm hỏng trang.
+ */
+const DEM: Record<string, () => Promise<SoDem>> = {
+  "/yeu-cau": async () => {
+    const ds = await goiDichVu<HoSoTomTat[]>("/requests");
+    return { dem: ds ? ds.filter((h) => !h.state.is_terminal).length : null };
+  },
+  "/dieu-phoi": async () => {
+    const hang = await goiDichVu<HangDoi>("/coordination/queue");
+    return { dem: hang ? hang.items.length : null };
+  },
+  "/phong-ban": async () => {
+    const hang = await goiDichVu<HangDoiPhongBan>("/department/queue");
+    if (!hang) return { dem: null };
+    const theoDoi = new Set(hang.groups.filter((g) => g.watch_only).map((g) => g.code));
+    return {
+      dem: hang.items.filter((m) => !theoDoi.has(m.state.code)).length,
+      phongBan: hang.departments,
+    };
+  },
+};
+
 export async function KhungLamViec({
   children,
   canKhongGian,
@@ -86,110 +129,37 @@ export async function KhungLamViec({
 
   const ten = danhTinh.name ?? danhTinh.username ?? danhTinh.id;
   const khongGian = danhTinh.workspaces ?? ["portal"];
-  const cacMuc = loiVaoCua(khongGian);
+  const loiVao = loiVaoCua(khongGian);
+
+  const soDem = new Map(
+    await Promise.all(
+      loiVao
+        .filter((l) => DEM[l.duongDan])
+        .map(async (l) => [l.duongDan, await DEM[l.duongDan]()] as const),
+    ),
+  );
+
+  const cacMuc: MucDieuHuong[] = [
+    { duongDan: "/", nhan: "Trang chủ", icon: "trang-chu", nhom: "chung" },
+    ...loiVao.map((l) => ({
+      duongDan: l.duongDan,
+      nhan: l.nhan,
+      icon: l.icon,
+      nhom: l.nhom,
+      dem: soDem.get(l.duongDan)?.dem ?? undefined,
+    })),
+  ];
+
+  // Dòng phụ dưới tên: tên phòng nếu người dùng thuộc phòng ban, không thì thư điện tử.
+  // `/me` chỉ trả mã vai trò, nên không hiện tên vai trò ở đây.
+  const phongBan = soDem.get("/phong-ban")?.phongBan?.map((p) => p.label).join(" · ");
 
   return (
-    <>
-      <header
-        className="khong-in"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-          background: "var(--surface)",
-          borderBottom: "1px solid var(--line)",
-        }}
-      >
-        <div
-          className="khung"
-          style={{
-            padding: "11px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-            flexWrap: "wrap",
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginRight: "auto",
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            <span
-              className="mono"
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "9px",
-                background: "var(--accent)",
-                color: "var(--accent-on)",
-                display: "grid",
-                placeItems: "center",
-                fontSize: "11.5px",
-                fontWeight: 500,
-              }}
-            >
-              YC
-            </span>
-            <span style={{ display: "grid", lineHeight: 1.28 }}>
-              <span style={{ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-.01em" }}>
-                Cổng yêu cầu nội bộ
-              </span>
-              <span style={{ fontSize: "11.5px", color: "var(--ink-3)" }}>
-                Tiếp nhận · Phân loại · Điều phối
-              </span>
-            </span>
-          </Link>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "9px",
-              paddingLeft: "13px",
-              borderLeft: "1px solid var(--line)",
-            }}
-          >
-            <span
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                background: "var(--surface-3)",
-                border: "1px solid var(--line)",
-                display: "grid",
-                placeItems: "center",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "var(--ink-2)",
-              }}
-            >
-              {chuCaiDau(ten)}
-            </span>
-            <span style={{ display: "grid", lineHeight: 1.28 }}>
-              <span style={{ fontSize: "12.5px", fontWeight: 600 }}>{ten}</span>
-              <a
-                href="/api/auth/logout"
-                style={{ fontSize: "11px", color: "var(--ink-3)" }}
-              >
-                Đăng xuất
-              </a>
-            </span>
-          </div>
-        </div>
-
-        <DieuHuong cacMuc={cacMuc} />
-      </header>
-
-      <main className="khung" style={{ padding: "26px 20px 80px" }}>
-        {khongGian.includes(canKhongGian) ? children : <KhongVaoDuoc />}
-      </main>
-    </>
+    <KhungUngDung
+      cacMuc={cacMuc}
+      nguoi={{ ten, chuCai: chuCaiDau(ten), mau: mauTheo(danhTinh.id), phu: phongBan || danhTinh.email }}
+    >
+      {khongGian.includes(canKhongGian) ? children : <KhongVaoDuoc />}
+    </KhungUngDung>
   );
 }
