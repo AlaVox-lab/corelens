@@ -285,13 +285,28 @@ ngày 24/09/2026:
   khi phòng ban đã trả lời, hoặc đã quá bốn giờ mà chưa ai trả lời
 - Hàng đợi hiện dấu *Người gửi đang chờ trả lời* khi lời nhắn sau cùng là của người gửi
 
+**Trò chuyện nội bộ** (#156) là loại lời nhắn *Nhắn nội bộ* mang cờ `hidden_from_requester`
+trong `message_kinds`: chỉ nhân viên đang mở được hồ sơ — điều phối, phòng đang giữ — đọc và
+nhắn được. Ví dụ điều phối viên hỏi trưởng phòng "phòng chị nhận vụ này không?" khi hồ sơ đang
+chờ phòng xác duyệt, trước khi trả qua trả lại (nhánh B). Chốt với navigator ngày 04/10 và
+06/10/2026:
+
+- **Người gửi của hồ sơ không thấy**, kể cả khi họ cũng là nhân viên — ràng buộc theo hồ sơ,
+  không theo vai trò. Dịch vụ lọc ở mọi điểm cuối, giao diện chỉ là lớp thứ hai
+- **Không làm lệch luật lời nhắn thường**: không tính vào *Người gửi đang chờ trả lời*, không
+  phải là "đã trả lời" trong luật hỏi lại của *Hỏi tiến độ*
+- **Hồ sơ kết thúc thì chỉ đọc**, như mọi lời nhắn
+- Cũng không đổi hồ sơ và không vào nhật ký sự kiện
+
 **Hộp thư chung** (#155) gom lời nhắn của mọi hồ sơ một người đang giữ — không phải kho tin
 nhắn thứ hai, mỗi cuộc trò chuyện là lời nhắn của một hồ sơ. Phạm vi theo việc đang giữ,
 chốt với navigator ngày 05/10/2026: người gửi thấy hồ sơ của mình, phòng ban thấy mọi hồ sơ
 của phòng có lời nhắn — người mới được giao lại đọc được trao đổi cũ —, điều phối viên thấy
-hồ sơ đang ở hàng đợi điều phối và hồ sơ mình đã từng nhắn. Đánh dấu *đã đọc* nằm ở bảng
-`case_message_reads`, cũng **không vào nhật ký sự kiện** và không chạm dòng hồ sơ: đọc không
-phải là một hoạt động của quy trình.
+hồ sơ đang ở hàng đợi điều phối và hồ sơ mình đã từng nhắn. Từ #156 một hồ sơ có thể có hai
+cuộc: với người gửi, và nội bộ — cuộc nội bộ vào nhóm *Nội bộ nhân viên* có ổ khóa, không có
+dấu *Đang chờ bạn*. Đánh dấu *đã đọc* nằm ở bảng `case_message_reads`, mỗi cuộc một mốc, cũng
+**không vào nhật ký sự kiện** và không chạm dòng hồ sơ: đọc không phải là một hoạt động của
+quy trình.
 
 Khác *Yêu cầu bổ sung thông tin*: cạnh đó đổi trạng thái, dừng đồng hồ và bắt người gửi phải
 trả lời thì hồ sơ mới đi tiếp. Lời nhắn thì không đổi gì và không bắt ai làm gì. Với khai

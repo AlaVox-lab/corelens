@@ -18,6 +18,9 @@
 // Kiểu `chat` (#169) là ô soạn dạng viên thuốc dưới khung hội thoại của trang hồ sơ phía
 // nhân viên: Enter để gửi, Shift + Enter xuống dòng, nút gửi là loại lời nhắn đầu tiên.
 // Các loại còn lại, nếu có, thành nút nhỏ phía trên ô soạn.
+//
+// Cuộc nội bộ (#156) dùng chính khung này với `noiBo`: nơi dùng truyền vào đúng các loại
+// nội bộ dịch vụ trả về, câu dưới ô soạn nhắc người gửi không thấy.
 
 import { ArrowUp } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
@@ -33,6 +36,7 @@ export function KhungLoiNhan({
   hanhDong,
   kieu = "khung",
   goiY,
+  noiBo = false,
 }: {
   maHoSo: number;
   cacLoai: LoaiLoiNhan[];
@@ -44,6 +48,8 @@ export function KhungLoiNhan({
   kieu?: "khung" | "chat";
   /** Chữ mờ trong ô soạn kiểu chat. */
   goiY?: string;
+  /** Ô soạn của cuộc nội bộ giữa nhân viên (#156). */
+  noiBo?: boolean;
 }) {
   const [ketQua, thucHien, dangChay] = useActionState(hanhDong, CHUA_CO_LOI);
   const [coChu, datCoChu] = useState(false);
@@ -60,8 +66,10 @@ export function KhungLoiNhan({
         }}
       >
         {daKetThuc
-          ? "Hồ sơ đã kết thúc — lời nhắn chỉ còn để đọc."
-          : "Bạn chưa gửi được lời nhắn trên hồ sơ này."}
+          ? `Hồ sơ đã kết thúc — ${noiBo ? "tin nội bộ" : "lời nhắn"} chỉ còn để đọc.`
+          : noiBo
+            ? "Bạn chưa nhắn nội bộ được trên hồ sơ này."
+            : "Bạn chưa gửi được lời nhắn trên hồ sơ này."}
       </p>
     );
   }
@@ -141,7 +149,8 @@ export function KhungLoiNhan({
           </div>
         )}
         <p className="goi-y-soan" style={{ margin: "0 20px" }}>
-          Không đổi trạng thái hồ sơ · Enter để gửi · Shift + Enter xuống dòng
+          {noiBo ? "Người gửi hồ sơ không thấy" : "Không đổi trạng thái hồ sơ"} · Enter để gửi ·
+          Shift + Enter xuống dòng
         </p>
         <div className="soan">
           <textarea
@@ -149,7 +158,7 @@ export function KhungLoiNhan({
             rows={1}
             maxLength={2000}
             required={chinh.body_required}
-            aria-label="Soạn lời nhắn"
+            aria-label={noiBo ? "Soạn tin nội bộ" : "Soạn lời nhắn"}
             placeholder={goiY}
             onInput={(e) => {
               const o = e.currentTarget;

@@ -13,6 +13,12 @@
 # thấy nằm ở từng buồng lái — routes.py, coordination.py, department.py. Ở đây chỉ thu hẹp
 # thêm theo bảng `message_kinds`: vai trò, chủ hồ sơ, chặng phòng ban, luật hỏi lại.
 # Không có tên vai trò, tên trạng thái hay mã loại lời nhắn nào trong mã.
+#
+# TRÒ CHUYỆN NỘI BỘ (#156): loại mang cờ `hidden_from_requester` thì người gửi của chính
+# hồ sơ không đọc, không gửi được — kể cả khi họ cũng là nhân viên. Mọi chỗ trả lời nhắn
+# hay suy điều gì từ lời nhắn đều đi qua tệp này, nên bộ lọc chỉ có ở đây. Lời nhắn nội bộ
+# không tính vào "ai nhắn sau cùng" và không mở khóa luật hỏi lại: người gửi không thấy
+# chúng, nên chúng không phải câu trả lời cho người gửi.
 
 from __future__ import annotations
 
@@ -53,13 +59,26 @@ def _thu_tu():
     return (CaseMessage.created_at, CaseMessage.id)
 
 
-def cac_loi_nhan(session: Session, case_id: int) -> list[CaseMessage]:
-    """Mọi lời nhắn của một hồ sơ, theo thứ tự thời gian."""
-    return list(
-        session.scalars(
-            select(CaseMessage).where(CaseMessage.case_id == case_id).order_by(*_thu_tu())
-        ).all()
-    )
+def thay_noi_bo(ho_so: Request, actor: Actor) -> bool:
+    """Người này đọc được lời nhắn nội bộ của hồ sơ không (#156).
+
+    Phía gọi đã bảo đảm người này mở được hồ sơ. Chỉ người gửi của chính hồ sơ bị chặn —
+    theo hồ sơ, không theo vai trò: điều phối viên mở hồ sơ mình gửi cũng không thấy.
+    """
+    return actor.id != ho_so.requester_id
+
+
+def ma_loai_noi_bo():
+    """Câu chọn mã các loại lời nhắn nội bộ, để lọc ngay trong SQL."""
+    return select(MessageKind.code).where(MessageKind.hidden_from_requester)
+
+
+def cac_loi_nhan(session: Session, ho_so: Request, actor: Actor) -> list[CaseMessage]:
+    """Lời nhắn của hồ sơ mà người này được đọc, theo thứ tự thời gian."""
+    cau = select(CaseMessage).where(CaseMessage.case_id == ho_so.id)
+    if not thay_noi_bo(ho_so, actor):
+        cau = cau.where(CaseMessage.kind.not_in(ma_loai_noi_bo()))
+    return list(session.scalars(cau.order_by(*_thu_tu())).all())
 
 
 def loi_nhan_cuoi_tu_nguoi_gui(session: Session, ho_so: Request) -> bool | None:
@@ -68,11 +87,11 @@ def loi_nhan_cuoi_tu_nguoi_gui(session: Session, ho_so: Request) -> bool | None:
 
     Nguồn của dấu hiệu trên hàng đợi: lời nhắn cuối là của người gửi thì người gửi đang
     chờ nhân viên trả lời, và ngược lại. Suy từ ai nhắn sau cùng, không theo dõi đã đọc
-    hay chưa — chốt với navigator ngày 24/09/2026.
+    hay chưa — chốt với navigator ngày 24/09/2026. Lời nhắn nội bộ không tính (#156).
     """
     tac_gia = session.scalar(
         select(CaseMessage.author)
-        .where(CaseMessage.case_id == ho_so.id)
+        .where(CaseMessage.case_id == ho_so.id, CaseMessage.kind.not_in(ma_loai_noi_bo()))
         .order_by(*(c.desc() for c in _thu_tu()))
         .limit(1)
     )
@@ -102,6 +121,8 @@ def _gui_lai_tu(session: Session, ho_so: Request, loai: MessageKind) -> dt.datet
     tac_gia_sau_do = session.scalars(
         select(CaseMessage.author).where(
             CaseMessage.case_id == ho_so.id,
+            # Nhân viên nhắn nội bộ không phải đã trả lời người gửi (#156)
+            CaseMessage.kind.not_in(ma_loai_noi_bo()),
             tuple_(*_thu_tu()) > tuple_(literal(lan_truoc.created_at), literal(lan_truoc.id)),
         )
     ).all()
@@ -132,6 +153,8 @@ def loai_gui_duoc(session: Session, ho_so: Request, actor: Actor) -> list[LoaiGu
         if not actor.roles & loai.role_codes:
             continue
         if loai.owner_only and actor.id != ho_so.requester_id:
+            continue
+        if loai.hidden_from_requester and not thay_noi_bo(ho_so, actor):
             continue
         if loai.department_stage_only:
             if chang_phong_ban is None:

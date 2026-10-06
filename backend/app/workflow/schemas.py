@@ -144,6 +144,10 @@ class LoiNhanRa(BaseModel):
     author_label: str
     # Tác giả là người gửi của chính hồ sơ — so định danh, không lưu thêm cột
     from_requester: bool
+    # Của chính người đang xem — cuộc nội bộ toàn nhân viên, nên chia phía theo người viết
+    mine: bool = False
+    # Lời nhắn nội bộ giữa nhân viên (#156) — người gửi hồ sơ không bao giờ nhận được
+    internal: bool = False
     body: str | None = None
     created_at: dt.datetime
 
@@ -160,6 +164,8 @@ class LoaiLoiNhanRa(BaseModel):
     label: str
     description: str | None = None
     body_required: bool
+    # Loại nội bộ (#156): giao diện đặt nút gửi ở cuộc nội bộ, không ở cuộc với người gửi
+    internal: bool = False
     retry_at: dt.datetime | None = None
 
 
@@ -171,6 +177,9 @@ class HoSoChiTietRa(HoSoTomTatRa):
     allowed_transitions: list[CanhDiDuocRa]
     messages: list[LoiNhanRa] = Field(default_factory=list)
     message_kinds: list[LoaiLoiNhanRa] = Field(default_factory=list)
+    # Người đang xem đọc được cuộc nội bộ của hồ sơ này không (#156) — giao diện dựng thẻ
+    # "Nội bộ" theo cờ này, kể cả khi chưa có tin nội bộ nào
+    sees_internal: bool = False
 
 
 class TaoHoSoVao(BaseModel):
@@ -383,6 +392,9 @@ class CuocTroChuyenRa(BaseModel):
     requester_id: str
     requester_label: str | None = None
     workspace: str
+    # Cuộc nội bộ giữa nhân viên (#156). Một hồ sơ có thể có hai cuộc: với người gửi và
+    # nội bộ, mỗi cuộc số chưa đọc riêng
+    internal: bool = False
     last_message: LoiNhanCuoiRa
     unread: int
     # Lời nhắn cuối là của phía bên kia: người gửi đang chờ nhân viên, hoặc ngược lại

@@ -231,7 +231,7 @@ class MessageKind(Base):
 
     Lời nhắn không đổi hồ sơ nên không phải cạnh. Ai nhắn được trên hồ sơ nào do cửa
     nhìn thấy của từng buồng lái quyết — ai mở được hồ sơ thì nhắn được. Bảng này chỉ thu
-    hẹp thêm, theo vai trò và theo ba cờ dưới đây.
+    hẹp thêm, theo vai trò và theo các cờ dưới đây.
     """
 
     __tablename__ = "message_kinds"
@@ -246,6 +246,9 @@ class MessageKind(Base):
     # Gửi lại chỉ được khi phía bên kia đã trả lời, hoặc đã quá chừng này giờ
     reask_after_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
     body_required: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Trò chuyện nội bộ (#156): người gửi của hồ sơ không thấy, không gửi được — theo hồ
+    # sơ, không theo vai trò
+    hidden_from_requester: Mapped[bool] = mapped_column(Boolean, default=False)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
     allowed_roles: Mapped[list[MessageKindRole]] = relationship(lazy="selectin")

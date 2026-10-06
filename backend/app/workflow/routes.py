@@ -58,6 +58,7 @@ from app.workflow.messages import (
     cac_loi_nhan,
     loai_gui_duoc,
     loi_nhan_cuoi_tu_nguoi_gui,
+    thay_noi_bo,
 )
 from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
 from app.workflow.schemas import (
@@ -579,19 +580,22 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     ]
 
     # Lời nhắn (#128) đi riêng khỏi `history`: nhật ký chỉ ghi những lần hồ sơ đổi
-    ten_loai = {k.code: k.label for k in session.scalars(select(MessageKind)).all()}
+    cac_loai = {k.code: k for k in session.scalars(select(MessageKind)).all()}
     loi_nhan = [
         LoiNhanRa(
             id=m.id,
             kind=m.kind,
-            kind_label=ten_loai.get(m.kind, m.kind),
+            kind_label=cac_loai[m.kind].label,
+            internal=cac_loai[m.kind].hidden_from_requester,
             author=m.author,
             author_label=m.author_label,
             from_requester=m.author == ho_so.requester_id,
+            mine=m.author == actor.id,
             body=m.body,
             created_at=m.created_at,
         )
-        for m in cac_loi_nhan(session, ho_so.id)
+        # Người gửi của hồ sơ không nhận lời nhắn nội bộ nào, ở bất kỳ cửa nào (#156)
+        for m in cac_loi_nhan(session, ho_so, actor)
     ]
     loai_nhan_duoc = [
         LoaiLoiNhanRa(
@@ -599,6 +603,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             label=g.loai.label,
             description=g.loai.description,
             body_required=g.loai.body_required,
+            internal=g.loai.hidden_from_requester,
             retry_at=g.gui_lai_tu,
         )
         for g in loai_gui_duoc(session, ho_so, actor)
@@ -613,4 +618,5 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         "allowed_transitions": di_duoc,
         "messages": loi_nhan,
         "message_kinds": loai_nhan_duoc,
+        "sees_internal": thay_noi_bo(ho_so, actor),
     }

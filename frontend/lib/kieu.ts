@@ -140,6 +140,10 @@ export type LoiNhan = {
   author_label: string;
   /** Tác giả là người gửi của chính hồ sơ. */
   from_requester: boolean;
+  /** Của chính người đang xem. */
+  mine: boolean;
+  /** Lời nhắn nội bộ giữa nhân viên (#156) — người gửi hồ sơ không bao giờ nhận được. */
+  internal: boolean;
   /** Trống được ở loại không bắt buộc nội dung, như "Hỏi tiến độ". */
   body: string | null;
   /** Chuỗi ISO 8601 theo UTC. */
@@ -153,6 +157,8 @@ export type LoiNhan = {
 export type LoaiLoiNhan = NhanCoMa & {
   description: string | null;
   body_required: boolean;
+  /** Loại nội bộ (#156): nút gửi nằm ở cuộc nội bộ, không ở cuộc với người gửi. */
+  internal: boolean;
   /** Có giá trị thì loại này đang chờ luật hỏi lại: nút mờ tới mốc đó, hoặc tới khi có trả lời. */
   retry_at: string | null;
 };
@@ -165,6 +171,8 @@ export type HoSoChiTiet = HoSoTomTat & {
   allowed_transitions: CanhDiDuoc[];
   messages: LoiNhan[];
   message_kinds: LoaiLoiNhan[];
+  /** Người đang xem đọc được cuộc nội bộ của hồ sơ này (#156). */
+  sees_internal: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -280,7 +288,7 @@ export type LoiNhanCuoi = {
   from_requester: boolean;
 };
 
-/** Một cuộc trò chuyện: lời nhắn của MỘT hồ sơ. */
+/** Một cuộc trò chuyện: lời nhắn của MỘT hồ sơ, với người gửi hoặc nội bộ (#156). */
 export type CuocTroChuyen = {
   case_id: number;
   code: string;
@@ -289,6 +297,8 @@ export type CuocTroChuyen = {
   requester_id: string;
   requester_label: string | null;
   workspace: CuaMoHoSo;
+  /** Cuộc nội bộ giữa nhân viên — một hồ sơ có thể có cả hai cuộc. */
+  internal: boolean;
   last_message: LoiNhanCuoi;
   unread: number;
   /** Phía bên kia nhắn sau cùng: đang chờ người đang xem trả lời. */
