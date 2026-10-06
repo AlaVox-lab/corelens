@@ -64,6 +64,7 @@ def loai_thuong(session) -> MessageKind:
             MessageKind.owner_only.is_(False),
             MessageKind.department_stage_only.is_(False),
             MessageKind.reask_after_hours.is_(None),
+            MessageKind.hidden_from_requester.is_(False),
         )
         .order_by(MessageKind.display_order)
     ).first()
@@ -118,7 +119,8 @@ def _nhan(session, ho_so: Request, actor: Actor, loai: MessageKind, noi_dung: st
 def _cuoc(client, actor: Actor) -> dict[int, dict]:
     tra_ve = _goi(client, actor, "get", "/inbox")
     assert tra_ve.status_code == 200
-    return {c["case_id"]: c for c in tra_ve.json()["items"]}
+    # Cuộc với người gửi — cuộc nội bộ (#156) kiểm ở test_noi_bo.py
+    return {c["case_id"]: c for c in tra_ve.json()["items"] if not c["internal"]}
 
 
 # ---------------------------------------------------------------------------
@@ -161,13 +163,15 @@ def test_nguoi_moi_trong_phong_doc_duoc_trao_doi_cu(client, session, rule_set, p
 
 
 def test_phong_khac_khong_thay(client, session, rule_set, phong_ban, phong_khac, loai_thuong):
+    nguoi_phong_khac = _xu_ly(phong_khac)
+    # Cụm thử có thể còn hồ sơ của phòng kia đang có lời nhắn: so chênh lệch
+    truoc = _goi(client, nguoi_phong_khac, "get", "/inbox/unread").json()["unread"]
     ho_so = _dang_xu_ly(session, phong_ban)
     _nhan(session, ho_so, NGUOI_GUI, loai_thuong, "Máy in ở tầng ba")
     session.commit()
 
-    nguoi_phong_khac = _xu_ly(phong_khac)
     assert ho_so.id not in _cuoc(client, nguoi_phong_khac)
-    assert _goi(client, nguoi_phong_khac, "get", "/inbox/unread").json()["unread"] == 0
+    assert _goi(client, nguoi_phong_khac, "get", "/inbox/unread").json()["unread"] == truoc
     assert _goi(client, nguoi_phong_khac, "post", f"/inbox/{ho_so.id}/read").status_code == 404
 
 
@@ -241,7 +245,7 @@ def test_danh_dau_luon_toi_tin_moi_nhat(client, session, rule_set, phong_ban, lo
     ).all()
 
     _goi(client, xu_ly, "post", f"/inbox/{ho_so.id}/read")
-    assert session.get(CaseMessageRead, (ho_so.id, xu_ly.id)).last_read_id == cac_id[-1]
+    assert session.get(CaseMessageRead, (ho_so.id, xu_ly.id, False)).last_read_id == cac_id[-1]
 
     # Mốc đang thấp (chỉ đọc tới tin đầu) thì lần đánh dấu sau đưa nó lên tin mới nhất
     session.execute(
@@ -252,7 +256,7 @@ def test_danh_dau_luon_toi_tin_moi_nhat(client, session, rule_set, phong_ban, lo
     assert _cuoc(client, xu_ly)[ho_so.id]["unread"] == 1
     _goi(client, xu_ly, "post", f"/inbox/{ho_so.id}/read")
     session.expire_all()
-    assert session.get(CaseMessageRead, (ho_so.id, xu_ly.id)).last_read_id == cac_id[-1]
+    assert session.get(CaseMessageRead, (ho_so.id, xu_ly.id, False)).last_read_id == cac_id[-1]
 
 
 def test_dang_cho_toi(client, session, rule_set, phong_ban, loai_thuong):

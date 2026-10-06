@@ -378,16 +378,27 @@ INSERT INTO priorities (code, label, is_default, display_order) VALUES
 -- hồ sơ ở phòng ban, và hỏi lại chỉ khi phòng ban đã trả lời hoặc đã quá bốn giờ — để
 -- số lần phòng ban bị hối mà tầng I đếm không bị thổi phồng.
 
+--
+-- Chốt ngày 04/10 và 06/10/2026 (#156): mỗi hồ sơ có thêm một cuộc trò chuyện NỘI BỘ chỉ
+-- nhân viên đang mở được hồ sơ thấy — ví dụ điều phối viên hỏi trưởng phòng "phòng chị
+-- nhận vụ này không?" trước khi trả qua lại. Người gửi của hồ sơ không thấy, kể cả khi họ
+-- cũng là nhân viên. Không tính vào "người gửi đang chờ trả lời", không mở khóa luật hỏi
+-- lại của "Hỏi tiến độ"; hồ sơ kết thúc thì chỉ đọc như mọi lời nhắn.
+
 INSERT INTO message_kinds
     (code, label, description, owner_only, department_stage_only,
-     reask_after_hours, body_required, display_order) VALUES
+     reask_after_hours, body_required, hidden_from_requester, display_order) VALUES
     ('message',          'Gửi lời nhắn',
      'Trao đổi thêm trên hồ sơ, hai chiều giữa người gửi và nhân viên đang giữ hồ sơ.',
-     FALSE, FALSE, NULL, TRUE,  1),
+     FALSE, FALSE, NULL, TRUE,  FALSE, 1),
 
     ('progress-inquiry', 'Hỏi tiến độ',
      'Người gửi hỏi phòng ban đang giữ hồ sơ việc đã tới đâu. Hỏi lại được khi phòng ban đã trả lời, hoặc đã quá bốn giờ mà chưa ai trả lời.',
-     TRUE,  TRUE,  4,    FALSE, 2);
+     TRUE,  TRUE,  4,    FALSE, FALSE, 2),
+
+    ('internal-note',    'Nhắn nội bộ',
+     'Trao đổi giữa nhân viên đang giữ hồ sơ. Người gửi hồ sơ không thấy.',
+     FALSE, FALSE, NULL, TRUE,  TRUE,  3);
 
 -- Quản trị viên không có mặt: họ không mở hồ sơ nào ở buồng lái nào
 INSERT INTO message_kind_roles (kind_code, role_code) VALUES
@@ -395,4 +406,7 @@ INSERT INTO message_kind_roles (kind_code, role_code) VALUES
     ('message',          'classifier'),
     ('message',          'approver'),
     ('message',          'handler'),
-    ('progress-inquiry', 'requester');
+    ('progress-inquiry', 'requester'),
+    ('internal-note',    'classifier'),
+    ('internal-note',    'approver'),
+    ('internal-note',    'handler');

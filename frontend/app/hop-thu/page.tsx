@@ -8,8 +8,12 @@
 // chỉ gửi yêu cầu). Cột phải mở cuộc đang chọn qua ĐÚNG cửa dịch vụ trả về cho hồ sơ đó —
 // cổng người gửi, buồng lái phòng ban hay điều phối — và gửi lời nhắn bằng thao tác của
 // chính cửa đó, nên mọi luật của #128 chỉ có một nơi.
+//
+// Từ #156 một hồ sơ có thể có hai cuộc: với người gửi, và nội bộ giữa nhân viên. Cuộc nội
+// bộ vào nhóm "Nội bộ nhân viên" có ổ khóa; đầu khung chat có nút chuyển giữa hai cuộc của
+// cùng hồ sơ, mở được cả khi cuộc kia chưa có tin nào.
 
-import { ArrowLeft, ArrowRight, MessagesSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, EyeOff, Lock, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 
 import { guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
@@ -24,6 +28,7 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { TuLamMoi } from "@/components/tu-lam-moi";
 import { docDichVu, goiDichVu } from "@/lib/api";
 import { chiGio, khoaNgay } from "@/lib/dinh-dang";
+import { duongCuoc, KENH_NOI_BO } from "@/lib/hop-thu";
 import type { CuaMoHoSo, CuocTroChuyen, HoSoChiTiet, HopThu } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
 import { docDongHo } from "@/lib/sla";
@@ -53,24 +58,32 @@ function thanhMuc(c: CuocTroChuyen, bayGio: Date): MucCuoc {
   const tin = c.last_message;
   const noiDung = tin.body ?? tin.kind_label;
   // Nhân viên xem cuộc với người gửi: tin của người gửi khỏi ghi tên — nhóm đã mang tên đó
-  const bo = c.workspace !== "portal" && tin.from_requester;
+  const bo = c.workspace !== "portal" && !c.internal && tin.from_requester;
   return {
     maHoSo: c.case_id,
+    noiBo: c.internal,
     tieuDe: c.title,
     ma: c.code,
     xemTruoc: tin.mine ? `Bạn: ${noiDung}` : bo ? noiDung : `${tin.author_label}: ${noiDung}`,
     luc: lucNgan(tin.created_at, bayGio),
     chuaDoc: c.unread,
     choBan: c.waiting_on_me,
-    tim: `${c.requester_label ?? ""} ${c.code} ${c.title}`,
+    tim: `${c.requester_label ?? ""} ${c.code} ${c.title}${c.internal ? " nội bộ" : ""}`,
   };
 }
 
-/** Gom theo người gửi hồ sơ; hồ sơ của chính mình vào một nhóm riêng. */
+/** Gom theo người gửi hồ sơ; hồ sơ của chính mình và các cuộc nội bộ vào nhóm riêng. */
 function gomNhom(cacCuoc: CuocTroChuyen[], bayGio: Date): NhomCuoc[] {
   const chiCuaMinh = cacCuoc.every((c) => c.workspace === "portal");
   const nhom = new Map<string, NhomCuoc>();
   for (const c of cacCuoc) {
+    if (c.internal) {
+      if (!nhom.has(KENH_NOI_BO)) {
+        nhom.set(KENH_NOI_BO, { ma: KENH_NOI_BO, ten: "Nội bộ nhân viên", noiBo: true, cuoc: [] });
+      }
+      nhom.get(KENH_NOI_BO)!.cuoc.push(thanhMuc(c, bayGio));
+      continue;
+    }
     const cuaMinh = c.workspace === "portal";
     const ma = cuaMinh ? "cua-toi" : c.requester_id;
     if (!nhom.has(ma)) {
@@ -86,6 +99,20 @@ function gomNhom(cacCuoc: CuocTroChuyen[], bayGio: Date): NhomCuoc[] {
   }
   // Dịch vụ đã xếp cuộc mới nhất lên đầu, nên Map giữ thứ tự nhóm theo tin mới nhất
   return [...nhom.values()];
+}
+
+/**
+ * Cuộc đang mở theo địa chỉ trang. Cuộc chưa có tin nào thì chưa có trong hộp thư, nhưng
+ * nút chuyển vẫn mở được nó khi cuộc kia của cùng hồ sơ đã có — để bắt đầu nhắn nội bộ
+ * ngay từ hộp thư. Người gửi của hồ sơ không bao giờ mở được cuộc nội bộ; dịch vụ gác lại
+ * lần nữa khi đọc chi tiết.
+ */
+function chonCuoc(cacCuoc: CuocTroChuyen[], hoSo: string, noiBo: boolean): CuocTroChuyen | null {
+  const dung = cacCuoc.find((c) => String(c.case_id) === hoSo && c.internal === noiBo);
+  if (dung) return dung;
+  const cungHoSo = cacCuoc.find((c) => String(c.case_id) === hoSo);
+  if (!cungHoSo || (noiBo && cungHoSo.workspace === "portal")) return null;
+  return { ...cungHoSo, internal: noiBo, unread: 0, waiting_on_me: false };
 }
 
 function Rong({ tieuDe, cau }: { tieuDe: string; cau: string }) {
@@ -107,8 +134,19 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
     return <Rong tieuDe="Không mở được cuộc trò chuyện" cau={ketQua.thongDiep} />;
   }
   const ho_so = ketQua.duLieu;
+  const noiBo = cuoc.internal;
+  if (noiBo && !ho_so.sees_internal) {
+    return <Rong tieuDe="Không mở được cuộc trò chuyện này" cau="Bạn không đọc được cuộc nội bộ của hồ sơ này." />;
+  }
+  // Chỉ lời nhắn và loại lời nhắn của đúng cuộc đang mở
+  const cacTin = ho_so.messages.filter((m) => m.internal === noiBo);
+  const cacLoai = ho_so.message_kinds.filter((k) => k.internal === noiBo);
   const laNguoiGui = cuoc.workspace === "portal";
-  const ten = laNguoiGui ? "Các bên xử lý hồ sơ" : (cuoc.requester_label ?? "Người gửi");
+  const ten = noiBo
+    ? `Nội bộ · ${[...new Set(cacTin.map((m) => m.author_label))].join(", ") || "nhân viên"}`
+    : laNguoiGui
+      ? "Các bên xử lý hồ sơ"
+      : (cuoc.requester_label ?? "Người gửi");
   const dongHo = docDongHo(ho_so, laNguoiGui ? "nguoi-gui" : "noi-bo");
 
   return (
@@ -117,7 +155,11 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
         <Link className="nut-icon nut-lui" href="/hop-thu" aria-label="Quay lại danh sách">
           <ArrowLeft aria-hidden />
         </Link>
-        {laNguoiGui ? (
+        {noiBo ? (
+          <span className="icon-o" data-noi-bo="" aria-hidden>
+            <Lock />
+          </span>
+        ) : laNguoiGui ? (
           <span className="icon-o" aria-hidden>
             <MessagesSquare />
           </span>
@@ -128,10 +170,30 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
         )}
         <div className="than">
           <b>{ten}</b>
-          <span className="phu">
-            {laNguoiGui ? "Điều phối và phòng ban đang giữ hồ sơ trả lời ở đây" : "Người gửi"}
+          <span className="phu" style={noiBo ? { flexWrap: "nowrap", gap: "6px" } : undefined}>
+            {noiBo ? (
+              <>
+                <EyeOff aria-hidden style={{ width: "13px", height: "13px", flex: "none" }} />
+                <span>Người gửi không thấy cuộc trò chuyện này</span>
+              </>
+            ) : laNguoiGui ? (
+              "Điều phối và phòng ban đang giữ hồ sơ trả lời ở đây"
+            ) : (
+              "Người gửi"
+            )}
           </span>
         </div>
+        {ho_so.sees_internal && (
+          <nav className="seg" aria-label="Cuộc trò chuyện của hồ sơ">
+            <Link href={duongCuoc(ho_so.id, false)} scroll={false} aria-current={noiBo ? undefined : "page"}>
+              Với người gửi
+            </Link>
+            <Link href={duongCuoc(ho_so.id, true)} scroll={false} aria-current={noiBo ? "page" : undefined}>
+              <Lock aria-hidden />
+              Nội bộ
+            </Link>
+          </nav>
+        )}
       </div>
 
       <div className="the-hs">
@@ -152,25 +214,33 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
       </div>
 
       <KhungChat
-        cacLoiNhan={ho_so.messages}
+        cacLoiNhan={cacTin}
         bayGio={bayGio}
         phiaMinh={laNguoiGui ? "nguoi-gui" : "nhan-vien"}
+        noiBo={noiBo}
         soan={
           <KhungLoiNhan
-            // Khóa theo hồ sơ, không theo số lời nhắn: tin mới tới trong lúc đang gõ thì ô
+            // Khóa theo cuộc, không theo số lời nhắn: tin mới tới trong lúc đang gõ thì ô
             // soạn không bị dựng lại, chữ gõ dở không mất
-            key={ho_so.id}
+            key={`${ho_so.id}-${noiBo}`}
             maHoSo={ho_so.id}
-            cacLoai={ho_so.message_kinds}
+            cacLoai={cacLoai}
             daKetThuc={ho_so.state.is_terminal}
             hanhDong={cua.gui}
             kieu="chat"
-            goiY={laNguoiGui ? "Nhắn cho bên xử lý" : `Nhắn cho ${ten}`}
+            noiBo={noiBo}
+            goiY={
+              noiBo
+                ? "Nhắn nội bộ — người gửi không thấy"
+                : laNguoiGui
+                  ? "Nhắn cho bên xử lý"
+                  : `Nhắn cho ${ten}`
+            }
           />
         }
       />
-      <DanhDauDaDoc maHoSo={ho_so.id} soTin={ho_so.messages.length} />
-      <TuLamMoi key={ho_so.id} soTin={ho_so.messages.length} />
+      <DanhDauDaDoc maHoSo={ho_so.id} soTin={cacTin.length} noiBo={noiBo} />
+      <TuLamMoi key={`${ho_so.id}-${noiBo}`} soTin={cacTin.length} />
     </>
   );
 }
@@ -178,9 +248,9 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
 export default async function TrangHopThu({
   searchParams,
 }: {
-  searchParams: Promise<{ "ho-so"?: string }>;
+  searchParams: Promise<{ "ho-so"?: string; kenh?: string }>;
 }) {
-  const { "ho-so": hoSo } = await searchParams;
+  const { "ho-so": hoSo, kenh } = await searchParams;
   const hopThu = await goiDichVu<HopThu>("/inbox");
   const bayGio = new Date();
   const tieuDe = <h1 className="an-di">Hộp thư</h1>;
@@ -218,9 +288,7 @@ export default async function TrangHopThu({
   }
 
   // Có `?ho-so=` thì mở đúng cuộc đó; không có thì mở cuộc mới nhất (trên màn rộng)
-  const chon = hoSo
-    ? (hopThu.items.find((c) => String(c.case_id) === hoSo) ?? null)
-    : hopThu.items[0];
+  const chon = hoSo ? chonCuoc(hopThu.items, hoSo, kenh === KENH_NOI_BO) : hopThu.items[0];
 
   return (
     <>
@@ -233,7 +301,10 @@ export default async function TrangHopThu({
         </NutThanhDau>
       )}
       <div className="hop-thu" data-dang-xem={hoSo ? "chat" : "ds"}>
-        <DanhSachHopThu nhom={gomNhom(hopThu.items, bayGio)} chon={chon?.case_id ?? null} />
+        <DanhSachHopThu
+          nhom={gomNhom(hopThu.items, bayGio)}
+          chon={chon ? { maHoSo: chon.case_id, noiBo: chon.internal } : null}
+        />
         <section className="ht-chat" aria-label="Cuộc trò chuyện">
           {chon ? (
             <CuocDangMo cuoc={chon} bayGio={bayGio} />

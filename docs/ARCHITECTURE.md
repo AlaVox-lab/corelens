@@ -413,7 +413,7 @@ Mười ba bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.
 | Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
 | Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
-| Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128) — xem mục 6.2 |
+| Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
 
 **Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
 vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
@@ -559,8 +559,8 @@ Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác kh�
 |---|---|---|
 | Chuyển trạng thái | `current_state`, có thể kèm trường quyết định | Cạnh thường |
 | Nhận việc về mình, sửa nội dung ở *Đã gửi* | Người xử lý; tiêu đề, mô tả, loại | **Cạnh tự trỏ** — trạng thái giữ nguyên |
-| Lời nhắn hai chiều, hỏi tiến độ | Không đổi gì | Bảng lời nhắn `case_messages` (#128) — không phải cạnh, không vào `event_log` |
-| Đánh dấu đã đọc lời nhắn | Không đổi gì | Bảng `case_message_reads` (#155) — mốc đã đọc của từng người, không vào `event_log` |
+| Lời nhắn hai chiều, hỏi tiến độ, nhắn nội bộ | Không đổi gì | Bảng lời nhắn `case_messages` (#128, #156) — không phải cạnh, không vào `event_log` |
+| Đánh dấu đã đọc lời nhắn | Không đổi gì | Bảng `case_message_reads` (#155) — mốc đã đọc của từng người, mỗi cuộc một mốc (#156), không vào `event_log` |
 
 Vì sao thao tác đổi hồ sơ mà không đổi trạng thái vẫn phải là cạnh: mọi thay đổi trên hồ
 sơ cần một dòng nhật ký giữ giá trị cũ (cột `changes`), cần qua kiểm quyền và ràng buộc
@@ -598,6 +598,14 @@ navigator ngày 24/09/2026. Luật gửi:
    lần gửi trước, hoặc đã quá chừng ấy giờ. "Hỏi tiến độ" vì vậy không bấm dồn được, và
    số lần phòng ban bị hối mà tầng `I` đếm là số thật. Loại đang chờ vẫn có trong danh sách
    loại gửi được, kèm mốc `retry_at`, để giao diện nói rõ vì sao nút mờ
+5. `hidden_from_requester` — trò chuyện nội bộ (#156): người gửi của **chính hồ sơ** không đọc,
+   không gửi được loại đó, kể cả khi họ cũng là nhân viên. Ràng buộc theo hồ sơ chứ không
+   theo vai trò, vì cùng một người vừa gửi yêu cầu vừa điều phối. Bộ lọc chỉ có một nơi —
+   `messages.py` (`thay_noi_bo`, `ma_loai_noi_bo`) — và mọi chỗ trả lời nhắn hay suy điều gì
+   từ lời nhắn đều đi qua đó: chi tiết hồ sơ của cả ba cửa, hộp thư, cờ
+   `last_message_from_requester`, luật hỏi lại. Tin nội bộ không phải câu trả lời cho người
+   gửi, nên không tính vào hai cờ sau. Bài kiểm thử quét mọi điểm cuối GET trong lược đồ
+   OpenAPI với tư cách người gửi, nên điểm cuối thêm sau này cũng bị canh
 
 Ghi lời nhắn **không chạm dòng `requests`** — không trạng thái, không trường, không
 `updated_at`, không đồng hồ. Bài kiểm thử so cả `ctid` của dòng: mọi lệnh UPDATE, kể cả
@@ -911,6 +919,15 @@ trình duyệt khi lời nhắn thật sự đang hiện — không ghi lúc d�
 đánh dấu nhầm. Trang hộp thư tự tải lại khoảng 12 giây một lần bằng `router.refresh()`;
 thanh bên hỏi riêng con số qua `app/api/hop-thu/chua-doc` — không thêm dịch vụ nào vào
 Compose.
+
+**Từ #156, mỗi hồ sơ có hai cuộc trò chuyện.** Hộp thư trả mỗi cặp (hồ sơ, kênh) thành một
+cuộc với cờ `internal`; mốc đã đọc thêm cột `internal` vào khóa chính (migration 0009), nên
+đọc cuộc này không làm cuộc kia thành đã đọc. Địa chỉ `?ho-so=<id>&kenh=noi-bo` mở cuộc nội
+bộ; nút chuyển ở đầu khung chat mở được cả cuộc chưa có tin, để bắt đầu nhắn nội bộ ngay từ
+hộp thư. Trang hồ sơ phía nhân viên có thẻ thứ ba "Nội bộ" khi dịch vụ trả `sees_internal`.
+Giao diện chỉ chia `messages` và `message_kinds` theo cờ `internal` dịch vụ đã gắn, không
+biết mã loại nào là nội bộ; cuộc nội bộ có nền vàng nhạt viền đứt để không nhắn nhầm cho
+người gửi.
 
 ---
 

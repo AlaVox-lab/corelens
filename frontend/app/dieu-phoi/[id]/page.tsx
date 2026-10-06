@@ -24,6 +24,7 @@ import { MoiDangNhap } from "@/components/khung-lam-viec";
 import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
+import { duongHopThu } from "@/lib/hop-thu";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
@@ -65,6 +66,9 @@ export default async function ChiTietDieuPhoi({
   const ho_so = ket_qua.duLieu;
 
   const bayGio = new Date();
+  // Hai cuộc của hồ sơ (#156): với người gửi, và nội bộ — dịch vụ đã lọc theo người xem
+  const chung = ho_so.messages.filter((m) => !m.internal);
+  const noiBo = ho_so.messages.filter((m) => m.internal);
   const nguoiGui = ho_so.requester_label ?? "Không rõ";
   const macDinh = cacMuc?.find((m) => m.is_default)?.code ?? "";
   const goiYPhong = ho_so.suggested_department;
@@ -83,7 +87,7 @@ export default async function ChiTietDieuPhoi({
       <TenCapCon ten={ho_so.code} />
       {ho_so.messages.length > 0 && (
         <NutThanhDau>
-          <Link className="nut nut-nho" data-loai="ma" href={`/hop-thu?ho-so=${ho_so.id}`}>
+          <Link className="nut nut-nho" data-loai="ma" href={duongHopThu(ho_so)}>
             <MessagesSquare aria-hidden />
             Mở trong hộp thư
           </Link>
@@ -119,7 +123,8 @@ export default async function ChiTietDieuPhoi({
 
           <TheLichSu
             maHoSo={ho_so.id}
-            soLoiNhan={ho_so.messages.length}
+            soLoiNhan={chung.length}
+            soNoiBo={noiBo.length}
             dongThoiGian={
               <DongThoiGian
                 cacSuKien={ho_so.history}
@@ -130,13 +135,13 @@ export default async function ChiTietDieuPhoi({
             }
             traoDoi={
               <KhungChat
-                cacLoiNhan={ho_so.messages}
+                cacLoiNhan={chung}
                 bayGio={bayGio}
                 soan={
                   <KhungLoiNhan
-                    key={ho_so.messages.length}
+                    key={chung.length}
                     maHoSo={ho_so.id}
-                    cacLoai={ho_so.message_kinds}
+                    cacLoai={ho_so.message_kinds.filter((k) => !k.internal)}
                     daKetThuc={ho_so.state.is_terminal}
                     hanhDong={guiLoiNhanDieuPhoi}
                     kieu="chat"
@@ -144,6 +149,27 @@ export default async function ChiTietDieuPhoi({
                   />
                 }
               />
+            }
+            noiBo={
+              ho_so.sees_internal ? (
+                <KhungChat
+                  cacLoiNhan={noiBo}
+                  bayGio={bayGio}
+                  noiBo
+                  soan={
+                    <KhungLoiNhan
+                      key={noiBo.length}
+                      maHoSo={ho_so.id}
+                      cacLoai={ho_so.message_kinds.filter((k) => k.internal)}
+                      daKetThuc={ho_so.state.is_terminal}
+                      hanhDong={guiLoiNhanDieuPhoi}
+                      kieu="chat"
+                      noiBo
+                      goiY="Nhắn nội bộ — người gửi không thấy"
+                    />
+                  }
+                />
+              ) : undefined
             }
           />
         </div>

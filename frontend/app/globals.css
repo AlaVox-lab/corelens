@@ -748,7 +748,7 @@ textarea.o-nhap {
   font-size: 10px;
 }
 
-/* Thẻ: dòng thời gian / trao đổi */
+/* Thẻ: dòng thời gian / trao đổi / nội bộ (#156) */
 .tabs {
   display: flex;
   gap: 4px;
@@ -760,6 +760,7 @@ textarea.o-nhap {
   position: relative;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   gap: 6px;
   height: 44px;
   padding: 0 10px;
@@ -771,6 +772,28 @@ textarea.o-nhap {
 
 .tabs button:hover {
   color: var(--ink);
+}
+
+.tabs button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Ba thẻ ở màn 375px: bớt lề để tên thẻ không xuống dòng */
+@media (max-width: 767px) {
+  .tabs {
+    padding: 0 8px;
+    gap: 0;
+  }
+
+  .tabs button {
+    padding: 0 8px;
+  }
+
+  .tabs button[aria-selected="true"]::after {
+    left: 8px;
+    right: 8px;
+  }
 }
 
 .tabs button[aria-selected="true"] {
@@ -946,6 +969,83 @@ textarea.o-nhap {
 .soan .gui svg {
   width: 16px;
   height: 16px;
+}
+
+/* Trò chuyện nội bộ (#156): nền vàng nhạt, viền đứt — nhìn là biết người gửi không thấy,
+   không nhắn nhầm. Cùng sắc với nhãn "Có can thiệp" nên không thêm màu mới. */
+.chat[data-noi-bo] .bong,
+.chat[data-noi-bo] .bong-hang[data-minh] .bong {
+  background: var(--f-a-bg);
+  color: var(--ink);
+  border: 1px dashed var(--f-a-line);
+}
+
+.chat[data-noi-bo] .soan {
+  background: var(--f-a-bg);
+  border-color: var(--f-a-line);
+}
+
+/* Chữ mờ đậm hơn một bậc: nền vàng tối làm --ink-3 hụt tương phản 4,5:1 */
+.chat[data-noi-bo] .soan textarea::placeholder {
+  color: var(--ink-2);
+}
+
+.chat[data-noi-bo] .soan:focus-within {
+  border-color: var(--f-a-solid);
+  box-shadow: 0 0 0 3px var(--f-a-line);
+}
+
+.chat[data-noi-bo] .soan .gui {
+  background: var(--f-a-solid);
+  color: var(--f-a-on);
+}
+
+.icon-o[data-noi-bo] {
+  background: var(--f-a-bg);
+  color: var(--f-a-ink);
+}
+
+/* Nút chuyển hai cuộc của một hồ sơ: với người gửi / nội bộ */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  gap: 2px;
+  flex: none;
+}
+
+.seg a {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.seg a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.seg a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.seg svg {
+  width: 13px;
+  height: 13px;
 }
 
 @media (max-width: 1099px) {
@@ -1692,6 +1792,18 @@ textarea.o-nhap {
 
   .ht-dau {
     padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Nút chuyển hai cuộc (#156) xuống hàng riêng, chia đôi bề ngang — không ép tên thành cột hẹp */
+  .ht-dau .seg {
+    order: 3;
+    flex: 1 0 100%;
+  }
+
+  .ht-dau .seg a {
+    flex: 1;
+    justify-content: center;
   }
 
   .the-hs {
@@ -2161,7 +2273,8 @@ html.doi-mau * {
   /* Trang hồ sơ (#169): bản in luôn có dòng thời gian, dù đang mở thẻ nào; bỏ thanh
    * thẻ và khung chat — giấy không bấm được. */
   .tabs,
-  [data-tab-than="trao-doi"] {
+  [data-tab-than="trao-doi"],
+  [data-tab-than="noi-bo"] {
     display: none !important;
   }
 

@@ -11,9 +11,10 @@
 import { guiDichVu } from "@/lib/api";
 
 /**
- * Đánh dấu đã đọc tới lời nhắn mới nhất của hồ sơ. Không đổi hồ sơ (ADR-0005), nên không
- * làm mới trang nào — thanh bên tự hỏi lại con số chưa đọc.
+ * Đánh dấu đã đọc tới lời nhắn mới nhất của một cuộc trên hồ sơ — cuộc với người gửi, hoặc
+ * cuộc nội bộ (#156), mỗi cuộc một mốc. Không đổi hồ sơ (ADR-0005), nên không làm mới
+ * trang nào — thanh bên tự hỏi lại con số chưa đọc.
  */
-export async function danhDauDaDoc(maHoSo: number): Promise<void> {
-  await guiDichVu<void>(`/inbox/${maHoSo}/read`, {});
+export async function danhDauDaDoc(maHoSo: number, noiBo = false): Promise<void> {
+  await guiDichVu<void>(`/inbox/${maHoSo}/read${noiBo ? "?internal=true" : ""}`, {});
 }

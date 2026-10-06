@@ -318,10 +318,17 @@ CREATE TABLE message_kinds (
     -- chừng này giờ. NULL là không giới hạn.
     reask_after_hours      SMALLINT,
     body_required          BOOLEAN   NOT NULL DEFAULT TRUE,
+    -- Người gửi của hồ sơ KHÔNG thấy và không gửi được loại này, kể cả khi họ cũng có vai
+    -- trò nhân viên — trò chuyện nội bộ giữa nhân viên (#156). Ràng buộc theo hồ sơ, không
+    -- theo vai trò. Dịch vụ lọc ở mọi điểm cuối trả lời nhắn.
+    hidden_from_requester  BOOLEAN   NOT NULL DEFAULT FALSE,
     display_order          SMALLINT  NOT NULL DEFAULT 0,
 
     CONSTRAINT message_kinds_hoi_lai_duong
-        CHECK (reask_after_hours IS NULL OR reask_after_hours > 0)
+        CHECK (reask_after_hours IS NULL OR reask_after_hours > 0),
+    -- Loại chỉ người gửi hồ sơ gửi được mà lại ẩn với chính người đó là cấu hình chết
+    CONSTRAINT message_kinds_noi_bo_khong_cua_chu_ho_so
+        CHECK (NOT (owner_only AND hidden_from_requester))
 );
 
 CREATE TABLE message_kind_roles (
