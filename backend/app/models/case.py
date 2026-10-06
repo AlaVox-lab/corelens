@@ -12,6 +12,7 @@ import datetime as dt
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     ForeignKey,
     ForeignKeyConstraint,
     Identity,
@@ -238,11 +239,16 @@ class CaseMessageRead(Base):
     Khác `CaseMessage`, dòng này được sửa: đọc thêm thì `last_read_id` dời lên. Nó là
     trạng thái hiển thị của từng người, không phải dấu vết của cuộc trao đổi, nên không vào
     nhật ký sự kiện và không chạm `requests` (ADR-0005). Xem migration 0008.
+
+    Mỗi hồ sơ có hai cuộc trò chuyện — với người gửi và nội bộ (#156) — nên mốc đã đọc
+    tính riêng từng cuộc: đọc bên này không làm bên kia thành đã đọc. Xem migration 0009.
     """
 
     __tablename__ = "case_message_reads"
 
     case_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("requests.id"), primary_key=True)
     reader: Mapped[str] = mapped_column(Text, primary_key=True)
+    # Mốc của cuộc nội bộ — lời nhắn thuộc loại `hidden_from_requester`
+    internal: Mapped[bool] = mapped_column(Boolean, primary_key=True, default=False)
     last_read_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("case_messages.id"))
     read_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())

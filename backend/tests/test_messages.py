@@ -66,6 +66,7 @@ def loai_thuong(session) -> MessageKind:
             MessageKind.owner_only.is_(False),
             MessageKind.department_stage_only.is_(False),
             MessageKind.reask_after_hours.is_(None),
+            MessageKind.hidden_from_requester.is_(False),
         )
         .order_by(MessageKind.display_order)
     ).first()

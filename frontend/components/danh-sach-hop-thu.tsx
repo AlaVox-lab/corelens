@@ -4,16 +4,21 @@
 // Copyright (c) 2026 AlaVox-lab
 //
 // Cột trái của hộp thư (#155): các cuộc trò chuyện gom theo người, ô tìm và chip "Chưa
-// đọc". Trang ở máy chủ đã gom nhóm và dịch mỗi cuộc thành dòng chữ sẵn; ở đây chỉ lọc
-// trên trình duyệt, không gọi dịch vụ. Bấm một cuộc là đổi `?ho-so=` trên địa chỉ trang —
-// tải lại hay gửi đường dẫn đều mở đúng cuộc đó.
+// đọc" — thêm chip "Nội bộ" khi có cuộc nội bộ (#156). Trang ở máy chủ đã gom nhóm và dịch
+// mỗi cuộc thành dòng chữ sẵn; ở đây chỉ lọc trên trình duyệt, không gọi dịch vụ. Bấm một
+// cuộc là đổi `?ho-so=` (và `kenh=`) trên địa chỉ trang — tải lại hay gửi đường dẫn đều mở
+// đúng cuộc đó.
 
-import { FileText, Hourglass, Search } from "lucide-react";
+import { FileText, Hourglass, Lock, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { duongCuoc } from "@/lib/hop-thu";
+
 export type MucCuoc = {
   maHoSo: number;
+  /** Cuộc nội bộ giữa nhân viên (#156). */
+  noiBo: boolean;
   tieuDe: string;
   ma: string;
   /** Dòng xem trước: "Bạn: …", "Cường Lê: …" hay chính lời nhắn. */
@@ -30,6 +35,8 @@ export type NhomCuoc = {
   /** `null`: không có dòng tiêu đề nhóm — hộp thư của người chỉ gửi yêu cầu. */
   ten: string | null;
   anh?: { chuCai: string; mau: number };
+  /** Nhóm các cuộc nội bộ — đầu nhóm là ổ khóa thay cho ảnh người. */
+  noiBo?: boolean;
   cuoc: MucCuoc[];
 };
 
@@ -37,17 +44,31 @@ function chuanHoa(chu: string): string {
   return chu.normalize("NFD").replace(/\p{M}/gu, "").replace(/[đĐ]/g, "d").toLowerCase();
 }
 
-export function DanhSachHopThu({ nhom, chon }: { nhom: NhomCuoc[]; chon: number | null }) {
-  const [tim, datTim] = useState("");
-  const [chiChuaDoc, datChiChuaDoc] = useState(false);
-  const khoa = chuanHoa(tim.trim());
-  const tongChuaDoc = nhom.reduce((t, n) => t + n.cuoc.filter((c) => c.chuaDoc > 0).length, 0);
+type Loc = "tat-ca" | "chua-doc" | "noi-bo";
 
-  const loc = nhom
+export function DanhSachHopThu({
+  nhom,
+  chon,
+}: {
+  nhom: NhomCuoc[];
+  /** Cuộc đang mở: hồ sơ và kênh. */
+  chon: { maHoSo: number; noiBo: boolean } | null;
+}) {
+  const [tim, datTim] = useState("");
+  const [loc, datLoc] = useState<Loc>("tat-ca");
+  const khoa = chuanHoa(tim.trim());
+  const tatCa = nhom.flatMap((n) => n.cuoc);
+  const tongChuaDoc = tatCa.filter((c) => c.chuaDoc > 0).length;
+  const coNoiBo = tatCa.some((c) => c.noiBo);
+
+  const conLai = nhom
     .map((n) => ({
       ...n,
       cuoc: n.cuoc.filter(
-        (c) => (!chiChuaDoc || c.chuaDoc > 0) && (!khoa || chuanHoa(c.tim).includes(khoa)),
+        (c) =>
+          (loc !== "chua-doc" || c.chuaDoc > 0) &&
+          (loc !== "noi-bo" || c.noiBo) &&
+          (!khoa || chuanHoa(c.tim).includes(khoa)),
       ),
     }))
     .filter((n) => n.cuoc.length > 0);
@@ -67,25 +88,43 @@ export function DanhSachHopThu({ nhom, chon }: { nhom: NhomCuoc[]; chon: number 
           />
         </label>
         <div className="chip-hang">
-          <button className="chip" type="button" aria-pressed={!chiChuaDoc} onClick={() => datChiChuaDoc(false)}>
+          <button className="chip" type="button" aria-pressed={loc === "tat-ca"} onClick={() => datLoc("tat-ca")}>
             Tất cả
           </button>
-          <button className="chip" type="button" aria-pressed={chiChuaDoc} onClick={() => datChiChuaDoc(true)}>
+          <button
+            className="chip"
+            type="button"
+            aria-pressed={loc === "chua-doc"}
+            onClick={() => datLoc("chua-doc")}
+          >
             Chưa đọc {tongChuaDoc}
           </button>
+          {coNoiBo && (
+            <button className="chip" type="button" aria-pressed={loc === "noi-bo"} onClick={() => datLoc("noi-bo")}>
+              <Lock aria-hidden />
+              Nội bộ
+            </button>
+          )}
         </div>
       </div>
 
       <div className="ht-cuon">
-        {loc.length === 0 && (
+        {conLai.length === 0 && (
           <p className="nhat" style={{ fontSize: "13px", margin: "12px 8px" }}>
-            {chiChuaDoc && !khoa ? "Không còn cuộc trò chuyện nào chưa đọc." : "Không có cuộc trò chuyện nào khớp."}
+            {loc === "chua-doc" && !khoa
+              ? "Không còn cuộc trò chuyện nào chưa đọc."
+              : "Không có cuộc trò chuyện nào khớp."}
           </p>
         )}
-        {loc.map((n) => (
+        {conLai.map((n) => (
           <div key={n.ma} style={{ display: "contents" }}>
             {n.ten !== null && (
               <div className="nhom-nguoi">
+                {n.noiBo && (
+                  <span className="icon-o" data-noi-bo="" style={{ width: "24px", height: "24px", borderRadius: "8px" }} aria-hidden>
+                    <Lock />
+                  </span>
+                )}
                 {n.anh && (
                   <span className="av av-nho" data-c={n.anh.mau} aria-hidden>
                     {n.anh.chuCai}
@@ -99,15 +138,15 @@ export function DanhSachHopThu({ nhom, chon }: { nhom: NhomCuoc[]; chon: number 
             )}
             {n.cuoc.map((c) => (
               <Link
-                key={c.maHoSo}
+                key={`${c.maHoSo}-${c.noiBo}`}
                 className="cuoc"
-                href={`/hop-thu?ho-so=${c.maHoSo}`}
+                href={duongCuoc(c.maHoSo, c.noiBo)}
                 scroll={false}
-                aria-current={c.maHoSo === chon ? "true" : undefined}
+                aria-current={chon && c.maHoSo === chon.maHoSo && c.noiBo === chon.noiBo ? "true" : undefined}
                 data-chua-doc={c.chuaDoc > 0 ? "" : undefined}
               >
-                <span className="icon-o">
-                  <FileText aria-hidden />
+                <span className="icon-o" data-noi-bo={c.noiBo ? "" : undefined}>
+                  {c.noiBo ? <Lock aria-label="Nội bộ" /> : <FileText aria-hidden />}
                 </span>
                 <span className="than">
                   <span className="d1">
