@@ -4,13 +4,14 @@
 > hình ngôn ngữ cục bộ và khung LLM cho không gian `I`, làm căn cứ cho bản ghi quyết định
 > ADR-0008 (navigator đã giữ số).
 >
-> **Issue liên quan**: #47 · **Ngày thực hiện**: 2026-10-08 · **Phạm vi**: khảo sát và dựng thử
-> ngoài kho mã, chưa tích hợp vào hệ thống
+> **Issue liên quan**: #47 · **Ngày thực hiện**: 2026-10-08 (giấy phép, ảnh chứa — Nguyễn Thanh
+> Nguyên), 2026-10-10 (sáu phép thử — navigator) · **Phạm vi**: khảo sát và dựng thử ngoài kho mã,
+> chưa tích hợp vào hệ thống
 >
-> **Trạng thái tài liệu: BẢN DỞ DANG.** Đã kiểm xong giấy phép tận gốc và kích thước ảnh chứa,
-> đã dựng được cụm thử. **Chưa có số đo hiệu năng hay độ đúng nào**: đĩa dữ liệu của Docker trên
-> máy đo có dấu hiệu hỏng (mục 6), nên mọi số đo có ghi đĩa trên máy đó không dùng được. Phần còn
-> lại chuyển navigator — danh sách ở mục 7. ADR-0008 chưa viết.
+> **Hai lượt đo.** Lượt đầu trên máy của người khảo sát dừng giữa chừng vì đĩa dữ liệu Docker có
+> dấu hiệu hỏng (mục 6) — không số đo nào của lượt đó được dùng. Lượt hai trên máy navigator chạy
+> đủ sáu phép thử có đáp án biết trước (mục 5). Kết luận ở mục 7, bản ghi quyết định là
+> [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md).
 
 ---
 
@@ -81,17 +82,18 @@ mô hình chỉ là một yêu cầu HTTP — phương án này **không thêm p
 ### 2.4. Mô hình (trọng số)
 
 Giấy phép của **trọng số mô hình** phải kiểm riêng, độc lập với giấy phép phần mềm chạy nó. Cột
-giấy phép dưới đây đọc từ trường `license` trong siêu dữ liệu Hugging Face (API `models/<tên>`) —
-**chưa mở tận tệp `LICENSE`** của từng mô hình.
+*Giấy phép khai* đọc từ trường `license` trong siêu dữ liệu Hugging Face (API `models/<tên>`).
+Cột *Kiểm tận gốc* (ngày 2026-10-10): mở tệp `LICENSE` ở gốc kho mô hình; kho nào không có tệp đó
+thì đọc dòng `license:` trong phần đầu tệp `README.md` (thẻ mô hình) — nguồn ở mục 8.
 
-| Mô hình | Dùng cho | Tệp, kích thước | Giấy phép khai | Ghi chú |
+| Mô hình | Dùng cho | Tệp, kích thước | Giấy phép khai | Kiểm tận gốc |
 |---|---|---|---|---|
-| `Qwen/Qwen2.5-1.5B-Instruct-GGUF` | Sinh văn bản | `qwen2.5-1.5b-instruct-q4_k_m.gguf`, 1.117.320.736 byte | apache-2.0 | Kho có tệp `LICENSE` |
-| `Qwen/Qwen3-0.6B-GGUF` | Sinh văn bản, bản nhẹ | `Qwen3-0.6B-Q8_0.gguf`, 639.446.688 byte | apache-2.0 | Kho có tệp `LICENSE` |
-| `Qwen/Qwen3-Embedding-0.6B-GGUF` | Nhúng véc-tơ, đa ngữ | `Qwen3-Embedding-0.6B-Q8_0.gguf`, 639.150.592 byte | apache-2.0 | Kho GGUF **không có** tệp `LICENSE`, chỉ khai ở thẻ mô hình |
-| `intfloat/multilingual-e5-small` | Nhúng véc-tơ, đa ngữ, chạy bằng ONNX | `onnx/model.onnx`, 448 MiB | mit | |
-| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Nhúng véc-tơ, đa ngữ | `onnx/model.onnx`, 449 MiB | apache-2.0 | Chưa tải |
-| `BAAI/bge-m3` | Nhúng véc-tơ, đa ngữ | — | mit | Chưa tải |
+| `Qwen/Qwen2.5-1.5B-Instruct-GGUF` | Sinh văn bản | `qwen2.5-1.5b-instruct-q4_k_m.gguf`, 1.117.320.736 byte | apache-2.0 | Tệp `LICENSE`, dòng đầu *Apache License* |
+| `Qwen/Qwen3-0.6B-GGUF` | Sinh văn bản, bản nhẹ | `Qwen3-0.6B-Q8_0.gguf`, 639.446.688 byte | apache-2.0 | Tệp `LICENSE`, dòng đầu *Apache License* |
+| `Qwen/Qwen3-Embedding-0.6B-GGUF` | Nhúng véc-tơ, đa ngữ | `Qwen3-Embedding-0.6B-Q8_0.gguf`, 639.150.592 byte | apache-2.0 | **Không có** tệp `LICENSE` — cả kho GGUF lẫn kho gốc `Qwen/Qwen3-Embedding-0.6B`; thẻ mô hình của cả hai ghi `license: apache-2.0` |
+| `intfloat/multilingual-e5-small` | Nhúng véc-tơ, đa ngữ, chạy bằng ONNX | `onnx/model.onnx`, 448 MiB | mit | Không có tệp `LICENSE`; thẻ mô hình ghi `license: mit` |
+| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Nhúng véc-tơ, đa ngữ | `onnx/model.onnx`, 449 MiB | apache-2.0 | Không có tệp `LICENSE`; thẻ mô hình ghi `license: apache-2.0`. Chưa tải |
+| `BAAI/bge-m3` | Nhúng véc-tơ, đa ngữ | — | mit | Không có tệp `LICENSE`; thẻ mô hình ghi `license: mit`. Chưa tải |
 
 Ba tệp GGUF đã tải được **đối chiếu SHA-256** với giá trị Hugging Face công bố — khớp cả ba:
 
@@ -124,7 +126,7 @@ Bài học từ #20 và #21: nhãn kho mã không đủ, phải soi thứ thật
 |---|---|---|
 | `pgvector/pgvector:0.8.7-pg16-bookworm` | `/usr/share/doc/pgvector/LICENSE`, dòng đầu trùng tệp ở kho. `vector.control`: `default_version = '0.8.7'`. `postgres --version`: *PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2)* | Cùng PostgreSQL 16 với cụm chính |
 | `qdrant/qdrant:v1.19.1` | **Không có** tệp `LICENSE`. Có SBOM `/qdrant/qdrant.spdx.json` (sinh bởi `cargo-sbom-v0.10.0`): gói `qdrant` `1.19.1` khai `Apache-2.0`; các thư viện kéo theo khai MIT, Apache-2.0, Unicode-3.0, MPL-2.0, `BSL-1.0`… | **`BSL-1.0` trong SBOM là Boost Software License 1.0**, mã SPDX của giấy phép Boost — **không phải** Business Source License. Đừng loại nhầm. MPL-2.0 là copyleft mức tệp, cần ghi chú khi tích hợp |
-| `chromadb/chroma:1.5.9` | **Không có** tệp `LICENSE` trong ảnh. Ảnh không có nhãn OCI. Lệnh `chroma --version` trong ảnh in **`chroma 1.4.4`** dù thẻ ảnh là `1.5.9`; điểm cuối `/api/v2/version` trả `"1.0.0"` | Chưa rõ vì sao số phiên bản lệch — cần hỏi lại trước khi ghi phiên bản vào bản ghi |
+| `chromadb/chroma:1.5.9` | **Không có** tệp `LICENSE` trong ảnh. Ảnh không có nhãn OCI. Lệnh `chroma --version` trong ảnh in **`chroma 1.4.4`** dù thẻ ảnh là `1.5.9`; điểm cuối `/api/v2/version` trả `"1.0.0"` | Lượt đo hai kéo lại ảnh, thấy **y hệt** (ảnh tạo ngày 2026-05-05). Chưa rõ vì sao số phiên bản lệch; bản ghi chỉ ghi theo thẻ ảnh và máy khách `chromadb-client 1.5.9`. Không ảnh hưởng kết luận vì Chroma không được chọn |
 | `ghcr.io/ggml-org/llama.cpp:server` | **Không có** tệp `LICENSE` của llama.cpp trong ảnh. Nhãn OCI trỏ `https://github.com/ggml-org/llama.cpp`, `llama-server --version`: *version: 0.6.0-dev (build 11459, commit f498f864f)* | Căn cứ giấy phép là tệp ở kho |
 
 ---
@@ -155,62 +157,149 @@ cụm — việc của bước tích hợp, chưa đánh giá.
 
 ---
 
-## 5. Dựng thử
+## 5. Dựng thử và số đo
 
 ### 5.1. Môi trường
 
 Cụm thử dựng ngoài kho mã, tên dự án riêng `thu47`, cổng không trùng cụm chính:
 
-| Dịch vụ | Ảnh | Cổng máy |
-|---|---|---|
-| `pgvector` | `pgvector/pgvector:0.8.7-pg16-bookworm` | 15432 |
-| `qdrant` | `qdrant/qdrant:v1.19.1`, tắt telemetry | 16333 |
-| `chroma` | `chromadb/chroma:1.5.9`, tắt telemetry | 18001 |
-| `llm` | `llama.cpp:server` + `qwen2.5-1.5b-instruct-q4_k_m.gguf`, ngữ cảnh 4096, 6 luồng | 18080 |
-| `emb` | `llama.cpp:server --embedding --pooling last` + `Qwen3-Embedding-0.6B-Q8_0.gguf` | 18081 |
-| `py` | `python:3.12-slim`, môi trường ảo trong volume riêng của cụm thử | — |
+| Dịch vụ | Ảnh | Cổng máy | Tham số |
+|---|---|---|---|
+| `pgvector` | `pgvector/pgvector:0.8.7-pg16-bookworm` | 15432 | mặc định |
+| `qdrant` | `qdrant/qdrant:v1.19.2`, tắt telemetry | 16333 | mặc định, trừ phép B (mục 5.3) |
+| `chroma` | `chromadb/chroma:1.5.9`, tắt telemetry | 18001 | mặc định |
+| `llm` | `ghcr.io/ggml-org/llama.cpp:server` (build 11541, commit `f2918cabb`) + `qwen2.5-1.5b-instruct-q4_k_m.gguf` | 18080 | `-c 4096 -t 6` |
+| `emb` | cùng ảnh + `Qwen3-Embedding-0.6B-Q8_0.gguf` | 18081 | `--embedding --pooling last -c 8192 -ub 8192 -t 6` |
+| `py` | `python:3.12-slim`, môi trường ảo trong volume riêng của cụm thử | — | — |
 
-| Mục | Giá trị |
+| Mục | Lượt đo hai (dùng cho mọi số dưới đây) |
 |---|---|
-| Máy | Intel Core i5-13420H, 15,5 GB RAM, Windows 11 Home Single Language |
-| Docker | Engine `28.3.2`, Docker Desktop trên WSL2; máy ảo được cấp 7,5 GiB; trình lưu trữ `overlayfs` qua containerd snapshotter |
-| Gói Python đo | `httpx 0.28.1`, `psycopg 3.3.5`, `numpy 2.5.3`, `onnxruntime 1.30.0`, `tokenizers 0.23.2`, `qdrant-client 1.19.1`, `chromadb-client` |
+| Máy | Intel Core i7-13700HX, 15,6 GB RAM, Windows 11 Pro |
+| Docker | Engine `29.7.2`, Docker Desktop trên WSL2, máy ảo 24 nhân logic, 7,75 GiB; đĩa dữ liệu Docker trên ổ còn trống 379 GB |
+| Gói Python đo | `httpx 0.28.1`, `psycopg 3.3.5`, `numpy 2.5.3`, `qdrant-client 1.19.1`, `chromadb-client 1.5.9` |
+| Tệp mô hình | Hai tệp GGUF tải lại từ kho Qwen; **SHA-256 khớp** bảng ở mục 2.4 |
 
-Máy đo không cài Python nên mọi kịch bản chạy trong container `py`. Hai phiên bản lệch so với
-bản mới nhất **không do ứng viên**: thẻ `pgvector …-pg16-trixie` và `qdrant v1.19.2` hỏng lớp
-dữ liệu trong bộ đệm Docker của máy đo (mục 6), nên cụm thử dùng bản `bookworm` và `v1.19.1`.
+Mọi thời gian đo **phía máy khách** (container `py`, cùng mạng Docker với ba cơ sở dữ liệu), chỉ
+chạy CPU, không GPU. Số đo phụ thuộc máy; dùng để so các phương án với nhau, không phải con số
+cam kết.
 
-### 5.2. Phép thử đã thiết kế, chưa chạy xong
+### 5.2. Sáu phép thử có đáp án biết trước
 
-Mọi phép thử đều **có đáp án biết trước**, theo bài học #48:
+Năm phép A–E giữ đúng thiết kế của lượt đầu, theo bài học #48. Thêm phép F so chi phí của khung
+LLM.
 
 | Phép thử | Dữ liệu | Đáp án biết trước | Đo gì |
 |---|---|---|---|
-| A — truy xuất kho tri thức | 20 bài hướng dẫn nội bộ tiếng Việt; 20 câu hỏi **diễn đạt lại** bằng từ khác | Bài đúng của từng câu | Kết quả mỗi cơ sở dữ liệu có **trùng** thứ hạng tính vét cạn bằng numpy không; recall@1, recall@3 của hai mô hình nhúng |
-| B — chỉ mục xấp xỉ | 10.000 véc-tơ 1024 chiều, hạt giống `47`; 100 câu hỏi là bản nhiễu nhẹ của 100 véc-tơ đã biết | Láng giềng gốc của từng câu hỏi; top-10 vét cạn | Thời gian nạp, dựng HNSW, truy vấn p50/p95; recall@10 so với vét cạn |
-| C — gợi ý loại yêu cầu | 20 yêu cầu, mỗi loại năm mẫu; danh mục loại **đọc từ dữ liệu** khởi tạo, không viết cứng | Loại đúng của từng yêu cầu | Số đúng, thời gian p50/p95. Đầu ra ràng buộc bằng JSON schema có `enum` = mã loại, nên mô hình **không trả được mã lạ** |
-| D — soạn nháp trả lời | Câu hỏi phép A, 3 bài gần nhất | Bài đúng | Bài đúng có trong top-3 không; mô hình có chọn đúng bài để trích không |
-| E — dự phòng | Gọi tới dịch vụ mô hình không tồn tại, hạn chót 3 giây | Phải trả *không có gợi ý* | Thời gian trước khi bỏ cuộc |
+| A — truy xuất kho tri thức | 20 bài hướng dẫn nội bộ tiếng Việt; 20 câu hỏi **diễn đạt lại** bằng từ khác ("Tôi không nhớ pass để vào hộp mail" cho bài *Đặt lại mật khẩu email công ty*) | Bài đúng của từng câu | recall@1, recall@3 của mô hình nhúng (xếp hạng vét cạn bằng numpy); mỗi cơ sở dữ liệu có **trùng** thứ hạng vét cạn không |
+| B — chỉ mục xấp xỉ | 10.000 véc-tơ 1024 chiều ngẫu nhiên, hạt giống `47`; 100 câu hỏi là bản nhiễu nhẹ của 100 véc-tơ đã biết | Véc-tơ gốc của từng câu; top-10 vét cạn | Thời gian nạp, dựng HNSW, truy vấn p50/p95; recall@10 |
+| C — gợi ý loại yêu cầu | 20 yêu cầu, mỗi loại năm mẫu; danh mục loại **đọc từ dữ liệu khởi tạo** `infra/seed/02-co-cau-to-chuc.sql`, không viết cứng | Loại đúng của từng yêu cầu | Số đúng, số đầu ra ngoài tập, p50/p95. Đầu ra ràng buộc bằng JSON schema có `enum` = mã loại |
+| D — soạn nháp trả lời | Câu hỏi phép A, 3 bài gần nhất | Bài đúng | Bài đúng có trong top-3 không; mô hình chọn đúng bài không (`enum` = mã 3 bài) |
+| E — dự phòng | Dịch vụ mô hình không tồn tại; cổng đóng; mô hình sống nhưng chậm hơn hạn | Phải trả *không có gợi ý* trong hạn chót 3 giây | Thời gian trước khi bỏ cuộc |
+| F — chi phí khung LLM | Mỗi phương án một môi trường ảo riêng, cài gói tối thiểu cho pgvector + điểm cuối kiểu OpenAI | — | Số gói, dung lượng, thời gian `import` lần một và lần hai |
 
-Dữ liệu và kịch bản nằm ngoài kho, trong thư mục thử của người khảo sát; navigator cần thì gửi
-kèm.
+Kịch bản đo và dữ liệu thử nằm ngoài kho mã (thư mục thử của navigator), không đưa vào kho.
 
-### 5.3. Đã chạy được tới đâu
+### 5.3. Kết quả
 
-- Sáu dịch vụ của cụm thử lên đủ. `llm` và `emb` báo `healthy`; `/v1/models` của `llm` liệt kê
-  đúng tệp Qwen2.5, ngữ cảnh 4096
-- Phép A chạy qua bước nhúng bằng Qwen3-Embedding, nạp và truy vấn pgvector không lỗi, rồi
-  **hỏng ở bước nạp Qdrant**: tạo một bộ sưu tập rỗng mất 39,6 giây, lệnh nạp kế tiếp bị máy chủ
-  ngắt kết nối. Kết quả chưa được ghi lại
-- Phép B, C, D, E: **chưa chạy**
-- Bộ nhớ từng dịch vụ (`docker stats --no-stream`): **chưa đo**
+**A — truy xuất kho tri thức** (Qwen3-Embedding-0.6B Q8_0, 1024 chiều; câu hỏi kèm chỉ dẫn theo
+thẻ mô hình, bài để nguyên)
 
-**Chưa có số liệu nào để so sánh.** Không kết luận được gì về hiệu năng hay độ đúng từ lần dựng
-này.
+| Đo | Kết quả |
+|---|---|
+| recall@1 | **18/20** |
+| recall@3 | **20/20** |
+| Hai câu sai hạng 1 | "Máy lạnh phòng họp nhỏ nhỏ giọt xuống bàn" → hạng 1 là *Đặt phòng họp*, bài đúng *Báo hỏng điều hòa* ở hạng 2. "Muốn dùng một công cụ vẽ sơ đồ chưa có trên máy" → bài đúng ở hạng 3 |
+| Top-3 trùng vét cạn | pgvector **20/20**, Qdrant **20/20**, Chroma **20/20** |
+| Thời gian nhúng | 20 bài 4,95 giây; 20 câu hỏi 2,79 giây (một lô) |
+
+Ở quy mô này ba cơ sở dữ liệu cho **cùng một kết quả**: độ đúng nằm ở mô hình nhúng, không ở nơi
+lưu véc-tơ.
+
+**B — chỉ mục xấp xỉ** (10.000 × 1024, tham số HNSW mặc định của từng sản phẩm)
+
+| | Nạp | Dựng chỉ mục | Truy vấn p50 / p95 | recall@10 | Gốc ở hạng 1 |
+|---|---|---|---|---|---|
+| pgvector — HNSW, `ef_search` 40 (mặc định) | 3,05 s | 8,51 s | 1,5 / 2,4 ms | 0,378 | 86/100 |
+| pgvector — HNSW, `ef_search` 100 | | | 21,4 / 24,4 ms | 1,0 | 100/100 |
+| pgvector — **quét chính xác, không chỉ mục** | 3,05 s | — | **21,4 / 23,2 ms** | **1,0** | **100/100** |
+| Qdrant | 5,28 s | 0,52 s | 2,7 / 3,2 ms | 1,0 | 100/100 |
+| Chroma (dựng HNSW trong lúc nạp) | 2,93 s | | 2,8 / 5,6 ms | 0,501 | 96/100 |
+
+Đọc bảng này cẩn thận:
+
+- **Véc-tơ ngẫu nhiên 1024 chiều là trường hợp xấu nhất của HNSW** — không có cụm nào để đồ thị
+  bám vào. Recall thấp của pgvector và Chroma ở tham số mặc định nói về dữ liệu này, không nói
+  về véc-tơ nhúng thật, vốn có cấu trúc
+- **Qdrant mặc định không dựng HNSW cho tập nhỏ.** Với `indexing_threshold` mặc định
+  10.000 KB, 10.000 véc-tơ chia thành nhiều đoạn nhỏ hơn ngưỡng và bị quét phẳng
+  (`indexed_vectors_count = 0`). Lượt đo hạ ngưỡng xuống 1.000 KB để Qdrant dựng chỉ mục; dù
+  vậy, đoạn nhỏ hơn `full_scan_threshold` (mặc định 10.000 KB) vẫn được tìm chính xác — nên
+  recall 1,0 của Qdrant là **tìm chính xác**, không phải HNSW tốt hơn
+- **Kết luận dùng được**: ở quy mô kho tri thức nội bộ (vài nghìn tới vài chục nghìn bài), quét
+  chính xác trên pgvector mất khoảng 21 ms mỗi câu ở 10.000 bài mà luôn đúng. Chưa cần chỉ mục;
+  khi cần, HNSW của pgvector đạt recall 1,0 ở `ef_search` 100
+
+**C — gợi ý loại yêu cầu** (Qwen2.5-1.5B-Instruct Q4_K_M, nhiệt độ 0)
+
+| Đo | Kết quả |
+|---|---|
+| Đúng | **19/20** |
+| Đầu ra ngoài tập mã loại | **0** — JSON schema có `enum` chặn ở bước sinh |
+| Thời gian p50 / p95 | 620 / 775 ms |
+| Câu sai | "Xin quyền thư mục dùng chung phòng Nhân sự" → gợi ý *Giấy xác nhận nhân sự*, đúng là *Cấp quyền phần mềm* — chữ "Nhân sự" kéo lệch |
+
+Mô hình không trả được mã lạ, nên đầu ra luôn ghi được vào `suggested_category` — đúng nguyên
+tắc AI chỉ ghi trường gợi ý. Một câu sai trên hai mươi là lý do người phân loại vẫn phải xác
+nhận.
+
+**D — soạn nháp trả lời**
+
+| Đo | Kết quả |
+|---|---|
+| Bài đúng có trong top-3 | **20/20** |
+| Mô hình chọn đúng bài | **18/20** |
+| Thời gian p50 / p95 | 3,0 / 4,2 s |
+| Chất lượng nháp | Không đều: có câu chép gần nguyên văn bài hướng dẫn, có câu chỉ trả tên bài ("Đổi mật khẩu email công ty"). Đủ làm **nháp cho nhân viên sửa**, không đủ để tự gửi |
+
+**E — dự phòng** (hàm gợi ý mẫu, hạn chót 3 giây; lỗi hay quá hạn đều trả *không có gợi ý*)
+
+| Tình huống | Trả *không có gợi ý* | Thời gian |
+|---|---|---|
+| Dịch vụ không tồn tại (tên máy sai) | Có | 1,96 s |
+| Cổng đóng | Có | 0,01 s |
+| Mô hình sống nhưng sinh chậm hơn hạn | Có | 3,01 s |
+
+Luồng thủ công không bao giờ chờ quá hạn chót, dù mô hình hỏng theo cách nào.
+
+**F — chi phí khung LLM** (gói tối thiểu cho pgvector + điểm cuối kiểu OpenAI; thời gian `import`
+lần hai, sau khi Python đã biên dịch)
+
+| Phương án | Gói cài | Phiên bản chính | Số gói | Dung lượng | `import` |
+|---|---|---|---|---|---|
+| **Không dùng khung** | `httpx`, `psycopg[binary]` — **đã có sẵn** trong `backend/requirements.txt` | — | 10 | 39 MB | 0,10 s |
+| LangChain | `langchain`, `langchain-openai`, `langchain-postgres` | `langchain 1.4.4` | 54 | 257 MB | 0,95 s |
+| LlamaIndex | `llama-index-core` + ba gói tích hợp | `llama-index-core 0.14.25` | 74 | 302 MB | 1,24 s |
+| Haystack | `haystack-ai`, `pgvector-haystack` | `haystack-ai 3.3.0` | 47 | 195 MB | 0,38 s |
+
+Năm phép A–E đều chạy bằng **gọi thẳng HTTP và SQL**, không khung nào — nên năng lực cần cho các
+gợi ý đã định không đòi khung. Khung thêm 37–64 gói kéo theo vào dịch vụ ứng dụng.
+
+**Bộ nhớ** (`docker stats --no-stream` sau khi chạy xong cả sáu phép)
+
+| Dịch vụ | Bộ nhớ |
+|---|---|
+| `llm` — Qwen2.5-1.5B Q4_K_M, ngữ cảnh 4096 | 1,21 GiB |
+| `emb` — Qwen3-Embedding-0.6B Q8_0, ngữ cảnh 8192 | 1,57 GiB |
+| `pgvector` | 194 MiB |
+| `qdrant` | 170 MiB |
+| `chroma` | 135 MiB |
+
+Hai dịch vụ mô hình cộng **khoảng 2,8 GiB** — gần gấp đôi ngân sách 1,55 GiB hiện tại của cụm.
+Ngữ cảnh 8192 của `emb` là thừa cho bài hướng dẫn ngắn; hạ xuống sẽ bớt bộ nhớ, **chưa đo**.
 
 ---
 
-## 6. Sự cố trên máy đo — đĩa dữ liệu của Docker
+## 6. Sự cố ở lượt đo đầu — đĩa dữ liệu của Docker
 
 Ghi lại để người dựng lại biết số đo của lần này không dùng được, và vì máy thành viên từng gặp
 lỗi dựng ở #48. **Nguyên nhân chưa xác nhận.**
@@ -231,30 +320,36 @@ defaults* thì **không bấm** (`TRO-LY-THANH-VIEN.md` mục 2.7).
 
 ---
 
-## 7. Việc còn lại
+## 7. Kết luận và việc còn lại
 
-- [ ] Đọc bình luận giao việc của #47 và đối chiếu phạm vi — người khảo sát chưa đọc được vì máy
-      chưa cài `gh`
-- [ ] Dựng lại cụm thử trên máy có đĩa Docker ổn định, chạy năm phép thử ở mục 5.2
-- [ ] Đo bộ nhớ từng dịch vụ bằng `docker stats --no-stream`; đo thời gian nạp thư viện từ lần chạy
-      thứ hai
-- [ ] Cài ba khung LLM vào ba môi trường riêng: đếm số gói kéo theo, dung lượng, thời gian nạp,
-      chạy cùng một luồng truy xuất để so với phương án không dùng khung
-- [ ] Mở tận tệp `LICENSE` của từng mô hình ở mục 2.4
-- [ ] Làm rõ số phiên bản lệch trong ảnh Chroma (mục 3)
-- [ ] Soi ảnh phát hành của Weaviate nếu còn muốn xét
-- [ ] Viết ADR-0008 trạng thái *Đề xuất*
+**Kết luận** — chi tiết lập luận và các phương án bị loại ở
+[ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md):
 
-**Hướng sơ bộ, chưa phải kết luận**: dữ kiện đã có nghiêng về pgvector (không thêm dịch vụ,
-cùng họ giấy phép PostgreSQL), llama.cpp server cho mô hình cục bộ (ảnh nhẹ, MIT, có điểm cuối
-kiểu OpenAI), và gọi thẳng HTTP thay vì khung (không thêm phụ thuộc Python). Cả ba cần số đo ở
-mục 5.2 mới đủ căn cứ.
+| Câu hỏi | Chọn | Căn cứ |
+|---|---|---|
+| Lưu véc-tơ ở đâu | **pgvector** — phần mở rộng trên PostgreSQL đang dùng | Phép A: cả ba cơ sở dữ liệu cùng kết quả 20/20; phép B: quét chính xác 21 ms ở 10.000 bài, recall 1,0. Không thêm dịch vụ, cùng họ giấy phép PostgreSQL |
+| Chạy mô hình bằng gì | **llama.cpp server** (MIT), hai tiến trình: sinh văn bản và nhúng | Ảnh 297 MiB nén so với 3,6 GiB của Ollama; điểm cuối kiểu OpenAI; phép C, D chạy được trên CPU |
+| Mô hình | Sinh văn bản `Qwen2.5-1.5B-Instruct` Q4_K_M; nhúng `Qwen3-Embedding-0.6B` Q8_0 — cả hai Apache-2.0 | Phép A recall@3 20/20; phép C 19/20, không đầu ra ngoài tập; phép D chọn đúng bài 18/20 |
+| Có cần khung LLM không | **Không** — gọi thẳng HTTP và SQL bằng `httpx`, `psycopg` đã có | Phép F: khung thêm 37–64 gói, 195–302 MB; năm phép A–E đều chạy không cần khung |
+| Dự phòng | Hạn chót 3 giây, lỗi hay quá hạn thì *không có gợi ý* | Phép E: cả ba tình huống lỗi trả về trong hạn |
+
+**Chưa làm, ghi lại để người sau không tưởng đã làm**
+
+- [ ] Mô hình nhúng thứ hai (`multilingual-e5-small`, `bge-m3`) — chưa tải, chưa so recall
+- [ ] Đo lại với dữ liệu thật của kho tri thức khi #46 (Wiki.js, ADR-0006) được chấp nhận và có bài
+- [ ] Bộ nhớ của `emb` khi hạ ngữ cảnh xuống 2048; chạy hai mô hình trong **một** tiến trình
+      llama.cpp — chưa kiểm
+- [ ] Đổi ảnh PostgreSQL của cụm chính từ `postgres:16-alpine` sang ảnh có pgvector — chưa đánh giá
+      ảnh hưởng tới dữ liệu và bộ quy tắc hiện có
+- [ ] Soi ảnh phát hành của Weaviate — không cần nữa vì không chọn
+- [ ] Vì sao ảnh Chroma `1.5.9` tự báo `1.4.4` — không cần nữa vì không chọn
 
 ---
 
 ## 8. Nguồn
 
-Mọi đường dẫn dưới đây đã được mở ngày 2026-10-08 và trả về nội dung.
+Mọi đường dẫn dưới đây đã được mở ngày 2026-10-08; mười ba đường dẫn tệp giấy phép được mở lại
+ngày 2026-10-10 khi soát, dòng đầu khớp bảng mục 2.
 
 | Nguồn | Đường dẫn |
 |---|---|
@@ -274,3 +369,6 @@ Mọi đường dẫn dưới đây đã được mở ngày 2026-10-08 và tr�
 | Phiên bản mới nhất | <https://api.github.com/repos/qdrant/qdrant/releases/latest> · <https://api.github.com/repos/chroma-core/chroma/releases/latest> · <https://api.github.com/repos/ollama/ollama/releases/latest> · <https://api.github.com/repos/pgvector/pgvector/tags> · <https://api.github.com/repos/ggml-org/llama.cpp/releases?per_page=3> |
 | Kích thước ảnh Docker Hub | <https://hub.docker.com/v2/repositories/ollama/ollama/tags> · <https://hub.docker.com/v2/repositories/pgvector/pgvector/tags/0.8.7-pg16-bookworm> · <https://hub.docker.com/v2/repositories/qdrant/qdrant/tags/v1.19.2> · <https://hub.docker.com/v2/repositories/chromadb/chroma/tags/1.5.9> |
 | Mô hình — siêu dữ liệu, giấy phép khai, SHA-256 | <https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct-GGUF> · <https://huggingface.co/api/models/Qwen/Qwen3-0.6B-GGUF> · <https://huggingface.co/api/models/Qwen/Qwen3-Embedding-0.6B-GGUF> · <https://huggingface.co/api/models/intfloat/multilingual-e5-small> · <https://huggingface.co/api/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2> · <https://huggingface.co/api/models/BAAI/bge-m3> |
+| Mô hình — tệp `LICENSE` (mở 2026-10-10) | <https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/LICENSE> · <https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/LICENSE> |
+| Mô hình — thẻ mô hình, dòng `license:` (mở 2026-10-10) | <https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/main/README.md> · <https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/resolve/main/README.md> · <https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/README.md> · <https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/README.md> · <https://huggingface.co/BAAI/bge-m3/resolve/main/README.md> |
+| Tải tệp mô hình đã đo | <https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf> · <https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/main/Qwen3-Embedding-0.6B-Q8_0.gguf> |
