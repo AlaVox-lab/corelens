@@ -332,18 +332,26 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
             </Link>
           )}
 
+          {/* Hai nút cùng chỗ phải mang `key` riêng (#188): không có key, React dùng lại một
+              phần tử và đổi nó thành `submit` ngay trong cú bấm "Tiếp tục", nên trình duyệt
+              gửi biểu mẫu và bỏ qua bước Xem lại. `preventDefault` là lớp chặn thứ hai. */}
           {buoc < 3 ? (
             <button
+              key="tiep-tuc"
               type="button"
               className="nut"
               data-loai="chinh"
               disabled={!theTiep}
-              onClick={() => datBuoc(buoc + 1)}
+              onClick={(e) => {
+                e.preventDefault();
+                datBuoc(buoc + 1);
+              }}
             >
               Tiếp tục →
             </button>
           ) : (
             <button
+              key="gui"
               type="submit"
               className="nut"
               data-loai="chinh"
