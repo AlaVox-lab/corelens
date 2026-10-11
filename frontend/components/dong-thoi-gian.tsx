@@ -11,8 +11,14 @@
 // Từ #128 dòng thời gian trộn thêm lời nhắn theo thời gian. Hai nguồn khác nhau về bản
 // chất — mốc là lần hồ sơ ĐỔI, lời nhắn thì không đổi gì (ADR-0005) — nên chúng trông
 // khác nhau, và mọi con số về trạng thái chỉ đếm mốc.
+//
+// Từ #189 dòng thời gian mặc định THU GỌN, chỉ còn bước hiện tại — mốc mới nhất —, vì người
+// mở hồ sơ cần thấy việc của mình trước, nhật ký để tra khi cần (nhận xét của giảng viên
+// 11/10/2026). Cả hai khối đều dựng ở máy chủ; CSS ẩn hiện theo thuộc tính trên <html> mà
+// nut-dong-thoi-gian.tsx bật tắt, nên thu gọn không mất mốc nào và bản in luôn đủ.
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { NutDongThoiGian } from "@/components/nut-dong-thoi-gian";
 import { chiGio, khoaNgay, nhanNgay } from "@/lib/dinh-dang";
 import type { LoiNhan, SuKien, ThayDoiTruong } from "@/lib/kieu";
 import { bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
@@ -400,14 +406,40 @@ export function DongThoiGian({
   const quayLui = danhDauQuayLui(cacSuKien);
   const cacMuc = tronTheoThoiGian(cacSuKien, cacLoiNhan);
 
+  // Bước hiện tại: mốc đổi trạng thái mới nhất. Từ hai mốc trở lên mới có gì để thu gọn.
+  const thuGonDuoc = cacSuKien.length >= 2;
+  const chiSoCuoi = cacSuKien.reduce(
+    (moiNhat, e, i) => (Date.parse(e.timestamp) >= Date.parse(cacSuKien[moiNhat].timestamp) ? i : moiNhat),
+    0,
+  );
+  const idDay = "dong-thoi-gian-day-du";
+
   const thongKe = (
-    <p
-      className="mono"
-      style={{ margin: trongThe ? "0 0 16px" : "6px 0 0", fontSize: "12px", color: "var(--ink-3)" }}
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px 12px",
+        margin: trongThe ? "0 0 16px" : "6px 0 0",
+      }}
     >
-      {cacSuKien.length} mốc
-      {cacLoiNhan.length > 0 && <> · {cacLoiNhan.length} lời nhắn</>} · {quayLui.size} lần quay lui
-    </p>
+      <p className="mono" style={{ margin: 0, fontSize: "12px", color: "var(--ink-3)" }}>
+        {cacSuKien.length} mốc
+        {cacLoiNhan.length > 0 && <> · {cacLoiNhan.length} lời nhắn</>} · {quayLui.size} lần quay lui
+      </p>
+      {thuGonDuoc && <NutDongThoiGian soMoc={cacSuKien.length} idDay={idDay} />}
+    </div>
+  );
+
+  const buocHienTai = thuGonDuoc && (
+    <div className="dtg-tom-tat">
+      <div className="mono tua-muc" style={{ margin: "0 0 14px" }}>
+        Bước hiện tại · {nhanNgay(cacSuKien[chiSoCuoi].timestamp, bayGio)}
+      </div>
+      <MocThoiGian su_kien={cacSuKien[chiSoCuoi]} quayLui={quayLui.get(chiSoCuoi)} cuoiCung />
+    </div>
   );
 
   return (
@@ -427,54 +459,57 @@ export function DongThoiGian({
         className={trongThe ? undefined : "the"}
         style={trongThe ? undefined : { marginTop: "14px", padding: "20px 20px 4px" }}
       >
-        {cacMuc.length === 0 ? (
-          <p
-            style={{
-              margin: "0 0 16px",
-              fontSize: "13.5px",
-              color: "var(--ink-2)",
-              lineHeight: 1.6,
-            }}
-          >
-            {khiTrong}
-          </p>
-        ) : (
-          cacMuc.map((muc, i) => {
-            const ngayMoi = i === 0 || khoaNgay(muc.luc) !== khoaNgay(cacMuc[i - 1].luc);
-            const cuoiCung = i === cacMuc.length - 1;
+        {buocHienTai}
+        <div id={idDay} className={thuGonDuoc ? "dtg-day" : undefined}>
+          {cacMuc.length === 0 ? (
+            <p
+              style={{
+                margin: "0 0 16px",
+                fontSize: "13.5px",
+                color: "var(--ink-2)",
+                lineHeight: 1.6,
+              }}
+            >
+              {khiTrong}
+            </p>
+          ) : (
+            cacMuc.map((muc, i) => {
+              const ngayMoi = i === 0 || khoaNgay(muc.luc) !== khoaNgay(cacMuc[i - 1].luc);
+              const cuoiCung = i === cacMuc.length - 1;
 
-            return (
-              <div key={muc.loai === "su-kien" ? `e-${muc.chiSo}` : `m-${muc.loi_nhan.id}`}>
-                {ngayMoi && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      margin: i === 0 ? "0 0 14px" : "6px 0 14px",
-                    }}
-                  >
-                    <span className="mono tua-muc" style={{ whiteSpace: "nowrap" }}>
-                      {nhanNgay(muc.luc, bayGio)}
-                    </span>
-                    <span
-                      style={{ flex: "1 1 auto", height: "1px", background: "var(--line)" }}
+              return (
+                <div key={muc.loai === "su-kien" ? `e-${muc.chiSo}` : `m-${muc.loi_nhan.id}`}>
+                  {ngayMoi && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        margin: i === 0 ? "0 0 14px" : "6px 0 14px",
+                      }}
+                    >
+                      <span className="mono tua-muc" style={{ whiteSpace: "nowrap" }}>
+                        {nhanNgay(muc.luc, bayGio)}
+                      </span>
+                      <span
+                        style={{ flex: "1 1 auto", height: "1px", background: "var(--line)" }}
+                      />
+                    </div>
+                  )}
+                  {muc.loai === "su-kien" ? (
+                    <MocThoiGian
+                      su_kien={muc.su_kien}
+                      quayLui={quayLui.get(muc.chiSo)}
+                      cuoiCung={cuoiCung}
                     />
-                  </div>
-                )}
-                {muc.loai === "su-kien" ? (
-                  <MocThoiGian
-                    su_kien={muc.su_kien}
-                    quayLui={quayLui.get(muc.chiSo)}
-                    cuoiCung={cuoiCung}
-                  />
-                ) : (
-                  <MocLoiNhan loi_nhan={muc.loi_nhan} cuoiCung={cuoiCung} />
-                )}
-              </div>
-            );
-          })
-        )}
+                  ) : (
+                    <MocLoiNhan loi_nhan={muc.loi_nhan} cuoiCung={cuoiCung} />
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </>
   );

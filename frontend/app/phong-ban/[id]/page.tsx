@@ -137,8 +137,8 @@ export default async function ChiTietPhongBan({
       <ThanhBuoc cacBuoc={cacBuoc(cacTrangThai ?? [], ho_so.state.code, ho_so.history)} />
 
       <div className="hai-cot">
-        {/* --- Cột trái: đọc -------------------------------------------------- */}
-        <div style={{ display: "grid", gap: "16px", minWidth: 0 }}>
+        {/* --- Cột trái: đọc. Màn hẹp thì xuống sau Hạn và thao tác (#189) ------- */}
+        <div className="cot-doc" style={{ display: "grid", gap: "16px", minWidth: 0 }}>
           {ho_so.description && (
             <div className="the khoi">
               <div className="khoi-dau">Nội dung yêu cầu</div>

@@ -1048,14 +1048,78 @@ textarea.o-nhap {
   height: 13px;
 }
 
+/* Màn hẹp (#189): việc của người dùng lên trước nhật ký. Cột phải tan vào lưới cha
+   (`display: contents`), hai thẻ đầu của nó — Hạn xử lý và Bạn có thể làm gì — lên ngay dưới
+   tiêu đề, nằm ngang khi đủ chỗ; cột đọc (nội dung, dòng thời gian) theo sau; các thẻ còn
+   lại như Liên hệ người gửi xuống cuối. */
 @media (max-width: 1099px) {
+  .hai-cot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cot-dinh {
+    display: contents;
+  }
+
+  .cot-dinh > * {
+    order: -1;
+  }
+
+  .cot-dinh > :nth-child(n + 3) {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+
+  .hai-cot > .cot-doc {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
   .hai-cot {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .cot-dinh {
-    position: static;
+  /* Chữ giải thích phụ nhường chỗ cho việc chính trên điện thoại (#189). `!important` vì
+     vài phần tử mang `display` viết thẳng trên thẻ */
+  .an-tren-hep {
+    display: none !important;
   }
+
+  /* Ô có nhãn trạng thái cỡ to: một hàng riêng, không đè ô bên cạnh */
+  .o-tron-hang {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Dòng thời gian thu gọn (#189): mặc định chỉ bước hiện tại; <html data-dong-thoi-gian="mo">
+   — do nut-dong-thoi-gian.tsx và đoạn mã đầu trang đặt — thì hiện đủ. */
+.dtg-day,
+.nut-dtg .khi-mo {
+  display: none;
+}
+
+:root[data-dong-thoi-gian="mo"] .dtg-day {
+  display: block;
+}
+
+:root[data-dong-thoi-gian="mo"] .dtg-tom-tat,
+:root[data-dong-thoi-gian="mo"] .nut-dtg .khi-thu {
+  display: none;
+}
+
+:root[data-dong-thoi-gian="mo"] .nut-dtg .khi-mo {
+  display: inline;
+}
+
+.nut-dtg svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s;
+}
+
+:root[data-dong-thoi-gian="mo"] .nut-dtg svg {
+  transform: rotate(180deg);
 }
 
 @media (max-width: 767px) {
@@ -2280,6 +2344,16 @@ html.doi-mau * {
 
   [data-tab-than="dong-thoi-gian"] {
     display: block !important;
+  }
+
+  /* Bản in luôn đủ mọi mốc, dù trên màn hình đang thu gọn (#189) */
+  .dtg-day {
+    display: block !important;
+  }
+
+  .dtg-tom-tat,
+  .nut-dtg {
+    display: none !important;
   }
 
   .hai-cot {
