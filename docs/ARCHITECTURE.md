@@ -920,6 +920,25 @@ trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao di�
   giấu mất tin nhắn. Trên điện thoại, chữ giải thích phụ và số liệu nhật ký (`.an-tren-hep`)
   nhường chỗ để nút thao tác nằm trong màn hình đầu
 
+**Từ #192, "Hồ sơ của tôi" trả lời "hồ sơ đang ở đâu" ngay trên dòng của nó**, thay cho bảng
+giải thích mười trạng thái từng nằm cuối trang. Nhãn trạng thái của mỗi dòng là một nút
+(`components/xem-nhanh-trang-thai.tsx`): rê chuột, Tab tới hay chạm vào thì hiện sơ đồ nhỏ —
+thanh chấm của đường chính suy bằng chính `lib/buoc.ts` ở trên, câu *Bước x/y*, và một dòng
+*Đang dừng ở…* khi hồ sơ ở trạng thái nhánh (vế "chờ bạn trả lời" lấy từ nhóm trình bày trong
+`lib/trang-thai.ts`, không từ tên trạng thái). Ba quy ước đi kèm:
+
+- **Dòng không còn là một thẻ `<a>`**: nút bên trong liên kết là HTML sai, nên dòng dùng liên kết
+  trong suốt phủ kín dòng như bảng hàng đợi (`.lk-dong`), nút nhãn nằm trên liên kết
+- **Lịch sử chỉ tải cho hồ sơ cần nó**: danh sách `/requests` không có lịch sử, nên trang gọi thêm
+  `/requests/{id}` — điểm cuối có sẵn — cho riêng các hồ sơ đang ở trạng thái nhánh chưa kết
+  thúc. Trạng thái kết thúc ngoài đường chính (đã hủy) chỉ có dòng chữ, không tô bước, để hồ sơ
+  cũ dồn lên theo thời gian không kéo theo số lời gọi
+- **Sơ đồ gắn vào `<body>` và đặt `fixed` theo nút**: thẻ danh sách cắt phần tràn, và khung nội
+  dung có hiệu ứng hiện trang mang `transform` — đặt trong dòng thì sơ đồ bị cắt hoặc lệch. Mở
+  bằng rê thì sơ đồ là tooltip: chuột đi xuyên qua nó (nó phủ lên nhãn của dòng dưới), rời nhãn
+  hay cuộn trang là đóng. Bấm/chạm thì ghim: sơ đồ nhận chạm và bám theo nút khi cuộn. Chạm ra
+  ngoài hay Esc thì đóng; mỗi lúc chỉ một sơ đồ mở
+
 **Từ #170, hai hàng đợi dùng chung một bảng** (`components/bang-hang-doi.tsx`). Trang ở máy
 chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng ở trình duyệt chỉ lọc theo ô tìm (không
 phân biệt dấu, không gọi dịch vụ) và thu gọn nhóm. Hàng đợi phòng ban chia nhóm theo mức gấp
