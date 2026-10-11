@@ -15,21 +15,21 @@
 // Ba lần là cố ý. Một người mở trang này giữa lúc bận sẽ lướt qua rất nhanh, và thứ
 // họ bỏ lỡ sẽ nằm đó thêm vài ngày — trong khi đồng hồ SLA của hệ thống thì dừng, nên
 // không ai bị nhắc cả. Đó là kiểu tắc nghẽn không hiện lên trong báo cáo nào.
+//
+// Câu hỏi thứ hai — **hồ sơ này đang ở đâu** — trả lời ngay trên dòng của nó (#192): rê,
+// Tab hay chạm vào nhãn trạng thái thì hiện sơ đồ nhỏ của đường chính. Bảng giải thích
+// mười trạng thái từng nằm cuối trang đã bỏ: không ai đọc nó để biết hồ sơ của mình ở đâu.
 
 import Link from "next/link";
 
 import { DauLoiNhan } from "@/components/dau-loi-nhan";
-import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { XemNhanhTrangThai } from "@/components/xem-nhanh-trang-thai";
 import { goiDichVu } from "@/lib/api";
+import { type Buoc, cacBuoc, duongChinh } from "@/lib/buoc";
 import { khoangCach, ngayGio } from "@/lib/dinh-dang";
-import type { HoSoTomTat, TrangThai } from "@/lib/kieu";
+import type { HoSoChiTiet, HoSoTomTat, SuKien, TrangThai } from "@/lib/kieu";
 import { docDongHo } from "@/lib/sla";
-import {
-  CHU_GIAI_NHOM,
-  bienHoMau,
-  dangChoNguoiDung,
-  trinhBayTrangThai,
-} from "@/lib/trang-thai";
+import { bienHoMau, dangChoNguoiDung, viecCuaBan } from "@/lib/trang-thai";
 
 export const dynamic = "force-dynamic";
 
@@ -104,23 +104,57 @@ function DaiNhac({ so }: { so: number }) {
   );
 }
 
-function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
+type ViTri = { buoc: Buoc[] | null; dong: string | null };
+
+/**
+ * Hồ sơ đang ở đâu trên đường chính, cho sơ đồ xem nhanh (#192).
+ *
+ * Trạng thái nằm trên đường chính thì tự nó là vị trí. Trạng thái nhánh chưa kết thúc —
+ * chờ bổ sung, bị trả lại, leo thang — cần lịch sử để biết hồ sơ dừng ở bước nào, nên
+ * trang tải thêm chi tiết của riêng những hồ sơ đó (`lichSu`). Trạng thái kết thúc ngoài
+ * đường chính (đã hủy) không tô bước nào và không tải gì: hồ sơ cũ dồn nhiều lên theo thời
+ * gian, mà câu trả lời chỉ cần một dòng.
+ */
+function tinhViTri(
+  ho_so: HoSoTomTat,
+  cacTrangThai: TrangThai[],
+  lichSu: SuKien[] | null | undefined,
+): ViTri {
+  const tt = ho_so.state;
+  if (cacTrangThai.length === 0) return { buoc: null, dong: null };
+  if (duongChinh(cacTrangThai).some((t) => t.code === tt.code)) {
+    return { buoc: cacBuoc(cacTrangThai, tt.code, []), dong: null };
+  }
+  const moDau = tt.is_terminal ? "Đã kết thúc ở" : "Đang dừng ở";
+  const dong = `${moDau}: ${tt.label} — ${viecCuaBan(tt.code)}`;
+  if (tt.is_terminal || !lichSu) return { buoc: null, dong };
+  return { buoc: cacBuoc(cacTrangThai, tt.code, lichSu), dong };
+}
+
+function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri: ViTri }) {
   const choBan = dangChoNguoiDung(ho_so.state.code);
   const dongHo = docDongHo(ho_so, "nguoi-gui");
 
   return (
-    <Link
-      href={`/yeu-cau/${ho_so.id}`}
+    <div
+      className="dong-hs"
       style={{
+        position: "relative",
         display: "flex",
         flexWrap: "wrap",
         gap: "10px 14px",
         padding: "14px 16px",
         borderTop: "1px solid var(--line)",
-        color: "inherit",
-        textDecoration: "none",
       }}
     >
+      {/* Liên kết trong suốt phủ kín dòng như bảng hàng đợi (#170): bấm đâu trên dòng cũng
+          mở hồ sơ, trừ nhãn trạng thái — nút đó nằm trên liên kết và mở sơ đồ xem nhanh.
+          Không bọc cả dòng trong <a> như trước: nút bên trong liên kết là HTML sai. */}
+      <Link
+        href={`/yeu-cau/${ho_so.id}`}
+        className="lk-dong"
+        aria-label={`${ho_so.code} · ${ho_so.title}`}
+      />
       <span style={{ flex: "1 1 260px", minWidth: 0, display: "grid", gap: "4px" }}>
         <span
           className="mono"
@@ -177,7 +211,12 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
           justifyItems: "start",
         }}
       >
-        <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} />
+        <XemNhanhTrangThai
+          ma={ho_so.state.code}
+          nhan={ho_so.state.label}
+          buoc={viTri.buoc}
+          dong={viTri.dong}
+        />
         {choBan && (
           <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--f-a-ink)" }}>
             Cần bạn xử lý →
@@ -203,90 +242,7 @@ function Dong({ ho_so, bayGio }: { ho_so: HoSoTomTat; bayGio: Date }) {
           {khoangCach(ho_so.created_at, bayGio)}
         </span>
       </span>
-
-    </Link>
-  );
-}
-
-function ChuGiai({ cacTrangThai }: { cacTrangThai: TrangThai[] }) {
-  return (
-    <section className="the" style={{ marginTop: "26px" }}>
-      <div style={{ padding: "15px 17px", borderBottom: "1px solid var(--line)" }}>
-        <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
-          {cacTrangThai.length} trạng thái của hệ thống
-        </h2>
-        <p
-          style={{
-            margin: "4px 0 0",
-            fontSize: "13px",
-            color: "var(--ink-2)",
-            lineHeight: 1.6,
-            maxWidth: "70ch",
-          }}
-        >
-          Mỗi trạng thái có một dấu hiệu riêng đặt trước nhãn, nên vẫn phân biệt được
-          khi in đen trắng hoặc khi người đọc không phân biệt được màu.
-        </p>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(248px,1fr))",
-          gap: "1px",
-          background: "var(--line)",
-        }}
-      >
-        {CHU_GIAI_NHOM.map((nhom) => {
-          const thuoc = cacTrangThai.filter(
-            (t) => trinhBayTrangThai(t.code).nhom === nhom.nhom,
-          );
-          if (thuoc.length === 0) return null;
-
-          return (
-            <div
-              key={nhom.nhom}
-              style={{
-                padding: "15px 17px",
-                background: "var(--surface)",
-                display: "grid",
-                gap: "11px",
-                alignContent: "start",
-              }}
-            >
-              <span style={{ display: "grid", gap: "4px" }}>
-                <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
-                  {nhom.tieuDe}
-                </span>
-                <span
-                  style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}
-                >
-                  {nhom.moTa}
-                </span>
-              </span>
-              <span style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-                {thuoc.map((t) => (
-                  <NhanTrangThai key={t.code} ma={t.code} nhan={t.label} />
-                ))}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <p
-        style={{
-          margin: 0,
-          padding: "13px 17px",
-          borderTop: "1px solid var(--line)",
-          background: "var(--surface-2)",
-          fontSize: "12.5px",
-          color: "var(--ink-3)",
-        }}
-      >
-        Nhãn nền đậm = hồ sơ đang chờ bạn. Nhãn viền = hệ thống hoặc phòng ban đang giữ.
-      </p>
-    </section>
+    </div>
   );
 }
 
@@ -297,7 +253,18 @@ export default async function HoSoCuaToi() {
   ]);
 
   const cacHoSo = danhSach ?? [];
+  const cacTrangThai = danhMucTrangThai ?? [];
   const bayGio = new Date();
+
+  // Lịch sử chỉ cần cho hồ sơ đang ở nhánh phụ chưa kết thúc — thường không quá vài hồ sơ
+  const duong = new Set(duongChinh(cacTrangThai).map((t) => t.code));
+  const canLichSu = cacHoSo.filter(
+    (h) => cacTrangThai.length > 0 && !duong.has(h.state.code) && !h.state.is_terminal,
+  );
+  const chiTiet = await Promise.all(
+    canLichSu.map((h) => goiDichVu<HoSoChiTiet>(`/requests/${h.id}`)),
+  );
+  const lichSu = new Map(canLichSu.map((h, i) => [h.id, chiTiet[i]?.history]));
   const soChoBan = cacHoSo.filter((h) => dangChoNguoiDung(h.state.code)).length;
 
   return (
@@ -325,7 +292,7 @@ export default async function HoSoCuaToi() {
           </h1>
           <p style={{ margin: "7px 0 0", fontSize: "14.5px", color: "var(--ink-2)" }}>
             {cacHoSo.length > 0
-              ? `${cacHoSo.length} yêu cầu bạn đã gửi. Bấm một dòng để xem toàn bộ đường đi của hồ sơ.`
+              ? `${cacHoSo.length} yêu cầu bạn đã gửi. Rê hoặc chạm vào nhãn trạng thái để xem nhanh hồ sơ đang ở bước nào; bấm vào dòng để mở hồ sơ.`
               : "Nơi theo dõi mọi yêu cầu bạn đã gửi."}
           </p>
         </div>
@@ -357,15 +324,16 @@ export default async function HoSoCuaToi() {
               <span style={{ flex: "0 0 96px" }}>Đã gửi</span>
             </div>
             {cacHoSo.map((h) => (
-              <Dong key={h.id} ho_so={h} bayGio={bayGio} />
+              <Dong
+                key={h.id}
+                ho_so={h}
+                bayGio={bayGio}
+                viTri={tinhViTri(h, cacTrangThai, lichSu.get(h.id))}
+              />
             ))}
           </div>
         )}
       </div>
-
-      {danhMucTrangThai && danhMucTrangThai.length > 0 && (
-        <ChuGiai cacTrangThai={danhMucTrangThai} />
-      )}
     </>
   );
 }
