@@ -892,12 +892,28 @@ chứ không ở cột thao tác: cột đó dính khi cuộn, thêm thẻ là c
 **Từ #169, trang hồ sơ phía nhân viên tách mốc và lời nhắn thành hai thẻ.** Thẻ "Dòng
 thời gian" chỉ còn các mốc đổi hồ sơ; thẻ "Trao đổi" hiện lời nhắn dạng hội thoại
 (`components/khung-chat.tsx`) với ô soạn kiểu chat của cùng khung lời nhắn — cùng dữ liệu,
-cùng điểm cuối, chỉ khác cách trình bày; trang người gửi vẫn trộn như #128. Thanh "hồ sơ
+cùng điểm cuối, chỉ khác cách trình bày; trang người gửi tách theo ở #189. Thanh "hồ sơ
 đang ở đâu" suy từ dữ liệu (`lib/buoc.ts`): đường chính là các trạng thái theo
 `display_order`, tính tới và gồm trạng thái kết thúc đầu tiên; hồ sơ ở trạng thái nhánh thì
 thanh dừng ở bước đường chính cuối cùng nó đã vào. Đổi đường chính là đổi thứ tự trong dữ
 liệu khởi tạo, không sửa mã. Thẻ hạn chỉ phân hai mức trong hạn và quá hạn theo cờ dịch vụ
 trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao diện không tự đặt (#175).
+
+**Từ #189, trang hồ sơ đặt việc của người dùng trước nhật ký** (nhận xét của giảng viên
+11/10/2026). Ba điều, áp cho cả trang nhân viên lẫn trang người gửi:
+
+- **Dòng thời gian mặc định thu gọn**, chỉ còn bước hiện tại — mốc đổi trạng thái mới nhất;
+  nút *Xem toàn bộ N mốc* mở đủ. Cả hai khối dựng sẵn ở máy chủ, CSS ẩn hiện theo thuộc tính
+  `data-dong-thoi-gian` trên `<html>` (`components/nut-dong-thoi-gian.tsx`). Lựa chọn nhớ trong
+  `localStorage` và được đoạn mã đầu trang (`app/layout.tsx`, cùng chỗ đọc chế độ sáng/tối) đặt
+  trước khi trình duyệt vẽ, nên không nháy. Bản in luôn đủ mốc
+- **Màn hẹp dưới 1100 px**: cột phải tan vào lưới (`display: contents`), thẻ *Hạn xử lý* và
+  *Bạn có thể làm gì* lên ngay dưới tiêu đề, cột đọc (`.cot-doc`) theo sau — chỉ đổi thứ tự
+  bằng CSS
+- **Trang người gửi**: khối thao tác lên ngay dưới phần đầu hồ sơ; lời nhắn tách khỏi dòng thời
+  gian thành khung trò chuyện riêng như thẻ Trao đổi phía nhân viên, để thu gọn nhật ký không
+  giấu mất tin nhắn. Trên điện thoại, chữ giải thích phụ và số liệu nhật ký (`.an-tren-hep`)
+  nhường chỗ để nút thao tác nằm trong màn hình đầu
 
 **Từ #170, hai hàng đợi dùng chung một bảng** (`components/bang-hang-doi.tsx`). Trang ở máy
 chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng ở trình duyệt chỉ lọc theo ô tìm (không
