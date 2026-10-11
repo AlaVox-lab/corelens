@@ -1332,6 +1332,146 @@ textarea.o-nhap {
   border-radius: 0;
 }
 
+/* --- Hồ sơ của tôi: xem nhanh vị trí khi rê vào nhãn (#192) ---------------------------
+ * Dòng danh sách dùng cùng liên kết phủ dòng như bảng hàng đợi; nhãn trạng thái là nút
+ * nằm trên liên kết. Sơ đồ gắn thẳng vào <body>, đặt `fixed` theo nút — xem chú thích đầu
+ * components/xem-nhanh-trang-thai.tsx. Chỉ có thanh chấm của đường chính, câu "Bước x/y"
+ * và dòng nhánh — không giờ, không tên người. */
+.dong-hs {
+  transition: background 0.15s;
+}
+
+.dong-hs:hover {
+  background: var(--hover);
+}
+
+.xn {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.xn-nut {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.xn-nut:hover .nhan-tt,
+.xn-nut[aria-expanded="true"] .nhan-tt {
+  box-shadow: 0 0 0 3px var(--ho-bg), 0 0 0 4px var(--ho-line);
+}
+
+.xn-hop {
+  position: fixed;
+  z-index: 30;
+  width: min(300px, calc(100vw - 16px));
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow), 0 8px 24px rgba(15, 23, 42, 0.12);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  animation: vao 0.15s var(--nhanh) backwards;
+}
+
+/* Mở bằng rê là tooltip: chuột đi xuyên qua, rê sang nhãn dòng dưới không vướng sơ đồ này */
+.xn-hop:not([data-ghim]) {
+  pointer-events: none;
+}
+
+.xn-hop:focus {
+  outline: none;
+}
+
+.xn-buoc {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 2px 0;
+}
+
+.xn-buoc li {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.xn-buoc li::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  background: var(--surface);
+}
+
+.xn-buoc li::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  margin: 0 3px;
+  background: var(--line);
+  border-radius: 1px;
+}
+
+.xn-buoc li:last-child {
+  flex: none;
+}
+
+.xn-buoc li:last-child::after {
+  display: none;
+}
+
+.xn-buoc li[data-xong]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.xn-buoc li[data-xong]::after {
+  background: var(--accent);
+}
+
+.xn-buoc li[data-dang]::before {
+  width: 12px;
+  height: 12px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.xn-chu,
+.xn-dong {
+  margin: 0;
+}
+
+.xn-chu strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.xn-dong {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.xn-dong:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
 /* Nền rê là --hover, không phải --surface-2: dòng tiêu đề nhóm đã dùng --surface-2,
  * rê vào dòng sát nhóm thì hai nền dính làm một */
 .bang tr.dong:hover td {

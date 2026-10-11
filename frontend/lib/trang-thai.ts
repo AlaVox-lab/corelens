@@ -106,7 +106,22 @@ export function bienHoMau(ho: string): React.CSSProperties {
   } as React.CSSProperties;
 }
 
-/** Chú giải bốn nhóm, dùng cho bảng chú thích ở màn “Hồ sơ của tôi”. */
+/**
+ * Một vế ngắn nói người gửi cần làm gì khi hồ sơ đứng ở trạng thái này — dòng nhánh trong
+ * sơ đồ xem nhanh của “Hồ sơ của tôi” (#192), ví dụ "Đang dừng ở: Chờ bổ sung thông tin —
+ * chờ bạn trả lời". Không nêu tên vai trò đang giữ hồ sơ, cùng lý do với câu nhóm
+ * "Có can thiệp" ở dưới (#151).
+ */
+export function viecCuaBan(ma: string): string {
+  const kieu = trinhBayTrangThai(ma);
+  if (kieu.khiDung === "cho-tra-loi") return "chờ bạn trả lời";
+  if (kieu.khiDung === "cho-xac-nhan") return "chờ bạn xác nhận kết quả";
+  if (kieu.nhom === "cho-ban") return "chờ bạn";
+  if (kieu.nhom === "ket-thuc") return "không còn thao tác nào";
+  return "hồ sơ vẫn đang được xử lý, bạn chưa cần làm gì";
+}
+
+/** Chú giải bốn nhóm, giải thích trạng thái hiện tại trên trang hồ sơ của người gửi. */
 export const CHU_GIAI_NHOM: {
   nhom: NhomTrangThai;
   tieuDe: string;
