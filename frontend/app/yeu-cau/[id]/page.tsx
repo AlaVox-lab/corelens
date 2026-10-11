@@ -31,6 +31,8 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
+import { CuonTinMoi } from "@/components/cuon-tin-moi";
+import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { NutThanhDau } from "@/components/khung-ung-dung";
 import { MoiDangNhap } from "@/components/khung-lam-viec";
@@ -75,18 +77,25 @@ function O({
   chinh,
   phu,
   phuCanhBao = false,
+  lop,
+  lopPhu,
 }: {
   tua: string;
   chinh: React.ReactNode;
   phu?: string;
   phuCanhBao?: boolean;
+  /** Lớp CSS cho cách xếp trên điện thoại (#189). */
+  lop?: string;
+  /** Lớp CSS cho dòng phụ — ẩn được trên điện thoại (#189). */
+  lopPhu?: string;
 }) {
   return (
-    <div style={{ display: "grid", gap: "7px", alignContent: "start" }}>
+    <div className={lop} style={{ display: "grid", gap: "7px", alignContent: "start" }}>
       <span className="tua-muc">{tua}</span>
       <span style={{ fontSize: "15px", fontWeight: 600 }}>{chinh}</span>
       {phu && (
         <span
+          className={lopPhu}
           style={{
             fontSize: "12.5px",
             color: phuCanhBao ? "var(--f-r-ink)" : "var(--ink-3)",
@@ -133,7 +142,8 @@ export default async function ChiTietHoSo({
           </Link>
         </NutThanhDau>
       )}
-      <Link href="/yeu-cau" className="nut nut-nho khong-in">
+      {/* Điện thoại đã có đường dẫn ở thanh đầu — nút này nhường chỗ cho thao tác (#189) */}
+      <Link href="/yeu-cau" className="nut nut-nho khong-in an-tren-hep">
         ← Hồ sơ của tôi
       </Link>
 
@@ -186,11 +196,14 @@ export default async function ChiTietHoSo({
             style={{
               marginTop: "18px",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
+              // 140px: điện thoại xếp 2×2 thay vì một cột, nút thao tác lên màn hình đầu (#189)
+              gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
               gap: "16px",
             }}
           >
             <O
+              lop="o-tron-hang"
+              lopPhu="an-tren-hep"
               tua="Trạng thái hiện tại"
               chinh={
                 <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} to />
@@ -217,7 +230,9 @@ export default async function ChiTietHoSo({
               phu={dongHo.cau}
               phuCanhBao={dongHo.canhBao}
             />
+            {/* Số liệu nhật ký — dòng thời gian bên dưới vẫn đủ; điện thoại nhường chỗ (#189) */}
             <O
+              lop="an-tren-hep"
               tua="Số lần đổi trạng thái"
               chinh={`${soLanDoiTrangThai(ho_so.history)}`}
               phu={
@@ -270,59 +285,15 @@ export default async function ChiTietHoSo({
         )}
       </div>
 
-      {ho_so.description && (
-        <div className="the" style={{ marginTop: "24px", padding: "18px 22px" }}>
-          <h2 className="tua-muc" style={{ margin: 0 }}>
-            Nội dung yêu cầu
-          </h2>
-          <p
-            style={{
-              margin: "9px 0 0",
-              fontSize: "14px",
-              lineHeight: 1.7,
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {ho_so.description}
-          </p>
-        </div>
-      )}
-
-      <DongThoiGian
-        cacSuKien={ho_so.history}
-        cacLoiNhan={ho_so.messages}
-        bayGio={bayGio}
-        khiTrong="Hồ sơ vừa được gửi và chưa đổi trạng thái lần nào. Mốc đầu tiên sẽ xuất hiện ở đây ngay khi điều phối viên tiếp nhận."
-      />
-
-      {/* --- Lời nhắn (#128) — ngay dưới dòng thời gian, vì lời nhắn nằm trong đó --- */}
+      {/* --- Thao tác — ngay dưới phần đầu (#189): người gửi mở hồ sơ là thấy việc của
+          mình, không phải cuộn qua nhật ký --------------------------------------- */}
       <div className="the khong-in" style={{ marginTop: "16px" }}>
-        <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
-          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Lời nhắn</h2>
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
-            Nhắn cho điều phối viên hay phòng ban đang giữ hồ sơ, thay cho gọi điện: câu hỏi và
-            câu trả lời đều nằm lại trên hồ sơ. Lời nhắn không đổi trạng thái và không dừng
-            đồng hồ hạn xử lý.
-          </p>
-        </div>
-        <div style={{ padding: "17px 20px" }}>
-          <KhungLoiNhan
-            key={ho_so.messages.length}
-            maHoSo={ho_so.id}
-            cacLoai={ho_so.message_kinds}
-            daKetThuc={ho_so.state.is_terminal}
-            hanhDong={guiLoiNhan}
-          />
-        </div>
-      </div>
-
-      {/* --- Thao tác ------------------------------------------------------- */}
-      <div className="the khong-in" style={{ marginTop: "24px" }}>
         <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
           <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
             Bạn có thể làm gì lúc này
           </h2>
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
+          {/* Lời giải thích nhường chỗ cho nút trên điện thoại (#189) */}
+          <p className="an-tren-hep" style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
             Danh sách dưới đây do chính bộ quy tắc quy trình sinh ra, dựa trên trạng
             thái hồ sơ và vai trò của bạn. Thao tác nào không có ở đây thì không tồn tại
             đường đi cho nó.
@@ -344,6 +315,60 @@ export default async function ChiTietHoSo({
           />
         </div>
       </div>
+      {ho_so.description && (
+        <div className="the" style={{ marginTop: "24px", padding: "18px 22px" }}>
+          <h2 className="tua-muc" style={{ margin: 0 }}>
+            Nội dung yêu cầu
+          </h2>
+          <p
+            style={{
+              margin: "9px 0 0",
+              fontSize: "14px",
+              lineHeight: 1.7,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {ho_so.description}
+          </p>
+        </div>
+      )}
+
+      {/* --- Lời nhắn (#128) — khung trò chuyện riêng, như thẻ Trao đổi phía nhân viên
+          (#169): dòng thời gian thu gọn (#189) không được giấu mất tin nhắn ---------- */}
+      <div id="khung-loi-nhan" className="the khong-in" style={{ marginTop: "16px" }}>
+        <CuonTinMoi chon="#khung-loi-nhan" soTin={ho_so.messages.length} />
+        <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
+          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Lời nhắn</h2>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
+            Nhắn cho điều phối viên hay phòng ban đang giữ hồ sơ, thay cho gọi điện: câu hỏi và
+            câu trả lời đều nằm lại trên hồ sơ. Lời nhắn không đổi trạng thái và không dừng
+            đồng hồ hạn xử lý.
+          </p>
+        </div>
+        <KhungChat
+          cacLoiNhan={ho_so.messages}
+          bayGio={bayGio}
+          phiaMinh="nguoi-gui"
+          soan={
+            <div style={{ padding: "4px 20px 17px" }}>
+              <KhungLoiNhan
+                key={ho_so.messages.length}
+                maHoSo={ho_so.id}
+                cacLoai={ho_so.message_kinds}
+                daKetThuc={ho_so.state.is_terminal}
+                hanhDong={guiLoiNhan}
+              />
+            </div>
+          }
+        />
+      </div>
+
+      <DongThoiGian
+        cacSuKien={ho_so.history}
+        bayGio={bayGio}
+        khiTrong="Hồ sơ vừa được gửi và chưa đổi trạng thái lần nào. Mốc đầu tiên sẽ xuất hiện ở đây ngay khi điều phối viên tiếp nhận."
+      />
+
     </>
   );
 }

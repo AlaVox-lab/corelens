@@ -49,7 +49,10 @@ export const metadata: Metadata = {
 // Đọc lựa chọn sáng/tối đã lưu và đặt lên <html> TRƯỚC KHI trình duyệt vẽ trang (#158).
 // Đặt muộn hơn — trong một component React — thì người chọn tối thấy trang trắng nháy
 // lên rồi mới tối lại. Khóa lưu trùng với `KHOA_CHE_DO` trong khung-ung-dung.tsx.
-const DOC_CHE_DO = `try{var t=localStorage.getItem("dxlab-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+//
+// Cùng lý do, đọc luôn lựa chọn mở dòng thời gian (#189) — khóa trùng `KHOA_DONG_THOI_GIAN`
+// trong nut-dong-thoi-gian.tsx. Không có thì dòng thời gian thu gọn, chỉ hiện bước hiện tại.
+const DOC_CHE_DO = `try{var d=document.documentElement,t=localStorage.getItem("dxlab-theme");if(t==="dark"||t==="light")d.dataset.theme=t;if(localStorage.getItem("dxlab-dong-thoi-gian")==="mo")d.dataset.dongThoiGian="mo"}catch(e){}`;
 
 export default function RootLayout({
   children,
