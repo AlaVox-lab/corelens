@@ -40,7 +40,8 @@ Mục tiêu: kho mã có bộ quy chuẩn đầy đủ, cả nhóm nắm đượ
 
 ## Giai đoạn 1 — Khảo sát và thiết kế
 
-**Trạng thái**: Hoàn thành, trừ ba khảo sát và hai việc lẻ ghi dưới · **Phiên bản**: `v0.2.0`
+**Trạng thái**: Hoàn thành — cả ba khảo sát cuối đã có bản ghi *Đề xuất*, chờ giảng viên duyệt;
+còn hai việc lẻ ghi dưới · **Phiên bản**: `v0.2.0`
 
 Mục tiêu: chốt toàn bộ nền tảng Open-Core và thiết kế nghiệp vụ, đủ để bắt đầu viết
 mã mà không phải quay lại bàn lại.
@@ -63,7 +64,9 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 - [x] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
       máy trạng thái — chọn tự viết, ADR-0004
 - [x] `[D]` Nền tảng kinh doanh thông minh nguồn mở — Apache Superset, ADR-0003
-- [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — #47
+- [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — khảo sát xong
+      (#47), ADR-0008 đề xuất pgvector và llama.cpp, không dùng khung LLM, chờ giảng viên
+      duyệt
 - [ ] `[I]` Thư viện khai phá quy trình — khảo sát xong (#48), ADR-0007 đề xuất PM4Py
       trong dịch vụ tách riêng, chờ giảng viên duyệt
 
@@ -86,8 +89,10 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 ## Giai đoạn 2 — Không gian H và P
 
-**Trạng thái**: Đang chạy — luồng chính đã thông cho cả bốn vai trò · **Phiên bản**:
-`v0.3.0` có cổng người gửi; `v0.4.0` khép luồng thủ công với hai buồng lái
+**Trạng thái**: Đang chạy — luồng thủ công thông đầu-cuối, đang hoàn thiện theo các luật giảng
+viên chốt ngày 08/10 · **Phiên bản**: `v0.3.0` có cổng người gửi; `v0.4.0` khép luồng thủ công
+với hai buồng lái; **`v0.5.0` khép hẳn giai đoạn** — hộp thư trao đổi, giao diện mới và các luật
+cho hồ sơ nằm im, hạn từng hồ sơ, mở lại
 
 Mục tiêu: luồng nghiệp vụ chạy được **hoàn toàn thủ công**, không có AI. Đây là nền
 tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
@@ -98,7 +103,11 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Phân quyền theo vai trò — năm vai trò từ buổi trao đổi với giảng viên ngày 10/09
 - [x] Cổng tự phục vụ: gửi yêu cầu, tra cứu trạng thái — #44
 - [x] Buồng lái điều phối viên và buồng lái phòng ban — #45
-- [ ] Thông tin liên hệ của người gửi cho nhân viên xử lý hồ sơ — #131
+- [x] Thông tin liên hệ của người gửi cho nhân viên xử lý hồ sơ — #131
+- [x] Hộp thư chung kiểu Messenger, mỗi cuộc trò chuyện gắn một hồ sơ — #155
+- [x] Giao diện mới: khung thanh bên, trang hồ sơ hai cột, hai hàng đợi — #158, #169, #170
+- [x] Trang hồ sơ đặt việc và hạn trước nhật ký, theo nhận xét của giảng viên — #189
+- [ ] *Hồ sơ của tôi* bỏ bảng chú giải trạng thái — #192
 - [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006, rồi tích hợp
 
 ### 2.2. Không gian P — Quy trình
@@ -112,20 +121,27 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
       quyết định
 - [x] Thao tác không đổi trạng thái: nhắn, hỏi tiến độ, nhận việc, sửa nội dung — #81,
       thiết kế ở ADR-0005, làm ở #127 và #128
+- [x] Trò chuyện nội bộ chỉ nhân viên thấy — #156
+- [x] Đếm quay lui theo cạnh làm lại khai trong dữ liệu; cấm tự điều phối hồ sơ mình gửi —
+      #153, #154
+- [ ] Hồ sơ nằm im ở ba trạng thái chờ: cảnh báo trước, rồi tự trả về hay tự đóng — #142,
+      #143, #144, giảng viên chốt hướng ngày 08/10
+- [ ] Hạn theo mức ưu tiên và điều phối viên chỉnh hạn từng hồ sơ — #101, giảng viên chốt
+      ngày 08/10
+- [ ] Mở lại có giới hạn và cấp hạn mới — #102, thay quyết định ngày 23/09
 - [ ] Đính kèm tệp — #80
-- [ ] Điều phối viên chỉnh hạn từng hồ sơ — #101, chờ giảng viên
 
 **Tiêu chí hoàn thành giai đoạn**: một yêu cầu đi được trọn vòng từ lúc gửi tới lúc
 hoàn tất, qua đủ các nhánh, hoàn toàn bằng thao tác của người.
 
 Vòng chính đã đạt ngày 23/09: navigator chạy tay trọn một hồ sơ qua bốn vai trò trên giao
-diện thật. Còn lại là các nhánh phụ ở trên và một lượt kiểm thử tổng thể.
+diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày 02/10. Còn lại là các luật ở trên.
 
 ---
 
 ## Giai đoạn 3 — Không gian D
 
-**Phiên bản dự kiến**: `v0.5.0`
+**Phiên bản dự kiến**: `v0.6.0`
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.
@@ -144,7 +160,7 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.6.0`
+**Phiên bản dự kiến**: `v0.7.0`
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. Ba tác vụ theo thứ tự
 tăng dần độ khó.
