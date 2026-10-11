@@ -26,12 +26,14 @@ xác nhận nhân sự, đề xuất mua vật tư).
 nhật ký sự kiện có cấu trúc; từ đó hệ thống tự khai phá lại quy trình thực tế đang
 chạy và đối chiếu với quy trình đã thiết kế, chỉ ra điểm nghẽn và nhánh lệch chuẩn.
 
-**Giai đoạn hiện tại**: `v0.2.0` — Giai đoạn 2, không gian `H` và `P`.
+**Giai đoạn hiện tại**: Giai đoạn 2, không gian `H` và `P` — luồng thủ công chạy đầu-cuối.
+Số phiên bản xem `git tag` hoặc trang Releases.
 
 Đã cài đặt: hạ tầng sáu dịch vụ dựng bằng một lệnh, lược đồ cấu hình đầy đủ của
-engine máy trạng thái, **điểm chuyển trạng thái duy nhất** và **nhật ký sự kiện**.
-Chưa cài đặt: cổng gửi yêu cầu, buồng lái vận hành, toàn bộ không gian `I`. Những
-mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
+engine máy trạng thái, **điểm chuyển trạng thái duy nhất**, **nhật ký sự kiện**, lời nhắn
+ngoài máy trạng thái, và cổng Next.js gồm cổng người gửi, buồng lái điều phối, buồng lái
+phòng ban, hộp thư chung. Chưa cài đặt: toàn bộ không gian `D` ngoài nhật ký sự kiện, và
+không gian `I`. Những mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
 
 **Ràng buộc quan trọng**: đề thi chính thức chỉ được công bố tháng 11/2026. Mọi thứ
 xây dựng trước thời điểm đó là **bộ khung tái sử dụng**, không phải sản phẩm cuối.
@@ -217,17 +219,18 @@ khảo sát và dựng thử bốn ứng viên — xem
 nơi tạo ra giá trị của đề tài, và không nền tảng nào sinh sẵn nhật ký đúng lược đồ mà
 `I` cần, nên nhóm phải tự viết lớp đó dù có lắp engine hay không.
 
-### 3.2. Chờ khảo sát
+### 3.2. Đã khảo sát, chờ duyệt
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Ba nhóm thành phần sau cần khảo sát và ghi kết quả vào
-`docs/adr/`:
+yêu cầu Open-Core. Ba nhóm thành phần sau đã khảo sát xong, mỗi nhóm có một bản ghi ở trạng
+thái *Đề xuất*. **Chưa phải quyết định**: chưa có thành phần nào trong số này được tích hợp,
+và mục 3.1 chỉ nhận chúng khi bản ghi chuyển sang *Đã chấp nhận*.
 
-| Không gian | Thành phần | Ghi chú khảo sát |
-|---|---|---|
-| `H` | Hệ thống quản trị tri thức | Vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
-| `I` | Cơ sở dữ liệu véc-tơ và khung LLM | Ưu tiên phần mở rộng véc-tơ ngay trên PostgreSQL để giảm số dịch vụ |
-| `I` | Thư viện khai phá quy trình | Kiểm tra kỹ giấy phép, mảng này có thư viện dùng copyleft mạnh |
+| Không gian | Thành phần | Bản ghi | Đề xuất |
+|---|---|---|---|
+| `H` | Hệ thống quản trị tri thức | [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) | Wiki.js — vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
+| `I` | Thư viện khai phá quy trình | [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) | PM4Py trong một dịch vụ tách riêng |
+| `I` | Cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ | [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) | pgvector ngay trên PostgreSQL, llama.cpp server với hai mô hình Apache-2.0, không dùng khung LLM |
 
 ### 3.3. Quy tắc kiểm tra giấy phép
 
@@ -277,9 +280,11 @@ dx-os-lab/
 ├── frontend/                    # Next.js — cổng người dùng
 │   ├── app/
 │   │   ├── api/auth/            # [H] ba chặng của luồng đăng nhập OIDC
+│   │   ├── api/hop-thu/         # [H] số lời nhắn chưa đọc cho thanh bên tự hỏi
 │   │   ├── yeu-cau/             # [H] cổng gửi yêu cầu — ba màn hình của #44
 │   │   ├── dieu-phoi/           # [H] buồng lái điều phối viên — #82
 │   │   ├── phong-ban/           # [H] buồng lái phòng ban — #83
+│   │   ├── hop-thu/             # [H] hộp thư chung, kể cả trò chuyện nội bộ — #155, #156
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
@@ -292,7 +297,7 @@ dx-os-lab/
 │   ├── ROADMAP.md               # lộ trình tới tháng 12
 │   ├── process-flow.md          # sơ đồ trạng thái, nguồn của dữ liệu khởi tạo
 │   ├── dependencies.md          # danh mục phụ thuộc và giấy phép
-│   └── *-survey.md              # bốn tài liệu khảo sát Open-Core
+│   └── *-survey.md              # bảy tài liệu khảo sát Open-Core
 ├── infra/                       # dựng cả cụm bằng một lệnh
 │   ├── docker-compose.yml
 │   ├── .env.example
