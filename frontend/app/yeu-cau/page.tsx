@@ -28,7 +28,7 @@ import { goiDichVu } from "@/lib/api";
 import { type Buoc, cacBuoc, duongChinh } from "@/lib/buoc";
 import { khoangCach, ngayGio } from "@/lib/dinh-dang";
 import type { HoSoChiTiet, HoSoTomTat, SuKien, TrangThai } from "@/lib/kieu";
-import { docDongHo } from "@/lib/sla";
+import { docDongHo, docTuDong } from "@/lib/sla";
 import { bienHoMau, dangChoNguoiDung, viecCuaBan } from "@/lib/trang-thai";
 
 export const dynamic = "force-dynamic";
@@ -96,8 +96,7 @@ function DaiNhac({ so }: { so: number }) {
           {so} hồ sơ đang chờ bạn
         </span>
         <span style={{ fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.55 }}>
-          Hồ sơ dừng lại cho tới khi bạn trả lời hoặc xác nhận. Không ai xử lý tiếp
-          thay bạn được.
+          Hồ sơ dừng lại cho tới khi bạn trả lời hoặc xác nhận.
         </span>
       </span>
     </div>
@@ -133,7 +132,9 @@ function tinhViTri(
 
 function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri: ViTri }) {
   const choBan = dangChoNguoiDung(ho_so.state.code);
-  const dongHo = docDongHo(ho_so, "nguoi-gui");
+  // Ngày làm việc cuối trước khi hồ sơ tự đóng (#144): câu đó thay câu đồng hồ, tô cam
+  const tuDong = docTuDong(ho_so);
+  const dongHo = tuDong?.canhBao ? tuDong : docDongHo(ho_so, "nguoi-gui");
 
   return (
     <div
@@ -192,7 +193,13 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
           style={{
             fontSize: "12.5px",
             lineHeight: 1.5,
-            color: dongHo.canhBao ? "var(--f-r-ink)" : "var(--ink-3)",
+            color:
+              dongHo === tuDong
+                ? "var(--f-a-ink)"
+                : dongHo.canhBao
+                  ? "var(--f-r-ink)"
+                  : "var(--ink-3)",
+            fontWeight: dongHo === tuDong ? 600 : undefined,
           }}
         >
           {dongHo.cau}

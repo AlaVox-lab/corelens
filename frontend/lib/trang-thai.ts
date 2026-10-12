@@ -136,7 +136,9 @@ export const CHU_GIAI_NHOM: {
   {
     nhom: "cho-ban",
     tieuDe: "Đang chờ bạn",
-    moTa: "Hồ sơ dừng lại cho tới khi bạn trả lời hoặc xác nhận. Không ai đi tiếp thay bạn được.",
+    // Không hứa "không ai đi tiếp thay bạn": từ #144 hồ sơ chờ quá hạn thì hệ thống tự đi,
+    // và lúc tự đi hiện riêng ngay dưới, lấy từ dữ liệu
+    moTa: "Hồ sơ dừng lại cho tới khi bạn trả lời hoặc xác nhận.",
   },
   {
     nhom: "can-thiep",

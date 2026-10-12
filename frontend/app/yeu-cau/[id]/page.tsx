@@ -39,7 +39,7 @@ import { MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
 import type { HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
-import { daTroiQua, docDongHo } from "@/lib/sla";
+import { daTroiQua, docDongHo, docTuDong } from "@/lib/sla";
 import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
@@ -126,6 +126,8 @@ export default async function ChiTietHoSo({
   const danhMuc = await danhMucCan(ho_so);
   const bayGio = new Date();
   const dongHo = docDongHo(ho_so, "nguoi-gui");
+  // Hồ sơ đang chờ người gửi mà có hạn chờ — Hoàn tất tự đóng sau 3 ngày làm việc (#144)
+  const tuDong = docTuDong(ho_so);
   const kieu = trinhBayTrangThai(ho_so.state.code);
   const nhomChuGiai = CHU_GIAI_NHOM.find((n) => n.nhom === kieu.nhom);
   const quayLui = danhDauQuayLui(ho_so.history);
@@ -298,6 +300,18 @@ export default async function ChiTietHoSo({
             thái hồ sơ và vai trò của bạn. Thao tác nào không có ở đây thì không tồn tại
             đường đi cho nó.
           </p>
+          {tuDong && (
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: "13px",
+                fontWeight: tuDong.canhBao ? 600 : undefined,
+                color: tuDong.canhBao ? "var(--f-a-ink)" : "var(--ink-2)",
+              }}
+            >
+              {tuDong.cau}
+            </p>
+          )}
         </div>
         <div style={{ padding: "17px 20px" }}>
           {/* Khóa có `updated_at`: sửa nội dung giữ nguyên trạng thái (#127), nên chỉ mã

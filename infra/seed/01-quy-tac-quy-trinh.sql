@@ -160,7 +160,11 @@ VALUES
 
     (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
-    (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24);
+    (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24),
+    -- Người gửi không xác nhận thì hồ sơ Hoàn tất tự đóng (#144, giảng viên chốt 08/10):
+    -- Hoàn tất đã là xử lý xong nghiệp vụ, Đã đóng mới hết chu kỳ hồ sơ. Cùng cặp trạng thái
+    -- với Xác nhận đạt của người gửi — hạn chờ khai ở ngay dưới.
+    (1, 'completed',           'closed',                 'auto-close',          'Tự đóng hồ sơ',                       TRUE,  FALSE, NULL,                    27);
 
 -- Hạn chờ của cạnh tự đi (#142), tính bằng giờ làm việc (#199): hết hạn thì bộ quét đi
 -- cạnh thay người; còn `warn_before_hours` thì màn hình báo trước. Tự trả về không phải cạnh
@@ -168,6 +172,12 @@ VALUES
 UPDATE transitions
    SET auto_after_hours = 24, warn_before_hours = 4
  WHERE rule_set_id = 1 AND activity_code = 'auto-return';
+
+-- "3 ngày làm việc" của giảng viên = 24 giờ làm việc với lịch mẫu 8 giờ một ngày; báo
+-- trước một ngày làm việc (navigator chốt 12/10, #144). Đổi lịch thì xem lại con số này.
+UPDATE transitions
+   SET auto_after_hours = 24, warn_before_hours = 8
+ WHERE rule_set_id = 1 AND activity_code = 'auto-close';
 
 -- Cạnh làm lại (#153): hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm "quay lui" theo
 -- đúng các cạnh này — hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính.
