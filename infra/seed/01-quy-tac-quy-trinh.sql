@@ -134,6 +134,11 @@ VALUES
     (1, 'awaiting-acceptance', 'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 10),
     (1, 'awaiting-acceptance', 'rejected-by-department', 'reject',              'Từ chối vì sai chuyên môn',           FALSE, TRUE,  NULL,                    11),
     (1, 'awaiting-acceptance', 'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    12),
+    -- Hồ sơ nằm im ở Chờ phòng ban xác duyệt (#142, giảng viên chốt 08/10): điều phối viên
+    -- rút về trước hạn, hay hệ thống tự trả về khi hết hạn chờ. Hai cạnh cùng cặp trạng
+    -- thái, một của người, một của hệ thống — hạn chờ khai ở ngay dưới.
+    (1, 'awaiting-acceptance', 'classified',             'withdraw',            'Rút hồ sơ về điều phối',              FALSE, TRUE,  'Lý do rút hồ sơ',      25),
+    (1, 'awaiting-acceptance', 'classified',             'auto-return',         'Tự trả về điều phối',                 TRUE,  FALSE, NULL,                    26),
 
     (1, 'rejected-by-department', 'classified',          'reroute',             'Định tuyến lại phòng khác',           FALSE, FALSE, NULL,                    13),
 
@@ -157,6 +162,13 @@ VALUES
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24);
 
+-- Hạn chờ của cạnh tự đi (#142), tính bằng giờ làm việc (#199): hết hạn thì bộ quét đi
+-- cạnh thay người; còn `warn_before_hours` thì màn hình báo trước. Tự trả về không phải cạnh
+-- làm lại — phòng ban không từ chối nội dung, chỉ để quá hạn (navigator chốt 12/10).
+UPDATE transitions
+   SET auto_after_hours = 24, warn_before_hours = 4
+ WHERE rule_set_id = 1 AND activity_code = 'auto-return';
+
 -- Cạnh làm lại (#153): hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm "quay lui" theo
 -- đúng các cạnh này — hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính.
 -- Doanh nghiệp đổi cạnh nào là làm lại thì sửa danh sách này, không sửa mã.
@@ -176,7 +188,8 @@ UPDATE transitions t
 -- Ma trận phân quyền
 -- ---------------------------------------------------------------------------
 -- Cạnh leo thang không có mặt ở đây vì nó đã đánh dấu is_system — hệ thống tự
--- đi, không vai trò người nào đi được. Vai trò administrator cũng không có mặt:
+-- đi, không vai trò người nào đi được. Một cặp trạng thái có thể có cả cạnh người lẫn
+-- cạnh hệ thống (#142), nên phép nối dưới đây chỉ nhận cạnh của người. Vai trò administrator cũng không có mặt:
 -- quản trị viên sửa cấu hình chứ không đẩy hồ sơ.
 
 INSERT INTO transition_roles (transition_id, role_code)
@@ -196,6 +209,7 @@ FROM (VALUES
     ('awaiting-acceptance',    'awaiting-info',          'approver'),
     ('awaiting-acceptance',    'rejected-by-department', 'approver'),
     ('awaiting-acceptance',    'cancelled',              'requester'),
+    ('awaiting-acceptance',    'classified',             'classifier'),
 
     ('rejected-by-department', 'classified',             'classifier'),
 
@@ -216,7 +230,8 @@ FROM (VALUES
 JOIN transitions t
   ON t.rule_set_id = 1
  AND t.from_state  = v.from_state
- AND t.to_state    = v.to_state;
+ AND t.to_state    = v.to_state
+ AND NOT t.is_system;
 
 
 -- ---------------------------------------------------------------------------
@@ -316,6 +331,7 @@ FROM (VALUES
     ('classified',          'awaiting-acceptance',    'actor-not-requester'),
     ('classified',          'closed',                 'actor-not-requester'),
     ('rejected-by-department', 'classified',          'actor-not-requester'),
+    ('awaiting-acceptance', 'classified',             'actor-not-requester'),
 
     -- Phòng ban chỉ thao tác được trên hồ sơ của phòng mình
     ('awaiting-acceptance', 'in-progress',            'actor-in-case-department'),
@@ -352,7 +368,8 @@ FROM (VALUES
 JOIN transitions t
   ON t.rule_set_id = 1
  AND t.from_state  = v.from_state
- AND t.to_state    = v.to_state;
+ AND t.to_state    = v.to_state
+ AND NOT t.is_system;
 
 
 -- ---------------------------------------------------------------------------

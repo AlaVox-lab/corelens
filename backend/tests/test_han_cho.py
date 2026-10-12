@@ -1,0 +1,255 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Kiểm thử hạn chờ ở "Chờ phòng ban xác duyệt" (#142).
+#
+# Giảng viên chốt ngày 08/10: phòng ban không xác duyệt trong 24 giờ làm việc thì hồ sơ tự
+# trả về điều phối viên, báo trước 4 giờ; điều phối viên rút được trước hạn, có lý do; việc
+# trả về ghi nhật ký. Navigator chốt 12/10: hai cạnh cùng cặp trạng thái (một người, một hệ
+# thống), tự trả về không tính quay lui.
+#
+# Nhật ký sự kiện chỉ ghi thêm nên không lùi được lúc hồ sơ vào trạng thái; bài kiểm thử
+# truyền thời điểm xét ở tương lai cho bộ quét. Lịch cả ngày cả tuần (fixture `lich_ca_ngay`)
+# để "24 giờ làm việc" trùng 24 giờ lịch ở mọi lúc chạy — lịch thật kiểm ở #199.
+
+from __future__ import annotations
+
+import datetime as dt
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from app.auth.dependencies import current_actor
+from app.db import get_session
+from app.main import app
+from app.models.workflow_config import Priority, RequestType, Transition
+from app.rules.han_cho import tu_dong
+from app.rules.sla import bay_gio
+from app.workflow.context import Actor
+from app.workflow.coordination import trang_thai_hang_doi_dieu_phoi
+from app.workflow.engine import (
+    allowed_transitions,
+    case_history,
+    create_case,
+    perform_transition,
+)
+from app.workflow.errors import GuardViolation, NoteRequired, RoleNotPermitted
+from app.workflow.escalation import TAC_NHAN_HAN_CHO, quet_het_han_cho, quet_va_leo_thang
+
+pytestmark = pytest.mark.usefixtures("lich_ca_ngay")
+
+NGUOI_GUI = "nguoi-gui-142"
+DIEU_PHOI = Actor(id="dp-142", roles=frozenset({"classifier"}))
+# Người dựng cảnh: một điều phối viên khác, để dựng được cả hồ sơ do DIEU_PHOI gửi (#154)
+DP_DUNG = Actor(id="dp-142-dung", roles=frozenset({"classifier"}))
+GIO = dt.timedelta(hours=1)
+
+
+def _cho_phong(session, phong_ban: str, nguoi_gui: str = NGUOI_GUI):
+    """Hồ sơ vừa chuyển về phòng ban, đang ở Chờ phòng ban xác duyệt."""
+    loai = session.scalars(
+        select(RequestType).where(RequestType.is_active).order_by(RequestType.display_order)
+    ).first()
+    uu_tien = session.scalars(select(Priority.code).where(Priority.is_default)).one()
+    ho_so = create_case(session, title="Hồ sơ thử hạn chờ", requester_id=nguoi_gui)
+    perform_transition(
+        session,
+        case_id=ho_so.id,
+        to_state="classified",
+        actor=DP_DUNG,
+        changes={"priority_code": uu_tien, "request_type_code": loai.code},
+    )
+    perform_transition(
+        session,
+        case_id=ho_so.id,
+        to_state="awaiting-acceptance",
+        actor=DP_DUNG,
+        changes={"department_code": phong_ban},
+    )
+    return ho_so
+
+
+def _hai_canh(session, rule_set) -> tuple[Transition, Transition]:
+    cac = session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == rule_set.id,
+            Transition.from_state == "awaiting-acceptance",
+            Transition.to_state == "classified",
+        )
+    ).all()
+    nguoi = [c for c in cac if not c.is_system]
+    he_thong = [c for c in cac if c.is_system]
+    assert len(nguoi) == 1 and len(he_thong) == 1
+    return nguoi[0], he_thong[0]
+
+
+# ---------------------------------------------------------------------------
+# Dữ liệu khởi tạo
+# ---------------------------------------------------------------------------
+
+
+def test_mot_cap_trang_thai_co_canh_nguoi_va_canh_he_thong(session, rule_set):
+    rut, tu_tra = _hai_canh(session, rule_set)
+    assert rut.role_codes == {"classifier"}
+    assert rut.requires_note
+    assert "actor-not-requester" in rut.guard_codes
+    # Cạnh hệ thống không nhận vai trò hay ràng buộc của cạnh người cùng cặp
+    assert tu_tra.role_codes == set() and tu_tra.guard_codes == []
+    assert tu_tra.auto_after_hours == 24 and tu_tra.warn_before_hours == 4
+    assert not tu_tra.is_rework and not rut.is_rework
+
+
+def test_chi_mot_canh_tu_di_moi_trang_thai(session, rule_set):
+    from sqlalchemy.exc import IntegrityError
+
+    _, tu_tra = _hai_canh(session, rule_set)
+    session.add(
+        Transition(
+            rule_set_id=rule_set.id,
+            from_state="awaiting-acceptance",
+            to_state="cancelled",
+            activity_code="tu-huy",
+            activity_label="Tự hủy",
+            is_system=True,
+            auto_after_hours=48,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+# ---------------------------------------------------------------------------
+# Điều phối viên rút hồ sơ
+# ---------------------------------------------------------------------------
+
+
+def test_dieu_phoi_vien_rut_ho_so_ve_co_ly_do(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    cac_nut = {c.activity_code for c in allowed_transitions(session, ho_so, DIEU_PHOI)}
+    assert cac_nut == {"withdraw"}
+
+    with pytest.raises(NoteRequired):
+        perform_transition(session, case_id=ho_so.id, to_state="classified", actor=DIEU_PHOI)
+
+    perform_transition(
+        session,
+        case_id=ho_so.id,
+        to_state="classified",
+        actor=DIEU_PHOI,
+        note="Phòng đang quá tải, chuyển phòng khác",
+    )
+    assert ho_so.current_state == "classified"
+    # Phòng cũ giữ lại tới khi điều phối chọn phòng mới, như hồ sơ bị phòng ban trả
+    assert ho_so.department_code == phong_ban
+    cuoi = case_history(session, ho_so.id)[-1]
+    assert cuoi.activity == "withdraw" and cuoi.actor == DIEU_PHOI.id
+
+
+def test_phong_ban_khong_rut_duoc(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    truong_phong = Actor(
+        id="tp-142", roles=frozenset({"approver"}), departments=frozenset({phong_ban})
+    )
+    with pytest.raises(RoleNotPermitted):
+        perform_transition(
+            session, case_id=ho_so.id, to_state="classified", actor=truong_phong, note="x"
+        )
+
+
+def test_khong_rut_ho_so_cua_chinh_minh(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban, nguoi_gui=DIEU_PHOI.id)
+    assert allowed_transitions(session, ho_so, DIEU_PHOI) == []
+    with pytest.raises(GuardViolation):
+        perform_transition(
+            session, case_id=ho_so.id, to_state="classified", actor=DIEU_PHOI, note="x"
+        )
+
+
+def test_trang_thai_cho_phong_vao_hang_doi_dieu_phoi(session, rule_set):
+    """Điều phối viên có cạnh đi ra từ Chờ phòng ban xác duyệt nên trạng thái đó tự vào
+    hàng đợi điều phối — suy từ dữ liệu, không liệt kê."""
+    ma = {t.code for t in trang_thai_hang_doi_dieu_phoi(session, rule_set.id)}
+    assert "awaiting-acceptance" in ma
+
+
+# ---------------------------------------------------------------------------
+# Hệ thống tự trả về khi hết hạn chờ
+# ---------------------------------------------------------------------------
+
+
+def test_chua_het_han_cho_thi_khong_tu_tra(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    assert quet_het_han_cho(session, bay_gio(session) + 24 * GIO - dt.timedelta(minutes=1)) == []
+    assert ho_so.current_state == "awaiting-acceptance"
+
+
+def test_het_han_cho_thi_tu_tra_ve_dieu_phoi_va_ghi_nhat_ky(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    da_di = quet_het_han_cho(session, bay_gio(session) + 24 * GIO)
+
+    assert da_di == [ho_so.id]
+    assert ho_so.current_state == "classified"
+    assert ho_so.department_code == phong_ban
+    cuoi = case_history(session, ho_so.id)[-1]
+    assert cuoi.activity == "auto-return"
+    assert cuoi.actor == TAC_NHAN_HAN_CHO
+    assert cuoi.from_state == "awaiting-acceptance"
+    assert "24 giờ làm việc" in (cuoi.note or "")
+
+
+def test_bo_quet_leo_thang_khong_dong_toi_canh_tu_di(session, phong_ban):
+    """Hai bộ quét, hai loại cạnh hệ thống: quét SLA không đi cạnh có hạn chờ."""
+    ho_so = _cho_phong(session, phong_ban)
+    assert ho_so.id not in quet_va_leo_thang(session)
+    assert ho_so.current_state == "awaiting-acceptance"
+
+
+def test_nguoi_khong_di_duoc_canh_he_thong(session, phong_ban):
+    """Điều phối viên gọi cùng cặp trạng thái thì đi cạnh của người — phải có lý do — chứ
+    không lọt qua cạnh hệ thống không đòi lý do."""
+    ho_so = _cho_phong(session, phong_ban)
+    with pytest.raises(NoteRequired):
+        perform_transition(session, case_id=ho_so.id, to_state="classified", actor=DIEU_PHOI)
+
+
+# ---------------------------------------------------------------------------
+# Báo trước trên màn hình
+# ---------------------------------------------------------------------------
+
+
+def test_tu_dong_cho_biet_luc_tu_tra_va_bao_truoc(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    bay = bay_gio(session)
+
+    td = tu_dong(session, ho_so)
+    assert td.canh.activity_code == "auto-return"
+    assert td.luc == bay + 24 * GIO
+    assert not td.bao_truoc
+
+    assert not tu_dong(session, ho_so, bay + 20 * GIO - dt.timedelta(minutes=1)).bao_truoc
+    assert tu_dong(session, ho_so, bay + 20 * GIO).bao_truoc
+
+
+def test_trang_thai_khong_co_han_cho_thi_khong_co_tu_dong(session):
+    ho_so = create_case(session, title="Mới gửi", requester_id=NGUOI_GUI)
+    assert tu_dong(session, ho_so) is None
+
+
+def test_danh_sach_ho_so_tra_ve_luc_tu_tra(session, phong_ban):
+    ho_so = _cho_phong(session, phong_ban)
+    session.commit()
+
+    nguoi_gui = Actor(id=NGUOI_GUI, roles=frozenset({"requester"}))
+    app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[current_actor] = lambda: nguoi_gui
+    try:
+        with TestClient(app) as c:
+            ds = c.get("/requests").json()
+    finally:
+        app.dependency_overrides.clear()
+
+    muc = next(m for m in ds if m["id"] == ho_so.id)
+    assert muc["auto_transition"]["activity_label"] == "Tự trả về điều phối"
+    assert muc["auto_transition"]["warn"] is False
+    assert muc["auto_transition"]["at"] is not None

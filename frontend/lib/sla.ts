@@ -117,6 +117,18 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
 }
 
 /**
+ * Câu báo hồ sơ sẽ tự đi lúc nào khi nằm im quá hạn chờ (#142): "Tự trả về điều phối lúc
+ * 10:41 Thứ Ba 13/10". Nhãn hành động lấy từ dữ liệu của cạnh, không viết ở đây. `canhBao`
+ * khi đã vào khoảng báo trước khai trong dữ liệu. `null` khi trạng thái không có hạn chờ.
+ */
+export function docTuDong(ho_so: HoSoTomTat): DocDongHo | null {
+  const td = ho_so.auto_transition;
+  if (!td) return null;
+  const luc = td.at ? ` lúc ${hanLuc(td.at)}` : "";
+  return { cau: `${td.activity_label}${luc}`, canhBao: td.warn };
+}
+
+/**
  * Vạch hạn trên trang hồ sơ (#169): đã dùng bao nhiêu phần trăm cam kết, có quá hạn
  * chưa. `null` khi chưa có gì để vẽ — chưa có ngưỡng, đồng hồ chưa chạy, hồ sơ đã kết
  * thúc. Chỉ hai mức, trong hạn và quá hạn, theo đúng cờ dịch vụ trả về: chưa có ngưỡng

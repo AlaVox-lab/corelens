@@ -277,12 +277,18 @@ def perform_transition(
         raise CaseNotFound(f"Không tìm thấy hồ sơ mang định danh {case_id}.")
 
     # --- Bước 1: tra bảng quy tắc -----------------------------------------
+    # Một cặp trạng thái có thể có cả cạnh người lẫn cạnh hệ thống (#142) — chọn theo loại
+    # tác nhân. Người gọi nhầm loại thì không thấy cạnh của mình và nhận lỗi quyền ở bước 2
+    # qua cạnh kia, như trước khi có cặp đôi.
     canh = session.scalars(
-        select(Transition).where(
+        select(Transition)
+        .where(
             Transition.rule_set_id == ho_so.rule_set_id,
             Transition.from_state == ho_so.current_state,
             Transition.to_state == to_state,
         )
+        .order_by(Transition.is_system != actor.is_system)
+        .limit(1)
     ).one_or_none()
 
     if canh is None:

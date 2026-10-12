@@ -169,6 +169,7 @@ def ho_so_qua_han(session: Session) -> list[Request]:
             Transition.rule_set_id == Request.rule_set_id,
             Transition.from_state == Request.current_state,
             Transition.is_system,
+            Transition.auto_after_hours.is_(None),
         )
         .exists()
     )

@@ -29,13 +29,16 @@ import { TenCapCon } from "@/components/khung-ung-dung";
 import { goiDichVu } from "@/lib/api";
 import type { HangDoiPhongBan, MucHangDoiPhongBan } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
-import { docDongHo } from "@/lib/sla";
+import { docDongHo, docTuDong } from "@/lib/sla";
 import { trinhBayTrangThai } from "@/lib/trang-thai";
 
 export const dynamic = "force-dynamic";
 
 function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
-  const dongHo = docDongHo(m);
+  // Hồ sơ sắp tự đi vì nằm im quá hạn chờ (#142): câu đó quan trọng hơn câu cam kết chưa
+  // chạy, nên thay chỗ trong khoảng báo trước
+  const tuDong = docTuDong(m);
+  const dongHo = tuDong?.canhBao ? tuDong : docDongHo(m);
   const tenGiao = m.assigned_to_me ? "Bạn" : (m.assignee_label ?? "Một người trong phòng");
   return {
     id: m.id,
@@ -51,7 +54,14 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
     cuoi: {
       chu: dongHo.cau,
       // Quá hạn đỏ; đồng hồ đứng (chưa nhận việc, đang chờ người gửi) thì nhạt
-      muc: dongHo.canhBao ? "qua" : !m.sla_started || m.sla_paused ? "dung" : undefined,
+      muc:
+        dongHo === tuDong
+          ? "sap"
+          : dongHo.canhBao
+            ? "qua"
+            : !m.sla_started || m.sla_paused
+              ? "dung"
+              : undefined,
     },
   };
 }

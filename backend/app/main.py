@@ -24,7 +24,7 @@ from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import router as router_phong_ban
 from app.workflow.department import vao_duoc_phong_ban
-from app.workflow.escalation import quet_va_leo_thang
+from app.workflow.escalation import quet_het_han_cho, quet_va_leo_thang
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.routes import router as router_yeu_cau
 
@@ -42,12 +42,16 @@ logging.basicConfig(
 
 settings = get_settings()
 
-def _quet_mot_lan() -> list[int]:
-    """Một lượt quét hồ sơ quá hạn, mở và đóng giao dịch của riêng nó."""
+def _quet_mot_lan() -> tuple[list[int], list[int]]:
+    """Một lượt quét hồ sơ quá hạn SLA rồi hồ sơ hết hạn chờ (#142), mỗi bộ quét một giao
+    dịch riêng. Trả về (hồ sơ đã leo thang, hồ sơ đã tự đi)."""
     with SessionLocal() as phien:
         da_leo_thang = quet_va_leo_thang(phien)
         phien.commit()
-        return da_leo_thang
+    with SessionLocal() as phien:
+        da_tu_di = quet_het_han_cho(phien)
+        phien.commit()
+    return da_leo_thang, da_tu_di
 
 
 async def _vong_quet_sla() -> None:
@@ -196,7 +200,7 @@ def me(
 def sla_scan(
     actor: Annotated[Actor, Depends(require_roles("administrator"))],
 ) -> dict:
-    """Chạy ngay một lượt quét hồ sơ quá hạn, không đợi chu kỳ.
+    """Chạy ngay một lượt quét hồ sơ quá hạn SLA và hết hạn chờ, không đợi chu kỳ.
 
     Có hai lý do tồn tại: kiểm chứng cơ chế mà không phải ngồi chờ, và trình diễn
     việc tự leo thang trước người xem.
@@ -205,9 +209,11 @@ def sla_scan(
     nhất, nên người bấm nút không ghi đè được luật nào — nhật ký vẫn ghi tác nhân là
     hệ thống, không phải người này.
     """
-    da_leo_thang = _quet_mot_lan()
+    da_leo_thang, da_tu_di = _quet_mot_lan()
     return {
         "escalated_count": len(da_leo_thang),
         "escalated_case_ids": da_leo_thang,
+        # Hồ sơ hết hạn chờ đã được hệ thống tự đi thay (#142)
+        "auto_moved_case_ids": da_tu_di,
         "triggered_by": actor.id,
     }

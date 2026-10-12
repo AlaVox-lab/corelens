@@ -137,8 +137,23 @@ CREATE TABLE transitions (
     -- khởi tạo không bao giờ cần nhắc tới cột này — giá trị mặc định lo hết.
     from_is_terminal BOOLEAN  NOT NULL DEFAULT FALSE,
 
+    -- Cạnh hệ thống tự đi khi hồ sơ nằm ở trạng thái nguồn đủ chừng này GIỜ LÀM VIỆC
+    -- (#142): hồ sơ nằm im vì người phải bấm không bấm thì hệ thống đi thay, có ghi nhật
+    -- ký. NULL là cạnh không tự đi theo thời gian chờ — cạnh leo thang do bộ quét SLA đi.
+    auto_after_hours  SMALLINT,
+    -- Báo trước trên màn hình khi còn chừng này giờ làm việc tới lúc tự đi. NULL là
+    -- không báo trước.
+    warn_before_hours SMALLINT,
+
     CONSTRAINT transitions_khong_roi_trang_thai_ket_thuc
         CHECK (from_is_terminal = FALSE),
+
+    CONSTRAINT transitions_tu_di_chi_canh_he_thong
+        CHECK (auto_after_hours IS NULL OR (is_system AND auto_after_hours > 0)),
+    CONSTRAINT transitions_bao_truoc_hop_le
+        CHECK (warn_before_hours IS NULL
+               OR (auto_after_hours IS NOT NULL
+                   AND warn_before_hours > 0 AND warn_before_hours < auto_after_hours)),
 
     FOREIGN KEY (rule_set_id, from_state, from_is_terminal)
         REFERENCES states (rule_set_id, code, is_terminal),
@@ -146,10 +161,13 @@ CREATE TABLE transitions (
     FOREIGN KEY (rule_set_id, to_state)
         REFERENCES states (rule_set_id, code),
 
-    -- Giữa hai trạng thái chỉ có tối đa một cạnh theo mỗi chiều, và mỗi trạng thái tối
-    -- đa một cạnh tự trỏ. Engine, API và giao diện đều nhận diện một cạnh bằng cặp
-    -- (trạng thái nguồn, trạng thái đích) — gỡ ràng buộc này là phải đổi cả ba.
-    UNIQUE (rule_set_id, from_state, to_state)
+    -- Giữa hai trạng thái chỉ có tối đa một cạnh của NGƯỜI và một cạnh của HỆ THỐNG theo
+    -- mỗi chiều, và mỗi trạng thái tối đa một cạnh tự trỏ mỗi loại. Hai loại tác nhân
+    -- không bao giờ đi được cạnh của nhau, nên engine nhận diện một cạnh bằng cặp (trạng
+    -- thái nguồn, trạng thái đích) cộng loại tác nhân; API và giao diện chỉ thấy cạnh của
+    -- người nên vẫn nhận diện bằng cặp. Thêm `is_system` từ #142: "Chờ phòng ban xác duyệt
+    -- → Đã phân loại" có cả cạnh điều phối viên rút hồ sơ lẫn cạnh hệ thống tự trả về.
+    UNIQUE (rule_set_id, from_state, to_state, is_system)
 
     -- Cạnh tự trỏ (from_state = to_state) ĐƯỢC PHÉP từ ADR-0005: thao tác đổi hồ sơ mà
     -- không đổi trạng thái — nhận việc về mình, sửa nội dung — vẫn phải đi qua cửa
@@ -164,6 +182,11 @@ COMMENT ON COLUMN transitions.requires_note IS
     'TRUE thì bắt buộc nhập lý do. Ví dụ: từ chối vì sai chuyên môn, đóng hồ sơ khi không phòng nào nhận, mở lại vì chưa đạt.';
 COMMENT ON COLUMN transitions.note_label IS
     'Tên ô ghi chú của cạnh này trên giao diện. NULL thì gọi là lý do. Đặt khi ghi chú không phải lời giải thích mà là nội dung chính — ví dụ câu hỏi khi yêu cầu bổ sung, câu trả lời khi bổ sung thông tin.';
+
+-- Mỗi trạng thái tối đa một cạnh tự đi theo thời gian chờ: hai đồng hồ chờ trên cùng một
+-- trạng thái thì không biết cái nào thắng.
+CREATE UNIQUE INDEX transitions_mot_canh_tu_di
+    ON transitions (rule_set_id, from_state) WHERE auto_after_hours IS NOT NULL;
 
 CREATE INDEX transitions_tra_theo_trang_thai_nguon
     ON transitions (rule_set_id, from_state);
