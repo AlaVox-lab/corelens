@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Kiểm thử hạn chờ ở "Chờ phòng ban xác duyệt" (#142).
+# Kiểm thử hạn chờ ở "Chờ phòng ban xác duyệt" (#142) và "Hoàn tất" (#144).
 #
 # Giảng viên chốt ngày 08/10: phòng ban không xác duyệt trong 24 giờ làm việc thì hồ sơ tự
 # trả về điều phối viên, báo trước 4 giờ; điều phối viên rút được trước hạn, có lý do; việc
@@ -253,3 +253,67 @@ def test_danh_sach_ho_so_tra_ve_luc_tu_tra(session, phong_ban):
     assert muc["auto_transition"]["activity_label"] == "Tự trả về điều phối"
     assert muc["auto_transition"]["warn"] is False
     assert muc["auto_transition"]["at"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Hoàn tất tự đóng khi người gửi không xác nhận (#144)
+# ---------------------------------------------------------------------------
+
+
+def _hoan_tat(session, phong_ban: str):
+    """Hồ sơ phòng ban đã làm xong, đang chờ người gửi xác nhận."""
+    ho_so = _cho_phong(session, phong_ban)
+    tp = Actor(id="tp-144", roles=frozenset({"approver"}), departments=frozenset({phong_ban}))
+    xl = Actor(id="xl-144", roles=frozenset({"handler"}), departments=frozenset({phong_ban}))
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=tp)
+    perform_transition(session, case_id=ho_so.id, to_state="completed", actor=xl)
+    return ho_so
+
+
+def test_hoan_tat_co_canh_xac_nhan_va_canh_tu_dong(session, rule_set):
+    cac = session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == rule_set.id,
+            Transition.from_state == "completed",
+            Transition.to_state == "closed",
+        )
+    ).all()
+    nguoi = [c for c in cac if not c.is_system]
+    he_thong = [c for c in cac if c.is_system]
+    assert [c.activity_code for c in nguoi] == ["confirm"]
+    assert [c.activity_code for c in he_thong] == ["auto-close"]
+    # Ba ngày làm việc của lịch mẫu, báo trước một ngày
+    assert he_thong[0].auto_after_hours == 24 and he_thong[0].warn_before_hours == 8
+    assert he_thong[0].role_codes == set() and he_thong[0].guard_codes == []
+
+
+def test_nguoi_gui_khong_xac_nhan_thi_tu_dong(session, phong_ban):
+    ho_so = _hoan_tat(session, phong_ban)
+    bay = bay_gio(session)
+    assert quet_het_han_cho(session, bay + 24 * GIO - dt.timedelta(minutes=1)) == []
+
+    assert quet_het_han_cho(session, bay + 24 * GIO) == [ho_so.id]
+    assert ho_so.current_state == "closed"
+    # Đồng hồ SLA dừng hẳn như mọi lần vào trạng thái kết thúc
+    assert ho_so.sla_segment_since is None
+    cuoi = case_history(session, ho_so.id)[-1]
+    assert (cuoi.activity, cuoi.actor) == ("auto-close", TAC_NHAN_HAN_CHO)
+
+
+def test_nguoi_gui_van_tu_xac_nhan_duoc(session, phong_ban):
+    """Cạnh tự đóng cùng cặp không chiếm chỗ cạnh Xác nhận đạt: nhật ký phân biệt được hai
+    cách đóng bằng mã hoạt động."""
+    ho_so = _hoan_tat(session, phong_ban)
+    nguoi_gui = Actor(id=NGUOI_GUI, roles=frozenset({"requester"}))
+    assert {c.activity_code for c in allowed_transitions(session, ho_so, nguoi_gui)} >= {"confirm"}
+    perform_transition(session, case_id=ho_so.id, to_state="closed", actor=nguoi_gui)
+    cuoi = case_history(session, ho_so.id)[-1]
+    assert (cuoi.activity, cuoi.actor) == ("confirm", NGUOI_GUI)
+
+
+def test_hoan_tat_bao_truoc_mot_ngay_lam_viec(session, phong_ban):
+    ho_so = _hoan_tat(session, phong_ban)
+    bay = bay_gio(session)
+    assert tu_dong(session, ho_so).luc == bay + 24 * GIO
+    assert not tu_dong(session, ho_so, bay + 16 * GIO - dt.timedelta(minutes=1)).bao_truoc
+    assert tu_dong(session, ho_so, bay + 16 * GIO).bao_truoc

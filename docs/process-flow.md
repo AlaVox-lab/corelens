@@ -15,7 +15,8 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 >
 > **Cập nhật 12/10/2026** theo quyết định của giảng viên ngày 08/10 (#142): hồ sơ nằm im ở *Chờ
 > phòng ban xác duyệt* thì điều phối viên rút về được, và hết 24 giờ làm việc thì hệ thống tự
-> trả về. Luồng có hai mươi sáu cạnh.
+> trả về. Cùng ngày (#144): hồ sơ *Hoàn tất* mà người gửi không xác nhận thì tự đóng sau 3 ngày
+> làm việc. Luồng có hai mươi bảy cạnh.
 
 ---
 
@@ -68,7 +69,7 @@ stateDiagram-v2
     ChoBoSung --> DangXuLy: Bổ sung (người xử lý đã hỏi)
     ChoBoSung --> Huy: Người tạo hủy
 
-    HoanTat --> Dong: Người tạo xác nhận đạt
+    HoanTat --> Dong: Người tạo xác nhận đạt, hay tự đóng sau 3 ngày làm việc
     HoanTat --> DangXuLy: Người tạo mở lại, chưa đạt
 
     Dong --> [*]
@@ -134,7 +135,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Hai mươi sáu cạnh chuyển trạng thái
+## 3. Hai mươi bảy cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -166,6 +167,7 @@ là không đi được**.
 | `awaiting-info` | `in-progress` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `cancelled` | Hủy yêu cầu | `requester` |
 | `completed` | `closed` | Xác nhận đạt | `requester` |
+| `completed` | `closed` | Tự đóng hồ sơ — hết 24 giờ làm việc (3 ngày theo lịch mẫu) chờ xác nhận, báo trước 8 giờ | **hệ thống** |
 | `completed` | `in-progress` | Mở lại, chưa đạt | `requester` |
 
 **Chờ bổ sung thông tin quay về đúng chỗ đã hỏi** (#79, navigator chốt ngày 23/09). Ba nơi
@@ -201,8 +203,12 @@ tiên, phòng ban dự kiến đều dựa trên nội dung cũ, nên người p
 **Hạn chờ: hồ sơ không nằm im mãi** (#142, giảng viên chốt ngày 08/10). Trạng thái chờ một
 người bấm có thể mang một cạnh hệ thống **tự đi** khi hồ sơ nằm đó đủ một số giờ làm việc
 (`transitions.auto_after_hours`), và màn hình báo trước khi còn `warn_before_hours`. Hiện có
-một: *Chờ phòng ban xác duyệt* tự trả về *Đã phân loại* sau 24 giờ làm việc, báo trước 4 giờ
-trên hàng đợi phòng ban, hàng đợi điều phối và thẻ hạn của trang hồ sơ. Trước hạn, điều phối
+hai. *Chờ phòng ban xác duyệt* tự trả về *Đã phân loại* sau 24 giờ làm việc, báo trước 4 giờ
+trên hàng đợi phòng ban, hàng đợi điều phối và thẻ hạn của trang hồ sơ. *Hoàn tất* tự đóng sau
+24 giờ làm việc — "3 ngày làm việc" của giảng viên với lịch mẫu 8 giờ một ngày — nếu người gửi
+không xác nhận, báo trước một ngày làm việc trên trang hồ sơ và danh sách *Hồ sơ của tôi* của
+người gửi (#144). *Hoàn tất* vẫn là đã xử lý xong nghiệp vụ; *Đã đóng* mới hết chu kỳ hồ sơ.
+Nhật ký tách hai cách đóng bằng mã hoạt động `confirm` và `auto-close`. Trước hạn, điều phối
 viên rút về bằng tay được, có lý do — vì cạnh này mà *Chờ phòng ban xác duyệt* có mặt trong
 hàng đợi điều phối. Hai cạnh cùng cặp trạng thái, một của người, một của hệ thống: lược đồ giữ
 `UNIQUE (bộ quy tắc, từ, sang, is_system)`. Phòng cũ giữ lại tới khi điều phối chọn phòng mới,
