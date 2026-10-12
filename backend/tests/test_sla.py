@@ -29,6 +29,10 @@ from app.workflow.escalation import TAC_NHAN_SLA, quet_va_leo_thang
 
 NGUOI_TAO = "nguoi-tao-sla"
 
+# Các bài ở đây lùi đồng hồ theo giờ lịch; lịch cả ngày cả tuần giữ đáp án không đổi theo
+# lúc chạy. Lịch làm việc thật kiểm ở test_lich_lam_viec.py (#199).
+pytestmark = pytest.mark.usefixtures("lich_ca_ngay")
+
 
 # ---------------------------------------------------------------------------
 # Tiện ích

@@ -13,6 +13,11 @@
 # Trạng thái nào làm đồng hồ chạy do cột `states.sla_running` quyết định, không phải
 # do mã nguồn. Muốn tính cả thời gian chờ bổ sung vào SLA thì bật cờ đó cho
 # `awaiting-info` trong infra/seed/ — sửa dữ liệu, không sửa mã.
+#
+# Mọi khoảng thời gian ở đây là GIỜ LÀM VIỆC theo lịch mặc định (#199): `sla_hours` 8 là
+# 8 giờ làm việc, đêm và cuối tuần không trôi. Không hàm nào tự trừ hai mốc thời gian —
+# phép đo đi qua hàm `so_giay_lam_viec` của PostgreSQL (lược đồ khởi tạo, mục 10), để
+# Python và truy vấn tìm hồ sơ quá hạn đo cùng một cách.
 
 from __future__ import annotations
 
@@ -39,6 +44,12 @@ def bay_gio(session: Session) -> dt.datetime:
     return session.scalar(select(func.now()))
 
 
+def giay_lam_viec(session: Session, tu: dt.datetime, den: dt.datetime | None = None) -> int:
+    """Số giây làm việc giữa hai mốc theo lịch mặc định. Bỏ `den` là tới bây giờ."""
+    moc_den = func.now() if den is None else den
+    return int(session.scalar(select(func.so_giay_lam_viec(tu, moc_den))))
+
+
 def cap_nhat_dong_ho(session: Session, case: Request, transition: Transition) -> None:
     """Chốt đoạn đang tính rồi mở đoạn mới, theo đúng một lần chuyển trạng thái.
 
@@ -56,7 +67,7 @@ def cap_nhat_dong_ho(session: Session, case: Request, transition: Transition) ->
 
     # Chốt đoạn vừa qua, cộng vào đúng ngăn
     if case.sla_segment_since is not None:
-        giay = int((hien_tai - case.sla_segment_since).total_seconds())
+        giay = giay_lam_viec(session, case.sla_segment_since, hien_tai)
         if tu.sla_running:
             case.sla_running_seconds += giay
         else:
@@ -85,8 +96,26 @@ def da_chay_giay(session: Session, case: Request) -> int:
     if case.sla_segment_since is not None:
         trang_thai = _trang_thai(session, case.rule_set_id, case.current_state)
         if trang_thai.sla_running:
-            tong += int((bay_gio(session) - case.sla_segment_since).total_seconds())
+            tong += giay_lam_viec(session, case.sla_segment_since)
     return tong
+
+
+def han_chot(session: Session, case: Request) -> dt.datetime | None:
+    """Mốc hết hạn xử lý, để giao diện ghi "hạn 15:00 thứ Hai" thay vì chỉ đếm giờ (#199).
+
+    Chỉ có khi đồng hồ đang chạy và hạn chưa qua trong một đoạn trước: hạn là mốc sau
+    phần cam kết còn lại, đếm bằng giờ làm việc từ đầu đoạn đang mở. Đồng hồ đang dừng thì
+    chưa biết hạn rơi vào lúc nào — phụ thuộc lúc nó chạy lại — nên trả `None`.
+    """
+    gioi_han = gioi_han_giay(session, case)
+    if gioi_han is None or case.sla_segment_since is None:
+        return None
+    if not _trang_thai(session, case.rule_set_id, case.current_state).sla_running:
+        return None
+    con = gioi_han - case.sla_running_seconds
+    if con <= 0:
+        return None
+    return session.scalar(select(func.moc_sau_giay_lam_viec(case.sla_segment_since, con)))
 
 
 def an_han_con_lai_giay(session: Session, case: Request) -> int | None:
@@ -104,7 +133,7 @@ def an_han_con_lai_giay(session: Session, case: Request) -> int | None:
     if da_chay_giay(session, case) <= gioi_han:
         return None
     loai = session.get(RequestType, case.request_type_code)
-    da_o = int((bay_gio(session) - case.sla_segment_since).total_seconds())
+    da_o = giay_lam_viec(session, case.sla_segment_since)
     con = loai.sla_grace_hours * 3600 - da_o
     return con if con > 0 else None
 
@@ -131,6 +160,9 @@ def ho_so_qua_han(session: Session) -> list[Request]:
     vẫn được ghi nhận là quá hạn, và số liệu thời gian xử lý giữ đúng cho tầng `I`.
     Hết ân hạn mà vẫn chưa xong thì leo thang lại — đó là tín hiệu đúng.
     """
+    # Giờ làm việc của đoạn đang mở, cùng phép đo với `da_chay_giay`
+    dang_mo = func.so_giay_lam_viec(Request.sla_segment_since, func.now())
+
     dang_chay = (
         select(Transition.id)
         .where(
@@ -152,11 +184,8 @@ def ho_so_qua_han(session: Session) -> list[Request]:
         .where(
             State.sla_running,
             Request.sla_segment_since.is_not(None),
-            Request.sla_running_seconds
-            + func.extract("epoch", func.now() - Request.sla_segment_since)
-            > RequestType.sla_hours * 3600,
-            func.extract("epoch", func.now() - Request.sla_segment_since)
-            >= RequestType.sla_grace_hours * 3600,
+            Request.sla_running_seconds + dang_mo > RequestType.sla_hours * 3600,
+            dang_mo >= RequestType.sla_grace_hours * 3600,
             dang_chay,
         )
         .order_by(Request.id)

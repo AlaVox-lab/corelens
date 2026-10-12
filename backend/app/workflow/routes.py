@@ -30,7 +30,7 @@ from app.models.workflow_config import (
     Transition,
 )
 from app.rules.guards import permitted_fields
-from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay
+from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay, han_chot
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
 from app.workflow.engine import (
@@ -211,6 +211,8 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         # Hồ sơ quá hạn nhưng vừa vào lại trạng thái đếm giờ: còn chừng này giây trước
         # khi bộ quét được leo thang lại (#94). None khi không áp.
         "sla_grace_seconds": an_han_con_lai_giay(session, ho_so),
+        # Hạn chót theo lịch làm việc, để giao diện ghi "hạn 15:00 thứ Hai" (#199)
+        "sla_due_at": han_chot(session, ho_so),
         # Đồng hồ đang tạm dừng: đã khởi động nhưng trạng thái hiện tại không đếm giờ
         "sla_paused": (
             ho_so.sla_segment_since is not None and not trang_thai.sla_running
