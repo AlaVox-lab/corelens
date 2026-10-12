@@ -30,6 +30,7 @@ from app.models.workflow_config import (
     Transition,
 )
 from app.rules.guards import permitted_fields
+from app.rules.han_cho import tu_dong
 from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay, han_chot
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
@@ -77,6 +78,7 @@ from app.workflow.schemas import (
     TaoHoSoVao,
     ThayDoiTruongRa,
     TrangThaiRa,
+    TuDongRa,
 )
 from app.db import get_session
 
@@ -165,6 +167,14 @@ def _nhan(gia_tri, mac_dinh: str = "") -> str:
     return getattr(gia_tri, "label", mac_dinh) if gia_tri is not None else mac_dinh
 
 
+def _tu_dong_ra(session: Session, ho_so: Request) -> TuDongRa | None:
+    """Cạnh tự đi khi hết hạn chờ của trạng thái hiện tại, nếu có (#142)."""
+    td = tu_dong(session, ho_so)
+    if td is None:
+        return None
+    return TuDongRa(activity_label=td.canh.activity_label, at=td.luc, warn=td.bao_truoc)
+
+
 def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict:
     """Phần dùng chung giữa danh sách và chi tiết."""
     trang_thai = states[ho_so.current_state]
@@ -213,6 +223,7 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_grace_seconds": an_han_con_lai_giay(session, ho_so),
         # Hạn chót theo lịch làm việc, để giao diện ghi "hạn 15:00 thứ Hai" (#199)
         "sla_due_at": han_chot(session, ho_so),
+        "auto_transition": _tu_dong_ra(session, ho_so),
         # Đồng hồ đang tạm dừng: đã khởi động nhưng trạng thái hiện tại không đếm giờ
         "sla_paused": (
             ho_so.sla_segment_since is not None and not trang_thai.sla_running

@@ -186,6 +186,7 @@ def kiem_nguoi_duoc_giao(
             Transition.rule_set_id == ho_so.rule_set_id,
             Transition.from_state == ho_so.current_state,
             Transition.to_state == to_state,
+            Transition.is_system.is_(False),
         )
     ).one_or_none()
     if (

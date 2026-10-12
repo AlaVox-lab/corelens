@@ -98,6 +98,13 @@ export type SuKien = {
   is_rework: boolean;
 };
 
+/** Cạnh hệ thống tự đi khi hồ sơ nằm im quá hạn chờ (#142). Nhãn lấy từ dữ liệu. */
+export type TuDong = {
+  activity_label: string;
+  at: string | null;
+  warn: boolean;
+};
+
 export type HoSoTomTat = {
   id: number;
   code: string;
@@ -126,6 +133,11 @@ export type HoSoTomTat = {
    * đang dừng hay chưa chạy — lúc đó chưa biết hạn rơi vào đâu.
    */
   sla_due_at: string | null;
+  /**
+   * Hồ sơ đang ở trạng thái có hạn chờ: hết hạn thì hệ thống tự đi cạnh này (#142). `warn`
+   * là đã vào khoảng báo trước. `null` khi trạng thái hiện tại không có hạn chờ.
+   */
+  auto_transition: TuDong | null;
   /**
    * Lời nhắn sau cùng là của người gửi hồ sơ (`true`), của nhân viên (`false`), hay chưa
    * có lời nhắn nào (`null`) — nguồn của dấu hiệu "đang chờ trả lời" trên danh sách (#128).

@@ -104,6 +104,16 @@ class SuKienRa(BaseModel):
     is_rework: bool = False
 
 
+class TuDongRa(BaseModel):
+    """Cạnh hệ thống sẽ tự đi từ trạng thái hiện tại khi hết hạn chờ (#142)."""
+
+    activity_label: str
+    # Lúc tự đi, theo lịch làm việc (#199)
+    at: dt.datetime | None
+    # Đã vào khoảng báo trước — màn hình nhấn mạnh
+    warn: bool
+
+
 class HoSoTomTatRa(BaseModel):
     id: int
     code: str
@@ -126,6 +136,8 @@ class HoSoTomTatRa(BaseModel):
     sla_grace_seconds: int | None = None
     # Mốc hết hạn xử lý khi đồng hồ đang chạy và chưa quá hạn; None khi đang dừng (#199)
     sla_due_at: dt.datetime | None = None
+    # Hồ sơ đang nằm ở trạng thái có hạn chờ: hệ thống sẽ tự đi cạnh nào, lúc nào (#142)
+    auto_transition: TuDongRa | None = None
 
     # Lời nhắn sau cùng là của người gửi hồ sơ (True), của nhân viên (False), hay chưa
     # có lời nhắn nào (None) — nguồn của dấu hiệu "đang chờ trả lời" trên hàng đợi (#128)

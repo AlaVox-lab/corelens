@@ -610,6 +610,12 @@ textarea.o-nhap {
   color: var(--ink-3);
 }
 
+/* Lúc hệ thống sẽ tự đi khi hết hạn chờ (#142); vào khoảng báo trước thì nhấn màu */
+.han small.tu-dong[data-sap] {
+  color: var(--f-a-ink);
+  font-weight: 600;
+}
+
 /* Các bước của đường chính — suy từ thứ tự trạng thái trong dữ liệu */
 .buoc {
   display: flex;
@@ -1521,6 +1527,12 @@ textarea.o-nhap {
 
 .chu-han[data-muc="dung"] {
   color: var(--ink-3);
+}
+
+/* Sắp tự đi vì nằm im quá hạn chờ (#142): chưa phải lỗi như quá hạn, nhưng cần làm ngay */
+.chu-han[data-muc="sap"] {
+  color: var(--f-a-ink);
+  font-weight: 600;
 }
 
 .nhom-hang th {

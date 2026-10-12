@@ -449,9 +449,15 @@ phải "không nên đi", mà là "không có đường mà đi". Khóa sửa n�
 phòng ban (#127) cũng thực thi theo đúng cách đó.
 
 **Cạnh tự trỏ được phép từ ADR-0005** (#127) — lược đồ gỡ ràng buộc `CHECK (from_state <>
-to_state)` nhưng giữ `UNIQUE (rule_set_id, from_state, to_state)`, nên mỗi trạng thái có
-tối đa một cạnh tự trỏ, và engine, API, giao diện vẫn nhận diện một cạnh bằng cặp trạng
-thái như trước. Vì sao cần cạnh tự trỏ: mục 6.2.
+to_state)`. Vì sao cần cạnh tự trỏ: mục 6.2.
+
+**Một cặp trạng thái: tối đa một cạnh người, một cạnh hệ thống** (#142). Ràng buộc là
+`UNIQUE (rule_set_id, from_state, to_state, is_system)` — *Chờ phòng ban xác duyệt → Đã phân
+loại* có cả cạnh điều phối viên rút hồ sơ lẫn cạnh hệ thống tự trả về. Người không đi được cạnh
+hệ thống và ngược lại, nên engine tra cạnh bằng cặp trạng thái cộng loại tác nhân; API và giao
+diện chỉ thấy cạnh của người nên vẫn nhận diện bằng cặp. Dữ liệu khởi tạo gắn vai trò và ràng
+buộc bằng phép nối theo cặp — phép nối đó phải bỏ cạnh hệ thống, không thì cạnh hệ thống nhận
+luôn vai trò của cạnh người cùng cặp.
 
 Cột `is_initial` đáng chú ý riêng: nhờ nó mà mã nguồn hỏi *"trạng thái bắt đầu là gì"*
 thay vì viết `if state == "submitted"`. Mỗi cột kiểu này là một câu lệnh `if` không bao
@@ -767,6 +773,18 @@ phá quy trình mất khả năng chỉ ra điểm nghẽn.
 cờ `is_system` xuất phát từ trạng thái hiện tại. Nhờ vậy hồ sơ ĐANG ở `escalated` không
 bị nhặt lại mỗi vòng — từ đó không còn cạnh hệ thống nào — mà không cần thêm một cột
 *"đã leo thang chưa"*.
+
+**Hạn chờ: cạnh hệ thống tự đi khi hồ sơ nằm im** (#142). Đồng hồ SLA không giúp gì ở trạng
+thái chờ một người bấm — nó chưa chạy hay đang dừng. Cạnh hệ thống mang
+`transitions.auto_after_hours` tự đi khi hồ sơ nằm ở trạng thái nguồn đủ chừng ấy giờ làm việc,
+đo từ lần chuyển gần nhất đổi trạng thái vào đó (cạnh tự trỏ không đặt lại); `warn_before_hours`
+để màn hình báo trước. Mỗi trạng thái tối đa một cạnh như vậy (chỉ mục duy nhất từng phần). Bộ
+quét thứ hai `quet_het_han_cho` chạy cùng vòng với bộ quét leo thang, mỗi bộ một giao dịch, tác
+nhân `wait-watcher`, và cũng đi qua cửa chuyển trạng thái duy nhất. Hai bộ quét không giẫm nhau:
+bộ leo thang chỉ nhận cạnh hệ thống **không** có hạn chờ. Dịch vụ trả `auto_transition` (nhãn
+cạnh, lúc tự đi, đã vào khoảng báo trước chưa) để giao diện ghi "Tự trả về điều phối lúc …" và
+nhấn màu khi sắp tới. Tính lúc vào trạng thái từ nhật ký, nên bộ quét nhận *thời điểm xét* làm
+tham số — bài kiểm thử truyền một mốc tương lai thay cho việc sửa nhật ký vốn chỉ ghi thêm.
 
 **Ân hạn sau mỗi lần vào lại trạng thái đếm giờ** (#94). Chỉ riêng cấu trúc dữ liệu thì
 chưa đủ: trưởng phòng phân công lại thì hồ sơ về `in-progress`, đồng hồ tổng vẫn quá

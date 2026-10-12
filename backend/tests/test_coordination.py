@@ -305,9 +305,15 @@ def test_phan_loai_roi_chuyen_ve_phong_ban_nguoi_gui_thay_ngay(client, session, 
     assert r.status_code == 200, r.text
     trang_thai_moi = r.json()["state"]["code"]
 
-    # 3. Hồ sơ rời hàng đợi...
-    con_trong_hang = {m["id"] for m in client.get("/coordination/queue").json()["items"]}
-    assert ho_so.id not in con_trong_hang
+    # 3. Hồ sơ rời chỗ chờ phân loại. Còn trong hàng đợi điều phối hay không là do bộ quy
+    # tắc: từ #142 điều phối viên rút được hồ sơ ở trạng thái mới, nên trạng thái đó cũng vào
+    # hàng đợi — dưới đúng nhóm của nó
+    hang = client.get("/coordination/queue").json()
+    con_trong_hang = {m["id"]: m["state"]["code"] for m in hang["items"]}
+    if trang_thai_moi in {g["code"] for g in hang["groups"]}:
+        assert con_trong_hang[ho_so.id] == trang_thai_moi
+    else:
+        assert ho_so.id not in con_trong_hang
 
     # ...và người gửi thấy đúng trạng thái mới trên cổng của mình
     _goi_bang(client, NGUOI_GUI)
