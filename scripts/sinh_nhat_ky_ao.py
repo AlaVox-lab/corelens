@@ -57,6 +57,8 @@ RB_TU_NHAN = "assign-self"
 # backend/app/workflow/escalation.py, và nhãn "Hệ thống" giao diện dùng để nhận ra nó.
 TAC_NHAN_HE_THONG = "sla-watcher"
 NHAN_HE_THONG = "Hệ thống"
+# Tác nhân hệ thống khi hồ sơ nằm im quá hạn chờ (#142) — cùng giá trị với TAC_NHAN_HAN_CHO
+TAC_NHAN_HAN_CHO = "wait-watcher"
 
 # Bộ quét leo thang chạy mỗi phút, nên hồ sơ leo thang trễ hơn lúc quá hạn tối đa một phút.
 TRE_BO_QUET_GIAY = 60
@@ -85,6 +87,8 @@ KICH_BAN_MAC_DINH: dict = {
         "cancel": 0.35,
         "reject": 0.5,
         "close-unrouted": 0.3,
+        # Điều phối viên hiếm khi rút hồ sơ khỏi phòng ban trước hạn chờ (#142)
+        "withdraw": 0.3,
     },
     "trong_so_mac_dinh": 1.0,
     # Hồ sơ bị chuyển nhầm phòng thì phòng đó rất hay trả lại — nhân trọng số các hoạt
@@ -142,6 +146,7 @@ SELECT json_build_object(
              'tu', t.from_state, 'den', t.to_state, 'hoat_dong', t.activity_code,
              'nhan_hoat_dong', t.activity_label,
              'he_thong', t.is_system, 'can_ghi_chu', t.requires_note,
+             'tu_di_sau_gio', t.auto_after_hours,
              'vai_tro', COALESCE((SELECT json_agg(r.role_code ORDER BY r.role_code)
                                   FROM transition_roles r WHERE r.transition_id = t.id),
                                  '[]'::json),
@@ -184,6 +189,9 @@ class Canh:
     can_ghi_chu: bool
     vai_tro: tuple[str, ...]
     rang_buoc: tuple[str, ...]
+    # Cạnh hệ thống tự đi sau chừng này giờ nằm ở trạng thái nguồn (#142). None: cạnh leo
+    # thang do đồng hồ SLA quyết, hoặc cạnh của người.
+    tu_di_sau_gio: int | None = None
 
 
 @dataclass
@@ -236,7 +244,7 @@ class BoSinh:
 
         self.canh = [
             Canh(c["tu"], c["den"], c["hoat_dong"], c["he_thong"], c["can_ghi_chu"],
-                 tuple(c["vai_tro"]), tuple(c["rang_buoc"]))
+                 tuple(c["vai_tro"]), tuple(c["rang_buoc"]), c.get("tu_di_sau_gio"))
             for c in quy_tac["canh"]
         ]
         self.canh_ra: dict[str, list[Canh]] = defaultdict(list)
@@ -320,7 +328,7 @@ class BoSinh:
 
     def _tac_nhan(self, hs: HoSo, c: Canh) -> tuple[str, str]:
         if c.he_thong:
-            return TAC_NHAN_HE_THONG, NHAN_HE_THONG
+            return (TAC_NHAN_HAN_CHO if c.tu_di_sau_gio else TAC_NHAN_HE_THONG), NHAN_HE_THONG
         if RB_NGUOI_TAO in c.rang_buoc:
             return hs.nguoi_gui, hs.nguoi_gui
         vai = self.rng.choice(c.vai_tro) if c.vai_tro else "khong-ro-vai-tro"
@@ -424,7 +432,8 @@ class BoSinh:
         tt = self.trang_thai[hs.trang_thai]
         if not tt["chay_dong_ho"] or not hs.loai:
             return None
-        if not any(c.he_thong for c in self.canh_ra[hs.trang_thai]):
+        leo = self.canh_ra[hs.trang_thai]
+        if not any(c.he_thong and c.tu_di_sau_gio is None for c in leo):
             return None
         nguong = self.loai[hs.loai]["sla_gio"] * 3600
         an_han = self.loai[hs.loai]["an_han_gio"] * 3600
@@ -461,8 +470,21 @@ class BoSinh:
 
             den_leo = self._giay_toi_leo_thang(hs)
             if den_leo is not None and (canh is None or den_leo < cho):
-                canh = next(c for c in self.canh_ra[hs.trang_thai] if c.he_thong)
+                canh = next(
+                    c for c in self.canh_ra[hs.trang_thai]
+                    if c.he_thong and c.tu_di_sau_gio is None
+                )
                 cho = den_leo
+
+            # Không ai thao tác trước hạn chờ thì hệ thống tự đi (#142, #144). Hạn đếm bằng giờ
+            # lịch ở đây — bộ sinh chưa mô phỏng lịch làm việc của #199.
+            tu_di = next(
+                (c for c in self.canh_ra[hs.trang_thai] if c.he_thong and c.tu_di_sau_gio), None
+            )
+            if tu_di is not None:
+                den_tu_di = tu_di.tu_di_sau_gio * 3600 + TRE_BO_QUET_GIAY
+                if canh is None or den_tu_di < cho:
+                    canh, cho = tu_di, den_tu_di
             if canh is None:
                 break
 
@@ -521,7 +543,10 @@ class BoSinh:
 
 def tu_kiem(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> list[str]:
     """Mọi sự kiện phải là thứ engine thật cho phép ghi. Trả về danh sách lỗi."""
-    canh = {(c.tu, c.den): c for c in bo.canh}
+    # Một cặp trạng thái có thể có cả cạnh người lẫn cạnh hệ thống (#142): nhận diện cạnh
+    # theo cả loại tác nhân, như engine
+    canh = {(c.tu, c.den, c.he_thong): c for c in bo.canh}
+    he_thong = {TAC_NHAN_HE_THONG, TAC_NHAN_HAN_CHO}
     theo_ho_so: dict[int, list[dict]] = defaultdict(list)
     for e in su_kien:
         theo_ho_so[e["case_id"]].append(e)
@@ -531,7 +556,7 @@ def tu_kiem(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> list[str]:
         hien_tai, truoc, luc = bo.trang_thai_dau, None, hs.tao_luc
         nguoi_giu: str | None = None
         for e in theo_ho_so[hs.ma]:
-            c = canh.get((e["from_state"], e["to_state"]))
+            c = canh.get((e["from_state"], e["to_state"], e["actor"] in he_thong))
             noi = f"hồ sơ {hs.ma}, {e['from_state']} → {e['to_state']}"
             if c is None:
                 loi.append(f"{noi}: không có cạnh này trong bộ quy tắc")
@@ -542,8 +567,9 @@ def tu_kiem(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> list[str]:
                 loi.append(f"{noi}: đi tiếp sau trạng thái kết thúc")
             if RB_VE_CHO_CU in c.rang_buoc and e["to_state"] != truoc:
                 loi.append(f"{noi}: không về đúng chỗ đã hỏi ({truoc})")
-            if c.he_thong != (e["actor"] == TAC_NHAN_HE_THONG):
-                loi.append(f"{noi}: cạnh hệ thống và tác nhân hệ thống lệch nhau")
+            dung_tac_nhan = TAC_NHAN_HAN_CHO if c.tu_di_sau_gio else TAC_NHAN_HE_THONG
+            if c.he_thong and e["actor"] != dung_tac_nhan:
+                loi.append(f"{noi}: cạnh hệ thống đi bằng nhầm tác nhân hệ thống")
             if e["timestamp"] < luc:
                 loi.append(f"{noi}: thời điểm đi lùi")
 
@@ -584,6 +610,7 @@ def in_thong_ke(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> None:
         if sum('"department_code"' in e["changes"] for e in ds) >= 2
     )
     leo_thang = sum(1 for e in su_kien if e["actor"] == TAC_NHAN_HE_THONG)
+    tu_di = sum(1 for e in su_kien if e["actor"] == TAC_NHAN_HAN_CHO)
     co_dong_ho = [hs for hs in ho_so if hs.chay_giay > 0 and hs.loai]
     qua_han = sum(
         1 for hs in co_dong_ho if hs.chay_giay > bo.loai[hs.loai]["sla_gio"] * 3600
@@ -597,6 +624,7 @@ def in_thong_ke(bo: BoSinh, ho_so: list[HoSo], su_kien: list[dict]) -> None:
     print(f"  có quay lui                 : {quay_lui}")
     print(f"  chuyển phòng từ hai lần     : {doi_phong}")
     print(f"  lần leo thang               : {leo_thang}")
+    print(f"  lần tự đi khi hết hạn chờ   : {tu_di}")
     if co_dong_ho:
         print(f"  quá hạn SLA (đã chạy đồng hồ): {qua_han}/{len(co_dong_ho)} "
               f"= {100 * qua_han / len(co_dong_ho):.1f} %")
