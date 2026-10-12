@@ -212,4 +212,45 @@ BEGIN
     END IF;
 
     RAISE NOTICE 'Loại lời nhắn hợp lệ: mọi loại đều có vai trò gửi được';
+
+    -- Phép kiểm tra 10 — lịch làm việc (#199)
+    -- Mọi đồng hồ đo bằng giờ làm việc của lịch mặc định. Thiếu lịch, hay lịch không có
+    -- giờ làm nào, thì đồng hồ SLA đứng yên mãi và không hồ sơ nào bao giờ quá hạn — lỗi
+    -- im lặng, nên phải chặn lúc nạp.
+    IF (SELECT count(*) FROM work_calendars WHERE is_default) <> 1 THEN
+        RAISE EXCEPTION 'Phải có đúng một lịch làm việc mặc định (work_calendars.is_default)';
+    END IF;
+
+    SELECT string_agg(c.code || ' (' || c.time_zone || ')', ', ' ORDER BY c.code) INTO danh_sach
+    FROM work_calendars c
+    WHERE NOT EXISTS (SELECT 1 FROM pg_timezone_names z WHERE z.name = c.time_zone);
+
+    IF danh_sach IS NOT NULL THEN
+        RAISE EXCEPTION 'Lịch làm việc mang tên múi giờ không tồn tại: %', danh_sach;
+    END IF;
+
+    SELECT string_agg(c.code, ', ' ORDER BY c.code) INTO danh_sach
+    FROM work_calendars c
+    WHERE NOT EXISTS (SELECT 1 FROM work_hours w WHERE w.calendar_code = c.code);
+
+    IF danh_sach IS NOT NULL THEN
+        RAISE EXCEPTION 'Lịch làm việc không có khung giờ làm nào: %', danh_sach;
+    END IF;
+
+    -- Hai khung chồng nhau trong cùng một ngày thì phần chồng bị đếm hai lần
+    SELECT string_agg(a.calendar_code || ' thứ ' || a.iso_weekday || ' '
+                      || a.start_time || '–' || a.end_time || ' chồng ' || b.start_time || '–' || b.end_time,
+                      ', ') INTO danh_sach
+    FROM work_hours a
+    JOIN work_hours b
+      ON b.calendar_code = a.calendar_code
+     AND b.iso_weekday = a.iso_weekday
+     AND b.start_time > a.start_time
+     AND b.start_time < a.end_time;
+
+    IF danh_sach IS NOT NULL THEN
+        RAISE EXCEPTION 'Khung giờ làm chồng nhau: %', danh_sach;
+    END IF;
+
+    RAISE NOTICE 'Lịch làm việc hợp lệ: một lịch mặc định, có giờ làm, không khung nào chồng nhau';
 END $$;

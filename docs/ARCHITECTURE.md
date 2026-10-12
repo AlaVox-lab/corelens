@@ -411,7 +411,7 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 5.2. Lược đồ cấu hình đã hiện thực
 
-Mười ba bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia bốn nhóm:
+Mười sáu bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia năm nhóm:
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
@@ -419,6 +419,7 @@ Mười ba bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
 | Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
+| Lịch làm việc | `work_calendars` · `work_hours` · `holidays` | Giờ làm theo thứ, ngày nghỉ, múi giờ (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định — xem mục 7.1 |
 
 **Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
 vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
@@ -437,7 +438,8 @@ giữa hai loại nội dung khác hẳn nhau.
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
    là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
-   ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được. Sai một điều thì
+   ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được, từ #199 là lịch
+   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Sai một điều thì
    **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
    kẹt mới lộ ra
 
@@ -733,6 +735,18 @@ gian, thứ mà một nền tảng workflow có sẵn sẽ cho không. Đây là
 `sla_paused_seconds` và `sla_segment_since`. Lý do không tính sẵn một mốc hạn chót:
 đồng hồ dừng rồi chạy lại nhiều lần trong đời một hồ sơ, nên mốc cố định sẽ sai ngay
 lần đầu người dùng bị hỏi thêm thông tin.
+
+**Đồng hồ đếm giờ làm việc, không đếm giờ lịch** (#199). Hồ sơ cam kết 8 giờ mà phòng ban
+nhận lúc 15:00 thứ Sáu thì hạn là 15:00 thứ Hai — đêm, cuối tuần, nghỉ trưa, ngày lễ không
+trôi. Lịch là dữ liệu (mục 5.2): khung giờ theo thứ, ngày nghỉ, múi giờ, một lịch mặc định
+cho cả công ty. Mọi phép đo đi qua hai hàm của lược đồ khởi tạo — `so_giay_lam_viec(từ,
+đến)` và phép ngược `moc_sau_giay_lam_viec(từ, số giây)` — không chỗ nào trong mã tự trừ
+hai mốc thời gian. Đặt hàm trong PostgreSQL vì truy vấn tìm hồ sơ quá hạn của bộ quét cần
+đo ngay trong SQL; Python gọi đúng hàm đó, nên hai nơi không thể đo lệch nhau. Áp cho cả
+đoạn chạy lẫn đoạn dừng, ân hạn, và hạn chót `sla_due_at` dịch vụ trả cho giao diện ("hạn
+15:00 Thứ Hai 19/10" — chỉ có khi đồng hồ đang chạy, vì lúc dừng chưa biết nó chạy lại
+khi nào). `sla_hours`, `sla_grace_hours` giữ nguyên số, nay là giờ làm việc. Mốc thời gian
+vẫn lưu UTC; lịch chỉ dùng để đo khoảng.
 
 **Trạng thái nào làm đồng hồ chạy là dữ liệu, không phải mã.** Cột `states.sla_running`
 trả lời cả hai câu — đồng hồ bắt đầu từ đâu, và dừng ở đâu — nên mã nguồn không phải

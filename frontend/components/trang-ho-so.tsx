@@ -13,7 +13,7 @@ import { Check, Info } from "lucide-react";
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import type { Buoc } from "@/lib/buoc";
-import { thoiLuong } from "@/lib/dinh-dang";
+import { thoiLuongLamViec } from "@/lib/dinh-dang";
 import type { HoSoTomTat } from "@/lib/kieu";
 import { docDongHo, vachHan } from "@/lib/sla";
 
@@ -80,7 +80,8 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
               <i style={{ width: `${vach.phan}%` }} />
             </div>
             <small>
-              Cam kết {thoiLuong(ho_so.sla_limit_seconds ?? 0)}, tính từ lúc phòng ban nhận việc
+              Cam kết {thoiLuongLamViec(ho_so.sla_limit_seconds ?? 0)}, tính từ lúc phòng ban
+              nhận việc
             </small>
           </>
         ) : (

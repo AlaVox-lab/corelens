@@ -333,8 +333,9 @@ Ngoài trạng thái và quy tắc chuyển, ba nhóm sau cũng là **dữ liệ
 | **Phòng ban** | Công nghệ thông tin, Nhân sự, Hành chính, Tài chính kế toán | `administrator` |
 | **Loại yêu cầu** | Sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư | `administrator` |
 | **Ánh xạ loại → phòng ban** | Sự cố thiết bị → Công nghệ thông tin | `administrator` |
-| **Ngưỡng SLA** | Theo từng loại yêu cầu | `administrator` |
-| **Ân hạn sau khi vào lại xử lý** | Theo từng loại yêu cầu, mẫu là một phần tư ngưỡng SLA | `administrator` |
+| **Ngưỡng SLA** | Theo từng loại yêu cầu, tính bằng **giờ làm việc** | `administrator` |
+| **Ân hạn sau khi vào lại xử lý** | Theo từng loại yêu cầu, mẫu là một phần tư ngưỡng SLA, cũng là giờ làm việc | `administrator` |
+| **Lịch làm việc** | Khung giờ làm theo thứ, ngày nghỉ, múi giờ — mẫu: thứ Hai–thứ Sáu 08:00–12:00 và 13:00–17:00, giờ Việt Nam, ngày nghỉ lễ 2026 (#199) | `administrator` |
 
 Yêu cầu này không chỉ để thích ứng đề thi tháng 11. Mục tiêu sản phẩm là **doanh nghiệp
 khác tải về rồi tự tùy biến phòng ban và loại yêu cầu theo đặc thù của mình** — đó là lý do

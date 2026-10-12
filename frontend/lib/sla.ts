@@ -19,8 +19,12 @@
 // lib/trang-thai.ts — bảng trình bày, có câu chung cho trạng thái lạ.
 //
 // Cùng một hồ sơ, người gửi đọc "chờ bạn", người trong phòng đọc "chờ người gửi".
+//
+// Mọi con số của đồng hồ là GIỜ LÀM VIỆC theo lịch trong dữ liệu (#199), nên câu luôn nói
+// "giờ làm việc" và, khi đồng hồ đang chạy, kèm hạn chót dịch vụ tính sẵn — "còn 6 giờ làm
+// việc" mà không có giờ cụ thể thì người đọc phải tự đếm qua đêm và cuối tuần.
 
-import { thoiLuong } from "@/lib/dinh-dang";
+import { hanLuc, thoiLuong, thoiLuongLamViec } from "@/lib/dinh-dang";
 import type { HoSoTomTat } from "@/lib/kieu";
 import { trinhBayTrangThai } from "@/lib/trang-thai";
 
@@ -53,7 +57,7 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
       return { cau: `Khép lại, đã vượt cam kết`, canhBao: true };
     }
     return {
-      cau: `Khép lại sau ${thoiLuong(ho_so.sla_running_seconds)} xử lý`,
+      cau: `Khép lại sau ${thoiLuongLamViec(ho_so.sla_running_seconds)}`,
       canhBao: false,
     };
   }
@@ -66,7 +70,7 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
   // rõ mốc bắt đầu, không nói "còn …" như thể hạn đang đếm.
   if (!ho_so.sla_started) {
     return {
-      cau: `Cam kết ${thoiLuong(ho_so.sla_limit_seconds)}, tính từ lúc phòng ban nhận việc`,
+      cau: `Cam kết ${thoiLuongLamViec(ho_so.sla_limit_seconds)}, tính từ lúc phòng ban nhận việc`,
       canhBao: false,
     };
   }
@@ -79,10 +83,12 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
   if (khiDung === "cho-xac-nhan") {
     const cho = laNguoiGui ? "chờ bạn xác nhận" : "chờ người gửi xác nhận";
     if (ho_so.sla_overdue) {
-      return { cau: `Đã xử lý xong, trễ hạn ${thoiLuong(-con_lai)} · ${cho}`, canhBao: true };
+      return { cau: `Đã xử lý xong, trễ hạn ${thoiLuongLamViec(-con_lai)} · ${cho}`, canhBao: true };
     }
     const trong =
-      ho_so.sla_running_seconds < 60 ? "" : ` trong ${thoiLuong(ho_so.sla_running_seconds)}`;
+      ho_so.sla_running_seconds < 60
+        ? ""
+        : ` trong ${thoiLuongLamViec(ho_so.sla_running_seconds)}`;
     return { cau: `Đã xử lý xong${trong} · ${cho}`, canhBao: false };
   }
 
@@ -91,9 +97,9 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
     // thang lần nữa, để không ai tưởng hệ thống quên hồ sơ này (#94).
     const anHan =
       ho_so.sla_grace_seconds !== null && ho_so.sla_grace_seconds > 0
-        ? ` · ân hạn còn ${thoiLuong(ho_so.sla_grace_seconds)}`
+        ? ` · ân hạn còn ${thoiLuongLamViec(ho_so.sla_grace_seconds)}`
         : "";
-    return { cau: `Quá hạn ${thoiLuong(-con_lai)}${anHan}`, canhBao: true };
+    return { cau: `Quá hạn ${thoiLuongLamViec(-con_lai)}${anHan}`, canhBao: true };
   }
 
   if (ho_so.sla_paused) {
@@ -101,12 +107,13 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
     const vi =
       khiDung === "cho-tra-loi" ? (laNguoiGui ? " trong lúc chờ bạn" : ", chờ người gửi") : "";
     return {
-      cau: `Tạm dừng đếm hạn${vi} · còn ${thoiLuong(con_lai)}`,
+      cau: `Tạm dừng đếm hạn${vi} · còn ${thoiLuongLamViec(con_lai)}`,
       canhBao: false,
     };
   }
 
-  return { cau: `Còn ${thoiLuong(con_lai)} trong cam kết`, canhBao: false };
+  const han = ho_so.sla_due_at ? ` · hạn ${hanLuc(ho_so.sla_due_at)}` : " trong cam kết";
+  return { cau: `Còn ${thoiLuongLamViec(con_lai)}${han}`, canhBao: false };
 }
 
 /**

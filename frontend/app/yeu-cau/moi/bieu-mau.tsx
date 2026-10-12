@@ -140,7 +140,7 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
                 key={l.code}
                 nhan={l.label}
                 moTa={l.description ?? ""}
-                phu={`Cam kết ${l.sla_hours} giờ`}
+                phu={`Cam kết ${l.sla_hours} giờ làm việc`}
                 chon={loai === l.code}
                 onChon={() => {
                   datLoai(l.code);
@@ -283,7 +283,7 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
               khoa="Thời hạn cam kết"
               gia_tri={
                 loaiDaChon
-                  ? `${loaiDaChon.sla_hours} giờ kể từ lúc phòng ban bắt đầu xử lý`
+                  ? `${loaiDaChon.sla_hours} giờ làm việc kể từ lúc phòng ban bắt đầu xử lý`
                   : "Chưa xác định cho tới khi hồ sơ được phân loại"
               }
             />

@@ -122,6 +122,11 @@ export type HoSoTomTat = {
    */
   sla_grace_seconds: number | null;
   /**
+   * Mốc hết hạn xử lý theo lịch làm việc, khi đồng hồ đang chạy (#199). `null` khi đồng hồ
+   * đang dừng hay chưa chạy — lúc đó chưa biết hạn rơi vào đâu.
+   */
+  sla_due_at: string | null;
+  /**
    * Lời nhắn sau cùng là của người gửi hồ sơ (`true`), của nhân viên (`false`), hay chưa
    * có lời nhắn nào (`null`) — nguồn của dấu hiệu "đang chờ trả lời" trên danh sách (#128).
    */
