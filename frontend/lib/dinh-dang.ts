@@ -145,3 +145,30 @@ export function thoiLuong(giay: number): string {
   const le = gio % 24;
   return le > 0 ? `${ngay} ngày ${le} giờ` : `${ngay} ngày`;
 }
+
+/**
+ * Thời lượng tính bằng GIỜ LÀM VIỆC (#199): `12 giờ 30 phút làm việc`.
+ *
+ * Mọi con số của đồng hồ SLA đếm giờ làm việc theo lịch trong dữ liệu, nên không quy ra
+ * ngày như `thoiLuong`: một ngày làm việc dài bao nhiêu giờ là chuyện của lịch, không phải
+ * 24 giờ — "1 ngày" ở đây sẽ đọc thành một ngày lịch và sai gấp ba.
+ */
+export function thoiLuongLamViec(giay: number): string {
+  if (giay < 60) return "chưa tới một phút làm việc";
+
+  const phut = Math.floor(giay / 60);
+  if (phut < 60) return `${phut} phút làm việc`;
+
+  const gio = Math.floor(phut / 60);
+  const le = phut % 60;
+  return le > 0 ? `${gio} giờ ${le} phút làm việc` : `${gio} giờ làm việc`;
+}
+
+/** Hạn chót: `15:00 Thứ Hai 19/10` (#199). */
+export function hanLuc(iso: string): string {
+  const d = new Date(iso);
+  const thu = phan(NGAY_DAY_DU, d, "weekday");
+  const ngay = phan(NGAY_DAY_DU, d, "day");
+  const thang = phan(NGAY_DAY_DU, d, "month");
+  return `${CHI_GIO.format(d)} ${thu} ${ngay}/${thang}`;
+}

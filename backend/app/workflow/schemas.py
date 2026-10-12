@@ -114,7 +114,7 @@ class HoSoTomTatRa(BaseModel):
     created_at: dt.datetime
     updated_at: dt.datetime
 
-    # Đồng hồ SLA — xem app/rules/sla.py
+    # Đồng hồ SLA — xem app/rules/sla.py. Mọi số giây là giờ làm việc (#199)
     sla_running_seconds: int
     sla_paused_seconds: int
     sla_limit_seconds: int | None = None
@@ -124,6 +124,8 @@ class HoSoTomTatRa(BaseModel):
     sla_started: bool
     # Ân hạn còn lại khi hồ sơ quá hạn vừa được giao lại hay mở lại (#94)
     sla_grace_seconds: int | None = None
+    # Mốc hết hạn xử lý khi đồng hồ đang chạy và chưa quá hạn; None khi đang dừng (#199)
+    sla_due_at: dt.datetime | None = None
 
     # Lời nhắn sau cùng là của người gửi hồ sơ (True), của nhân viên (False), hay chưa
     # có lời nhắn nào (None) — nguồn của dấu hiệu "đang chờ trả lời" trên hàng đợi (#128)

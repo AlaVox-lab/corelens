@@ -250,10 +250,10 @@ CREATE TABLE request_types (
 );
 
 COMMENT ON COLUMN request_types.sla_hours IS
-    'Ngưỡng SLA tính bằng giờ. Cạnh leo thang tự động ở #42 đọc cột này, không mã cứng ngưỡng.';
+    'Ngưỡng SLA tính bằng giờ làm việc theo lịch mặc định (#199). Cạnh leo thang tự động ở #42 đọc cột này, không mã cứng ngưỡng.';
 
 COMMENT ON COLUMN request_types.sla_grace_hours IS
-    'Ân hạn tính bằng giờ (#94): mỗi lần hồ sơ vào lại trạng thái đếm giờ — phân công lại, mở lại, bổ sung thông tin xong — người nhận có ít nhất chừng này trước khi bộ quét được leo thang lại, dù hồ sơ đã quá hạn. Đồng hồ tổng không đặt lại. 0 là không có ân hạn.';
+    'Ân hạn tính bằng giờ làm việc (#94, #199): mỗi lần hồ sơ vào lại trạng thái đếm giờ — phân công lại, mở lại, bổ sung thông tin xong — người nhận có ít nhất chừng này trước khi bộ quét được leo thang lại, dù hồ sơ đã quá hạn. Đồng hồ tổng không đặt lại. 0 là không có ân hạn.';
 
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách. Nhiều-nhiều có đánh dấu mặc
 -- định: một loại yêu cầu có thể do vài phòng đảm nhận, nhưng chỉ một phòng được
@@ -340,3 +340,147 @@ CREATE TABLE message_kind_roles (
 
 COMMENT ON TABLE message_kinds IS
     'Loại lời nhắn trên hồ sơ (#128). Lời nhắn không đổi hồ sơ nên không phải cạnh chuyển trạng thái — xem ADR-0005.';
+
+
+-- ===========================================================================
+-- 10. LỊCH LÀM VIỆC (#199)
+-- ===========================================================================
+-- Mọi khoảng thời gian của quy trình — đồng hồ SLA, ân hạn (#94), các hạn chờ — đo
+-- bằng GIỜ LÀM VIỆC: hồ sơ cam kết 8 giờ, phòng ban nhận lúc 15:00 thứ Sáu thì hạn là
+-- 15:00 thứ Hai, không phải 23:00 thứ Sáu. Giờ làm, ngày nghỉ, múi giờ đều là dữ liệu
+-- trong infra/seed/ — doanh nghiệp đổi lịch không sửa mã.
+--
+-- Một lịch chung cho cả công ty (`is_default`). Bảng vẫn có khóa lịch để sau này gắn
+-- lịch riêng cho phòng ban mà không phải đổi lược đồ.
+--
+-- Mốc thời gian vẫn lưu theo UTC như mọi nơi khác; lịch chỉ dùng để ĐO KHOẢNG giữa hai
+-- mốc. Không chỗ nào trong mã được tự trừ hai mốc để ra thời gian xử lý — mọi phép đo
+-- đi qua hai hàm ở cuối mục này.
+
+CREATE TABLE work_calendars (
+    code        TEXT     PRIMARY KEY,
+    label       TEXT     NOT NULL,
+    -- Tên múi giờ IANA, ví dụ Asia/Ho_Chi_Minh. Giờ làm và ngày nghỉ hiểu theo múi này.
+    -- Tên sai thì tệp 99 chặn ngay lúc nạp.
+    time_zone   TEXT     NOT NULL,
+    is_default  BOOLEAN  NOT NULL DEFAULT FALSE
+);
+
+CREATE UNIQUE INDEX work_calendars_chi_mot_mac_dinh
+    ON work_calendars (is_default) WHERE is_default;
+
+-- Khung giờ làm theo thứ trong tuần. Một ngày có nhiều khung — nghỉ trưa là khoảng
+-- trống giữa hai khung. `end_time` nhận '24:00' cho khung chạy tới hết ngày.
+CREATE TABLE work_hours (
+    calendar_code  TEXT      NOT NULL REFERENCES work_calendars (code) ON DELETE CASCADE,
+    -- 1 = thứ Hai … 7 = Chủ nhật, theo ISODOW của PostgreSQL
+    iso_weekday    SMALLINT  NOT NULL,
+    start_time     TIME      NOT NULL,
+    end_time       TIME      NOT NULL,
+
+    PRIMARY KEY (calendar_code, iso_weekday, start_time),
+
+    CONSTRAINT work_hours_thu_hop_le
+        CHECK (iso_weekday BETWEEN 1 AND 7),
+    CONSTRAINT work_hours_khung_hop_le
+        CHECK (start_time < end_time)
+);
+
+-- Ngày nghỉ trọn ngày (lễ, Tết, nghỉ bù). Ngày nằm ở đây thì không có giờ làm nào,
+-- kể cả khi rơi vào thứ có khung giờ.
+CREATE TABLE holidays (
+    calendar_code  TEXT  NOT NULL REFERENCES work_calendars (code) ON DELETE CASCADE,
+    day            DATE  NOT NULL,
+    label          TEXT  NOT NULL,
+
+    PRIMARY KEY (calendar_code, day)
+);
+
+COMMENT ON TABLE work_calendars IS
+    'Lịch làm việc (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định.';
+
+-- Số giây làm việc giữa hai mốc, theo lịch `p_lich` (bỏ trống là lịch mặc định).
+-- Đi từng ngày theo giờ địa phương, bỏ ngày nghỉ, cộng phần giao của [p_tu, p_den) với
+-- từng khung giờ làm của ngày đó. Mốc đảo ngược hay trùng nhau thì ra 0.
+CREATE FUNCTION so_giay_lam_viec(p_tu TIMESTAMPTZ, p_den TIMESTAMPTZ, p_lich TEXT DEFAULT NULL)
+RETURNS BIGINT
+LANGUAGE sql STABLE
+AS $$
+    WITH lich AS (
+        SELECT code, time_zone
+        FROM work_calendars
+        WHERE code = COALESCE(p_lich, (SELECT code FROM work_calendars WHERE is_default))
+    ),
+    ngay AS (
+        SELECT l.code, l.time_zone, d::date AS ngay
+        FROM lich l,
+             generate_series((p_tu AT TIME ZONE l.time_zone)::date,
+                             (p_den AT TIME ZONE l.time_zone)::date,
+                             INTERVAL '1 day') AS d
+        WHERE p_den > p_tu
+          AND NOT EXISTS (
+              SELECT 1 FROM holidays h WHERE h.calendar_code = l.code AND h.day = d::date
+          )
+    )
+    SELECT COALESCE(FLOOR(SUM(GREATEST(0, EXTRACT(EPOCH FROM
+               LEAST(p_den, (n.ngay + w.end_time) AT TIME ZONE n.time_zone)
+             - GREATEST(p_tu, (n.ngay + w.start_time) AT TIME ZONE n.time_zone))))), 0)::BIGINT
+    FROM ngay n
+    JOIN work_hours w
+      ON w.calendar_code = n.code AND w.iso_weekday = EXTRACT(ISODOW FROM n.ngay)
+$$;
+
+-- Mốc thời gian sau `p_giay` giây làm việc kể từ `p_tu` — hạn chót để hiển thị ("hạn
+-- 15:00 thứ Hai"). Phép ngược của hàm trên: so_giay_lam_viec(p_tu, kết quả) = p_giay.
+-- Trả NULL khi không có lịch, hoặc khi mười năm tới không đủ giờ làm (lịch trống).
+CREATE FUNCTION moc_sau_giay_lam_viec(p_tu TIMESTAMPTZ, p_giay BIGINT, p_lich TEXT DEFAULT NULL)
+RETURNS TIMESTAMPTZ
+LANGUAGE plpgsql STABLE
+AS $$
+DECLARE
+    v_lich  TEXT;
+    v_tz    TEXT;
+    v_ngay  DATE;
+    v_con   NUMERIC;
+    v_bat   TIMESTAMPTZ;
+    v_ket   TIMESTAMPTZ;
+    v_khung RECORD;
+BEGIN
+    SELECT code, time_zone INTO v_lich, v_tz
+    FROM work_calendars
+    WHERE code = COALESCE(p_lich, (SELECT code FROM work_calendars WHERE is_default));
+
+    IF v_lich IS NULL OR p_tu IS NULL OR p_giay IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF p_giay <= 0 THEN
+        RETURN p_tu;
+    END IF;
+
+    v_con  := p_giay;
+    v_ngay := (p_tu AT TIME ZONE v_tz)::date;
+
+    FOR i IN 1 .. 3660 LOOP
+        IF NOT EXISTS (SELECT 1 FROM holidays WHERE calendar_code = v_lich AND day = v_ngay) THEN
+            FOR v_khung IN
+                SELECT start_time, end_time
+                FROM work_hours
+                WHERE calendar_code = v_lich AND iso_weekday = EXTRACT(ISODOW FROM v_ngay)
+                ORDER BY start_time
+            LOOP
+                v_bat := GREATEST(p_tu, (v_ngay + v_khung.start_time) AT TIME ZONE v_tz);
+                v_ket := (v_ngay + v_khung.end_time) AT TIME ZONE v_tz;
+                CONTINUE WHEN v_ket <= v_bat;
+
+                IF EXTRACT(EPOCH FROM v_ket - v_bat) >= v_con THEN
+                    RETURN v_bat + make_interval(secs => v_con::double precision);
+                END IF;
+                v_con := v_con - EXTRACT(EPOCH FROM v_ket - v_bat);
+            END LOOP;
+        END IF;
+        v_ngay := v_ngay + 1;
+    END LOOP;
+
+    RETURN NULL;
+END;
+$$;

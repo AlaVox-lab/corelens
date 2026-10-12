@@ -23,7 +23,7 @@ import urllib.error
 import urllib.request
 
 import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.directory import KeycloakDirectory
@@ -69,6 +69,28 @@ def session(db_engine):
         phien.close()
         giao_dich.rollback()
         ket_noi.close()
+
+
+@pytest.fixture
+def lich_ca_ngay(session) -> None:
+    """Lịch làm việc mặc định thành cả ngày, cả tuần, không ngày nghỉ (#199).
+
+    Đồng hồ SLA đo bằng giờ làm việc, nên bài kiểm thử "lùi đồng hồ 9 giờ" sẽ ra kết quả
+    khác nhau tùy lúc chạy — chiều thứ Sáu hay sáng thứ Hai. Với lịch này giờ làm việc
+    trùng giờ lịch, bài cũ giữ đúng đáp án ở mọi thời điểm. Thay đổi nằm trong giao dịch
+    của bài nên hoàn tác cùng bài. Lịch thật được kiểm riêng ở test_lich_lam_viec.py.
+    """
+    mac_dinh = "(SELECT code FROM work_calendars WHERE is_default)"
+    session.execute(text(f"DELETE FROM holidays WHERE calendar_code = {mac_dinh}"))
+    session.execute(text(f"DELETE FROM work_hours WHERE calendar_code = {mac_dinh}"))
+    session.execute(
+        text(
+            "INSERT INTO work_hours (calendar_code, iso_weekday, start_time, end_time) "
+            "SELECT code, thu, TIME '00:00', TIME '24:00' "
+            "FROM work_calendars, generate_series(1, 7) AS thu WHERE is_default"
+        )
+    )
+    session.flush()
 
 
 @pytest.fixture
