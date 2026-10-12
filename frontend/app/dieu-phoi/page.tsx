@@ -18,11 +18,13 @@ import { BangHangDoi, type DongHangDoi } from "@/components/bang-hang-doi";
 import { goiDichVu } from "@/lib/api";
 import { thoiLuong } from "@/lib/dinh-dang";
 import type { HangDoi, MucHangDoi } from "@/lib/kieu";
+import { docTuDong } from "@/lib/sla";
 
 export const dynamic = "force-dynamic";
 
 function thanhDong(m: MucHangDoi, bayGio: Date): DongHangDoi {
   const giay = Math.max(0, (bayGio.getTime() - new Date(m.state_entered_at).getTime()) / 1000);
+  const tuDong = docTuDong(m);
   return {
     id: m.id,
     href: `/dieu-phoi/${m.id}`,
@@ -34,7 +36,8 @@ function thanhDong(m: MucHangDoi, bayGio: Date): DongHangDoi {
     nguoiGui: m.requester_label ?? undefined,
     loai: m.request_type?.label ?? null,
     trangThai: { code: m.state.code, label: m.state.label },
-    cuoi: { chu: thoiLuong(giay) },
+    // Hồ sơ sắp tự trả về vì phòng ban chưa xác duyệt (#142): báo thay cho thời gian chờ
+    cuoi: tuDong?.canhBao ? { chu: tuDong.cau, muc: "sap" } : { chu: thoiLuong(giay) },
   };
 }
 

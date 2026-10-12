@@ -15,7 +15,7 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import type { Buoc } from "@/lib/buoc";
 import { thoiLuongLamViec } from "@/lib/dinh-dang";
 import type { HoSoTomTat } from "@/lib/kieu";
-import { docDongHo, vachHan } from "@/lib/sla";
+import { docDongHo, docTuDong, vachHan } from "@/lib/sla";
 
 export type MucMeta = { icon: React.ReactNode; chu: string };
 
@@ -68,6 +68,8 @@ export function ThanhBuoc({ cacBuoc }: { cacBuoc: Buoc[] }) {
 export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
   const dongHo = docDongHo(ho_so);
   const vach = vachHan(ho_so);
+  // Trạng thái có hạn chờ (#142): nói luôn lúc hệ thống sẽ tự đi, nhấn mạnh khi sắp tới
+  const tuDong = docTuDong(ho_so);
 
   return (
     <div className="the khoi">
@@ -94,6 +96,11 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
           >
             {dongHo.cau}
           </span>
+        )}
+        {tuDong && (
+          <small className="tu-dong" data-sap={tuDong.canhBao ? "" : undefined}>
+            {tuDong.cau}
+          </small>
         )}
       </div>
     </div>

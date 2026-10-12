@@ -9,16 +9,21 @@
 # hạn — và khai phá quy trình mất khả năng chỉ ra điểm nghẽn.
 #
 # Tệp nằm ở `workflow/` chứ không ở `rules/` vì nó ĐIỀU KHIỂN việc chuyển trạng thái.
-# Phần kế toán thời gian thuần túy nằm ở `app/rules/sla.py`.
+# Phần kế toán thời gian thuần túy nằm ở `app/rules/sla.py` và `app/rules/han_cho.py`.
+#
+# Hai bộ quét, hai loại cạnh hệ thống: leo thang khi quá hạn SLA (cạnh không có hạn chờ),
+# và tự đi khi hồ sơ nằm im quá hạn chờ (cạnh mang `auto_after_hours`, #142).
 
 from __future__ import annotations
 
+import datetime as dt
 import logging
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.workflow_config import Transition
+from app.rules.han_cho import ho_so_het_han_cho
 from app.rules.sla import ho_so_qua_han
 from app.workflow.context import Actor
 from app.workflow.engine import perform_transition
@@ -29,6 +34,8 @@ logger = logging.getLogger(__name__)
 # Tên tác nhân ghi vào cột `actor` của nhật ký sự kiện khi hệ thống tự đi.
 # Khai phá quy trình dựa vào đây để tách nhánh tự động khỏi nhánh do người làm.
 TAC_NHAN_SLA = "sla-watcher"
+# Tác nhân của cạnh tự đi khi hết hạn chờ (#142) — tách tên để nhật ký phân biệt hai lý do.
+TAC_NHAN_HAN_CHO = "wait-watcher"
 
 
 def quet_va_leo_thang(session: Session) -> list[int]:
@@ -52,6 +59,7 @@ def quet_va_leo_thang(session: Session) -> list[int]:
                 Transition.rule_set_id == ho_so.rule_set_id,
                 Transition.from_state == ho_so.current_state,
                 Transition.is_system,
+                Transition.auto_after_hours.is_(None),
             )
         ).first()
 
@@ -80,3 +88,35 @@ def quet_va_leo_thang(session: Session) -> list[int]:
         logger.info("Đã leo thang %d hồ sơ quá hạn", len(da_leo_thang))
 
     return da_leo_thang
+
+
+def quet_het_han_cho(session: Session, luc: dt.datetime | None = None) -> list[int]:
+    """Đẩy những hồ sơ nằm im quá hạn chờ qua cạnh tự đi của trạng thái đó (#142).
+
+    Trả về danh sách định danh hồ sơ đã đi. Cạnh, hạn chờ, trạng thái đích đều tra từ
+    `transitions` — bộ quét không biết "Chờ phòng ban xác duyệt" là gì. `luc` là thời điểm
+    xét, mặc định bây giờ.
+
+    Hàm **không tự commit**, giống `quet_va_leo_thang`.
+    """
+    he_thong = Actor.system(TAC_NHAN_HAN_CHO)
+    da_di: list[int] = []
+
+    for ho_so, canh in ho_so_het_han_cho(session, luc):
+        try:
+            perform_transition(
+                session,
+                case_id=ho_so.id,
+                to_state=canh.to_state,
+                actor=he_thong,
+                note=f"Hết hạn chờ {canh.auto_after_hours} giờ làm việc mà chưa ai thao tác",
+            )
+        except TransitionError as loi:
+            logger.warning("Không tự đi được hồ sơ %s: %s", ho_so.id, loi.message)
+            continue
+        da_di.append(ho_so.id)
+
+    if da_di:
+        logger.info("Đã tự đi %d hồ sơ hết hạn chờ", len(da_di))
+
+    return da_di

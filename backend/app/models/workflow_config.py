@@ -97,6 +97,10 @@ class Transition(Base):
     # Cạnh làm lại (#153): đi qua là hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm
     # quay lui theo cờ này — xem lược đồ khởi tạo.
     is_rework: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Cạnh hệ thống tự đi sau chừng này giờ làm việc ở trạng thái nguồn, và báo trước
+    # chừng này giờ (#142). NULL là không tự đi theo thời gian chờ.
+    auto_after_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+    warn_before_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
 
     # Cột kỹ thuật luôn bằng FALSE, tồn tại để khóa ngoại tổng hợp chặn việc tạo
     # cạnh rời khỏi một trạng thái kết thúc. Mã nguồn không bao giờ đọc hay ghi nó.

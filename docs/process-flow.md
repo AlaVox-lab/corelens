@@ -12,6 +12,10 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 > **Cập nhật 24/09/2026** theo ADR-0005, giảng viên đã duyệt: người tạo sửa được nội dung
 > trước khi hồ sơ tới phòng ban, người xử lý tự nhận được hồ sơ chưa giao ai. Hai thao tác
 > này là cạnh — hai trong số đó tự trỏ — nên luồng có hai mươi bốn cạnh. Xem mục 3.
+>
+> **Cập nhật 12/10/2026** theo quyết định của giảng viên ngày 08/10 (#142): hồ sơ nằm im ở *Chờ
+> phòng ban xác duyệt* thì điều phối viên rút về được, và hết 24 giờ làm việc thì hệ thống tự
+> trả về. Luồng có hai mươi sáu cạnh.
 
 ---
 
@@ -48,6 +52,7 @@ stateDiagram-v2
     ChoXacDuyet --> ChoBoSung: Trưởng phòng hỏi thêm
     ChoXacDuyet --> BiTuChoi: Phòng ban từ chối, sai chuyên môn
     ChoXacDuyet --> Huy: Người tạo hủy
+    ChoXacDuyet --> DaPhanLoai: Điều phối rút về, hay tự trả về sau 24 giờ làm việc
 
     BiTuChoi --> DaPhanLoai: Người phân loại định tuyến lại
 
@@ -129,7 +134,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Hai mươi bốn cạnh chuyển trạng thái
+## 3. Hai mươi sáu cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -148,6 +153,8 @@ là không đi được**.
 | `awaiting-acceptance` | `awaiting-info` | Yêu cầu bổ sung thông tin | `approver` |
 | `awaiting-acceptance` | `rejected-by-department` | Từ chối vì sai chuyên môn | `approver` |
 | `awaiting-acceptance` | `cancelled` | Hủy yêu cầu | `requester` |
+| `awaiting-acceptance` | `classified` | Rút hồ sơ về điều phối — bắt buộc lý do | `classifier` |
+| `awaiting-acceptance` | `classified` | Tự trả về điều phối — hết 24 giờ làm việc chờ, báo trước 4 giờ | **hệ thống** |
 | `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
 | `in-progress` | `in-progress` | Nhận việc về mình | `handler` |
 | `in-progress` | `awaiting-info` | Yêu cầu bổ sung thông tin | `handler` |
@@ -180,7 +187,8 @@ một dòng nhật ký kèm giá trị cũ. Thao tác **không** đổi gì trê
 viên hay hỏi tiến độ, không phải cạnh: chúng vào bảng lời nhắn riêng (#128). Ba điều giữ cho
 cạnh tự trỏ không làm rối đồ thị:
 
-- Mỗi trạng thái **tối đa một** cạnh tự trỏ — lược đồ giữ `UNIQUE (bộ quy tắc, từ, sang)`
+- Mỗi trạng thái **tối đa một** cạnh tự trỏ của người — lược đồ giữ `UNIQUE (bộ quy tắc, từ,
+  sang, is_system)`
 - **Không có** cạnh tự trỏ ở trạng thái chờ người khác, như *Chờ bổ sung thông tin* — phép
   kiểm đồ thị số 7 trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` từ chối dữ liệu như vậy
 - Dòng nhật ký tự trỏ không đưa hồ sơ vào trạng thái nào, nên ràng buộc
@@ -189,6 +197,18 @@ cạnh tự trỏ không làm rối đồ thị:
 
 **Sửa nội dung ở *Đã phân loại* thì hồ sơ về *Đã gửi***, không tự trỏ: phân loại, mức ưu
 tiên, phòng ban dự kiến đều dựa trên nội dung cũ, nên người phân loại phải xem lại.
+
+**Hạn chờ: hồ sơ không nằm im mãi** (#142, giảng viên chốt ngày 08/10). Trạng thái chờ một
+người bấm có thể mang một cạnh hệ thống **tự đi** khi hồ sơ nằm đó đủ một số giờ làm việc
+(`transitions.auto_after_hours`), và màn hình báo trước khi còn `warn_before_hours`. Hiện có
+một: *Chờ phòng ban xác duyệt* tự trả về *Đã phân loại* sau 24 giờ làm việc, báo trước 4 giờ
+trên hàng đợi phòng ban, hàng đợi điều phối và thẻ hạn của trang hồ sơ. Trước hạn, điều phối
+viên rút về bằng tay được, có lý do — vì cạnh này mà *Chờ phòng ban xác duyệt* có mặt trong
+hàng đợi điều phối. Hai cạnh cùng cặp trạng thái, một của người, một của hệ thống: lược đồ giữ
+`UNIQUE (bộ quy tắc, từ, sang, is_system)`. Phòng cũ giữ lại tới khi điều phối chọn phòng mới,
+như hồ sơ bị phòng ban từ chối. Tự trả về và rút về **không** là cạnh làm lại — phòng ban
+không chê nội dung (navigator chốt 12/10). Nhật ký ghi tác nhân `wait-watcher` cho lần tự đi,
+tách khỏi `sla-watcher` của leo thang.
 
 **Cạnh làm lại** (#153, navigator chốt ngày 02/10). Ba cạnh mang cờ `is_rework` trong dữ
 liệu: *Từ chối vì sai chuyên môn*, *Mở lại, chưa đạt*, và *Sửa nội dung* từ *Đã phân loại*

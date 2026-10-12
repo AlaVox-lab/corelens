@@ -36,7 +36,7 @@ export type DongHangDoi = {
   /** Loại yêu cầu; `null` là chưa rõ loại. Không có khóa: bảng không có cột loại. */
   loai?: string | null;
   trangThai?: { code: string; label: string };
-  cuoi: { chu: string; muc?: "qua" | "dung" };
+  cuoi: { chu: string; muc?: "qua" | "sap" | "dung" };
 };
 
 export type NhomHangDoi = {
