@@ -16,7 +16,10 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 > **Cập nhật 12/10/2026** theo quyết định của giảng viên ngày 08/10 (#142): hồ sơ nằm im ở *Chờ
 > phòng ban xác duyệt* thì điều phối viên rút về được, và hết 24 giờ làm việc thì hệ thống tự
 > trả về. Cùng ngày (#144): hồ sơ *Hoàn tất* mà người gửi không xác nhận thì tự đóng sau 3 ngày
-> làm việc. Luồng có hai mươi bảy cạnh.
+> làm việc.
+>
+> **Cập nhật 15/10/2026** (#143): hồ sơ ở *Chờ bổ sung thông tin* mà người gửi không trả lời
+> thì tự đóng sau 5 ngày làm việc, nhắc từ ngày thứ ba. Luồng có hai mươi tám cạnh.
 
 ---
 
@@ -68,6 +71,7 @@ stateDiagram-v2
     ChoBoSung --> ChoXacDuyet: Bổ sung (trưởng phòng đã hỏi)
     ChoBoSung --> DangXuLy: Bổ sung (người xử lý đã hỏi)
     ChoBoSung --> Huy: Người tạo hủy
+    ChoBoSung --> Dong: Tự đóng sau 5 ngày làm việc không bổ sung
 
     HoanTat --> Dong: Người tạo xác nhận đạt, hay tự đóng sau 3 ngày làm việc
     HoanTat --> DangXuLy: Người tạo mở lại, chưa đạt
@@ -135,7 +139,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Hai mươi bảy cạnh chuyển trạng thái
+## 3. Hai mươi tám cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -166,6 +170,7 @@ là không đi được**.
 | `awaiting-info` | `awaiting-acceptance` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `in-progress` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `cancelled` | Hủy yêu cầu | `requester` |
+| `awaiting-info` | `closed` | Tự đóng vì chưa bổ sung thông tin — hết 40 giờ làm việc (5 ngày theo lịch mẫu), nhắc từ giờ thứ 16 | **hệ thống** |
 | `completed` | `closed` | Xác nhận đạt | `requester` |
 | `completed` | `closed` | Tự đóng hồ sơ — hết 24 giờ làm việc (3 ngày theo lịch mẫu) chờ xác nhận, báo trước 8 giờ | **hệ thống** |
 | `completed` | `in-progress` | Mở lại, chưa đạt | `requester` |
@@ -203,7 +208,7 @@ tiên, phòng ban dự kiến đều dựa trên nội dung cũ, nên người p
 **Hạn chờ: hồ sơ không nằm im mãi** (#142, giảng viên chốt ngày 08/10). Trạng thái chờ một
 người bấm có thể mang một cạnh hệ thống **tự đi** khi hồ sơ nằm đó đủ một số giờ làm việc
 (`transitions.auto_after_hours`), và màn hình báo trước khi còn `warn_before_hours`. Hiện có
-hai. *Chờ phòng ban xác duyệt* tự trả về *Đã phân loại* sau 24 giờ làm việc, báo trước 4 giờ
+ba. *Chờ phòng ban xác duyệt* tự trả về *Đã phân loại* sau 24 giờ làm việc, báo trước 4 giờ
 trên hàng đợi phòng ban, hàng đợi điều phối và thẻ hạn của trang hồ sơ. *Hoàn tất* tự đóng sau
 24 giờ làm việc — "3 ngày làm việc" của giảng viên với lịch mẫu 8 giờ một ngày — nếu người gửi
 không xác nhận, báo trước một ngày làm việc trên trang hồ sơ và danh sách *Hồ sơ của tôi* của
@@ -215,6 +220,14 @@ hàng đợi điều phối. Hai cạnh cùng cặp trạng thái, một của n
 như hồ sơ bị phòng ban từ chối. Tự trả về và rút về **không** là cạnh làm lại — phòng ban
 không chê nội dung (navigator chốt 12/10). Nhật ký ghi tác nhân `wait-watcher` cho lần tự đi,
 tách khỏi `sla-watcher` của leo thang.
+
+*Chờ bổ sung thông tin* tự đóng sau 40 giờ làm việc nếu người gửi không trả lời (#143) — giảng
+viên chốt "nhắc sau 2 ngày", navigator chốt đóng sau 5 ngày làm việc ngày 15/10 — nên dấu nhắc
+hiện từ giờ thứ 16, tức báo trước 24 giờ, trên trang hồ sơ và *Hồ sơ của tôi* của người gửi,
+trên hàng đợi và trang hồ sơ của phòng ban. Đích là *Đã đóng* chứ không phải *Đã hủy*: người
+gửi không chủ động bỏ yêu cầu; mã hoạt động `auto-close-no-info` tách lần đóng này khỏi hai
+cách đóng kia. Đồng hồ SLA của phòng ban vẫn dừng suốt thời gian chờ — đúng ý giảng viên, phòng
+ban không xử lý được khi thiếu thông tin. Mở lại sau khi đóng thuộc luật mở lại của #102.
 
 **Cạnh làm lại** (#153, navigator chốt ngày 02/10). Ba cạnh mang cờ `is_rework` trong dữ
 liệu: *Từ chối vì sai chuyên môn*, *Mở lại, chưa đạt*, và *Sửa nội dung* từ *Đã phân loại*
