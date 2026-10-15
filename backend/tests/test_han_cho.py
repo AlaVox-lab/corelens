@@ -128,7 +128,8 @@ def test_chi_mot_canh_tu_di_moi_trang_thai(session, rule_set):
 def test_dieu_phoi_vien_rut_ho_so_ve_co_ly_do(session, phong_ban):
     ho_so = _cho_phong(session, phong_ban)
     cac_nut = {c.activity_code for c in allowed_transitions(session, ho_so, DIEU_PHOI)}
-    assert cac_nut == {"withdraw"}
+    # Gia hạn (#101) cũng là cạnh của điều phối viên ở trạng thái này
+    assert cac_nut == {"withdraw", "extend-deadline"}
 
     with pytest.raises(NoteRequired):
         perform_transition(session, case_id=ho_so.id, to_state="classified", actor=DIEU_PHOI)

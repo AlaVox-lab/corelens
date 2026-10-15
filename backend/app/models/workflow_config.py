@@ -187,6 +187,8 @@ class Priority(Base):
     label: Mapped[str] = mapped_column(Text)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    # Hạn của mức này bằng chừng ấy phần trăm hạn chuẩn của loại yêu cầu (#101)
+    sla_factor_percent: Mapped[int] = mapped_column(SmallInteger, default=100)
 
 
 class Department(Base):
@@ -214,6 +216,9 @@ class RequestType(Base):
     sla_grace_hours: Mapped[int] = mapped_column(Integer, default=0)
     # Đã dùng từ chừng này phần trăm cam kết thì "sắp hết hạn" (#175)
     sla_warn_percent: Mapped[int] = mapped_column(SmallInteger, default=75)
+    # Gia hạn (#101): mỗi lần tối đa chừng này phần trăm hạn gốc, tổng tối đa chừng ấy lần
+    sla_extension_max_percent: Mapped[int] = mapped_column(SmallInteger, default=50)
+    sla_extension_max_count: Mapped[int] = mapped_column(SmallInteger, default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 

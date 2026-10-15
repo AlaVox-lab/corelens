@@ -131,6 +131,9 @@ class HoSoTomTatRa(BaseModel):
     sla_overdue: bool
     # Đã dùng tới ngưỡng "sắp hết hạn" trong dữ liệu mà chưa quá hạn (#175)
     sla_due_soon: bool = False
+    # Gia hạn xử lý (#101): tổng giờ đã cộng vào hạn, và đã gia hạn mấy lần
+    sla_extension_total_hours: int = 0
+    sla_extension_count: int = 0
     sla_paused: bool
     # Đồng hồ đã khởi động — hồ sơ đã từng vào trạng thái đếm giờ (#97)
     sla_started: bool

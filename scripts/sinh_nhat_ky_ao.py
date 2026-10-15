@@ -52,6 +52,9 @@ RB_PHONG = "select-department"
 RB_GIAO_NGUOI = "assign-handler"
 RB_SUA_NOI_DUNG = "edit-content"
 RB_TU_NHAN = "assign-self"
+# Gia hạn xử lý (#101): bộ sinh chưa mô phỏng — không đi cạnh mang ràng buộc này, nên mọi
+# hồ sơ ảo giữ hạn gốc. Hệ số theo mức ưu tiên cũng chưa mô phỏng: hạn ảo là hạn chuẩn.
+RB_GIA_HAN = "extend-deadline"
 
 # Tác nhân hệ thống khi leo thang — cùng giá trị với TAC_NHAN_SLA trong
 # backend/app/workflow/escalation.py, và nhãn "Hệ thống" giao diện dùng để nhận ra nó.
@@ -306,6 +309,8 @@ class BoSinh:
         (#127).
         """
         if RB_VE_CHO_CU in c.rang_buoc and c.den != truoc:
+            return False
+        if RB_GIA_HAN in c.rang_buoc:
             return False
         return not (RB_TU_NHAN in c.rang_buoc and hs.nguoi_xu_ly)
 

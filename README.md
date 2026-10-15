@@ -333,6 +333,11 @@ rồi **tự leo thang** chúng. Ngưỡng khai theo từng loại yêu cầu tr
 `infra/seed/02-co-cau-to-chuc.sql`; trạng thái nào làm đồng hồ chạy khai ở cột
 `sla_running` trong `infra/seed/01-quy-tac-quy-trinh.sql`.
 
+Ngưỡng ở `02-co-cau-to-chuc.sql` là hạn chuẩn của mức ưu tiên Bình thường; mức Khẩn, Cao,
+Thấp nhân hệ số 50%, 75%, 150% khai trong bảng `priorities`. Điều phối viên gia hạn được một
+lần trước khi phòng ban nhận việc, trưởng phòng gia hạn khi hồ sơ đã leo thang — mỗi lần tối đa
+nửa hạn gốc, tổng tối đa hai lần, luôn kèm lý do.
+
 Hạn đếm bằng **giờ làm việc**, không phải giờ đồng hồ: mẫu là Thứ Hai tới Thứ Sáu, 8:00–12:00
 và 13:00–17:00 giờ Việt Nam, trừ ngày lễ năm 2026, khai trong
 `infra/seed/03-lich-lam-viec.sql`. Hồ sơ gửi tối Thứ Sáu chỉ bắt đầu tính hạn từ 8:00 Thứ

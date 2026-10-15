@@ -27,7 +27,11 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU
+from sqlalchemy.orm import object_session
+
+from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU, Request
+from app.models.workflow_config import RequestType
+from app.rules.sla import han_goc_giay
 from app.workflow.context import TransitionContext
 from app.workflow.errors import GuardViolation, UnknownGuard
 
@@ -302,6 +306,95 @@ def _giao_cho_nguoi_thao_tac(ctx: TransitionContext) -> dict[str, Any]:
     return {"assignee_id": ctx.actor.id}
 
 
+def _loai_cua(ho_so: Request) -> RequestType | None:
+    """Loại yêu cầu của hồ sơ — nơi khai giới hạn gia hạn (#101)."""
+    if ho_so.request_type_code is None:
+        return None
+    return object_session(ho_so).get(RequestType, ho_so.request_type_code)
+
+
+def _so_gio_gia_han(ctx: TransitionContext) -> int:
+    """Số giờ gia hạn người dùng nhập, đã đọc thành số nguyên dương."""
+    gia_tri = ctx.changes.get("sla_extension_hours")
+    if isinstance(gia_tri, str) and gia_tri.strip().isdigit():
+        gia_tri = int(gia_tri.strip())
+    if isinstance(gia_tri, bool) or not isinstance(gia_tri, int) or gia_tri < 1:
+        raise GuardViolation(
+            "extend-deadline", "Nhập số giờ làm việc gia hạn thêm, là số nguyên từ 1 trở lên."
+        )
+    return gia_tri
+
+
+def extend_deadline(ctx: TransitionContext) -> None:
+    """Gia hạn xử lý một hồ sơ (#101, giảng viên chốt 08/10).
+
+    Người dùng nhập số giờ làm việc cộng thêm; lý do bắt buộc nằm ở `requires_note` của
+    cạnh. Mỗi lần tối đa `request_types.sla_extension_max_percent` phần trăm hạn GỐC — hạn
+    của loại nhân hệ số ưu tiên, không tính phần đã gia hạn, để hai lần gia hạn liền nhau
+    không tự phình trần cho nhau. Tổng số lần không vượt `sla_extension_max_count` — kiểm cả
+    ở đây, dù cạnh đã mang `first-extension` hay `extension-limit`, để cạnh nào lỡ thiếu hai
+    ràng buộc kia cũng không vượt được trần. Ai gia hạn lần nào là chuyện của dữ liệu.
+    """
+    so_gio = _so_gio_gia_han(ctx)
+    loai = _loai_cua(ctx.case)
+    goc = han_goc_giay(object_session(ctx.case), ctx.case)
+    if loai is None or goc is None:
+        raise GuardViolation(
+            "extend-deadline", "Hồ sơ chưa có loại yêu cầu nên chưa có hạn để gia hạn."
+        )
+    if ctx.case.sla_extension_count >= loai.sla_extension_max_count:
+        raise GuardViolation(
+            "extend-deadline",
+            f"Hồ sơ đã gia hạn đủ {loai.sla_extension_max_count} lần.",
+        )
+    tran = goc * loai.sla_extension_max_percent // 100 // 3600
+    if so_gio > tran:
+        raise GuardViolation(
+            "extend-deadline",
+            f"Mỗi lần gia hạn tối đa {tran} giờ làm việc — {loai.sla_extension_max_percent}% "
+            f"hạn gốc {goc // 3600} giờ của hồ sơ này.",
+        )
+
+
+def _cong_gia_han(ctx: TransitionContext) -> dict[str, Any]:
+    """Tác động của `extend-deadline`: cộng vào tổng giờ gia hạn và đếm thêm một lần.
+
+    Ghi lại cả số giờ của lần này dạng số nguyên — ô nhập gửi lên là chuỗi. Ba trường cùng
+    vào cột `changes` của nhật ký với giá trị cũ và mới (#100): hạn trước và sau khi gia
+    hạn dựng lại được từ đó.
+    """
+    so_gio = _so_gio_gia_han(ctx)
+    return {
+        "sla_extension_hours": so_gio,
+        "sla_extension_total_hours": ctx.case.sla_extension_total_hours + so_gio,
+        "sla_extension_count": ctx.case.sla_extension_count + 1,
+    }
+
+
+def first_extension(ctx: TransitionContext) -> None:
+    """Chỉ gia hạn khi hồ sơ chưa gia hạn lần nào (#101).
+
+    Gắn vào cạnh gia hạn của điều phối viên: giảng viên chốt điều phối viên gia hạn tối đa
+    một lần, lần thứ hai chỉ trưởng bộ phận. Không cần nhập liệu nên chạy lúc chào nút —
+    hồ sơ đã gia hạn thì điều phối viên không thấy nút nữa.
+    """
+    if ctx.case.sla_extension_count > 0:
+        raise GuardViolation(
+            "first-extension",
+            "Hồ sơ đã gia hạn một lần — lần sau chỉ trưởng phòng gia hạn được.",
+        )
+
+
+def extension_limit(ctx: TransitionContext) -> None:
+    """Hồ sơ chưa gia hạn đủ số lần tối đa khai ở loại yêu cầu (#101)."""
+    loai = _loai_cua(ctx.case)
+    if loai is None or ctx.case.sla_extension_count >= loai.sla_extension_max_count:
+        raise GuardViolation(
+            "extension-limit",
+            "Hồ sơ đã hết lượt gia hạn.",
+        )
+
+
 # Hợp đồng giữa dữ liệu và mã nguồn. Khóa phải trùng khít cột `code` của bảng `guards`.
 #
 # Cột thứ hai quyết định trường nào đặt được ở cạnh nào. `department-unchanged` quản
@@ -326,6 +419,18 @@ GUARD_REGISTRY: dict[str, Guard] = {
         sets=frozenset({"assignee_id"}),
         effect=_giao_cho_nguoi_thao_tac,
     ),
+    # Số giờ của lần này vừa là ô nhập vừa được tác động ghi lại dạng số nguyên; tổng và
+    # số lần thì chỉ tác động đặt — người dùng không gửi được (#101)
+    "extend-deadline": Guard(
+        extend_deadline,
+        frozenset({"sla_extension_hours"}),
+        sets=frozenset(
+            {"sla_extension_hours", "sla_extension_total_hours", "sla_extension_count"}
+        ),
+        effect=_cong_gia_han,
+    ),
+    "first-extension": Guard(first_extension, input_free=True),
+    "extension-limit": Guard(extension_limit, input_free=True),
 }
 
 # Mọi trường mà ít nhất một ràng buộc quản hoặc tự đặt. Engine đối chiếu tập này với
