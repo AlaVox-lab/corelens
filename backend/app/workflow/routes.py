@@ -111,7 +111,7 @@ MA_HTTP = {
 # phòng ban đặt. Trước đây trả theo chữ cái, nên bảng Sửa nội dung ra Mô tả đứng trên
 # Tiêu đề và người dùng gõ nhầm ô.
 #
-# Đây là sáu cột của bảng `requests`, tức lược đồ, không phải cấu hình nghiệp vụ.
+# Đây là các cột của bảng `requests`, tức lược đồ, không phải cấu hình nghiệp vụ.
 THU_TU_O_NHAP: tuple[str, ...] = (
     "request_type_code",
     "title",
@@ -119,6 +119,10 @@ THU_TU_O_NHAP: tuple[str, ...] = (
     "priority_code",
     "department_code",
     "assignee_id",
+    # Gia hạn xử lý (#101): chỉ số giờ lần này là ô nhập; hai trường sau do ràng buộc tự đặt
+    "sla_extension_hours",
+    "sla_extension_total_hours",
+    "sla_extension_count",
 )
 
 # Kiểm ngay lúc nạp mô-đun, cùng khuôn với biên ngoài trong engine: thêm một trường vào
@@ -222,6 +226,9 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_overdue": gioi_han is not None and da_chay > gioi_han,
         # Đã dùng tới ngưỡng sắp hết hạn của loại yêu cầu mà chưa quá hạn (#175)
         "sla_due_soon": sap_het_han(session, ho_so),
+        # Gia hạn (#101): hạn ở `sla_limit_seconds` đã gồm phần này
+        "sla_extension_total_hours": ho_so.sla_extension_total_hours,
+        "sla_extension_count": ho_so.sla_extension_count,
         # Đồng hồ đã từng khởi động chưa. Nó chỉ khởi động khi hồ sơ lần đầu vào một
         # trạng thái có `sla_running` — tức khi phòng ban nhận việc. Trước đó giao diện
         # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97).
@@ -260,6 +267,8 @@ def _thay_doi(e: EventLog, nhan: dict[str, dict[str, str]]) -> list[ThayDoiTruon
         ma = muc.get(ben)
         if ma is None:
             return None
+        # Giá trị số — giờ và số lần gia hạn (#101) — kể lại dạng chữ, như mọi giá trị khác
+        ma = str(ma)
         ten = muc.get(f"{ben}_label") or nhan.get(truong, {}).get(ma) or ma
         return NhanCoMa(code=ma, label=ten)
 

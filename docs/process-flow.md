@@ -19,7 +19,9 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 > làm việc.
 >
 > **Cập nhật 15/10/2026** (#143): hồ sơ ở *Chờ bổ sung thông tin* mà người gửi không trả lời
-> thì tự đóng sau 5 ngày làm việc, nhắc từ ngày thứ ba. Luồng có hai mươi tám cạnh.
+> thì tự đóng sau 5 ngày làm việc, nhắc từ ngày thứ ba. Cùng ngày (#101): hạn đi theo mức ưu
+> tiên, và điều phối viên, trưởng phòng gia hạn được từng hồ sơ bằng ba cạnh tự trỏ *Gia hạn
+> xử lý*. Luồng có ba mươi mốt cạnh.
 
 ---
 
@@ -51,12 +53,14 @@ stateDiagram-v2
     DaPhanLoai --> DaGui: Người tạo sửa nội dung
     DaPhanLoai --> Huy: Người tạo hủy
     DaPhanLoai --> Dong: Không phòng nào nhận, đóng kèm lý do
+    DaPhanLoai --> DaPhanLoai: Điều phối gia hạn lần đầu
 
     ChoXacDuyet --> DangXuLy: Phòng ban XÁC DUYỆT và giao xử lý
     ChoXacDuyet --> ChoBoSung: Trưởng phòng hỏi thêm
     ChoXacDuyet --> BiTuChoi: Phòng ban từ chối, sai chuyên môn
     ChoXacDuyet --> Huy: Người tạo hủy
     ChoXacDuyet --> DaPhanLoai: Điều phối rút về, hay tự trả về sau 24 giờ làm việc
+    ChoXacDuyet --> ChoXacDuyet: Điều phối gia hạn lần đầu
 
     BiTuChoi --> DaPhanLoai: Người phân loại định tuyến lại
 
@@ -66,6 +70,7 @@ stateDiagram-v2
     DangXuLy --> HoanTat: Người xử lý hoàn thành
 
     LeoThang --> DangXuLy: Phân công lại trong cùng phòng
+    LeoThang --> LeoThang: Trưởng phòng gia hạn
 
     ChoBoSung --> DaGui: Bổ sung (người phân loại đã hỏi)
     ChoBoSung --> ChoXacDuyet: Bổ sung (trưởng phòng đã hỏi)
@@ -139,7 +144,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 
 ---
 
-## 3. Hai mươi tám cạnh chuyển trạng thái
+## 3. Ba mươi mốt cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -154,18 +159,21 @@ là không đi được**.
 | `classified` | `submitted` | Sửa nội dung | `requester` |
 | `classified` | `cancelled` | Hủy yêu cầu | `requester` |
 | `classified` | `closed` | Đóng hồ sơ, không phòng nào nhận | `classifier` |
+| `classified` | `classified` | Gia hạn xử lý — lần đầu, bắt buộc lý do | `classifier` |
 | `awaiting-acceptance` | `in-progress` | **Xác duyệt và giao xử lý** | `approver` |
 | `awaiting-acceptance` | `awaiting-info` | Yêu cầu bổ sung thông tin | `approver` |
 | `awaiting-acceptance` | `rejected-by-department` | Từ chối vì sai chuyên môn | `approver` |
 | `awaiting-acceptance` | `cancelled` | Hủy yêu cầu | `requester` |
 | `awaiting-acceptance` | `classified` | Rút hồ sơ về điều phối — bắt buộc lý do | `classifier` |
 | `awaiting-acceptance` | `classified` | Tự trả về điều phối — hết 24 giờ làm việc chờ, báo trước 4 giờ | **hệ thống** |
+| `awaiting-acceptance` | `awaiting-acceptance` | Gia hạn xử lý — lần đầu, bắt buộc lý do | `classifier` |
 | `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
 | `in-progress` | `in-progress` | Nhận việc về mình | `handler` |
 | `in-progress` | `awaiting-info` | Yêu cầu bổ sung thông tin | `handler` |
 | `in-progress` | `escalated` | Leo thang do quá hạn | **hệ thống** |
 | `in-progress` | `completed` | Hoàn thành xử lý | `handler` |
 | `escalated` | `in-progress` | Phân công lại trong cùng phòng | `approver` |
+| `escalated` | `escalated` | Gia hạn xử lý — tới khi hết lượt, bắt buộc lý do | `approver` |
 | `awaiting-info` | `submitted` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `awaiting-acceptance` | Bổ sung thông tin | `requester` |
 | `awaiting-info` | `in-progress` | Bổ sung thông tin | `requester` |
@@ -188,7 +196,8 @@ tiên của nó — lối vòng phát hiện ở #78, nơi hồ sơ vào tận p
 đã đóng.
 
 **Cạnh tự trỏ: đổi hồ sơ mà giữ nguyên trạng thái** (ADR-0005, #127). *Sửa nội dung* ở *Đã
-gửi* và *Nhận việc về mình* ở *Đang xử lý* đi từ một trạng thái về chính nó. Chúng vẫn là
+gửi*, *Nhận việc về mình* ở *Đang xử lý* và *Gia hạn xử lý* (#101) đi từ một trạng thái về
+chính nó. Chúng vẫn là
 cạnh, vì chúng đổi hồ sơ — nội dung, người xử lý — và mọi thay đổi trên hồ sơ phải để lại
 một dòng nhật ký kèm giá trị cũ. Thao tác **không** đổi gì trên hồ sơ, như nhắn điều phối
 viên hay hỏi tiến độ, không phải cạnh: chúng vào bảng lời nhắn riêng (#128). Ba điều giữ cho
@@ -272,6 +281,24 @@ người nhận có một **khoảng ân hạn** trước khi bị leo thang l�
 đặt lại và **không** cấp hạn mới: hồ sơ vẫn được ghi nhận là quá hạn. Hết ân hạn mà vẫn
 chưa xong thì leo thang lại. Không có ân hạn thì bộ quét leo thang lại ngay lượt kế tiếp,
 và người được giao không có một phút nào để làm.
+
+**Hạn theo mức ưu tiên và gia hạn từng hồ sơ** (#101, giảng viên chốt ngày 08/10, navigator
+chốt chi tiết ngày 15/10). Hạn gốc của hồ sơ là hạn chuẩn của loại yêu cầu nhân hệ số của mức
+ưu tiên: Khẩn 50%, Cao 75%, Bình thường 100%, Thấp 150% (`priorities.sla_factor_percent`).
+Sự cố thiết bị 8 giờ thì Khẩn 4 giờ, Thấp 12 giờ. Ân hạn nhân cùng hệ số. Gia hạn là cạnh tự
+trỏ *Gia hạn xử lý*: nhập số giờ làm việc cộng thêm, lý do bắt buộc, nhật ký giữ tổng giờ
+và số lần trước và sau. Luật, đều khai trong dữ liệu:
+
+- Mỗi lần tối đa `request_types.sla_extension_max_percent` phần trăm **hạn gốc** — mẫu 50%,
+  tức 4 giờ với hồ sơ 8 giờ. Tính trên hạn gốc chứ không trên hạn đã gia hạn, để hai lần liền
+  nhau không tự nới trần cho nhau
+- Tổng tối đa `request_types.sla_extension_max_count` lần — mẫu 2
+- Điều phối viên chỉ gia hạn **lần đầu**, ở *Đã phân loại* hay *Chờ phòng ban xác duyệt*
+  (ràng buộc `first-extension`), và không gia hạn hồ sơ mình gửi
+- Trưởng phòng gia hạn ở *Đã leo thang*, tới khi hết lượt (`extension-limit`) — nên lần thứ
+  hai luôn là của trưởng phòng. *Đang xử lý* đã có cạnh tự trỏ *Nhận việc về mình*, mà mỗi
+  trạng thái chỉ được một cạnh tự trỏ của người
+- Không gia hạn sau khi đóng: trạng thái kết thúc không có cạnh nào đi ra
 
 **Một ràng buộc bổ trợ, thêm ở #78 — cần giảng viên xác nhận:** hồ sơ rời khỏi tay người
 phân loại phải có loại yêu cầu. Giữ loại người gửi đã chọn trên biểu mẫu, hoặc người phân

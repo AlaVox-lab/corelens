@@ -87,6 +87,16 @@ export function OTruong({
         <span style={KIEU_NHAN}>{kieu.nhan}</span>
         {kieu.dai ? (
           <textarea name={ten} defaultValue={giaTriDau} className="o-nhap" rows={5} />
+        ) : kieu.so ? (
+          <input
+            name={ten}
+            defaultValue={giaTriDau}
+            className="o-nhap"
+            type="number"
+            min={1}
+            step={1}
+            inputMode="numeric"
+          />
         ) : (
           <input name={ten} defaultValue={giaTriDau} className="o-nhap" />
         )}

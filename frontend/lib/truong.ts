@@ -23,6 +23,8 @@ export type KieuTruong = {
   nguon?: NguonDanhMuc;
   /** Ô nhập nhiều dòng thay vì một dòng — cho đoạn văn như mô tả. */
   dai?: boolean;
+  /** Ô nhập số nguyên dương. Trần thật nằm ở ràng buộc của dịch vụ, không ở đây. */
+  so?: boolean;
 };
 
 const BANG: Record<string, KieuTruong> = {
@@ -35,6 +37,11 @@ const BANG: Record<string, KieuTruong> = {
   // Hai trường nội dung người gửi sửa được khi hồ sơ chưa tới phòng ban (#127)
   title: { nhan: "Tiêu đề" },
   description: { nhan: "Mô tả", dai: true },
+  // Gia hạn xử lý (#101). Chỉ ô đầu là ô nhập; hai trường sau do dịch vụ tự đặt, có mặt
+  // ở đây để dòng thời gian gọi đúng tên khi kể lại giá trị cũ và mới.
+  sla_extension_hours: { nhan: "Gia hạn thêm (giờ làm việc)", so: true },
+  sla_extension_total_hours: { nhan: "Tổng giờ đã gia hạn" },
+  sla_extension_count: { nhan: "Số lần gia hạn" },
 };
 
 export function kieuTruong(ma: string): KieuTruong {

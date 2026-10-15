@@ -122,6 +122,9 @@ export type HoSoTomTat = {
   sla_overdue: boolean;
   /** Đã dùng tới ngưỡng "sắp hết hạn" khai theo loại yêu cầu mà chưa quá hạn (#175). */
   sla_due_soon: boolean;
+  /** Gia hạn xử lý (#101): `sla_limit_seconds` đã gồm số giờ này. */
+  sla_extension_total_hours: number;
+  sla_extension_count: number;
   sla_paused: boolean;
   /** Đồng hồ đã khởi động chưa — nó chỉ khởi động khi phòng ban nhận việc. */
   sla_started: boolean;

@@ -754,6 +754,17 @@ hai mốc thời gian. Đặt hàm trong PostgreSQL vì truy vấn tìm hồ sơ
 khi nào). `sla_hours`, `sla_grace_hours` giữ nguyên số, nay là giờ làm việc. Mốc thời gian
 vẫn lưu UTC; lịch chỉ dùng để đo khoảng.
 
+**Hạn của hồ sơ = hạn chuẩn × hệ số ưu tiên + giờ đã gia hạn** (#101). `gioi_han_giay` cộng
+ba con số trong dữ liệu: `request_types.sla_hours`, `priorities.sla_factor_percent`,
+`requests.sla_extension_total_hours`; ân hạn nhân cùng hệ số. Truy vấn của bộ quét tính đúng
+phép đó trong SQL — chia nguyên, ép `BIGINT` trước khi nhân — để Python và bộ quét không lệch
+nhau một giây. Gia hạn là cạnh tự trỏ theo ADR-0005: ô nhập là số giờ của lần này
+(`sla_extension_hours`), còn tổng và số lần do **tác động** của ràng buộc `extend-deadline`
+tự đặt, người dùng không gửi được. Vì thế một trường có thể vừa nằm trong `governs` vừa trong
+`sets` của cùng ràng buộc: ô nhập là chuỗi, tác động ghi lại dạng số nguyên. Ai gia hạn lần
+nào là ràng buộc gắn trên từng cạnh (`first-extension`, `extension-limit`), không mã cứng vai
+trò.
+
 **Ngưỡng "sắp hết hạn" là phần trăm cam kết, khai theo loại yêu cầu** (#175). Cột
 `request_types.sla_warn_percent` (mẫu 75, lược đồ chặn ngoài khoảng 1–99): hồ sơ đã dùng từ
 chừng ấy phần trăm hạn của chính nó mà chưa quá hạn thì `sap_het_han` trả đúng, dịch vụ trả

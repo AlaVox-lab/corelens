@@ -263,6 +263,8 @@ CREATE TABLE request_types (
     sla_hours      INTEGER   NOT NULL,
     sla_grace_hours INTEGER  NOT NULL DEFAULT 0,
     sla_warn_percent SMALLINT NOT NULL DEFAULT 75,
+    sla_extension_max_percent SMALLINT NOT NULL DEFAULT 50,
+    sla_extension_max_count   SMALLINT NOT NULL DEFAULT 2,
     is_active      BOOLEAN   NOT NULL DEFAULT TRUE,
     display_order  SMALLINT  NOT NULL DEFAULT 0,
 
@@ -273,7 +275,9 @@ CREATE TABLE request_types (
         CHECK (sla_grace_hours >= 0 AND sla_grace_hours <= sla_hours),
     -- 0 thì mọi hồ sơ vừa nhận việc đã "sắp hết hạn"; 100 thì mức vàng không bao giờ hiện
     CONSTRAINT request_types_nguong_sap_het_hop_le
-        CHECK (sla_warn_percent > 0 AND sla_warn_percent < 100)
+        CHECK (sla_warn_percent > 0 AND sla_warn_percent < 100),
+    CONSTRAINT request_types_gia_han_hop_le
+        CHECK (sla_extension_max_percent > 0 AND sla_extension_max_count >= 0)
 );
 
 COMMENT ON COLUMN request_types.sla_hours IS
@@ -284,6 +288,12 @@ COMMENT ON COLUMN request_types.sla_grace_hours IS
 
 COMMENT ON COLUMN request_types.sla_warn_percent IS
     'Ngưỡng "sắp hết hạn" (#175): hồ sơ đã dùng từ chừng này phần trăm cam kết trở lên mà chưa quá hạn thì dịch vụ trả cờ sla_due_soon, giao diện tô vàng. Tính trên hạn của chính hồ sơ nên tự co giãn theo hạn.';
+
+COMMENT ON COLUMN request_types.sla_extension_max_percent IS
+    'Gia hạn (#101): mỗi lần gia hạn tối đa chừng này phần trăm hạn gốc của hồ sơ — hạn của loại nhân hệ số ưu tiên. Giảng viên để ngỏ con số; navigator chốt 50 ngày 15/10.';
+
+COMMENT ON COLUMN request_types.sla_extension_max_count IS
+    'Gia hạn (#101): tổng số lần gia hạn tối đa của một hồ sơ. Ai gia hạn lần nào là chuyện của ràng buộc gắn trên từng cạnh gia hạn.';
 
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách. Nhiều-nhiều có đánh dấu mặc
 -- định: một loại yêu cầu có thể do vài phòng đảm nhận, nhưng chỉ một phòng được
@@ -314,7 +324,11 @@ CREATE TABLE priorities (
     code           TEXT      PRIMARY KEY,
     label          TEXT      NOT NULL,
     is_default     BOOLEAN   NOT NULL DEFAULT FALSE,
-    display_order  SMALLINT  NOT NULL DEFAULT 0
+    display_order  SMALLINT  NOT NULL DEFAULT 0,
+    -- Hạn theo mức ưu tiên (#101): hạn = hạn chuẩn của loại yêu cầu × hệ số / 100
+    sla_factor_percent SMALLINT NOT NULL DEFAULT 100,
+
+    CONSTRAINT priorities_he_so_duong CHECK (sla_factor_percent > 0)
 );
 
 CREATE UNIQUE INDEX priorities_chi_mot_mac_dinh
