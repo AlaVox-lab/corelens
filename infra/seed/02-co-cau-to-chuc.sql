@@ -41,19 +41,24 @@ INSERT INTO departments (code, label, description, display_order) VALUES
 -- Ân hạn (sla_grace_hours, #94): hồ sơ đã quá hạn mà được phân công lại hay mở lại
 -- thì người nhận có chừng này giờ trước khi bị leo thang lần nữa. Mẫu lấy một phần
 -- tư hạn xử lý; doanh nghiệp đổi tùy loại việc.
+--
+-- Ngưỡng sắp hết hạn (sla_warn_percent, #175): đã dùng từ chừng này phần trăm cam kết thì
+-- hồ sơ chuyển vàng trên trang hồ sơ và vào nhóm "Sắp hết hạn" của hàng đợi phòng ban. Mẫu
+-- 75% cho mọi loại — Sự cố thiết bị vàng khi còn 2 giờ, Cấp quyền phần mềm khi còn 6 giờ.
+-- Tính trên hạn của chính hồ sơ, nên co giãn theo khi hạn đổi.
 
-INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, display_order) VALUES
+INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, sla_warn_percent, display_order) VALUES
     ('device-incident', 'Sự cố thiết bị',
-     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2,  1),
+     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2, 75,  1),
 
     ('software-access', 'Cấp quyền phần mềm',
-     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6,  2),
+     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6, 75,  2),
 
     ('hr-certificate',  'Giấy xác nhận nhân sự',
-     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12,  3),
+     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12, 75,  3),
 
     ('supply-purchase', 'Đề xuất mua vật tư',
-     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18,  4);
+     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18, 75,  4);
 
 
 -- ---------------------------------------------------------------------------

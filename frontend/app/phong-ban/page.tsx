@@ -53,7 +53,8 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
       : null,
     cuoi: {
       chu: dongHo.cau,
-      // Quá hạn đỏ; đồng hồ đứng (chưa nhận việc, đang chờ người gửi) thì nhạt
+      // Quá hạn đỏ; sắp hết hạn vàng (#175); đồng hồ đứng (chưa nhận việc, đang chờ người
+      // gửi) thì nhạt
       muc:
         dongHo === tuDong
           ? "sap"
@@ -61,7 +62,9 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
             ? "qua"
             : !m.sla_started || m.sla_paused
               ? "dung"
-              : undefined,
+              : m.sla_due_soon
+                ? "sap"
+                : undefined,
     },
   };
 }
@@ -112,10 +115,19 @@ export default async function HangDoiPhongBan({
       dong: viec.filter((m) => m.sla_overdue).map(thanhDong),
     },
     {
+      // Ngưỡng khai theo loại yêu cầu trong dữ liệu (#175), giao diện chỉ đọc cờ
+      ma: "sap-het-han",
+      ten: "Sắp hết hạn",
+      mau: "var(--f-a-solid)",
+      dong: viec.filter((m) => m.sla_due_soon && !m.sla_overdue).map(thanhDong),
+    },
+    {
       ma: "trong-han",
       ten: "Trong hạn",
       mau: "var(--f-t-solid)",
-      dong: viec.filter((m) => !m.sla_overdue && m.sla_started).map(thanhDong),
+      dong: viec
+        .filter((m) => !m.sla_overdue && !m.sla_due_soon && m.sla_started)
+        .map(thanhDong),
     },
     // Đồng hồ chưa chạy: mỗi trạng thái một nhóm, theo thứ tự nhóm dịch vụ trả về
     ...tatCa.groups

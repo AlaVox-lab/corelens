@@ -120,6 +120,8 @@ export type HoSoTomTat = {
   /** `null` khi hồ sơ chưa có loại yêu cầu, nên chưa biết áp ngưỡng nào. */
   sla_limit_seconds: number | null;
   sla_overdue: boolean;
+  /** Đã dùng tới ngưỡng "sắp hết hạn" khai theo loại yêu cầu mà chưa quá hạn (#175). */
+  sla_due_soon: boolean;
   sla_paused: boolean;
   /** Đồng hồ đã khởi động chưa — nó chỉ khởi động khi phòng ban nhận việc. */
   sla_started: boolean;

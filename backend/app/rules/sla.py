@@ -100,6 +100,22 @@ def da_chay_giay(session: Session, case: Request) -> int:
     return tong
 
 
+def sap_het_han(session: Session, case: Request) -> bool:
+    """Hồ sơ đã dùng tới ngưỡng "sắp hết hạn" của loại yêu cầu mà chưa quá hạn chưa (#175).
+
+    Ngưỡng là phần trăm cam kết (`request_types.sla_warn_percent`), tính trên hạn của chính
+    hồ sơ nên tự co giãn khi hạn đổi. Đúng mốc ngưỡng là đã sắp hạn; đúng mốc hạn vẫn là
+    sắp hạn, vì quá hạn là vượt hẳn — cùng phép so với cờ `sla_overdue`. So bằng số nguyên
+    để không lệch vì làm tròn.
+    """
+    gioi_han = gioi_han_giay(session, case)
+    if gioi_han is None:
+        return False
+    loai = session.get(RequestType, case.request_type_code)
+    da_chay = da_chay_giay(session, case)
+    return da_chay * 100 >= gioi_han * loai.sla_warn_percent and da_chay <= gioi_han
+
+
 def han_chot(session: Session, case: Request) -> dt.datetime | None:
     """Mốc hết hạn xử lý, để giao diện ghi "hạn 15:00 thứ Hai" thay vì chỉ đếm giờ (#199).
 

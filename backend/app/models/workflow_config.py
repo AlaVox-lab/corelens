@@ -212,6 +212,8 @@ class RequestType(Base):
     sla_hours: Mapped[int] = mapped_column(Integer)
     # Ân hạn sau mỗi lần hồ sơ vào lại trạng thái đếm giờ — xem rules/sla.py (#94)
     sla_grace_hours: Mapped[int] = mapped_column(Integer, default=0)
+    # Đã dùng từ chừng này phần trăm cam kết thì "sắp hết hạn" (#175)
+    sla_warn_percent: Mapped[int] = mapped_column(SmallInteger, default=75)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 

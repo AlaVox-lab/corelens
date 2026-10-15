@@ -129,17 +129,20 @@ export function docTuDong(ho_so: HoSoTomTat): DocDongHo | null {
 }
 
 /**
- * Vạch hạn trên trang hồ sơ (#169): đã dùng bao nhiêu phần trăm cam kết, có quá hạn
- * chưa. `null` khi chưa có gì để vẽ — chưa có ngưỡng, đồng hồ chưa chạy, hồ sơ đã kết
- * thúc. Chỉ hai mức, trong hạn và quá hạn, theo đúng cờ dịch vụ trả về: chưa có ngưỡng
- * "sắp hạn" nào trong dữ liệu, nên giao diện không tự đặt.
+ * Vạch hạn trên trang hồ sơ (#169): đã dùng bao nhiêu phần trăm cam kết, sắp hạn hay quá
+ * hạn chưa. `null` khi chưa có gì để vẽ — chưa có ngưỡng, đồng hồ chưa chạy, hồ sơ đã kết
+ * thúc. Ba mức theo đúng cờ dịch vụ trả về: ngưỡng "sắp hạn" khai theo loại yêu cầu trong
+ * dữ liệu (#175), giao diện không tự đặt con số nào.
  */
-export function vachHan(ho_so: HoSoTomTat): { phan: number; qua: boolean } | null {
+export function vachHan(
+  ho_so: HoSoTomTat,
+): { phan: number; muc: "qua" | "sap" | undefined } | null {
   if (ho_so.state.is_terminal || ho_so.sla_limit_seconds === null || !ho_so.sla_started) {
     return null;
   }
   const phan = (ho_so.sla_running_seconds / ho_so.sla_limit_seconds) * 100;
-  return { phan: Math.min(100, Math.max(0, phan)), qua: ho_so.sla_overdue };
+  const muc = ho_so.sla_overdue ? "qua" : ho_so.sla_due_soon ? "sap" : undefined;
+  return { phan: Math.min(100, Math.max(0, phan)), muc };
 }
 
 /** Tổng thời gian hồ sơ đã nằm trong hệ thống, kể cả những đoạn đồng hồ dừng. */
