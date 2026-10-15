@@ -754,6 +754,13 @@ hai mốc thời gian. Đặt hàm trong PostgreSQL vì truy vấn tìm hồ sơ
 khi nào). `sla_hours`, `sla_grace_hours` giữ nguyên số, nay là giờ làm việc. Mốc thời gian
 vẫn lưu UTC; lịch chỉ dùng để đo khoảng.
 
+**Ngưỡng "sắp hết hạn" là phần trăm cam kết, khai theo loại yêu cầu** (#175). Cột
+`request_types.sla_warn_percent` (mẫu 75, lược đồ chặn ngoài khoảng 1–99): hồ sơ đã dùng từ
+chừng ấy phần trăm hạn của chính nó mà chưa quá hạn thì `sap_het_han` trả đúng, dịch vụ trả
+cờ `sla_due_soon` cạnh `sla_overdue`. Chọn phần trăm thay vì số giờ còn lại để ngưỡng co giãn
+theo hạn của từng hồ sơ — hạn đổi thì không phải sửa ngưỡng. Thẻ hạn tô vàng, hàng đợi phòng
+ban có nhóm *Sắp hết hạn* giữa *Quá hạn* và *Trong hạn*.
+
 **Trạng thái nào làm đồng hồ chạy là dữ liệu, không phải mã.** Cột `states.sla_running`
 trả lời cả hai câu — đồng hồ bắt đầu từ đâu, và dừng ở đâu — nên mã nguồn không phải
 viết `if state == "in-progress"`. Hiện chỉ `in-progress` và `escalated` bật cờ này.
@@ -933,8 +940,8 @@ cùng điểm cuối, chỉ khác cách trình bày; trang người gửi tách 
 đang ở đâu" suy từ dữ liệu (`lib/buoc.ts`): đường chính là các trạng thái theo
 `display_order`, tính tới và gồm trạng thái kết thúc đầu tiên; hồ sơ ở trạng thái nhánh thì
 thanh dừng ở bước đường chính cuối cùng nó đã vào. Đổi đường chính là đổi thứ tự trong dữ
-liệu khởi tạo, không sửa mã. Thẻ hạn chỉ phân hai mức trong hạn và quá hạn theo cờ dịch vụ
-trả — chưa có ngưỡng "sắp hạn" nào trong dữ liệu nên giao diện không tự đặt (#175).
+liệu khởi tạo, không sửa mã. Thẻ hạn phân ba mức trong hạn, sắp hết hạn, quá hạn theo cờ
+dịch vụ trả — ngưỡng "sắp hạn" nằm trong dữ liệu (mục 7.1, #175), giao diện không tự đặt.
 
 **Từ #189, trang hồ sơ đặt việc của người dùng trước nhật ký** (nhận xét của giảng viên
 11/10/2026). Ba điều, áp cho cả trang nhân viên lẫn trang người gửi:
@@ -974,7 +981,8 @@ thanh chấm của đường chính suy bằng chính `lib/buoc.ts` ở trên, c
 **Từ #170, hai hàng đợi dùng chung một bảng** (`components/bang-hang-doi.tsx`). Trang ở máy
 chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng ở trình duyệt chỉ lọc theo ô tìm (không
 phân biệt dấu, không gọi dịch vụ) và thu gọn nhóm. Hàng đợi phòng ban chia nhóm theo mức gấp
-suy từ cờ của dịch vụ: Quá hạn (`sla_overdue`), Trong hạn (đồng hồ đang chạy), mỗi trạng thái
+suy từ cờ của dịch vụ: Quá hạn (`sla_overdue`), Sắp hết hạn (`sla_due_soon`, #175), Trong
+hạn (đồng hồ đang chạy), mỗi trạng thái
 đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo dõi
 (`watch_only`). Hàng đợi điều phối lọc bằng hàng tab dựng từ `groups`, bộ lọc nằm trên địa
 chỉ trang. Không tệp nào liệt kê tên trạng thái.

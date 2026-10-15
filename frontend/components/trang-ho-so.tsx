@@ -73,7 +73,7 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
 
   return (
     <div className="the khoi">
-      <div className="han" data-muc={vach?.qua || dongHo.canhBao ? "qua" : undefined}>
+      <div className="han" data-muc={dongHo.canhBao ? "qua" : vach?.muc}>
         <span className="tua-muc">Hạn xử lý</span>
         {vach ? (
           <>
