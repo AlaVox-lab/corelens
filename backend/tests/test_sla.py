@@ -430,3 +430,81 @@ def test_an_han_khong_duoc_dai_hon_han_xu_ly(session, rule_set):
             loai.sla_grace_hours = loai.sla_hours + 1
             session.flush()
     session.expire_all()
+
+
+# ---------------------------------------------------------------------------
+# Ngưỡng "sắp hết hạn" trong dữ liệu (#175)
+# ---------------------------------------------------------------------------
+
+
+def test_nguong_sap_het_han_nam_trong_du_lieu(session, rule_set):
+    """Mẫu 75% cho mọi loại yêu cầu (navigator chốt 15/10)."""
+    cac = session.scalars(select(RequestType).where(RequestType.is_active)).all()
+    assert cac and {loai.sla_warn_percent for loai in cac} == {75}
+
+
+@pytest.mark.parametrize(
+    ("phan", "sap"),
+    [
+        # Sự cố thiết bị: 8 giờ, ngưỡng 75% = 6 giờ
+        (5.9 / 8, False),
+        (6 / 8, True),
+        (1.0, True),  # đúng mốc hạn vẫn là sắp hạn — quá hạn là vượt hẳn
+        (8.02 / 8, False),
+    ],
+)
+def test_ranh_gioi_sap_het_han(session, rule_set, phong_ban, phan, sap):
+    from app.rules.sla import sap_het_han
+
+    loai = _loai_yeu_cau(session)
+    assert loai.sla_hours == 8 and loai.sla_warn_percent == 75
+    ho_so = _den_dang_xu_ly(session, phong_ban, loai)
+    _lui_dong_ho(session, ho_so, gio=loai.sla_hours * phan)
+    assert sap_het_han(session, ho_so) is sap
+
+
+def test_doi_nguong_sap_het_han_chi_can_sua_du_lieu(session, rule_set, phong_ban):
+    """Định nghĩa hoàn thành của #175: đổi ngưỡng trong dữ liệu đổi hồ sơ nào sắp hạn."""
+    from app.rules.sla import sap_het_han
+
+    loai = _loai_yeu_cau(session)
+    ho_so = _den_dang_xu_ly(session, phong_ban, loai)
+    _lui_dong_ho(session, ho_so, gio=4)
+    assert not sap_het_han(session, ho_so)
+
+    loai.sla_warn_percent = 50
+    session.flush()
+    assert sap_het_han(session, ho_so)
+
+
+def test_chua_phan_loai_thi_khong_sap_het_han(session, rule_set):
+    from app.rules.sla import sap_het_han
+
+    ho_so = create_case(session, title="Chưa phân loại", requester_id=NGUOI_TAO)
+    assert not sap_het_han(session, ho_so)
+
+
+@pytest.mark.parametrize("phan_tram", [0, 100])
+def test_nguong_sap_het_han_phai_nam_giua_0_va_100(session, rule_set, phan_tram):
+    loai = _loai_yeu_cau(session)
+    with pytest.raises(IntegrityError):
+        with session.begin_nested():
+            loai.sla_warn_percent = phan_tram
+            session.flush()
+    session.expire_all()
+
+
+def test_tom_tat_ho_so_tra_co_sap_het_han(session, rule_set, phong_ban):
+    from app.workflow.routes import _tom_tat
+
+    states = {s.code: s for s in session.scalars(select(State)).all()}
+    ho_so = _den_dang_xu_ly(session, phong_ban, _loai_yeu_cau(session))
+    assert _tom_tat(session, ho_so, states)["sla_due_soon"] is False
+
+    _lui_dong_ho(session, ho_so, gio=7)
+    tom_tat = _tom_tat(session, ho_so, states)
+    assert tom_tat["sla_due_soon"] is True and tom_tat["sla_overdue"] is False
+
+    _lui_dong_ho(session, ho_so, gio=9)
+    tom_tat = _tom_tat(session, ho_so, states)
+    assert tom_tat["sla_due_soon"] is False and tom_tat["sla_overdue"] is True

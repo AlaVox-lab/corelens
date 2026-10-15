@@ -262,6 +262,7 @@ CREATE TABLE request_types (
     description    TEXT,
     sla_hours      INTEGER   NOT NULL,
     sla_grace_hours INTEGER  NOT NULL DEFAULT 0,
+    sla_warn_percent SMALLINT NOT NULL DEFAULT 75,
     is_active      BOOLEAN   NOT NULL DEFAULT TRUE,
     display_order  SMALLINT  NOT NULL DEFAULT 0,
 
@@ -269,7 +270,10 @@ CREATE TABLE request_types (
         CHECK (sla_hours > 0),
     -- Ân hạn dài hơn chính hạn xử lý thì lần leo thang ĐẦU TIÊN cũng bị hoãn — sai
     CONSTRAINT request_types_an_han_hop_le
-        CHECK (sla_grace_hours >= 0 AND sla_grace_hours <= sla_hours)
+        CHECK (sla_grace_hours >= 0 AND sla_grace_hours <= sla_hours),
+    -- 0 thì mọi hồ sơ vừa nhận việc đã "sắp hết hạn"; 100 thì mức vàng không bao giờ hiện
+    CONSTRAINT request_types_nguong_sap_het_hop_le
+        CHECK (sla_warn_percent > 0 AND sla_warn_percent < 100)
 );
 
 COMMENT ON COLUMN request_types.sla_hours IS
@@ -277,6 +281,9 @@ COMMENT ON COLUMN request_types.sla_hours IS
 
 COMMENT ON COLUMN request_types.sla_grace_hours IS
     'Ân hạn tính bằng giờ làm việc (#94, #199): mỗi lần hồ sơ vào lại trạng thái đếm giờ — phân công lại, mở lại, bổ sung thông tin xong — người nhận có ít nhất chừng này trước khi bộ quét được leo thang lại, dù hồ sơ đã quá hạn. Đồng hồ tổng không đặt lại. 0 là không có ân hạn.';
+
+COMMENT ON COLUMN request_types.sla_warn_percent IS
+    'Ngưỡng "sắp hết hạn" (#175): hồ sơ đã dùng từ chừng này phần trăm cam kết trở lên mà chưa quá hạn thì dịch vụ trả cờ sla_due_soon, giao diện tô vàng. Tính trên hạn của chính hồ sơ nên tự co giãn theo hạn.';
 
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách. Nhiều-nhiều có đánh dấu mặc
 -- định: một loại yêu cầu có thể do vài phòng đảm nhận, nhưng chỉ một phòng được

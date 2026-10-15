@@ -579,6 +579,11 @@ textarea.o-nhap {
   color: var(--f-r-ink);
 }
 
+/* Sắp hết hạn — ngưỡng khai theo loại yêu cầu trong dữ liệu (#175) */
+.han[data-muc="sap"] .han-so {
+  color: var(--f-a-ink);
+}
+
 .vach {
   height: 6px;
   border-radius: 3px;
@@ -597,6 +602,10 @@ textarea.o-nhap {
 
 .han[data-muc="qua"] .vach > i {
   background: var(--f-r-solid);
+}
+
+.han[data-muc="sap"] .vach > i {
+  background: var(--f-a-solid);
 }
 
 @keyframes vach {

@@ -31,7 +31,13 @@ from app.models.workflow_config import (
 )
 from app.rules.guards import permitted_fields
 from app.rules.han_cho import tu_dong
-from app.rules.sla import an_han_con_lai_giay, da_chay_giay, gioi_han_giay, han_chot
+from app.rules.sla import (
+    an_han_con_lai_giay,
+    da_chay_giay,
+    gioi_han_giay,
+    han_chot,
+    sap_het_han,
+)
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
 from app.workflow.engine import (
@@ -214,6 +220,8 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_paused_seconds": ho_so.sla_paused_seconds,
         "sla_limit_seconds": gioi_han,
         "sla_overdue": gioi_han is not None and da_chay > gioi_han,
+        # Đã dùng tới ngưỡng sắp hết hạn của loại yêu cầu mà chưa quá hạn (#175)
+        "sla_due_soon": sap_het_han(session, ho_so),
         # Đồng hồ đã từng khởi động chưa. Nó chỉ khởi động khi hồ sơ lần đầu vào một
         # trạng thái có `sla_running` — tức khi phòng ban nhận việc. Trước đó giao diện
         # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97).
