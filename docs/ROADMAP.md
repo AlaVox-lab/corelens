@@ -91,8 +91,10 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 **Trạng thái**: Đang chạy — luồng thủ công thông đầu-cuối, đang hoàn thiện theo các luật giảng
 viên chốt ngày 08/10 · **Phiên bản**: `v0.3.0` có cổng người gửi; `v0.4.0` khép luồng thủ công
-với hai buồng lái; **`v0.5.0` khép hẳn giai đoạn** — hộp thư trao đổi, giao diện mới và các luật
-cho hồ sơ nằm im, hạn từng hồ sơ, mở lại
+với hai buồng lái; `v0.5.0` (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng thử theo yêu cầu
+của giảng viên: hộp thư trao đổi, giao diện mới, lịch làm việc, luật hồ sơ nằm im, hạn theo mức
+ưu tiên và gia hạn; **`v0.6.0` khép hẳn giai đoạn** — mở lại có giới hạn (#102), đính kèm tệp
+(#80)
 
 Mục tiêu: luồng nghiệp vụ chạy được **hoàn toàn thủ công**, không có AI. Đây là nền
 tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
@@ -107,7 +109,7 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Hộp thư chung kiểu Messenger, mỗi cuộc trò chuyện gắn một hồ sơ — #155
 - [x] Giao diện mới: khung thanh bên, trang hồ sơ hai cột, hai hàng đợi — #158, #169, #170
 - [x] Trang hồ sơ đặt việc và hạn trước nhật ký, theo nhận xét của giảng viên — #189
-- [ ] *Hồ sơ của tôi* bỏ bảng chú giải trạng thái — #192
+- [x] *Hồ sơ của tôi* bỏ bảng chú giải trạng thái — #192
 - [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006, rồi tích hợp
 
 ### 2.2. Không gian P — Quy trình
@@ -124,10 +126,11 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Trò chuyện nội bộ chỉ nhân viên thấy — #156
 - [x] Đếm quay lui theo cạnh làm lại khai trong dữ liệu; cấm tự điều phối hồ sơ mình gửi —
       #153, #154
-- [ ] Hồ sơ nằm im ở ba trạng thái chờ: cảnh báo trước, rồi tự trả về hay tự đóng — #142,
+- [x] Hồ sơ nằm im ở ba trạng thái chờ: cảnh báo trước, rồi tự trả về hay tự đóng — #142,
       #143, #144, giảng viên chốt hướng ngày 08/10
-- [ ] Hạn theo mức ưu tiên và điều phối viên chỉnh hạn từng hồ sơ — #101, giảng viên chốt
-      ngày 08/10
+- [x] Lịch làm việc: mọi đồng hồ đếm giờ làm việc — #199
+- [x] Hạn theo mức ưu tiên và gia hạn từng hồ sơ — #101, giảng viên chốt ngày 08/10
+- [x] Mức "sắp hết hạn" khai trong dữ liệu — #175
 - [ ] Mở lại có giới hạn và cấp hạn mới — #102, thay quyết định ngày 23/09
 - [ ] Đính kèm tệp — #80
 
@@ -141,7 +144,7 @@ diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày
 
 ## Giai đoạn 3 — Không gian D
 
-**Phiên bản dự kiến**: `v0.6.0`
+**Phiên bản dự kiến**: `v0.7.0`
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.
@@ -160,7 +163,7 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.7.0`
+**Phiên bản dự kiến**: `v0.8.0`
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. Ba tác vụ theo thứ tự
 tăng dần độ khó.
