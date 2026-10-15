@@ -102,10 +102,12 @@ sử commit.
 Luồng thủ công đã chạy đầu-cuối cho cả bốn vai trò trên giao diện thật: người gửi gửi
 và theo dõi yêu cầu, điều phối viên phân loại và định tuyến, trưởng phòng nhận việc và
 giao người, người xử lý làm và hỏi thêm khi cần. Người gửi sửa được nội dung khi hồ sơ
-chưa tới phòng ban, người xử lý tự nhận việc về mình, và hai bên nhắn qua lại ngay trên
-hồ sơ. Engine máy trạng thái tự viết chạy ràng
-buộc Poka-yoke, đếm hạn SLA và tự leo thang, và ghi nhật ký sự kiện cho mọi lần chuyển
-trạng thái. Tầng `D` và `I` chưa cài đặt. Xem
+chưa tới phòng ban, người xử lý tự nhận việc về mình. Mọi lời nhắn gom về một hộp thư
+chung, mỗi cuộc trò chuyện gắn một hồ sơ, và nhân viên trao đổi nội bộ được mà người gửi
+không thấy. Engine máy trạng thái tự viết chạy ràng buộc Poka-yoke, đếm hạn SLA theo giờ
+làm việc và tự leo thang, tự trả hồ sơ về điều phối hay tự đóng khi người phải bấm im lặng
+quá hạn, và ghi nhật ký sự kiện cho mọi lần chuyển trạng thái. Tầng `D` và `I` chưa cài
+đặt. Xem
 [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) để biết tiến độ và việc tiếp theo.
 
 ---
@@ -119,12 +121,47 @@ trạng thái. Tầng `D` và `I` chưa cài đặt. Xem
 
 | Thành phần | Yêu cầu |
 |---|---|
-| Docker Engine | 24 trở lên, kèm Docker Compose v2 |
-| Git | bất kỳ phiên bản nào còn được hỗ trợ |
-| Bộ nhớ trống | khoảng **2 GB** cho toàn cụm |
+| Docker | Docker Desktop trên Windows và macOS, hoặc Docker Engine 24 trở lên trên Linux — kèm Docker Compose v2. Kiểm bằng `docker compose version` |
+| Bộ nhớ cấp cho Docker | khoảng **2 GB** khi cả cụm chạy — đo lúc rảnh được 1,4 GB, Keycloak chiếm gần một nửa |
+| Ổ đĩa trống | khoảng **6 GB** cho ảnh chứa và dữ liệu, tính trên ổ chứa dữ liệu của Docker |
+| Mạng | cần Internet ở lần dựng đầu để tải ảnh chứa và thư viện; các lần sau không cần |
 | Cổng cần trống | 3000 · 5432 · 8000 · 8080 · 8088 · 8333 |
 
-### Ba bước
+Cài từ bản phát hành thì không cần Git.
+
+### Cách 1 — cài từ bản phát hành
+
+Đây là cách dành cho người chỉ muốn dựng và dùng thử hệ thống.
+
+1. Mở trang [Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), chọn bản mang
+   nhãn **Latest**, tải tệp **Source code (tar.gz)** ở mục *Assets*. Tệp tải về tên
+   `dx-os-lab-<phiên bản>.tar.gz`, ví dụ `dx-os-lab-0.5.0.tar.gz`
+2. Bật Docker Desktop và chờ tới khi nó báo đang chạy
+3. Mở terminal ở thư mục chứa tệp vừa tải, chạy bốn lệnh dưới đây. Thay `0.5.0` bằng số
+   phiên bản bạn đã tải — tệp nén giải ra thư mục `dx-os-lab-<phiên bản>`, không phải
+   `dx-os-lab`
+
+Windows — PowerShell (Windows 10 và 11 có sẵn lệnh `tar`):
+
+```powershell
+tar -xzf dx-os-lab-0.5.0.tar.gz
+cd dx-os-lab-0.5.0\infra
+Copy-Item .env.example .env
+docker compose --env-file .env up -d --build
+```
+
+Linux và macOS:
+
+```bash
+tar -xzf dx-os-lab-0.5.0.tar.gz
+cd dx-os-lab-0.5.0/infra
+cp .env.example .env
+docker compose --env-file .env up -d --build
+```
+
+### Cách 2 — cài từ kho mã
+
+Dành cho người sẽ sửa mã và gửi đóng góp. Cần thêm Git.
 
 ```bash
 git clone https://github.com/AlaVox-lab/dx-os-lab.git
@@ -134,7 +171,28 @@ docker compose --env-file .env up -d --build
 ```
 
 Mọi giá trị trong `.env.example` **chạy được ngay**, không cần sửa gì để dựng thử. Lần
-đầu chạy mất vài phút vì phải tải ảnh chứa và dựng ảnh dẫn xuất cho Superset.
+dựng đầu mất khoảng **10–20 phút**, tùy tốc độ mạng, vì phải tải ảnh chứa và dựng ba ảnh: dịch vụ ứng
+dụng, cổng người dùng và ảnh dẫn xuất cho Superset.
+
+### Kiểm cụm đã lên
+
+```bash
+docker compose --env-file .env ps
+```
+
+Chạy trong thư mục `infra`. Bốn dịch vụ `postgres`, `backend`, `frontend`, `superset` phải
+báo `healthy`; `keycloak` và `seaweedfs` báo `Up`. Keycloak cần thêm khoảng một phút sau
+khi lên mới nhận đăng nhập. Rồi mở `http://localhost:3000`.
+
+### Sự cố thường gặp
+
+| Dấu hiệu | Cách xử lý |
+|---|---|
+| `failed to connect to the docker API`, `Cannot connect to the Docker daemon` | Docker chưa chạy. Bật Docker Desktop, chờ nó báo đang chạy rồi chạy lại lệnh |
+| `port is already allocated`, `address already in use` | Một chương trình khác giữ cổng — thường là PostgreSQL cài sẵn trên máy, giữ cổng 5432. Tắt chương trình đó, hoặc đổi `POSTGRES_PORT` trong `.env`. Đổi được tương tự `BACKEND_PORT`, `SUPERSET_PORT`, `SEAWEEDFS_S3_PORT`; giữ nguyên 3000 và 8080 vì cấu hình đăng nhập mẫu gắn với hai cổng đó |
+| Dựng hỏng giữa chừng với `no space left on device` hoặc `EOF` | Kiểm ổ chứa dữ liệu của Docker còn đủ chỗ như bảng yêu cầu, rồi chạy lại lệnh `up` — phần đã tải không phải tải lại |
+| Bấm đăng nhập báo lỗi khi mở cổng từ máy khác qua địa chỉ IP | Cấu hình đăng nhập mẫu chỉ nhận `localhost`. Mở `http://localhost:3000` trên chính máy đã cài |
+| Sửa tệp trong `infra/seed/` hoặc realm rồi dựng lại mà không thấy thay đổi | Dữ liệu khởi tạo chỉ nạp lần đầu. Chạy `down -v` ở mục *Dừng và dọn* rồi dựng lại |
 
 ### Các dịch vụ sau khi dựng xong
 
@@ -204,7 +262,7 @@ trò là sửa tệp đó rồi dựng lại cụm, không đụng mã nguồn.
 | Màn | Địa chỉ | Việc làm được |
 |---|---|---|
 | Gửi yêu cầu | `/yeu-cau/moi` | Biểu mẫu ba bước: chọn loại, viết nội dung, xem lại rồi gửi |
-| Hồ sơ của tôi | `/yeu-cau` | Danh sách hồ sơ đã gửi, kèm chú giải mười trạng thái |
+| Hồ sơ của tôi | `/yeu-cau` | Danh sách hồ sơ đã gửi; rê chuột hoặc chạm vào nhãn trạng thái để xem hồ sơ đang ở bước nào |
 | Chi tiết hồ sơ | `/yeu-cau/{số}` | Dòng thời gian đầy đủ và những thao tác làm được lúc này |
 
 Ba điều đáng thử, vì chúng cho thấy bộ quy tắc đang thật sự điều khiển giao diện:
@@ -274,6 +332,11 @@ Dịch vụ ứng dụng chạy một bộ quét nền, mặc định mỗi 60 g
 rồi **tự leo thang** chúng. Ngưỡng khai theo từng loại yêu cầu trong
 `infra/seed/02-co-cau-to-chuc.sql`; trạng thái nào làm đồng hồ chạy khai ở cột
 `sla_running` trong `infra/seed/01-quy-tac-quy-trinh.sql`.
+
+Hạn đếm bằng **giờ làm việc**, không phải giờ đồng hồ: mẫu là Thứ Hai tới Thứ Sáu, 8:00–12:00
+và 13:00–17:00 giờ Việt Nam, trừ ngày lễ năm 2026, khai trong
+`infra/seed/03-lich-lam-viec.sql`. Hồ sơ gửi tối Thứ Sáu chỉ bắt đầu tính hạn từ 8:00 Thứ
+Hai. Các hạn chờ tự trả về, tự đóng cũng đếm theo lịch này.
 
 Muốn xem cơ chế hoạt động mà không phải chờ, hạ chu kỳ quét trong `.env`:
 
