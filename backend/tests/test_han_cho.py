@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Kiểm thử hạn chờ ở "Chờ phòng ban xác duyệt" (#142) và "Hoàn tất" (#144).
+# Kiểm thử hạn chờ ở "Chờ phòng ban xác duyệt" (#142), "Hoàn tất" (#144) và "Chờ bổ sung
+# thông tin" (#143).
 #
 # Giảng viên chốt ngày 08/10: phòng ban không xác duyệt trong 24 giờ làm việc thì hồ sơ tự
 # trả về điều phối viên, báo trước 4 giờ; điều phối viên rút được trước hạn, có lý do; việc
@@ -315,5 +316,76 @@ def test_hoan_tat_bao_truoc_mot_ngay_lam_viec(session, phong_ban):
     ho_so = _hoan_tat(session, phong_ban)
     bay = bay_gio(session)
     assert tu_dong(session, ho_so).luc == bay + 24 * GIO
+    assert not tu_dong(session, ho_so, bay + 16 * GIO - dt.timedelta(minutes=1)).bao_truoc
+    assert tu_dong(session, ho_so, bay + 16 * GIO).bao_truoc
+
+
+# ---------------------------------------------------------------------------
+# Chờ bổ sung thông tin tự đóng khi người gửi không trả lời (#143)
+# ---------------------------------------------------------------------------
+
+
+def _cho_bo_sung(session, phong_ban: str):
+    """Người xử lý đã hỏi thêm, hồ sơ đang chờ người gửi bổ sung."""
+    ho_so = _cho_phong(session, phong_ban)
+    tp = Actor(id="tp-143", roles=frozenset({"approver"}), departments=frozenset({phong_ban}))
+    xl = Actor(id="xl-143", roles=frozenset({"handler"}), departments=frozenset({phong_ban}))
+    perform_transition(session, case_id=ho_so.id, to_state="in-progress", actor=tp)
+    perform_transition(
+        session, case_id=ho_so.id, to_state="awaiting-info", actor=xl, note="Cần số máy"
+    )
+    return ho_so
+
+
+def test_cho_bo_sung_co_canh_tu_dong(session, rule_set):
+    cac = session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == rule_set.id,
+            Transition.from_state == "awaiting-info",
+            Transition.is_system,
+        )
+    ).all()
+    assert [(c.to_state, c.activity_code) for c in cac] == [("closed", "auto-close-no-info")]
+    # Năm ngày làm việc của lịch mẫu, dấu nhắc từ ngày thứ ba (navigator chốt 15/10)
+    assert cac[0].auto_after_hours == 40 and cac[0].warn_before_hours == 24
+    assert cac[0].role_codes == set() and cac[0].guard_codes == []
+    assert not cac[0].is_rework
+
+
+def test_nguoi_gui_khong_bo_sung_thi_tu_dong(session, phong_ban):
+    ho_so = _cho_bo_sung(session, phong_ban)
+    sla_truoc = ho_so.sla_running_seconds
+    bay = bay_gio(session)
+    assert quet_het_han_cho(session, bay + 40 * GIO - dt.timedelta(minutes=1)) == []
+
+    assert quet_het_han_cho(session, bay + 40 * GIO) == [ho_so.id]
+    assert ho_so.current_state == "closed"
+    # Thời gian chờ người gửi không tính vào hạn của phòng ban
+    assert ho_so.sla_running_seconds == sla_truoc
+    assert ho_so.sla_segment_since is None
+    cuoi = case_history(session, ho_so.id)[-1]
+    assert (cuoi.activity, cuoi.actor) == ("auto-close-no-info", TAC_NHAN_HAN_CHO)
+    assert cuoi.note
+
+
+def test_bo_sung_truoc_han_thi_khong_tu_dong(session, phong_ban):
+    ho_so = _cho_bo_sung(session, phong_ban)
+    nguoi_gui = Actor(id=NGUOI_GUI, roles=frozenset({"requester"}))
+    assert "auto-close-no-info" not in {
+        c.activity_code for c in allowed_transitions(session, ho_so, nguoi_gui)
+    }
+    perform_transition(
+        session, case_id=ho_so.id, to_state="in-progress", actor=nguoi_gui, note="Máy số 12"
+    )
+    assert quet_het_han_cho(session, bay_gio(session) + 40 * GIO) == []
+    assert ho_so.current_state == "in-progress"
+
+
+def test_cho_bo_sung_nhac_tu_ngay_thu_ba(session, phong_ban):
+    ho_so = _cho_bo_sung(session, phong_ban)
+    bay = bay_gio(session)
+    td = tu_dong(session, ho_so)
+    assert td.luc == bay + 40 * GIO
+    assert td.canh.activity_label == "Tự đóng vì chưa bổ sung thông tin"
     assert not tu_dong(session, ho_so, bay + 16 * GIO - dt.timedelta(minutes=1)).bao_truoc
     assert tu_dong(session, ho_so, bay + 16 * GIO).bao_truoc

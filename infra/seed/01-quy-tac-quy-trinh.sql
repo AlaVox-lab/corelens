@@ -157,6 +157,10 @@ VALUES
     (1, 'awaiting-info',       'awaiting-acceptance',    'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     20),
     (1, 'awaiting-info',       'in-progress',            'provide-info',        'Bổ sung thông tin',                   FALSE, TRUE,  'Thông tin bổ sung',     21),
     (1, 'awaiting-info',       'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                    22),
+    -- Người gửi không bổ sung thì hồ sơ tự đóng (#143, giảng viên chốt 08/10): nhắc trước,
+    -- vẫn im lặng thì đóng và ghi lý do. Đích là Đã đóng chứ không phải Đã hủy — người gửi
+    -- không chủ động bỏ yêu cầu. Mã hoạt động riêng để nhật ký tách được với tự đóng Hoàn tất.
+    (1, 'awaiting-info',       'closed',                 'auto-close-no-info',  'Tự đóng vì chưa bổ sung thông tin',   TRUE,  FALSE, NULL,                    28),
 
     (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
@@ -178,6 +182,14 @@ UPDATE transitions
 UPDATE transitions
    SET auto_after_hours = 24, warn_before_hours = 8
  WHERE rule_set_id = 1 AND activity_code = 'auto-close';
+
+-- Chờ bổ sung thông tin (#143): giảng viên chốt "nhắc sau 2 ngày"; navigator chốt 15/10 tự
+-- đóng sau 5 ngày làm việc. Với lịch mẫu 8 giờ một ngày: đóng sau 40 giờ làm việc, dấu nhắc
+-- hiện từ giờ thứ 16 — tức báo trước 24 giờ. Đồng hồ SLA của phòng ban vẫn dừng ở trạng thái
+-- này (cột sla_running), hạn chờ là đồng hồ riêng của người gửi.
+UPDATE transitions
+   SET auto_after_hours = 40, warn_before_hours = 24
+ WHERE rule_set_id = 1 AND activity_code = 'auto-close-no-info';
 
 -- Cạnh làm lại (#153): hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm "quay lui" theo
 -- đúng các cạnh này — hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính.
