@@ -185,8 +185,10 @@ export default async function ChiTietDieuPhoi({
                 Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng.
               </p>
             )}
+            {/* Khóa có `updated_at`: gia hạn giữ nguyên trạng thái (#101), nên chỉ mã trạng
+                thái thì bảng không dựng lại, khung gia hạn vừa xong vẫn mở */}
             <BangThaoTac
-              key={ho_so.state.code}
+              key={`${ho_so.state.code}-${ho_so.updated_at}`}
               maHoSo={ho_so.id}
               cacCanh={ho_so.allowed_transitions}
               giaTriDau={giaTriDau}

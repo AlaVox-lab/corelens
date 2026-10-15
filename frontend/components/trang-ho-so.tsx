@@ -97,6 +97,14 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
             {dongHo.cau}
           </span>
         )}
+        {/* Gia hạn (#101): hạn ở trên đã gồm phần này; nói ra để người đọc biết vì sao
+            cam kết dài hơn mức của loại yêu cầu */}
+        {ho_so.sla_extension_count > 0 && (
+          <small>
+            Đã gia hạn {ho_so.sla_extension_count} lần, thêm{" "}
+            {thoiLuongLamViec(ho_so.sla_extension_total_hours * 3600)}
+          </small>
+        )}
         {tuDong && (
           <small className="tu-dong" data-sap={tuDong.canhBao ? "" : undefined}>
             {tuDong.cau}

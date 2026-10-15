@@ -70,6 +70,11 @@ CHANGEABLE_FIELDS = frozenset(
         "assignee_id",
         "title",
         "description",
+        # Gia hạn xử lý (#101): số giờ lần này do người nhập; tổng và số lần do ràng buộc
+        # `extend-deadline` tự đặt
+        "sla_extension_hours",
+        "sla_extension_total_hours",
+        "sla_extension_count",
     }
 )
 

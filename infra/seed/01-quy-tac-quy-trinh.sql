@@ -162,6 +162,15 @@ VALUES
     -- không chủ động bỏ yêu cầu. Mã hoạt động riêng để nhật ký tách được với tự đóng Hoàn tất.
     (1, 'awaiting-info',       'closed',                 'auto-close-no-info',  'Tự đóng vì chưa bổ sung thông tin',   TRUE,  FALSE, NULL,                    28),
 
+    -- Gia hạn xử lý (#101, giảng viên chốt 08/10): cạnh tự trỏ (ADR-0005), lý do bắt buộc,
+    -- giá trị cũ và mới vào nhật ký. Điều phối viên gia hạn lần đầu trước khi phòng nhận
+    -- việc; lần sau chỉ trưởng phòng, khi hồ sơ đã leo thang — Đang xử lý đã có cạnh tự
+    -- trỏ "Nhận việc về mình" (navigator chốt 15/10). Đã đóng không có cạnh nào: hết hồ sơ
+    -- là hết gia hạn. Giới hạn số giờ và số lần khai ở loại yêu cầu.
+    (1, 'classified',          'classified',             'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        29),
+    (1, 'awaiting-acceptance', 'awaiting-acceptance',    'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        30),
+    (1, 'escalated',           'escalated',              'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        31),
+
     (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
     -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24),
@@ -241,6 +250,11 @@ FROM (VALUES
 
     ('escalated',              'in-progress',            'approver'),
 
+    -- Gia hạn xử lý (#101): điều phối trước khi phòng nhận, trưởng phòng sau leo thang
+    ('classified',             'classified',             'classifier'),
+    ('awaiting-acceptance',    'awaiting-acceptance',    'classifier'),
+    ('escalated',              'escalated',              'approver'),
+
     ('awaiting-info',          'submitted',              'requester'),
     ('awaiting-info',          'awaiting-acceptance',    'requester'),
     ('awaiting-info',          'in-progress',            'requester'),
@@ -318,7 +332,19 @@ INSERT INTO guards (code, label, description) VALUES
 
     ('assign-self',
      'Tự nhận việc',
-     'Cạnh này chỉ đi được khi hồ sơ chưa giao cho ai, và tự đặt người xử lý là chính người thao tác — không có ô chọn người. Hồ sơ đã có người giữ thì phải nhờ trưởng phòng phân công lại.');
+     'Cạnh này chỉ đi được khi hồ sơ chưa giao cho ai, và tự đặt người xử lý là chính người thao tác — không có ô chọn người. Hồ sơ đã có người giữ thì phải nhờ trưởng phòng phân công lại.'),
+
+    ('extend-deadline',
+     'Gia hạn xử lý',
+     'Cạnh này cho nhập số giờ làm việc gia hạn thêm: từ 1 tới request_types.sla_extension_max_percent phần trăm hạn gốc — hạn của loại yêu cầu nhân hệ số của mức ưu tiên. Tự cộng vào tổng giờ gia hạn và đếm số lần; nhật ký giữ giá trị cũ và mới (#101).'),
+
+    ('first-extension',
+     'Chỉ gia hạn lần đầu',
+     'Cạnh này chỉ đi được khi hồ sơ chưa gia hạn lần nào. Gắn vào cạnh gia hạn của điều phối viên: lần gia hạn thứ hai chỉ trưởng phòng được làm (#101).'),
+
+    ('extension-limit',
+     'Chưa hết lượt gia hạn',
+     'Cạnh này chỉ đi được khi hồ sơ gia hạn chưa tới request_types.sla_extension_max_count lần (#101).');
 
 INSERT INTO transition_guards (transition_id, guard_code)
 SELECT t.id, v.guard_code
@@ -385,7 +411,19 @@ FROM (VALUES
     ('in-progress',         'in-progress',            'assign-self'),
 
     -- Leo thang không đổi phòng
-    ('escalated',           'in-progress',            'department-unchanged')
+    ('escalated',           'in-progress',            'department-unchanged'),
+
+    -- Gia hạn xử lý (#101). Điều phối viên chỉ gia hạn lần đầu, và không gia hạn hồ sơ
+    -- mình gửi; trưởng phòng gia hạn hồ sơ của phòng mình tới khi hết lượt.
+    ('classified',          'classified',             'extend-deadline'),
+    ('classified',          'classified',             'first-extension'),
+    ('classified',          'classified',             'actor-not-requester'),
+    ('awaiting-acceptance', 'awaiting-acceptance',    'extend-deadline'),
+    ('awaiting-acceptance', 'awaiting-acceptance',    'first-extension'),
+    ('awaiting-acceptance', 'awaiting-acceptance',    'actor-not-requester'),
+    ('escalated',           'escalated',              'extend-deadline'),
+    ('escalated',           'escalated',              'extension-limit'),
+    ('escalated',           'escalated',              'actor-in-case-department')
 ) AS v (from_state, to_state, guard_code)
 JOIN transitions t
   ON t.rule_set_id = 1
@@ -398,11 +436,14 @@ JOIN transitions t
 -- Mức ưu tiên
 -- ---------------------------------------------------------------------------
 
-INSERT INTO priorities (code, label, is_default, display_order) VALUES
-    ('low',    'Thấp',        FALSE, 1),
-    ('normal', 'Bình thường', TRUE,  2),
-    ('high',   'Cao',         FALSE, 3),
-    ('urgent', 'Khẩn',        FALSE, 4);
+-- Hạn theo mức ưu tiên (#101, giảng viên chốt 08/10): hạn = hạn chuẩn của loại yêu cầu ×
+-- sla_factor_percent / 100. Ân hạn nhân cùng hệ số (navigator chốt 15/10). Sự cố thiết bị
+-- 8 giờ: Khẩn 4 giờ, Cao 6, Bình thường 8, Thấp 12.
+INSERT INTO priorities (code, label, is_default, display_order, sla_factor_percent) VALUES
+    ('low',    'Thấp',        FALSE, 1, 150),
+    ('normal', 'Bình thường', TRUE,  2, 100),
+    ('high',   'Cao',         FALSE, 3,  75),
+    ('urgent', 'Khẩn',        FALSE, 4,  50);
 
 
 -- ---------------------------------------------------------------------------

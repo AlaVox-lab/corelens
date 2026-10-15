@@ -121,6 +121,13 @@ class Request(Base):
     # hoặc hồ sơ đã đóng.
     sla_segment_since: Mapped[dt.datetime | None] = mapped_column(default=None)
 
+    # Gia hạn xử lý (#101). Hạn của hồ sơ = hạn gốc (loại yêu cầu nhân hệ số ưu tiên) cộng
+    # tổng số giờ đã gia hạn. Ô người dùng nhập là số giờ của lần này; tổng và số lần do
+    # ràng buộc `extend-deadline` tự đặt — xem app/rules/guards.py.
+    sla_extension_hours: Mapped[int] = mapped_column(Integer, default=0)
+    sla_extension_total_hours: Mapped[int] = mapped_column(Integer, default=0)
+    sla_extension_count: Mapped[int] = mapped_column(SmallInteger, default=0)
+
     # --- Mốc thời gian, luôn UTC -------------------------------------------
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[dt.datetime] = mapped_column(

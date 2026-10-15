@@ -18,16 +18,21 @@
 # 8 giờ làm việc, đêm và cuối tuần không trôi. Không hàm nào tự trừ hai mốc thời gian —
 # phép đo đi qua hàm `so_giay_lam_viec` của PostgreSQL (lược đồ khởi tạo, mục 10), để
 # Python và truy vấn tìm hồ sơ quá hạn đo cùng một cách.
+#
+# Hạn của một hồ sơ (#101) = hạn chuẩn của loại yêu cầu × hệ số của mức ưu tiên, cộng tổng
+# số giờ đã gia hạn. Ân hạn nhân cùng hệ số, không cộng phần gia hạn. Ba con số đều là dữ
+# liệu: `request_types.sla_hours`, `priorities.sla_factor_percent`,
+# `requests.sla_extension_total_hours`.
 
 from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import func, select
+from sqlalchemy import BigInteger, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.models.case import Request
-from app.models.workflow_config import RequestType, State, Transition
+from app.models.workflow_config import Priority, RequestType, State, Transition
 
 
 def _trang_thai(session: Session, rule_set_id: int, ma: str) -> State:
@@ -82,12 +87,42 @@ def cap_nhat_dong_ho(session: Session, case: Request, transition: Transition) ->
         case.sla_segment_since = hien_tai
 
 
-def gioi_han_giay(session: Session, case: Request) -> int | None:
-    """Ngưỡng SLA của hồ sơ, tính bằng giây. `None` khi chưa phân loại xong."""
+def he_so_uu_tien(session: Session, case: Request) -> int:
+    """Phần trăm hạn chuẩn áp cho hồ sơ theo mức ưu tiên (#101). Chưa có mức thì 100."""
+    if case.priority_code is None:
+        return 100
+    muc = session.get(Priority, case.priority_code)
+    return 100 if muc is None else muc.sla_factor_percent
+
+
+def han_goc_giay(session: Session, case: Request) -> int | None:
+    """Hạn gốc của hồ sơ, tính bằng giây: hạn chuẩn của loại nhân hệ số ưu tiên (#101).
+
+    Chưa cộng phần gia hạn — đây là con số mà mỗi lần gia hạn được tính phần trăm trên.
+    `None` khi chưa phân loại xong. Chia nguyên giống truy vấn ở `ho_so_qua_han`, để Python
+    và SQL không lệch nhau một giây nào.
+    """
     if case.request_type_code is None:
         return None
     loai = session.get(RequestType, case.request_type_code)
-    return None if loai is None else loai.sla_hours * 3600
+    if loai is None:
+        return None
+    return loai.sla_hours * 3600 * he_so_uu_tien(session, case) // 100
+
+
+def gioi_han_giay(session: Session, case: Request) -> int | None:
+    """Ngưỡng SLA của hồ sơ, tính bằng giây: hạn gốc cộng tổng giờ đã gia hạn (#101).
+
+    `None` khi chưa phân loại xong.
+    """
+    goc = han_goc_giay(session, case)
+    return None if goc is None else goc + case.sla_extension_total_hours * 3600
+
+
+def an_han_giay(session: Session, case: Request) -> int:
+    """Ân hạn của hồ sơ (#94), nhân cùng hệ số ưu tiên với hạn (#101)."""
+    loai = session.get(RequestType, case.request_type_code)
+    return loai.sla_grace_hours * 3600 * he_so_uu_tien(session, case) // 100
 
 
 def da_chay_giay(session: Session, case: Request) -> int:
@@ -148,9 +183,8 @@ def an_han_con_lai_giay(session: Session, case: Request) -> int | None:
         return None
     if da_chay_giay(session, case) <= gioi_han:
         return None
-    loai = session.get(RequestType, case.request_type_code)
     da_o = giay_lam_viec(session, case.sla_segment_since)
-    con = loai.sla_grace_hours * 3600 - da_o
+    con = an_han_giay(session, case) - da_o
     return con if con > 0 else None
 
 
@@ -179,6 +213,15 @@ def ho_so_qua_han(session: Session) -> list[Request]:
     # Giờ làm việc của đoạn đang mở, cùng phép đo với `da_chay_giay`
     dang_mo = func.so_giay_lam_viec(Request.sla_segment_since, func.now())
 
+    # Cùng phép tính với `gioi_han_giay` và `an_han_giay` (#101). Ép BIGINT trước khi nhân:
+    # cột SMALLINT/INTEGER nhân 3600 rồi nhân hệ số có thể tràn kiểu gốc.
+    he_so = cast(func.coalesce(Priority.sla_factor_percent, 100), BigInteger)
+    gioi_han = (
+        cast(RequestType.sla_hours, BigInteger) * 3600 * he_so // 100
+        + cast(Request.sla_extension_total_hours, BigInteger) * 3600
+    )
+    an_han = cast(RequestType.sla_grace_hours, BigInteger) * 3600 * he_so // 100
+
     dang_chay = (
         select(Transition.id)
         .where(
@@ -198,11 +241,12 @@ def ho_so_qua_han(session: Session) -> list[Request]:
             & (State.code == Request.current_state),
         )
         .join(RequestType, RequestType.code == Request.request_type_code)
+        .outerjoin(Priority, Priority.code == Request.priority_code)
         .where(
             State.sla_running,
             Request.sla_segment_since.is_not(None),
-            Request.sla_running_seconds + dang_mo > RequestType.sla_hours * 3600,
-            dang_mo >= RequestType.sla_grace_hours * 3600,
+            Request.sla_running_seconds + dang_mo > gioi_han,
+            dang_mo >= an_han,
             dang_chay,
         )
         .order_by(Request.id)

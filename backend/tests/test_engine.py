@@ -1261,7 +1261,14 @@ def test_moi_truong_quyet_dinh_deu_dat_duoc_o_it_nhat_mot_canh(session, rule_set
         ).all()
         for g in t.guards
     }
-    assert permitted_fields(cac_ma) == CHANGEABLE_FIELDS
+    # Trường chỉ ràng buộc TỰ ĐẶT, không ai nhập — tổng giờ và số lần gia hạn (#101). Chúng
+    # không là ô nhập của cạnh nào, nhưng vẫn phải có cạnh trong dữ liệu mang ràng buộc đặt
+    # chúng, không thì cũng thành trường chết.
+    tu_dat = frozenset().union(*(g.sets for g in GUARD_REGISTRY.values()))
+    nhap_duoc = frozenset().union(*(g.governs for g in GUARD_REGISTRY.values()))
+    chi_tu_dat = tu_dat - nhap_duoc
+    assert permitted_fields(cac_ma) == CHANGEABLE_FIELDS - chi_tu_dat
+    assert chi_tu_dat <= frozenset().union(*(GUARD_REGISTRY[m].sets for m in cac_ma))
     assert GOVERNED_FIELDS <= CHANGEABLE_FIELDS
 
 
