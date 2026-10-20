@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-10-12 |
-| Phiên bản hiện tại | `v0.4.0` (04/10). Trên `main` đã có thêm 10 commit nội dung chưa phát hành: 8 `feat`, 1 `fix`, 1 `docs`. **`v0.5.0` cắt khi khép hẳn Giai đoạn 2** — sau các issue giảng viên chốt ngày 08/10 |
-| Giai đoạn | **Giai đoạn 2, vòng hoàn thiện** — luồng thủ công thông đầu-cuối từ Tuần 8; Tuần 9 thêm hộp thư trao đổi, trò chuyện nội bộ và giao diện mới. Còn bốn luật giảng viên chốt cho hồ sơ nằm im, hạn từng hồ sơ và mở lại, cùng đính kèm tệp |
-| Mốc công việc | Tuần 9 — Hộp thư trao đổi và khép luồng thủ công, **đóng 12/10** với 10 issue. Tuần 10 — Quy tắc thầy chốt và giao diện người gửi, hạn 18/10 |
+| Cập nhật lần cuối | 2026-10-20 |
+| Phiên bản hiện tại | **`v0.5.0`** (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng thử. `main` và `dev` cùng một commit, không có thay đổi chưa phát hành. **`v0.6.0` khép hẳn Giai đoạn 2** — sau #102 và #80 |
+| Giai đoạn | **Giai đoạn 2, vòng hoàn thiện** — luồng thủ công thông đầu-cuối từ Tuần 8; Tuần 10 làm xong lịch làm việc và các luật giảng viên chốt 08/10 cho hồ sơ nằm im, hạn theo mức ưu tiên và gia hạn. Còn mở lại có giới hạn (#102) và đính kèm tệp (#80) |
+| Mốc công việc | Tuần 10 — Quy tắc thầy chốt và giao diện người gửi, hạn 18/10: **8 issue đóng**, ba issue còn mở dời sang Tuần 11 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với cổng người gửi, buồng lái điều phối, buồng lái phòng ban và hộp thư chung. Cụm gồm **sáu dịch vụ** |
-| Issue đang mở | **9** — #80, #101, #102, #142, #143, #144, #157, #175, #192 |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với cổng người gửi, buồng lái điều phối, buồng lái phòng ban và hộp thư chung. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **10 trạng thái, 31 cạnh** |
+| Issue đang mở | **3** — #80, #102, #157 |
 | Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
 | Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **261 bài**, chạy trên PostgreSQL và Keycloak thật. Mọi issue từ #78 đều qua phép thử đột biến, trừ phần chỉ có ở giao diện — frontend chưa có bộ kiểm thử, kiểm bằng đăng nhập OIDC thật và kịch bản đầu–cuối |
-| Tổng bộ nhớ toàn cụm | **1,55 GiB**, đo ngày 16/09. Chưa đo lại — tuần 7 tới 9 không thêm dịch vụ nào. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
-| Số ngày còn lại tới chấm kho mã | **56 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **20 ngày** (đầu tháng 11/2026) |
+| Bộ kiểm thử tự động | **362 bài**, chạy trên PostgreSQL và Keycloak thật. Mọi issue từ #78 đều qua phép thử đột biến, trừ phần chỉ có ở giao diện — frontend chưa có bộ kiểm thử, kiểm bằng đăng nhập OIDC thật và kịch bản đầu–cuối |
+| Tổng bộ nhớ toàn cụm | **1,4 GB lúc rảnh**, đo lại ngày 15/10 khi viết hướng dẫn cài đặt (#206); Keycloak chiếm gần một nửa. Ảnh chứa khoảng 3,9 GB. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
+| Số ngày còn lại tới chấm kho mã | **48 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **12 ngày** (đầu tháng 11/2026) |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
@@ -40,11 +40,13 @@ phòng ban. Mọi bước đổi hồ sơ ghi nhật ký sự kiện, kèm lịc
 tra từ danh bạ Keycloak. Mọi lời nhắn gom về **một hộp thư chung**, mỗi cuộc trò chuyện gắn
 một hồ sơ; nhân viên có thêm **cuộc trò chuyện nội bộ** mà người gửi không thấy. Điều phối
 viên không tự điều phối hồ sơ do chính mình gửi. Trang hồ sơ đặt hạn và nút thao tác lên
-trước nhật ký. Chạy được trên máy sạch bằng một lệnh.
+trước nhật ký. Mọi hạn đếm theo **giờ làm việc** của một lịch khai trong dữ liệu; hạn xử lý
+đi theo loại yêu cầu nhân hệ số mức ưu tiên, gia hạn được tối đa hai lần, có lý do. Hồ sơ
+nằm im ở ba trạng thái chờ thì được báo trước rồi **tự trả về điều phối hay tự đóng**. Chạy
+được trên máy sạch bằng một lệnh, kể cả từ tệp nén của bản phát hành.
 
-Thứ còn thiếu trong luồng thủ công: **đính kèm tệp** (#80), và bốn luật giảng viên chốt ngày
-08/10 — **hồ sơ nằm im** ở ba trạng thái chờ (#142, #143, #144), **hạn theo mức ưu tiên và
-chỉnh hạn từng hồ sơ** (#101), **giới hạn mở lại** (#102). Tầng `D` và `I` chưa cài đặt.
+Thứ còn thiếu trong luồng thủ công: **giới hạn mở lại** (#102) và **đính kèm tệp** (#80).
+Tầng `D` và `I` chưa cài đặt.
 
 ---
 
@@ -507,11 +509,71 @@ giải trạng thái ở *Hồ sơ của tôi* sẽ thay bằng sơ đồ nhỏ 
 
 **Issue đã đóng**: #47, #153, #154, #155, #156, #158, #169, #170, #188, #189
 
+### Tuần 10 — Lịch làm việc, luật hồ sơ nằm im và `v0.5.0`
+
+**Hồ sơ của tôi xem nhanh vị trí** (#192). Bảng chú giải mười trạng thái cuối trang bỏ đi; rê
+chuột, Tab tới hay chạm vào nhãn trạng thái thì hiện sơ đồ nhỏ của đường chính, suy từ dữ liệu
+như thanh bước trang hồ sơ, kèm một dòng khi hồ sơ đang dừng ở nhánh phụ.
+
+**Lịch làm việc** (#199, issue mới trong tuần). Giảng viên chốt các hạn chờ tính theo giờ làm
+việc, mà đồng hồ SLA đang đếm giờ lịch — hồ sơ cam kết 8 giờ nhận chiều thứ Sáu đã quá hạn từ
+đêm thứ Sáu. Navigator chốt làm lịch **trước** #142 và #144 và áp cho mọi đồng hồ, để cả hệ
+thống chỉ có một loại giờ. Lịch là dữ liệu: khung giờ theo thứ, ngày nghỉ, múi giờ; mẫu là thứ
+Hai đến thứ Sáu, nghỉ trưa, ngày lễ năm 2026. Mọi phép đo đi qua hai hàm trong PostgreSQL, vì
+bộ quét phải đo ngay trong SQL; Python gọi đúng hai hàm đó nên hai nơi không đo lệch nhau.
+
+**Hồ sơ nằm im ở ba trạng thái chờ** — luật giảng viên chốt 08/10, mỗi trạng thái một issue,
+dùng chung một khuôn: **cạnh hệ thống** cùng cặp trạng thái với cạnh của người, hạn chờ và mốc
+báo trước là hai cột dữ liệu trên cạnh, một bộ quét chạy cùng vòng với bộ quét leo thang và đi
+qua cửa chuyển trạng thái duy nhất.
+
+| Trạng thái | Hết hạn chờ thì | Hạn chờ · báo trước (giờ làm việc) | Issue |
+|---|---|---|---|
+| *Chờ phòng ban xác duyệt* | tự trả về điều phối viên; điều phối viên cũng rút về được trước hạn, có lý do | 24 · 4 | #142 |
+| *Hoàn tất* | tự đóng, nhật ký ghi lý do | 24 · 8 | #144 |
+| *Chờ bổ sung thông tin* | tự đóng sang *Đã đóng*, không sang *Đã hủy* vì người gửi không chủ động bỏ | 40 · 24 | #143 |
+
+Chỗ vướng ghi ở tuần trước được gỡ: ràng buộc duy nhất của bảng cạnh thêm cột `is_system`,
+nên một cặp trạng thái có tối đa một cạnh của người và một cạnh của hệ thống. Tự trả về
+**không** tính là quay lui — phòng ban không từ chối nội dung, chỉ để quá hạn.
+
+**Ngưỡng sắp hết hạn trong dữ liệu** (#175). Ngưỡng là phần trăm cam kết, khai theo loại yêu
+cầu, mẫu 75 %. Dịch vụ trả thêm cờ *sắp hết hạn*; thẻ hạn và vạch chuyển vàng, hàng đợi phòng
+ban có nhóm *Sắp hết hạn* giữa *Quá hạn* và *Trong hạn*. Chọn phần trăm thay vì số giờ để
+ngưỡng co giãn theo hạn của từng hồ sơ.
+
+**Hạn theo mức ưu tiên và gia hạn từng hồ sơ** (#101). Hạn gốc là hạn chuẩn của loại nhân hệ
+số trong bảng mức ưu tiên — Khẩn 50 %, Cao 75 %, Bình thường 100 %, Thấp 150 %; ân hạn nhân
+cùng hệ số. Gia hạn là cạnh tự trỏ theo ADR-0005, nhập số giờ cộng thêm kèm lý do: điều phối
+viên gia hạn lần đầu trước khi phòng ban nhận việc, trưởng phòng gia hạn khi hồ sơ đã leo
+thang. Mỗi lần tối đa 50 % hạn gốc, tổng tối đa hai lần — giảng viên để ngỏ con số X, navigator
+chốt 50 % trong dữ liệu. Bộ quy tắc mẫu lên **31 cạnh**.
+
+**Bản cài đặt đầu tiên cho nhóm khác dùng thử.** Giảng viên giao: hai nhóm gửi nhau bản cài
+đặt, nhóm kia cài chỉ dựa vào README. Nhóm gửi tệp `.tar.gz` của bản phát hành — cũng là cách
+ban giám khảo lấy mã — nên README thêm cách cài từ tệp nén, có lệnh cho PowerShell và bash,
+yêu cầu máy đo lại, cách kiểm cụm đã lên và bảng sự cố thường gặp (#206). Lệnh cũ
+`cd dx-os-lab/infra` sai tên thư mục khi giải nén tệp của GitHub. Cắt **`v0.5.0`** ngay sau
+#101, rồi chạy thử đúng tệp `.tar.gz` của Release theo bốn lệnh trong README: kịch bản
+đầu–cuối 19/19 bước đạt. Tệp chưa gửi tới nhóm kia.
+
+**Sự cố khi phát hành**: pull request sinh nhật ký thay đổi (#215) vào thẳng `main` vì ô
+`base` để mặc định. Không revert — `dev` lúc đó là tổ tiên của `main`, nên tua thẳng `dev` lên
+`main` và đặt thẻ ngay trên `main`; sau đó hai nhánh cùng một commit.
+
+Kiểm qua đường thật bắt được hai lỗi mà bộ kiểm thử không thấy, cả hai sửa trong pull request
+của #101: trang hồ sơ trả 500 khi dòng thời gian kể lại một giá trị số, và khung gia hạn vẫn
+mở sau khi gia hạn xong — xem Ghi chú kỹ thuật.
+
+**Bộ kiểm thử lên 362 bài.**
+
+**Issue đã đóng**: #101, #142, #143, #144, #175, #192, #199, #206
+
 ---
 
 ## Đang làm
 
-Không có issue nào đang làm dở. Tuần 10 bắt đầu từ #192.
+Không có issue nào đang làm dở. Tuần 11 bắt đầu từ #102.
 
 Ba bản ghi ADR-0006, ADR-0007 và ADR-0008 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp
 nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và mở issue tích hợp.
@@ -522,22 +584,20 @@ nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và
 
 ### Theo thứ tự
 
-1. **#192 — *Hồ sơ của tôi***: bỏ bảng chú giải trạng thái, rê, Tab hay chạm vào nhãn thì hiện
-   sơ đồ nhỏ — thanh bước rút gọn và một dòng nhánh. Chỉ đổi giao diện
-2. **Chốt cách lược đồ nhận cạnh hệ thống** trước khi làm #142 và #144: cạnh tự trả về, tự đóng
-   trùng cặp trạng thái với cạnh người bấm, mà `transitions` giữ `UNIQUE (rule_set_id,
-   from_state, to_state)`. Một quyết định dùng cho cả hai issue
-3. **#142, #144 — hồ sơ nằm im ở *Chờ phòng ban xác duyệt* và *Hoàn tất***: cảnh báo trước,
-   tự trả về điều phối viên hay tự đóng khi hết hạn chờ, ghi sự kiện
-4. **#143 cùng #102 — *Chờ bổ sung thông tin* tự đóng, và luật mở lại mới**: hai issue cùng
-   đổi mô hình quanh *Đã đóng* (mở lại tính từ khi đóng, tối đa hai lần, cấp hạn mới,
-   `parent_request_id`), nên làm một lượt. #102 đổi sang `type/feat` khi bắt đầu
-5. **#101 — hạn theo mức ưu tiên và chỉnh hạn từng hồ sơ**: hệ số trong bảng `priorities`,
-   chỉnh hạn là cạnh tự trỏ theo ADR-0005
-6. **Cắt `v0.5.0`** khi các issue trên lên `main` — khép hẳn Giai đoạn 2. Các bước 2–5 đều đổi
-   dữ liệu khởi tạo: gom lên `main` sát nhau để cả nhóm `down -v` ít lần nhất
-7. **#157 rà từ ngữ**, **#175 ngưỡng sắp hết hạn trong dữ liệu**, **#80 đính kèm tệp**
-8. Sang **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện. Tầng
+1. **Gửi tệp `.tar.gz` của `v0.5.0` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README —
+   việc giảng viên giao, chưa làm. Lỗi cài đặt xử lý trước mọi issue khác
+2. **#102 — luật mở lại mới**: mở lại trong 7 ngày làm việc kể từ khi đóng, tối đa hai lần, có
+   lý do, cấp hạn mới; quá hai lần thì tạo hồ sơ mới liên kết `parent_request_id`. Nhánh đóng
+   khi không phòng nào nhận đổi tên trạng thái. Hồ sơ tự đóng ở #143, #144 mở lại theo luật
+   này. Phải chốt trước: mở lại từ *Đã đóng* — khi đó *Đã đóng* không còn là trạng thái kết
+   thúc — hay giữ mở lại từ *Hoàn tất* và kéo dài cửa sổ. Đổi sang `type/feat` khi bắt đầu
+3. **#80 — đính kèm tệp** qua SeaweedFS bằng S3 API. Thêm thư viện S3: kiểm giấy phép, ghi
+   `dependencies.md`. Phải chốt: ai xem được tệp, giữ hay xóa tệp khi hủy hồ sơ, danh sách kiểu
+   tệp nằm trong cấu hình
+4. **Cắt `v0.6.0`** khi #102 và #80 lên `main` — khép hẳn Giai đoạn 2
+5. **#157 rà từ ngữ** xen kẽ: lập bảng chữ theo từng màn, tách chữ trong mã với chữ trong dữ
+   liệu, navigator duyệt rồi mới sửa
+6. Sang **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện. Tầng
    `I` chỉ tích hợp sau khi `P` và `D` ổn định
 
 ### Chờ giảng viên
@@ -549,14 +609,10 @@ Gom vào một buổi:
   `dependencies.md` phải sửa thành "chỉ trong dịch vụ tách riêng" — PM4Py là thư viện, không
   phải ứng dụng chạy nguyên ảnh như Wiki.js. ADR-0008 kéo theo khoảng 2,8 GiB bộ nhớ cho tầng
   `I` — nhóm đề xuất để tầng này sau một hồ sơ Compose riêng
-- **"Giờ làm việc" tính thế nào** — #142, #143, #144, #102 đều tính theo giờ hay ngày làm
-  việc, mà hệ thống chưa có lịch làm việc. Thêm lịch vào dữ liệu, hay tạm dùng giờ lịch
-- **X % mỗi lần gia hạn tối đa**, và hai lần gia hạn (điều phối viên rồi trưởng phòng) có
-  phải tổng tối đa hai lần không — #101
-- **Hồ sơ tự trả về điều phối viên có tính một lần *quay lui* không** — #142
-- **Tổng thời gian chờ trước khi tự đóng** ở *Chờ bổ sung thông tin* — giảng viên mới nêu mốc
-  nhắc sau 2 ngày (#143)
-- **Ngưỡng "sắp hết hạn"** cho hàng đợi và trang hồ sơ — #175
+- **Xác nhận các con số navigator đã đặt tạm trong dữ liệu** — gia hạn mỗi lần tối đa 50 % hạn
+  gốc, tổng hai lần (#101); tự đóng *Chờ bổ sung thông tin* sau 5 ngày làm việc (#143); ngưỡng
+  sắp hết hạn 75 % (#175). Đổi con số nào cũng chỉ sửa dữ liệu khởi tạo
+- **Công khai kho mã khi nào** — phải trước 07/12; công khai thì bật lại quy tắc bảo vệ nhánh
 - **Kênh thông báo** — các luật mới đều "gửi thông báo", hệ thống chưa có kênh nào. Đề xuất
   tạm dùng lời nhắn tự động trên hồ sơ cộng dấu trên hàng đợi; email là việc riêng
 - **AI trong hộp thư được tự động tới đâu** — nhóm đề xuất AI chỉ soạn nháp câu hỏi và tóm
@@ -566,7 +622,7 @@ Gom vào một buổi:
 ### Việc vận hành, không cần issue
 
 1. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
-   từ lâu — 261 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
+   từ lâu — 362 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
 2. Thêm `CODE_OF_CONDUCT.md`
 3. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
    `delete_branch_on_merge` an toàn
@@ -582,8 +638,8 @@ Gom vào một buổi:
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Chưa có tích hợp liên tục** | 261 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 — #142, #143, #144, #101, #102 — đều đổi dữ liệu khởi tạo: gom lên `main` sát nhau |
+| **Chưa có tích hợp liên tục** | 362 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. #102 sẽ đổi tiếp |
 | **Máy thành viên không đủ tài nguyên dựng cụm** | #48 phải chuyển người làm: bản dựng ảnh chứa hỏng giữa chừng với lỗi `EOF` trên một máy còn khoảng 7,5 GB trống. **Nguyên nhân chưa xác nhận** — nghi ổ gần đầy, hoặc Docker mất kết nối khi dựng nhiều ảnh cùng lúc. Con số 15 GB mà một trợ lý AI đòi cũng chưa đo. Ở #47, đĩa ảo Docker nằm trên ổ C gần đầy làm ảnh vừa kéo báo lỗi đọc ghi và ghi đồng bộ chỉ vài kB/s — số đo trên máy đó bỏ đi | Giao cho máy đó việc không cần dựng cụm — tài liệu, review pull request — cho tới khi giải phóng được ổ đĩa. Trước khi dựng hay đo, chuyển *Disk image location* của Docker Desktop sang ổ còn trống. Con số này cũng là dữ liệu cho mục **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
@@ -648,6 +704,13 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Hồ sơ nằm im: **cảnh báo trước, rồi tự trả về hay tự đóng**, ghi sự kiện | *Chờ phòng ban xác duyệt* tự trả về điều phối viên; *Chờ bổ sung thông tin* nhắc rồi tự đóng; *Hoàn tất* nhắc rồi tự đóng. Mọi ngưỡng là dữ liệu. Giảng viên chốt 08/10 — #142, #143, #144 |
 | Hạn mặc định theo **loại yêu cầu × mức ưu tiên** | Khẩn 50 %, cao 75 %, bình thường 100 %, thấp 150 % hạn chuẩn. Điều phối viên chỉnh hạn được, có lý do và nhật ký, không chỉnh sau khi đóng. Giảng viên chốt 08/10 — #101 |
 | Trang hồ sơ đặt **việc và hạn trước nhật ký** | Dòng thời gian mặc định thu gọn về bước hiện tại; màn hẹp đưa thẻ hạn và thao tác lên đầu. Theo nhận xét của giảng viên 11/10 — #189 |
+| Mọi hạn đếm theo **giờ làm việc** của một lịch trong dữ liệu | Một lịch mặc định cho cả công ty; mọi phép đo đi qua hai hàm SQL dùng chung cho bộ quét và dịch vụ. Navigator chốt 12/10 — #199 |
+| Một cặp trạng thái có tối đa **một cạnh người và một cạnh hệ thống** | Ràng buộc duy nhất của bảng cạnh thêm `is_system`; engine chọn cạnh theo loại tác nhân. Hạn chờ và mốc báo trước là cột trên cạnh. Navigator chốt 12/10 — #142 |
+| Tự trả về điều phối **không** tính là quay lui | Phòng ban không từ chối nội dung, chỉ để quá hạn. Navigator chốt 12/10 — #142 |
+| Hồ sơ tự đóng ở *Chờ bổ sung thông tin* sang ***Đã đóng***, không sang *Đã hủy* | Người gửi không chủ động bỏ yêu cầu; mở lại sau khi đóng theo luật của #102. Navigator chốt 15/10 — #143 |
+| Ngưỡng sắp hết hạn là **phần trăm** theo loại yêu cầu | Co giãn theo hạn của từng hồ sơ, kể cả khi hạn đổi theo mức ưu tiên. Navigator chốt 15/10 — #175 |
+| Gia hạn: **điều phối viên lần đầu, trưởng phòng khi đã leo thang** | Điều phối viên gia hạn ở *Đã phân loại* và *Chờ phòng ban xác duyệt*; trưởng phòng ở *Đã leo thang*, vì *Đang xử lý* đã có cạnh tự trỏ *Nhận việc về mình*. Nhập số giờ cộng thêm kèm lý do. Navigator chốt 15/10 — #101 |
+| Bản cài đặt gửi người ngoài là **tệp `.tar.gz` của bản phát hành** | Cùng đường ban giám khảo lấy mã; kho còn riêng tư nên gửi tệp, không gửi liên kết. Navigator chốt 15/10 — #206 |
 
 ---
 
@@ -1027,6 +1090,33 @@ chọn. Quy tắc ẩn theo màn hình phải mang `!important`, hoặc bỏ `di
 Router lồng nhau của FastAPI không hiện đủ trong `app.routes`, nên bài quét "người gửi không
 thấy tin nội bộ ở bất kỳ điểm cuối `GET` nào" bỏ sót phần lớn điểm cuối mà vẫn xanh. Lấy danh
 sách từ `app.openapi()["paths"]` — đúng thứ máy khách thấy.
+
+**SQLAlchemy 2: `/` giữa hai số nguyên là chia số thực** (#101)
+
+Biểu thức `a / b` trên hai cột số nguyên sinh phép chia ra số thực, không cắt như `/` của
+PostgreSQL viết tay. Bộ quét tính hạn bằng `//` để khớp phép tính trong Python.
+
+**Cột `SMALLINT` nhân 3600 trong SQL bị tràn** (#142)
+
+Giờ khai bằng `SMALLINT`, đổi ra giây thì vượt miền giá trị. Ép `cast(..., BigInteger)` trước
+khi nhân.
+
+**Seed gắn vai trò theo cặp trạng thái phải loại cạnh hệ thống** (#142)
+
+Phép nối theo `(from_state, to_state)` gắn vai trò, ràng buộc cho mọi cạnh cùng cặp. Từ khi một
+cặp có cả cạnh người lẫn cạnh hệ thống, phải thêm `AND NOT t.is_system`, không thì cạnh hệ thống
+nhận luôn vai trò của cạnh người.
+
+**Kể lại thay đổi trên dòng thời gian không được ép mọi giá trị về chuỗi** (#101)
+
+Cột `changes` lần đầu mang giá trị số — số giờ gia hạn. Đoạn kể lại giả định mọi giá trị là
+chuỗi nên trang hồ sơ trả 500. Bộ kiểm thử không thấy vì chỉ kiểm dịch vụ; kiểm qua đăng nhập
+OIDC thật mới thấy.
+
+**Khung thao tác phải gắn `key` theo `updated_at` của hồ sơ** (#101)
+
+Sau cạnh tự trỏ, trạng thái không đổi nên React giữ nguyên khung thao tác cũ — khung gia hạn
+vẫn mở sau khi đã gửi. Khóa theo cả `updated_at` để khung dựng lại sau mỗi lần đổi hồ sơ.
 
 **Qdrant tìm chính xác khi tập nhỏ — recall 1,0 không chứng minh HNSW tốt** (#47)
 
