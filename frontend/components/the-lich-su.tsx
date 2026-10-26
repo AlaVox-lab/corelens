@@ -74,7 +74,7 @@ export function TheLichSu({
       <div
         className="tabs"
         role="tablist"
-        aria-label="Lịch sử hồ sơ"
+        aria-label="Dòng thời gian và trao đổi của hồ sơ"
         onKeyDown={(e) => {
           // Mũi tên trái phải chuyển tab, như mọi thanh tab
           if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;

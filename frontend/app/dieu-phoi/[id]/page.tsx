@@ -71,7 +71,7 @@ export default async function ChiTietDieuPhoi({
   // Hai cuộc của hồ sơ (#156): với người gửi, và nội bộ — dịch vụ đã lọc theo người xem
   const chung = ho_so.messages.filter((m) => !m.internal);
   const noiBo = ho_so.messages.filter((m) => m.internal);
-  const nguoiGui = ho_so.requester_label ?? "Không rõ";
+  const nguoiGui = ho_so.requester_label ?? "Không rõ người gửi";
   const macDinh = cacMuc?.find((m) => m.is_default)?.code ?? "";
   const goiYPhong = ho_so.suggested_department;
 
@@ -103,7 +103,7 @@ export default async function ChiTietDieuPhoi({
             icon: <Building2 aria-hidden />,
             chu:
               ho_so.department?.label ??
-              (goiYPhong ? `Chưa định tuyến · gợi ý theo loại: ${goiYPhong.label}` : "Chưa định tuyến"),
+              (goiYPhong ? `Chưa chuyển phòng · gợi ý theo loại: ${goiYPhong.label}` : "Chưa chuyển phòng"),
           },
           {
             icon: <Flag aria-hidden />,

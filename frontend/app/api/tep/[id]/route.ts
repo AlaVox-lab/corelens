@@ -20,7 +20,7 @@ export async function GET(
 
   const phanHoi = await layPhanHoiDichVu(`/attachments/${id}`);
   if (phanHoi === null) {
-    return new Response("Phiên đăng nhập đã hết hạn hoặc dịch vụ không trả lời.", {
+    return new Response("Phiên đăng nhập đã hết hạn hoặc hệ thống không phản hồi.", {
       status: 401,
     });
   }

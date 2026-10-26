@@ -290,7 +290,7 @@ người không phân biệt được màu đọc được giao diện này.
 | Màn | Địa chỉ | Việc làm được |
 |---|---|---|
 | Hàng đợi | `/dieu-phoi` | Hồ sơ đang chờ phân loại hoặc định tuyến, chờ lâu nhất lên đầu |
-| Chi tiết | `/dieu-phoi/{số}` | Phân loại, chuyển về phòng ban, hỏi thêm thông tin, định tuyến lại hồ sơ bị trả |
+| Chi tiết | `/dieu-phoi/{số}` | Phân loại, chuyển về phòng ban, hỏi thêm thông tin, chuyển lại phòng khác cho hồ sơ bị trả |
 
 Thử một vòng trọn vẹn với hai cửa sổ: `an.nguyen` gửi yêu cầu ở cổng người gửi,
 `binh.tran` phân loại rồi chuyển về phòng ban ở buồng lái — cửa sổ của người gửi thấy

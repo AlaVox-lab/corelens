@@ -248,7 +248,7 @@ export function BangThaoTac({
                 rows={3}
                 maxLength={2000}
                 required={dangMo.requires_note}
-                placeholder="Dòng này đi vào nhật ký hồ sơ, người gửi và các bên xử lý đều đọc được."
+                placeholder="Dòng này đi vào dòng thời gian của hồ sơ, người gửi và các bên xử lý đều đọc được."
               />
             </label>
           )}

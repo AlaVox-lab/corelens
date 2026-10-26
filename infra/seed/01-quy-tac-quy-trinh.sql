@@ -32,7 +32,7 @@ INSERT INTO roles (code, label, description, display_order) VALUES
      'Gửi yêu cầu, sửa nội dung trước khi tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1),
 
     ('classifier',    'Người phân loại yêu cầu',
-     'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, định tuyến lại khi bị từ chối', 2),
+     'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối', 2),
 
     ('approver',      'Người xét duyệt yêu cầu',
      'Quyết định phòng ban nhận hay không nhận, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang', 3),
@@ -82,7 +82,7 @@ INSERT INTO states (rule_set_id, code, label, description, is_initial, is_termin
      'Hỏi ngược người tạo, không phải trả về phòng ban',              FALSE, FALSE, FALSE, 7),
 
     (1, 'rejected-by-department', 'Bị phòng ban từ chối',
-     'Sai chuyên môn, cần định tuyến lại',                            FALSE, FALSE, FALSE, 8),
+     'Sai chuyên môn, cần chuyển lại sang phòng khác',                            FALSE, FALSE, FALSE, 8),
 
     (1, 'escalated',              'Đã leo thang',
      'Quá hạn SLA, đẩy lên cấp trên trong cùng phòng ban',            FALSE, FALSE, TRUE,  9),
@@ -148,7 +148,7 @@ VALUES
     (1, 'awaiting-acceptance', 'classified',             'withdraw',            'Rút hồ sơ về điều phối',              FALSE, TRUE,  'Lý do rút hồ sơ',      25),
     (1, 'awaiting-acceptance', 'classified',             'auto-return',         'Tự trả về điều phối',                 TRUE,  FALSE, NULL,                    26),
 
-    (1, 'rejected-by-department', 'classified',          'reroute',             'Định tuyến lại phòng khác',           FALSE, FALSE, NULL,                    13),
+    (1, 'rejected-by-department', 'classified',          'reroute',             'Chuyển lại sang phòng khác',          FALSE, FALSE, NULL,                    13),
 
     -- Nhận việc về mình (#127, ADR-0005): cạnh tự trỏ, đổi người xử lý mà không đổi
     -- trạng thái. Chỉ đi được khi hồ sơ chưa giao ai.

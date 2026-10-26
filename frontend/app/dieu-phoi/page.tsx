@@ -65,7 +65,7 @@ export default async function HangDoiDieuPhoi({
         <div className="the">
           <div className="rong" data-loi="">
             <h2>Không tải được dữ liệu</h2>
-            <p>Dịch vụ ứng dụng không trả lời. Thử lại sau ít phút.</p>
+            <p>Hệ thống không phản hồi. Thử lại sau ít phút.</p>
             <Link href={state ? `/dieu-phoi?state=${encodeURIComponent(state)}` : "/dieu-phoi"} className="nut nut-nho">
               Thử lại
             </Link>

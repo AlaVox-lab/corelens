@@ -312,8 +312,8 @@ export function BieuMauGuiYeuCau({
                 placeholder="Máy in phòng kế toán kẹt giấy liên tục"
               />
               <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>
-                Một câu nói rõ hiện tượng. Đừng chỉ ghi “lỗi” hay “cần hỗ trợ” — người
-                tiếp nhận đọc dòng này trước tiên để xếp việc.
+                Một câu nói rõ hiện tượng. Đừng chỉ ghi “lỗi” hay “cần hỗ trợ” — điều
+                phối viên đọc dòng này trước tiên để xếp việc.
               </span>
             </label>
 
@@ -399,9 +399,9 @@ export function BieuMauGuiYeuCau({
               color: "var(--ink)",
             }}
           >
-            Gửi xong, hồ sơ vào hàng đợi tiếp nhận và bạn theo dõi được toàn bộ đường đi
+            Gửi xong, hồ sơ vào hàng đợi điều phối và bạn theo dõi được toàn bộ đường đi
             của nó ở mục <strong style={{ fontWeight: 600 }}>Hồ sơ của tôi</strong>. Mức
-            độ ưu tiên do người tiếp nhận đặt sau khi phân loại.
+            độ ưu tiên do điều phối viên đặt sau khi phân loại.
           </p>
         </div>
 

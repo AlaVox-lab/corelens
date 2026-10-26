@@ -1118,6 +1118,27 @@ Thiếu header này bị trừ 5 điểm theo bảng chấm.
 | Tài liệu | Tiếng Việt có dấu |
 | Chuỗi hiển thị cho người dùng | Tiếng Việt có dấu |
 
+**Từ ngữ trên giao diện** (rà ở #157, navigator duyệt 26/10/2026). Một khái niệm một tên, ở mọi
+màn hình, thông báo lỗi và tài liệu hướng người dùng:
+
+| Khái niệm | Tên duy nhất | Không dùng |
+|---|---|---|
+| Người gửi yêu cầu | **người gửi** | người tạo, chủ hồ sơ |
+| Người phân loại và chuyển phòng | **điều phối viên** | người tiếp nhận, người phân loại |
+| Người làm việc ở phòng | **người xử lý** (được giao), **trưởng phòng** (giao việc) | người phụ trách, người xét duyệt |
+| Thứ được gửi / thứ được theo dõi | **yêu cầu** (lúc gửi, theo loại) / **hồ sơ** (sau khi gửi) | — |
+| Cuộc nói chuyện trên một hồ sơ | **Trao đổi**; từng tin là **lời nhắn**; danh sách chung là **Hộp thư** | — |
+| Chuỗi mốc của hồ sơ | **dòng thời gian** | nhật ký, lịch sử hồ sơ |
+| Bộ đếm hạn | **đồng hồ hạn xử lý** | đồng hồ trơ trọi, SLA |
+| Lỗi hạ tầng người dùng gặp | **hệ thống không phản hồi** | dịch vụ ứng dụng, máy chủ |
+| Chuyển hồ sơ sang phòng khác | **chuyển** (về, lại sang) | định tuyến |
+
+"Nhật ký sự kiện" và "dịch vụ ứng dụng" vẫn là tên đúng trong tài liệu kỹ thuật và bảng trạng thái
+vận hành ở trang chủ — quy tắc trên chỉ áp cho chữ người dùng cuối đọc. Thông báo lỗi nói bằng
+**nhãn** của trạng thái và vai trò (tra từ bảng `states`, `roles`), không bao giờ bằng mã tiếng Anh.
+Chữ nằm ở mã (`frontend/`, `backend/`) đổi không cần `down -v`; chữ nằm trong dữ liệu (nhãn trạng thái,
+cạnh, ô ghi chú trong `infra/seed/`) thì phải.
+
 ---
 
 ## 9. Ngoài phạm vi

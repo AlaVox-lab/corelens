@@ -47,8 +47,8 @@ function Trong() {
           lineHeight: 1.6,
         }}
       >
-        Mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy tờ nhân sự, đề
-        xuất mua sắm — đều gửi từ một chỗ duy nhất.
+        Mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề
+        xuất mua vật tư — đều gửi từ một chỗ duy nhất.
       </p>
       <Link href="/yeu-cau/moi" className="nut" data-loai="chinh">
         Gửi yêu cầu đầu tiên
@@ -226,7 +226,7 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
         />
         {choBan && (
           <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--f-a-ink)" }}>
-            Cần bạn xử lý →
+            Đang chờ bạn →
           </span>
         )}
       </span>
@@ -238,7 +238,7 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
           color: ho_so.department ? "var(--ink-2)" : "var(--ink-3)",
         }}
       >
-        {ho_so.department?.label ?? "Chưa định tuyến"}
+        {ho_so.department?.label ?? "Chưa chuyển về phòng nào"}
       </span>
 
       <span style={{ flex: "0 0 96px", display: "grid", gap: "2px" }}>
@@ -325,7 +325,7 @@ export default async function HoSoCuaToi() {
                 background: "var(--surface-2)",
               }}
             >
-              <span style={{ flex: "1 1 260px", minWidth: 0 }}>Yêu cầu</span>
+              <span style={{ flex: "1 1 260px", minWidth: 0 }}>Hồ sơ</span>
               <span style={{ flex: "0 0 190px" }}>Trạng thái</span>
               <span style={{ flex: "0 0 130px" }}>Đang giữ</span>
               <span style={{ flex: "0 0 96px" }}>Đã gửi</span>
