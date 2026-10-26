@@ -42,6 +42,8 @@ const BANG: Record<string, KieuTruong> = {
   sla_extension_hours: { nhan: "Gia hạn thêm (giờ làm việc)", so: true },
   sla_extension_total_hours: { nhan: "Tổng giờ đã gia hạn" },
   sla_extension_count: { nhan: "Số lần gia hạn" },
+  // Mở lại (#102): do dịch vụ tự đặt, có mặt để dòng thời gian gọi đúng tên
+  reopen_count: { nhan: "Số lần mở lại" },
 };
 
 export function kieuTruong(ma: string): KieuTruong {

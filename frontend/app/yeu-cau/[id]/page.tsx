@@ -31,6 +31,7 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
+import { GhiChuMoLai, KhoiHoSoLienQuan, MoiTaoHoSoMoi } from "@/components/ho-so-lien-quan";
 import { CuonTinMoi } from "@/components/cuon-tin-moi";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
@@ -327,7 +328,13 @@ export default async function ChiTietHoSo({
             }}
             danhMuc={danhMuc}
           />
+          <GhiChuMoLai hoSo={ho_so} />
         </div>
+      </div>
+      {/* Hết đường mở lại thì mời tạo hồ sơ mới; hồ sơ nối nhau thì liệt kê (#102) */}
+      <MoiTaoHoSoMoi hoSo={ho_so} />
+      <div style={{ marginTop: "16px" }}>
+        <KhoiHoSoLienQuan hoSo={ho_so} lienKet={(id) => `/yeu-cau/${id}`} />
       </div>
       {ho_so.description && (
         <div className="the" style={{ marginTop: "24px", padding: "18px 22px" }}>

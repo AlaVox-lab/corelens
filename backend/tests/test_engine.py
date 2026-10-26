@@ -495,7 +495,7 @@ def test_canh_bat_buoc_ly_do_thi_thieu_ly_do_bi_chan(session, rule_set):
 
     with pytest.raises(NoteRequired):
         perform_transition(
-            session, case_id=ho_so.id, to_state="closed", actor=nguoi_phan_loai
+            session, case_id=ho_so.id, to_state="rejected-unrouted", actor=nguoi_phan_loai
         )
 
     # Khoảng trắng không tính là lý do
@@ -503,7 +503,7 @@ def test_canh_bat_buoc_ly_do_thi_thieu_ly_do_bi_chan(session, rule_set):
         perform_transition(
             session,
             case_id=ho_so.id,
-            to_state="closed",
+            to_state="rejected-unrouted",
             actor=nguoi_phan_loai,
             note="   ",
         )
@@ -511,7 +511,7 @@ def test_canh_bat_buoc_ly_do_thi_thieu_ly_do_bi_chan(session, rule_set):
     perform_transition(
         session,
         case_id=ho_so.id,
-        to_state="closed",
+        to_state="rejected-unrouted",
         actor=nguoi_phan_loai,
         note="Không phòng ban nào nhận sau hai lần định tuyến.",
     )

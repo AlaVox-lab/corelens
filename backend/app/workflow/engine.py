@@ -75,6 +75,8 @@ CHANGEABLE_FIELDS = frozenset(
         "sla_extension_hours",
         "sla_extension_total_hours",
         "sla_extension_count",
+        # Mở lại có giới hạn (#102): số lần do ràng buộc `reopen-limit` tự đặt
+        "reopen_count",
     }
 )
 
@@ -162,6 +164,34 @@ def kiem_loai_yeu_cau(session: Session, ma: str | None) -> str | None:
     return ma
 
 
+def kiem_ho_so_goc(session: Session, ma: int | None, requester_id: str) -> int | None:
+    """Đối chiếu hồ sơ cũ mà hồ sơ mới tạo lại (#102). Trả lại chính mã đó khi hợp lệ.
+
+    Ném `ValueError` khi hồ sơ không có, không phải của người gửi này, hay chưa ở trạng thái kết
+    thúc — hồ sơ đang chạy thì mở lại hay chờ xử lý tiếp, không tạo bản sao. Nội dung lỗi giống
+    nhau cho "không có" và "của người khác", để không lộ hồ sơ của người khác có tồn tại.
+
+    Cố ý không đòi hết lượt mở lại hay quá cửa sổ: người gửi muốn tạo lại hồ sơ Không tiếp
+    nhận hay hồ sơ đã đóng với thông tin khác thì không có gì sai. Giao diện chỉ mời tạo mới ở
+    đúng những chỗ hết đường mở lại.
+    """
+    if ma is None:
+        return None
+
+    goc = session.get(Request, ma)
+    trang_thai = (
+        session.get(State, (goc.rule_set_id, goc.current_state)) if goc is not None else None
+    )
+    if (
+        goc is None
+        or goc.requester_id != requester_id
+        or trang_thai is None
+        or not trang_thai.is_terminal
+    ):
+        raise ValueError(f"Hồ sơ gốc không hợp lệ: {ma!r}")
+    return ma
+
+
 def create_case(
     session: Session,
     *,
@@ -170,6 +200,7 @@ def create_case(
     description: str | None = None,
     request_type_code: str | None = None,
     requester_label: str | None = None,
+    parent_request_id: int | None = None,
 ) -> Request:
     """Tạo một hồ sơ mới ở trạng thái bắt đầu của bộ quy tắc đang kích hoạt.
 
@@ -179,6 +210,9 @@ def create_case(
     `request_type_code` là trường quyết định duy nhất người gửi tự đặt được, và vẫn
     phải nằm trong danh mục đang hoạt động. Mức ưu tiên, phòng ban và người xử lý thì
     không — xem chú thích ở `app/models/case.py`.
+
+    `parent_request_id` là hồ sơ cũ mà hồ sơ này tạo lại (#102). Engine không kiểm nó: người
+    gọi kiểm hồ sơ cũ có tồn tại, của chính người gửi và đã kết thúc bằng `kiem_ho_so_goc`.
 
     **Việc tạo hồ sơ không sinh bản ghi nhật ký**, vì nó không phải một lần *chuyển*
     trạng thái — không có trạng thái nào trước nó. Mốc bắt đầu của hồ sơ là cột
@@ -202,6 +236,7 @@ def create_case(
         requester_id=requester_id,
         requester_label=requester_label,
         request_type_code=kiem_loai_yeu_cau(session, request_type_code),
+        parent_request_id=parent_request_id,
     )
     session.add(ho_so)
     session.flush()

@@ -27,11 +27,13 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import object_session
 
 from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU, Request
-from app.models.workflow_config import RequestType
-from app.rules.sla import han_goc_giay
+from app.models.workflow_config import RequestType, Transition
+from app.rules.han_cho import luc_vao_trang_thai
+from app.rules.sla import giay_lam_viec, han_goc_giay
 from app.workflow.context import TransitionContext
 from app.workflow.errors import GuardViolation, UnknownGuard
 
@@ -395,6 +397,88 @@ def extension_limit(ctx: TransitionContext) -> None:
         )
 
 
+def reopen_limit(ctx: TransitionContext) -> None:
+    """Hồ sơ chưa mở lại đủ số lần tối đa khai ở loại yêu cầu (#102).
+
+    Giảng viên chốt 08/10: mở lại tối đa 2 lần, quá thì tạo hồ sơ mới liên kết hồ sơ cũ. Gắn
+    vào cả hai cạnh mở lại — từ Hoàn tất và từ Đã đóng — nên số lần tính chung. Không cần nhập
+    liệu nên chạy lúc chào nút: hết lượt thì nút Mở lại biến mất, giao diện mời tạo hồ sơ mới.
+    """
+    loai = _loai_cua(ctx.case)
+    toi_da = 0 if loai is None else loai.reopen_max_count
+    if ctx.case.reopen_count >= toi_da:
+        raise GuardViolation(
+            "reopen-limit",
+            f"Hồ sơ đã mở lại đủ {toi_da} lần — hãy tạo hồ sơ mới liên kết hồ sơ này.",
+        )
+
+
+def _mo_chu_ky_moi(ctx: TransitionContext) -> dict[str, Any]:
+    """Tác động của `reopen-limit`: đếm thêm một lần mở lại và đưa gia hạn về 0.
+
+    Mở lại là mở chu kỳ xử lý mới với hạn mới, nên phần gia hạn của chu kỳ cũ không kế thừa
+    (#102). Đồng hồ SLA đếm lại từ 0 nhờ cờ `transitions.restarts_sla`, không nằm ở đây — số
+    giây đã chạy không phải trường quyết định để kể trên dòng thời gian. Giá trị cũ của ba
+    trường gia hạn vào cột `changes` của nhật ký (#100), nên hạn của chu kỳ trước dựng lại được.
+    """
+    return {
+        "reopen_count": ctx.case.reopen_count + 1,
+        "sla_extension_hours": 0,
+        "sla_extension_total_hours": 0,
+        "sla_extension_count": 0,
+    }
+
+
+def reopen_window(ctx: TransitionContext) -> None:
+    """Còn trong cửa sổ mở lại kể từ lúc hồ sơ vào trạng thái kết thúc (#102).
+
+    Cửa sổ là `transitions.reopen_window_hours` của chính cạnh đang đi, đo bằng giờ làm việc
+    theo lịch (#199) — giảng viên chốt 7 ngày làm việc. Quá cửa sổ thì cạnh biến mất khỏi danh
+    sách nút và hồ sơ kết thúc hẳn. Cạnh không khai cửa sổ thì ràng buộc này không giới hạn gì.
+    """
+    gio = ctx.transition.reopen_window_hours
+    if gio is None:
+        return
+    phien = object_session(ctx.case)
+    vao = phien.scalar(select(luc_vao_trang_thai()).where(Request.id == ctx.case.id))
+    if giay_lam_viec(phien, vao) > gio * 3600:
+        raise GuardViolation(
+            "reopen-window",
+            f"Hồ sơ đã đóng quá {gio} giờ làm việc nên không mở lại được — "
+            "hãy tạo hồ sơ mới liên kết hồ sơ này.",
+        )
+
+
+def reopen_from_rework(ctx: TransitionContext) -> None:
+    """Chỉ mở lại hồ sơ đã từng làm xong (#102).
+
+    Trạng thái hồ sơ đứng ngay trước khi kết thúc phải có một cạnh LÀM LẠI (`is_rework`, #153)
+    về cùng đích của cạnh đang đi. Hồ sơ Hoàn tất rồi đóng — người gửi xác nhận hay tự đóng —
+    thì trước đó là Hoàn tất, có cạnh "Mở lại, chưa đạt" về Đang xử lý, nên mở lại được. Hồ sơ
+    tự đóng vì chưa bổ sung thông tin thì trước đó là Chờ bổ sung thông tin, không có cạnh nào
+    như vậy: chưa ai làm xong gì để "chưa đạt". Không có danh sách trạng thái nào trong mã —
+    đổi luồng là sửa dữ liệu, như `return-to-previous-state`. Không cần nhập liệu.
+    """
+    truoc = ctx.previous_state
+    co_canh_lam_lai = truoc is not None and object_session(ctx.case).scalars(
+        select(Transition.id)
+        .where(
+            Transition.rule_set_id == ctx.case.rule_set_id,
+            Transition.from_state == truoc,
+            Transition.to_state == ctx.transition.to_state,
+            Transition.is_rework,
+            ~Transition.is_system,
+        )
+        .limit(1)
+    ).first() is not None
+    if not co_canh_lam_lai:
+        raise GuardViolation(
+            "reopen-from-rework",
+            "Hồ sơ này chưa từng được xử lý xong nên không có gì để mở lại — "
+            "hãy tạo hồ sơ mới liên kết hồ sơ này.",
+        )
+
+
 # Hợp đồng giữa dữ liệu và mã nguồn. Khóa phải trùng khít cột `code` của bảng `guards`.
 #
 # Cột thứ hai quyết định trường nào đặt được ở cạnh nào. `department-unchanged` quản
@@ -431,6 +515,22 @@ GUARD_REGISTRY: dict[str, Guard] = {
     ),
     "first-extension": Guard(first_extension, input_free=True),
     "extension-limit": Guard(extension_limit, input_free=True),
+    # Mở lại có giới hạn (#102). Chỉ tác động đặt trường — không cạnh nào cho người dùng nhập
+    "reopen-limit": Guard(
+        reopen_limit,
+        input_free=True,
+        sets=frozenset(
+            {
+                "reopen_count",
+                "sla_extension_hours",
+                "sla_extension_total_hours",
+                "sla_extension_count",
+            }
+        ),
+        effect=_mo_chu_ky_moi,
+    ),
+    "reopen-window": Guard(reopen_window, input_free=True),
+    "reopen-from-rework": Guard(reopen_from_rework, input_free=True),
 }
 
 # Mọi trường mà ít nhất một ràng buộc quản hoặc tự đặt. Engine đối chiếu tập này với

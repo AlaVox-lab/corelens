@@ -11,7 +11,14 @@
 // Dùng chung cho cổng người gửi và buồng lái, để cùng một rủi ro được nói bằng cùng
 // một câu ở mọi nơi.
 
-export function CanhBaoKetThuc({ nhanTrangThai }: { nhanTrangThai: string }) {
+export function CanhBaoKetThuc({
+  nhanTrangThai,
+  moLaiGio,
+}: {
+  nhanTrangThai: string;
+  /** Giờ làm việc người gửi còn mở lại được sau khi hồ sơ vào trạng thái này (#102). */
+  moLaiGio?: number | null;
+}) {
   return (
     <p
       role="note"
@@ -26,8 +33,18 @@ export function CanhBaoKetThuc({ nhanTrangThai }: { nhanTrangThai: string }) {
         lineHeight: 1.55,
       }}
     >
-      Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> — trạng thái kết thúc, không hoàn
-      tác được. Muốn làm tiếp sau đó phải gửi yêu cầu mới.
+      {moLaiGio ? (
+        <>
+          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> — trạng thái kết thúc. Chưa đạt thì
+          người gửi còn mở lại được trong {moLaiGio} giờ làm việc kể từ lúc đóng; quá đó
+          muốn làm tiếp phải gửi yêu cầu mới.
+        </>
+      ) : (
+        <>
+          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> — trạng thái kết thúc, không hoàn
+          tác được. Muốn làm tiếp sau đó phải gửi yêu cầu mới.
+        </>
+      )}
     </p>
   );
 }

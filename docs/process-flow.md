@@ -22,6 +22,11 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 > thì tự đóng sau 5 ngày làm việc, nhắc từ ngày thứ ba. Cùng ngày (#101): hạn đi theo mức ưu
 > tiên, và điều phối viên, trưởng phòng gia hạn được từng hồ sơ bằng ba cạnh tự trỏ *Gia hạn
 > xử lý*. Luồng có ba mươi mốt cạnh.
+>
+> **Cập nhật 26/10/2026** (#102): nhánh điều phối viên đóng khi không phòng nào nhận đổi sang
+> trạng thái kết thúc riêng *Không tiếp nhận*; người gửi mở lại được cả sau khi hồ sơ đã
+> *Đã đóng* — trong 7 ngày làm việc, tối đa 2 lần, mỗi lần có lý do và có hạn mới; quá giới
+> hạn thì tạo hồ sơ mới liên kết hồ sơ cũ. Luồng có mười một trạng thái, ba mươi hai cạnh.
 
 ---
 
@@ -39,6 +44,7 @@ stateDiagram-v2
     DangXuLy: Đang xử lý
     HoanTat: Hoàn tất
     Dong: Đã đóng
+    KhongTiepNhan: Không tiếp nhận
     ChoBoSung: Chờ bổ sung thông tin
     BiTuChoi: Bị phòng ban từ chối
     LeoThang: Đã leo thang
@@ -52,7 +58,7 @@ stateDiagram-v2
     DaPhanLoai --> ChoXacDuyet: Chuyển về phòng ban
     DaPhanLoai --> DaGui: Người tạo sửa nội dung
     DaPhanLoai --> Huy: Người tạo hủy
-    DaPhanLoai --> Dong: Không phòng nào nhận, đóng kèm lý do
+    DaPhanLoai --> KhongTiepNhan: Không phòng nào nhận, ghi lý do
     DaPhanLoai --> DaPhanLoai: Điều phối gia hạn lần đầu
 
     ChoXacDuyet --> DangXuLy: Phòng ban XÁC DUYỆT và giao xử lý
@@ -81,7 +87,10 @@ stateDiagram-v2
     HoanTat --> Dong: Người tạo xác nhận đạt, hay tự đóng sau 3 ngày làm việc
     HoanTat --> DangXuLy: Người tạo mở lại, chưa đạt
 
-    Dong --> [*]
+    Dong --> DangXuLy: Người tạo mở lại sau khi đóng (7 ngày làm việc, tối đa 2 lần)
+
+    Dong --> [*]: Quá cửa sổ mở lại hay hết lượt
+    KhongTiepNhan --> [*]
     Huy --> [*]
 
     note right of ChoXacDuyet
@@ -123,7 +132,7 @@ stateDiagram-v2
 
 ---
 
-## 2. Mười trạng thái
+## 2. Mười một trạng thái
 
 Cột **Định danh** là giá trị thật lưu trong bảng `states` và trong hai trường `from_state`,
 `to_state` của nhật ký sự kiện. Dùng tiếng Anh vì mã nguồn so sánh với chúng; cột **Nhãn**
@@ -136,15 +145,16 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 | 3 | `awaiting-acceptance` | Chờ phòng ban xác duyệt | Đã chuyển về phòng, chờ họ nhận hoặc từ chối | |
 | 4 | `in-progress` | Đang xử lý | Phòng ban **đã nhận** và giao người xử lý | |
 | 5 | `completed` | Hoàn tất | Người xử lý báo xong, chờ người tạo xác nhận | |
-| 6 | `closed` | Đã đóng | | ✅ |
+| 6 | `closed` | Đã đóng | Hồ sơ hết chu kỳ xử lý. Người gửi còn **mở lại** được trong 7 ngày làm việc, tối đa 2 lần (#102) | ✅ |
 | 7 | `awaiting-info` | Chờ bổ sung thông tin | Hỏi ngược **người tạo**, không phải trả về phòng ban | |
 | 8 | `rejected-by-department` | Bị phòng ban từ chối | Sai chuyên môn, cần định tuyến lại | |
 | 9 | `escalated` | Đã leo thang | Quá hạn SLA, đẩy lên cấp trên **trong cùng phòng ban** | |
 | 10 | `cancelled` | Đã hủy | Người tạo rút yêu cầu | ✅ |
+| 11 | `rejected-unrouted` | Không tiếp nhận | Điều phối viên ghi lý do vì không phòng nào nhận. Không mang nghĩa đã xử lý xong; không mở lại — người gửi tạo hồ sơ mới (#102) | ✅ |
 
 ---
 
-## 3. Ba mươi mốt cạnh chuyển trạng thái
+## 3. Ba mươi hai cạnh chuyển trạng thái
 
 Đây là nội dung của bảng `transitions`. Mỗi dòng là một cạnh hợp lệ; **không có dòng nghĩa
 là không đi được**.
@@ -158,7 +168,7 @@ là không đi được**.
 | `classified` | `awaiting-acceptance` | Chuyển về phòng ban | `classifier` |
 | `classified` | `submitted` | Sửa nội dung | `requester` |
 | `classified` | `cancelled` | Hủy yêu cầu | `requester` |
-| `classified` | `closed` | Đóng hồ sơ, không phòng nào nhận | `classifier` |
+| `classified` | `rejected-unrouted` | Không tiếp nhận, không phòng nào nhận — bắt buộc lý do | `classifier` |
 | `classified` | `classified` | Gia hạn xử lý — lần đầu, bắt buộc lý do | `classifier` |
 | `awaiting-acceptance` | `in-progress` | **Xác duyệt và giao xử lý** | `approver` |
 | `awaiting-acceptance` | `awaiting-info` | Yêu cầu bổ sung thông tin | `approver` |
@@ -181,7 +191,8 @@ là không đi được**.
 | `awaiting-info` | `closed` | Tự đóng vì chưa bổ sung thông tin — hết 40 giờ làm việc (5 ngày theo lịch mẫu), nhắc từ giờ thứ 16 | **hệ thống** |
 | `completed` | `closed` | Xác nhận đạt | `requester` |
 | `completed` | `closed` | Tự đóng hồ sơ — hết 24 giờ làm việc (3 ngày theo lịch mẫu) chờ xác nhận, báo trước 8 giờ | **hệ thống** |
-| `completed` | `in-progress` | Mở lại, chưa đạt | `requester` |
+| `completed` | `in-progress` | Mở lại, chưa đạt — bắt buộc lý do, tối đa 2 lần | `requester` |
+| `closed` | `in-progress` | Mở lại sau khi đóng — trong 56 giờ làm việc (7 ngày theo lịch mẫu), bắt buộc lý do, chung 2 lần với cạnh trên | `requester` |
 
 **Chờ bổ sung thông tin quay về đúng chỗ đã hỏi** (#79, navigator chốt ngày 23/09). Ba nơi
 hỏi thêm được — điều phối ở *Đã gửi*, trưởng phòng ở *Chờ phòng ban xác duyệt*, người xử lý ở
@@ -236,7 +247,33 @@ hiện từ giờ thứ 16, tức báo trước 24 giờ, trên trang hồ sơ v
 trên hàng đợi và trang hồ sơ của phòng ban. Đích là *Đã đóng* chứ không phải *Đã hủy*: người
 gửi không chủ động bỏ yêu cầu; mã hoạt động `auto-close-no-info` tách lần đóng này khỏi hai
 cách đóng kia. Đồng hồ SLA của phòng ban vẫn dừng suốt thời gian chờ — đúng ý giảng viên, phòng
-ban không xử lý được khi thiếu thông tin. Mở lại sau khi đóng thuộc luật mở lại của #102.
+ban không xử lý được khi thiếu thông tin. Hồ sơ tự đóng vì chưa bổ sung thông tin không mở lại được — xem luật mở lại bên dưới.
+
+**Mở lại có giới hạn và Không tiếp nhận** (#102, giảng viên chốt 08/10, thay quyết định 23/09
+"mở lại không giới hạn, không cấp hạn mới"; navigator chốt chi tiết 26/10):
+
+- *Mở lại, chưa đạt* (từ *Hoàn tất*) và *Mở lại sau khi đóng* (từ *Đã đóng*) dùng chung một bộ
+  đếm: tối đa `request_types.reopen_max_count` lần, mẫu 2, ràng buộc `reopen-limit`. Mỗi lần
+  bắt buộc có lý do, và nhật ký ghi `reopen_count` cũ và mới
+- Mở lại sau khi đóng chỉ trong **56 giờ làm việc** kể từ lúc hồ sơ vào *Đã đóng* — 7 ngày
+  làm việc với lịch mẫu 8 giờ một ngày. Con số nằm ở `transitions.reopen_window_hours` của cạnh,
+  đo bằng lịch làm việc (#199), ràng buộc `reopen-window`. Đây là cạnh **duy nhất** rời khỏi một
+  trạng thái kết thúc: lược đồ cho phép cạnh như vậy chỉ khi nó khai cửa sổ thời gian
+- Chỉ hồ sơ **từng làm xong** mới mở lại từ *Đã đóng* (`reopen-from-rework`): trạng thái hồ sơ
+  đứng ngay trước khi đóng phải có một cạnh làm lại về cùng đích. Hồ sơ *Hoàn tất* rồi đóng —
+  xác nhận đạt hay tự đóng — thì mở lại được; hồ sơ tự đóng vì chưa bổ sung thông tin thì không,
+  vì chưa có gì "chưa đạt"
+- **Hạn mới**: mở lại là chu kỳ xử lý mới. Cờ `transitions.restarts_sla` đưa số giây đã chạy về
+  0, `reopen-limit` đưa gia hạn (#101) về 0 — không kế thừa hạn đã hết. Thời gian dừng chờ bổ
+  sung vẫn giữ. Hồ sơ ở lại đúng phòng đã nhận. Đây là chỗ #94 từng ghi "mở lại không cấp hạn
+  mới, người nhận có ân hạn": nay hồ sơ mở lại không còn quá hạn
+- Hồ sơ **hết lượt, quá cửa sổ, Không tiếp nhận, hay tự đóng vì chưa bổ sung** không còn nút
+  mở lại: người gửi bấm *Tạo hồ sơ mới từ hồ sơ này* — biểu mẫu Gửi yêu cầu chép sẵn nội dung,
+  hồ sơ mới mang `parent_request_id`, và trang hai hồ sơ liệt kê nhau ở khối *Hồ sơ liên quan*.
+  Dịch vụ chỉ nhận hồ sơ gốc là của chính người gửi và đã kết thúc
+- *Không tiếp nhận* thay cho *Đã đóng* ở nhánh C: giảng viên không muốn việc "không phòng nào
+  nhận" đọc như một yêu cầu đã xử lý xong. Lý do bắt buộc, mã hoạt động `decline-unrouted`; tầng
+  `D` đếm riêng khỏi hồ sơ đã xử lý
 
 **Cạnh làm lại** (#153, navigator chốt ngày 02/10). Ba cạnh mang cờ `is_rework` trong dữ
 liệu: *Từ chối vì sai chuyên môn*, *Mở lại, chưa đạt*, và *Sửa nội dung* từ *Đã phân loại*
@@ -275,12 +312,13 @@ người vẫn bấm nút quyết định.
 Mọi ràng buộc cài đặt ở **cả hai phía**: giao diện chặn để trải nghiệm tốt, dịch vụ chặn để
 bảo đảm toàn vẹn. Chỉ chặn ở giao diện là không đủ.
 
-**Leo thang lại sau khi phân công lại hay mở lại** (quyết định ngày 23/09, #94). Hồ sơ đã
-quá hạn mà được phân công lại, được người gửi mở lại, hay vừa bổ sung thông tin xong thì
-người nhận có một **khoảng ân hạn** trước khi bị leo thang lần nữa. Đồng hồ tổng **không**
-đặt lại và **không** cấp hạn mới: hồ sơ vẫn được ghi nhận là quá hạn. Hết ân hạn mà vẫn
-chưa xong thì leo thang lại. Không có ân hạn thì bộ quét leo thang lại ngay lượt kế tiếp,
-và người được giao không có một phút nào để làm.
+**Leo thang lại sau khi phân công lại hay bổ sung thông tin** (quyết định ngày 23/09, #94). Hồ
+sơ đã quá hạn mà được phân công lại, hay vừa bổ sung thông tin xong thì người nhận có một
+**khoảng ân hạn** trước khi bị leo thang lần nữa. Đồng hồ tổng **không** đặt lại và **không**
+cấp hạn mới: hồ sơ vẫn được ghi nhận là quá hạn. Hết ân hạn mà vẫn chưa xong thì leo thang lại.
+Không có ân hạn thì bộ quét leo thang lại ngay lượt kế tiếp, và người được giao không có một
+phút nào để làm. **Mở lại thì khác** (#102, giảng viên chốt 08/10): mở lại là chu kỳ xử lý mới,
+đồng hồ đếm lại từ 0 và gia hạn cũ bị xóa — xem luật mở lại ở trên.
 
 **Hạn theo mức ưu tiên và gia hạn từng hồ sơ** (#101, giảng viên chốt ngày 08/10, navigator
 chốt chi tiết ngày 15/10). Hạn gốc của hồ sơ là hạn chuẩn của loại yêu cầu nhân hệ số của mức
@@ -298,7 +336,8 @@ và số lần trước và sau. Luật, đều khai trong dữ liệu:
 - Trưởng phòng gia hạn ở *Đã leo thang*, tới khi hết lượt (`extension-limit`) — nên lần thứ
   hai luôn là của trưởng phòng. *Đang xử lý* đã có cạnh tự trỏ *Nhận việc về mình*, mà mỗi
   trạng thái chỉ được một cạnh tự trỏ của người
-- Không gia hạn sau khi đóng: trạng thái kết thúc không có cạnh nào đi ra
+- Không gia hạn sau khi đóng: trạng thái kết thúc chỉ có cạnh mở lại đi ra (#102), không cạnh
+  gia hạn
 
 **Một ràng buộc bổ trợ, thêm ở #78 — cần giảng viên xác nhận:** hồ sơ rời khỏi tay người
 phân loại phải có loại yêu cầu. Giữ loại người gửi đã chọn trên biểu mẫu, hoặc người phân
@@ -420,9 +459,11 @@ trao đổi với giảng viên ngày 10/09/2026 đổi ba điểm:
 | **Thêm chặng định tuyến phòng ban** | `classified → awaiting-acceptance → in-progress`, kèm vòng lặp trả về khi sai chuyên môn |
 | **Bỏ cổng phê duyệt chi phí** | Trạng thái `Chờ phê duyệt` cũ **không còn**. Khi phát sinh chi phí, người phụ trách phòng lập **một phiếu yêu cầu mới** theo luồng riêng — đó là hồ sơ khác, không phải trạng thái của hồ sơ này |
 
-**Hai điểm suy luận, chưa có xác nhận của giảng viên**, cần đính chính nếu sai:
+**Hai cạnh nhóm tự thêm ngày 10/09, giảng viên đã đồng ý ngày 08/10 với điều kiện** (#102):
 
-1. **Cạnh `classified → closed`** cho trường hợp không phòng nào nhận. Không có cạnh này thì
-   hồ sơ có thể luẩn quẩn vô hạn giữa định tuyến và từ chối
-2. **Cạnh `completed → in-progress`** cho người tạo mở lại khi chưa đạt. Không mâu thuẫn
+1. **Cạnh `classified → rejected-unrouted`** (từ #102; trước đó là `classified → closed`) cho
+   trường hợp không phòng nào nhận. Không có cạnh này thì hồ sơ có thể luẩn quẩn vô hạn giữa
+   định tuyến và từ chối. Giảng viên đã đồng ý 08/10, đổi tên trạng thái
+2. **Cạnh `completed → in-progress`** cho người tạo mở lại khi chưa đạt — giảng viên đã đồng ý
+   08/10, thêm giới hạn 2 lần, hạn mới, và mở lại cả sau khi đóng (#102). Không mâu thuẫn
    nguyên tắc *đã nhận là không trả về*, vì hồ sơ ở lại đúng phòng ban đã nhận

@@ -32,6 +32,7 @@ import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { duongHopThu } from "@/lib/hop-thu";
+import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
@@ -202,6 +203,7 @@ export default async function ChiTietPhongBan({
         {/* --- Cột phải: làm, dính khi cuộn --------------------------------- */}
         <div className="cot-dinh">
           <TheHan ho_so={ho_so} />
+          <GhiChuMoLai hoSo={ho_so} />
           <TheThaoTac>
             {/* Khóa có `updated_at`: nhận việc giữ nguyên trạng thái (#127), nên chỉ mã
                 trạng thái thì bảng không dựng lại sau khi nhận. */}
@@ -226,6 +228,9 @@ export default async function ChiTietPhongBan({
               }}
             />
           </TheThaoTac>
+          {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
+              đang ở phòng khác */}
+          <KhoiHoSoLienQuan hoSo={ho_so} />
           <TheLienHe ten={nguoiGui} dinhDanh={ho_so.requester_id} ketQua={lienHe} />
         </div>
       </div>

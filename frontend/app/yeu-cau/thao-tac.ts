@@ -43,6 +43,9 @@ export async function guiYeuCau(
   const tieuDe = chuoiHoacRong(duLieu.get("title"));
   const moTa = chuoiHoacRong(duLieu.get("description"));
   const loai = chuoiHoacRong(duLieu.get("request_type_code"));
+  // Tạo lại từ hồ sơ cũ (#102). Chuỗi không phải số nguyên dương thì coi như không có;
+  // dịch vụ kiểm hồ sơ gốc có phải của người gửi và đã kết thúc hay không.
+  const goc = chuoiHoacRong(duLieu.get("parent_request_id"));
 
   if (tieuDe.length < 3) {
     return { loi: "Tiêu đề phải dài ít nhất 3 ký tự." };
@@ -52,6 +55,7 @@ export async function guiYeuCau(
     title: tieuDe,
     description: moTa || null,
     request_type_code: loai || null,
+    parent_request_id: /^\d+$/.test(goc) ? Number(goc) : null,
   });
 
   if (!ketQua.ok) return { loi: ketQua.thongDiep };

@@ -43,9 +43,13 @@ class CanhDiDuocRa(BaseModel):
 
     to_state: str
     to_state_label: str
-    # Trạng thái đích là trạng thái kết thúc — không cạnh nào đi ra, không hoàn tác được.
-    # Giao diện hỏi lại trước khi gửi (#98). Tra từ cột `states.is_terminal`.
+    # Trạng thái đích là trạng thái kết thúc — chỉ cạnh mở lại có cửa sổ thời gian đi ra được
+    # (#102), nên coi như không hoàn tác. Giao diện hỏi lại trước khi gửi (#98). Tra từ cột
+    # `states.is_terminal`.
     to_state_is_terminal: bool = False
+    # Trạng thái kết thúc đích còn cạnh mở lại: số giờ làm việc kể từ lúc vào đó mà người gửi
+    # còn mở lại được (#102). None là kết thúc hẳn. Giao diện sửa câu cảnh báo theo giá trị này.
+    to_state_reopen_hours: int | None = None
     activity_code: str
     activity_label: str
     requires_note: bool
@@ -188,8 +192,24 @@ class LoaiLoiNhanRa(BaseModel):
     retry_at: dt.datetime | None = None
 
 
+class HoSoLienQuanRa(BaseModel):
+    """Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id` (#102): bản gốc hay bản tạo lại."""
+
+    id: int
+    code: str
+    title: str
+    state: TrangThaiRa
+
+
 class HoSoChiTietRa(HoSoTomTatRa):
     description: str | None = None
+    # Hồ sơ này được tạo lại từ hồ sơ nào, và đã có những hồ sơ nào tạo lại từ nó (#102)
+    parent: HoSoLienQuanRa | None = None
+    children: list[HoSoLienQuanRa] = Field(default_factory=list)
+    # Số lần đã mở lại và số lần được mở lại tối đa của loại yêu cầu (#102). Hết lượt thì giao
+    # diện mời tạo hồ sơ mới thay cho nút Mở lại.
+    reopen_count: int = 0
+    reopen_max_count: int | None = None
     requester_id: str
     assignee_id: str | None = None
     history: list[SuKienRa]
@@ -215,6 +235,8 @@ class TaoHoSoVao(BaseModel):
     title: str = Field(min_length=TIEU_DE_TOI_THIEU, max_length=TIEU_DE_TOI_DA)
     description: str | None = Field(default=None, max_length=MO_TA_TOI_DA)
     request_type_code: str | None = Field(default=None, max_length=64)
+    # Tạo lại từ hồ sơ cũ của chính người gửi, đã kết thúc (#102). Chỉ đặt lúc tạo.
+    parent_request_id: int | None = Field(default=None, ge=1)
 
 
 class ChuyenTrangThaiVao(BaseModel):

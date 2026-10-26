@@ -55,6 +55,8 @@ RB_TU_NHAN = "assign-self"
 # Gia hạn xử lý (#101): bộ sinh chưa mô phỏng — không đi cạnh mang ràng buộc này, nên mọi
 # hồ sơ ảo giữ hạn gốc. Hệ số theo mức ưu tiên cũng chưa mô phỏng: hạn ảo là hạn chuẩn.
 RB_GIA_HAN = "extend-deadline"
+# Mở lại có giới hạn (#102): bộ sinh không đi cạnh rời trạng thái kết thúc, và chưa đếm số lần mở lại
+# từ Hoàn tất — hồ sơ ảo mở lại hiếm, nên hiếm khi chạm trần 2 lần.
 
 # Tác nhân hệ thống khi leo thang — cùng giá trị với TAC_NHAN_SLA trong
 # backend/app/workflow/escalation.py, và nhãn "Hệ thống" giao diện dùng để nhận ra nó.
@@ -89,7 +91,7 @@ KICH_BAN_MAC_DINH: dict = {
         "reopen": 1.5,
         "cancel": 0.35,
         "reject": 0.5,
-        "close-unrouted": 0.3,
+        "decline-unrouted": 0.3,
         # Điều phối viên hiếm khi rút hồ sơ khỏi phòng ban trước hạn chờ (#142)
         "withdraw": 0.3,
     },

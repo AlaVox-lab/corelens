@@ -102,9 +102,16 @@ class Transition(Base):
     auto_after_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
     warn_before_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
 
-    # Cột kỹ thuật luôn bằng FALSE, tồn tại để khóa ngoại tổng hợp chặn việc tạo
-    # cạnh rời khỏi một trạng thái kết thúc. Mã nguồn không bao giờ đọc hay ghi nó.
+    # Trạng thái nguồn có phải trạng thái kết thúc không; khóa ngoại tổng hợp buộc nó khớp với
+    # `states.is_terminal`. Cạnh rời khỏi trạng thái kết thúc chỉ được là cạnh mở lại có cửa
+    # sổ thời gian (#102). Mã nguồn không đọc hay ghi cột này.
     from_is_terminal: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Cạnh mở lại sau khi hồ sơ kết thúc (#102): đi được khi hồ sơ vào trạng thái kết thúc chưa
+    # quá chừng này giờ làm việc. NULL là cạnh thường.
+    reopen_window_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+    # Đi qua cạnh này là mở chu kỳ xử lý mới: đồng hồ SLA đếm lại từ 0 (#102)
+    restarts_sla: Mapped[bool] = mapped_column(Boolean, default=False)
 
     allowed_roles: Mapped[list[TransitionRole]] = relationship(
         back_populates="transition", lazy="selectin"
@@ -219,6 +226,8 @@ class RequestType(Base):
     # Gia hạn (#101): mỗi lần tối đa chừng này phần trăm hạn gốc, tổng tối đa chừng ấy lần
     sla_extension_max_percent: Mapped[int] = mapped_column(SmallInteger, default=50)
     sla_extension_max_count: Mapped[int] = mapped_column(SmallInteger, default=2)
+    # Mở lại (#102): tổng số lần người gửi mở lại một hồ sơ; quá thì phải tạo hồ sơ mới
+    reopen_max_count: Mapped[int] = mapped_column(SmallInteger, default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 

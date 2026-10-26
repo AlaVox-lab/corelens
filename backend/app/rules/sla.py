@@ -19,6 +19,9 @@
 # phép đo đi qua hàm `so_giay_lam_viec` của PostgreSQL (lược đồ khởi tạo, mục 10), để
 # Python và truy vấn tìm hồ sơ quá hạn đo cùng một cách.
 #
+# Mở lại (#102) là chu kỳ xử lý mới: cạnh mang cờ `transitions.restarts_sla` đưa số giây đã chạy
+# về 0, và ràng buộc `reopen-limit` đưa gia hạn về 0 — hạn mới, không kế thừa hạn đã hết.
+#
 # Hạn của một hồ sơ (#101) = hạn chuẩn của loại yêu cầu × hệ số của mức ưu tiên, cộng tổng
 # số giờ đã gia hạn. Ân hạn nhân cùng hệ số, không cộng phần gia hạn. Ba con số đều là dữ
 # liệu: `request_types.sla_hours`, `priorities.sla_factor_percent`,
@@ -77,6 +80,12 @@ def cap_nhat_dong_ho(session: Session, case: Request, transition: Transition) ->
             case.sla_running_seconds += giay
         else:
             case.sla_paused_seconds += giay
+
+    # Chu kỳ xử lý mới (#102): mở lại thì hạn đếm lại từ 0, không kế thừa hạn đã hết của chu kỳ
+    # cũ. Chốt đoạn vừa qua xong mới xóa, để phần chạy dở không rơi vào chu kỳ mới. Thời gian
+    # dừng (chờ bổ sung) giữ nguyên — nó không thuộc hạn.
+    if transition.restarts_sla:
+        case.sla_running_seconds = 0
 
     da_khoi_dong = case.sla_segment_since is not None or den.sla_running
 
