@@ -128,6 +128,16 @@ class Request(Base):
     sla_extension_total_hours: Mapped[int] = mapped_column(Integer, default=0)
     sla_extension_count: Mapped[int] = mapped_column(SmallInteger, default=0)
 
+    # Mở lại có giới hạn (#102): đã mở lại mấy lần, tính cả mở lại từ Hoàn tất lẫn từ Đã đóng.
+    # Do ràng buộc `reopen-limit` tự đặt, người dùng không gửi được.
+    reopen_count: Mapped[int] = mapped_column(SmallInteger, default=0)
+
+    # Hồ sơ này được tạo lại từ hồ sơ nào (#102): hết lượt mở lại, quá cửa sổ mở lại hay bị
+    # Không tiếp nhận thì người gửi tạo hồ sơ mới và liên kết hồ sơ cũ. Chỉ đặt lúc tạo.
+    parent_request_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("requests.id"), default=None
+    )
+
     # --- Mốc thời gian, luôn UTC -------------------------------------------
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[dt.datetime] = mapped_column(
@@ -144,6 +154,7 @@ class Request(Base):
         ),
         Index("requests_tra_theo_trang_thai", "current_state"),
         Index("requests_tra_theo_phong_ban", "department_code"),
+        Index("requests_tra_theo_ho_so_goc", "parent_request_id"),
     )
 
     def __repr__(self) -> str:

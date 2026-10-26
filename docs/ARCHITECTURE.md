@@ -428,10 +428,12 @@ giữa hai loại nội dung khác hẳn nhau.
 
 **Ba lớp bảo vệ, không lớp nào nằm trong mã ứng dụng:**
 
-1. **Khóa ngoại** chặn cạnh trỏ tới trạng thái không tồn tại. Thêm một mẹo nhỏ: cột kỹ
-   thuật `transitions.from_is_terminal` luôn bằng `FALSE` và tham chiếu tới
-   `states (rule_set_id, code, is_terminal)`, nên **không thể tạo cạnh rời khỏi một
-   trạng thái đóng**. Dữ liệu khởi tạo không bao giờ nhắc tới cột này
+1. **Khóa ngoại** chặn cạnh trỏ tới trạng thái không tồn tại. Thêm một mẹo nhỏ: cột
+   `transitions.from_is_terminal` tham chiếu tới `states (rule_set_id, code, is_terminal)`
+   nên luôn khớp trạng thái nguồn, và một `CHECK` buộc cạnh rời khỏi trạng thái kết thúc
+   phải khai `reopen_window_hours` — **chỉ cạnh mở lại có cửa sổ thời gian** (#102) rời được
+   một trạng thái kết thúc, không thể tạo cạnh thường đi ra từ đó. Trước #102 `CHECK` cấm
+   hẳn; "kết thúc" nay nghĩa là hết chu kỳ hồ sơ, chưa hẳn là không còn đường ra
 2. **Chỉ mục duy nhất từng phần** bảo đảm mỗi bộ quy tắc có đúng một trạng thái bắt đầu,
    mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
 3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
@@ -819,6 +821,30 @@ hết ân hạn mà vẫn chưa xong thì leo thang lại. Ân hạn không đư
 lý — ràng buộc `CHECK` chặn, vì khi đó lần leo thang đầu tiên cũng bị hoãn. Giao diện
 nói "Quá hạn … · ân hạn còn …" để không ai tưởng hệ thống quên hồ sơ.
 
+**Mở lại có giới hạn và hạn mới** (#102). Hai cạnh mở lại — *Mở lại, chưa đạt* từ `completed`
+và *Mở lại sau khi đóng* từ `closed` — dùng chung ràng buộc `reopen-limit`: số lần đếm ở
+`requests.reopen_count`, trần ở `request_types.reopen_max_count`, và tác động của ràng buộc đặt
+lại ba trường gia hạn về 0 rồi đếm thêm một lần. Đồng hồ SLA đếm lại từ 0 nhờ cờ dữ liệu
+`transitions.restarts_sla`, xử lý trong `cap_nhat_dong_ho` sau khi chốt đoạn vừa qua: số giây đã
+chạy không phải trường quyết định để kể trên dòng thời gian, nên không đi qua `changes`. Chiều
+này đảo lại điều #94 đã chọn cho riêng trường hợp mở lại — **đặt lại đồng hồ** thay vì ân hạn —
+vì giảng viên chốt 08/10 "cấp hạn mới cho chu kỳ xử lý mới"; số liệu của chu kỳ cũ vẫn nằm trọn
+trong nhật ký sự kiện cho tầng `I`. Ân hạn của #94 giữ nguyên cho phân công lại sau leo thang và
+bổ sung thông tin xong.
+
+Cạnh rời trạng thái kết thúc (*Mở lại sau khi đóng*) là cạnh DUY NHẤT thuộc loại đó, và lược đồ
+bắt nó khai `reopen_window_hours`: cửa sổ đo bằng giờ làm việc từ lúc hồ sơ vào trạng thái kết
+thúc, theo cùng hàm lịch với `auto_after_hours`, ràng buộc `reopen-window` đọc cột này của chính
+cạnh đang đi. `reopen-from-rework` chỉ cho mở lại hồ sơ mà trạng thái đứng ngay trước khi kết
+thúc có cạnh làm lại (`is_rework`) về cùng đích — suy từ dữ liệu và nhật ký như
+`return-to-previous-state`, không có danh sách trạng thái nào trong mã. Cả ba ràng buộc đều
+`input_free`: hết lượt hay quá cửa sổ thì nút biến mất khỏi `allowed_transitions`, và giao diện
+mời tạo hồ sơ mới thay vào. Hồ sơ mới mang `requests.parent_request_id`, chỉ đặt lúc tạo —
+`kiem_ho_so_goc` đòi hồ sơ gốc là của chính người gửi và đã ở trạng thái kết thúc; lỗi giống nhau
+cho "không có" và "của người khác" để không lộ hồ sơ của người khác. Tạo hồ sơ không sinh dòng
+nhật ký (§6), nên liên kết hiện qua hai trường `parent` và `children` của trang hồ sơ chứ không
+qua một mốc trên dòng thời gian của hồ sơ cũ.
+
 Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
 Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
@@ -860,8 +886,10 @@ lại khi yêu cầu thật gửi lên. Chặn ở giao diện thôi thì không
 API được.
 
 **Nút nào phải hỏi lại cũng đến từ dữ liệu** (#98). Mỗi cạnh mang thêm cờ
-`to_state_is_terminal`, tra từ `states.is_terminal`. Cạnh dẫn tới trạng thái kết thúc thì
-giao diện mở bảng xác nhận, kèm cảnh báo không hoàn tác được và ô lý do tùy chọn; cạnh bắt
+`to_state_is_terminal`, tra từ `states.is_terminal`, và từ #102 thêm `to_state_reopen_hours`:
+trạng thái kết thúc đích còn cạnh mở lại thì dịch vụ báo cửa sổ bao nhiêu giờ làm việc, để câu
+cảnh báo nói đúng "còn mở lại được" thay vì "không hoàn tác được". Cạnh dẫn tới trạng thái kết
+thúc thì giao diện mở bảng xác nhận, kèm cảnh báo và ô lý do tùy chọn; cạnh bắt
 buộc lý do (`requires_note`) thì lý do vẫn bắt buộc. Trước đó "Hủy yêu cầu" bấm là mất
 hồ sơ. Không có danh sách "thao tác nguy hiểm" nào trong mã: doanh nghiệp thêm một trạng
 thái kết thúc mới thì mọi cạnh dẫn tới nó tự được hỏi lại.

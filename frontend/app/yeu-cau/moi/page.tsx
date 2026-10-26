@@ -9,12 +9,23 @@
 
 import { BieuMauGuiYeuCau } from "@/app/yeu-cau/moi/bieu-mau";
 import { goiDichVu } from "@/lib/api";
-import type { LoaiYeuCau } from "@/lib/kieu";
+import type { HoSoChiTiet, LoaiYeuCau } from "@/lib/kieu";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuiYeuCau() {
+export default async function GuiYeuCau({
+  searchParams,
+}: {
+  searchParams: Promise<{ tu?: string }>;
+}) {
   const cacLoai = await goiDichVu<LoaiYeuCau[]>("/request-types");
+
+  // Tạo lại từ một hồ sơ cũ của chính mình (#102): `?tu=<mã hồ sơ>`. Dịch vụ trả 404 cho hồ
+  // sơ của người khác, nên mã lạ chỉ làm biểu mẫu trống như thường. Cái dịch vụ kiểm lại lúc
+  // gửi mới là cái quyết định — chép sẵn ở đây chỉ để người gửi đỡ gõ lại.
+  const { tu } = await searchParams;
+  const maGoc = tu && /^\d+$/.test(tu) ? Number(tu) : null;
+  const goc = maGoc ? await goiDichVu<HoSoChiTiet>(`/requests/${maGoc}`) : null;
 
   return (
     <>
@@ -63,7 +74,20 @@ export default async function GuiYeuCau() {
           </p>
         </div>
       ) : (
-        <BieuMauGuiYeuCau cacLoai={cacLoai} />
+        <BieuMauGuiYeuCau
+          cacLoai={cacLoai}
+          goc={
+            goc && goc.state.is_terminal
+              ? {
+                  id: goc.id,
+                  code: goc.code,
+                  title: goc.title,
+                  description: goc.description ?? "",
+                  request_type_code: goc.request_type?.code ?? null,
+                }
+              : null
+          }
+        />
       )}
     </>
   );

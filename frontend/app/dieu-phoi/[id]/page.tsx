@@ -25,6 +25,7 @@ import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { duongHopThu } from "@/lib/hop-thu";
+import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
@@ -177,6 +178,7 @@ export default async function ChiTietDieuPhoi({
         {/* --- Cột phải: làm, dính khi cuộn --------------------------------- */}
         <div className="cot-dinh">
           <TheHan ho_so={ho_so} />
+          <GhiChuMoLai hoSo={ho_so} />
           <TheThaoTac>
             {/* Hồ sơ của chính mình: không có nút điều phối nào, chỉ còn nút của chủ hồ sơ
                 nếu có — nói rõ vì sao (#154) */}
@@ -208,6 +210,9 @@ export default async function ChiTietDieuPhoi({
               }}
             />
           </TheThaoTac>
+          {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
+              đang ở phòng khác */}
+          <KhoiHoSoLienQuan hoSo={ho_so} />
           <TheLienHe ten={nguoiGui} dinhDanh={ho_so.requester_id} ketQua={lienHe} />
         </div>
       </div>

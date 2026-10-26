@@ -224,7 +224,10 @@ export function BangThaoTac({
           })}
 
           {dangMo.to_state_is_terminal && (
-            <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
+            <CanhBaoKetThuc
+              nhanTrangThai={dangMo.to_state_label}
+              moLaiGio={dangMo.to_state_reopen_hours}
+            />
           )}
 
           {/* Lý do: bắt buộc khi cạnh đòi (`requires_note`); tùy chọn khi cạnh dẫn tới

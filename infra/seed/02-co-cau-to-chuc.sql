@@ -51,20 +51,21 @@ INSERT INTO departments (code, label, description, display_order) VALUES
 -- priorities (#101). Gia hạn (#101): mỗi lần tối đa sla_extension_max_percent phần trăm hạn
 -- gốc, tổng tối đa sla_extension_max_count lần. Giảng viên để ngỏ con số phần trăm,
 -- navigator chốt 50% ngày 15/10 — Sự cố thiết bị mức Bình thường gia hạn mỗi lần tối đa 4
--- giờ, tổng tối đa 2 lần.
+-- giờ, tổng tối đa 2 lần. Mở lại (#102): reopen_max_count là tổng số lần người gửi mở lại một
+-- hồ sơ, giảng viên chốt 08/10 là 2 — hồ sơ quá số đó phải tạo mới.
 
-INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, sla_warn_percent, sla_extension_max_percent, sla_extension_max_count, display_order) VALUES
+INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, sla_warn_percent, sla_extension_max_percent, sla_extension_max_count, reopen_max_count, display_order) VALUES
     ('device-incident', 'Sự cố thiết bị',
-     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2, 75, 50, 2,  1),
+     'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2, 75, 50, 2, 2,  1),
 
     ('software-access', 'Cấp quyền phần mềm',
-     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6, 75, 50, 2,  2),
+     'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6, 75, 50, 2, 2,  2),
 
     ('hr-certificate',  'Giấy xác nhận nhân sự',
-     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12, 75, 50, 2,  3),
+     'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12, 75, 50, 2, 2,  3),
 
     ('supply-purchase', 'Đề xuất mua vật tư',
-     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18, 75, 50, 2,  4);
+     'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18, 75, 50, 2, 2,  4);
 
 
 -- ---------------------------------------------------------------------------
