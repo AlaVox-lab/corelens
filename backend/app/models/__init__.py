@@ -17,7 +17,7 @@ Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên
 một dòng import.
 """
 
-from app.models.case import CaseMessage, EventLog, Request
+from app.models.case import CaseAttachment, CaseMessage, EventLog, Request
 from app.models.workflow_config import (
     Department,
     Guard,
@@ -35,6 +35,7 @@ from app.models.workflow_config import (
 )
 
 __all__ = [
+    "CaseAttachment",
     "CaseMessage",
     "Department",
     "EventLog",

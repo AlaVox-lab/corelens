@@ -112,6 +112,8 @@ class Transition(Base):
     reopen_window_hours: Mapped[int | None] = mapped_column(SmallInteger, default=None)
     # Đi qua cạnh này là mở chu kỳ xử lý mới: đồng hồ SLA đếm lại từ 0 (#102)
     restarts_sla: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Người đang đứng ở cạnh này đính kèm được tệp vào hồ sơ (#80)
+    accepts_attachments: Mapped[bool] = mapped_column(Boolean, default=False)
 
     allowed_roles: Mapped[list[TransitionRole]] = relationship(
         back_populates="transition", lazy="selectin"

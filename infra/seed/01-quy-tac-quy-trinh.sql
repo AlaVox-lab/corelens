@@ -209,6 +209,16 @@ UPDATE transitions
    SET auto_after_hours = 40, warn_before_hours = 24
  WHERE rule_set_id = 1 AND activity_code = 'auto-close-no-info';
 
+-- Đính kèm tệp (#80, navigator chốt 26/10): người gửi đính kèm được khi họ đang có một cạnh
+-- Sửa nội dung hay Bổ sung thông tin — lúc vừa gửi, lúc sửa nội dung, lúc trả lời câu hỏi.
+-- Tới phòng ban thì không cạnh nào mang cờ, việc đính kèm khóa lại. Muốn mở thêm chỗ đính
+-- kèm thì bật cờ cho cạnh khác ở đây, không sửa mã.
+UPDATE transitions
+   SET accepts_attachments = TRUE
+ WHERE rule_set_id = 1
+   AND NOT is_system
+   AND activity_code IN ('edit-content', 'provide-info');
+
 -- Mở lại sau khi đã đóng (#102, giảng viên chốt 08/10): trong 7 ngày làm việc kể từ lúc hồ sơ vào
 -- Đã đóng — 56 giờ làm việc với lịch mẫu 8 giờ một ngày, đổi lịch thì xem lại con số này. Đây là
 -- cạnh DUY NHẤT rời khỏi một trạng thái kết thúc, nên khai cột from_is_terminal và cửa sổ thời gian
