@@ -71,7 +71,7 @@ export default async function GuiYeuCau({
               lineHeight: 1.6,
             }}
           >
-            Dịch vụ ứng dụng không phản hồi. Tải lại trang sau ít phút; nếu vẫn vậy thì
+            Hệ thống không phản hồi. Tải lại trang sau ít phút; nếu vẫn vậy thì
             báo quản trị hệ thống.
           </p>
         </div>

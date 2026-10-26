@@ -465,7 +465,7 @@ def test_dong_thoi_gian_giu_ca_doan_quay_lui(client, session, rule_set, phong_ba
     ]
     assert lich_su[2]["note"].startswith("Sai chuyên môn")
     assert lich_su[2]["note_label"] is None, "cạnh không đặt tên ô thì ghi chú là lý do"
-    assert lich_su[3]["activity_label"] == "Định tuyến lại phòng khác"
+    assert lich_su[3]["activity_label"] == "Chuyển lại sang phòng khác"
 
     # Hồ sơ quay lại `classified` lần thứ hai — đoạn quay lui nằm nguyên trong nhật ký
     assert duong_di.count(("submitted", "classified")) == 1

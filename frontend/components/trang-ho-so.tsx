@@ -119,11 +119,11 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
 export function TheThaoTac({ children }: { children: React.ReactNode }) {
   return (
     <div className="the khoi khong-in">
-      <div className="khoi-dau">Bạn có thể làm gì</div>
+      <div className="khoi-dau">Bạn có thể làm gì lúc này</div>
       {children}
       <p className="ghi-quy-tac">
         <Info aria-hidden />
-        Nút do bộ quy tắc sinh ra theo trạng thái hồ sơ và vai trò của bạn.
+        Các nút phụ thuộc vào trạng thái hồ sơ và vai trò của bạn.
       </p>
     </div>
   );

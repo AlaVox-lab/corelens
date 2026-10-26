@@ -31,7 +31,7 @@ const LOI_VAO: Record<string, LoiVao[]> = {
     {
       duongDan: "/yeu-cau/moi",
       nhan: "Gửi yêu cầu",
-      moTa: "Một biểu mẫu cho mọi loại yêu cầu: sự cố thiết bị, cấp quyền phần mềm, giấy tờ nhân sự, đề xuất mua sắm.",
+      moTa: "Một biểu mẫu cho mọi loại yêu cầu: sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư.",
       icon: "gui",
       nhom: "chung",
     },
