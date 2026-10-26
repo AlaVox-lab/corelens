@@ -103,7 +103,7 @@ function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: numbe
               {d.giao.ten}
             </span>
           ) : (
-            <span className="nhat">Chưa giao ai</span>
+            <span className="nhat">Chưa giao cho ai</span>
           )}
         </td>
       )}

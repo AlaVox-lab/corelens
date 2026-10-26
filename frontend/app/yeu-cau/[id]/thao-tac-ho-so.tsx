@@ -209,18 +209,16 @@ export function ThaoTacHoSo({
               required={dangMo.requires_note}
               placeholder={
                 !dangMo.requires_note
-                  ? "Có thể bỏ trống. Nếu ghi, dòng này đi vào nhật ký hồ sơ."
+                  ? "Có thể bỏ trống. Nếu ghi, dòng này đi vào dòng thời gian của hồ sơ."
                   : dangMo.note_label
-                    ? "Dòng này đi vào nhật ký hồ sơ, và người đã hỏi bạn sẽ đọc nó."
-                    : "Nói rõ vì sao. Dòng này đi vào nhật ký hồ sơ và người xử lý sẽ đọc nó."
+                    ? "Dòng này đi vào dòng thời gian của hồ sơ, và người đã hỏi bạn sẽ đọc nó."
+                    : "Nói rõ vì sao. Dòng này đi vào dòng thời gian của hồ sơ và người xử lý sẽ đọc nó."
               }
             />
           </label>
           {dangMo.requires_note && (
             <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>
-              Ô này bắt buộc. Để trống thì người tiếp theo không biết chuyện gì đã xảy ra,
-              và bản phân tích quy trình về sau chỉ thấy một nhánh lệch chuẩn không rõ
-              nguyên nhân.
+              Ô này bắt buộc: người nhận việc tiếp theo cần biết vì sao.
             </span>
           )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>

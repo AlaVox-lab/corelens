@@ -228,7 +228,7 @@ export default async function ChiTietHoSo({
                 dưới đây. */}
             <O
               tua="Đang giữ hồ sơ"
-              chinh={ho_so.department?.label ?? "Chưa định tuyến"}
+              chinh={ho_so.department?.label ?? "Chưa chuyển về phòng nào"}
               phu={
                 ho_so.assignee_id
                   ? "Đã có người được phân công xử lý"
@@ -305,9 +305,8 @@ export default async function ChiTietHoSo({
           </h2>
           {/* Lời giải thích nhường chỗ cho nút trên điện thoại (#189) */}
           <p className="an-tren-hep" style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
-            Danh sách dưới đây do chính bộ quy tắc quy trình sinh ra, dựa trên trạng
-            thái hồ sơ và vai trò của bạn. Thao tác nào không có ở đây thì không tồn tại
-            đường đi cho nó.
+            Các nút dưới đây phụ thuộc vào trạng thái hồ sơ và vai trò của bạn. Thao
+            tác nào không có ở đây thì ở bước này chưa làm được.
           </p>
           {tuDong && (
             <p
@@ -395,7 +394,7 @@ export default async function ChiTietHoSo({
       <div id="khung-loi-nhan" className="the khong-in" style={{ marginTop: "16px" }}>
         <CuonTinMoi chon="#khung-loi-nhan" soTin={ho_so.messages.length} />
         <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
-          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Lời nhắn</h2>
+          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Trao đổi</h2>
           <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
             Nhắn cho điều phối viên hay phòng ban đang giữ hồ sơ, thay cho gọi điện: câu hỏi và
             câu trả lời đều nằm lại trên hồ sơ. Lời nhắn không đổi trạng thái và không dừng

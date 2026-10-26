@@ -24,6 +24,7 @@ from app.models.workflow_config import (
     Department,
     Priority,
     RequestType,
+    Role,
     RuleSet,
     State,
     Transition,
@@ -137,6 +138,18 @@ def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict) -> None:
                 gia_tri,
                 f"'{gia_tri}' không có trong danh mục đang dùng của {truong}.",
             )
+
+
+def _nhan_trang_thai(session: Session, rule_set_id: int, ma: str) -> str:
+    """Nhãn tiếng Việt của một trạng thái, để thông báo lỗi không lộ mã tiếng Anh (#157)."""
+    trang_thai = session.get(State, (rule_set_id, ma))
+    return trang_thai.label if trang_thai is not None else ma
+
+
+def _nhan_vai_tro(session: Session, ma: str) -> str:
+    """Nhãn tiếng Việt của một vai trò, cùng lý do với `_nhan_trang_thai`."""
+    vai_tro = session.get(Role, ma)
+    return vai_tro.label if vai_tro is not None else ma
 
 
 def get_active_rule_set(session: Session) -> RuleSet:
@@ -332,26 +345,31 @@ def perform_transition(
     ).one_or_none()
 
     if canh is None:
+        # Nhãn chứ không phải mã: người gặp lỗi này thường là người bấm một nút của trang đã cũ
+        # — hồ sơ vừa được người khác chuyển đi — và họ đọc được nhãn, không đọc được mã
+        tu = _nhan_trang_thai(session, ho_so.rule_set_id, ho_so.current_state)
+        den = _nhan_trang_thai(session, ho_so.rule_set_id, to_state)
         raise TransitionNotAllowed(
-            f"Không có đường đi từ '{ho_so.current_state}' sang '{to_state}' "
-            f"trong bộ quy tắc đang áp dụng."
+            f"Từ “{tu}” không đi được sang “{den}”. Hồ sơ có thể vừa đổi trạng thái — "
+            f"tải lại trang để xem trạng thái mới nhất."
         )
 
     # --- Bước 2: kiểm quyền ------------------------------------------------
     if canh.is_system and not actor.is_system:
         raise SystemTransitionOnly(
-            f"Cạnh '{canh.activity_label}' do hệ thống tự đi, người dùng không "
-            f"kích hoạt được."
+            f"Bước “{canh.activity_label}” do hệ thống tự thực hiện, người dùng không "
+            f"bấm được."
         )
     if not canh.is_system and actor.is_system:
         raise RoleNotPermitted(
-            f"Tác nhân hệ thống không đi được cạnh '{canh.activity_label}' — "
-            f"cạnh này thuộc về con người."
+            f"Tác nhân hệ thống không thực hiện được “{canh.activity_label}” — "
+            f"bước này thuộc về con người."
         )
     if not canh.is_system and not (actor.roles & canh.role_codes):
+        danh_cho = ", ".join(sorted(_nhan_vai_tro(session, ma) for ma in canh.role_codes))
         raise RoleNotPermitted(
-            f"Vai trò hiện tại không thực hiện được '{canh.activity_label}'. "
-            f"Cạnh này dành cho: {', '.join(sorted(canh.role_codes)) or 'không ai'}."
+            f"Vai trò hiện tại không thực hiện được “{canh.activity_label}”. "
+            f"Bước này dành cho: {danh_cho or 'không ai'}."
         )
 
     if canh.requires_note and not (note and note.strip()):

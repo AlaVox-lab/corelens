@@ -262,7 +262,7 @@ export default async function TrangHopThu({
         <div className="the" style={{ margin: "24px" }}>
           <div className="rong" data-loi="">
             <h2>Không tải được hộp thư</h2>
-            <p>Dịch vụ ứng dụng không trả lời. Lời nhắn đã gửi vẫn còn nguyên trên hồ sơ.</p>
+            <p>Hệ thống không phản hồi. Lời nhắn đã gửi vẫn còn nguyên trên hồ sơ.</p>
             <Link href="/hop-thu" className="nut nut-nho">
               Thử lại
             </Link>

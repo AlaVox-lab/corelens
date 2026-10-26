@@ -164,7 +164,7 @@ def department_unchanged(ctx: TransitionContext) -> None:
     ):
         raise GuardViolation(
             "department-unchanged",
-            "Không được đổi phòng ban ở bước này, chỉ đổi người phụ trách.",
+            "Không được đổi phòng ban ở bước này, chỉ đổi người xử lý.",
         )
 
 

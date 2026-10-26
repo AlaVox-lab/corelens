@@ -47,7 +47,7 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
     tieuDe: m.title,
     phu: m.request_type?.label ?? "Chưa rõ loại",
     choTraLoi: m.last_message_from_requester === true && !m.state.is_terminal,
-    nguoiGui: m.requester_label ?? "Không rõ",
+    nguoiGui: m.requester_label ?? "Không rõ người gửi",
     giao: m.assignee_id
       ? { ten: tenGiao, mau: mauTheo(m.assignee_id), chuCai: chuCaiDau(m.assignee_label ?? "?") }
       : null,
@@ -95,7 +95,7 @@ export default async function HangDoiPhongBan({
         <div className="the">
           <div className="rong" data-loi="">
             <h2>Không tải được dữ liệu</h2>
-            <p>Dịch vụ ứng dụng không trả lời. Thử lại sau ít phút.</p>
+            <p>Hệ thống không phản hồi. Thử lại sau ít phút.</p>
             <Link href={cuaToi ? "/phong-ban?mine=1" : "/phong-ban"} className="nut nut-nho">
               Thử lại
             </Link>

@@ -166,7 +166,7 @@ async function docLoi(phanHoi: Response): Promise<{ ma: string; thongDiep: strin
 
   return {
     ma: `http-${phanHoi.status}`,
-    thongDiep: "Dịch vụ ứng dụng không xử lý được yêu cầu này.",
+    thongDiep: "Hệ thống không xử lý được yêu cầu này.",
   };
 }
 
@@ -193,7 +193,7 @@ export async function docDichVu<T>(duongDan: string): Promise<KetQua<T>> {
     return {
       ok: false,
       ma: "khong-ket-noi-duoc",
-      thongDiep: "Không kết nối được tới dịch vụ ứng dụng. Thử lại sau ít phút.",
+      thongDiep: "Hệ thống không phản hồi. Thử lại sau ít phút.",
     };
   }
 
@@ -248,7 +248,7 @@ export async function guiBieuMauDichVu<T>(
     return {
       ok: false,
       ma: "khong-ket-noi-duoc",
-      thongDiep: "Không kết nối được tới dịch vụ ứng dụng. Thử lại sau ít phút.",
+      thongDiep: "Hệ thống không phản hồi. Thử lại sau ít phút.",
     };
   }
 
@@ -288,7 +288,7 @@ export async function guiDichVu<T>(
     return {
       ok: false,
       ma: "khong-ket-noi-duoc",
-      thongDiep: "Không kết nối được tới dịch vụ ứng dụng. Thử lại sau ít phút.",
+      thongDiep: "Hệ thống không phản hồi. Thử lại sau ít phút.",
     };
   }
 

@@ -202,7 +202,7 @@ export function KhungLoiNhan({
         rows={3}
         maxLength={2000}
         required={coLoaiCanNoiDung}
-        placeholder="Nhắn thêm cho các bên đang giữ hồ sơ. Lời nhắn không đổi trạng thái và không dừng đồng hồ."
+        placeholder="Nhắn thêm cho các bên đang giữ hồ sơ. Lời nhắn không đổi trạng thái và không dừng đồng hồ hạn xử lý."
       />
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
         {cacLoai.map((k, i) => (

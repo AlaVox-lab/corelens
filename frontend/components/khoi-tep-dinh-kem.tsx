@@ -56,7 +56,7 @@ export function KhoiTepDinhKem({
       datChon([]);
       router.refresh();
     } catch {
-      datLoi("Không kết nối được tới máy chủ. Thử lại sau ít phút.");
+      datLoi("Hệ thống không phản hồi. Thử lại sau ít phút.");
     } finally {
       datDangTai(false);
     }

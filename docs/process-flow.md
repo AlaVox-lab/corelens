@@ -68,7 +68,7 @@ stateDiagram-v2
     ChoXacDuyet --> DaPhanLoai: Điều phối rút về, hay tự trả về sau 24 giờ làm việc
     ChoXacDuyet --> ChoXacDuyet: Điều phối gia hạn lần đầu
 
-    BiTuChoi --> DaPhanLoai: Người phân loại định tuyến lại
+    BiTuChoi --> DaPhanLoai: Người phân loại chuyển lại sang phòng khác
 
     DangXuLy --> DangXuLy: Người xử lý nhận việc về mình
     DangXuLy --> ChoBoSung: Người xử lý hỏi thêm
@@ -147,7 +147,7 @@ là chuỗi hiển thị cho người dùng. Theo quy ước ở `ARCHITECTURE.m
 | 5 | `completed` | Hoàn tất | Người xử lý báo xong, chờ người tạo xác nhận | |
 | 6 | `closed` | Đã đóng | Hồ sơ hết chu kỳ xử lý. Người gửi còn **mở lại** được trong 7 ngày làm việc, tối đa 2 lần (#102) | ✅ |
 | 7 | `awaiting-info` | Chờ bổ sung thông tin | Hỏi ngược **người tạo**, không phải trả về phòng ban | |
-| 8 | `rejected-by-department` | Bị phòng ban từ chối | Sai chuyên môn, cần định tuyến lại | |
+| 8 | `rejected-by-department` | Bị phòng ban từ chối | Sai chuyên môn, cần chuyển lại sang phòng khác | |
 | 9 | `escalated` | Đã leo thang | Quá hạn SLA, đẩy lên cấp trên **trong cùng phòng ban** | |
 | 10 | `cancelled` | Đã hủy | Người tạo rút yêu cầu | ✅ |
 | 11 | `rejected-unrouted` | Không tiếp nhận | Điều phối viên ghi lý do vì không phòng nào nhận. Không mang nghĩa đã xử lý xong; không mở lại — người gửi tạo hồ sơ mới (#102) | ✅ |
@@ -177,7 +177,7 @@ là không đi được**.
 | `awaiting-acceptance` | `classified` | Rút hồ sơ về điều phối — bắt buộc lý do | `classifier` |
 | `awaiting-acceptance` | `classified` | Tự trả về điều phối — hết 24 giờ làm việc chờ, báo trước 4 giờ | **hệ thống** |
 | `awaiting-acceptance` | `awaiting-acceptance` | Gia hạn xử lý — lần đầu, bắt buộc lý do | `classifier` |
-| `rejected-by-department` | `classified` | Định tuyến lại phòng khác | `classifier` |
+| `rejected-by-department` | `classified` | Chuyển lại sang phòng khác | `classifier` |
 | `in-progress` | `in-progress` | Nhận việc về mình | `handler` |
 | `in-progress` | `awaiting-info` | Yêu cầu bổ sung thông tin | `handler` |
 | `in-progress` | `escalated` | Leo thang do quá hạn | **hệ thống** |
@@ -297,7 +297,7 @@ thì sửa dữ liệu khởi tạo.
 | Định danh | Nhãn hiển thị | Trách nhiệm |
 |---|---|---|
 | `requester` | Người tạo yêu cầu | Gửi yêu cầu, sửa nội dung trước khi hồ sơ tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
-| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, định tuyến lại khi bị từ chối |
+| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối |
 | `handler` | Người xử lý yêu cầu | Tự nhận hồ sơ chưa giao ai trong phòng, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
 | `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang |
 | `administrator` | Quản trị viên | **Không đi cạnh nào.** Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại → phòng |
@@ -365,7 +365,7 @@ không có loại sẽ không bao giờ bị bộ quét đánh dấu quá hạn.
 
 **Không tự điều phối hồ sơ của mình** (#154, navigator chốt ngày 02/10). Ràng buộc
 `actor-not-requester` gắn vào **mọi cạnh của vai điều phối** — phân loại, hỏi thêm ở *Đã
-gửi*, chuyển phòng ban, định tuyến lại, đóng hồ sơ không phòng nào nhận. Một người vừa gửi
+gửi*, chuyển phòng ban, chuyển lại phòng khác, ghi Không tiếp nhận khi không phòng nào nhận. Một người vừa gửi
 yêu cầu vừa là điều phối viên thì không tự phân loại, tự đặt mức ưu tiên cho yêu cầu của
 mình: ràng buộc *người tạo không tự đặt mức ưu tiên* ở trên sẽ bị vòng qua nếu thiếu nó.
 Trên hồ sơ của chính mình các nút đó không hiện, hàng đợi ghi *Bạn gửi — người khác điều

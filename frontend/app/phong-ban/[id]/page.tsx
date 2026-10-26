@@ -106,7 +106,7 @@ export default async function ChiTietPhongBan({
   // Hai cuộc của hồ sơ (#156): với người gửi, và nội bộ — dịch vụ đã lọc theo người xem
   const chung = ho_so.messages.filter((m) => !m.internal);
   const noiBo = ho_so.messages.filter((m) => m.internal);
-  const nguoiGui = ho_so.requester_label ?? "Không rõ";
+  const nguoiGui = ho_so.requester_label ?? "Không rõ người gửi";
   const nguoiXuLy = ho_so.assigned_to_me
     ? "Bạn"
     : ho_so.assignee_id
