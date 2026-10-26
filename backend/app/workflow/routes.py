@@ -40,6 +40,7 @@ from app.rules.sla import (
 )
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.context import Actor
+from app.workflow.attachments import danh_sach_tep
 from app.workflow.engine import (
     CHANGEABLE_FIELDS,
     DANH_MUC_CUA_TRUONG,
@@ -84,6 +85,7 @@ from app.workflow.schemas import (
     PhongBanRa,
     SuKienRa,
     TaoHoSoVao,
+    TepDinhKemRa,
     ThayDoiTruongRa,
     TrangThaiRa,
     TuDongRa,
@@ -643,6 +645,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         if t.reopen_window_hours is not None
     }
 
+    canh_di_duoc = allowed_transitions(session, ho_so, actor)
     di_duoc = [
         CanhDiDuocRa(
             to_state=t.to_state,
@@ -658,7 +661,20 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             keeps_state=t.from_state == t.to_state,
             fields=xep_o_nhap(permitted_fields(t.guard_codes)),
         )
-        for t in allowed_transitions(session, ho_so, actor)
+        for t in canh_di_duoc
+    ]
+
+    # Tệp đính kèm (#80): liệt kê ở mọi cổng — ai mở được hồ sơ thì thấy tệp
+    tep_dinh_kem = [
+        TepDinhKemRa(
+            id=t.id,
+            filename=t.filename,
+            content_type=t.content_type,
+            size_bytes=t.size_bytes,
+            uploaded_by_label=t.uploaded_by_label,
+            created_at=t.created_at,
+        )
+        for t in danh_sach_tep(session, ho_so.id)
     ]
 
     # Lời nhắn (#128) đi riêng khỏi `history`: nhật ký chỉ ghi những lần hồ sơ đổi
@@ -697,6 +713,8 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         "requester_id": ho_so.requester_id,
         "assignee_id": ho_so.assignee_id,
         **_lien_ket_ho_so(session, ho_so, states),
+        "attachments": tep_dinh_kem,
+        "can_attach": any(c.accepts_attachments for c in canh_di_duoc),
         "history": [_su_kien(e, states, canh, nhan) for e in case_history(session, ho_so.id)],
         "allowed_transitions": di_duoc,
         "messages": loi_nhan,

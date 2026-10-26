@@ -96,6 +96,28 @@ class Settings(BaseSettings):
     # trình diễn việc tự leo thang mà không phải ngồi chờ.
     sla_scan_interval_seconds: int = 60
 
+    # --- Tệp đính kèm, xem #80 và ADR-0002 ----------------------------------
+    #
+    # Tệp nằm trong SeaweedFS, gọi qua S3 API chuẩn bằng boto3 — không nhúng thư viện của
+    # SeaweedFS, không dùng API riêng của nó. Đổi nền tảng lưu trữ (Garage, MinIO) chỉ là
+    # đổi bốn giá trị dưới đây. Địa chỉ là địa chỉ NỘI BỘ trong mạng Compose: trình duyệt
+    # không bao giờ nói chuyện với kho, tệp đi qua dịch vụ ứng dụng để quyền kiểm ở mỗi lần.
+    s3_endpoint: str = "http://seaweedfs:8333"
+    s3_access_key: str = "dxlab_access_key"
+    s3_secret_key: str = ""
+    s3_bucket: str = "dxlab-attachments"
+    # SeaweedFS không dùng vùng, nhưng chữ ký S3 vẫn đòi một giá trị
+    s3_region: str = "us-east-1"
+
+    # Giới hạn tệp đính kèm là cấu hình triển khai, không phải mã (CLAUDE.md mục 1.2). Giao
+    # diện hỏi dịch vụ giới hạn thay vì tự giữ bản sao — xem GET /attachments/policy.
+    attachment_allowed_extensions: str = (
+        "png,jpg,jpeg,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv"
+    )
+    attachment_max_mb: int = 10
+    attachment_max_files: int = 5
+    attachment_max_files_per_case: int = 20
+
 
 @lru_cache
 def get_settings() -> Settings:

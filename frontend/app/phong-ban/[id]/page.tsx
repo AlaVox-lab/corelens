@@ -33,6 +33,7 @@ import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { duongHopThu } from "@/lib/hop-thu";
 import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
+import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
 import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
@@ -231,6 +232,13 @@ export default async function ChiTietPhongBan({
           {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
               đang ở phòng khác */}
           <KhoiHoSoLienQuan hoSo={ho_so} />
+          {/* Tệp đính kèm (#80): nhân viên chỉ xem và tải về, không thêm */}
+          <KhoiTepDinhKem
+            maHoSo={ho_so.id}
+            tep={ho_so.attachments}
+            choPhep={false}
+            chinhSach={null}
+          />
           <TheLienHe ten={nguoiGui} dinhDanh={ho_so.requester_id} ketQua={lienHe} />
         </div>
       </div>

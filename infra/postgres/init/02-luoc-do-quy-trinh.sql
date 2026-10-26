@@ -148,6 +148,11 @@ CREATE TABLE transitions (
     -- hạn đã hết của chu kỳ cũ. Bật cho hai cạnh mở lại. Thời gian dừng (chờ bổ sung) vẫn giữ.
     restarts_sla      BOOLEAN   NOT NULL DEFAULT FALSE,
 
+    -- Người đang đứng ở cạnh này đính kèm được tệp vào hồ sơ (#80): cạnh Sửa nội dung và Bổ sung
+    -- thông tin, tức những lúc người gửi còn chuyện để nói với người nhận. Hồ sơ tới phòng ban
+    -- thì không còn cạnh nào mang cờ này và việc đính kèm khóa lại, như cách Sửa nội dung khóa.
+    accepts_attachments BOOLEAN NOT NULL DEFAULT FALSE,
+
     -- Cạnh hệ thống tự đi khi hồ sơ nằm ở trạng thái nguồn đủ chừng này GIỜ LÀM VIỆC
     -- (#142): hồ sơ nằm im vì người phải bấm không bấm thì hệ thống đi thay, có ghi nhật
     -- ký. NULL là cạnh không tự đi theo thời gian chờ — cạnh leo thang do bộ quét SLA đi.
@@ -195,6 +200,8 @@ COMMENT ON COLUMN transitions.is_system IS
     'TRUE nghĩa là hệ thống tự đi, không vai trò người nào đi được. Hiện chỉ dùng cho cạnh leo thang khi quá hạn SLA.';
 COMMENT ON COLUMN transitions.reopen_window_hours IS
     'Cạnh mở lại sau khi hồ sơ kết thúc (#102): đi được khi hồ sơ mới vào trạng thái kết thúc chưa quá chừng này giờ làm việc. NULL là cạnh thường.';
+COMMENT ON COLUMN transitions.accepts_attachments IS
+    'Người có cạnh này đính kèm được tệp vào hồ sơ (#80). Cờ nằm ở cạnh chứ không ở trạng thái, vì quyền đính kèm đi theo vai và việc người đó đang làm — người gửi ở Chờ bổ sung thông tin đính kèm được, nhân viên phòng ban ở Đang xử lý thì không.';
 COMMENT ON COLUMN transitions.restarts_sla IS
     'Đi qua cạnh này là mở chu kỳ xử lý mới (#102): đồng hồ SLA đếm lại từ 0.';
 COMMENT ON COLUMN transitions.requires_note IS

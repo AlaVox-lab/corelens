@@ -192,6 +192,26 @@ class LoaiLoiNhanRa(BaseModel):
     retry_at: dt.datetime | None = None
 
 
+class TepDinhKemRa(BaseModel):
+    """Một tệp đính kèm trên hồ sơ (#80). Không có khóa kho: tải về đi qua `id`."""
+
+    id: int
+    filename: str
+    content_type: str
+    size_bytes: int
+    uploaded_by_label: str
+    created_at: dt.datetime
+
+
+class ChinhSachTepRa(BaseModel):
+    """Giới hạn tệp đính kèm — giao diện hỏi dịch vụ thay vì tự giữ bản sao (#80)."""
+
+    allowed_extensions: list[str]
+    max_mb: int
+    max_files: int
+    max_files_per_case: int
+
+
 class HoSoLienQuanRa(BaseModel):
     """Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id` (#102): bản gốc hay bản tạo lại."""
 
@@ -210,6 +230,10 @@ class HoSoChiTietRa(HoSoTomTatRa):
     # diện mời tạo hồ sơ mới thay cho nút Mở lại.
     reopen_count: int = 0
     reopen_max_count: int | None = None
+    # Tệp đính kèm (#80), và người đang xem đính kèm thêm được lúc này không — chỉ người gửi, ở
+    # những bước có cạnh mang cờ `accepts_attachments`
+    attachments: list[TepDinhKemRa] = Field(default_factory=list)
+    can_attach: bool = False
     requester_id: str
     assignee_id: str | None = None
     history: list[SuKienRa]

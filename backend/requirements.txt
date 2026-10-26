@@ -17,6 +17,11 @@ alembic==1.20.0
 psycopg[binary]==3.3.5
 pydantic-settings==2.15.0
 
+# Tệp đính kèm (#80). boto3 gọi S3 API chuẩn của SeaweedFS — ADR-0002. python-multipart để
+# FastAPI đọc được biểu mẫu tải tệp lên. Giấy phép ghi ở docs/dependencies.md.
+boto3==1.43.118
+python-multipart==0.0.32
+
 # Kiểm chữ ký token OIDC cục bộ. Kèm phần `crypto` để đọc được khóa RSA từ JWKS.
 # Dịch vụ ứng dụng KHÔNG gọi ngược sang Keycloak ở mỗi yêu cầu — xem ADR-0001.
 pyjwt[crypto]==2.14.0

@@ -22,10 +22,13 @@
 // diện rồi vẫn còn một lớp chặn nữa phía sau.
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useRef, useState } from "react";
 
-import type { LoaiYeuCau } from "@/lib/kieu";
-import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
+import { OChonTep } from "@/components/o-chon-tep";
+import { dungLuong } from "@/lib/dinh-dang";
+import type { ChinhSachTep, LoaiYeuCau } from "@/lib/kieu";
+import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiYeuCau } from "@/app/yeu-cau/thao-tac";
 
 const BUOC = [
@@ -49,11 +52,45 @@ export type HoSoGoc = {
 export function BieuMauGuiYeuCau({
   cacLoai,
   goc,
+  chinhSach,
 }: {
   cacLoai: LoaiYeuCau[];
   goc: HoSoGoc | null;
+  /** Giới hạn tệp đính kèm do dịch vụ trả. Không nạp được thì ẩn ô chọn tệp (#80). */
+  chinhSach: ChinhSachTep | null;
 }) {
-  const [ketQua, guiDi, dangGui] = useActionState(guiYeuCau, CHUA_CO_LOI);
+  const chuyenTrang = useRouter();
+  // Tệp chọn ở bước 2 giữ trong `ref` song song với state: hành động gửi chạy sau lần dựng
+  // cuối cùng và phải đọc được danh sách mới nhất, không phải bản chụp lúc nó được tạo
+  const [tep, datTep] = useState<File[]>([]);
+  const tepRef = useRef<File[]>([]);
+  tepRef.current = tep;
+
+  // Tạo hồ sơ trước, rồi tải tệp lên chính hồ sơ đó: tệp cần một hồ sơ đã tồn tại để gắn vào.
+  // Tệp tải hỏng thì hồ sơ vẫn đã gửi — chuyển sang trang hồ sơ kèm lời nhắc thêm tệp lại ở
+  // đó, thay vì báo lỗi ở biểu mẫu và khiến người gửi bấm gửi lần nữa, sinh ra hồ sơ thứ hai.
+  const [ketQua, guiDi, dangGui] = useActionState(
+    async (truoc: KetQuaThaoTac, duLieu: FormData): Promise<KetQuaThaoTac> => {
+      const kq = await guiYeuCau(truoc, duLieu);
+      if (kq.loi || kq.id === undefined) return kq;
+
+      let tepLoi = false;
+      if (tepRef.current.length > 0) {
+        const bieuMau = new FormData();
+        for (const f of tepRef.current) bieuMau.append("files", f);
+        try {
+          const ph = await fetch(`/api/tep/ho-so/${kq.id}`, { method: "POST", body: bieuMau });
+          const than = (await ph.json().catch(() => null)) as { ok?: boolean } | null;
+          tepLoi = !ph.ok || !than?.ok;
+        } catch {
+          tepLoi = true;
+        }
+      }
+      chuyenTrang.push(`/yeu-cau/${kq.id}${tepLoi ? "?tep=loi" : ""}`);
+      return kq;
+    },
+    CHUA_CO_LOI,
+  );
 
   const [buoc, datBuoc] = useState(1);
   // Loại của hồ sơ cũ có thể đã ngừng dùng — khi đó để trống cho người gửi chọn lại
@@ -297,6 +334,18 @@ export function BieuMauGuiYeuCau({
                 đứng lại chờ bạn trả lời.
               </span>
             </label>
+
+            {/* Tệp đính kèm (#80): ảnh chụp màn hình gần như luôn có ích — không có thì người
+                xử lý phải hỏi lại và hồ sơ rơi vào chờ bổ sung. Giới hạn do dịch vụ trả. */}
+            {chinhSach && (
+              <div style={{ display: "grid", gap: "7px" }}>
+                <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
+                  Tệp đính kèm{" "}
+                  <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>— không bắt buộc</span>
+                </span>
+                <OChonTep chinhSach={chinhSach} tepDaChon={tep} doi={datTep} voHieu={dangGui} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -326,6 +375,16 @@ export function BieuMauGuiYeuCau({
             />
             <MucXemLai khoa="Tiêu đề" gia_tri={tieuDe || "—"} />
             <MucXemLai khoa="Mô tả" gia_tri={moTa || "Bạn chưa điền mô tả"} />
+            {chinhSach && (
+              <MucXemLai
+                khoa="Tệp đính kèm"
+                gia_tri={
+                  tep.length > 0
+                    ? tep.map((f) => `${f.name} (${dungLuong(f.size)})`).join("\n")
+                    : "Không có tệp đính kèm"
+                }
+              />
+            )}
           </div>
 
           <p

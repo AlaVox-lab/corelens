@@ -160,6 +160,17 @@ services:
       # tự leo thang mà không phải ngồi chờ.
       DXLAB_SLA_SCAN_ENABLED: ${SLA_SCAN_ENABLED}
       DXLAB_SLA_SCAN_INTERVAL_SECONDS: ${SLA_SCAN_INTERVAL_SECONDS}
+      # Tệp đính kèm (#80) qua S3 API của SeaweedFS, trong mạng của Compose. Có giá trị mặc
+      # định để tệp .env cũ chưa có các biến này vẫn chạy được. Cố ý KHÔNG depends_on
+      # seaweedfs: kho tệp tắt thì dịch vụ vẫn lên, chỉ phần đính kèm báo lỗi.
+      DXLAB_S3_ENDPOINT: http://seaweedfs:8333
+      DXLAB_S3_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY:-dxlab_access_key}
+      DXLAB_S3_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY:-doi_mat_khau_nay_truoc_khi_trien_khai}
+      DXLAB_S3_BUCKET: ${SEAWEEDFS_BUCKET:-dxlab-attachments}
+      DXLAB_ATTACHMENT_ALLOWED_EXTENSIONS: ${ATTACHMENT_ALLOWED_EXTENSIONS:-png,jpg,jpeg,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv}
+      DXLAB_ATTACHMENT_MAX_MB: ${ATTACHMENT_MAX_MB:-10}
+      DXLAB_ATTACHMENT_MAX_FILES: ${ATTACHMENT_MAX_FILES:-5}
+      DXLAB_ATTACHMENT_MAX_FILES_PER_CASE: ${ATTACHMENT_MAX_FILES_PER_CASE:-20}
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:

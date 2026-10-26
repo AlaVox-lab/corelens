@@ -198,7 +198,29 @@ export type HoSoLienQuan = {
   state: TrangThai;
 };
 
+/** Một tệp đính kèm trên hồ sơ (#80). Tải về bằng `/api/tep/<id>`, không có khóa kho. */
+export type TepDinhKem = {
+  id: number;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_by_label: string;
+  /** Chuỗi ISO 8601 theo UTC. */
+  created_at: string;
+};
+
+/** Giới hạn tệp đính kèm. Giao diện hỏi dịch vụ thay vì tự giữ bản sao (#80). */
+export type ChinhSachTep = {
+  allowed_extensions: string[];
+  max_mb: number;
+  max_files: number;
+  max_files_per_case: number;
+};
+
 export type HoSoChiTiet = HoSoTomTat & {
+  /** Tệp đính kèm, và người đang xem đính kèm thêm được lúc này không (#80). */
+  attachments: TepDinhKem[];
+  can_attach: boolean;
   /** Hồ sơ này được tạo lại từ hồ sơ nào (#102). */
   parent: HoSoLienQuan | null;
   /** Các hồ sơ đã tạo lại từ hồ sơ này (#102). */
