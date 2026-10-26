@@ -58,6 +58,13 @@ const KHOA_NGAY = new Intl.DateTimeFormat("en-CA", {
 });
 
 /** `14/09 08:52` */
+/** Dung lượng tệp cho người đọc: 842 B, 1,4 MB. */
+export function dungLuong(byte: number): string {
+  if (byte < 1024) return `${byte} B`;
+  if (byte < 1024 * 1024) return `${(byte / 1024).toFixed(0)} KB`;
+  return `${(byte / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+}
+
 export function ngayGio(iso: string): string {
   const d = new Date(iso);
   const ngay = phan(NGAY_THANG, d, "day");

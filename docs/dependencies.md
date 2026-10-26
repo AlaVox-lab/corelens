@@ -133,8 +133,14 @@ phiên bản, bắt buộc commit.**
 | pydantic-settings | `2.15.0` | MIT | Có | Có | Đọc cấu hình từ biến môi trường |
 | pyjwt[crypto] | `2.14.0` | MIT | Có | Có | Kiểm chữ ký token OIDC **cục bộ**. Keycloak không nằm trên đường đi nóng — xem ADR-0001 |
 | cryptography | `50.0.1` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
+| boto3 | `1.43.118` | Apache-2.0 | Có | Có | Gọi S3 API chuẩn của SeaweedFS để lưu tệp đính kèm (#80) — đúng cách ADR-0002 chốt: dịch vụ độc lập qua giao thức chuẩn, không nhúng thư viện của SeaweedFS. Kiểm giấy phép trên gói đã cài: `Apache-2.0` |
+| python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
 
-Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause).
+Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause). Do `boto3` kéo theo:
+`botocore` (Apache-2.0), `s3transfer` (Apache-2.0), `jmespath` (MIT), `urllib3` (MIT),
+`python-dateutil` (Apache-2.0 hoặc BSD-3-Clause, ghi "Dual License" trong siêu dữ liệu gói) và
+`six` (MIT). Đã kiểm trên gói cài thật trong ảnh chứa của dịch vụ ứng dụng — không gói nào
+nằm ngoài danh sách OSI, và không gói nào copyleft.
 
 Chỉ dùng khi phát triển và kiểm thử: `pytest` `9.1.1` (MIT) và `httpx` `0.28.1`
 (BSD-3-Clause). `httpx` là thứ `TestClient` của FastAPI chạy bên dưới để gọi ứng dụng

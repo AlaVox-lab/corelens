@@ -19,7 +19,6 @@
 // câu cho người đọc.
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
@@ -31,10 +30,10 @@ function chuoiHoacRong(gia_tri: FormDataEntryValue | null): string {
 }
 
 /**
- * Gửi một yêu cầu mới rồi đưa thẳng người dùng tới hồ sơ vừa tạo.
+ * Gửi một yêu cầu mới và trả mã hồ sơ vừa tạo.
  *
- * Chuyển trang ngay thay vì hiện một hộp thoại "đã gửi thành công": người dùng cần
- * thấy mã hồ sơ và trạng thái thật của nó, chứ không cần một lời khen.
+ * Biểu mẫu chuyển thẳng người dùng tới hồ sơ đó thay vì hiện một hộp thoại "đã gửi thành
+ * công": người dùng cần thấy mã hồ sơ và trạng thái thật của nó, chứ không cần một lời khen.
  */
 export async function guiYeuCau(
   _truoc: KetQuaThaoTac,
@@ -61,7 +60,9 @@ export async function guiYeuCau(
   if (!ketQua.ok) return { loi: ketQua.thongDiep };
 
   revalidatePath("/yeu-cau");
-  redirect(`/yeu-cau/${ketQua.duLieu.id}`);
+  // Không chuyển trang ở đây (#80): biểu mẫu còn phải tải tệp đính kèm lên hồ sơ vừa tạo, mà
+  // việc đó chạy ở trình duyệt vì Server Action giới hạn thân yêu cầu. Biểu mẫu tự chuyển trang.
+  return { loi: "", id: ketQua.duLieu.id };
 }
 
 /**

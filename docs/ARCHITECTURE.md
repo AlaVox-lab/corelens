@@ -630,6 +630,37 @@ dịch `now()` không đổi. Hàng đợi biết hồ sơ nào đang chờ tr�
 hay chưa. Dòng thời gian trộn lời nhắn với mốc theo thời gian, hai loại trông khác nhau, và
 số lần đổi trạng thái chỉ đếm mốc.
 
+**Tệp đính kèm** (#80) đi cùng đường với lời nhắn: đính kèm không đổi hồ sơ nên không phải cạnh,
+không vào nhật ký, và chỉ ghi thêm — bảng `case_attachments` chặn UPDATE và DELETE bằng trigger,
+nên hồ sơ hủy vẫn giữ tệp (navigator chốt 26/10). Bảng chỉ giữ siêu dữ liệu; nội dung nhị phân
+nằm trong SeaweedFS qua S3 API bằng `boto3` (ADR-0002), dưới khóa ngẫu nhiên không mang tên tệp.
+Mọi cuộc gọi sang kho đi qua `app/storage/objects.py`; kho tắt chỉ làm phần đính kèm báo lỗi
+(502), hồ sơ vẫn mở được.
+
+Bốn quyết định đáng nhớ:
+
+- **Tệp đi qua dịch vụ ứng dụng, không presigned URL.** Trình duyệt không bao giờ nói chuyện với
+  kho: quyền kiểm ở MỖI lần tải, và người không có quyền nhận 404 — không 403, cùng lý do với
+  hồ sơ ở #44. Đổi lại tệp đi qua backend nên có trần dung lượng. Phía Next.js dùng Route Handler
+  (`/api/tep/...`) thay vì Server Action, vì Server Action giới hạn thân yêu cầu 1 MB mặc định
+- **Ai xem được tệp thì dùng lại luật xem hồ sơ**: người gửi, điều phối viên, nhân viên của
+  phòng đang giữ hồ sơ (`mo_duoc_ho_so`). Không có luật quyền thứ hai để lệch với luật thứ nhất
+- **Ai đính kèm được và lúc nào nằm trong dữ liệu**: cờ `transitions.accepts_attachments` bật cho
+  cạnh Sửa nội dung và Bổ sung thông tin. Người gửi đính kèm được khi họ đang có một cạnh mang
+  cờ — dịch vụ trả `can_attach` suy từ `allowed_transitions`, không so tên trạng thái nào. Tới
+  phòng ban thì không còn cạnh nào mang cờ và việc đính kèm khóa lại, như Sửa nội dung
+- **Giới hạn là cấu hình triển khai**: đuôi cho phép, MB mỗi tệp, số tệp mỗi lần và mỗi hồ sơ nằm
+  trong `.env`. Giao diện hỏi `GET /attachments/policy` thay vì giữ bản sao, nên hai lớp chặn không
+  lệch nhau. Dịch vụ kiểm ba thứ: đuôi trong danh sách, dung lượng, và nội dung khớp đuôi theo chữ
+  ký đầu tệp — đổi đuôi một tệp chạy được thành `.png` không qua được. Loại nội dung suy từ đuôi,
+  không tin tiêu đề trình duyệt; tải về luôn là `attachment` kèm `nosniff`
+
+Một lần tải lên hoặc nhận cả lô hoặc từ chối cả lô: kiểm hết trước khi ghi gì xuống kho. Hồ sơ
+chưa tồn tại lúc người gửi chọn tệp ở bước 2 của biểu mẫu, nên biểu mẫu tạo hồ sơ trước rồi tải
+tệp lên chính hồ sơ đó; tải hỏng thì hồ sơ vẫn đã gửi và trang hồ sơ nhắc thêm tệp lại, để người
+gửi không bấm gửi lần nữa. Không quét vi-rút — nằm ngoài phạm vi, bù bằng danh sách đuôi chặt và
+kiểm chữ ký.
+
 ---
 
 ## 7. Khuôn mẫu: ràng buộc Poka-yoke

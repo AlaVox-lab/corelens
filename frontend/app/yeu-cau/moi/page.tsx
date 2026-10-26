@@ -9,7 +9,7 @@
 
 import { BieuMauGuiYeuCau } from "@/app/yeu-cau/moi/bieu-mau";
 import { goiDichVu } from "@/lib/api";
-import type { HoSoChiTiet, LoaiYeuCau } from "@/lib/kieu";
+import type { ChinhSachTep, HoSoChiTiet, LoaiYeuCau } from "@/lib/kieu";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,8 @@ export default async function GuiYeuCau({
   searchParams: Promise<{ tu?: string }>;
 }) {
   const cacLoai = await goiDichVu<LoaiYeuCau[]>("/request-types");
+  // Giới hạn tệp đính kèm (#80). Không nạp được thì biểu mẫu vẫn gửi được, chỉ không có ô tệp
+  const chinhSachTep = await goiDichVu<ChinhSachTep>("/attachments/policy");
 
   // Tạo lại từ một hồ sơ cũ của chính mình (#102): `?tu=<mã hồ sơ>`. Dịch vụ trả 404 cho hồ
   // sơ của người khác, nên mã lạ chỉ làm biểu mẫu trống như thường. Cái dịch vụ kiểm lại lúc
@@ -75,6 +77,7 @@ export default async function GuiYeuCau({
         </div>
       ) : (
         <BieuMauGuiYeuCau
+          chinhSach={chinhSachTep}
           cacLoai={cacLoai}
           goc={
             goc && goc.state.is_terminal

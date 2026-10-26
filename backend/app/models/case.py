@@ -251,6 +251,40 @@ class CaseMessage(Base):
         return f"<CaseMessage {self.case_id} {self.kind} by {self.author}>"
 
 
+class CaseAttachment(Base):
+    """Một tệp đính kèm trên hồ sơ (#80).
+
+    Dòng này chỉ giữ siêu dữ liệu — tên, loại, kích thước, ai đính kèm — còn nội dung nhị phân
+    nằm trong SeaweedFS dưới khóa `storage_key` (ADR-0002). Khóa là chuỗi ngẫu nhiên, không
+    mang tên tệp: tên do người dùng đặt không bao giờ đi vào đường dẫn của kho.
+
+    Đính kèm không đổi hồ sơ nên không đi qua `perform_transition` và không vào nhật ký sự
+    kiện (ADR-0005). **Chỉ ghi thêm**, như `case_messages`: trigger ở tầng cơ sở dữ liệu chặn
+    UPDATE và DELETE — hồ sơ hủy vẫn giữ tệp để truy vết, giữ lại là quyết định ngày 26/10.
+    """
+
+    __tablename__ = "case_attachments"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    case_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("requests.id"))
+
+    # Tên người dùng đặt, đã làm sạch. Chỉ để hiển thị và đặt tên tệp lúc tải về
+    filename: Mapped[str] = mapped_column(Text)
+    content_type: Mapped[str] = mapped_column(Text)
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    storage_key: Mapped[str] = mapped_column(Text, unique=True)
+
+    # Định danh `sub` và tên tại thời điểm đính kèm — cùng lý do với `author_label`
+    uploaded_by: Mapped[str] = mapped_column(Text)
+    uploaded_by_label: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
+
+    __table_args__ = (Index("case_attachments_tra_theo_ho_so", "case_id", "created_at"),)
+
+    def __repr__(self) -> str:
+        return f"<CaseAttachment {self.case_id} {self.filename} ({self.size_bytes} B)>"
+
+
 class CaseMessageRead(Base):
     """Một người đã đọc lời nhắn của một hồ sơ tới đâu — cho hộp thư chung (#155).
 

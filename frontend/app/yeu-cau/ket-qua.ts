@@ -16,6 +16,8 @@
 export type KetQuaThaoTac = {
   /** Thông điệp lỗi để hiện cạnh biểu mẫu. Chuỗi rỗng nghĩa là chưa có lỗi nào. */
   loi: string;
+  /** Mã hồ sơ vừa tạo (#80): biểu mẫu gửi tải tệp lên hồ sơ đó rồi mới chuyển trang. */
+  id?: number;
 };
 
 export const CHUA_CO_LOI: KetQuaThaoTac = { loi: "" };

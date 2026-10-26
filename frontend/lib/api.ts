@@ -204,6 +204,60 @@ export async function docDichVu<T>(duongDan: string): Promise<KetQua<T>> {
 }
 
 /**
+ * Lấy nguyên phản hồi nhị phân của một điểm cuối — tải tệp đính kèm (#80). Trả `null` khi
+ * chưa đăng nhập hoặc dịch vụ không tới được; phản hồi lỗi (404…) trả nguyên để phía gọi
+ * chuyển tiếp đúng mã.
+ */
+export async function layPhanHoiDichVu(duongDan: string): Promise<Response | null> {
+  const phien = await layPhien();
+  if (!phien) return null;
+
+  const dungPhien = await lamMoiNeuSapHet(phien);
+  try {
+    return await fetch(`${diaChiDichVu}${duongDan}`, {
+      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gửi một biểu mẫu nhiều phần (tải tệp lên, #80). Không đặt `Content-Type`: để `fetch` tự
+ * đặt kèm ranh giới giữa các phần.
+ */
+export async function guiBieuMauDichVu<T>(
+  duongDan: string,
+  bieuMau: FormData,
+): Promise<KetQua<T>> {
+  const phien = await layPhien();
+  if (!phien) return CHUA_DANG_NHAP;
+
+  const dungPhien = await lamMoiNeuSapHet(phien);
+
+  let phanHoi: Response;
+  try {
+    phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      body: bieuMau,
+      cache: "no-store",
+    });
+  } catch {
+    return {
+      ok: false,
+      ma: "khong-ket-noi-duoc",
+      thongDiep: "Không kết nối được tới dịch vụ ứng dụng. Thử lại sau ít phút.",
+    };
+  }
+
+  if (phanHoi.status === 401) return CHUA_DANG_NHAP;
+  if (!phanHoi.ok) return { ok: false, ...(await docLoi(phanHoi)) };
+  return { ok: true, duLieu: (await phanHoi.json()) as T };
+}
+
+/**
  * Gọi một điểm cuối ghi dữ liệu.
  *
  * Khác `goiDichVu` ở chỗ trả về cả lỗi thay vì nuốt thành `null`: khi người dùng bấm

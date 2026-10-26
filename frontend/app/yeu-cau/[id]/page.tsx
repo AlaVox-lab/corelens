@@ -32,6 +32,7 @@ import { ThaoTacHoSo } from "@/app/yeu-cau/[id]/thao-tac-ho-so";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
 import { GhiChuMoLai, KhoiHoSoLienQuan, MoiTaoHoSoMoi } from "@/components/ho-so-lien-quan";
+import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
 import { CuonTinMoi } from "@/components/cuon-tin-moi";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
@@ -39,7 +40,7 @@ import { NutThanhDau } from "@/components/khung-ung-dung";
 import { MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
-import type { HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
+import type { ChinhSachTep, HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
 import { daTroiQua, docDongHo, docTuDong } from "@/lib/sla";
 import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
@@ -111,10 +112,13 @@ function O({
 
 export default async function ChiTietHoSo({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tep?: string }>;
 }) {
   const { id } = await params;
+  const { tep: tepLoi } = await searchParams;
   const ket_qua = await docDichVu<HoSoChiTiet>(`/requests/${id}`);
 
   // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
@@ -125,6 +129,10 @@ export default async function ChiTietHoSo({
   const ho_so = ket_qua.duLieu;
 
   const danhMuc = await danhMucCan(ho_so);
+  // Giới hạn tệp chỉ cần khi người gửi thêm được tệp lúc này (#80)
+  const chinhSachTep = ho_so.can_attach
+    ? await goiDichVu<ChinhSachTep>("/attachments/policy")
+    : null;
   const bayGio = new Date();
   const dongHo = docDongHo(ho_so, "nguoi-gui");
   // Hồ sơ đang chờ người gửi mà có hạn chờ — Hoàn tất tự đóng sau 3 ngày làm việc (#144)
@@ -330,6 +338,34 @@ export default async function ChiTietHoSo({
           />
           <GhiChuMoLai hoSo={ho_so} />
         </div>
+      </div>
+      {/* Biểu mẫu gửi đã tạo hồ sơ nhưng tải tệp lên hỏng (#80): nói rõ hồ sơ ĐÃ gửi, để
+          người gửi không bấm gửi lần nữa và sinh hồ sơ thứ hai */}
+      {tepLoi === "loi" && (
+        <p
+          role="alert"
+          style={{
+            margin: "16px 0 0",
+            padding: "10px 12px",
+            borderRadius: "9px",
+            background: "var(--f-a-bg)",
+            border: "1px solid var(--f-a-line)",
+            color: "var(--f-a-ink)",
+            fontSize: "13px",
+            lineHeight: 1.55,
+          }}
+        >
+          Hồ sơ đã được gửi, nhưng tệp đính kèm chưa tải lên được. Thêm lại tệp ở khối “Tệp đính
+          kèm” bên dưới — đừng gửi hồ sơ mới.
+        </p>
+      )}
+      <div style={{ marginTop: "16px" }}>
+        <KhoiTepDinhKem
+          maHoSo={ho_so.id}
+          tep={ho_so.attachments}
+          choPhep={ho_so.can_attach}
+          chinhSach={chinhSachTep}
+        />
       </div>
       {/* Hết đường mở lại thì mời tạo hồ sơ mới; hồ sơ nối nhau thì liệt kê (#102) */}
       <MoiTaoHoSoMoi hoSo={ho_so} />

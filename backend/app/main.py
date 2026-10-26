@@ -19,6 +19,7 @@ from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
 from app.workflow.assignment import router as router_giao_viec
+from app.workflow.attachment_routes import router as router_tep
 from app.workflow.context import Actor
 from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
@@ -102,6 +103,7 @@ app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
 app.include_router(router_phong_ban)
 app.include_router(router_hop_thu)
+app.include_router(router_tep)
 
 
 @app.get("/health", tags=["Vận hành"])

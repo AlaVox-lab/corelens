@@ -275,6 +275,14 @@ ban không xử lý được khi thiếu thông tin. Hồ sơ tự đóng vì ch
   nhận" đọc như một yêu cầu đã xử lý xong. Lý do bắt buộc, mã hoạt động `decline-unrouted`; tầng
   `D` đếm riêng khỏi hồ sơ đã xử lý
 
+**Tệp đính kèm** (#80, navigator chốt 26/10). Không phải cạnh — đính kèm không đổi hồ sơ, như
+lời nhắn (ADR-0005). Người gửi đính kèm được khi họ đang có một cạnh mang cờ
+`transitions.accepts_attachments`: *Sửa nội dung* ở *Đã gửi* và *Đã phân loại*, và ba cạnh
+*Bổ sung thông tin*. Tức là lúc vừa gửi, lúc sửa nội dung, và lúc trả lời câu hỏi của người nhận;
+tới phòng ban thì khóa. Ai mở được hồ sơ thì xem và tải được tệp, người khác nhận 404. Hồ sơ hủy
+hay đóng vẫn giữ tệp. Đuôi cho phép, dung lượng và số tệp là cấu hình trong `.env`, không phải
+dữ liệu của bộ quy tắc.
+
 **Cạnh làm lại** (#153, navigator chốt ngày 02/10). Ba cạnh mang cờ `is_rework` trong dữ
 liệu: *Từ chối vì sai chuyên môn*, *Mở lại, chưa đạt*, và *Sửa nội dung* từ *Đã phân loại*
 về *Đã gửi*. Dòng thời gian đếm "quay lui" là số lần hồ sơ đi qua các cạnh này — hồ sơ bị
