@@ -45,6 +45,11 @@ export type CanhDiDuoc = {
    * lại trước khi gửi, kèm ô lý do tùy chọn (#98).
    */
   to_state_is_terminal: boolean;
+  /**
+   * Trạng thái kết thúc đích còn cạnh mở lại: số giờ làm việc kể từ lúc vào đó mà người gửi
+   * còn mở lại được (#102). `null` là kết thúc hẳn — chỉ còn cách tạo hồ sơ mới.
+   */
+  to_state_reopen_hours: number | null;
   activity_code: string;
   activity_label: string;
   requires_note: boolean;
@@ -185,7 +190,22 @@ export type LoaiLoiNhan = NhanCoMa & {
   retry_at: string | null;
 };
 
+/** Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id`: bản gốc hay bản tạo lại (#102). */
+export type HoSoLienQuan = {
+  id: number;
+  code: string;
+  title: string;
+  state: TrangThai;
+};
+
 export type HoSoChiTiet = HoSoTomTat & {
+  /** Hồ sơ này được tạo lại từ hồ sơ nào (#102). */
+  parent: HoSoLienQuan | null;
+  /** Các hồ sơ đã tạo lại từ hồ sơ này (#102). */
+  children: HoSoLienQuan[];
+  /** Đã mở lại mấy lần, và loại yêu cầu cho mở lại tối đa mấy lần (#102). */
+  reopen_count: number;
+  reopen_max_count: number | null;
   description: string | null;
   requester_id: string;
   assignee_id: string | null;

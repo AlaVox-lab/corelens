@@ -88,7 +88,13 @@ INSERT INTO states (rule_set_id, code, label, description, is_initial, is_termin
      'Quá hạn SLA, đẩy lên cấp trên trong cùng phòng ban',            FALSE, FALSE, TRUE,  9),
 
     (1, 'cancelled',              'Đã hủy',
-     'Người tạo rút yêu cầu',                                         FALSE, TRUE,  FALSE, 10);
+     'Người tạo rút yêu cầu',                                         FALSE, TRUE,  FALSE, 10),
+
+    -- Giảng viên (08/10, #102): không gọi việc điều phối viên đóng hồ sơ không phòng nào nhận là
+    -- "đóng" như một yêu cầu đã xử lý xong. Trạng thái kết thúc riêng để tầng D tách khỏi số hồ sơ
+    -- đã xử lý; không có cạnh mở lại — người gửi tạo hồ sơ mới liên kết hồ sơ này.
+    (1, 'rejected-unrouted',      'Không tiếp nhận',
+     'Không phòng nào tiếp nhận, điều phối viên đã ghi lý do',        FALSE, TRUE,  FALSE, 11);
 
 
 -- ---------------------------------------------------------------------------
@@ -110,9 +116,9 @@ INSERT INTO states (rule_set_id, code, label, description, is_initial, is_termin
 -- Cạnh tự trỏ (#127, ADR-0005) là thao tác đổi hồ sơ mà giữ nguyên trạng thái: vẫn đi
 -- qua cửa chuyển trạng thái để có dòng nhật ký. Mỗi trạng thái tối đa một cạnh tự trỏ.
 --
--- Hai cạnh đánh dấu [CHỜ XÁC NHẬN] là suy luận của nhóm, chưa được giảng viên
--- duyệt. Xem docs/process-flow.md mục 8. Nếu thầy bác thì xóa đúng một dòng ở
--- đây và một dòng ma trận phân quyền tương ứng — không đụng tới mã nguồn.
+-- Hai cạnh nhóm tự thêm — không phòng nào nhận, và mở lại khi chưa đạt — giảng viên đã đồng
+-- ý ngày 08/10 với điều kiện đổi tên trạng thái và thêm giới hạn (#102). Xem
+-- docs/process-flow.md mục 8.
 
 INSERT INTO transitions
     (rule_set_id, from_state, to_state, activity_code, activity_label, is_system, requires_note, note_label, display_order)
@@ -127,8 +133,10 @@ VALUES
     (1, 'classified',          'awaiting-acceptance',    'route-to-department', 'Chuyển về phòng ban',                 FALSE, FALSE, NULL,                     5),
     (1, 'classified',          'submitted',              'edit-content',        'Sửa nội dung',                        FALSE, FALSE, NULL,                     6),
     (1, 'classified',          'cancelled',              'cancel',              'Hủy yêu cầu',                         FALSE, FALSE, NULL,                     7),
-    -- [CHỜ XÁC NHẬN] lối thoát khi không phòng nào nhận, tránh luẩn quẩn vô hạn
-    (1, 'classified',          'closed',                 'close-unrouted',      'Đóng hồ sơ, không phòng nào nhận',    FALSE, TRUE,  NULL,                     8),
+    -- Lối thoát khi không phòng nào nhận, tránh luẩn quẩn vô hạn (#102, giảng viên đồng ý
+    -- 08/10): đích là Không tiếp nhận chứ không phải Đã đóng, lý do bắt buộc. Người gửi tạo lại
+    -- hồ sơ với thông tin rõ hơn — hồ sơ mới liên kết hồ sơ này bằng parent_request_id.
+    (1, 'classified',          'rejected-unrouted',      'decline-unrouted',    'Không tiếp nhận, không phòng nào nhận', FALSE, TRUE, 'Lý do không tiếp nhận',   8),
 
     (1, 'awaiting-acceptance', 'in-progress',            'accept',              'Xác duyệt và giao xử lý',             FALSE, FALSE, NULL,                     9),
     (1, 'awaiting-acceptance', 'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 10),
@@ -165,14 +173,15 @@ VALUES
     -- Gia hạn xử lý (#101, giảng viên chốt 08/10): cạnh tự trỏ (ADR-0005), lý do bắt buộc,
     -- giá trị cũ và mới vào nhật ký. Điều phối viên gia hạn lần đầu trước khi phòng nhận
     -- việc; lần sau chỉ trưởng phòng, khi hồ sơ đã leo thang — Đang xử lý đã có cạnh tự
-    -- trỏ "Nhận việc về mình" (navigator chốt 15/10). Đã đóng không có cạnh nào: hết hồ sơ
-    -- là hết gia hạn. Giới hạn số giờ và số lần khai ở loại yêu cầu.
+    -- trỏ "Nhận việc về mình" (navigator chốt 15/10). Đã đóng chỉ có cạnh mở lại: hết hồ sơ là
+    -- hết gia hạn. Giới hạn số giờ và số lần khai ở loại yêu cầu.
     (1, 'classified',          'classified',             'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        29),
     (1, 'awaiting-acceptance', 'awaiting-acceptance',    'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        30),
     (1, 'escalated',           'escalated',              'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        31),
 
     (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
-    -- [CHỜ XÁC NHẬN] mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận
+    -- Mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận. Mỗi hồ sơ mở lại tối đa
+    -- request_types.reopen_max_count lần, mở lại là mở chu kỳ xử lý mới (#102).
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24),
     -- Người gửi không xác nhận thì hồ sơ Hoàn tất tự đóng (#144, giảng viên chốt 08/10):
     -- Hoàn tất đã là xử lý xong nghiệp vụ, Đã đóng mới hết chu kỳ hồ sơ. Cùng cặp trạng thái
@@ -199,6 +208,24 @@ UPDATE transitions
 UPDATE transitions
    SET auto_after_hours = 40, warn_before_hours = 24
  WHERE rule_set_id = 1 AND activity_code = 'auto-close-no-info';
+
+-- Mở lại sau khi đã đóng (#102, giảng viên chốt 08/10): trong 7 ngày làm việc kể từ lúc hồ sơ vào
+-- Đã đóng — 56 giờ làm việc với lịch mẫu 8 giờ một ngày, đổi lịch thì xem lại con số này. Đây là
+-- cạnh DUY NHẤT rời khỏi một trạng thái kết thúc, nên khai cột from_is_terminal và cửa sổ thời gian
+-- mà lược đồ đòi. Chỉ hồ sơ đã từng làm xong mới mở lại được (ràng buộc reopen-from-rework): hồ sơ tự
+-- đóng vì chưa bổ sung thông tin chưa có gì để "chưa đạt". Quá cửa sổ hay hết lượt thì người gửi tạo
+-- hồ sơ mới liên kết hồ sơ cũ.
+INSERT INTO transitions
+    (rule_set_id, from_state, to_state, activity_code, activity_label, is_system, requires_note,
+     note_label, display_order, is_rework, from_is_terminal, reopen_window_hours, restarts_sla)
+VALUES
+    (1, 'closed', 'in-progress', 'reopen-after-close', 'Mở lại sau khi đóng', FALSE, TRUE,
+     NULL, 32, TRUE, TRUE, 56, TRUE);
+
+-- Mở lại từ Hoàn tất cũng là chu kỳ xử lý mới: đồng hồ SLA đếm lại, gia hạn cũ không kế thừa
+UPDATE transitions
+   SET restarts_sla = TRUE
+ WHERE rule_set_id = 1 AND activity_code = 'reopen';
 
 -- Cạnh làm lại (#153): hồ sơ bị đẩy ngược để làm lại. Dòng thời gian đếm "quay lui" theo
 -- đúng các cạnh này — hỏi đáp bổ sung thông tin, phân công lại sau leo thang không tính.
@@ -234,7 +261,7 @@ FROM (VALUES
     ('classified',             'awaiting-acceptance',    'classifier'),
     ('classified',             'submitted',              'requester'),
     ('classified',             'cancelled',              'requester'),
-    ('classified',             'closed',                 'classifier'),
+    ('classified',             'rejected-unrouted',      'classifier'),
 
     ('awaiting-acceptance',    'in-progress',            'approver'),
     ('awaiting-acceptance',    'awaiting-info',          'approver'),
@@ -261,7 +288,8 @@ FROM (VALUES
     ('awaiting-info',          'cancelled',              'requester'),
 
     ('completed',              'closed',                 'requester'),
-    ('completed',              'in-progress',            'requester')
+    ('completed',              'in-progress',            'requester'),
+    ('closed',                 'in-progress',            'requester')
 ) AS v (from_state, to_state, role_code)
 JOIN transitions t
   ON t.rule_set_id = 1
@@ -344,7 +372,19 @@ INSERT INTO guards (code, label, description) VALUES
 
     ('extension-limit',
      'Chưa hết lượt gia hạn',
-     'Cạnh này chỉ đi được khi hồ sơ gia hạn chưa tới request_types.sla_extension_max_count lần (#101).');
+     'Cạnh này chỉ đi được khi hồ sơ gia hạn chưa tới request_types.sla_extension_max_count lần (#101).'),
+
+    ('reopen-limit',
+     'Chưa hết lượt mở lại',
+     'Cạnh này chỉ đi được khi hồ sơ mở lại chưa tới request_types.reopen_max_count lần (#102). Gắn vào cả hai cạnh mở lại — từ Hoàn tất và từ Đã đóng — nên số lần tính chung. Đi qua cạnh thì đếm thêm một lần và đưa gia hạn về 0: chu kỳ xử lý mới có hạn mới.'),
+
+    ('reopen-window',
+     'Còn trong cửa sổ mở lại',
+     'Cạnh này chỉ đi được khi hồ sơ vào trạng thái kết thúc chưa quá transitions.reopen_window_hours giờ làm việc (#102). Quá cửa sổ thì hồ sơ kết thúc hẳn.'),
+
+    ('reopen-from-rework',
+     'Chỉ mở lại hồ sơ đã từng làm xong',
+     'Cạnh này chỉ đi được khi trạng thái hồ sơ đứng ngay trước khi kết thúc có một cạnh làm lại về cùng đích (#102): hồ sơ Hoàn tất rồi đóng thì mở lại được, hồ sơ tự đóng vì chưa bổ sung thông tin thì không.');
 
 INSERT INTO transition_guards (transition_id, guard_code)
 SELECT t.id, v.guard_code
@@ -361,6 +401,14 @@ FROM (VALUES
     ('classified',          'submitted',              'requester-owns-case'),
     ('completed',           'closed',                 'requester-owns-case'),
     ('completed',           'in-progress',            'requester-owns-case'),
+    ('closed',              'in-progress',            'requester-owns-case'),
+
+    -- Mở lại có giới hạn (#102): tối đa reopen_max_count lần cho cả hai cạnh; từ Đã đóng thì
+    -- thêm cửa sổ 7 ngày làm việc và chỉ hồ sơ từng làm xong
+    ('completed',           'in-progress',            'reopen-limit'),
+    ('closed',              'in-progress',            'reopen-limit'),
+    ('closed',              'in-progress',            'reopen-window'),
+    ('closed',              'in-progress',            'reopen-from-rework'),
 
     -- Bổ sung thông tin xong thì về đúng chỗ đã hỏi (#79)
     ('awaiting-info',       'submitted',              'return-to-previous-state'),
@@ -377,7 +425,7 @@ FROM (VALUES
     ('submitted',           'classified',             'actor-not-requester'),
     ('submitted',           'awaiting-info',          'actor-not-requester'),
     ('classified',          'awaiting-acceptance',    'actor-not-requester'),
-    ('classified',          'closed',                 'actor-not-requester'),
+    ('classified',          'rejected-unrouted',      'actor-not-requester'),
     ('rejected-by-department', 'classified',          'actor-not-requester'),
     ('awaiting-acceptance', 'classified',             'actor-not-requester'),
 

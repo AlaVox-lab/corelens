@@ -37,13 +37,33 @@ const BUOC = [
 /** Giá trị đại diện cho “chưa chọn loại nào”. Gửi lên thành `null`. */
 const CHUA_RO = "";
 
-export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
+/** Hồ sơ cũ mà biểu mẫu này tạo lại (#102): nội dung chép sẵn để người gửi sửa. */
+export type HoSoGoc = {
+  id: number;
+  code: string;
+  title: string;
+  description: string;
+  request_type_code: string | null;
+};
+
+export function BieuMauGuiYeuCau({
+  cacLoai,
+  goc,
+}: {
+  cacLoai: LoaiYeuCau[];
+  goc: HoSoGoc | null;
+}) {
   const [ketQua, guiDi, dangGui] = useActionState(guiYeuCau, CHUA_CO_LOI);
 
   const [buoc, datBuoc] = useState(1);
-  const [loai, datLoai] = useState<string | null>(null);
-  const [tieuDe, datTieuDe] = useState("");
-  const [moTa, datMoTa] = useState("");
+  // Loại của hồ sơ cũ có thể đã ngừng dùng — khi đó để trống cho người gửi chọn lại
+  const [loai, datLoai] = useState<string | null>(
+    goc?.request_type_code && cacLoai.some((l) => l.code === goc.request_type_code)
+      ? goc.request_type_code
+      : null,
+  );
+  const [tieuDe, datTieuDe] = useState(goc?.title ?? "");
+  const [moTa, datMoTa] = useState(goc?.description ?? "");
 
   const daChonLoai = loai !== null;
   const loaiDaChon = cacLoai.find((l) => l.code === loai);
@@ -53,6 +73,23 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
 
   return (
     <form action={guiDi}>
+      {goc && (
+        <p
+          role="note"
+          style={{
+            margin: "18px 0 0",
+            padding: "10px 12px",
+            borderRadius: "9px",
+            background: "var(--surface-2)",
+            border: "1px solid var(--line)",
+            fontSize: "13.5px",
+            lineHeight: 1.55,
+          }}
+        >
+          Tạo lại từ hồ sơ <strong>{goc.code}</strong>. Nội dung đã chép sẵn, hãy sửa cho rõ hơn
+          trước khi gửi; hai hồ sơ sẽ nối với nhau.
+        </p>
+      )}
       {/* Dải bước */}
       <div
         style={{
@@ -366,6 +403,7 @@ export function BieuMauGuiYeuCau({ cacLoai }: { cacLoai: LoaiYeuCau[] }) {
       {/* Loại yêu cầu đi kèm biểu mẫu dưới dạng trường ẩn, vì nó do các thẻ bấm ở
           bước 1 quyết định chứ không phải một ô nhập. */}
       <input type="hidden" name="request_type_code" value={loai ?? CHUA_RO} />
+      {goc && <input type="hidden" name="parent_request_id" value={goc.id} />}
 
       {ketQua.loi && (
         <p

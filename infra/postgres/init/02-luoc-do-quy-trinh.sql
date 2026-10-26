@@ -94,7 +94,7 @@ CREATE TABLE states (
 COMMENT ON COLUMN states.is_initial IS
     'Điểm vào của luồng. Có cột này thì mã nguồn không phải viết if state = ''submitted''.';
 COMMENT ON COLUMN states.is_terminal IS
-    'Trạng thái đóng. Không cạnh nào được phép rời khỏi đây — ràng buộc ở bảng transitions.';
+    'Trạng thái kết thúc chu kỳ hồ sơ. Cạnh rời khỏi đây chỉ được là cạnh MỞ LẠI có cửa sổ thời gian (transitions.reopen_window_hours, #102) — ràng buộc ở bảng transitions.';
 COMMENT ON COLUMN states.sla_running IS
     'Đồng hồ SLA có chạy khi hồ sơ nằm ở trạng thái này không. Một cột này trả lời cả hai câu: đồng hồ bắt đầu từ đâu, và dừng ở đâu. Nhờ nó mà mã nguồn không phải viết if state = ''in-progress''.';
 
@@ -132,10 +132,21 @@ CREATE TABLE transitions (
     -- thông tin hay phân công lại sau leo thang là đi vòng rồi về, không phải làm lại.
     is_rework       BOOLEAN   NOT NULL DEFAULT FALSE,
 
-    -- Cột kỹ thuật, luôn bằng FALSE. Nó tồn tại chỉ để khóa ngoại ngay dưới
-    -- chặn được việc tạo cạnh xuất phát từ một trạng thái kết thúc. Dữ liệu
-    -- khởi tạo không bao giờ cần nhắc tới cột này — giá trị mặc định lo hết.
+    -- Trạng thái nguồn có phải trạng thái kết thúc không. Khóa ngoại ngay dưới buộc cột này
+    -- khớp với `states.is_terminal` của trạng thái nguồn. Từ #102 cạnh rời khỏi trạng thái kết
+    -- thúc được phép, nhưng chỉ cạnh mở lại có cửa sổ thời gian — xem CHECK bên dưới. Dữ liệu
+    -- khởi tạo chỉ nhắc tới cột này ở cạnh mở lại sau khi đóng.
     from_is_terminal BOOLEAN  NOT NULL DEFAULT FALSE,
+
+    -- Cạnh mở lại sau khi hồ sơ đã kết thúc (#102, giảng viên chốt 08/10): đi được khi hồ sơ
+    -- nằm ở trạng thái kết thúc chưa quá chừng này GIỜ LÀM VIỆC kể từ lúc vào đó (7 ngày làm
+    -- việc = 56 giờ với lịch mẫu 8 giờ một ngày). NULL là cạnh bình thường. Quá cửa sổ thì
+    -- cạnh không hiện nữa — hồ sơ kết thúc hẳn, người gửi tạo hồ sơ mới.
+    reopen_window_hours SMALLINT,
+
+    -- Đi qua cạnh này là mở chu kỳ xử lý mới (#102): đồng hồ SLA đếm lại từ 0, không kế thừa
+    -- hạn đã hết của chu kỳ cũ. Bật cho hai cạnh mở lại. Thời gian dừng (chờ bổ sung) vẫn giữ.
+    restarts_sla      BOOLEAN   NOT NULL DEFAULT FALSE,
 
     -- Cạnh hệ thống tự đi khi hồ sơ nằm ở trạng thái nguồn đủ chừng này GIỜ LÀM VIỆC
     -- (#142): hồ sơ nằm im vì người phải bấm không bấm thì hệ thống đi thay, có ghi nhật
@@ -145,8 +156,12 @@ CREATE TABLE transitions (
     -- không báo trước.
     warn_before_hours SMALLINT,
 
-    CONSTRAINT transitions_khong_roi_trang_thai_ket_thuc
-        CHECK (from_is_terminal = FALSE),
+    -- Rời khỏi trạng thái kết thúc chỉ được bằng cạnh mở lại có cửa sổ thời gian của người
+    CONSTRAINT transitions_roi_ket_thuc_phai_co_cua_so
+        CHECK (from_is_terminal = FALSE OR reopen_window_hours IS NOT NULL),
+    CONSTRAINT transitions_cua_so_mo_lai_hop_le
+        CHECK (reopen_window_hours IS NULL
+               OR (from_is_terminal AND NOT is_system AND reopen_window_hours > 0)),
 
     CONSTRAINT transitions_tu_di_chi_canh_he_thong
         CHECK (auto_after_hours IS NULL OR (is_system AND auto_after_hours > 0)),
@@ -178,6 +193,10 @@ COMMENT ON COLUMN transitions.activity_code IS
     'Tên hoạt động đi vào trường activity của nhật ký sự kiện. Nhiều cạnh được phép dùng chung một mã khi chúng là cùng một hành vi nghiệp vụ — ví dụ hủy yêu cầu từ bốn trạng thái khác nhau.';
 COMMENT ON COLUMN transitions.is_system IS
     'TRUE nghĩa là hệ thống tự đi, không vai trò người nào đi được. Hiện chỉ dùng cho cạnh leo thang khi quá hạn SLA.';
+COMMENT ON COLUMN transitions.reopen_window_hours IS
+    'Cạnh mở lại sau khi hồ sơ kết thúc (#102): đi được khi hồ sơ mới vào trạng thái kết thúc chưa quá chừng này giờ làm việc. NULL là cạnh thường.';
+COMMENT ON COLUMN transitions.restarts_sla IS
+    'Đi qua cạnh này là mở chu kỳ xử lý mới (#102): đồng hồ SLA đếm lại từ 0.';
 COMMENT ON COLUMN transitions.requires_note IS
     'TRUE thì bắt buộc nhập lý do. Ví dụ: từ chối vì sai chuyên môn, đóng hồ sơ khi không phòng nào nhận, mở lại vì chưa đạt.';
 COMMENT ON COLUMN transitions.note_label IS
@@ -265,6 +284,7 @@ CREATE TABLE request_types (
     sla_warn_percent SMALLINT NOT NULL DEFAULT 75,
     sla_extension_max_percent SMALLINT NOT NULL DEFAULT 50,
     sla_extension_max_count   SMALLINT NOT NULL DEFAULT 2,
+    reopen_max_count          SMALLINT NOT NULL DEFAULT 2,
     is_active      BOOLEAN   NOT NULL DEFAULT TRUE,
     display_order  SMALLINT  NOT NULL DEFAULT 0,
 
@@ -277,7 +297,9 @@ CREATE TABLE request_types (
     CONSTRAINT request_types_nguong_sap_het_hop_le
         CHECK (sla_warn_percent > 0 AND sla_warn_percent < 100),
     CONSTRAINT request_types_gia_han_hop_le
-        CHECK (sla_extension_max_percent > 0 AND sla_extension_max_count >= 0)
+        CHECK (sla_extension_max_percent > 0 AND sla_extension_max_count >= 0),
+    CONSTRAINT request_types_mo_lai_hop_le
+        CHECK (reopen_max_count >= 0)
 );
 
 COMMENT ON COLUMN request_types.sla_hours IS
@@ -294,6 +316,9 @@ COMMENT ON COLUMN request_types.sla_extension_max_percent IS
 
 COMMENT ON COLUMN request_types.sla_extension_max_count IS
     'Gia hạn (#101): tổng số lần gia hạn tối đa của một hồ sơ. Ai gia hạn lần nào là chuyện của ràng buộc gắn trên từng cạnh gia hạn.';
+
+COMMENT ON COLUMN request_types.reopen_max_count IS
+    'Mở lại (#102, giảng viên chốt 08/10): tổng số lần người gửi mở lại một hồ sơ, tính cả mở lại từ Hoàn tất lẫn từ Đã đóng. Quá số này thì phải tạo hồ sơ mới liên kết hồ sơ cũ (requests.parent_request_id). 0 là không cho mở lại.';
 
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách. Nhiều-nhiều có đánh dấu mặc
 -- định: một loại yêu cầu có thể do vài phòng đảm nhận, nhưng chỉ một phòng được

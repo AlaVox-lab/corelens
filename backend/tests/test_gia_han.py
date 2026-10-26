@@ -159,15 +159,17 @@ def test_ba_canh_gia_han_dung_vai_tro_va_rang_buoc(session, rule_set):
 def test_khong_gia_han_duoc_khi_dang_xu_ly_hay_da_dong(session, rule_set, phong_ban):
     ho_so = _dang_xu_ly(session, phong_ban)
     assert not _co_nut_gia_han(session, ho_so, _truong_phong(phong_ban))
-    # Trạng thái kết thúc không có cạnh nào đi ra — hết hồ sơ là hết gia hạn
+    # Trạng thái kết thúc chỉ có cạnh mở lại đi ra (#102) — hết hồ sơ là hết gia hạn
     ket_thuc = session.scalars(
         select(State.code).where(State.rule_set_id == rule_set.id, State.is_terminal)
     ).all()
-    assert not session.scalars(
+    ra = session.scalars(
         select(Transition).where(
             Transition.rule_set_id == rule_set.id, Transition.from_state.in_(ket_thuc)
         )
     ).all()
+    assert GIA_HAN not in {c.activity_code for c in ra}
+    assert all(c.reopen_window_hours for c in ra)
 
 
 # ---------------------------------------------------------------------------

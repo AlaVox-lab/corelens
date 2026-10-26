@@ -46,6 +46,7 @@ from app.workflow.engine import (
     allowed_transitions,
     case_history,
     create_case,
+    kiem_ho_so_goc,
     get_active_rule_set,
 )
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
@@ -73,6 +74,7 @@ from app.workflow.schemas import (
     ChuyenTrangThaiVao,
     GuiLoiNhanVao,
     HoSoChiTietRa,
+    HoSoLienQuanRa,
     HoSoTomTatRa,
     LoaiLoiNhanRa,
     LoaiYeuCauRa,
@@ -123,6 +125,8 @@ THU_TU_O_NHAP: tuple[str, ...] = (
     "sla_extension_hours",
     "sla_extension_total_hours",
     "sla_extension_count",
+    # Mở lại (#102): do ràng buộc tự đặt, không cạnh nào cho nhập
+    "reopen_count",
 )
 
 # Kiểm ngay lúc nạp mô-đun, cùng khuôn với biên ngoài trong engine: thêm một trường vào
@@ -445,6 +449,14 @@ def tao_ho_so(
     người gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.
     """
     try:
+        goc = kiem_ho_so_goc(session, du_lieu.parent_request_id, actor.id)
+    except ValueError as loi:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid-parent-request", "message": str(loi)},
+        ) from loi
+
+    try:
         ho_so = create_case(
             session,
             title=du_lieu.title,
@@ -452,6 +464,7 @@ def tao_ho_so(
             requester_id=actor.id,
             requester_label=actor.label,
             request_type_code=du_lieu.request_type_code,
+            parent_request_id=goc,
         )
     except ValueError as loi:
         # Danh mục đổi giữa lúc giao diện nạp biểu mẫu và lúc người dùng bấm gửi. Trả
@@ -573,6 +586,37 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTie
     return HoSoChiTietRa(**_du_lieu_chi_tiet(session, ho_so, actor))
 
 
+def _ho_so_lien_quan(ho_so: Request, states: dict[str, State]) -> HoSoLienQuanRa:
+    trang_thai = states[ho_so.current_state]
+    return HoSoLienQuanRa(
+        id=ho_so.id,
+        code=_ma_ho_so(ho_so),
+        title=ho_so.title,
+        state=TrangThaiRa(
+            code=trang_thai.code,
+            label=trang_thai.label,
+            is_terminal=trang_thai.is_terminal,
+        ),
+    )
+
+
+def _lien_ket_ho_so(session: Session, ho_so: Request, states: dict[str, State]) -> dict:
+    """Hồ sơ gốc, các hồ sơ tạo lại và số lần mở lại của hồ sơ này (#102)."""
+    goc = session.get(Request, ho_so.parent_request_id) if ho_so.parent_request_id else None
+    con = session.scalars(
+        select(Request).where(Request.parent_request_id == ho_so.id).order_by(Request.id)
+    ).all()
+    loai = (
+        session.get(RequestType, ho_so.request_type_code) if ho_so.request_type_code else None
+    )
+    return {
+        "parent": _ho_so_lien_quan(goc, states) if goc else None,
+        "children": [_ho_so_lien_quan(c, states) for c in con],
+        "reopen_count": ho_so.reopen_count,
+        "reopen_max_count": loai.reopen_max_count if loai else None,
+    }
+
+
 def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     """Phần chi tiết dùng chung giữa cổng người gửi và buồng lái điều phối.
 
@@ -592,6 +636,13 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         ).all()
     }
 
+    # Trạng thái kết thúc nào còn cạnh mở lại, và cửa sổ bao nhiêu giờ làm việc (#102)
+    cua_so_mo_lai = {
+        t.from_state: t.reopen_window_hours
+        for t in canh.values()
+        if t.reopen_window_hours is not None
+    }
+
     di_duoc = [
         CanhDiDuocRa(
             to_state=t.to_state,
@@ -599,6 +650,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             to_state_is_terminal=bool(
                 states.get(t.to_state) and states[t.to_state].is_terminal
             ),
+            to_state_reopen_hours=cua_so_mo_lai.get(t.to_state),
             activity_code=t.activity_code,
             activity_label=t.activity_label,
             requires_note=t.requires_note,
@@ -644,6 +696,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         "description": ho_so.description,
         "requester_id": ho_so.requester_id,
         "assignee_id": ho_so.assignee_id,
+        **_lien_ket_ho_so(session, ho_so, states),
         "history": [_su_kien(e, states, canh, nhan) for e in case_history(session, ho_so.id)],
         "allowed_transitions": di_duoc,
         "messages": loi_nhan,

@@ -151,6 +151,9 @@ export const CHU_GIAI_NHOM: {
   {
     nhom: "ket-thuc",
     tieuDe: "Đã kết thúc",
-    moTa: "Hồ sơ đã đóng hoặc đã hủy. Không còn thao tác nào đi tiếp được.",
+    // Một câu cho cả Đã đóng, Đã hủy và Không tiếp nhận (#102). Đã đóng còn mở lại được trong
+    // thời hạn mở lại nên không nói "không đi tiếp được": nút còn hay không do khung thao tác
+    // quyết, lấy từ dữ liệu
+    moTa: "Hồ sơ đã đóng, đã hủy hoặc không được tiếp nhận. Còn mở lại được hay không thì xem khung thao tác bên dưới; hết đường mở lại thì muốn làm tiếp phải gửi hồ sơ mới.",
   },
 ];

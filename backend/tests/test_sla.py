@@ -391,9 +391,10 @@ def test_het_an_han_thi_leo_thang_lai(session, rule_set, phong_ban):
     assert ho_so.current_state == "escalated"
 
 
-def test_mo_lai_ho_so_da_qua_han_cung_co_an_han(session, rule_set, phong_ban):
-    """Lối vào thứ hai: người gửi mở lại một hồ sơ đã quá hạn — không cấp hạn mới,
-    nhưng người xử lý có ân hạn để làm lại."""
+def test_mo_lai_ho_so_da_qua_han_duoc_cap_han_moi(session, rule_set, phong_ban):
+    """Lối vào thứ hai: người gửi mở lại một hồ sơ đã quá hạn. Từ #102 (giảng viên chốt 08/10,
+    thay quyết định 23/09 "không cấp hạn mới") mở lại là chu kỳ xử lý mới: đồng hồ đếm lại từ
+    0, nên hồ sơ không còn quá hạn và không cần ân hạn để cứu."""
     loai = _loai_co_an_han(session)
     ho_so = _den_dang_xu_ly(session, phong_ban, loai)
     _lui_dong_ho(session, ho_so, gio=loai.sla_hours + 1)
@@ -406,7 +407,9 @@ def test_mo_lai_ho_so_da_qua_han_cung_co_an_han(session, rule_set, phong_ban):
 
     assert ho_so not in ho_so_qua_han(session)
     assert quet_va_leo_thang(session) == []
-    assert an_han_con_lai_giay(session, ho_so) is not None
+    # Hạn mới, không kế thừa hạn đã hết của chu kỳ cũ — ân hạn không phải dùng tới
+    assert ho_so.sla_running_seconds == 0
+    assert an_han_con_lai_giay(session, ho_so) is None
 
 
 def test_an_han_bang_khong_thi_leo_thang_ngay(session, rule_set, phong_ban):

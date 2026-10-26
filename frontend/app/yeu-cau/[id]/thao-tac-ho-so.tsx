@@ -165,7 +165,10 @@ export function ThaoTacHoSo({
           }}
         >
           {dangMo.to_state_is_terminal && (
-            <CanhBaoKetThuc nhanTrangThai={dangMo.to_state_label} />
+            <CanhBaoKetThuc
+              nhanTrangThai={dangMo.to_state_label}
+              moLaiGio={dangMo.to_state_reopen_hours}
+            />
           )}
           {/* Ô nhập dựng từ `fields` của cạnh — chỉ thao tác sửa nội dung có (#127). Sửa
               ở Đã phân loại thì hồ sơ về Đã gửi; nói trước để người gửi không bất ngờ. */}
