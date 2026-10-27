@@ -89,12 +89,12 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 ## Giai đoạn 2 — Không gian H và P
 
-**Trạng thái**: Đang chạy — luồng thủ công thông đầu-cuối, đang hoàn thiện theo các luật giảng
-viên chốt ngày 08/10 · **Phiên bản**: `v0.3.0` có cổng người gửi; `v0.4.0` khép luồng thủ công
-với hai buồng lái; `v0.5.0` (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng thử theo yêu cầu
-của giảng viên: hộp thư trao đổi, giao diện mới, lịch làm việc, luật hồ sơ nằm im, hạn theo mức
-ưu tiên và gia hạn; **`v0.6.0` khép hẳn giai đoạn** — mở lại có giới hạn (#102), đính kèm tệp
-(#80)
+**Trạng thái**: Hoàn thành — luồng thủ công thông đầu-cuối, đủ các luật giảng viên chốt ngày
+08/10; còn kho tri thức chờ duyệt ADR-0006 · **Phiên bản**: `v0.3.0` có cổng người gửi; `v0.4.0`
+khép luồng thủ công với hai buồng lái; `v0.5.0` (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng
+thử theo yêu cầu của giảng viên: hộp thư trao đổi, giao diện mới, lịch làm việc, luật hồ sơ nằm
+im, hạn theo mức ưu tiên và gia hạn; **`v0.6.0` (27/10) khép giai đoạn** — mở lại có giới hạn và
+trạng thái Không tiếp nhận (#102), đính kèm tệp (#80), thống nhất từ ngữ trên giao diện (#157)
 
 Mục tiêu: luồng nghiệp vụ chạy được **hoàn toàn thủ công**, không có AI. Đây là nền
 tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
@@ -131,14 +131,15 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Lịch làm việc: mọi đồng hồ đếm giờ làm việc — #199
 - [x] Hạn theo mức ưu tiên và gia hạn từng hồ sơ — #101, giảng viên chốt ngày 08/10
 - [x] Mức "sắp hết hạn" khai trong dữ liệu — #175
-- [ ] Mở lại có giới hạn và cấp hạn mới — #102, thay quyết định ngày 23/09
-- [ ] Đính kèm tệp — #80
+- [x] Mở lại có giới hạn và cấp hạn mới — #102, thay quyết định ngày 23/09
+- [x] Đính kèm tệp — #80
 
 **Tiêu chí hoàn thành giai đoạn**: một yêu cầu đi được trọn vòng từ lúc gửi tới lúc
 hoàn tất, qua đủ các nhánh, hoàn toàn bằng thao tác của người.
 
 Vòng chính đã đạt ngày 23/09: navigator chạy tay trọn một hồ sơ qua bốn vai trò trên giao
-diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày 02/10. Còn lại là các luật ở trên.
+diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày 02/10. Các luật ở trên lên đủ ngày
+26/10.
 
 ---
 

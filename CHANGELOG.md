@@ -5,6 +5,22 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.6.0] - 2026-10-27
+
+### Công việc phụ trợ
+
+- **h-portal:** Thống nhất từ ngữ trên giao diện ([#222](https://github.com/AlaVox-lab/dx-os-lab/issues/222)) ([ed2bcea](https://github.com/AlaVox-lab/dx-os-lab/commit/ed2bcea883bd3df6960fd65b81be4d17004e5d88))
+
+### Tài liệu
+
+- **state:** Cập nhật trạng thái cuối tuần 10 ([#216](https://github.com/AlaVox-lab/dx-os-lab/issues/216)) ([5025d9d](https://github.com/AlaVox-lab/dx-os-lab/commit/5025d9dfa20ce1655870f3e669126cfdb602cd77))
+- **state:** Cập nhật trạng thái cuối tuần 11 và 12 ([#224](https://github.com/AlaVox-lab/dx-os-lab/issues/224)) ([9e092d2](https://github.com/AlaVox-lab/dx-os-lab/commit/9e092d21c88e5da15fc0b1600b9a4df06da22cf1))
+
+### Tính năng mới
+
+- **p-workflow:** Mở lại có giới hạn, trạng thái Không tiếp nhận ([#218](https://github.com/AlaVox-lab/dx-os-lab/issues/218)) ([037d217](https://github.com/AlaVox-lab/dx-os-lab/commit/037d217919e2b1ec23962b8b1b6581ab8bc77d39))
+- **core:** Đính kèm tệp vào hồ sơ qua SeaweedFS ([#220](https://github.com/AlaVox-lab/dx-os-lab/issues/220)) ([e7ff194](https://github.com/AlaVox-lab/dx-os-lab/commit/e7ff194125adf84857f88bae832a5489d8946e99))
+
 ## [0.5.0] - 2026-10-15
 
 ### Sửa lỗi
