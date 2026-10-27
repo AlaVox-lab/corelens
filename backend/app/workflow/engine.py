@@ -15,6 +15,9 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -291,6 +294,54 @@ def allowed_transitions(
     ]
 
 
+def needs_my_action(
+    session: Session, cases: Sequence[Request], actor: Actor
+) -> dict[int, bool]:
+    """Hồ sơ nào đang chờ chính tác nhân này làm bước chính (#227), cho cả một danh sách.
+
+    "Bấm được" chưa phải "cần xử lý": người gửi sửa hay hủy được ở Đã gửi mà hồ sơ không
+    chờ họ. Nên cờ chỉ xét các cạnh khai `primary_scope` trong dữ liệu quy tắc, qua cùng hai
+    lớp kiểm như `allowed_transitions` — vai trò và ràng buộc không cần nhập liệu. Cạnh
+    `assignee` thêm điều kiện hồ sơ chưa giao ai hoặc giao đúng người này.
+
+    Số truy vấn không tăng theo số dòng: một lần tải cạnh, một lần đọc trạng thái trước
+    cho mọi hồ sơ. Ràng buộc gắn trên bước chính nên là loại không tự truy vấn.
+    """
+    if not cases:
+        return {}
+
+    canh_theo_nguon: dict[tuple[int, str], list[Transition]] = defaultdict(list)
+    for canh in session.scalars(
+        select(Transition)
+        .where(
+            Transition.rule_set_id.in_({h.rule_set_id for h in cases}),
+            Transition.primary_scope.is_not(None),
+        )
+        .order_by(Transition.display_order)
+    ):
+        if _actor_can_traverse(actor, canh):
+            canh_theo_nguon[(canh.rule_set_id, canh.from_state)].append(canh)
+
+    can_xet = [h for h in cases if (h.rule_set_id, h.current_state) in canh_theo_nguon]
+    truoc = _trang_thai_truoc_nhieu(session, [h.id for h in can_xet])
+
+    ket_qua = dict.fromkeys((h.id for h in cases), False)
+    for ho_so in can_xet:
+        ket_qua[ho_so.id] = any(
+            (canh.primary_scope != "assignee" or ho_so.assignee_id in (None, actor.id))
+            and input_free_guards_pass(
+                TransitionContext(
+                    case=ho_so,
+                    transition=canh,
+                    actor=actor,
+                    previous_state=truoc.get(ho_so.id),
+                )
+            )
+            for canh in canh_theo_nguon[(ho_so.rule_set_id, ho_so.current_state)]
+        )
+    return ket_qua
+
+
 def perform_transition(
     session: Session,
     *,
@@ -476,6 +527,20 @@ def _trang_thai_truoc(session: Session, case_id: int) -> str | None:
         .order_by(EventLog.timestamp.desc(), EventLog.id.desc())
         .limit(1)
     ).first()
+
+
+def _trang_thai_truoc_nhieu(session: Session, case_ids: list[int]) -> dict[int, str]:
+    """`_trang_thai_truoc` cho nhiều hồ sơ trong một truy vấn (DISTINCT ON của PostgreSQL)."""
+    if not case_ids:
+        return {}
+    return dict(
+        session.execute(
+            select(EventLog.case_id, EventLog.from_state)
+            .where(EventLog.case_id.in_(case_ids), EventLog.from_state != EventLog.to_state)
+            .order_by(EventLog.case_id, EventLog.timestamp.desc(), EventLog.id.desc())
+            .distinct(EventLog.case_id)
+        ).all()
+    )
 
 
 def _actor_can_traverse(actor: Actor, transition: Transition) -> bool:
