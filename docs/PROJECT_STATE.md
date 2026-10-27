@@ -14,39 +14,43 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-10-20 |
-| Phiên bản hiện tại | **`v0.5.0`** (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng thử. `main` và `dev` cùng một commit, không có thay đổi chưa phát hành. **`v0.6.0` khép hẳn Giai đoạn 2** — sau #102 và #80 |
-| Giai đoạn | **Giai đoạn 2, vòng hoàn thiện** — luồng thủ công thông đầu-cuối từ Tuần 8; Tuần 10 làm xong lịch làm việc và các luật giảng viên chốt 08/10 cho hồ sơ nằm im, hạn theo mức ưu tiên và gia hạn. Còn mở lại có giới hạn (#102) và đính kèm tệp (#80) |
-| Mốc công việc | Tuần 10 — Quy tắc thầy chốt và giao diện người gửi, hạn 18/10: **8 issue đóng**, ba issue còn mở dời sang Tuần 11 |
+| Cập nhật lần cuối | 2026-10-27 |
+| Phiên bản hiện tại | **`v0.5.0`** (15/10) — bản cài đặt đầu tiên gửi nhóm khác dùng thử. `main` đã có thêm #102, #80 và #157 chưa phát hành; **`v0.6.0` khép hẳn Giai đoạn 2** và sắp cắt |
+| Giai đoạn | **Giai đoạn 2 xong về chức năng** — luồng thủ công thông đầu-cuối từ Tuần 8; Tuần 10 làm xong lịch làm việc và các luật giảng viên chốt 08/10 cho hồ sơ nằm im, hạn theo mức ưu tiên và gia hạn; Tuần 11–12 làm xong mở lại có giới hạn, đính kèm tệp và rà từ ngữ. Chờ cắt `v0.6.0`, rồi sang Giai đoạn 3 (không gian `D`) |
+| Mốc công việc | Tuần 11 hết hạn 25/10 chưa đóng issue nào nên dời cả ba sang **Tuần 12** (hạn 01/11): **3 issue đóng, 0 còn mở** — #102, #80, #157 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với cổng người gửi, buồng lái điều phối, buồng lái phòng ban và hộp thư chung. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **10 trạng thái, 31 cạnh** |
-| Issue đang mở | **3** — #80, #102, #157 |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với cổng người gửi, buồng lái điều phối, buồng lái phòng ban và hộp thư chung. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
+| Issue đang mở | **0** |
 | Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
 | Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **362 bài**, chạy trên PostgreSQL và Keycloak thật. Mọi issue từ #78 đều qua phép thử đột biến, trừ phần chỉ có ở giao diện — frontend chưa có bộ kiểm thử, kiểm bằng đăng nhập OIDC thật và kịch bản đầu–cuối |
+| Bộ kiểm thử tự động | **418 bài**, chạy trên PostgreSQL và Keycloak thật. Mọi issue từ #78 đều qua phép thử đột biến, trừ phần chỉ có ở giao diện — frontend chưa có bộ kiểm thử, kiểm bằng đăng nhập OIDC thật và kịch bản đầu–cuối |
 | Tổng bộ nhớ toàn cụm | **1,4 GB lúc rảnh**, đo lại ngày 15/10 khi viết hướng dẫn cài đặt (#206); Keycloak chiếm gần một nửa. Ảnh chứa khoảng 3,9 GB. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
-| Số ngày còn lại tới chấm kho mã | **48 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | khoảng **12 ngày** (đầu tháng 11/2026) |
+| Số ngày còn lại tới chấm kho mã | **41 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | khoảng **5 ngày** (đầu tháng 11/2026) |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
 từ danh bạ Keycloak → người xử lý làm, hỏi thêm người gửi khi cần → quá hạn thì tự leo
-thang, có ân hạn sau khi phân công lại → người gửi xác nhận đạt hoặc mở lại. Dọc đường,
+thang, có ân hạn sau khi phân công lại → người gửi xác nhận đạt hoặc mở lại — tối đa hai
+lần, trong bảy ngày làm việc kể từ khi đóng, mỗi lần có hạn mới; quá giới hạn thì tạo hồ sơ
+mới nối với hồ sơ cũ. Điều phối viên còn có lối **không tiếp nhận** khi không phòng nào nhận.
+Dọc đường,
 người gửi sửa được nội dung khi hồ sơ chưa tới phòng ban, người xử lý tự nhận việc về
 mình, và hai bên nhắn qua lại trên hồ sơ — người gửi hỏi tiến độ được khi hồ sơ nằm ở
 phòng ban. Mọi bước đổi hồ sơ ghi nhật ký sự kiện, kèm lịch sử thay đổi của trường quyết
 định. Điều phối viên và nhân viên phòng ban thấy email và số điện thoại của người gửi,
 tra từ danh bạ Keycloak. Mọi lời nhắn gom về **một hộp thư chung**, mỗi cuộc trò chuyện gắn
 một hồ sơ; nhân viên có thêm **cuộc trò chuyện nội bộ** mà người gửi không thấy. Điều phối
-viên không tự điều phối hồ sơ do chính mình gửi. Trang hồ sơ đặt hạn và nút thao tác lên
+viên không tự điều phối hồ sơ do chính mình gửi. Người gửi **đính kèm tệp** (ảnh, PDF, văn
+bản) lúc gửi, lúc sửa nội dung và lúc bổ sung thông tin; tệp nằm trong SeaweedFS và chỉ người
+mở được hồ sơ mới tải về được. Trang hồ sơ đặt hạn và nút thao tác lên
 trước nhật ký. Mọi hạn đếm theo **giờ làm việc** của một lịch khai trong dữ liệu; hạn xử lý
 đi theo loại yêu cầu nhân hệ số mức ưu tiên, gia hạn được tối đa hai lần, có lý do. Hồ sơ
 nằm im ở ba trạng thái chờ thì được báo trước rồi **tự trả về điều phối hay tự đóng**. Chạy
 được trên máy sạch bằng một lệnh, kể cả từ tệp nén của bản phát hành.
 
-Thứ còn thiếu trong luồng thủ công: **giới hạn mở lại** (#102) và **đính kèm tệp** (#80).
-Tầng `D` và `I` chưa cài đặt.
+Luồng thủ công đã đủ theo các quyết định của giảng viên. Tầng `D` và `I` chưa cài đặt.
 
 ---
 
@@ -569,11 +573,68 @@ mở sau khi gia hạn xong — xem Ghi chú kỹ thuật.
 
 **Issue đã đóng**: #101, #142, #143, #144, #175, #192, #199, #206
 
+### Tuần 11–12 — Mở lại có giới hạn, đính kèm tệp và từ ngữ
+
+Mốc Tuần 11 hết hạn 25/10 mà chưa đóng issue nào; ba issue dời sang mốc Tuần 12 và làm xong
+trong ngày 26/10, mỗi issue một pull request squash cộng một pull request phát hành.
+
+**Mở lại có giới hạn và trạng thái *Không tiếp nhận*** (#102). Giảng viên chốt 08/10, thay quyết
+định 23/09 "mở lại không giới hạn, không cấp hạn mới". Navigator chốt chi tiết 26/10:
+
+- Nhánh điều phối viên đóng khi không phòng nào nhận sang **trạng thái kết thúc riêng**
+  *Không tiếp nhận*, lý do bắt buộc, không mở lại được; tầng `D` đếm riêng khỏi hồ sơ đã xử lý
+- Mở lại từ cả *Hoàn tất* lẫn *Đã đóng*, **dùng chung một bộ đếm** tối đa 2 lần
+  (`request_types.reopen_max_count`), mỗi lần có lý do. Mở lại sau khi đóng chỉ trong **56 giờ
+  làm việc** — 7 ngày với lịch mẫu 8 giờ một ngày — và chỉ với hồ sơ **từng làm xong**: hồ sơ
+  tự đóng vì chưa bổ sung thông tin thì không
+- **Hạn mới**: mở lại là chu kỳ xử lý mới, đồng hồ đếm lại từ 0 và gia hạn cũ về 0. Đây là chỗ
+  đảo lại ân hạn của #94 cho riêng trường hợp mở lại
+- Hết lượt, quá cửa sổ hay *Không tiếp nhận* thì người gửi bấm *Tạo hồ sơ mới từ hồ sơ này*:
+  biểu mẫu chép sẵn nội dung, hồ sơ mới mang `parent_request_id` (migration `0011`), hai trang
+  liệt kê nhau. Dịch vụ chỉ nhận hồ sơ gốc của chính người gửi và đã kết thúc
+
+Phát hiện lúc làm đã đổi thiết kế: lược đồ **cấm hẳn** cạnh rời khỏi trạng thái kết thúc, nên
+mở lại từ *Đã đóng* không có chỗ đi. Navigator chọn nới ràng buộc: cạnh rời trạng thái kết thúc
+nay hợp lệ nhưng **bắt buộc khai cửa sổ thời gian** (`reopen_window_hours`), và cạnh mở lại sau
+khi đóng là cạnh duy nhất loại đó — xem Ghi chú kỹ thuật. Bộ quy tắc mẫu lên **11 trạng thái, 32
+cạnh**. Phép thử đột biến 19/19 bị bắt, đường thật 36/36.
+
+**Đính kèm tệp vào hồ sơ** (#80). Tệp lưu trong SeaweedFS qua S3 API bằng `boto3` (ADR-0002);
+hồ sơ chỉ giữ siêu dữ liệu ở bảng `case_attachments` (migration `0012`), chỉ ghi thêm nên hồ sơ
+hủy vẫn giữ tệp. Navigator chốt 26/10:
+
+- **Tệp đi qua dịch vụ ứng dụng**, không presigned URL: quyền kiểm ở mỗi lần tải, người ngoài
+  nhận 404. Phía Next.js dùng Route Handler vì Server Action giới hạn thân yêu cầu 1 MB
+- **Ai mở được hồ sơ thì xem được tệp** — dùng lại ba luật xem hồ sơ, không viết luật quyền thứ hai
+- **Chỉ người gửi đính kèm, và chỉ khi có cạnh mang cờ** `transitions.accepts_attachments` — *Sửa
+  nội dung* và *Bổ sung thông tin*; tới phòng ban thì khóa
+- **Giới hạn là cấu hình** trong `.env`: mẫu 10 MB mỗi tệp, 5 tệp mỗi lần, 20 tệp mỗi hồ sơ, đuôi
+  ảnh, PDF, Word, Excel, văn bản. Giao diện hỏi `GET /attachments/policy` nên hai lớp chặn không
+  lệch nhau; dịch vụ còn kiểm nội dung khớp đuôi theo chữ ký đầu tệp
+
+Thêm hai phụ thuộc `boto3` và `python-multipart`, cùng Apache-2.0; các gói kéo theo đã kiểm trên
+ảnh chứa thật. Một lần tải nhận cả lô hoặc từ chối cả lô; tải hỏng sau khi gửi thì hồ sơ vẫn đã
+gửi và trang hồ sơ nhắc thêm tệp lại. Không quét vi-rút — ngoài phạm vi. Phép thử đột biến 21/21
+bị bắt, đường thật 29/29.
+
+**Rà từ ngữ giao diện** (#157). Trợ lý lập bảng 20 dòng theo từng màn, tách chữ trong mã với chữ
+trong dữ liệu; navigator duyệt 19 dòng, giữ "quay lui". Một khái niệm một tên ở mọi màn hình:
+người gửi, điều phối viên (không còn "người tiếp nhận"), người xử lý (không còn "người phụ
+trách"), *Trao đổi* cho thẻ của người gửi như tab của nhân viên, *dòng thời gian* thay cho
+"nhật ký", đồng hồ hạn xử lý. Bỏ từ kỹ thuật khỏi màn người dùng cuối — định tuyến, bộ quy tắc,
+nhánh lệch chuẩn, dịch vụ ứng dụng — và thông báo lỗi của engine nói bằng nhãn trạng thái, vai
+trò thay vì mã tiếng Anh. Chỉ một nhãn nằm trong dữ liệu (*Chuyển lại sang phòng khác*). Quy tắc
+đặt tên ghi ở `ARCHITECTURE.md` mục 8.3. Đột biến 5/5, đường thật 32/32.
+
+**Bộ kiểm thử lên 418 bài.**
+
+**Issue đã đóng**: #80, #102, #157
+
 ---
 
 ## Đang làm
 
-Không có issue nào đang làm dở. Tuần 11 bắt đầu từ #102.
+Không có issue nào đang làm dở. Mốc Tuần 12 hết việc; chờ cắt `v0.6.0`.
 
 Ba bản ghi ADR-0006, ADR-0007 và ADR-0008 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp
 nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và mở issue tích hợp.
@@ -584,20 +645,11 @@ nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và
 
 ### Theo thứ tự
 
-1. **Gửi tệp `.tar.gz` của `v0.5.0` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README —
-   việc giảng viên giao, chưa làm. Lỗi cài đặt xử lý trước mọi issue khác
-2. **#102 — luật mở lại mới**: mở lại trong 7 ngày làm việc kể từ khi đóng, tối đa hai lần, có
-   lý do, cấp hạn mới; quá hai lần thì tạo hồ sơ mới liên kết `parent_request_id`. Nhánh đóng
-   khi không phòng nào nhận đổi tên trạng thái. Hồ sơ tự đóng ở #143, #144 mở lại theo luật
-   này. Phải chốt trước: mở lại từ *Đã đóng* — khi đó *Đã đóng* không còn là trạng thái kết
-   thúc — hay giữ mở lại từ *Hoàn tất* và kéo dài cửa sổ. Đổi sang `type/feat` khi bắt đầu
-3. **#80 — đính kèm tệp** qua SeaweedFS bằng S3 API. Thêm thư viện S3: kiểm giấy phép, ghi
-   `dependencies.md`. Phải chốt: ai xem được tệp, giữ hay xóa tệp khi hủy hồ sơ, danh sách kiểu
-   tệp nằm trong cấu hình
-4. **Cắt `v0.6.0`** khi #102 và #80 lên `main` — khép hẳn Giai đoạn 2
-5. **#157 rà từ ngữ** xen kẽ: lập bảng chữ theo từng màn, tách chữ trong mã với chữ trong dữ
-   liệu, navigator duyệt rồi mới sửa
-6. Sang **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện. Tầng
+1. **Cắt `v0.6.0`** — khép hẳn Giai đoạn 2: nhật ký thay đổi, ROADMAP, thẻ, bản phát hành
+2. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
+   viên giao từ 15/10, chưa làm. Nên gửi bản `v0.6.0` thay `v0.5.0`: bản mới có đủ mở lại và
+   đính kèm. Lỗi cài đặt xử lý trước mọi việc khác
+3. Sang **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện. Tầng
    `I` chỉ tích hợp sau khi `P` và `D` ổn định
 
 ### Chờ giảng viên
@@ -611,7 +663,10 @@ Gom vào một buổi:
   `I` — nhóm đề xuất để tầng này sau một hồ sơ Compose riêng
 - **Xác nhận các con số navigator đã đặt tạm trong dữ liệu** — gia hạn mỗi lần tối đa 50 % hạn
   gốc, tổng hai lần (#101); tự đóng *Chờ bổ sung thông tin* sau 5 ngày làm việc (#143); ngưỡng
-  sắp hết hạn 75 % (#175). Đổi con số nào cũng chỉ sửa dữ liệu khởi tạo
+  sắp hết hạn 75 % (#175); mở lại tối đa hai lần (#102); giới hạn tệp đính kèm 10 MB, 5 tệp mỗi
+  lần, 20 tệp mỗi hồ sơ (#80). Đổi con số nào cũng chỉ sửa dữ liệu khởi tạo hay `.env`
+- **Có cần quét vi-rút tệp đính kèm không** (#80) — hiện chỉ chặn bằng danh sách đuôi chặt và
+  kiểm chữ ký đầu tệp
 - **Công khai kho mã khi nào** — phải trước 07/12; công khai thì bật lại quy tắc bảo vệ nhánh
 - **Kênh thông báo** — các luật mới đều "gửi thông báo", hệ thống chưa có kênh nào. Đề xuất
   tạm dùng lời nhắn tự động trên hồ sơ cộng dấu trên hàng đợi; email là việc riêng
@@ -622,7 +677,7 @@ Gom vào một buổi:
 ### Việc vận hành, không cần issue
 
 1. Tích hợp liên tục: chạy `pytest` và `next build` trên mỗi pull request. Điều kiện đã đủ
-   từ lâu — 362 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
+   từ lâu — 418 bài kiểm thử hiện chỉ chạy khi có người nhớ chạy
 2. Thêm `CODE_OF_CONDUCT.md`
 3. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
    `delete_branch_on_merge` an toàn
@@ -638,8 +693,8 @@ Gom vào một buổi:
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Chưa có tích hợp liên tục** | 362 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. #102 sẽ đổi tiếp |
+| **Chưa có tích hợp liên tục** | 418 bài kiểm thử chỉ chạy khi ai đó nhớ chạy. Một hồi quy lọt vào `dev` sẽ không ai biết cho tới lần dựng sau | Điều kiện đã đủ — có cấu trúc thư mục và bộ kiểm thử. Dựng một quy trình chạy `pytest` và `next build` trên mỗi pull request |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. Tuần 11–12 có ba, cùng ngày 26/10: #102 và #80 đổi lược đồ và dữ liệu khởi tạo, #157 đổi một nhãn; kéo `dev` từ trước 26/10 về thì `down -v` một lần. #80 còn thêm biến vào `infra/.env.example` — có giá trị mặc định trong Compose nên `.env` cũ vẫn chạy |
 | **Máy thành viên không đủ tài nguyên dựng cụm** | #48 phải chuyển người làm: bản dựng ảnh chứa hỏng giữa chừng với lỗi `EOF` trên một máy còn khoảng 7,5 GB trống. **Nguyên nhân chưa xác nhận** — nghi ổ gần đầy, hoặc Docker mất kết nối khi dựng nhiều ảnh cùng lúc. Con số 15 GB mà một trợ lý AI đòi cũng chưa đo. Ở #47, đĩa ảo Docker nằm trên ổ C gần đầy làm ảnh vừa kéo báo lỗi đọc ghi và ghi đồng bộ chỉ vài kB/s — số đo trên máy đó bỏ đi | Giao cho máy đó việc không cần dựng cụm — tài liệu, review pull request — cho tới khi giải phóng được ổ đĩa. Trước khi dựng hay đo, chuyển *Disk image location* của Docker Desktop sang ổ còn trống. Con số này cũng là dữ liệu cho mục **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
@@ -661,7 +716,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Thứ tự xây dựng: hoàn thiện luồng thủ công trước, gắn AI sau | Theo góp ý của giảng viên |
 | Tệp khóa phiên bản bắt buộc commit, không đưa vào `.gitignore` | Ảnh hưởng tiêu chí PoF mục 4 và 5 |
 | Toàn bộ tài liệu kỹ thuật công khai, không gitignore | Ảnh hưởng tiêu chí chấm số 10 và PoF mục 6 |
-| Luồng nghiệp vụ chốt bằng sơ đồ trạng thái | Mười trạng thái, ba lối phê duyệt, Poka-yoke khi hủy, tự leo thang SLA — xem `docs/process-flow.md` |
+| Luồng nghiệp vụ chốt bằng sơ đồ trạng thái | Mười một trạng thái, ba lối phê duyệt, Poka-yoke khi hủy, tự leo thang SLA — xem `docs/process-flow.md` |
 | `PROJECT_STATE.md` do navigator cập nhật theo tuần | Thành viên không sửa trong PR công việc — xem `CONTRIBUTING.md` mục 2.5 |
 | `H` — Keycloak `26.7.3` làm nền tảng định danh | Nạp trọn realm từ tệp JSON nên đổi vai trò là đổi dữ liệu — ADR-0001 |
 | `core` — SeaweedFS `4.45` làm kho lưu trữ đối tượng | Garage là bản lùi mặc định, MinIO là bản lùi có điều kiện — ADR-0002 |
@@ -681,9 +736,17 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Trạng thái nào chạy đồng hồ SLA là **dữ liệu**, không phải mã | Cột `states.sla_running` trả lời cả hai câu: đồng hồ bắt đầu từ đâu và dừng ở đâu |
 | Trường quyết định chỉ đặt được ở cạnh có ràng buộc quản nó | Người xử lý không tự nâng được mức ưu tiên việc của mình — #78, `ARCHITECTURE.md` mục 7 |
 | Giao người xử lý là **tùy chọn** | Ngoài đời người trong phòng hay tự chia việc; hồ sơ chưa giao ai vẫn thuộc cả phòng. Navigator chốt 23/09 |
-| Leo thang lại có **khoảng ân hạn**, không cấp hạn mới | Hồ sơ vẫn được ghi nhận quá hạn; người vừa được giao lại có ân hạn trước khi bị leo thang lần nữa. Ân hạn là dữ liệu theo loại yêu cầu — #94 |
+| Leo thang lại có **khoảng ân hạn**, không cấp hạn mới | Hồ sơ vẫn được ghi nhận quá hạn; người vừa được giao lại hay vừa bổ sung xong có ân hạn trước khi bị leo thang lần nữa. Ân hạn là dữ liệu theo loại yêu cầu — #94. **Mở lại thì khác**: cấp hạn mới, xem dưới — #102 |
 | Bổ sung thông tin xong thì **về đúng chỗ đã hỏi** | Hỏi ở *Đã gửi* về *Đã gửi*, trưởng phòng hỏi thì về *Chờ phòng ban xác duyệt*, người xử lý hỏi thì về *Đang xử lý* — #79 |
-| Mở lại: **trong 7 ngày làm việc sau khi đóng, tối đa hai lần, có lý do, cấp hạn mới**; quá hai lần thì tạo hồ sơ mới liên kết `parent_request_id` | Giảng viên chốt 08/10, **thay** quyết định 23/09 "không giới hạn, không cấp hạn mới". Hai cạnh từng đánh dấu `[CHỜ XÁC NHẬN]` được giữ; nhánh đóng khi không phòng nào nhận phải đổi tên trạng thái, không mang nghĩa đã xử lý xong — #102 |
+| Mở lại: **trong 7 ngày làm việc sau khi đóng, tối đa hai lần, có lý do, cấp hạn mới**; quá hai lần thì tạo hồ sơ mới liên kết `parent_request_id` | Giảng viên chốt 08/10, **thay** quyết định 23/09 "không giới hạn, không cấp hạn mới". Hai cạnh từng đánh dấu `[CHỜ XÁC NHẬN]` được giữ và nhãn đã gỡ. Đã làm ở #102: mở lại từ cả *Hoàn tất* lẫn *Đã đóng*, chung một bộ đếm; cửa sổ 56 giờ làm việc và số lần nằm trong dữ liệu |
+| Nhánh điều phối viên đóng khi không phòng nào nhận sang trạng thái kết thúc riêng ***Không tiếp nhận*** | Không đọc như hồ sơ đã xử lý xong; lý do bắt buộc; không mở lại — người gửi tạo hồ sơ mới liên kết. Giảng viên đề xuất 08/10, navigator chốt tên 26/10 — #102 |
+| Mở lại sau khi đóng chỉ với hồ sơ **từng làm xong**; mở lại là **chu kỳ xử lý mới** | Hồ sơ tự đóng vì chưa bổ sung thông tin chưa có gì "chưa đạt". Đồng hồ đếm lại từ 0, gia hạn cũ về 0; số liệu chu kỳ cũ còn nguyên trong nhật ký. Navigator chốt 26/10 — #102 |
+| Cạnh rời trạng thái kết thúc **hợp lệ khi khai cửa sổ thời gian** | Lược đồ trước đó cấm hẳn. Nay `CHECK` đòi cạnh rời trạng thái kết thúc phải có `reopen_window_hours`; cạnh *Mở lại sau khi đóng* là cạnh duy nhất. Navigator chốt 26/10 — #102 |
+| Tệp đính kèm **đi qua dịch vụ ứng dụng**, không presigned URL | Quyền kiểm mỗi lần tải; người ngoài nhận 404 chứ không 403. Navigator chốt 26/10 — #80 |
+| Ai mở được hồ sơ thì xem được tệp; **chỉ người gửi đính kèm**, ở cạnh mang cờ `accepts_attachments` | Không luật quyền thứ hai để lệch với luật xem hồ sơ; đính kèm khóa khi hồ sơ tới phòng ban. Navigator chốt 26/10 — #80 |
+| Hồ sơ hủy **vẫn giữ tệp đính kèm** | Truy vết; bảng `case_attachments` chỉ ghi thêm, không có thao tác xóa nào. Navigator chốt 26/10 — #80 |
+| Giới hạn tệp đính kèm là **biến môi trường** | Đuôi, MB mỗi tệp, số tệp — đổi `.env` rồi khởi động lại, không `down -v`; giao diện hỏi dịch vụ nên hai lớp chặn không lệch. Navigator chốt 26/10 — #80 |
+| **Một khái niệm một tên** trên giao diện | Người gửi, điều phối viên, người xử lý, Trao đổi, dòng thời gian; thông báo lỗi nói bằng nhãn chứ không bằng mã. Bảng ở `ARCHITECTURE.md` mục 8.3. Navigator duyệt 26/10 — #157 |
 | Hồ sơ bị phòng ban trả **giữ phòng cũ** tới khi điều phối chọn lại | Nhật ký ghi đủ lần đổi phòng nhờ cột `changes` — #100 |
 | Lý do *Từ chối vì sai chuyên môn* **bắt buộc** | Là cờ `requires_note` trong dữ liệu |
 | **Ranh giới máy trạng thái** — ADR-0005 | Thao tác đổi hồ sơ — trạng thái, trường quyết định, nội dung — đi qua cửa chuyển trạng thái; lời nhắn đi bảng riêng. Người gửi sửa được nội dung khi hồ sơ chưa tới phòng ban. Giảng viên duyệt 24/09 |
@@ -707,7 +770,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Mọi hạn đếm theo **giờ làm việc** của một lịch trong dữ liệu | Một lịch mặc định cho cả công ty; mọi phép đo đi qua hai hàm SQL dùng chung cho bộ quét và dịch vụ. Navigator chốt 12/10 — #199 |
 | Một cặp trạng thái có tối đa **một cạnh người và một cạnh hệ thống** | Ràng buộc duy nhất của bảng cạnh thêm `is_system`; engine chọn cạnh theo loại tác nhân. Hạn chờ và mốc báo trước là cột trên cạnh. Navigator chốt 12/10 — #142 |
 | Tự trả về điều phối **không** tính là quay lui | Phòng ban không từ chối nội dung, chỉ để quá hạn. Navigator chốt 12/10 — #142 |
-| Hồ sơ tự đóng ở *Chờ bổ sung thông tin* sang ***Đã đóng***, không sang *Đã hủy* | Người gửi không chủ động bỏ yêu cầu; mở lại sau khi đóng theo luật của #102. Navigator chốt 15/10 — #143 |
+| Hồ sơ tự đóng ở *Chờ bổ sung thông tin* sang ***Đã đóng***, không sang *Đã hủy* | Người gửi không chủ động bỏ yêu cầu; hồ sơ này **không** mở lại được (chưa từng làm xong) — người gửi tạo hồ sơ mới. Navigator chốt 15/10 và 26/10 — #143, #102 |
 | Ngưỡng sắp hết hạn là **phần trăm** theo loại yêu cầu | Co giãn theo hạn của từng hồ sơ, kể cả khi hạn đổi theo mức ưu tiên. Navigator chốt 15/10 — #175 |
 | Gia hạn: **điều phối viên lần đầu, trưởng phòng khi đã leo thang** | Điều phối viên gia hạn ở *Đã phân loại* và *Chờ phòng ban xác duyệt*; trưởng phòng ở *Đã leo thang*, vì *Đang xử lý* đã có cạnh tự trỏ *Nhận việc về mình*. Nhập số giờ cộng thêm kèm lý do. Navigator chốt 15/10 — #101 |
 | Bản cài đặt gửi người ngoài là **tệp `.tar.gz` của bản phát hành** | Cùng đường ban giám khảo lấy mã; kho còn riêng tư nên gửi tệp, không gửi liên kết. Navigator chốt 15/10 — #206 |
@@ -1117,6 +1180,54 @@ OIDC thật mới thấy.
 
 Sau cạnh tự trỏ, trạng thái không đổi nên React giữ nguyên khung thao tác cũ — khung gia hạn
 vẫn mở sau khi đã gửi. Khóa theo cả `updated_at` để khung dựng lại sau mỗi lần đổi hồ sơ.
+
+**Lược đồ cấm cạnh rời trạng thái kết thúc — nới có điều kiện, không bỏ** (#102)
+
+`transitions` có `CHECK (from_is_terminal = FALSE)` và khóa ngoại tổng hợp tới
+`states.is_terminal`, nên không thể tạo cạnh xuất phát từ *Đã đóng*. Chỉ đọc luật của giảng viên
+thì không thấy — lỗi hiện ra lúc viết cạnh *Mở lại sau khi đóng*. Cách nới: bỏ `CHECK` cấm hẳn,
+thêm `CHECK` đòi cạnh nào rời trạng thái kết thúc thì phải khai `reopen_window_hours`, và cột đó
+chỉ hợp lệ trên cạnh của người xuất phát từ trạng thái kết thúc. Lỡ tay thêm cạnh thường đi ra
+từ một trạng thái kết thúc vẫn bị lược đồ từ chối.
+
+**Cửa sổ thời gian lưu bằng giờ, không phải ngày** (#102)
+
+Lịch làm việc khai khung giờ theo thứ, nên "7 ngày làm việc" không có một con số giờ cố định.
+Cột `reopen_window_hours` giữ 56 giờ làm việc — 7 ngày với lịch mẫu 8 giờ — cùng khuôn với
+`auto_after_hours`. Đổi lịch thì xem lại con số này, như hai hạn chờ kia.
+
+**Bài kiểm thử cửa sổ phải thay hàm đo thời gian, không lùi nhật ký** (#102)
+
+`event_log` chỉ ghi thêm nên không lùi được mốc vào *Đã đóng*. Ràng buộc `reopen-window` gọi
+`giay_lam_viec` ở cấp mô-đun; bài kiểm thử thay hàm đó để thử đúng mốc, quá một giây và đổi cột
+dữ liệu — cùng tinh thần "thời điểm xét" của bộ quét hạn chờ.
+
+**Khóa S3 của SeaweedFS cần quyền `Admin` riêng cho thùng mới** (#80)
+
+Khóa chỉ có `Read`, `Write`, `List`, `Tagging` thì `CreateBucket` bị `AccessDenied`. Cấp
+`Admin:dxlab-attachments` trong `infra/seaweedfs/s3-config.json` là đủ, và chỉ cho đúng một
+thùng. Không cần tạo thùng bằng tay: dịch vụ tự tạo khi tải tệp đầu tiên lên. Đổi
+`SEAWEEDFS_BUCKET` thì phải đổi cả tệp đó. SeaweedFS khởi động chậm sau khi khởi động lại
+container — gọi ngay sẽ gặp lỗi kết nối.
+
+**Server Action giới hạn thân yêu cầu 1 MB** (#80)
+
+Tải tệp đính kèm đi qua Route Handler (`/api/tep/...`), không qua Server Action. Biểu mẫu gửi vì
+vậy tạo hồ sơ bằng Server Action rồi tải tệp bằng `fetch` từ trình duyệt, và tự chuyển trang
+khi xong. Tệp tải hỏng thì hồ sơ vẫn đã gửi: chuyển sang trang hồ sơ kèm lời nhắc, không báo lỗi
+ở biểu mẫu — báo ở đó thì người gửi bấm gửi lần nữa và sinh hồ sơ thứ hai.
+
+**Thông báo lỗi của engine hiện mã tiếng Anh nếu không tra nhãn** (#157)
+
+`TransitionNotAllowed` và `RoleNotPermitted` từng in `'completed'`, `classifier`. Người gặp
+chúng thường là người bấm nút của một trang đã cũ — hồ sơ vừa được người khác chuyển đi — và họ
+đọc được nhãn, không đọc được mã. Engine nay tra `states.label` và `roles.label`.
+
+**Bộ quét hạn chờ quét cả dữ liệu thử còn lại trên cụm thử**
+
+Hồ sơ thử còn nằm ở *Chờ bổ sung thông tin* hay *Hoàn tất* trên cụm thử khiến bài kiểm thử so
+danh sách chính xác của bộ quét ra thừa mã hồ sơ. Không phải lỗi mã: hủy hay đóng các hồ sơ thử
+đó rồi chạy lại, hoặc dựng lại cụm thử. Bài đếm nên so chênh lệch, không so số tuyệt đối.
 
 **Qdrant tìm chính xác khi tập nhỏ — recall 1,0 không chứng minh HNSW tốt** (#47)
 
