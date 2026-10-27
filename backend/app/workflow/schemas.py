@@ -155,6 +155,9 @@ class HoSoTomTatRa(BaseModel):
     # Hồ sơ đang chờ chính người xem làm bước chính của quy trình (#227), suy từ cột
     # transitions.primary_scope. Chỉ điền ở danh sách hồ sơ và hàng đợi; None ở trang chi tiết.
     needs_my_action: bool | None = None
+    # Nhãn của bước chính đang chờ người xem, ví dụ "Phân loại yêu cầu" — chữ trên nút của
+    # dòng việc ở trang chủ (#228). None khi hồ sơ không chờ họ, và ở trang chi tiết.
+    next_step_label: str | None = None
 
 
 class LoiNhanRa(BaseModel):

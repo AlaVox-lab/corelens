@@ -1109,8 +1109,18 @@ trên cạnh bước chính nên là loại không tự truy vấn, không thì 
 
 CHECK `transitions_buoc_chinh_hop_le` cấm khai bước chính cho cạnh hệ thống: không ai "phải bấm"
 cạnh hệ thống tự đi. Đổi bước chính của một trạng thái là sửa dữ liệu khởi tạo, không sửa mã — có
-bài kiểm thử đổi cột ngay trong giao dịch và thấy cờ đổi theo. Cùng cột này dự kiến dùng cho nút
-chính trên dòng việc và cột "Việc tiếp theo" ở hàng đợi.
+bài kiểm thử đổi cột ngay trong giao dịch và thấy cờ đổi theo.
+
+**Trang chủ theo việc cần làm (#228, #230).** `my_primary_steps()` trả luôn cạnh bước chính, nên mỗi
+dòng danh sách còn có `next_step_label` — chữ trên nút của dòng việc ("Phân loại yêu cầu →"). Trang chủ
+gộp hồ sơ có cờ từ mọi vai người xem có (người gửi, điều phối, phòng ban) thành một khối "Cần bạn xử
+lý"; tổng quan thì tách theo vai. Nút trên dòng mở trang hồ sơ ở khối `#thao-tac`, không đi cạnh ngay
+trên trang chủ: bước chính thường cần nhập thêm (mức ưu tiên, người xử lý, lý do), và bảng thao tác
+dựng từ `allowed_transitions` vẫn là chỗ duy nhất gửi lệnh chuyển. Quy tắc xếp mặc định **độ gấp**: quá
+hạn trước, rồi sắp hạn hay sắp bị hệ thống tự đi (`sla_due_soon`, `auto_transition.warn`), rồi chờ lâu
+nhất; người dùng đổi được sang hạn gần nhất, chờ lâu nhất, mới nhất — trình duyệt nhớ lựa chọn.
+Thanh bên đếm cùng cờ đó: số đặc là việc chờ mình, số mờ là hồ sơ đang mở, chấm đỏ khi có việc chờ
+mình đã quá hạn hoặc sắp tự đi.
 
 ---
 
@@ -1167,7 +1177,8 @@ màn hình, thông báo lỗi và tài liệu hướng người dùng:
 | Chuyển hồ sơ sang phòng khác | **chuyển** (về, lại sang) | định tuyến |
 
 "Nhật ký sự kiện" và "dịch vụ ứng dụng" vẫn là tên đúng trong tài liệu kỹ thuật và bảng trạng thái
-vận hành ở trang chủ — quy tắc trên chỉ áp cho chữ người dùng cuối đọc. Thông báo lỗi nói bằng
+vận hành ở màn Hệ thống, nơi chỉ quản trị viên vào được (#229) — quy tắc trên chỉ áp cho chữ người
+dùng cuối đọc. Thông báo lỗi nói bằng
 **nhãn** của trạng thái và vai trò (tra từ bảng `states`, `roles`), không bao giờ bằng mã tiếng Anh.
 Chữ nằm ở mã (`frontend/`, `backend/`) đổi không cần `down -v`; chữ nằm trong dữ liệu (nhãn trạng thái,
 cạnh, ô ghi chú trong `infra/seed/`) thì phải.

@@ -13,6 +13,7 @@
 // hiện, và hỏi ngay khi có nơi vừa đánh dấu đã đọc — con số không đợi chuyển trang.
 
 import {
+  Activity,
   FolderOpen,
   GitFork,
   House,
@@ -34,6 +35,10 @@ export type MucDieuHuong = {
   nhom: "chung" | "lam-viec";
   /** Số hồ sơ còn mở ở mục này — hay số tin chưa đọc ở Hộp thư. Không có thì không hiện. */
   dem?: number;
+  /** Số hồ sơ đang chờ chính người xem làm bước chính (#230), huy hiệu đặc màu nhấn. */
+  cho?: number;
+  /** Có việc chờ người xem đã quá hạn hoặc sắp tự đi: chấm đỏ trên icon (#230). */
+  gap?: boolean;
 };
 
 /** Mỗi bao lâu thanh bên hỏi lại số chưa đọc, khi trang đang hiện. */
@@ -46,6 +51,7 @@ const ICON: Record<TenIcon, LucideIcon> = {
   "dieu-phoi": GitFork,
   "phong-ban": Inbox,
   "hop-thu": MessagesSquare,
+  "he-thong": Activity,
 };
 
 /** Số chưa đọc của Hộp thư, bắt đầu từ con số máy chủ dựng sẵn rồi tự hỏi lại. */
@@ -93,22 +99,45 @@ export function mucDangDung(duongDan: string, cacMuc: MucDieuHuong[]): MucDieuHu
   return khop[0] ?? null;
 }
 
+/**
+ * Huy hiệu hai mức (#230): số đặc màu nhấn là việc đang chờ chính mình — tin chưa đọc ở Hộp
+ * thư, hồ sơ có `needs_my_action` ở các mục khác; số mờ là hồ sơ còn mở. Nhãn đọc màn hình
+ * nói đủ cả hai số, vì khi thu gọn thanh bên chỉ còn số đặc.
+ */
 function Muc({ muc, chon, dem }: { muc: MucDieuHuong; chon: boolean; dem?: number }) {
   const Icon = ICON[muc.icon];
-  const so = dem ?? muc.dem;
   const laHopThu = muc.icon === "hop-thu";
+  const cho = laHopThu ? (dem ?? muc.dem) : muc.cho;
+  const mo = laHopThu ? undefined : muc.dem;
+  const nhan = [
+    muc.nhan,
+    cho ? (laHopThu ? `${cho} tin chưa đọc` : `${cho} việc cần xử lý`) : null,
+    mo ? `${mo} đang mở` : null,
+    muc.gap ? "có việc quá hạn hoặc sắp tự đi" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
   return (
     <Link
       className="sb-muc"
       href={muc.duongDan}
       aria-current={chon ? "page" : undefined}
-      aria-label={laHopThu && so ? `${muc.nhan}, ${so} tin chưa đọc` : undefined}
+      aria-label={nhan}
+      title={muc.nhan}
     >
-      <Icon aria-hidden />
-      <span>{muc.nhan}</span>
-      {so ? (
-        <span className="so" data-moi={laHopThu ? "" : undefined}>
-          {so}
+      <span className="sb-icon">
+        <Icon aria-hidden />
+        {muc.gap ? <span className="sb-cham" aria-hidden /> : null}
+      </span>
+      <span className="sb-nhan">{muc.nhan}</span>
+      {cho ? (
+        <span className="so" data-moi="" aria-hidden>
+          {cho}
+        </span>
+      ) : null}
+      {mo ? (
+        <span className="so" data-mo="" aria-hidden>
+          {mo}
         </span>
       ) : null}
     </Link>

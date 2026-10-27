@@ -3,246 +3,248 @@
 //
 // Trang chủ — nơi mọi người dùng đến đầu tiên, và nơi đăng nhập xong quay về.
 //
-// Hai việc:
+// Mở lên là biết hôm nay phải làm gì (#228). Ba phần:
 //
-//   Lối vào — đã đăng nhập thì dẫn thẳng tới từng không gian làm việc, dựng từ
-//             `workspaces` của `/me`. Người gửi thấy cổng gửi yêu cầu; điều phối viên
-//             thấy thêm buồng lái. Trang này không biết tên vai trò nào.
+//   Cần bạn xử lý — mọi hồ sơ đang chờ chính người xem làm bước chính, gộp từ mọi vai họ
+//             có, xếp theo độ gấp. Cờ `needs_my_action` và nhãn bước do dịch vụ tính từ dữ
+//             liệu quy tắc (#227); trang này không biết tên trạng thái hay vai trò nào.
+//   Dải số    — chờ bạn, quá hạn, sắp hạn, và số hồ sơ đang mở ở khu vực chính của họ.
+//   Tổng quan — tách theo vai: hồ sơ của tôi, hàng đợi điều phối, hàng đợi phòng ban. Quản
+//             trị viên thấy thêm tình trạng hệ thống (#229) — người khác không thấy nữa.
 //
-//   Trạng thái hệ thống — README hứa "mở trang chủ là biết cụm có khỏe không". Hiện cả
-//             khi chưa đăng nhập, vì đó là lúc người dựng lại hệ thống từ mã nguồn cần
-//             nó nhất: trước khi đăng nhập, họ cần biết cụm đã lên đủ chưa.
-//
-// Trang này từng là bộ khung của #62, dùng bộ biến màu cũ. #44 thay bộ biến màu mà
-// không soát tới đây, nên từ #44 tới #82 trang chủ mất hết màu và viền — ghi lại để
-// lần đổi token sau nhớ soát mọi trang, không chỉ trang đang làm.
+// Trang chưa đăng nhập không còn bảng trạng thái hệ thống: tình trạng cụm chỉ có nghĩa với
+// người vận hành, và họ xem ở màn Hệ thống sau khi đăng nhập (navigator chốt 27/10).
 
+import { AlarmClock, CircleCheck, Clock, FolderOpen, Hand } from "lucide-react";
 import Link from "next/link";
 
 import { KhungLamViec } from "@/components/khung-lam-viec";
+import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
+import { ViecCanLam, type DongViec } from "@/components/viec-can-lam";
 import { goiDichVu, type DanhTinh } from "@/lib/api";
-import { loiVaoCua } from "@/lib/khong-gian";
-import { bienHoMau } from "@/lib/trang-thai";
+import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
+import { docDongHo, docTuDong, type NguoiXem } from "@/lib/sla";
 
 export const dynamic = "force-dynamic";
 
-const DIA_CHI_DICH_VU = process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000";
+const XA_NHAT = Number.MAX_SAFE_INTEGER;
 
-type SucKhoe = {
-  status?: string;
-  database?: string;
-  version?: string;
-  active_rule_set_states?: number;
-  detail?: string;
-};
-
-async function docSucKhoe(): Promise<SucKhoe | null> {
-  try {
-    const phanHoi = await fetch(`${DIA_CHI_DICH_VU}/health`, { cache: "no-store" });
-    return (await phanHoi.json()) as SucKhoe;
-  } catch {
-    return null;
-  }
-}
-
-function DongTrangThai({ nhan, tot, giaTri }: { nhan: string; tot: boolean; giaTri: string }) {
-  return (
-    <div
-      style={{
-        ...bienHoMau(tot ? "g" : "r"),
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: "6px 14px",
-        padding: "11px 17px",
-        borderTop: "1px solid var(--line)",
-      }}
-    >
-      <span style={{ flex: "1 1 170px", fontSize: "13.5px", color: "var(--ink-2)" }}>{nhan}</span>
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          fontSize: "13.5px",
-          fontWeight: 600,
-          color: "var(--ho-ink)",
-        }}
-      >
-        {/* Dấu hiệu chữ đi kèm màu, cùng lý do với nhãn trạng thái hồ sơ: bản in đen
-            trắng và người không phân biệt được màu vẫn đọc được. */}
-        <span aria-hidden="true">{tot ? "✓" : "✕"}</span>
-        {giaTri}
-      </span>
-    </div>
-  );
-}
-
-function TheTrangThai({ sucKhoe }: { sucKhoe: SucKhoe | null }) {
-  const dungHet = sucKhoe?.status === "ok";
-
-  return (
-    <section className="the" style={{ marginTop: "28px" }}>
-      <div style={{ padding: "14px 17px" }}>
-        <h2 style={{ margin: 0, fontSize: "14.5px", fontWeight: 600 }}>Trạng thái hệ thống</h2>
-      </div>
-      <DongTrangThai nhan="Cổng người dùng" tot giaTri="đang chạy" />
-      <DongTrangThai
-        nhan="Dịch vụ ứng dụng"
-        tot={Boolean(sucKhoe)}
-        giaTri={sucKhoe ? `đang chạy · v${sucKhoe.version ?? "?"}` : "không tới được"}
-      />
-      <DongTrangThai
-        nhan="Cơ sở dữ liệu"
-        tot={sucKhoe?.database === "ok"}
-        giaTri={sucKhoe?.database === "ok" ? "đã kết nối" : "chưa kết nối"}
-      />
-      <DongTrangThai
-        nhan="Bộ quy tắc quy trình"
-        tot={dungHet && Boolean(sucKhoe?.active_rule_set_states)}
-        giaTri={
-          sucKhoe?.active_rule_set_states
-            ? `đã nạp · ${sucKhoe.active_rule_set_states} trạng thái`
-            : "chưa nạp"
-        }
-      />
-      {!dungHet && (
-        <p
-          style={{
-            margin: 0,
-            padding: "12px 17px",
-            borderTop: "1px solid var(--line)",
-            background: "var(--surface-2)",
-            fontSize: "12.5px",
-            color: "var(--ink-3)",
-            lineHeight: 1.6,
-          }}
-        >
-          {sucKhoe?.detail ?? "Kiểm tra dịch vụ ứng dụng bằng docker compose logs backend."}
-        </p>
-      )}
-    </section>
-  );
-}
-
-function ChuaDangNhap({ sucKhoe }: { sucKhoe: SucKhoe | null }) {
+function ChuaDangNhap() {
   return (
     <main className="khung" style={{ padding: "72px 20px 80px", maxWidth: "44rem" }}>
-      <span
-        className="mono"
-        style={{
-          width: "40px",
-          height: "40px",
-          borderRadius: "11px",
-          background: "var(--accent)",
-          color: "var(--accent-on)",
-          display: "grid",
-          placeItems: "center",
-          fontSize: "14px",
-          fontWeight: 500,
-        }}
-      >
-        YC
-      </span>
-      <h1
-        style={{
-          margin: "18px 0 0",
-          fontSize: "clamp(24px,4vw,32px)",
-          fontWeight: 600,
-          letterSpacing: "-.02em",
-          lineHeight: 1.2,
-        }}
-      >
-        Cổng yêu cầu nội bộ
-      </h1>
+      <span className="logo-lon mono">YC</span>
+      <h1 className="tieu-de-trang">Cổng yêu cầu nội bộ</h1>
       <p style={{ margin: "6px 0 0", fontSize: "14px", color: "var(--ink-3)" }}>
         DX-OS Lab · Hệ điều hành Doanh nghiệp số
       </p>
-      <p
-        style={{
-          margin: "18px 0 0",
-          fontSize: "15px",
-          color: "var(--ink-2)",
-          lineHeight: 1.65,
-          maxWidth: "58ch",
-        }}
-      >
-        Tiếp nhận và điều phối tập trung mọi yêu cầu nội bộ trong doanh nghiệp. Mỗi hồ sơ
-        đi qua một quy trình khai báo bằng dữ liệu, và mọi bước nó đi đều được ghi lại.
+      <p style={{ margin: "18px 0 0", fontSize: "15px", color: "var(--ink-2)", lineHeight: 1.65, maxWidth: "58ch" }}>
+        Tiếp nhận và điều phối tập trung mọi yêu cầu nội bộ trong doanh nghiệp. Mỗi hồ sơ đi qua
+        một quy trình khai báo bằng dữ liệu, và mọi bước nó đi đều được ghi lại.
       </p>
-      <a
-        href="/api/auth/login"
-        className="nut"
-        data-loai="chinh"
-        style={{ marginTop: "22px" }}
-      >
+      <a href="/api/auth/login" className="nut" data-loai="chinh" style={{ marginTop: "22px" }}>
         Đăng nhập bằng tài khoản công ty
       </a>
-
-      <TheTrangThai sucKhoe={sucKhoe} />
     </main>
   );
 }
 
+type Nguon = {
+  ds: HoSoTomTat[];
+  href: (h: HoSoTomTat) => string;
+  vai: string;
+  nguoiXem: NguoiXem;
+  phu: (h: HoSoTomTat) => string | null;
+};
+
+/** Một hồ sơ đang chờ người xem → một dòng việc, kèm câu hạn và khóa sắp xếp dựng sẵn. */
+function thanhDong(h: HoSoTomTat, n: Nguon, nhieuVai: boolean): DongViec {
+  const tuDong = docTuDong(h);
+  const dongHo = docDongHo(h, n.nguoiXem);
+  const gap: DongViec["gap"] = h.sla_overdue ? 0 : tuDong?.canhBao || h.sla_due_soon ? 1 : 2;
+  const han = h.sla_overdue || h.sla_due_soon ? dongHo.cau : (tuDong?.cau ?? null);
+  const moc = h.sla_due_at ?? h.auto_transition?.at;
+  const vao = (h as HoSoTomTat & { state_entered_at?: string }).state_entered_at ?? h.updated_at;
+  return {
+    khoa: `${n.vai}-${h.id}`,
+    href: n.href(h),
+    ma: h.code,
+    tieuDe: h.title,
+    trangThai: { ma: h.state.code, nhan: h.state.label },
+    han,
+    gap,
+    phu: n.phu(h),
+    vai: nhieuVai ? n.vai : null,
+    buoc: h.next_step_label ?? "Mở hồ sơ",
+    xep: { han: moc ? Date.parse(moc) : XA_NHAT, cho: Date.parse(vao), moi: Date.parse(h.created_at) },
+  };
+}
+
+function OSo({ icon: Icon, nhan, so, phu, xau }: { icon: typeof Hand; nhan: string; so: number; phu?: string; xau?: boolean }) {
+  return (
+    <div className="o-so">
+      <span className="o-so-nhan">
+        <span className="o-so-icon" aria-hidden>
+          <Icon />
+        </span>
+        {nhan}
+      </span>
+      <strong>{so}</strong>
+      {phu ? <em data-xau={xau ? "" : undefined}>{phu}</em> : null}
+    </div>
+  );
+}
+
+function TongQuan({ tieuDe, href, dong }: { tieuDe: string; href: string; dong: { nhan: string; so: number }[] }) {
+  const coSo = dong.filter((d) => d.so > 0);
+  if (coSo.length === 0) return null;
+  return (
+    <section className="the">
+      <div className="khoi-dau">
+        <h2>{tieuDe}</h2>
+        <Link href={href}>Xem tất cả</Link>
+      </div>
+      <ul className="ds-tong-quan">
+        {coSo.map((d) => (
+          <li key={d.nhan}>
+            <span>{d.nhan}</span>
+            <b>{d.so}</b>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Đếm theo nhãn trạng thái, giữ thứ tự xuất hiện. */
+function demTheoTrangThai(ds: HoSoTomTat[]): { nhan: string; so: number }[] {
+  const dem = new Map<string, number>();
+  for (const h of ds) dem.set(h.state.label, (dem.get(h.state.label) ?? 0) + 1);
+  return [...dem].map(([nhan, so]) => ({ nhan, so }));
+}
+
 export default async function TrangChu() {
-  const [sucKhoe, danhTinh] = await Promise.all([
-    docSucKhoe(),
-    goiDichVu<DanhTinh>("/me"),
+  const danhTinh = await goiDichVu<DanhTinh>("/me");
+  if (!danhTinh) return <ChuaDangNhap />;
+
+  const kg = danhTinh.workspaces ?? ["portal"];
+  const [cuaToi, dieuPhoi, phongBan, sucKhoe] = await Promise.all([
+    goiDichVu<HoSoTomTat[]>("/requests"),
+    kg.includes("coordination") ? goiDichVu<HangDoi>("/coordination/queue") : null,
+    kg.includes("department") ? goiDichVu<HangDoiPhongBan>("/department/queue") : null,
+    kg.includes("system") ? docSucKhoe() : null,
   ]);
 
-  if (!danhTinh) return <ChuaDangNhap sucKhoe={sucKhoe} />;
+  const cacNguon = ([
+    cuaToi && {
+      ds: cuaToi,
+      href: (h: HoSoTomTat) => `/yeu-cau/${h.id}`,
+      vai: "Người gửi",
+      nguoiXem: "nguoi-gui" as const,
+      phu: () => null,
+    },
+    dieuPhoi && {
+      ds: dieuPhoi.items,
+      href: (h: HoSoTomTat) => `/dieu-phoi/${h.id}`,
+      vai: "Điều phối",
+      nguoiXem: "noi-bo" as const,
+      phu: (h: HoSoTomTat) => (h as HoSoTomTat & { requester_label?: string }).requester_label ?? null,
+    },
+    phongBan && {
+      ds: phongBan.items,
+      href: (h: HoSoTomTat) => `/phong-ban/${h.id}`,
+      vai: "Phòng ban",
+      nguoiXem: "noi-bo" as const,
+      phu: (h: HoSoTomTat) => {
+        const giao = (h as HoSoTomTat & { assignee_label?: string | null }).assignee_label;
+        return giao ? `Đang giao: ${giao}` : null;
+      },
+    },
+  ] as (Nguon | null)[]).filter((n): n is Nguon => n !== null);
+
+  const coViec = cacNguon.filter((n) => n.ds.some((h) => h.needs_my_action));
+  const nhieuVai = coViec.length > 1;
+  const dong = coViec.flatMap((n) => n.ds.filter((h) => h.needs_my_action).map((h) => thanhDong(h, n, nhieuVai)));
+
+  const quaHan = dong.filter((d) => d.gap === 0).length;
+  const sapHan = dong.filter((d) => d.gap === 1).length;
+  const moCuaToi = (cuaToi ?? []).filter((h) => !h.state.is_terminal);
+  const theoDoi = new Set((phongBan?.groups ?? []).filter((g) => g.watch_only).map((g) => g.code));
+  const oCuoi = dieuPhoi
+    ? { nhan: "Trong hàng đợi điều phối", so: dieuPhoi.items.length }
+    : phongBan
+      ? { nhan: "Phòng đang giữ", so: phongBan.items.filter((m) => !theoDoi.has(m.state.code)).length }
+      : { nhan: "Hồ sơ của tôi đang mở", so: moCuaToi.length };
 
   const ten = danhTinh.name ?? danhTinh.username ?? danhTinh.id;
-  const cacLoiVao = loiVaoCua(danhTinh.workspaces ?? ["portal"]);
+  const cauChao = dong.length
+    ? `Hôm nay có ${dong.length} việc chờ bạn${quaHan ? `, trong đó ${quaHan} việc đã quá hạn` : ""}.`
+    : "Hôm nay không có việc nào chờ bạn.";
+  const loiTiep = kg.includes("coordination")
+    ? { href: "/dieu-phoi", nhan: "Mở hàng đợi điều phối" }
+    : kg.includes("department")
+      ? { href: "/phong-ban", nhan: "Mở hàng đợi phòng ban" }
+      : kg.includes("system")
+        ? { href: "/he-thong", nhan: "Mở màn Hệ thống" }
+        : { href: "/yeu-cau/moi", nhan: "Gửi yêu cầu mới" };
+
+  const phongNhan = (phongBan?.departments ?? []).map((p: NhanCoMa) => p.label).join(" · ");
 
   return (
     <KhungLamViec canKhongGian="portal">
-      <h1
-        style={{
-          margin: 0,
-          fontSize: "clamp(22px,3.4vw,28px)",
-          fontWeight: 600,
-          letterSpacing: "-.02em",
-          lineHeight: 1.25,
-        }}
-      >
-        Chào {ten}
-      </h1>
-      <p style={{ margin: "7px 0 0", fontSize: "14.5px", color: "var(--ink-2)" }}>
-        Bạn muốn làm gì hôm nay?
-      </p>
+      <div className="trang-chu">
+        <h1 className="tieu-de-trang">Chào {ten}</h1>
+        <p className="cau-chao">{cauChao}</p>
 
-      <div
-        style={{
-          marginTop: "20px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
-          gap: "12px",
-        }}
-      >
-        {cacLoiVao.map((l) => (
-          <Link
-            key={l.duongDan}
-            href={l.duongDan}
-            className="the"
-            style={{
-              padding: "18px",
-              display: "grid",
-              gap: "6px",
-              alignContent: "start",
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            <span style={{ fontSize: "15.5px", fontWeight: 600 }}>{l.nhan} →</span>
-            <span style={{ fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6 }}>
-              {l.moTa}
-            </span>
-          </Link>
-        ))}
+        <div className="dai-so">
+          <OSo icon={Hand} nhan="Chờ bạn" so={dong.length} />
+          <OSo icon={AlarmClock} nhan="Quá hạn" so={quaHan} phu={quaHan ? "Làm trước tiên" : undefined} xau />
+          <OSo icon={Clock} nhan="Sắp hạn hoặc sắp tự đi" so={sapHan} />
+          <OSo icon={FolderOpen} nhan={oCuoi.nhan} so={oCuoi.so} />
+        </div>
+
+        <div className="luoi-chu">
+          <div className="cot-viec">
+            {dong.length ? (
+              <ViecCanLam dong={dong} />
+            ) : (
+              <section className="the khoi-viec">
+                <div className="khoi-dau">
+                  <h2>Cần bạn xử lý</h2>
+                </div>
+                <div className="rong">
+                  <span className="rong-vong" aria-hidden>
+                    <CircleCheck />
+                  </span>
+                  <h3>Không có việc nào chờ bạn</h3>
+                  <p>Hồ sơ cần bạn làm bước tiếp theo sẽ hiện ở đây, việc gấp nhất lên đầu.</p>
+                  <Link className="nut" href={loiTiep.href}>
+                    {loiTiep.nhan}
+                  </Link>
+                </div>
+              </section>
+            )}
+          </div>
+
+          <div className="cot-tong-quan">
+            {dieuPhoi ? (
+              <TongQuan
+                tieuDe="Hàng đợi điều phối"
+                href="/dieu-phoi"
+                dong={dieuPhoi.groups.map((g) => ({ nhan: g.label, so: g.count }))}
+              />
+            ) : null}
+            {phongBan ? (
+              <TongQuan
+                tieuDe={phongNhan ? `Phòng ${phongNhan}` : "Hàng đợi phòng ban"}
+                href="/phong-ban"
+                dong={phongBan.groups.map((g) => ({ nhan: g.label, so: g.count }))}
+              />
+            ) : null}
+            <TongQuan tieuDe="Hồ sơ của tôi đang mở" href="/yeu-cau" dong={demTheoTrangThai(moCuaToi)} />
+            {kg.includes("system") ? <TheHeThong sucKhoe={sucKhoe} /> : null}
+          </div>
+        </div>
       </div>
-
-      <TheTrangThai sucKhoe={sucKhoe} />
     </KhungLamViec>
   );
 }

@@ -298,7 +298,7 @@ export default async function ChiTietHoSo({
 
       {/* --- Thao tác — ngay dưới phần đầu (#189): người gửi mở hồ sơ là thấy việc của
           mình, không phải cuộn qua nhật ký --------------------------------------- */}
-      <div className="the khong-in" style={{ marginTop: "16px" }}>
+      <div id="thao-tac" className="the khong-in" style={{ marginTop: "16px", scrollMarginTop: "72px" }}>
         <div style={{ padding: "17px 20px", display: "grid", gap: "5px", borderBottom: "1px solid var(--line)" }}>
           <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
             Bạn có thể làm gì lúc này
