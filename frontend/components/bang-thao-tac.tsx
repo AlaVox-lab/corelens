@@ -141,7 +141,7 @@ export function BangThaoTac({
 
   if (cacCanh.length === 0) {
     return (
-      <div style={{ display: "grid", gap: "12px" }}>
+      <div id="thao-tac" style={{ display: "grid", gap: "12px", scrollMarginTop: "72px" }}>
         <p style={{ margin: 0, fontSize: "13.5px", color: "var(--ink-2)", lineHeight: 1.6 }}>
           {khiHet.cau}
         </p>
@@ -153,7 +153,7 @@ export function BangThaoTac({
   }
 
   return (
-    <form action={thucHien} style={{ display: "grid", gap: "12px" }}>
+    <form id="thao-tac" action={thucHien} style={{ display: "grid", gap: "12px", scrollMarginTop: "72px" }}>
       <input type="hidden" name="case_id" value={maHoSo} />
 
       <div style={{ display: "grid", gap: "8px" }}>

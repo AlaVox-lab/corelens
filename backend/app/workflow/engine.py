@@ -297,7 +297,16 @@ def allowed_transitions(
 def needs_my_action(
     session: Session, cases: Sequence[Request], actor: Actor
 ) -> dict[int, bool]:
-    """Hồ sơ nào đang chờ chính tác nhân này làm bước chính (#227), cho cả một danh sách.
+    """Hồ sơ nào đang chờ chính tác nhân này làm bước chính (#227), cho cả một danh sách."""
+    return {ma: canh is not None for ma, canh in my_primary_steps(session, cases, actor).items()}
+
+
+def my_primary_steps(
+    session: Session, cases: Sequence[Request], actor: Actor
+) -> dict[int, Transition | None]:
+    """Cạnh bước chính mà tác nhân này đang phải đi ở từng hồ sơ, `None` khi hồ sơ không chờ họ.
+
+    Trang chủ lấy nhãn của cạnh này làm chữ trên nút của dòng việc (#228).
 
     "Bấm được" chưa phải "cần xử lý": người gửi sửa hay hủy được ở Đã gửi mà hồ sơ không
     chờ họ. Nên cờ chỉ xét các cạnh khai `primary_scope` trong dữ liệu quy tắc, qua cùng hai
@@ -325,19 +334,24 @@ def needs_my_action(
     can_xet = [h for h in cases if (h.rule_set_id, h.current_state) in canh_theo_nguon]
     truoc = _trang_thai_truoc_nhieu(session, [h.id for h in can_xet])
 
-    ket_qua = dict.fromkeys((h.id for h in cases), False)
+    ket_qua: dict[int, Transition | None] = dict.fromkeys((h.id for h in cases))
     for ho_so in can_xet:
-        ket_qua[ho_so.id] = any(
-            (canh.primary_scope != "assignee" or ho_so.assignee_id in (None, actor.id))
-            and input_free_guards_pass(
-                TransitionContext(
-                    case=ho_so,
-                    transition=canh,
-                    actor=actor,
-                    previous_state=truoc.get(ho_so.id),
+        ket_qua[ho_so.id] = next(
+            (
+                canh
+                for canh in canh_theo_nguon[(ho_so.rule_set_id, ho_so.current_state)]
+                if
+                (canh.primary_scope != "assignee" or ho_so.assignee_id in (None, actor.id))
+                and input_free_guards_pass(
+                    TransitionContext(
+                        case=ho_so,
+                        transition=canh,
+                        actor=actor,
+                        previous_state=truoc.get(ho_so.id),
+                    )
                 )
-            )
-            for canh in canh_theo_nguon[(ho_so.rule_set_id, ho_so.current_state)]
+            ),
+            None,
         )
     return ket_qua
 

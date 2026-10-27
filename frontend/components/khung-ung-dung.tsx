@@ -10,7 +10,7 @@
 // chủ rồi truyền xuống. Tệp này chỉ giữ thứ thuộc về trình duyệt: đường dẫn đang mở,
 // ngăn kéo đang mở hay đóng, và lựa chọn sáng/tối lưu trên máy người dùng.
 
-import { ChevronRight, LogOut, Menu, Moon, Sun } from "lucide-react";
+import { ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -20,6 +20,9 @@ import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huo
 
 /** Khóa lưu lựa chọn sáng/tối. Đoạn mã đầu trang trong `app/layout.tsx` đọc cùng khóa. */
 export const KHOA_CHE_DO = "dxlab-theme";
+
+/** Khóa nhớ thanh bên đang thu gọn hay mở rộng (#230). */
+const KHOA_THU_GON = "dxlab-sb-thu-gon";
 
 /**
  * Đổi sáng/tối và nhớ lựa chọn. Chưa từng bấm thì trang theo thiết lập của hệ điều hành
@@ -95,6 +98,24 @@ export function KhungUngDung({
   const dang = mucDangDung(duongDan, cacMuc);
   const [moMenu, setMoMenu] = useState(false);
   const [tenCon, setTenCon] = useState<string | null>(null);
+  // Đọc lựa chọn sau khi dựng xong, để bản dựng ở máy chủ và ở trình duyệt khớp nhau
+  const [thuGon, setThuGon] = useState(false);
+  useEffect(() => {
+    try {
+      setThuGon(localStorage.getItem(KHOA_THU_GON) === "1");
+    } catch {
+      // Trình duyệt chặn lưu trữ: mặc định mở rộng
+    }
+  }, []);
+  const doiThuGon = () =>
+    setThuGon((cu) => {
+      try {
+        localStorage.setItem(KHOA_THU_GON, cu ? "0" : "1");
+      } catch {
+        // Vẫn đổi được trong lần mở này, chỉ không nhớ
+      }
+      return !cu;
+    });
 
   // Bấm một mục trong ngăn kéo là sang trang khác: đóng ngăn kéo lại
   useEffect(() => setMoMenu(false), [duongDan]);
@@ -111,7 +132,7 @@ export function KhungUngDung({
   const sauHon = dang !== null && duongDan !== dang.duongDan;
 
   return (
-    <div className="app" data-menu-mo={moMenu ? "" : undefined}>
+    <div className="app" data-menu-mo={moMenu ? "" : undefined} data-thu-gon={thuGon ? "" : undefined}>
       <aside className="sb khong-in" aria-label="Thanh bên">
         <div className="sb-dau">
           <span className="logo">YC</span>
@@ -124,6 +145,16 @@ export function KhungUngDung({
         <DieuHuong cacMuc={cacMuc} dang={dang} />
 
         <div className="sb-chan">
+          <button
+            className="sb-muc nut-thu-gon"
+            type="button"
+            onClick={doiThuGon}
+            aria-label={thuGon ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+            aria-expanded={!thuGon}
+            title={thuGon ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+          >
+            <PanelLeftClose aria-hidden />
+          </button>
           <button className="sb-muc nut-mau" type="button" onClick={doiCheDo}>
             <span className="khi-sang">
               <Moon aria-hidden />

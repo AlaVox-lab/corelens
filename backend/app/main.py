@@ -98,6 +98,9 @@ app = FastAPI(
 )
 
 
+# Vai trò vận hành cụm: gác màn Hệ thống và lệnh quét SLA bằng tay
+VAI_TRO_QUAN_TRI = "administrator"
+
 app.include_router(router_yeu_cau)
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
@@ -186,6 +189,10 @@ def me(
         khong_gian.append("coordination")
     if vao_duoc_phong_ban(session, actor):
         khong_gian.append("department")
+    # Màn Hệ thống (#229): tình trạng các dịch vụ chỉ có nghĩa với người vận hành cụm, nên
+    # chỉ quản trị viên thấy — cùng vai trò gác điểm cuối /sla/scan ngay dưới.
+    if VAI_TRO_QUAN_TRI in actor.roles:
+        khong_gian.append("system")
 
     return {
         "id": actor.id,
@@ -200,7 +207,7 @@ def me(
 
 @app.post("/sla/scan", tags=["Vận hành"])
 def sla_scan(
-    actor: Annotated[Actor, Depends(require_roles("administrator"))],
+    actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
 ) -> dict:
     """Chạy ngay một lượt quét hồ sơ quá hạn SLA và hết hạn chờ, không đợi chu kỳ.
 

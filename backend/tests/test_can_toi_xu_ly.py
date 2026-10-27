@@ -206,7 +206,9 @@ def test_danh_sach_ho_so_cua_toi_tra_co(session, rule_set, phong_ban):
     app.dependency_overrides[current_actor] = lambda: NGUOI_GUI
     try:
         with TestClient(app) as client:
-            dong = {d["id"]: d["needs_my_action"] for d in client.get("/requests").json()}
+            ds = client.get("/requests").json()
+            dong = {d["id"]: d["needs_my_action"] for d in ds}
+            nhan = {d["id"]: d["next_step_label"] for d in ds}
             chi_tiet = client.get(f"/requests/{cho_toi.id}").json()
     finally:
         app.dependency_overrides.clear()
@@ -214,6 +216,8 @@ def test_danh_sach_ho_so_cua_toi_tra_co(session, rule_set, phong_ban):
     assert dong[cho_toi.id] is True
     assert dong[khong_cho.id] is False
     assert chi_tiet["needs_my_action"] is None, "trang chi tiết không điền cờ"
+    assert nhan[cho_toi.id] == "Bổ sung thông tin", "nút trên dòng việc lấy nhãn của bước chính"
+    assert nhan[khong_cho.id] is None
 
 
 # --- Hiệu năng -----------------------------------------------------------------------
@@ -242,3 +246,27 @@ def test_so_truy_van_khong_tang_theo_so_dong(session, rule_set, phong_ban):
     mot_dong = _dem_truy_van(session, cac_ho_so[:1])
     sau_dong = _dem_truy_van(session, cac_ho_so)
     assert sau_dong <= mot_dong, f"1 hồ sơ: {mot_dong} truy vấn, 6 hồ sơ: {sau_dong}"
+
+
+def test_quan_tri_vien_co_khong_gian_he_thong(session):
+    """Màn Hệ thống (#229) chỉ hiện với quản trị viên, qua danh sách không gian của /me."""
+    from fastapi.testclient import TestClient
+
+    from app.auth.dependencies import current_actor, current_claims
+    from app.db import get_session
+    from app.main import app
+
+    quan_tri = Actor(id="ct-qt-01", name="Quản trị", roles=frozenset({"administrator"}))
+    app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[current_claims] = lambda: {}
+    try:
+        with TestClient(app) as client:
+            app.dependency_overrides[current_actor] = lambda: quan_tri
+            cua_qt = client.get("/me").json()["workspaces"]
+            app.dependency_overrides[current_actor] = lambda: NGUOI_GUI
+            cua_gui = client.get("/me").json()["workspaces"]
+    finally:
+        app.dependency_overrides.clear()
+
+    assert "system" in cua_qt
+    assert "system" not in cua_gui

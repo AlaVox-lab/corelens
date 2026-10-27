@@ -48,7 +48,7 @@ from app.workflow.engine import (
     case_history,
     create_case,
     kiem_ho_so_goc,
-    needs_my_action,
+    my_primary_steps,
     get_active_rule_set,
 )
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
@@ -190,6 +190,14 @@ def _tu_dong_ra(session: Session, ho_so: Request) -> TuDongRa | None:
     if td is None:
         return None
     return TuDongRa(activity_label=td.canh.activity_label, at=td.luc, warn=td.bao_truoc)
+
+
+def _buoc_cua_toi(canh: Transition | None) -> dict:
+    """Cờ và nhãn bước chính cho một dòng danh sách (#227, #228)."""
+    return {
+        "needs_my_action": canh is not None,
+        "next_step_label": canh.activity_label if canh else None,
+    }
 
 
 def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict:
@@ -499,11 +507,8 @@ def ho_so_cua_toi(
         return []
 
     states = _bang_trang_thai(session, cac_ho_so[0].rule_set_id)
-    cho_toi = needs_my_action(session, cac_ho_so, actor)
-    return [
-        HoSoTomTatRa(**_tom_tat(session, h, states), needs_my_action=cho_toi[h.id])
-        for h in cac_ho_so
-    ]
+    buoc = my_primary_steps(session, cac_ho_so, actor)
+    return [HoSoTomTatRa(**_tom_tat(session, h, states), **_buoc_cua_toi(buoc[h.id])) for h in cac_ho_so]
 
 
 @router.get("/requests/{case_id}", response_model=HoSoChiTietRa)

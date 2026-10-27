@@ -66,7 +66,17 @@ function KhongVaoDuoc() {
   );
 }
 
-type SoDem = { dem: number | null; phongBan?: NhanCoMa[] };
+type SoDem = { dem: number | null; cho?: number; gap?: boolean; phongBan?: NhanCoMa[] };
+
+/**
+ * Việc chờ chính người xem (#230): hồ sơ có `needs_my_action`, và có cái nào gấp không —
+ * đã quá hạn, hay hệ thống sắp tự đi thay (`auto_transition.warn`). Cờ do dịch vụ tính từ
+ * dữ liệu quy tắc, giao diện chỉ đếm.
+ */
+function viecCho(ds: HoSoTomTat[]): Pick<SoDem, "cho" | "gap"> {
+  const cho = ds.filter((h) => h.needs_my_action);
+  return { cho: cho.length, gap: cho.some((h) => h.sla_overdue || h.auto_transition?.warn) };
+}
 
 /**
  * Số hồ sơ còn mở ở từng mục, đếm bằng chính điểm cuối mà trang của mục đó dùng — không
@@ -82,11 +92,11 @@ type SoDem = { dem: number | null; phongBan?: NhanCoMa[] };
 const DEM: Record<string, () => Promise<SoDem>> = {
   "/yeu-cau": async () => {
     const ds = await goiDichVu<HoSoTomTat[]>("/requests");
-    return { dem: ds ? ds.filter((h) => !h.state.is_terminal).length : null };
+    return ds ? { dem: ds.filter((h) => !h.state.is_terminal).length, ...viecCho(ds) } : { dem: null };
   },
   "/dieu-phoi": async () => {
     const hang = await goiDichVu<HangDoi>("/coordination/queue");
-    return { dem: hang ? hang.items.length : null };
+    return hang ? { dem: hang.items.length, ...viecCho(hang.items) } : { dem: null };
   },
   "/phong-ban": async () => {
     const hang = await goiDichVu<HangDoiPhongBan>("/department/queue");
@@ -94,6 +104,7 @@ const DEM: Record<string, () => Promise<SoDem>> = {
     const theoDoi = new Set(hang.groups.filter((g) => g.watch_only).map((g) => g.code));
     return {
       dem: hang.items.filter((m) => !theoDoi.has(m.state.code)).length,
+      ...viecCho(hang.items),
       phongBan: hang.departments,
     };
   },
@@ -136,6 +147,8 @@ export async function KhungLamViec({
       icon: l.icon,
       nhom: l.nhom,
       dem: soDem.get(l.duongDan)?.dem ?? undefined,
+      cho: soDem.get(l.duongDan)?.cho,
+      gap: soDem.get(l.duongDan)?.gap,
     })),
     {
       duongDan: "/hop-thu",
