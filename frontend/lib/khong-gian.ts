@@ -11,7 +11,7 @@
 // diện kịp có trang cho nó là chuyện bình thường.
 
 /** Tên icon của mục trên thanh bên. Thanh bên tra icon theo tên này (#158). */
-export type TenIcon = "trang-chu" | "gui" | "ho-so" | "dieu-phoi" | "phong-ban" | "hop-thu";
+export type TenIcon = "trang-chu" | "gui" | "ho-so" | "dieu-phoi" | "phong-ban" | "hop-thu" | "he-thong";
 
 export type LoiVao = {
   duongDan: string;
@@ -58,6 +58,15 @@ const LOI_VAO: Record<string, LoiVao[]> = {
       nhan: "Phòng ban",
       moTa: "Nhận hồ sơ về phòng, giao người xử lý, theo dõi hạn xử lý và hồ sơ bị leo thang.",
       icon: "phong-ban",
+      nhom: "lam-viec",
+    },
+  ],
+  system: [
+    {
+      duongDan: "/he-thong",
+      nhan: "Hệ thống",
+      moTa: "Tình trạng các dịch vụ của cụm: định danh, cơ sở dữ liệu, bộ quy tắc quy trình.",
+      icon: "he-thong",
       nhom: "lam-viec",
     },
   ],

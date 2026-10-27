@@ -205,9 +205,11 @@ khi lên mới nhận đăng nhập. Rồi mở `http://localhost:3000`.
 | SeaweedFS — lưu trữ tệp, S3 API | `http://localhost:8333` | xem `.env` |
 | PostgreSQL | `localhost:5432` | xem `.env` |
 
-Mở `http://localhost:3000` là biết ngay cụm có khỏe không: trang chủ báo trạng thái
-từng tầng, kể cả việc bộ quy tắc quy trình đã nạp đủ mười trạng thái hay chưa. Cổng gửi
-yêu cầu nằm ở `http://localhost:3000/yeu-cau`.
+Kiểm cụm có khỏe không: đăng nhập bằng tài khoản quản trị viên `khanh.vo` rồi mở màn
+**Hệ thống** (`http://localhost:3000/he-thong`) — màn báo trạng thái từng tầng, kể cả việc bộ
+quy tắc quy trình đã nạp đủ các trạng thái hay chưa. Chưa đăng nhập thì xem thẳng
+`http://localhost:8000/health`. Người dùng khác mở trang chủ thấy danh sách việc đang chờ họ,
+không thấy chữ kỹ thuật. Cổng gửi yêu cầu nằm ở `http://localhost:3000/yeu-cau`.
 
 Lược đồ và dữ liệu khởi tạo của engine máy trạng thái nạp tự động lúc PostgreSQL khởi
 tạo lần đầu. Nếu bộ quy tắc sai — có ngõ cụt, có trạng thái không tới được, có cạnh

@@ -153,6 +153,10 @@ export type HoSoTomTat = {
    * có lời nhắn nào (`null`) — nguồn của dấu hiệu "đang chờ trả lời" trên danh sách (#128).
    */
   last_message_from_requester: boolean | null;
+  /** Hồ sơ đang chờ chính người xem làm bước chính (#227); null ở trang chi tiết. */
+  needs_my_action?: boolean | null;
+  /** Nhãn bước chính đang chờ người xem, ví dụ "Phân loại yêu cầu" (#228). */
+  next_step_label?: string | null;
 };
 
 /**

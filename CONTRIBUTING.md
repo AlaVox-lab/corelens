@@ -97,7 +97,7 @@ Quy trình cập nhật của người điều phối:
 
 ### 2.6. Tích hợp liên tục
 
-Mỗi pull request vào `dev` hay `main`, và mỗi lần hai nhánh đó nhận commit, chạy quy trình
+Mỗi pull request vào `dev` hay `main` chạy quy trình
 `.github/workflows/ci.yml`. Ba kiểm tra hiện riêng trên trang pull request:
 
 | Kiểm tra | Làm gì | Chạy tay ở máy |
