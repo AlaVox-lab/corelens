@@ -38,6 +38,7 @@ from app.workflow.context import Actor
 from app.workflow.coordination import VAI_TRO_DIEU_PHOI
 from app.workflow.engine import create_case
 from app.workflow.routes import xep_o_nhap
+from tests.truong_mau import chi_tiet_mau
 
 NGUOI_GUI = Actor(id="nd-gui-001", name="An Nguyễn", roles=frozenset({"requester"}))
 DIEU_PHOI = Actor(id="nd-dp-001", name="Bình Trần", roles=frozenset({VAI_TRO_DIEU_PHOI}))
@@ -161,10 +162,11 @@ def test_ho_so_gui_qua_cong_mang_ten_nguoi_gui_toi_hang_doi(client, session, rul
     Phép thử đột biến lộ ra khe đó: gỡ việc ghi tên ở cổng #44 mà không bài nào đổ.
     """
     _goi_bang(client, NGUOI_GUI)
-    loai = client.get("/request-types").json()[0]["code"]
+    loai = client.get("/request-types").json()[0]
     r = client.post(
         "/requests",
-        json={"title": "Wi-Fi tầng 3 mất kết nối buổi chiều", "request_type_code": loai},
+        json={"title": "Wi-Fi tầng 3 mất kết nối buổi chiều", "request_type_code": loai["code"],
+              "details": chi_tiet_mau(loai)},
     )
     assert r.status_code == 201, r.text
 

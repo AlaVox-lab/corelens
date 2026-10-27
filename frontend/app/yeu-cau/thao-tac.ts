@@ -22,7 +22,7 @@ import { revalidatePath } from "next/cache";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { guiDichVu } from "@/lib/api";
-import { docLoiNhan, gomThayDoi } from "@/lib/bieu-mau";
+import { docJson, docLoiNhan, gomThayDoi } from "@/lib/bieu-mau";
 import type { HoSoChiTiet } from "@/lib/kieu";
 
 function chuoiHoacRong(gia_tri: FormDataEntryValue | null): string {
@@ -54,6 +54,7 @@ export async function guiYeuCau(
     title: tieuDe,
     description: moTa || null,
     request_type_code: loai || null,
+    details: docJson(chuoiHoacRong(duLieu.get("details"))),
     parent_request_id: /^\d+$/.test(goc) ? Number(goc) : null,
   });
 

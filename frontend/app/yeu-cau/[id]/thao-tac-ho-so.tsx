@@ -37,7 +37,9 @@ import { useActionState, useState } from "react";
 
 import { OTruong, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
-import type { CanhDiDuoc } from "@/lib/kieu";
+import { OTruongRieng } from "@/components/o-truong-rieng";
+import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
+import type { CanhDiDuoc, LoaiYeuCau } from "@/lib/kieu";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
 import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
@@ -67,12 +69,15 @@ export function ThaoTacHoSo({
   cacCanh,
   giaTriDau = {},
   danhMuc = {},
+  truongRieng,
 }: {
   maHoSo: number;
   cacCanh: CanhDiDuoc[];
   /** Nội dung hồ sơ đang có, điền sẵn vào ô nhập của thao tác sửa nội dung (#127). */
   giaTriDau?: Record<string, string>;
   danhMuc?: Partial<Record<NguonDanhMuc, NguonLuaChon>>;
+  /** Trường riêng (#250): giá trị đang có, loại hiện tại và danh mục loại kèm khai báo trường. */
+  truongRieng?: { giaTri: Record<string, unknown>; loaiDau: string | null; cacLoai: LoaiYeuCau[] };
 }) {
   const [ketQua, thucHien, dangChay] = useActionState(chuyenTrangThai, CHUA_CO_LOI);
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
@@ -181,6 +186,20 @@ export function ThaoTacHoSo({
               </span>
               {dangMo.fields.map((truong) => {
                 const nguonMa = kieuTruong(truong).nguon;
+                if (kieuTruong(truong).rieng) {
+                  return truongRieng ? (
+                    <OTruongRieng
+                      key={truong}
+                      ten={`${TIEN_TO_TRUONG}${truong}`}
+                      giaTriDau={truongRieng.giaTri}
+                      theoLoai={{
+                        cacLoai: truongRieng.cacLoai,
+                        loaiDau: truongRieng.loaiDau,
+                        tenOChon: `${TIEN_TO_TRUONG}request_type_code`,
+                      }}
+                    />
+                  ) : null;
+                }
                 return (
                   <OTruong
                     key={truong}

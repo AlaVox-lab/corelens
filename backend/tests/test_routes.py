@@ -23,6 +23,7 @@ from app.main import app
 from app.models.workflow_config import Department, Priority, RequestType, State
 from app.workflow.context import Actor
 from app.workflow.engine import perform_transition
+from tests.truong_mau import chi_tiet_mau
 
 NGUOI_TAO = "nd-cong-001"
 NGUOI_KHAC = "nd-cong-002"
@@ -63,10 +64,11 @@ def _tao(client, title="Máy in phòng kế toán kẹt giấy") -> dict:
     Có loại thì hồ sơ đi tiếp được qua cạnh phân loại, vì ràng buộc `set-request-type`
     đòi hồ sơ phải có loại khi rời tay người phân loại (#78).
     """
-    loai = client.get("/request-types").json()[0]["code"]
+    loai = client.get("/request-types").json()[0]
     r = client.post(
         "/requests",
-        json={"title": title, "description": "Mô tả thử.", "request_type_code": loai},
+        json={"title": title, "description": "Mô tả thử.", "request_type_code": loai["code"],
+              "details": chi_tiet_mau(loai)},
     )
     assert r.status_code == 201, r.text
     return r.json()
@@ -126,11 +128,13 @@ def test_gui_yeu_cau_khong_dat_duoc_muc_uu_tien(client, rule_set):
 
 def test_gui_yeu_cau_dat_duoc_loai_tu_danh_muc(client, session, rule_set):
     """Người gửi chọn loại yêu cầu — trường quyết định duy nhất họ tự đặt được."""
-    ma_loai = client.get("/request-types").json()[0]["code"]
+    loai = client.get("/request-types").json()[0]
+    ma_loai = loai["code"]
 
     r = client.post(
         "/requests",
-        json={"title": "Máy chiếu phòng họp không lên hình", "request_type_code": ma_loai},
+        json={"title": "Máy chiếu phòng họp không lên hình", "request_type_code": ma_loai,
+              "details": chi_tiet_mau(loai)},
     )
     assert r.status_code == 201
     assert r.json()["request_type"]["code"] == ma_loai
@@ -209,7 +213,7 @@ def test_nut_bam_khop_voi_du_lieu_o_trang_thai_dau(client, rule_set):
 
     sua = cac_canh["submitted"]
     assert sua["keeps_state"] is True, "sửa nội dung ở Đã gửi là cạnh tự trỏ"
-    assert set(sua["fields"]) == {"title", "description", "request_type_code"}
+    assert set(sua["fields"]) == {"title", "description", "request_type_code", "details"}
 
 
 def test_khong_hien_nut_huy_khi_dang_xu_ly(client, session, rule_set, phong_ban):
@@ -415,7 +419,7 @@ def test_o_sua_noi_dung_theo_thu_tu_bieu_mau_tao_ho_so(client, rule_set):
     ho_so = _tao(client)
     chi_tiet = client.get(f"/requests/{ho_so['id']}").json()
     canh = {t["to_state"]: t for t in chi_tiet["allowed_transitions"]}
-    assert canh["submitted"]["fields"] == ["request_type_code", "title", "description"]
+    assert canh["submitted"]["fields"] == ["request_type_code", "title", "description", "details"]
 
 
 def test_cong_nguoi_gui_van_khong_dat_duoc_muc_uu_tien(client, session, rule_set):

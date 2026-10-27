@@ -67,6 +67,46 @@ INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours,
     ('supply-purchase', 'Đề xuất mua vật tư',
      'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18, 75, 50, 2, 2,  4);
 
+-- Trường thông tin riêng của từng loại (#250). Thêm, bớt, đổi nhãn hay đổi bắt buộc là sửa ở
+-- đây — biểu mẫu gửi, phép kiểm ở dịch vụ và trang hồ sơ tự theo. Dấu * trong ghi chú là
+-- trường bắt buộc.
+INSERT INTO request_type_fields
+    (request_type_code, code, label, kind, required, help_text, unit, options, display_order)
+VALUES
+    -- Sự cố thiết bị: mã tài sản*, vị trí*, mức ảnh hưởng
+    ('device-incident', 'ma-tai-san', 'Mã tài sản', 'text', TRUE,
+     'Số in trên tem dán ở thân máy, ví dụ LT-0042', NULL, NULL, 1),
+    ('device-incident', 'vi-tri', 'Vị trí', 'text', TRUE,
+     'Tầng, phòng hoặc chỗ ngồi', NULL, NULL, 2),
+    ('device-incident', 'muc-anh-huong', 'Mức ảnh hưởng', 'choice', FALSE,
+     NULL, NULL, ARRAY['Một người', 'Cả phòng', 'Cả công ty'], 3),
+
+    -- Cấp quyền phần mềm: hệ thống cần quyền*, mức quyền, cần trước ngày
+    ('software-access', 'he-thong', 'Hệ thống cần quyền', 'text', TRUE,
+     'Tên phần mềm hoặc thư mục, ví dụ MISA, ổ chung Phòng Nhân sự', NULL, NULL, 1),
+    ('software-access', 'muc-quyen', 'Mức quyền', 'choice', FALSE,
+     NULL, NULL, ARRAY['Chỉ xem', 'Xem và sửa', 'Quản trị'], 2),
+    ('software-access', 'can-truoc-ngay', 'Cần trước ngày', 'date', FALSE,
+     NULL, NULL, NULL, 3),
+
+    -- Giấy xác nhận nhân sự: loại giấy*, số bản*, ngôn ngữ
+    ('hr-certificate', 'loai-giay', 'Loại giấy', 'choice', TRUE,
+     NULL, NULL, ARRAY['Xác nhận công tác', 'Xác nhận thu nhập', 'Khác'], 1),
+    ('hr-certificate', 'so-ban', 'Số bản', 'number', TRUE,
+     NULL, 'bản', NULL, 2),
+    ('hr-certificate', 'ngon-ngu', 'Ngôn ngữ', 'choice', FALSE,
+     NULL, NULL, ARRAY['Tiếng Việt', 'Tiếng Anh', 'Cả hai'], 3),
+
+    -- Đề xuất mua vật tư: tên vật tư*, số lượng*, dự toán, nhà cung cấp gợi ý
+    ('supply-purchase', 'ten-vat-tu', 'Tên vật tư', 'text', TRUE,
+     NULL, NULL, NULL, 1),
+    ('supply-purchase', 'so-luong', 'Số lượng', 'number', TRUE,
+     NULL, NULL, NULL, 2),
+    ('supply-purchase', 'du-toan', 'Dự toán', 'number', FALSE,
+     'Tổng số tiền ước tính', 'đồng', NULL, 3),
+    ('supply-purchase', 'nha-cung-cap', 'Nhà cung cấp gợi ý', 'text', FALSE,
+     NULL, NULL, NULL, 4);
+
 
 -- ---------------------------------------------------------------------------
 -- Ánh xạ loại yêu cầu sang phòng ban phụ trách

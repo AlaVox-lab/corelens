@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -23,9 +24,23 @@ class NhanCoMa(BaseModel):
     label: str
 
 
+class TruongRiengRa(BaseModel):
+    """Một trường thông tin riêng khai cho loại yêu cầu (#250) — giao diện dựng ô nhập từ đây."""
+
+    code: str
+    label: str
+    kind: str
+    required: bool
+    help_text: str | None = None
+    unit: str | None = None
+    options: list[str] | None = None
+
+
 class LoaiYeuCauRa(NhanCoMa):
     description: str | None = None
     sla_hours: int
+    # Trường riêng của loại này, theo thứ tự hiển thị (#250)
+    fields: list[TruongRiengRa] = Field(default_factory=list)
 
 
 class TrangThaiRa(NhanCoMa):
@@ -230,6 +245,10 @@ class HoSoLienQuanRa(BaseModel):
 
 class HoSoChiTietRa(HoSoTomTatRa):
     description: str | None = None
+    # Trường riêng (#250): giá trị đang lưu, và khai báo của loại hiện tại để hiện nhãn — trường
+    # khai mà chưa có giá trị (ví dụ sau khi điều phối đổi loại) thì giao diện hiện "chưa có"
+    details: dict[str, Any] = Field(default_factory=dict)
+    detail_fields: list[TruongRiengRa] = Field(default_factory=list)
     # Hồ sơ này được tạo lại từ hồ sơ nào, và đã có những hồ sơ nào tạo lại từ nó (#102)
     parent: HoSoLienQuanRa | None = None
     children: list[HoSoLienQuanRa] = Field(default_factory=list)
@@ -268,6 +287,8 @@ class TaoHoSoVao(BaseModel):
     request_type_code: str | None = Field(default=None, max_length=64)
     # Tạo lại từ hồ sơ cũ của chính người gửi, đã kết thúc (#102). Chỉ đặt lúc tạo.
     parent_request_id: int | None = Field(default=None, ge=1)
+    # Trường riêng theo loại yêu cầu (#250): {mã trường: giá trị}, kiểm theo khai báo của loại
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChuyenTrangThaiVao(BaseModel):

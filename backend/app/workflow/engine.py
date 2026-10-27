@@ -40,6 +40,7 @@ from app.rules.guards import (
     run_guards,
 )
 from app.rules.sla import cap_nhat_dong_ho
+from app.rules.truong_rieng import kiem_chi_tiet
 from app.workflow.context import Actor, TransitionContext
 from app.workflow.errors import (
     CaseNotFound,
@@ -74,6 +75,8 @@ CHANGEABLE_FIELDS = frozenset(
         "assignee_id",
         "title",
         "description",
+        # Trường riêng theo loại yêu cầu (#250), cả bộ trong một trường JSONB
+        "details",
         # Gia hạn xử lý (#101): số giờ lần này do người nhập; tổng và số lần do ràng buộc
         # `extend-deadline` tự đặt
         "sla_extension_hours",
@@ -217,6 +220,7 @@ def create_case(
     request_type_code: str | None = None,
     requester_label: str | None = None,
     parent_request_id: int | None = None,
+    details: dict | None = None,
 ) -> Request:
     """Tạo một hồ sơ mới ở trạng thái bắt đầu của bộ quy tắc đang kích hoạt.
 
@@ -253,6 +257,10 @@ def create_case(
         requester_label=requester_label,
         request_type_code=kiem_loai_yeu_cau(session, request_type_code),
         parent_request_id=parent_request_id,
+        # Trường riêng theo loại (#250): kiểm theo khai báo của loại, thiếu bắt buộc là từ chối.
+        # `None` là lối gọi nội bộ chưa có trường riêng (bộ sinh dữ liệu, kiểm thử cũ) — điểm
+        # cuối gửi yêu cầu luôn truyền một bộ, nên người dùng không lách được phép kiểm.
+        details={} if details is None else kiem_chi_tiet(session, request_type_code, details),
     )
     session.add(ho_so)
     session.flush()
