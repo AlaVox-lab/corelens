@@ -41,7 +41,7 @@ from app.workflow.assignment import (
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import get_active_rule_set, needs_my_action
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
@@ -221,12 +221,15 @@ def hang_doi(
         truy_van = truy_van.where(Request.current_state == state)
 
     states = _bang_trang_thai(session, bo.id)
+    dong = session.execute(truy_van).all()
+    cho_toi = needs_my_action(session, [ho_so for ho_so, _ in dong], actor)
     cac_muc = []
-    for ho_so, vao in session.execute(truy_van).all():
+    for ho_so, vao in dong:
         tom_tat = _tom_tat(session, ho_so, states)
         cac_muc.append(
             MucHangDoiPhongBanRa(
                 **tom_tat,
+                needs_my_action=cho_toi[ho_so.id],
                 requester_label=ho_so.requester_label,
                 priority=_nhan_co_ma(
                     session.get(Priority, ho_so.priority_code) if ho_so.priority_code else None

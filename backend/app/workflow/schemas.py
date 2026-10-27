@@ -152,6 +152,10 @@ class HoSoTomTatRa(BaseModel):
     # có lời nhắn nào (None) — nguồn của dấu hiệu "đang chờ trả lời" trên hàng đợi (#128)
     last_message_from_requester: bool | None = None
 
+    # Hồ sơ đang chờ chính người xem làm bước chính của quy trình (#227), suy từ cột
+    # transitions.primary_scope. Chỉ điền ở danh sách hồ sơ và hàng đợi; None ở trang chi tiết.
+    needs_my_action: bool | None = None
+
 
 class LoiNhanRa(BaseModel):
     """Một lời nhắn trên hồ sơ (#128).

@@ -114,6 +114,8 @@ class Transition(Base):
     restarts_sla: Mapped[bool] = mapped_column(Boolean, default=False)
     # Người đang đứng ở cạnh này đính kèm được tệp vào hồ sơ (#80)
     accepts_attachments: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Bước chính ở trạng thái nguồn (#227): NULL, 'role' hay 'assignee' — xem lược đồ khởi tạo
+    primary_scope: Mapped[str | None] = mapped_column(Text, default=None)
 
     allowed_roles: Mapped[list[TransitionRole]] = relationship(
         back_populates="transition", lazy="selectin"

@@ -219,6 +219,23 @@ UPDATE transitions
    AND NOT is_system
    AND activity_code IN ('edit-content', 'provide-info');
 
+-- Bước chính của từng trạng thái (#227): hồ sơ đứng ở đó là đang chờ người đi được cạnh này,
+-- và cờ needs_my_action trên danh sách hồ sơ bật cho họ. Sửa, hủy, gia hạn, hỏi thêm, rút về,
+-- nhận việc không phải bước chính: bấm được nhưng hồ sơ không chờ họ. Hoàn thành xử lý chờ
+-- người được giao, chưa giao ai thì chờ cả phòng. Đổi bước chính thì sửa ở đây, không sửa mã.
+UPDATE transitions
+   SET primary_scope = 'role'
+ WHERE rule_set_id = 1
+   AND NOT is_system
+   AND activity_code IN ('classify', 'route-to-department', 'accept', 'reroute',
+                         'reassign', 'provide-info', 'confirm');
+
+UPDATE transitions
+   SET primary_scope = 'assignee'
+ WHERE rule_set_id = 1
+   AND NOT is_system
+   AND activity_code = 'complete';
+
 -- Mở lại sau khi đã đóng (#102, giảng viên chốt 08/10): trong 7 ngày làm việc kể từ lúc hồ sơ vào
 -- Đã đóng — 56 giờ làm việc với lịch mẫu 8 giờ một ngày, đổi lịch thì xem lại con số này. Đây là
 -- cạnh DUY NHẤT rời khỏi một trạng thái kết thúc, nên khai cột from_is_terminal và cửa sổ thời gian

@@ -48,6 +48,7 @@ from app.workflow.engine import (
     case_history,
     create_case,
     kiem_ho_so_goc,
+    needs_my_action,
     get_active_rule_set,
 )
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
@@ -498,7 +499,11 @@ def ho_so_cua_toi(
         return []
 
     states = _bang_trang_thai(session, cac_ho_so[0].rule_set_id)
-    return [HoSoTomTatRa(**_tom_tat(session, h, states)) for h in cac_ho_so]
+    cho_toi = needs_my_action(session, cac_ho_so, actor)
+    return [
+        HoSoTomTatRa(**_tom_tat(session, h, states), needs_my_action=cho_toi[h.id])
+        for h in cac_ho_so
+    ]
 
 
 @router.get("/requests/{case_id}", response_model=HoSoChiTietRa)
