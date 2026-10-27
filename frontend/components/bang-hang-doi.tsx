@@ -17,6 +17,7 @@ import { ChevronDown, CircleHelp, Inbox, MessageCircle, Search, Tag } from "luci
 import Link from "next/link";
 import { useState } from "react";
 
+import { ManRong } from "@/components/man-rong";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 
 export type DongHangDoi = {
@@ -191,13 +192,20 @@ export function BangHangDoi({
 
       <div className="the">
         {loc.length === 0 ? (
-          <div className="rong">
-            <span className="icon-to">
-              {khoa ? <Search aria-hidden /> : <Inbox aria-hidden />}
-            </span>
-            <h2>{khoa ? "Không có hồ sơ nào khớp" : khiTrong.tieuDe}</h2>
-            <p>{khoa ? `Không hồ sơ nào trong danh sách có mã, tiêu đề hay người gửi chứa “${tim.trim()}”.` : khiTrong.cau}</p>
-          </div>
+          khoa ? (
+            // Trống vì ô tìm (#234): nói rõ là do lọc, và cho xóa lọc ngay tại chỗ
+            <ManRong
+              icon={Search}
+              tieuDe="Không có hồ sơ nào khớp"
+              cau={`Không hồ sơ nào trong danh sách có mã, tiêu đề hay người gửi chứa “${tim.trim()}”.`}
+            >
+              <button className="nut" type="button" onClick={() => datTim("")}>
+                Xóa tìm kiếm
+              </button>
+            </ManRong>
+          ) : (
+            <ManRong icon={Inbox} tieuDe={khiTrong.tieuDe} cau={khiTrong.cau} />
+          )
         ) : (
           <table className="bang">
             <thead>

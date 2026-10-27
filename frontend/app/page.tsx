@@ -18,10 +18,10 @@
 import { AlarmClock, CircleCheck, Clock, FolderOpen, Hand } from "lucide-react";
 import Link from "next/link";
 
-import { KhungLamViec } from "@/components/khung-lam-viec";
+import { KhongPhanHoi, KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
 import { ViecCanLam, type DongViec } from "@/components/viec-can-lam";
-import { goiDichVu, type DanhTinh } from "@/lib/api";
+import { docDichVu, goiDichVu, type DanhTinh } from "@/lib/api";
 import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
 import { docDongHo, docTuDong, type NguoiXem } from "@/lib/sla";
 
@@ -123,8 +123,11 @@ function demTheoTrangThai(ds: HoSoTomTat[]): { nhan: string; so: number }[] {
 }
 
 export default async function TrangChu() {
-  const danhTinh = await goiDichVu<DanhTinh>("/me");
-  if (!danhTinh) return <ChuaDangNhap />;
+  const ketQua = await docDichVu<DanhTinh>("/me");
+  // Dịch vụ không phản hồi: trang lỗi chung, không giả làm trang chưa đăng nhập (#235)
+  if (!ketQua.ok && ketQua.ma === "khong-ket-noi-duoc") return <KhongPhanHoi />;
+  if (!ketQua.ok) return <ChuaDangNhap />;
+  const danhTinh = ketQua.duLieu;
 
   const kg = danhTinh.workspaces ?? ["portal"];
   const [cuaToi, dieuPhoi, phongBan, sucKhoe] = await Promise.all([

@@ -37,7 +37,7 @@ import { CuonTinMoi } from "@/components/cuon-tin-moi";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { NutThanhDau } from "@/components/khung-ung-dung";
-import { MoiDangNhap } from "@/components/khung-lam-viec";
+import { KhongPhanHoi, MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
 import type { ChinhSachTep, HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
@@ -125,6 +125,8 @@ export default async function ChiTietHoSo({
   if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
   // Dịch vụ trả 404 cho cả hồ sơ không tồn tại lẫn hồ sơ của người khác — cố ý, để
   // người dò số định danh không xác nhận được hồ sơ nào có thật.
+  // Dịch vụ không phản hồi khác hồ sơ không có: báo lỗi để người dùng thử lại (#235)
+  if (!ket_qua.ok && ket_qua.ma === "khong-ket-noi-duoc") return <KhongPhanHoi />;
   if (!ket_qua.ok) notFound();
   const ho_so = ket_qua.duLieu;
 

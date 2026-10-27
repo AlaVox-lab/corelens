@@ -22,6 +22,7 @@ import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
 import { DanhSachHopThu, type MucCuoc, type NhomCuoc } from "@/components/danh-sach-hop-thu";
 import { KhungChat } from "@/components/khung-chat";
+import { ManRong } from "@/components/man-rong";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { NutThanhDau } from "@/components/khung-ung-dung";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
@@ -117,12 +118,8 @@ function chonCuoc(cacCuoc: CuocTroChuyen[], hoSo: string, noiBo: boolean): CuocT
 
 function Rong({ tieuDe, cau }: { tieuDe: string; cau: string }) {
   return (
-    <div className="rong" style={{ alignSelf: "center" }}>
-      <span className="icon-to">
-        <MessagesSquare aria-hidden />
-      </span>
-      <h2>{tieuDe}</h2>
-      <p>{cau}</p>
+    <div style={{ alignSelf: "center" }}>
+      <ManRong icon={MessagesSquare} tieuDe={tieuDe} cau={cau} />
     </div>
   );
 }
