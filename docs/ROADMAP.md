@@ -82,7 +82,8 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 - [x] `docker-compose.yml` dựng được toàn bộ hệ thống bằng một lệnh
 - [x] `.env.example` với giá trị mặc định chạy được ngay
-- [ ] Tích hợp liên tục: chạy lệnh dựng ảnh chứa trên mỗi đề nghị hợp nhất
+- [x] Tích hợp liên tục: dựng ảnh chứa, kiểm thử dịch vụ trên cụm thật, kiểm kiểu giao diện
+      và kiểm header giấy phép trên mỗi đề nghị hợp nhất — #241
 - [x] `docs/dependencies.md` với giấy phép từng phụ thuộc
 
 ---
