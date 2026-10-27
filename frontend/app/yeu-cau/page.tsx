@@ -20,9 +20,11 @@
 // Tab hay chạm vào nhãn trạng thái thì hiện sơ đồ nhỏ của đường chính. Bảng giải thích
 // mười trạng thái từng nằm cuối trang đã bỏ: không ai đọc nó để biết hồ sơ của mình ở đâu.
 
+import { FolderOpen } from "lucide-react";
 import Link from "next/link";
 
 import { DauLoiNhan } from "@/components/dau-loi-nhan";
+import { ManRong } from "@/components/man-rong";
 import { XemNhanhTrangThai } from "@/components/xem-nhanh-trang-thai";
 import { goiDichVu } from "@/lib/api";
 import { type Buoc, cacBuoc, duongChinh } from "@/lib/buoc";
@@ -35,24 +37,16 @@ export const dynamic = "force-dynamic";
 
 function Trong() {
   return (
-    <div className="the" style={{ padding: "44px 24px", textAlign: "center" }}>
-      <p style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>
-        Bạn chưa gửi yêu cầu nào
-      </p>
-      <p
-        style={{
-          margin: "7px 0 20px",
-          fontSize: "13.5px",
-          color: "var(--ink-2)",
-          lineHeight: 1.6,
-        }}
+    <div className="the">
+      <ManRong
+        icon={FolderOpen}
+        tieuDe="Bạn chưa gửi yêu cầu nào"
+        cau="Mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư — đều gửi từ một chỗ duy nhất."
       >
-        Mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề
-        xuất mua vật tư — đều gửi từ một chỗ duy nhất.
-      </p>
-      <Link href="/yeu-cau/moi" className="nut" data-loai="chinh">
-        Gửi yêu cầu đầu tiên
-      </Link>
+        <Link href="/yeu-cau/moi" className="nut" data-loai="chinh">
+          Gửi yêu cầu đầu tiên
+        </Link>
+      </ManRong>
     </div>
   );
 }

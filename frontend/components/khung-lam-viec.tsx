@@ -16,12 +16,14 @@
 // dịch vụ quyết ai vào được đâu, giao diện chỉ vẽ theo. Phần chạy ở trình duyệt — ngăn
 // kéo, nút sáng/tối — nằm ở `khung-ung-dung.tsx`.
 
+import { ServerCrash } from "lucide-react";
 import { Suspense } from "react";
 
 import type { MucDieuHuong } from "@/components/dieu-huong";
 import { KhungUngDung } from "@/components/khung-ung-dung";
+import { ManRong } from "@/components/man-rong";
 import { NutDangNhap } from "@/components/nut-dang-nhap";
-import { goiDichVu, type DanhTinh } from "@/lib/api";
+import { docDichVu, goiDichVu, laHetPhien, type DanhTinh } from "@/lib/api";
 import { loiVaoCua } from "@/lib/khong-gian";
 import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
@@ -48,6 +50,34 @@ export function MoiDangNhap({ hetPhien = false }: { hetPhien?: boolean }) {
       <Suspense>
         <NutDangNhap>Đăng nhập</NutDangNhap>
       </Suspense>
+    </main>
+  );
+}
+
+/**
+ * Dịch vụ ứng dụng không phản hồi hay quá thời hạn chờ (#235). Dựng thẳng ở máy chủ như lời
+ * mời đăng nhập, không ném lỗi cho ranh giới lỗi phía trình duyệt: trang vẫn đọc được khi
+ * JavaScript chưa chạy, và không bị nhầm với "phiên đã hết hạn".
+ */
+export function KhongPhanHoi() {
+  return (
+    <main className="khung" style={{ padding: "72px 20px", maxWidth: "40rem" }}>
+      <div className="the">
+        <ManRong
+          icon={ServerCrash}
+          loi
+          tieuDe="Hệ thống không phản hồi"
+          cau="Trang này chưa tải được. Hồ sơ và mọi thao tác trước đó vẫn còn nguyên — thử lại sau ít phút."
+        >
+          {/* href rỗng là tải lại đúng trang đang mở */}
+          <a className="nut" data-loai="chinh" href="">
+            Thử lại
+          </a>
+          <a className="nut" href="/">
+            Về trang chủ
+          </a>
+        </ManRong>
+      </div>
     </main>
   );
 }
@@ -118,10 +148,14 @@ export async function KhungLamViec({
   /** Không gian mà trang này thuộc về. Người dùng không vào được thì hiện lời báo. */
   canKhongGian: string;
 }>) {
-  const danhTinh = await goiDichVu<DanhTinh>("/me");
+  const ketQua = await docDichVu<DanhTinh>("/me");
 
+  // Dịch vụ không phản hồi thì không phải hết phiên (#235): báo đúng như vậy, không mời
+  // đăng nhập lại một phiên vẫn còn hạn.
+  if (!ketQua.ok && ketQua.ma === "khong-ket-noi-duoc") return <KhongPhanHoi />;
   // Còn cookie phiên mà dịch vụ vẫn từ chối thì phiên đã hết hạn giữa chừng (#150)
-  if (!danhTinh) return <MoiDangNhap hetPhien={(await layPhien()) !== null} />;
+  if (!ketQua.ok) return <MoiDangNhap hetPhien={laHetPhien(ketQua) && (await layPhien()) !== null} />;
+  const danhTinh = ketQua.duLieu;
 
   const ten = danhTinh.name ?? danhTinh.username ?? danhTinh.id;
   const khongGian = danhTinh.workspaces ?? ["portal"];

@@ -20,7 +20,7 @@ import { BangThaoTac } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
-import { MoiDangNhap } from "@/components/khung-lam-viec";
+import { KhongPhanHoi, MoiDangNhap } from "@/components/khung-lam-viec";
 import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { TheLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
@@ -64,6 +64,8 @@ export default async function ChiTietDieuPhoi({
 
   // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
   if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
+  // Dịch vụ không phản hồi khác hồ sơ không có: báo lỗi để người dùng thử lại (#235)
+  if (!ket_qua.ok && ket_qua.ma === "khong-ket-noi-duoc") return <KhongPhanHoi />;
   if (!ket_qua.ok) notFound();
   const ho_so = ket_qua.duLieu;
 
