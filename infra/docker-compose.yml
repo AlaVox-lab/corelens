@@ -73,6 +73,8 @@ services:
       JAVA_OPTS_APPEND: "-Xms256m -Xmx${KEYCLOAK_MAX_HEAP}"
     volumes:
       - ./keycloak/realm-dx-os-lab.json:/opt/keycloak/data/import/realm-dx-os-lab.json:ro
+      # Chủ đề đăng nhập tiếng Việt của cổng (#236): kế thừa keycloak.v2, chỉ thêm CSS
+      - ./keycloak/themes/dx-os-lab:/opt/keycloak/themes/dx-os-lab:ro
     ports:
       - "${KEYCLOAK_PORT}:8080"
     depends_on:

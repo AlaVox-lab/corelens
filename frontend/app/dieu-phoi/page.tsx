@@ -14,6 +14,7 @@
 
 import Link from "next/link";
 
+import { DaiSoLoc } from "@/components/dai-so-loc";
 import { BangHangDoi, type DongHangDoi } from "@/components/bang-hang-doi";
 import { goiDichVu } from "@/lib/api";
 import { thoiLuong } from "@/lib/dinh-dang";
@@ -38,16 +39,28 @@ function thanhDong(m: MucHangDoi, bayGio: Date): DongHangDoi {
     trangThai: { code: m.state.code, label: m.state.label },
     // Hồ sơ sắp tự trả về vì phòng ban chưa xác duyệt (#142): báo thay cho thời gian chờ
     cuoi: tuDong?.canhBao ? { chu: tuDong.cau, muc: "sap" } : { chu: thoiLuong(giay) },
+    // Việc tiếp theo (#231): bước chính đang chờ tôi, không thì việc hệ thống sắp tự làm
+    tiepTheo: m.needs_my_action && m.next_step_label
+      ? { chu: m.next_step_label, cuaToi: true }
+      : tuDong
+        ? { chu: tuDong.cau, cuaToi: false }
+        : null,
+    xep: {
+      gap: m.sla_overdue ? 0 : tuDong?.canhBao || m.sla_due_soon ? 1 : 2,
+      cho: new Date(m.state_entered_at).getTime(),
+      moi: new Date(m.created_at).getTime(),
+    },
   };
 }
 
-function Tab({ href, nhan, so, chon }: { href: string; nhan: string; so: number; chon: boolean }) {
-  return (
-    <Link href={href} aria-current={chon ? "page" : undefined}>
-      {nhan} <b>{so}</b>
-    </Link>
-  );
+/** Số hồ sơ quá hạn và sắp hạn trong một nhóm — dòng phụ của ô trên dải số. */
+function demGap(ds: MucHangDoi[]): { quaHan: number; sapHan: number } {
+  return {
+    quaHan: ds.filter((m) => m.sla_overdue).length,
+    sapHan: ds.filter((m) => !m.sla_overdue && (m.sla_due_soon || m.auto_transition?.warn)).length,
+  };
 }
+
 
 export default async function HangDoiDieuPhoi({
   searchParams,
@@ -85,21 +98,22 @@ export default async function HangDoiDieuPhoi({
       {tieuDe}
       <BangHangDoi
         nhom={[{ ma: "tat-ca", ten: null, dong: cacMuc.map((m) => thanhDong(m, bayGio)) }]}
-        cot={{ loai: true, trangThai: true, cuoi: "Đã chờ" }}
+        cot={{ loai: true, trangThai: true, tiepTheo: true, cuoi: "Đã chờ" }}
         goiYTim="Tìm mã, tiêu đề, người gửi"
         trai={
-          <nav className="tab-dem" aria-label="Lọc theo trạng thái">
-            <Tab href="/dieu-phoi" nhan="Cần làm" so={tatCa.items.length} chon={!state} />
-            {tatCa.groups.map((g) => (
-              <Tab
-                key={g.code}
-                href={`/dieu-phoi?state=${encodeURIComponent(g.code)}`}
-                nhan={g.label}
-                so={g.count}
-                chon={state === g.code}
-              />
-            ))}
-          </nav>
+          <DaiSoLoc
+            nhan="Lọc theo trạng thái"
+            cacO={[
+              { href: "/dieu-phoi", nhan: "Cần làm", so: tatCa.items.length, chon: !state, ...demGap(tatCa.items) },
+              ...tatCa.groups.map((g) => ({
+                href: `/dieu-phoi?state=${encodeURIComponent(g.code)}`,
+                nhan: g.label,
+                so: g.count,
+                chon: state === g.code,
+                ...demGap(tatCa.items.filter((m) => m.state.code === g.code)),
+              })),
+            ]}
+          />
         }
         khiTrong={
           state
