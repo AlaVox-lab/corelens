@@ -30,18 +30,16 @@ export const dynamic = "force-dynamic";
 const XA_NHAT = Number.MAX_SAFE_INTEGER;
 
 function ChuaDangNhap() {
+  // Căn giữa màn, ngắn, nút đăng nhập nổi bật (#236) — không còn bảng kỹ thuật (#229)
   return (
-    <main className="khung" style={{ padding: "72px 20px 80px", maxWidth: "44rem" }}>
+    <main className="chua-dang-nhap">
       <span className="logo-lon mono">YC</span>
       <h1 className="tieu-de-trang">Cổng yêu cầu nội bộ</h1>
-      <p style={{ margin: "6px 0 0", fontSize: "14px", color: "var(--ink-3)" }}>
-        DX-OS Lab · Hệ điều hành Doanh nghiệp số
+      <p className="cdn-phu">DX-OS Lab · Hệ điều hành Doanh nghiệp số</p>
+      <p className="cdn-mo-ta">
+        Gửi yêu cầu nội bộ, theo dõi hồ sơ, và biết ngay hôm nay việc nào đang chờ bạn.
       </p>
-      <p style={{ margin: "18px 0 0", fontSize: "15px", color: "var(--ink-2)", lineHeight: 1.65, maxWidth: "58ch" }}>
-        Tiếp nhận và điều phối tập trung mọi yêu cầu nội bộ trong doanh nghiệp. Mỗi hồ sơ đi qua
-        một quy trình khai báo bằng dữ liệu, và mọi bước nó đi đều được ghi lại.
-      </p>
-      <a href="/api/auth/login" className="nut" data-loai="chinh" style={{ marginTop: "22px" }}>
+      <a href="/api/auth/login" className="nut" data-loai="chinh">
         Đăng nhập bằng tài khoản công ty
       </a>
     </main>

@@ -13,11 +13,12 @@
 //
 // Tệp này không biết tên trạng thái hay vai trò nào: nhóm, nhãn, màu đều do trang truyền.
 
-import { ChevronDown, CircleHelp, Inbox, MessageCircle, Search, Tag } from "lucide-react";
+import { AlarmClock, ChevronDown, CircleHelp, Clock, Inbox, MessageCircle, Search, Tag } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ManRong } from "@/components/man-rong";
+import { MenuXep, type CachXep } from "@/components/viec-can-lam";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 
 export type DongHangDoi = {
@@ -38,6 +39,13 @@ export type DongHangDoi = {
   loai?: string | null;
   trangThai?: { code: string; label: string };
   cuoi: { chu: string; muc?: "qua" | "sap" | "dung" };
+  /**
+   * Cột "Việc tiếp theo" (#231): bước chính đang chờ chính người xem (`cuaToi`), hay việc
+   * đang chờ ai khác. Nhãn lấy từ dữ liệu (`next_step_label`, `auto_transition`).
+   */
+  tiepTheo?: { chu: string; cuaToi: boolean } | null;
+  /** Khóa sắp xếp (#231): 0 quá hạn, 1 sắp hạn, 2 bình thường; mốc chờ và mốc tạo (ms). */
+  xep: { gap: 0 | 1 | 2; cho: number; moi: number };
 };
 
 export type NhomHangDoi = {
@@ -53,8 +61,23 @@ export type CotHangDoi = {
   nguoiXuLy?: boolean;
   loai?: boolean;
   trangThai?: boolean;
+  tiepTheo?: boolean;
   /** Tiêu đề cột cuối: "Hạn" hay "Đã chờ". */
   cuoi: string;
+};
+
+/** Cách xếp trong từng nhóm của hàng đợi (#231). Mặc định độ gấp, cùng quy tắc với trang chủ. */
+const CACH_XEP_HANG = [
+  { ma: "gap", ten: "Độ gấp", moTa: "Quá hạn → sắp hạn → chờ lâu nhất" },
+  { ma: "cho", ten: "Chờ lâu nhất", moTa: "Hồ sơ nằm im lâu nhất lên trước" },
+  { ma: "moi", ten: "Mới nhất", moTa: "Hồ sơ vừa tạo lên trước" },
+] as const satisfies readonly CachXep<string>[];
+type MaXepHang = (typeof CACH_XEP_HANG)[number]["ma"];
+const KHOA_XEP_HANG = "dxlab-xep-hang-doi";
+const SO_SANH_HANG: Record<MaXepHang, (a: DongHangDoi, b: DongHangDoi) => number> = {
+  gap: (a, b) => a.xep.gap - b.xep.gap || a.xep.cho - b.xep.cho,
+  cho: (a, b) => a.xep.cho - b.xep.cho,
+  moi: (a, b) => b.xep.moi - a.xep.moi,
 };
 
 /** Bỏ dấu và viết thường, để tìm "may in" ra "Máy in", "dung" ra "Dũng". */
@@ -128,8 +151,21 @@ function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: numbe
           <NhanTrangThai ma={d.trangThai.code} nhan={d.trangThai.label} />
         </td>
       )}
+      {cot.tiepTheo && (
+        <td className="w an-hep">
+          {d.tiepTheo ? (
+            <span className="viec-tiep" data-cua-toi={d.tiepTheo.cuaToi ? "" : undefined}>
+              {d.tiepTheo.chu}
+            </span>
+          ) : (
+            <span className="viec-tiep">—</span>
+          )}
+        </td>
+      )}
       <td className="w" style={{ textAlign: "right" }}>
         <span className="chu-han" data-muc={d.cuoi.muc}>
+          {/* Dấu hiệu bằng biểu tượng kèm chữ, không chỉ bằng màu (#231) */}
+          {d.cuoi.muc === "qua" ? <AlarmClock aria-hidden /> : d.cuoi.muc === "sap" ? <Clock aria-hidden /> : null}
           {d.cuoi.chu}
         </span>
       </td>
@@ -155,6 +191,23 @@ export function BangHangDoi({
   khiTrong: { tieuDe: string; cau: string };
 }) {
   const [tim, datTim] = useState("");
+  const [xep, datXep] = useState<MaXepHang>("gap");
+  useEffect(() => {
+    try {
+      const luu = localStorage.getItem(KHOA_XEP_HANG) as MaXepHang | null;
+      if (luu && luu in SO_SANH_HANG) datXep(luu);
+    } catch {
+      // Trình duyệt chặn lưu trữ: giữ cách xếp mặc định
+    }
+  }, []);
+  const chonXep = (m: MaXepHang) => {
+    datXep(m);
+    try {
+      localStorage.setItem(KHOA_XEP_HANG, m);
+    } catch {
+      // Vẫn xếp được trong lần mở này, chỉ không nhớ
+    }
+  };
   const [thu, datThu] = useState<Set<string>>(new Set());
   const khoa = chuanHoa(tim.trim());
 
@@ -165,10 +218,11 @@ export function BangHangDoi({
         ? n.dong.filter((d) => chuanHoa(`${d.ma} ${d.tieuDe} ${d.nguoiGui ?? ""} ${d.phu}`).includes(khoa))
         : n.dong,
     }))
+    .map((n) => ({ ...n, dong: [...n.dong].sort(SO_SANH_HANG[xep]) }))
     .filter((n) => n.dong.length > 0);
 
   const soCot =
-    2 + [cot.nguoiGui, cot.nguoiXuLy, cot.loai, cot.trangThai].filter(Boolean).length;
+    2 + [cot.nguoiGui, cot.nguoiXuLy, cot.loai, cot.trangThai, cot.tiepTheo].filter(Boolean).length;
 
   return (
     <>
@@ -186,6 +240,7 @@ export function BangHangDoi({
               onChange={(e) => datTim(e.target.value)}
             />
           </label>
+          <MenuXep dang={xep} chon={chonXep} cacCach={CACH_XEP_HANG} />
           {phai}
         </div>
       </div>
@@ -215,6 +270,7 @@ export function BangHangDoi({
                 {cot.nguoiXuLy && <th className="w an-hep">Người xử lý</th>}
                 {cot.loai && <th className="w an-hep">Loại</th>}
                 {cot.trangThai && <th className="w">Trạng thái</th>}
+                {cot.tiepTheo && <th className="w an-hep">Việc tiếp theo</th>}
                 <th className="w" style={{ textAlign: "right" }}>
                   {cot.cuoi}
                 </th>

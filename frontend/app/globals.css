@@ -3220,3 +3220,135 @@ html.doi-mau * {
   font-style: italic;
   color: var(--ink-3);
 }
+
+/* --- Trang chưa đăng nhập (#236): căn giữa màn, ngắn --------------------------- */
+.chua-dang-nhap {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  min-height: 100vh;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.chua-dang-nhap .logo-lon + .tieu-de-trang {
+  margin-top: 14px;
+}
+
+.cdn-phu {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.cdn-mo-ta {
+  margin: 12px 0 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+/* --- Hàng đợi (#231): dải số bấm để lọc, cột việc tiếp theo ------------------- */
+.dai-so-loc {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.o-loc {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 132px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  flex: none;
+}
+
+.o-loc:hover {
+  border-color: var(--line-2);
+  text-decoration: none;
+}
+
+.o-loc[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.o-loc:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.o-loc-nhan {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.o-loc strong {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.o-loc-phu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.o-loc-phu svg {
+  width: 13px;
+  height: 13px;
+}
+
+.o-loc-phu[data-muc="qua"] {
+  color: var(--f-r-ink);
+}
+
+.o-loc-phu[data-muc="sap"] {
+  color: var(--f-a-ink);
+}
+
+.viec-tiep {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.viec-tiep[data-cua-toi] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.chu-han {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chu-han svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+/* Hàng công cụ có dải số: dải chiếm phần còn lại, ô tìm và menu xếp dạt phải */
+.hang-cong-cu > .dai-so-loc {
+  flex: 1;
+  min-width: 0;
+}
