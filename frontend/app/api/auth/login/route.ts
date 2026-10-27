@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,
+    // Màn đăng nhập luôn tiếng Việt (#236). Không có tham số chuẩn OIDC này, Keycloak chọn
+    // ngôn ngữ theo trình duyệt — máy đặt tiếng Anh sẽ thấy "Sign in" dù realm mặc định vi.
+    ui_locales: "vi",
   });
 
   return NextResponse.redirect(diaChi.href);

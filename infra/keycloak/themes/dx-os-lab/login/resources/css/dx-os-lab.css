@@ -42,3 +42,18 @@
 :root.pf-v5-theme-dark .pf-v5-c-button.pf-m-primary {
   color: #12142b;
 }
+
+/* Tên hệ thống trên đầu thẻ: chủ đề gốc tô chữ trắng (kèm !important) cho nền tối; nền ở đây
+ * sáng nên phải dùng màu chữ của trang, không thì dòng tên gần như biến mất. Chữ thường, cỡ
+ * vừa thay cho chữ hoa giãn cách của chủ đề gốc. */
+#kc-header-wrapper {
+  color: #1b1f24 !important;
+  font-size: 22px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+:root.pf-v5-theme-dark #kc-header-wrapper {
+  color: #eef1f4 !important;
+}
