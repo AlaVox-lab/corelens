@@ -5,6 +5,20 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.7.0] - 2026-10-27
+
+### Tích hợp liên tục
+
+- Thêm tích hợp liên tục cho mỗi pull request ([#258](https://github.com/AlaVox-lab/dx-os-lab/issues/258)) ([86a850c](https://github.com/AlaVox-lab/dx-os-lab/commit/86a850cbce78dfc990f352d3d182d186ebadeecc))
+
+### Tính năng mới
+
+- **p-workflow:** Cờ cần tôi xử lý theo bước chính trong dữ liệu ([#260](https://github.com/AlaVox-lab/dx-os-lab/issues/260)) ([6a0904e](https://github.com/AlaVox-lab/dx-os-lab/commit/6a0904e60a7227e4abf11432625c8b217adb901a))
+- **h-portal:** Trang chủ theo việc cần làm và nhận diện mới ([#262](https://github.com/AlaVox-lab/dx-os-lab/issues/262)) ([d96fc89](https://github.com/AlaVox-lab/dx-os-lab/commit/d96fc89deba4b1098858fb32c0500f833bc7ff89))
+- **h-portal:** Màn rỗng, khung chờ và màn không phản hồi ([#264](https://github.com/AlaVox-lab/dx-os-lab/issues/264)) ([d0a7dab](https://github.com/AlaVox-lab/dx-os-lab/commit/d0a7dabd59ffafb844cca6af7d622ddf5b018b7a))
+- **p-workflow:** Trường thông tin riêng theo loại yêu cầu ([#266](https://github.com/AlaVox-lab/dx-os-lab/issues/266)) ([516cc6c](https://github.com/AlaVox-lab/dx-os-lab/commit/516cc6c5866422433194a174643cfa7af6b73625))
+- **h-portal:** Hàng đợi có dải số và đăng nhập tiếng Việt ([#268](https://github.com/AlaVox-lab/dx-os-lab/issues/268)) ([5c1b696](https://github.com/AlaVox-lab/dx-os-lab/commit/5c1b696ffa362f64a95f0dd87d83d12ad884ac8f))
+
 ## [0.6.0] - 2026-10-27
 
 ### Công việc phụ trợ
