@@ -25,6 +25,8 @@ export type KieuTruong = {
   dai?: boolean;
   /** Ô nhập số nguyên dương. Trần thật nằm ở ràng buộc của dịch vụ, không ở đây. */
   so?: boolean;
+  /** Bộ trường riêng theo loại (#250): ô ẩn mang JSON, dựng bằng `OTruongRieng`. */
+  rieng?: boolean;
 };
 
 const BANG: Record<string, KieuTruong> = {
@@ -37,6 +39,7 @@ const BANG: Record<string, KieuTruong> = {
   // Hai trường nội dung người gửi sửa được khi hồ sơ chưa tới phòng ban (#127)
   title: { nhan: "Tiêu đề" },
   description: { nhan: "Mô tả", dai: true },
+  details: { nhan: "Thông tin riêng", rieng: true },
   // Gia hạn xử lý (#101). Chỉ ô đầu là ô nhập; hai trường sau do dịch vụ tự đặt, có mặt
   // ở đây để dòng thời gian gọi đúng tên khi kể lại giá trị cũ và mới.
   sla_extension_hours: { nhan: "Gia hạn thêm (giờ làm việc)", so: true },

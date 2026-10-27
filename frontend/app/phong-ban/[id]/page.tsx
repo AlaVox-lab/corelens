@@ -23,6 +23,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { chuyenTrangThaiPhongBan, guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
+import { TheTruongRieng } from "@/components/the-truong-rieng";
 import { BangThaoTac, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
@@ -143,10 +144,12 @@ export default async function ChiTietPhongBan({
       <div className="hai-cot">
         {/* --- Cột trái: đọc. Màn hẹp thì xuống sau Hạn và thao tác (#189) ------- */}
         <div className="cot-doc" style={{ display: "grid", gap: "16px", minWidth: 0 }}>
-          {ho_so.description && (
+          {(ho_so.description || (ho_so.detail_fields?.length ?? 0) > 0) && (
             <div className="the khoi">
               <div className="khoi-dau">Nội dung yêu cầu</div>
-              <p className="mo-ta">{ho_so.description}</p>
+              {/* Trường riêng theo loại (#250) đứng trước mô tả tự do */}
+              <TheTruongRieng cacTruong={ho_so.detail_fields ?? []} giaTri={ho_so.details ?? {}} />
+              {ho_so.description ? <p className="mo-ta">{ho_so.description}</p> : null}
             </div>
           )}
 

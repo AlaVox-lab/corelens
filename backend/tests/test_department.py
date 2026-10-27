@@ -29,6 +29,7 @@ from app.rules.sla import gioi_han_giay
 from app.workflow.assignment import vai_tro_giao_viec, vai_tro_nhan_viec
 from app.workflow.context import Actor
 from app.workflow.engine import create_case, perform_transition
+from tests.truong_mau import chi_tiet_mau
 
 NGUOI_GUI = Actor(id="kc-gui-01", name="An Nguyễn", roles=frozenset({"requester"}))
 PHAN_LOAI = Actor(id="kc-pl-01", name="Bình Trần", roles=frozenset({"classifier"}))
@@ -756,8 +757,10 @@ def test_tron_vong_tu_luc_gui_toi_luc_dong(client, session, rule_set, phong_ban)
         assert r.status_code == mong_doi, (duong_dan, r.text)
         return r.json()
 
+    mau = next(l for l in client.get("/request-types").json() if l["code"] == loai)
     ho_so = buoc(NGUOI_GUI, "/requests",
-                 {"title": "Laptop không nhận sạc", "request_type_code": loai}, 201)
+                 {"title": "Laptop không nhận sạc", "request_type_code": loai,
+                  "details": chi_tiet_mau(mau)}, 201)
     ma = ho_so["id"]
     buoc(PHAN_LOAI, f"/coordination/requests/{ma}/transitions",
          {"to_state": "classified", "changes": {"priority_code": uu_tien}})

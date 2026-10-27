@@ -21,6 +21,7 @@ import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { TheTruongRieng } from "@/components/the-truong-rieng";
 import type { NguonLuaChon } from "@/components/bang-thao-tac";
 import {
   DongThoiGian,
@@ -40,7 +41,7 @@ import { NutThanhDau } from "@/components/khung-ung-dung";
 import { KhongPhanHoi, MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
-import type { ChinhSachTep, HoSoChiTiet, NhanCoMa } from "@/lib/kieu";
+import type { ChinhSachTep, HoSoChiTiet, LoaiYeuCau, NhanCoMa } from "@/lib/kieu";
 import { daTroiQua, docDongHo, docTuDong } from "@/lib/sla";
 import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
@@ -131,6 +132,10 @@ export default async function ChiTietHoSo({
   const ho_so = ket_qua.duLieu;
 
   const danhMuc = await danhMucCan(ho_so);
+  // Bảng sửa nội dung có trường riêng (#250): cần danh mục loại KÈM khai báo trường, để đổi
+  // loại trong bảng thì ô trường riêng đổi theo
+  const coTruongRieng = ho_so.allowed_transitions.some((c) => c.fields.includes("details"));
+  const cacLoaiDayDu = coTruongRieng ? await goiDichVu<LoaiYeuCau[]>("/request-types") : null;
   // Giới hạn tệp chỉ cần khi người gửi thêm được tệp lúc này (#80)
   const chinhSachTep = ho_so.can_attach
     ? await goiDichVu<ChinhSachTep>("/attachments/policy")
@@ -336,6 +341,11 @@ export default async function ChiTietHoSo({
               request_type_code: ho_so.request_type?.code ?? "",
             }}
             danhMuc={danhMuc}
+            truongRieng={
+              cacLoaiDayDu
+                ? { giaTri: ho_so.details ?? {}, loaiDau: ho_so.request_type?.code ?? null, cacLoai: cacLoaiDayDu }
+                : undefined
+            }
           />
           <GhiChuMoLai hoSo={ho_so} />
         </div>
@@ -373,11 +383,13 @@ export default async function ChiTietHoSo({
       <div style={{ marginTop: "16px" }}>
         <KhoiHoSoLienQuan hoSo={ho_so} lienKet={(id) => `/yeu-cau/${id}`} />
       </div>
-      {ho_so.description && (
+      {(ho_so.description || (ho_so.detail_fields?.length ?? 0) > 0) && (
         <div className="the" style={{ marginTop: "24px", padding: "18px 22px" }}>
           <h2 className="tua-muc" style={{ margin: 0 }}>
             Nội dung yêu cầu
           </h2>
+          <TheTruongRieng cacTruong={ho_so.detail_fields ?? []} giaTri={ho_so.details ?? {}} />
+          {ho_so.description ? (
           <p
             style={{
               margin: "9px 0 0",
@@ -388,6 +400,7 @@ export default async function ChiTietHoSo({
           >
             {ho_so.description}
           </p>
+          ) : null}
         </div>
       )}
 

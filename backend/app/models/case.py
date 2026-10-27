@@ -138,6 +138,11 @@ class Request(Base):
         BigInteger, ForeignKey("requests.id"), default=None
     )
 
+    # Trường thông tin riêng theo loại yêu cầu (#250): {mã trường: giá trị}, mã khai ở bảng
+    # cấu hình `request_type_fields`. Kiểm ở `app/rules/truong_rieng.py`, đổi qua cạnh Sửa
+    # nội dung như tiêu đề và mô tả — nhật ký giữ giá trị cũ.
+    details: Mapped[dict] = mapped_column(JSONB, default=dict)
+
     # --- Mốc thời gian, luôn UTC -------------------------------------------
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[dt.datetime] = mapped_column(

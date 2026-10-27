@@ -474,6 +474,35 @@ Cột `is_initial` đáng chú ý riêng: nhờ nó mà mã nguồn hỏi *"tr�
 thay vì viết `if state == "submitted"`. Mỗi cột kiểu này là một câu lệnh `if` không bao
 giờ phải viết.
 
+### 5.3. Trường thông tin riêng theo loại yêu cầu
+
+**Đã cài đặt** — #250.
+
+Mỗi loại yêu cầu khai danh sách trường của nó trong bảng cấu hình `request_type_fields`: mã,
+nhãn, kiểu (`text`, `number`, `date`, `choice`), bắt buộc hay không, câu hướng dẫn, đơn vị, lựa
+chọn. Giá trị lưu ở cột JSONB `requests.details` (migration `0013`), khóa là mã trường — một
+cột thay vì bảng mỗi giá trị một dòng, để danh sách đọc một lần và PostgreSQL, Superset vẫn lọc
+được theo khóa.
+
+Ba nơi đọc cùng một khai báo, không nơi nào biết tên trường:
+
+| Nơi | Làm gì |
+|---|---|
+| `GET /request-types` | Mỗi loại kèm `fields`; biểu mẫu gửi dựng ô từ đây (`components/o-truong-rieng.tsx`) |
+| `app/rules/truong_rieng.py` | `kiem_chi_tiet` kiểm và chuẩn hóa: khóa lạ, sai kiểu, thiếu bắt buộc thì từ chối bằng nhãn trường ("Chưa điền Vị trí.") |
+| `GET /requests/{id}` | `details` và `detail_fields` của loại hiện tại; trường khai mà chưa có giá trị hiện "chưa có" |
+
+Sửa sau khi gửi đi qua cạnh **Sửa nội dung** (ADR-0005), như tiêu đề và mô tả: `details` nằm
+trong `CHANGEABLE_FIELDS`, ràng buộc `edit-content` quản nó và kiểm theo loại *sau khi sửa*.
+Người gửi đổi loại mà không gửi trường riêng thì bộ cũ bị bỏ và trường bắt buộc của loại mới
+được nhắc. Nhật ký ghi bộ cũ và bộ mới; dòng thời gian kể bằng nhãn ("Vị trí: Tầng 3 → Tầng 5").
+Điều phối viên đổi loại lúc phân loại thì **không** bị chặn — trường thiếu hiện "chưa có", họ
+hỏi thêm người gửi nếu cần.
+
+`create_case` chỉ kiểm khi được truyền `details`: `None` là lối gọi nội bộ chưa có trường riêng
+(bộ sinh dữ liệu, kiểm thử cũ). Điểm cuối gửi yêu cầu luôn truyền một bộ, nên người dùng không
+lách được phép kiểm. Đổi bảng cấu hình thì phải `down -v`, như mọi bảng cấu hình khác.
+
 ---
 
 ## 6. Khuôn mẫu: nhật ký sự kiện
