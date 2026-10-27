@@ -190,6 +190,8 @@ services:
       # Gọi nội bộ trong mạng của Compose, không đi vòng ra cổng công bố. Trình
       # duyệt của người dùng không bao giờ thấy địa chỉ này.
       BACKEND_INTERNAL_URL: http://backend:8000
+      # Thời hạn chờ mỗi lời gọi sang dịch vụ ứng dụng, mili giây (#235)
+      BACKEND_TIMEOUT_MS: ${BACKEND_TIMEOUT_MS:-10000}
       # Trình duyệt đi qua địa chỉ công khai, máy chủ Next.js đi qua địa chỉ nội bộ
       OIDC_ISSUER_PUBLIC: http://localhost:${KEYCLOAK_PORT}/realms/${KEYCLOAK_REALM}
       OIDC_ISSUER_INTERNAL: http://keycloak:8080/realms/${KEYCLOAK_REALM}

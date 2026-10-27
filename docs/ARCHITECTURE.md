@@ -173,6 +173,15 @@ sang lớp `proxy` của Next, nơi ghi được cookie trước khi trang dựn
 thì trang chi tiết mời đăng nhập lại và quay về đúng trang; trang 404 chỉ dành cho hồ sơ
 không có hoặc không được xem.
 
+**Ba lối hỏng khi gọi dịch vụ, ba màn khác nhau** (#235). Mọi lời gọi từ `frontend/lib/api.ts`
+có thời hạn chờ `THOI_HAN_GOI_MS` (đặt một chỗ, đổi qua `BACKEND_TIMEOUT_MS`); quá hạn tính như
+không kết nối được. Khung và trang chủ đọc `/me` bằng `docDichVu` để tách: `khong-ket-noi-duoc` →
+màn **"Hệ thống không phản hồi"** dựng ngay ở máy chủ (`KhongPhanHoi`), có nút thử lại; phiên
+hết hạn → mời đăng nhập lại; 404 → `app/not-found.tsx`, câu chung cho cả hồ sơ không tồn tại
+lẫn hồ sơ không được xem. Màn không phản hồi không đi qua `app/error.tsx` vì ranh giới lỗi chỉ
+hiện sau khi JavaScript chạy; `error.tsx` để dành cho lỗi bất ngờ. Màn danh sách và trang hồ sơ
+có `loading.tsx` vẽ khung chờ đúng hình màn thật (`components/khung-cho.tsx`).
+
 **Danh bạ là lối duy nhất dịch vụ gọi ngược sang Keycloak** — `backend/app/auth/directory.py`,
 từ #84. Trưởng phòng giao việc phải chọn người từ một danh sách có tên thật, trong khi cơ
 sở dữ liệu nghiệp vụ chỉ giữ `sub`. Dịch vụ tra thành viên nhóm `/phong-ban/<mã>` qua

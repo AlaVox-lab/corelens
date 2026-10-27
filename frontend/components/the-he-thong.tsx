@@ -5,6 +5,7 @@
 // dùng; nay chỉ quản trị viên thấy — ở màn Hệ thống và ở cột tổng quan trang chủ của họ.
 // Nhân viên không làm gì được với tình trạng cụm, và chữ kỹ thuật làm trang chủ rối.
 
+import { THOI_HAN_GOI_MS } from "@/lib/api";
 import { bienHoMau } from "@/lib/trang-thai";
 
 const DIA_CHI_DICH_VU = process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000";
@@ -19,7 +20,7 @@ export type SucKhoe = {
 
 export async function docSucKhoe(): Promise<SucKhoe | null> {
   try {
-    const phanHoi = await fetch(`${DIA_CHI_DICH_VU}/health`, { cache: "no-store" });
+    const phanHoi = await fetch(`${DIA_CHI_DICH_VU}/health`, { cache: "no-store", signal: AbortSignal.timeout(THOI_HAN_GOI_MS) });
     return (await phanHoi.json()) as SucKhoe;
   } catch {
     return null;

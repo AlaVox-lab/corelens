@@ -15,6 +15,13 @@ import { layPhien, luuPhien, type Phien } from "@/lib/session";
 const diaChiDichVu =
   process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000";
 
+/**
+ * Thời hạn chờ mỗi lời gọi sang dịch vụ ứng dụng (#235), đặt ở đúng một chỗ. Quá hạn thì lời
+ * gọi hỏng như khi không kết nối được — trang báo "hệ thống không phản hồi" thay vì treo
+ * mãi. Đổi được qua biến môi trường mà không sửa mã.
+ */
+export const THOI_HAN_GOI_MS = Number(process.env.BACKEND_TIMEOUT_MS ?? 10_000);
+
 // Làm mới sớm hơn hạn một chút. Không có khoảng đệm này, một token còn hai giây sẽ
 // hết hạn ngay giữa đường truyền và người dùng nhận lỗi 401 vô cớ.
 const DEM_TRUOC_GIAY = 30;
@@ -76,6 +83,7 @@ export async function goiDichVu<T>(duongDan: string): Promise<T | null> {
 
   try {
     const phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
       cache: "no-store",
     });
@@ -186,6 +194,7 @@ export async function docDichVu<T>(duongDan: string): Promise<KetQua<T>> {
   let phanHoi: Response;
   try {
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
       cache: "no-store",
     });
@@ -215,6 +224,7 @@ export async function layPhanHoiDichVu(duongDan: string): Promise<Response | nul
   const dungPhien = await lamMoiNeuSapHet(phien);
   try {
     return await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
       cache: "no-store",
     });
@@ -239,6 +249,7 @@ export async function guiBieuMauDichVu<T>(
   let phanHoi: Response;
   try {
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       method: "POST",
       headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
       body: bieuMau,
@@ -276,6 +287,7 @@ export async function guiDichVu<T>(
   let phanHoi: Response;
   try {
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       method: "POST",
       headers: {
         Authorization: `Bearer ${dungPhien.accessToken}`,
