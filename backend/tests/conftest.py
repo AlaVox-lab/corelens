@@ -32,6 +32,20 @@ from app.models.workflow_config import Department, RuleSet
 
 DIA_CHI_MAC_DINH = "postgresql+psycopg://dxlab:doi_mat_khau_nay_truoc_khi_trien_khai@localhost:5432/dxlab"
 
+# Chạy tay thì thiếu PostgreSQL hay Keycloak chỉ bỏ qua bài. Trong quy trình tích hợp liên
+# tục (#241) thì bỏ qua nghĩa là cụm dựng hỏng, nên phải ra đỏ chứ không được ra xanh.
+CAM_BO_QUA = os.environ.get("DXLAB_CAM_BO_QUA") == "1"
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if not CAM_BO_QUA or exitstatus != 0:
+        return
+    bao_cao = session.config.pluginmanager.get_plugin("terminalreporter")
+    so_bo_qua = len(bao_cao.stats.get("skipped", [])) if bao_cao else 0
+    if so_bo_qua:
+        print(f"\nDXLAB_CAM_BO_QUA=1: có {so_bo_qua} bài bị bỏ qua, coi là thất bại.")
+        session.exitstatus = 1
+
 
 @pytest.fixture(scope="session")
 def db_engine():

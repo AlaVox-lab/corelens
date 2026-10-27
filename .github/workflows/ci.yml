@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Tích hợp liên tục (#241): chạy trên mỗi pull request vào dev và main, và mỗi lần
+# nhánh đó nhận commit mới. Ba việc tách thành ba job chạy song song để kết quả hiện
+# riêng trên pull request; tên job là tên kiểm tra sẽ đặt bắt buộc khi kho công khai
+# (CONTRIBUTING.md mục 2.6).
+
+name: Tích hợp liên tục
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  header:
+    name: Header giấy phép
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/kiem_header.py
+
+  giao-dien:
+    name: Giao diện — dựng và kiểm kiểu
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      # Dựng trước để Next sinh kiểu của route vào .next/types mà next-env.d.ts trỏ tới.
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - run: npm run typecheck
+
+  cum:
+    name: Cụm — dựng ảnh và kiểm thử dịch vụ
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
+    steps:
+      - uses: actions/checkout@v4
+      # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa.
+      - run: cp infra/.env.example infra/.env
+      - name: Dựng ảnh dịch vụ và giao diện
+        run: $COMPOSE build backend frontend
+      - name: Bật PostgreSQL, Keycloak, SeaweedFS và dịch vụ ứng dụng
+        run: $COMPOSE up -d postgres keycloak seaweedfs backend
+      - name: Chờ dịch vụ và Keycloak sẵn sàng
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:8000/health >/dev/null \
+              && curl -fsS http://localhost:8080/realms/dx-os-lab >/dev/null; then
+              echo "Sẵn sàng sau $((i * 2)) giây"; exit 0
+            fi
+            sleep 2
+          done
+          echo "Hết thời gian chờ cụm khởi động"; exit 1
+      # Bài bị bỏ qua cũng tính là hỏng: thiếu PostgreSQL hay Keycloak thì phải ra đỏ.
+      - name: Kiểm thử dịch vụ ứng dụng
+        run: docker exec -e DXLAB_CAM_BO_QUA=1 dxlab-backend python -m pytest -p no:cacheprovider -q
+      - name: Nhật ký cụm khi hỏng
+        if: failure()
+        run: $COMPOSE logs --no-color --tail=200 postgres keycloak seaweedfs backend

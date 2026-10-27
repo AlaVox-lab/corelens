@@ -183,6 +183,7 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 |---|---|---|---|
 | git-cliff | MIT hoặc Apache-2.0 | Sinh nhật ký thay đổi | Không |
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
+| `actions/checkout`, `actions/setup-node` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
 **Lưu ý về bảng chấm**: mục PoF số 4 trừ 5 điểm nếu *"mã nguồn được dịch bằng công
