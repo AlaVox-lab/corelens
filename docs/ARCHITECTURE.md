@@ -1079,6 +1079,39 @@ Giao diện chỉ chia `messages` và `message_kinds` theo cờ `internal` dịc
 biết mã loại nào là nội bộ; cuộc nội bộ có nền vàng nhạt viền đứt để không nhắn nhầm cho
 người gửi.
 
+### 7.3. Bước chính và cờ "cần tôi xử lý"
+
+**Đã cài đặt** — #227.
+
+"Bấm được" không đồng nghĩa "đang chờ tôi". Người gửi sửa hay hủy được hồ sơ ở *Đã gửi*, *Đã
+phân loại*, *Chờ phòng ban xác duyệt*, nhưng lúc đó hồ sơ chờ điều phối viên hay phòng ban.
+Suy cờ từ `allowed_transitions` sẽ báo mọi hồ sơ vừa gửi là "cần bạn xử lý".
+
+Nên mỗi trạng thái khai **bước chính** của nó trong dữ liệu, bằng cột `transitions.primary_scope`:
+
+| Giá trị | Nghĩa | Cạnh trong bộ quy tắc mẫu |
+|---|---|---|
+| `NULL` | Không phải bước chính: bấm được nhưng hồ sơ không chờ người này | sửa nội dung, hủy, gia hạn, hỏi thêm, rút về, nhận việc, từ chối, mở lại |
+| `role` | Hồ sơ chờ mọi người có vai đi được cạnh | phân loại, chuyển về phòng ban, xác duyệt, chuyển lại phòng khác, phân công lại, bổ sung thông tin, xác nhận đạt |
+| `assignee` | Hồ sơ chờ người đang được giao; chưa giao ai thì như `role` | hoàn thành xử lý |
+
+`needs_my_action()` trong `backend/app/workflow/engine.py` tính cờ cho cả một danh sách: đúng khi
+có một cạnh bước chính rời trạng thái hiện tại mà người xem qua được hai lớp kiểm như
+`allowed_transitions` — vai trò và ràng buộc không cần nhập liệu (mục 7) — cộng điều kiện người
+được giao với cạnh `assignee`. Nhờ đi qua ràng buộc, điều phối viên không thấy cờ trên hồ sơ chính
+mình gửi (#154), trưởng phòng không thấy cờ trên hồ sơ của phòng khác. Cờ có trên ba danh sách:
+`GET /requests`, hàng đợi điều phối, hàng đợi phòng ban; trang chi tiết trả `null`, vì ở đó nút
+bấm đã dựng từ `allowed_transitions`.
+
+Số truy vấn không tăng theo số dòng: một lần tải cạnh bước chính (kèm vai trò và ràng buộc), một lần
+đọc trạng thái trước cho mọi hồ sơ bằng `DISTINCT ON`. Hệ quả cho người viết dữ liệu: ràng buộc gắn
+trên cạnh bước chính nên là loại không tự truy vấn, không thì mỗi dòng thêm một truy vấn.
+
+CHECK `transitions_buoc_chinh_hop_le` cấm khai bước chính cho cạnh hệ thống: không ai "phải bấm"
+cạnh hệ thống tự đi. Đổi bước chính của một trạng thái là sửa dữ liệu khởi tạo, không sửa mã — có
+bài kiểm thử đổi cột ngay trong giao dịch và thấy cờ đổi theo. Cùng cột này dự kiến dùng cho nút
+chính trên dòng việc và cột "Việc tiếp theo" ở hàng đợi.
+
 ---
 
 ## 8. Quy ước đặt tên và mã nguồn

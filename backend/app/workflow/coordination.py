@@ -42,7 +42,7 @@ from app.models.workflow_config import (
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import get_active_rule_set, needs_my_action
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
@@ -212,9 +212,11 @@ def hang_doi(
     ).all()
 
     states = _bang_trang_thai(session, bo.id)
+    cho_toi = needs_my_action(session, [ho_so for ho_so, _ in dong], actor)
     cac_muc = [
         MucHangDoiRa(
             **_tom_tat(session, ho_so, states),
+            needs_my_action=cho_toi[ho_so.id],
             requester_label=ho_so.requester_label,
             priority=_nhan_co_ma(
                 session.get(Priority, ho_so.priority_code) if ho_so.priority_code else None

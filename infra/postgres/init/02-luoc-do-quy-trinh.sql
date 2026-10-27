@@ -161,6 +161,18 @@ CREATE TABLE transitions (
     -- không báo trước.
     warn_before_hours SMALLINT,
 
+    -- Bước chính của quy trình ở trạng thái nguồn (#227): hồ sơ đang ở đây là đang chờ người
+    -- đi được cạnh này. Cờ `needs_my_action` trên danh sách hồ sơ suy từ cột này, không từ
+    -- "bấm được gì" — người gửi sửa hay hủy được ở Đã gửi nhưng hồ sơ không chờ họ.
+    --   NULL       không phải bước chính (sửa, hủy, gia hạn, hỏi thêm, nhận việc…)
+    --   'role'     chờ mọi người có vai đi được cạnh
+    --   'assignee' chờ người đang được giao hồ sơ; hồ sơ chưa giao ai thì như 'role'
+    primary_scope TEXT,
+
+    CONSTRAINT transitions_buoc_chinh_hop_le
+        CHECK (primary_scope IS NULL
+               OR (primary_scope IN ('role', 'assignee') AND NOT is_system)),
+
     -- Rời khỏi trạng thái kết thúc chỉ được bằng cạnh mở lại có cửa sổ thời gian của người
     CONSTRAINT transitions_roi_ket_thuc_phai_co_cua_so
         CHECK (from_is_terminal = FALSE OR reopen_window_hours IS NOT NULL),
