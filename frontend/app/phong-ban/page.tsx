@@ -24,6 +24,7 @@
 import { User } from "lucide-react";
 import Link from "next/link";
 
+import { DaiSoLoc } from "@/components/dai-so-loc";
 import { BangHangDoi, type DongHangDoi, type NhomHangDoi } from "@/components/bang-hang-doi";
 import { TenCapCon } from "@/components/khung-ung-dung";
 import { goiDichVu } from "@/lib/api";
@@ -66,15 +67,28 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
                 ? "sap"
                 : undefined,
     },
+    // Việc tiếp theo (#231): bước chính đang chờ tôi, không thì ai đang giữ việc
+    tiepTheo: m.needs_my_action && m.next_step_label
+      ? { chu: m.next_step_label, cuaToi: true }
+      : tuDong
+        ? { chu: tuDong.cau, cuaToi: false }
+        : m.assignee_id && !m.assigned_to_me
+          ? { chu: `${tenGiao} đang làm`, cuaToi: false }
+          : null,
+    xep: {
+      gap: m.sla_overdue ? 0 : tuDong?.canhBao || m.sla_due_soon ? 1 : 2,
+      cho: new Date(m.state_entered_at).getTime(),
+      moi: new Date(m.created_at).getTime(),
+    },
   };
 }
 
 export default async function HangDoiPhongBan({
   searchParams,
 }: {
-  searchParams: Promise<{ mine?: string }>;
+  searchParams: Promise<{ mine?: string; nhom?: string }>;
 }) {
-  const { mine } = await searchParams;
+  const { mine, nhom: nhomChon } = await searchParams;
   const cuaToi = mine === "1";
   const tatCa = await goiDichVu<HangDoiPhongBan>(
     cuaToi ? "/department/queue?mine=true" : "/department/queue",
@@ -148,12 +162,45 @@ export default async function HangDoiPhongBan({
     },
   ];
 
+  // Giữ lựa chọn "Giao cho tôi" khi bấm ô lọc nhóm
+  const duongDan = (ma: string | null) => {
+    const q = new URLSearchParams();
+    if (cuaToi) q.set("mine", "1");
+    if (ma) q.set("nhom", ma);
+    const chuoi = q.toString();
+    return chuoi ? `/phong-ban?${chuoi}` : "/phong-ban";
+  };
+
   return (
     <>
       {tieuDe}
       <BangHangDoi
-        nhom={nhom}
-        cot={{ nguoiGui: true, nguoiXuLy: true, cuoi: "Hạn" }}
+        nhom={nhomChon ? nhom.filter((n) => n.ma === nhomChon) : nhom}
+        trai={
+          <DaiSoLoc
+            nhan="Lọc theo nhóm"
+            cacO={[
+              {
+                href: duongDan(null),
+                nhan: "Tất cả",
+                so: nhom.reduce((tong, n) => tong + n.dong.length, 0),
+                chon: !nhomChon,
+              },
+              // Nhóm rỗng không thành ô: dải số chỉ nói về hồ sơ đang có
+              ...nhom
+                .filter((n) => n.dong.length > 0)
+                .map((n) => ({
+                  href: duongDan(n.ma),
+                  nhan: n.ten ?? n.ma,
+                  so: n.dong.length,
+                  chon: nhomChon === n.ma,
+                  quaHan: n.dong.filter((d) => d.cuoi.muc === "qua").length,
+                  sapHan: n.dong.filter((d) => d.cuoi.muc === "sap").length,
+                })),
+            ]}
+          />
+        }
+        cot={{ nguoiGui: true, nguoiXuLy: true, tiepTheo: true, cuoi: "Hạn" }}
         goiYTim="Tìm mã, tiêu đề, người gửi"
         phai={
           <Link href={cuaToi ? "/phong-ban" : "/phong-ban?mine=1"} className="chip" aria-pressed={cuaToi}>

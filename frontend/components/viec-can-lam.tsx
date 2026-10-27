@@ -50,7 +50,19 @@ const SO_SANH: Record<MaXep, (a: DongViec, b: DongViec) => number> = {
   moi: (a, b) => b.xep.moi - a.xep.moi,
 };
 
-function MenuXep({ dang, chon }: { dang: MaXep; chon: (m: MaXep) => void }) {
+/** Một cách sắp xếp chọn được trong menu. */
+export type CachXep<M extends string> = { ma: M; ten: string; moTa: string };
+
+/** Menu chọn cách sắp xếp, dùng chung cho trang chủ và hàng đợi (#228, #231). */
+export function MenuXep<M extends string>({
+  dang,
+  chon,
+  cacCach,
+}: {
+  dang: M;
+  chon: (m: M) => void;
+  cacCach: readonly CachXep<M>[];
+}) {
   const [mo, setMo] = useState(false);
   const goc = useRef<HTMLDivElement>(null);
   const nut = useRef<HTMLButtonElement>(null);
@@ -93,13 +105,13 @@ function MenuXep({ dang, chon }: { dang: MaXep; chon: (m: MaXep) => void }) {
       >
         <ArrowDownUp aria-hidden />
         <span>
-          Sắp xếp: <b>{CACH_XEP.find((c) => c.ma === dang)?.ten}</b>
+          Sắp xếp: <b>{cacCach.find((c) => c.ma === dang)?.ten}</b>
         </span>
         <ChevronDown aria-hidden />
       </button>
       {mo ? (
         <div className="sx-menu" role="menu" aria-label="Cách sắp xếp" onKeyDown={diChuyen}>
-          {CACH_XEP.map((c) => (
+          {cacCach.map((c) => (
             <button
               key={c.ma}
               type="button"
@@ -148,7 +160,7 @@ export function ViecCanLam({ dong }: { dong: DongViec[] }) {
     <section className="the khoi-viec" aria-labelledby="tieu-de-viec">
       <div className="khoi-dau">
         <h2 id="tieu-de-viec">Cần bạn xử lý</h2>
-        {dong.length > 1 ? <MenuXep dang={xep} chon={chon} /> : null}
+        {dong.length > 1 ? <MenuXep dang={xep} chon={chon} cacCach={CACH_XEP} /> : null}
       </div>
       <ul className="ds-viec">
         {daXep.map((d) => (
