@@ -95,6 +95,35 @@ Quy trình cập nhật của người điều phối:
 5. Viết lại tệp trạng thái, không cộng dồn từng dòng
 6. Mở pull request như quy trình thông thường
 
+### 2.6. Tích hợp liên tục
+
+Mỗi pull request vào `dev` hay `main`, và mỗi lần hai nhánh đó nhận commit, chạy quy trình
+`.github/workflows/ci.yml`. Ba kiểm tra hiện riêng trên trang pull request:
+
+| Kiểm tra | Làm gì | Chạy tay ở máy |
+|---|---|---|
+| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng SPDX và dòng bản quyền | `python scripts/kiem_header.py` |
+| Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
+| Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
+
+Trong quy trình, bài kiểm thử bị **bỏ qua** cũng tính là hỏng (biến `DXLAB_CAM_BO_QUA=1`): bộ
+kiểm thử tự bỏ qua khi không gọi được PostgreSQL hay Keycloak, nên không có cờ này thì cụm
+dựng hỏng vẫn ra xanh. Chạy tay ở máy thì không đặt biến, giữ cách cũ.
+
+Kiểm tra đỏ thì mở **Details** cạnh kiểm tra đó. Job cụm in 200 dòng nhật ký cuối của từng
+dịch vụ khi hỏng. Sửa trên cùng nhánh, push tiếp, quy trình tự chạy lại.
+
+**Khi kho chuyển công khai**, quy tắc bảo vệ nhánh mới có hiệu lực. Bật thêm cho cả `main` và
+`dev` (*Settings → Branches*):
+
+- *Require status checks to pass before merging*, chọn đủ ba kiểm tra ở bảng trên
+- *Require branches to be up to date before merging*
+- Giữ nguyên các tùy chọn đã có: bắt buộc pull request, 1 phê duyệt, bỏ phê duyệt cũ khi có
+  commit mới, giải quyết hết hội thoại, cấm force push, cấm xóa nhánh
+
+Tới lúc đó, pull request lỡ đặt `base: main` (như #215) vẫn phải chờ ba kiểm tra xanh mới
+merge được.
+
 ---
 
 ## 3. Quy ước đặt tên nhánh
