@@ -21,9 +21,22 @@ export type NhanCoMa = {
   label: string;
 };
 
+/** Một trường thông tin riêng khai cho loại yêu cầu (#250). */
+export type TruongRieng = {
+  code: string;
+  label: string;
+  kind: "text" | "number" | "date" | "choice";
+  required: boolean;
+  help_text: string | null;
+  unit: string | null;
+  options: string[] | null;
+};
+
 export type LoaiYeuCau = NhanCoMa & {
   description: string | null;
   sla_hours: number;
+  /** Trường riêng của loại này, theo thứ tự hiển thị (#250). */
+  fields?: TruongRieng[];
 };
 
 export type TrangThai = NhanCoMa & {
@@ -222,6 +235,9 @@ export type ChinhSachTep = {
 };
 
 export type HoSoChiTiet = HoSoTomTat & {
+  /** Trường riêng (#250): giá trị đang lưu và khai báo của loại hiện tại. */
+  details?: Record<string, unknown>;
+  detail_fields?: TruongRieng[];
   /** Tệp đính kèm, và người đang xem đính kèm thêm được lúc này không (#80). */
   attachments: TepDinhKem[];
   can_attach: boolean;

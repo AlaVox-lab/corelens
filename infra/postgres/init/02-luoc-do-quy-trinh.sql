@@ -321,6 +321,36 @@ CREATE TABLE request_types (
         CHECK (reopen_max_count >= 0)
 );
 
+-- Trường thông tin riêng của từng loại yêu cầu (#250): mã tài sản cho sự cố thiết bị, số tiền
+-- cho đề xuất mua vật tư... Biểu mẫu gửi, phép kiểm ở dịch vụ và trang hồ sơ đều dựng từ bảng
+-- này; thêm một trường là thêm một dòng, không sửa mã. Giá trị lưu ở requests.details (JSONB,
+-- khóa là `code` dưới đây).
+CREATE TABLE request_type_fields (
+    request_type_code TEXT     NOT NULL REFERENCES request_types (code) ON DELETE CASCADE,
+    code              TEXT     NOT NULL,
+    label             TEXT     NOT NULL,
+    -- text: chữ một dòng; number: số không âm; date: ngày YYYY-MM-DD; choice: chọn một trong options
+    kind              TEXT     NOT NULL,
+    required          BOOLEAN  NOT NULL DEFAULT FALSE,
+    -- Câu hướng dẫn dưới ô nhập, ví dụ "Số in trên tem dán ở mặt dưới máy"
+    help_text         TEXT,
+    -- Đơn vị hiện cạnh ô số, ví dụ "đồng", "bản"
+    unit              TEXT,
+    options           TEXT[],
+    display_order     SMALLINT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (request_type_code, code),
+    CONSTRAINT request_type_fields_kieu_hop_le
+        CHECK (kind IN ('text', 'number', 'date', 'choice')),
+    -- Ô chọn phải có ít nhất hai lựa chọn; kiểu khác không mang danh sách lựa chọn
+    CONSTRAINT request_type_fields_lua_chon_hop_le
+        CHECK ((kind = 'choice') = (options IS NOT NULL)
+               AND (options IS NULL OR cardinality(options) >= 2)),
+    -- Mã là khóa trong JSONB: chữ thường, số, gạch ngang — giống mã trạng thái
+    CONSTRAINT request_type_fields_ma_hop_le
+        CHECK (code ~ '^[a-z][a-z0-9-]*$')
+);
+
 COMMENT ON COLUMN request_types.sla_hours IS
     'Ngưỡng SLA tính bằng giờ làm việc theo lịch mặc định (#199). Cạnh leo thang tự động ở #42 đọc cột này, không mã cứng ngưỡng.';
 

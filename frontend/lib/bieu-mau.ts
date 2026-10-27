@@ -31,12 +31,27 @@ export function chuoi(gia_tri: FormDataEntryValue | null): string {
  * dùng vừa xóa cả một đoạn. Ô nào là ô chọn thì hỏi lib/truong.ts — cùng chỗ quyết định
  * dựng ô chọn hay ô chữ, nên cách đọc ô luôn khớp với cách vẽ ô.
  */
-export function gomThayDoi(duLieu: FormData): Record<string, string | null> {
-  const thayDoi: Record<string, string | null> = {};
+/** Đọc chuỗi JSON của ô ẩn; hỏng thì gửi bộ rỗng để dịch vụ báo thiếu trường bằng lời. */
+export function docJson(v: string): Record<string, unknown> {
+  try {
+    const kq = JSON.parse(v || "{}");
+    return kq && typeof kq === "object" && !Array.isArray(kq) ? kq : {};
+  } catch {
+    return {};
+  }
+}
+
+export function gomThayDoi(duLieu: FormData): Record<string, unknown> {
+  const thayDoi: Record<string, unknown> = {};
   for (const [ten, gia_tri] of duLieu.entries()) {
     if (!ten.startsWith(TIEN_TO_TRUONG)) continue;
     const truong = ten.slice(TIEN_TO_TRUONG.length);
     const v = chuoi(gia_tri);
+    // Bộ trường riêng (#250) đi dưới dạng JSON trong một ô ẩn
+    if (kieuTruong(truong).rieng) {
+      thayDoi[truong] = docJson(v);
+      continue;
+    }
     if (v) thayDoi[truong] = v;
     else if (!kieuTruong(truong).nguon) thayDoi[truong] = null;
   }

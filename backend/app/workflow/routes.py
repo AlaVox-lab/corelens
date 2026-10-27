@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+import json
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -26,6 +28,7 @@ from app.models.workflow_config import (
     MessageKind,
     Priority,
     RequestType,
+    RequestTypeField,
     State,
     Transition,
 )
@@ -39,6 +42,7 @@ from app.rules.sla import (
     sap_het_han,
 )
 from app.workflow.assignment import kiem_nguoi_duoc_giao
+from app.rules.truong_rieng import truong_cua_loai
 from app.workflow.context import Actor
 from app.workflow.attachments import danh_sach_tep
 from app.workflow.engine import (
@@ -72,6 +76,7 @@ from app.workflow.messages import (
 )
 from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
 from app.workflow.schemas import (
+    TruongRiengRa,
     CanhDiDuocRa,
     ChuyenTrangThaiVao,
     GuiLoiNhanVao,
@@ -121,6 +126,7 @@ THU_TU_O_NHAP: tuple[str, ...] = (
     "request_type_code",
     "title",
     "description",
+    "details",
     "priority_code",
     "department_code",
     "assignee_id",
@@ -190,6 +196,13 @@ def _tu_dong_ra(session: Session, ho_so: Request) -> TuDongRa | None:
     if td is None:
         return None
     return TuDongRa(activity_label=td.canh.activity_label, at=td.luc, warn=td.bao_truoc)
+
+
+def _truong_ra(t: RequestTypeField) -> TruongRiengRa:
+    return TruongRiengRa(
+        code=t.code, label=t.label, kind=t.kind, required=t.required,
+        help_text=t.help_text, unit=t.unit, options=t.options,
+    )
 
 
 def _buoc_cua_toi(canh: Transition | None) -> dict:
@@ -269,10 +282,13 @@ def _nhan_danh_muc(session: Session) -> dict[str, dict[str, str]]:
     Lấy cả mục đã ngừng dùng: một hồ sơ cũ từng mang loại yêu cầu nay đã gỡ khỏi danh
     mục vẫn phải kể được "loại: A → B" bằng tên, không bằng mã.
     """
-    return {
+    nhan = {
         truong: {m.code: m.label for m in session.scalars(select(mo_hinh)).all()}
         for truong, mo_hinh in DANH_MUC_CUA_TRUONG.items()
     }
+    # Trường riêng theo loại (#250): mã trường → nhãn, để kể "Vị trí: Tầng 3" thay vì mã
+    nhan["details"] = {t.code: t.label for t in session.scalars(select(RequestTypeField)).all()}
+    return nhan
 
 
 def _thay_doi(e: EventLog, nhan: dict[str, dict[str, str]]) -> list[ThayDoiTruongRa]:
@@ -282,6 +298,11 @@ def _thay_doi(e: EventLog, nhan: dict[str, dict[str, str]]) -> list[ThayDoiTruon
         ma = muc.get(ben)
         if ma is None:
             return None
+        # Bộ trường riêng (#250) kể thành một dòng "Nhãn: giá trị · Nhãn: giá trị"
+        if isinstance(ma, dict):
+            ten_truong = nhan.get(truong, {})
+            ke = " · ".join(f"{ten_truong.get(k, k)}: {v}" for k, v in ma.items())
+            return NhanCoMa(code=json.dumps(ma, ensure_ascii=False), label=ke or "(trống)")
         # Giá trị số — giờ và số lần gia hạn (#101) — kể lại dạng chữ, như mọi giá trị khác
         ma = str(ma)
         ten = muc.get(f"{ben}_label") or nhan.get(truong, {}).get(ma) or ma
@@ -384,6 +405,7 @@ def danh_muc_loai_yeu_cau(
             label=l.label,
             description=l.description,
             sla_hours=l.sla_hours,
+            fields=[_truong_ra(t) for t in truong_cua_loai(session, l.code)],
         )
         for l in cac_loai
     ]
@@ -476,7 +498,14 @@ def tao_ho_so(
             requester_label=actor.label,
             request_type_code=du_lieu.request_type_code,
             parent_request_id=goc,
+            details=du_lieu.details,
         )
+    except InvalidFieldValue as loi:
+        # Trường riêng thiếu hay sai kiểu (#250): câu lỗi đã dùng nhãn trường
+        raise HTTPException(
+            status_code=422,
+            detail={"code": loi.code, "field": loi.field, "message": str(loi)},
+        ) from loi
     except ValueError as loi:
         # Danh mục đổi giữa lúc giao diện nạp biểu mẫu và lúc người dùng bấm gửi. Trả
         # 422 kèm mã máy đọc được để cổng mời chọn lại, thay vì để khóa ngoại nổ ra
@@ -720,6 +749,8 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     return {
         **_tom_tat(session, ho_so, states),
         "description": ho_so.description,
+        "details": ho_so.details or {},
+        "detail_fields": [_truong_ra(t) for t in truong_cua_loai(session, ho_so.request_type_code)],
         "requester_id": ho_so.requester_id,
         "assignee_id": ho_so.assignee_id,
         **_lien_ket_ho_so(session, ho_so, states),

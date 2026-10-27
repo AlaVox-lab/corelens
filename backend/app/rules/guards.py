@@ -34,8 +34,9 @@ from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU, Req
 from app.models.workflow_config import RequestType, Transition
 from app.rules.han_cho import luc_vao_trang_thai
 from app.rules.sla import giay_lam_viec, han_goc_giay
+from app.rules.truong_rieng import kiem_chi_tiet
 from app.workflow.context import TransitionContext
-from app.workflow.errors import GuardViolation, UnknownGuard
+from app.workflow.errors import GuardViolation, InvalidFieldValue, UnknownGuard
 
 GuardFunc = Callable[[TransitionContext], None]
 EffectFunc = Callable[[TransitionContext], dict[str, Any]]
@@ -279,6 +280,19 @@ def edit_content(ctx: TransitionContext) -> None:
     if "request_type_code" in ctx.changes and not ctx.changes["request_type_code"]:
         raise GuardViolation("edit-content", "Không được xóa loại yêu cầu khi sửa nội dung.")
 
+    # Trường riêng theo loại (#250): kiểm theo khai báo của loại SAU khi sửa. Đổi sang loại khác
+    # mà không gửi trường riêng thì bộ cũ thuộc loại cũ, bỏ đi — loại mới có trường bắt buộc
+    # nào thì người gửi được nhắc điền. Bản chuẩn hóa ghi lại vào `changes` để hồ sơ và nhật
+    # ký cùng giữ nó.
+    loai_moi = ctx.changes.get("request_type_code", ctx.case.request_type_code)
+    doi_loai = loai_moi != ctx.case.request_type_code
+    if "details" in ctx.changes or doi_loai:
+        chi_tiet = ctx.changes.get("details", {} if doi_loai else ctx.case.details)
+        try:
+            ctx.changes["details"] = kiem_chi_tiet(object_session(ctx.case), loai_moi, chi_tiet)
+        except InvalidFieldValue as loi:
+            raise GuardViolation("edit-content", str(loi)) from None
+
     if all(ctx.changes[truong] == getattr(ctx.case, truong) for truong in ctx.changes):
         raise GuardViolation(
             "edit-content", "Chưa có gì thay đổi so với nội dung đang có."
@@ -495,7 +509,7 @@ GUARD_REGISTRY: dict[str, Guard] = {
     "assign-handler": Guard(assign_handler, frozenset({"assignee_id"})),
     "return-to-previous-state": Guard(return_to_previous_state, input_free=True),
     "edit-content": Guard(
-        edit_content, frozenset({"title", "description", "request_type_code"})
+        edit_content, frozenset({"title", "description", "request_type_code", "details"})
     ),
     "assign-self": Guard(
         assign_self,

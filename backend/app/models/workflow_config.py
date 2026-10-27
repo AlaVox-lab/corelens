@@ -22,6 +22,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -233,6 +234,24 @@ class RequestType(Base):
     # Mở lại (#102): tổng số lần người gửi mở lại một hồ sơ; quá thì phải tạo hồ sơ mới
     reopen_max_count: Mapped[int] = mapped_column(SmallInteger, default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+
+
+class RequestTypeField(Base):
+    """Một trường thông tin riêng của một loại yêu cầu (#250). Xem lược đồ khởi tạo."""
+
+    __tablename__ = "request_type_fields"
+
+    request_type_code: Mapped[str] = mapped_column(
+        Text, ForeignKey("request_types.code"), primary_key=True
+    )
+    code: Mapped[str] = mapped_column(Text, primary_key=True)
+    label: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(Text)
+    required: Mapped[bool] = mapped_column(Boolean, default=False)
+    help_text: Mapped[str | None] = mapped_column(Text, default=None)
+    unit: Mapped[str | None] = mapped_column(Text, default=None)
+    options: Mapped[list[str] | None] = mapped_column(ARRAY(Text), default=None)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
 

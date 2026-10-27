@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useRef, useState } from "react";
 
+import { OTruongRieng } from "@/components/o-truong-rieng";
 import { OChonTep } from "@/components/o-chon-tep";
 import { dungLuong } from "@/lib/dinh-dang";
 import type { ChinhSachTep, LoaiYeuCau } from "@/lib/kieu";
@@ -334,6 +335,10 @@ export function BieuMauGuiYeuCau({
                 đứng lại chờ bạn trả lời.
               </span>
             </label>
+
+            {/* Trường riêng của loại đã chọn ở bước 1 (#250), dựng từ khai báo của dịch vụ.
+                `key` theo loại: đổi loại thì bộ ô dựng lại từ đầu, không mang giá trị loại cũ. */}
+            <OTruongRieng key={loai ?? ""} ten="details" cacTruong={loaiDaChon?.fields ?? []} />
 
             {/* Tệp đính kèm (#80): ảnh chụp màn hình gần như luôn có ích — không có thì người
                 xử lý phải hỏi lại và hồ sơ rơi vào chờ bổ sung. Giới hạn do dịch vụ trả. */}
