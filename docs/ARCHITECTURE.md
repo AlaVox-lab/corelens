@@ -1051,6 +1051,18 @@ thanh dừng ở bước đường chính cuối cùng nó đã vào. Đổi đ�
 liệu khởi tạo, không sửa mã. Thẻ hạn phân ba mức trong hạn, sắp hết hạn, quá hạn theo cờ
 dịch vụ trả — ngưỡng "sắp hạn" nằm trong dữ liệu (mục 7.1, #175), giao diện không tự đặt.
 
+**Khung trao đổi chia phía theo người viết (#274).** Bên phải chỉ là lời nhắn của chính người
+đang xem (cờ `mine` dịch vụ trả kèm mỗi lời nhắn), ở cả cuộc với người gửi lẫn cuộc nội bộ, ở
+cả hộp thư lẫn thẻ Trao đổi. Trước đó cuộc với người gửi chia theo phe nhân viên / người gửi,
+nên tin của đồng nghiệp nằm bên phải như tin của mình. Tin người khác ghi tên kèm "Người gửi hồ
+sơ" hay "Nhân viên"; tin của người gửi mang nền nhấn nhạt để nhân viên phân biệt với đồng
+nghiệp. Lời nhắn không lưu vai trò của người viết, nên chưa ghi được "điều phối viên" hay
+"trưởng phòng" trên từng tin.
+
+**Bề rộng nội dung (#275).** Vùng nội dung (`.vung`) rộng tối đa 1240 px và căn giữa phần còn
+lại sau thanh bên; màn có bảng hàng đợi nhiều cột được 1440 px; hộp thư giãn trọn chiều ngang.
+Màn hình rộng vì vậy không còn một khoảng trống lớn ở một phía.
+
 **Từ #189, trang hồ sơ đặt việc của người dùng trước nhật ký** (nhận xét của giảng viên
 11/10/2026). Ba điều, áp cho cả trang nhân viên lẫn trang người gửi:
 

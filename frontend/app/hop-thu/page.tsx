@@ -213,7 +213,6 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
       <KhungChat
         cacLoiNhan={cacTin}
         bayGio={bayGio}
-        phiaMinh={laNguoiGui ? "nguoi-gui" : "nhan-vien"}
         noiBo={noiBo}
         soan={
           <KhungLoiNhan

@@ -419,7 +419,6 @@ export default async function ChiTietHoSo({
         <KhungChat
           cacLoiNhan={ho_so.messages}
           bayGio={bayGio}
-          phiaMinh="nguoi-gui"
           soan={
             <div style={{ padding: "4px 20px 17px" }}>
               <KhungLoiNhan
