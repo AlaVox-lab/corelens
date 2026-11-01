@@ -139,6 +139,18 @@ tính CSS), 1 Python-2.0, 1 0BSD. `lightningcss` và `sharp` giải thích ở m
 
 ---
 
+## Phụ thuộc kiểm thử giao diện
+
+Kịch bản kiểm tra giao diện (#238) ở `e2e/`, khai báo trong `e2e/package.json`, ghim trong
+`e2e/package-lock.json`. **Tệp khóa bắt buộc commit.** Chỉ dùng khi kiểm thử, không đi vào ảnh chứa
+của cụm hay trang tài liệu.
+
+| Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
+|---|---|---|---|---|---|
+| @playwright/test | `1.64.1` | Apache-2.0 | Có | Có | Điều khiển trình duyệt thật, đăng nhập qua trang Keycloak. Kéo theo `playwright` và `playwright-core`, cùng Apache-2.0 — cả cây chỉ ba gói. Trình duyệt Chromium tải riêng bằng `npm run cai-trinh-duyet`, hoặc dùng Chrome cài sẵn |
+
+---
+
 ## Phụ thuộc dịch vụ ứng dụng
 
 Khai báo và ghim trong `backend/requirements.txt` bằng `==`. **Tệp này là tệp khóa

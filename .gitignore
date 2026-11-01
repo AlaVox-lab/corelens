@@ -13,6 +13,9 @@ out/
 build/
 dist/
 .astro/
+# Kết quả kịch bản kiểm tra giao diện (#238): ảnh chụp, báo cáo, và TRẠNG THÁI ĐĂNG NHẬP
+# (cookie phiên) — không bao giờ commit
+e2e/ket-qua/
 .turbo/
 *.tsbuildinfo
 .eslintcache
