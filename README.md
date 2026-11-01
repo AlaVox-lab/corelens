@@ -90,7 +90,8 @@ LLM cho `I`, thư viện khai phá quy trình cho `I`.
 
 Ngoài ra: [`docs/dependencies.md`](docs/dependencies.md) — danh mục phụ thuộc kèm
 giấy phép · [`CHANGELOG.md`](CHANGELOG.md) — nhật ký thay đổi, sinh tự động từ lịch
-sử commit.
+sử commit · [`docs/so-sanh-san-pham.md`](docs/so-sanh-san-pham.md) — so sánh với các sản
+phẩm cùng loại trong nước và quốc tế.
 
 ---
 
