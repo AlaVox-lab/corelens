@@ -1,0 +1,17 @@
+{
+  "name": "dx-os-lab-docs",
+  "version": "0.7.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Trang tài liệu của DX-OS Lab, dựng bằng Starlight",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.6",
+    "astro": "7.3.8"
+  }
+}

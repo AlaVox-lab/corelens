@@ -1,0 +1,47 @@
+---
+title: DX-OS Lab
+description: Cổng vận hành yêu cầu nội bộ cho doanh nghiệp — nguồn mở, quy trình khai trong dữ liệu.
+template: splash
+hero:
+  tagline: Một cổng cho mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận, đề xuất mua sắm. Ai cũng biết hồ sơ đang ở đâu, hạn còn bao lâu, và việc tiếp theo là của ai.
+  actions:
+    - text: Bắt đầu nhanh
+      link: bat-dau/bat-dau-nhanh/
+      icon: right-arrow
+    - text: Mã nguồn trên GitHub
+      link: https://github.com/AlaVox-lab/dx-os-lab
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+## DX-OS Lab làm gì
+
+<CardGrid>
+  <Card title="Điều phối theo từng hồ sơ" icon="random">
+    Người gửi không cần biết yêu cầu thuộc phòng nào. Điều phối viên phân loại, đặt mức ưu
+    tiên và chọn phòng phù hợp; phòng sai chuyên môn thì trả lại kèm lý do.
+  </Card>
+  <Card title="Quy trình là dữ liệu" icon="setting">
+    Trạng thái, bước đi, vai trò, ràng buộc và mọi con số nằm trong bảng dữ liệu. Đổi quy
+    trình cho doanh nghiệp khác là sửa dữ liệu, không sửa mã.
+  </Card>
+  <Card title="Hạn theo giờ làm việc" icon="seti:clock">
+    Hạn đếm theo lịch làm việc và ngày lễ, nhân hệ số theo mức ưu tiên. Quá hạn thì tự leo
+    thang; hồ sơ nằm im thì hệ thống báo trước rồi tự đi.
+  </Card>
+  <Card title="Mọi bước đều để lại dấu vết" icon="document">
+    Nhật ký sự kiện chỉ ghi thêm, sinh ra để khai phá lại quy trình thực tế và chỉ ra điểm
+    nghẽn.
+  </Card>
+</CardGrid>
+
+## Đọc theo vai của bạn
+
+<CardGrid>
+  <LinkCard title="Tôi muốn dùng thử" description="Cài bằng một lệnh, đăng nhập bằng tài khoản mẫu, gửi hồ sơ đầu tiên." href="bat-dau/bat-dau-nhanh/" />
+  <LinkCard title="Tôi là nhân viên dùng cổng" description="Hướng dẫn cho người gửi, điều phối viên, trưởng phòng, người xử lý." href="huong-dan/nguoi-gui/" />
+  <LinkCard title="Tôi cài đặt cho doanh nghiệp" description="Yêu cầu máy, cấu hình, nâng cấp, tùy biến quy trình và danh mục." href="cai-dat/cai-dat/" />
+  <LinkCard title="Tôi phát triển hay đóng góp" description="Kiến trúc H-P-D-I, engine quy trình, quy trình đóng góp." href="phat-trien/kien-truc/" />
+</CardGrid>

@@ -63,6 +63,7 @@ Nếu buộc phải dùng một nền tảng copyleft mạnh:
 | **psycopg2-binary** | LGPL kèm ngoại lệ | Chỉ cài vào **ảnh chứa của Superset**, không nằm trong mã nguồn dự án. LGPL nhẹ hơn GPL: dùng như thư viện nạp động thì không lan giấy phép sang phần mềm gọi nó. Ràng buộc phải giữ: **không sửa mã thư viện**, và người dùng phải thay thế được nó |
 | **psycopg 3** | LGPL-3.0-only | Trình điều khiển PostgreSQL của **dịch vụ ứng dụng**. Đây là phụ thuộc copyleft đầu tiên nằm trong mã nguồn của chính nhóm, nên ranh giới phải nói rõ: dự án chỉ `import` nó như thư viện, không sao chép mã, không sửa mã. LGPL cho phép đúng cách dùng này. Người dùng thay thế được bằng cách sửa một dòng trong `backend/requirements.txt` và một tiền tố trong chuỗi kết nối — hai bản lùi permissive là `pg8000` (BSD-3-Clause) và `asyncpg` (Apache-2.0) |
 | **sharp** và `@img/sharp-libvips-*` | Apache-2.0 (sharp) · LGPL-3.0-or-later (libvips) | Phụ thuộc **tùy chọn** mà Next.js kéo theo để tối ưu ảnh. Thư viện gốc `libvips` là nhị phân dựng sẵn, nạp động, thay thế được — đúng điều kiện LGPL cho phép. Cổng người dùng hiện **không dùng ảnh nào**; nếu muốn loại bỏ hẳn thì đặt `images: { unoptimized: true }` trong `next.config.ts` |
+| **lightningcss** | MPL-2.0 | Công cụ xử lý CSS mà Astro dùng **lúc dựng** trang tài liệu. MPL-2.0 là copyleft theo từng tệp: chỉ ràng buộc khi sửa chính tệp của thư viện. Dự án dùng qua trình quản lý gói, không sửa, không chép mã; kết quả dựng là CSS do dự án viết |
 | **Metabase** *(đã loại)* | AGPL-3.0 | Không dùng — xem ADR-0003 |
 | **Garage**, **MinIO** *(phương án lùi)* | AGPL-3.0 | Nếu phải dùng thì chỉ chạy như dịch vụ độc lập qua S3 API — xem ADR-0002 |
 
@@ -115,6 +116,26 @@ Toàn bộ cây phụ thuộc có **63 gói**. Đã rà giấy phép từng gói
 tệp khóa, không dựa vào trí nhớ: 27 MIT, 17 Apache-2.0, 14 gói `sharp`/`libvips` mang
 LGPL, 2 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
 Lưu ý về giấy phép copyleft.
+
+---
+
+## Phụ thuộc trang tài liệu
+
+Trang tài liệu (#279) ở `docs-site/`, khai báo trong `docs-site/package.json`, ghim chính xác trong
+`docs-site/package-lock.json`. **Tệp khóa bắt buộc commit.** Mọi gói dưới đây chỉ chạy **lúc dựng**:
+kết quả là trang HTML tĩnh, không phụ thuộc nào chạy cùng hệ thống, và không gói nào đi vào ảnh chứa
+của cụm.
+
+| Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
+|---|---|---|---|---|---|
+| astro | `7.3.8` | MIT | Có | Có | Bộ dựng trang tĩnh. Cần Node.js 22.12 trở lên |
+| @astrojs/starlight | `0.42.6` | MIT | Có | Có | Giao diện trang tài liệu, tìm kiếm cục bộ qua Pagefind (MIT), chế độ sáng và tối. Chọn thay Material for MkDocs vì dự án đó vào chế độ chỉ bảo trì từ 11/2025 |
+
+Chọn bản đã phát hành ít nhất hai tuần khi thêm (01/11/2026). Toàn bộ cây có **352 gói**, rà giấy
+phép bằng siêu dữ liệu trong tệp khóa: 283 MIT, 16 Apache-2.0, 12 MPL-2.0 (`lightningcss`), 10
+LGPL-3.0-or-later (`@img/sharp-libvips-*`, tùy chọn) cùng 4 gói `@img/sharp-*` mang Apache-2.0 và
+LGPL, 9 ISC, 8 BSD-2-Clause, 3 BSD-3-Clause, 3 BlueOak-1.0.0, 2 CC0-1.0 (`mdn-data`, dữ liệu thuộc
+tính CSS), 1 Python-2.0, 1 0BSD. `lightningcss` và `sharp` giải thích ở mục Lưu ý về giấy phép copyleft.
 
 ---
 
