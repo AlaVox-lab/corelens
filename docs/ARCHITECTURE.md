@@ -306,6 +306,7 @@ dx-os-lab/
 │   ├── ROADMAP.md               # lộ trình tới tháng 12
 │   ├── process-flow.md          # sơ đồ trạng thái, nguồn của dữ liệu khởi tạo
 │   ├── dependencies.md          # danh mục phụ thuộc và giấy phép
+│   ├── so-sanh-san-pham.md      # so sánh với sản phẩm cùng loại (#277)
 │   └── *-survey.md              # bảy tài liệu khảo sát Open-Core
 ├── infra/                       # dựng cả cụm bằng một lệnh
 │   ├── docker-compose.yml
