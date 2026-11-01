@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 AlaVox-lab
+ *
+ * Màu nhấn chàm của cổng (frontend/app/globals.css) cho trang tài liệu, để hai nơi cùng một
+ * nhận diện. Chỉ đổi biến màu của Starlight, không đè bố cục. */
+
+:root {
+  --sl-color-accent-low: #23264a;
+  --sl-color-accent: #8b93f8;
+  --sl-color-accent-high: #c7cbfb;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #eef0fe;
+  --sl-color-accent: #4f46e5;
+  --sl-color-accent-high: #312e81;
+}

@@ -2,7 +2,7 @@
 # Copyright (c) 2026 AlaVox-lab
 #
 # Tích hợp liên tục (#241): chạy trên mỗi pull request vào dev và main. Không chạy lại khi
-# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Ba việc tách thành ba job chạy song song để kết quả hiện
+# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Bốn việc tách thành bốn job chạy song song để kết quả hiện
 # riêng trên pull request; tên job là tên kiểm tra sẽ đặt bắt buộc khi kho công khai
 # (CONTRIBUTING.md mục 2.6).
 
@@ -49,6 +49,26 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
       - run: npm run typecheck
+
+  # Trang tài liệu (#279) phải luôn dựng được từ mã nguồn, như cổng và dịch vụ.
+  tai-lieu:
+    name: Trang tài liệu — dựng
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
 
   cum:
     name: Cụm — dựng ảnh và kiểm thử dịch vụ
