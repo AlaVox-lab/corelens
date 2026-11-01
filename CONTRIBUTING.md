@@ -107,6 +107,12 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
 | Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
 
+**Kiểm thử giao diện qua đăng nhập thật** (#238) chạy tay trước khi mở pull request có sửa giao diện,
+trên cụm thử: `npm ci`, `npm run cai-trinh-duyet` (lần đầu), `npm run kiem` trong `e2e/`. Kịch bản đăng
+nhập bốn vai qua Keycloak, kiểm các màn chính ở bốn cấu hình hiển thị và chụp ảnh — chi tiết ở trang tài
+liệu, phần *Phát triển → Kiểm thử giao diện*. Kịch bản gửi một hồ sơ thật, nên không chạy trên hệ thống
+đang dùng thật.
+
 Trong quy trình, bài kiểm thử bị **bỏ qua** cũng tính là hỏng (biến `DXLAB_CAM_BO_QUA=1`): bộ
 kiểm thử tự bỏ qua khi không gọi được PostgreSQL hay Keycloak, nên không có cờ này thì cụm
 dựng hỏng vẫn ra xanh. Chạy tay ở máy thì không đặt biến, giữ cách cũ.

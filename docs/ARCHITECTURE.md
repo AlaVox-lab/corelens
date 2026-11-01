@@ -308,6 +308,7 @@ dx-os-lab/
 │   ├── dependencies.md          # danh mục phụ thuộc và giấy phép
 │   ├── so-sanh-san-pham.md      # so sánh với sản phẩm cùng loại (#277)
 │   └── *-survey.md              # bảy tài liệu khảo sát Open-Core
+├── e2e/                         # kiểm tra giao diện qua đăng nhập thật, Playwright (#238)
 ├── docs-site/                   # trang tài liệu theo người đọc, dựng bằng Starlight (#279)
 │   ├── src/content/docs/        # mỗi trang một tệp Markdown; dẫn sang docs/, không chép lại
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
