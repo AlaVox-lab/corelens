@@ -27,6 +27,8 @@ dữ liệu, không mã cứng trong mã nguồn.** Xem `ARCHITECTURE.md` mục 
 > trạng thái kết thúc riêng *Không tiếp nhận*; người gửi mở lại được cả sau khi hồ sơ đã
 > *Đã đóng* — trong 7 ngày làm việc, tối đa 2 lần, mỗi lần có lý do và có hạn mới; quá giới
 > hạn thì tạo hồ sơ mới liên kết hồ sơ cũ. Luồng có mười một trạng thái, ba mươi hai cạnh.
+>
+> **Cập nhật 01/11/2026** (#276): mục 9 ghi cơ sở và nguồn cho từng con số của bộ quy tắc mẫu.
 
 ---
 
@@ -475,3 +477,64 @@ trao đổi với giảng viên ngày 10/09/2026 đổi ba điểm:
 2. **Cạnh `completed → in-progress`** cho người tạo mở lại khi chưa đạt — giảng viên đã đồng ý
    08/10, thêm giới hạn 2 lần, hạn mới, và mở lại cả sau khi đóng (#102). Không mâu thuẫn
    nguyên tắc *đã nhận là không trả về*, vì hồ sơ ở lại đúng phòng ban đã nhận
+
+---
+
+## 9. Cơ sở các con số trong bộ quy tắc mẫu
+
+Buổi báo cáo ngày 29/10/2026, các thầy hỏi vì sao chọn các con số của quy trình mẫu (#276). Bảng
+dưới ghi từng con số: giá trị mẫu, cơ sở chọn, và chỗ đổi trong dữ liệu. **Mọi con số là dữ liệu**
+— doanh nghiệp dùng thật đặt lại theo quy chế của mình, không sửa mã. Không có chuẩn quốc tế nào
+quy định một con số chung cho mọi nơi: các bộ chuẩn quản lý dịch vụ chỉ yêu cầu hạn đi theo mức ưu
+tiên và được thỏa thuận trong cam kết dịch vụ. Cơ sở dưới đây là quy định pháp luật Việt Nam và giá
+trị mặc định trong tài liệu chính thức của các nền tảng bàn dịch vụ phổ biến; nguồn ghi ở cuối mục.
+
+**Thời gian — đo bằng giờ làm việc**
+
+| Con số | Giá trị mẫu | Cơ sở | Đổi ở |
+|---|---|---|---|
+| Lịch làm việc | Thứ Hai–Sáu, 08:00–12:00 và 13:00–17:00 | Bộ luật Lao động 2019, Điều 105 khoản 1: không quá 8 giờ một ngày, 48 giờ một tuần. Mẫu lấy 8 giờ × 5 ngày, nghỉ trưa một giờ | `work_hours` (`infra/seed/03-lich-lam-viec.sql`) |
+| Ngày nghỉ lễ 2026 | 11 ngày theo luật + Ngày Văn hóa Việt Nam 24/11 | Điều 112 khoản 1 Bộ luật Lao động 2019; ngày 24/11 theo Nghị quyết 28/2026/QH16 (theo tin báo chí, chưa đối chiếu văn bản gốc) | `holidays` |
+| "Một ngày làm việc" | 8 giờ làm việc | Suy từ lịch trên. Đổi lịch thì phải xem lại các con số đổi từ ngày sang giờ ở bảng này | — |
+
+**Hạn xử lý**
+
+| Con số | Giá trị mẫu | Cơ sở | Đổi ở |
+|---|---|---|---|
+| Hạn chuẩn theo loại | Sự cố thiết bị 8 giờ, Cấp quyền phần mềm 24, Giấy xác nhận nhân sự 48, Đề xuất mua vật tư 72 | Giá trị mẫu: một, ba, sáu, chín ngày làm việc theo độ gấp của loại việc — sự cố làm ngừng việc của người gửi nên xong trong ngày; mua sắm cần báo giá, duyệt chi. Doanh nghiệp tự đặt | `request_types.sla_hours` |
+| Hệ số theo mức ưu tiên | Khẩn 50%, Cao 75%, Bình thường 100%, Thấp 150% | Hạn đi theo mức ưu tiên là thông lệ của ma trận ưu tiên trong quản lý sự cố. Ví dụ mẫu trong tài liệu học của Atlassian: Cao 4 giờ, Trung bình 8 giờ, Thấp 12 giờ — với Sự cố thiết bị 8 giờ, hệ số của dự án cho Khẩn 4, Cao 6, Bình thường 8, Thấp 12 giờ | `priorities.sla_factor_percent` |
+| Ngưỡng "sắp hết hạn" | 75% hạn | ServiceNow mặc định gửi cảnh báo hạn ở 50% và 75% thời hạn, và khi quá hạn; dự án lấy mốc 75% cho trạng thái "sắp hết hạn" (cảnh báo cuối trước khi quá) | `request_types.sla_warn_percent` |
+| Ân hạn khi phân công lại hay mở lại hồ sơ đã quá hạn | Một phần tư hạn chuẩn (Sự cố thiết bị 2 giờ) | Giá trị mẫu, chưa có nguồn đối chiếu: đủ để người mới đọc hồ sơ và bắt tay vào, không đủ dài để che việc trễ. Doanh nghiệp tự đặt | `request_types.sla_grace_hours` |
+| Gia hạn | Mỗi lần tối đa 50% hạn gốc, tối đa 2 lần | Giá trị mẫu: giảng viên hướng dẫn chốt giới hạn số lần (08/10), nhóm chốt 50% (15/10). Chưa tìm được nguồn ngành cho con số này. Hai lần × 50% nghĩa là hạn tối đa gấp đôi hạn gốc — vượt nữa thì nên là hồ sơ khác | `request_types.sla_extension_max_percent`, `sla_extension_max_count` |
+
+**Hạn chờ để hệ thống tự đi**
+
+| Con số | Giá trị mẫu | Cơ sở | Đổi ở |
+|---|---|---|---|
+| Tự đóng hồ sơ *Hoàn tất* khi người gửi không xác nhận | 24 giờ làm việc (3 ngày), báo trước 8 giờ | Mẫu dịch vụ CNTT của Jira Service Management tự đóng yêu cầu ba ngày làm việc sau khi nhân viên giải quyết. Zendesk mặc định đóng sau bốn ngày; ServiceNow cho đặt số ngày | `transitions.auto_after_hours`, `warn_before_hours` (cạnh `auto-close`) |
+| Tự đóng khi người gửi không bổ sung thông tin | 40 giờ làm việc (5 ngày), nhắc từ giờ thứ 16 | Mẫu tự động hóa của Atlassian khép yêu cầu ở trạng thái chờ khách hàng khi khách không cập nhật trong 5 ngày; Zendesk gợi ý nhắc lần đầu sau khoảng 4 ngày chờ | cạnh `auto-close-no-info` |
+| Tự trả về điều phối khi phòng ban không xác duyệt | 24 giờ làm việc (3 ngày), báo trước 4 giờ | Giảng viên hướng dẫn chốt "3 ngày làm việc" (08/10). Chưa có nguồn ngành riêng; cùng độ dài với hạn tự đóng *Hoàn tất* ở trên | cạnh `auto-return` |
+
+**Giới hạn lặp lại**
+
+| Con số | Giá trị mẫu | Cơ sở | Đổi ở |
+|---|---|---|---|
+| Số lần mở lại | Tối đa 2 lần một hồ sơ | Giảng viên hướng dẫn chốt (08/10). Các tổng hợp chỉ số bàn dịch vụ thường lấy tỉ lệ hồ sơ bị mở lại khoảng 5% làm mục tiêu — mở lại là ngoại lệ, mở lại lần thứ ba thường là việc khác, nên tạo hồ sơ mới liên kết hồ sơ cũ. Số liệu này đến từ nguồn thứ cấp, chưa đối chiếu được báo cáo gốc | `request_types.reopen_max_count` |
+| Cửa sổ mở lại sau khi đóng | 56 giờ làm việc (7 ngày) | Giảng viên hướng dẫn chốt (08/10). Chưa có nguồn ngành riêng | `transitions.reopen_window_hours` (cạnh `reopen-after-close`) |
+| Hỏi lại tiến độ | Sau khi phòng ban đã trả lời, hoặc quá 4 giờ | Giá trị mẫu (24/09): nửa ngày làm việc, để số lần phòng ban bị hối mà tầng I đếm không bị thổi phồng | `message_kinds.reask_after_hours` |
+
+**Nguồn** (mở ngày 01/11/2026)
+
+- Bộ luật Lao động số 45/2019/QH14, Điều 105 và Điều 112 — https://dulieuphapluat.vn/van-ban/lao-dong/bo-luat-lao-dong-2019-45716
+- Ngày Văn hóa Việt Nam 24/11 — https://ngoisao.vn/theo-dong-su-kien/tin-nong-trong-ngay/tu-01-7-2026-nguoi-lao-dong-chinh-thuc-co-them-1-ngay-nghi-huong-nguyen-luong-ai-cung-can-phai-biet-d487508.html
+- Jira Service Management, *Auto-close resolved service requests* — https://support.atlassian.com/jira-service-management-cloud/docs/auto-close-resolved-service-requests/
+- Atlassian, mẫu tự động hóa *Auto-close Jira issues* — https://www.atlassian.com/software/jira/automation-template-library/auto-close-jira-issues
+- Atlassian Community, bài học *Configure SLAs to manage service quality goals* — https://community.atlassian.com/learning/lesson/configure-slas-to-manage-service-quality-goals
+- ServiceNow, *SLA notifications* (bản Australia) — https://www.servicenow.com/docs/r/QykF2iRSIs6VXztArCSo3w/51ukburjOhboUBChIEhkYQ
+- ServiceNow, *Configure incidents to close automatically* (bản Yokohama) — https://www.servicenow.com/docs/r/Mr7qUatbFXax1_h~z60rmA/PmIulm8Zy6AxrGNFq0hVuw
+- Zendesk, *What is the difference between a solved ticket and a closed ticket?* — https://support.zendesk.com/hc/en-us/articles/4408887712154-What-is-the-difference-between-a-solved-ticket-and-a-closed-ticket
+- Zendesk, *Workflow recipe: Sending automated ticket reminders to customers* — https://support.zendesk.com/hc/en-us/articles/4408832749210-Workflow-recipe-Sending-automated-ticket-reminders-to-customers
+- Tỉ lệ mở lại: tổng hợp chỉ số bàn dịch vụ — https://www.givainc.com/blog/ticket-reopen-rate-causes/
+
+Con số nào còn ghi "giá trị mẫu, chưa có nguồn" là chỗ doanh nghiệp phải tự đặt theo quy chế của
+mình; nhóm sẽ bổ sung nguồn khi tìm được.
