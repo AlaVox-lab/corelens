@@ -5,14 +5,15 @@
 // nhân viên. Cùng dữ liệu `messages` mà dòng thời gian từng trộn vào (#128); lời nhắn
 // vẫn không đổi trạng thái, không dừng đồng hồ (ADR-0005).
 //
-// Phía phải là "phía mình" như mọi ứng dụng chat: nhân viên xem thì nhân viên bên phải,
-// người gửi bên trái; người gửi xem trong hộp thư (#155) thì ngược lại. Trên mỗi bong bóng
-// ghi tên người viết, vì nhiều người cùng giữ một hồ sơ: điều phối, trưởng phòng, người
-// xử lý. Lời nhắn không có nội dung (như "Hỏi tiến độ") hiện thành một dòng sự kiện ở
-// giữa, không thành bong bóng rỗng.
+// Phía phải chỉ là tin của CHÍNH người đang xem, như mọi ứng dụng chat (#274). Một hồ sơ có
+// nhiều nhân viên cùng nhắn — điều phối, trưởng phòng, người xử lý — nên chia theo phe nhân
+// viên / người gửi thì tin của đồng nghiệp nằm bên phải như tin của mình. Tin người khác nằm
+// bên trái, có tên và nhãn "Người gửi hồ sơ" hay "Nhân viên"; tin của người gửi mang nền nhấn
+// nhạt để nhân viên nhìn là phân biệt với đồng nghiệp. Lời nhắn không có nội dung (như "Hỏi
+// tiến độ") hiện thành một dòng sự kiện ở giữa, không thành bong bóng rỗng.
 //
-// Cuộc nội bộ (#156) toàn nhân viên, nên phía phải là tin của CHÍNH người đang xem; nền vàng
-// nhạt viền đứt (CSS `.chat[data-noi-bo]`) để không lẫn với cuộc có người gửi đọc.
+// Cuộc nội bộ (#156) toàn nhân viên: nền vàng nhạt viền đứt (CSS `.chat[data-noi-bo]`) để không
+// lẫn với cuộc có người gửi đọc, và không cần nhãn phe.
 
 import { CircleHelp } from "lucide-react";
 
@@ -24,13 +25,10 @@ export function KhungChat({
   cacLoiNhan,
   bayGio,
   soan,
-  phiaMinh = "nhan-vien",
   noiBo = false,
 }: {
   cacLoiNhan: LoiNhan[];
   bayGio: Date;
-  /** Người đang xem đứng phía nào — phía đó nằm bên phải. */
-  phiaMinh?: "nhan-vien" | "nguoi-gui";
   /** Ô soạn đặt dưới khung — thành phần phía trình duyệt của nơi đang dùng. */
   soan: React.ReactNode;
   /** Cuộc nội bộ giữa nhân viên (#156). */
@@ -51,7 +49,7 @@ export function KhungChat({
         ) : (
           theoGio.map((m, i) => {
             const ngayMoi = i === 0 || khoaNgay(m.created_at) !== khoaNgay(theoGio[i - 1].created_at);
-            const benPhai = noiBo ? m.mine : m.from_requester === (phiaMinh === "nguoi-gui");
+            const benPhai = m.mine;
             return (
               <div key={m.id} style={{ display: "contents" }}>
                 {ngayMoi && <span className="ngay">{nhanNgay(m.created_at, bayGio)}</span>}
@@ -61,7 +59,11 @@ export function KhungChat({
                     {m.author_label} · {m.kind_label} · {chiGio(m.created_at)}
                   </span>
                 ) : (
-                  <div className="bong-hang" data-minh={benPhai ? "" : undefined}>
+                  <div
+                    className="bong-hang"
+                    data-minh={benPhai ? "" : undefined}
+                    data-nguoi-gui={!benPhai && m.from_requester ? "" : undefined}
+                  >
                     {!benPhai && (
                       <span className="av av-nho" data-c={mauTheo(m.author)} aria-hidden>
                         {chuCaiDau(m.author_label)}
@@ -70,7 +72,7 @@ export function KhungChat({
                     <div>
                       <div className="bong-tg" style={{ margin: "0 0 2px" }}>
                         {m.author_label}
-                        {m.from_requester ? " · Người gửi hồ sơ" : ""}
+                        {noiBo ? "" : m.from_requester ? " · Người gửi hồ sơ" : " · Nhân viên"}
                       </div>
                       <div className="bong">{m.body}</div>
                       <div className="bong-tg">{chiGio(m.created_at)}</div>
