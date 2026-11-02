@@ -220,6 +220,35 @@ def test_danh_sach_ho_so_cua_toi_tra_co(session, rule_set, phong_ban):
     assert nhan[khong_cho.id] is None
 
 
+def test_canh_di_duoc_danh_dau_buoc_chinh(session, rule_set, phong_ban):
+    """Ngăn xem nhanh (#233) đặt bước chính thành nút ở đáy: đúng một cạnh mang cờ khi hồ sơ
+    chờ người xem, cùng cạnh với nhãn trên dòng danh sách; không chờ thì không cạnh nào."""
+    from fastapi.testclient import TestClient
+
+    from app.auth.dependencies import current_actor
+    from app.db import get_session
+    from app.main import app
+
+    cho_toi = _moi(session)
+    _chuyen(session, cho_toi, "awaiting-info", DIEU_PHOI, note="Ở phòng nào?")
+    khong_cho = _moi(session)
+
+    app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[current_actor] = lambda: NGUOI_GUI
+    try:
+        with TestClient(app) as client:
+            nhan = {d["id"]: d["next_step_label"] for d in client.get("/requests").json()["items"]}
+            canh_cho = client.get(f"/requests/{cho_toi.id}").json()["allowed_transitions"]
+            canh_khong = client.get(f"/requests/{khong_cho.id}").json()["allowed_transitions"]
+    finally:
+        app.dependency_overrides.clear()
+
+    chinh = [c for c in canh_cho if c["is_primary"]]
+    assert [c["activity_label"] for c in chinh] == [nhan[cho_toi.id]]
+    assert len(canh_cho) > len(chinh), "các thao tác khác vẫn còn, chỉ không phải bước chính"
+    assert canh_khong and not any(c["is_primary"] for c in canh_khong)
+
+
 # --- Hiệu năng -----------------------------------------------------------------------
 
 

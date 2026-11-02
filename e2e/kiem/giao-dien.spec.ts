@@ -93,6 +93,48 @@ test.describe("điều phối viên", () => {
     await expect(page.locator("#thao-tac").getByRole("button", { name: buoc })).toBeVisible();
   });
 
+  test("xem nhanh: mở từ dòng, duyệt bằng mũi tên, Esc trả tiêu điểm về dòng", async ({ page }) => {
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    const dong = page.locator("a.lk-dong");
+    const soDong = await dong.count();
+    expect(soDong, "hàng đợi có ít nhất hồ sơ của bước chuẩn bị").toBeGreaterThan(0);
+
+    await dong.first().click();
+    const ngan = page.locator("aside.ngan");
+    await expect(ngan).toBeVisible();
+    await expect(page).toHaveURL(/[?&]xem=\d+/);
+    await expect(ngan.getByRole("heading", { level: 2 })).toBeFocused();
+    await expect(ngan.locator(".ngan-vi-tri")).toHaveText(/^1 trên \d+$/);
+    // Màn hẹp: ngăn chiếm trọn chiều ngang; không màn nào cuộn ngang khi ngăn mở
+    const rong = page.viewportSize()!.width;
+    if (rong < 768) expect((await ngan.boundingBox())!.width).toBe(rong);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
+    await chup(page, test.info().project.name, "dieu-phoi-xem-nhanh");
+
+    // Duyệt tới 10 hồ sơ chỉ bằng phím, không rời trang danh sách
+    for (let i = 2; i <= Math.min(10, soDong); i++) {
+      await page.keyboard.press("ArrowDown");
+      await expect(ngan.locator(".ngan-vi-tri")).toHaveText(new RegExp(`^${i} trên \\d+$`));
+      await expect(page).toHaveURL(/\/dieu-phoi\?/);
+    }
+
+    const ma = new URL(page.url()).searchParams.get("xem");
+    await page.keyboard.press("Escape");
+    await expect(ngan).toHaveCount(0);
+    await expect(page).not.toHaveURL(/xem=/);
+    await expect(page.locator(`[data-xem-dong="${ma}"]`)).toBeFocused();
+  });
+
+  test("xem nhanh mở thẳng bằng địa chỉ, nút chính là bước chính của hồ sơ", async ({ page }) => {
+    const h = docHoSo();
+    await page.goto(`/dieu-phoi?xem=${h.ma}`, { waitUntil: "networkidle" });
+    const ngan = page.locator("aside.ngan");
+    await expect(ngan.getByRole("heading", { level: 2 })).toHaveText(h.tieuDe);
+    // Hồ sơ vừa gửi chờ điều phối viên phân loại — bước chính khai trong dữ liệu quy tắc
+    await expect(ngan.locator(".ngan-chan .nut[data-loai='chinh']")).toContainText("Phân loại yêu cầu");
+    await expect(ngan.getByRole("link", { name: "Mở trang đầy đủ" })).toHaveAttribute("href", `/dieu-phoi/${h.ma}`);
+  });
+
   test("thấy mục Điều phối, không thấy Hệ thống", async ({ page }) => {
     await page.goto("/");
     const sb = await thanhBen(page);

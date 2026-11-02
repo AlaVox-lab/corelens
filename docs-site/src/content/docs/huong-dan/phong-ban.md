@@ -13,7 +13,8 @@ Cả phòng nhìn chung một hàng đợi; nút của mỗi người khác nhau
 Mục **Phòng ban** (`/phong-ban`) chia hồ sơ theo độ gấp: quá hạn, sắp hết hạn, trong hạn, chờ phòng
 xác duyệt, chờ người gửi. Dải số trên đầu bấm để lọc; mỗi ô có biểu tượng kèm chữ, không chỉ bằng
 màu. Nút **Giao cho tôi** chỉ hiện việc của riêng bạn. Tìm, lọc theo loại và mức ưu tiên, chuyển
-trang giống hàng đợi điều phối; số trên dải luôn đếm cả hàng đợi, không chỉ trang đang xem.
+trang giống hàng đợi điều phối; số trên dải luôn đếm cả hàng đợi, không chỉ trang đang xem. Bấm
+một dòng mở ngăn xem nhanh bên phải, dùng phím như ở hàng đợi điều phối.
 
 ![Hàng đợi phòng ban](../../../assets/anh/hang-doi-phong-ban.png)
 

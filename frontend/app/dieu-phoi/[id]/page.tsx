@@ -9,15 +9,15 @@
 // cuộn xuống đáy trang mới thấy là một nút bị bấm chậm.
 //
 // Dòng thời gian dùng chung thành phần với cổng người gửi, để hai bên nhìn cùng một hồ
-// sơ thì thấy cùng một câu chuyện.
+// sơ thì thấy cùng một câu chuyện. Nạp dữ liệu và khối thao tác dùng chung với ngăn xem nhanh
+// của hàng đợi (#233), ở `app/dieu-phoi/ho-so.tsx`.
 
-import { Building2, Flag, MessagesSquare, Tag } from "lucide-react";
+import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { chuyenTrangThaiDieuPhoi, guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
-import { TheTruongRieng } from "@/components/the-truong-rieng";
-import { BangThaoTac } from "@/components/bang-thao-tac";
+import { guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
+import { metaDieuPhoi, napHoSoDieuPhoi, ThaoTacDieuPhoi } from "@/app/dieu-phoi/ho-so";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
@@ -28,24 +28,11 @@ import { TheLichSu } from "@/components/the-lich-su";
 import { duongHopThu } from "@/lib/hop-thu";
 import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
 import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
-import { DauHoSo, TheHan, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
-import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
+import { DauHoSo, TheHan, TheNoiDung, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
+import { laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
-import type {
-  HoSoDieuPhoi,
-  LienHeNguoiGui as LienHe,
-  LoaiYeuCau,
-  MucUuTien,
-  NhanCoMa,
-  PhongBan,
-  TrangThai,
-} from "@/lib/kieu";
 
 export const dynamic = "force-dynamic";
-
-function thanhNhanCoMa<T extends NhanCoMa>(ds: T[] | null): NhanCoMa[] {
-  return (ds ?? []).map(({ code, label }) => ({ code, label }));
-}
 
 export default async function ChiTietDieuPhoi({
   params,
@@ -53,39 +40,21 @@ export default async function ChiTietDieuPhoi({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  // Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ ô đó báo lỗi.
-  const [ket_qua, cacLoai, cacMuc, cacPhong, lienHe, cacTrangThai] = await Promise.all([
-    docDichVu<HoSoDieuPhoi>(`/coordination/requests/${id}`),
-    goiDichVu<LoaiYeuCau[]>("/request-types"),
-    goiDichVu<MucUuTien[]>("/priorities"),
-    goiDichVu<PhongBan[]>("/departments"),
-    docDichVu<LienHe>(`/coordination/requests/${id}/requester-contact`),
-    goiDichVu<TrangThai[]>("/states"),
-  ]);
+  const ket_qua = await napHoSoDieuPhoi(id);
 
   // Phiên hết hạn (401) khác hồ sơ không có: mời đăng nhập lại, không hiện 404 (#150)
   if (laHetPhien(ket_qua)) return <MoiDangNhap hetPhien />;
   // Dịch vụ không phản hồi khác hồ sơ không có: báo lỗi để người dùng thử lại (#235)
   if (!ket_qua.ok && ket_qua.ma === "khong-ket-noi-duoc") return <KhongPhanHoi />;
   if (!ket_qua.ok) notFound();
-  const ho_so = ket_qua.duLieu;
+  const d = ket_qua.duLieu;
+  const { ho_so, lienHe, cacTrangThai } = d;
 
   const bayGio = new Date();
   // Hai cuộc của hồ sơ (#156): với người gửi, và nội bộ — dịch vụ đã lọc theo người xem
   const chung = ho_so.messages.filter((m) => !m.internal);
   const noiBo = ho_so.messages.filter((m) => m.internal);
   const nguoiGui = ho_so.requester_label ?? "Không rõ người gửi";
-  const macDinh = cacMuc?.find((m) => m.is_default)?.code ?? "";
-  const goiYPhong = ho_so.suggested_department;
-
-  // Điền sẵn: giá trị hồ sơ đang có trước, rồi mới tới gợi ý và mặc định. Điều phối
-  // viên vẫn đổi được mọi ô — gợi ý chỉ để trường hợp thường gặp chỉ cần một cú bấm.
-  const giaTriDau: Record<string, string> = {
-    request_type_code: ho_so.request_type?.code ?? "",
-    priority_code: ho_so.priority?.code ?? macDinh,
-    department_code: ho_so.department?.code ?? goiYPhong?.code ?? "",
-    assignee_id: ho_so.assignee_id ?? "",
-  };
 
   return (
     <>
@@ -98,35 +67,13 @@ export default async function ChiTietDieuPhoi({
           </Link>
         </NutThanhDau>
       )}
-      <DauHoSo
-        ho_so={ho_so}
-        meta={[
-          { icon: <Tag aria-hidden />, chu: ho_so.request_type?.label ?? "Chưa rõ loại" },
-          {
-            icon: <Building2 aria-hidden />,
-            chu:
-              ho_so.department?.label ??
-              (goiYPhong ? `Chưa chuyển phòng · gợi ý theo loại: ${goiYPhong.label}` : "Chưa chuyển phòng"),
-          },
-          {
-            icon: <Flag aria-hidden />,
-            chu: ho_so.priority ? `Ưu tiên ${ho_so.priority.label}` : "Mức ưu tiên đặt khi phân loại",
-          },
-        ]}
-      />
+      <DauHoSo ho_so={ho_so} meta={metaDieuPhoi(ho_so)} />
       <ThanhBuoc cacBuoc={cacBuoc(cacTrangThai ?? [], ho_so.state.code, ho_so.history)} />
 
       <div className="hai-cot">
         {/* --- Cột trái: đọc. Màn hẹp thì xuống sau Hạn và thao tác (#189) ------- */}
         <div className="cot-doc" style={{ display: "grid", gap: "16px", minWidth: 0 }}>
-          {(ho_so.description || (ho_so.detail_fields?.length ?? 0) > 0) && (
-            <div className="the khoi">
-              <div className="khoi-dau">Nội dung yêu cầu</div>
-              {/* Trường riêng theo loại (#250) đứng trước mô tả tự do */}
-              <TheTruongRieng cacTruong={ho_so.detail_fields ?? []} giaTri={ho_so.details ?? {}} />
-              {ho_so.description ? <p className="mo-ta">{ho_so.description}</p> : null}
-            </div>
-          )}
+          <TheNoiDung ho_so={ho_so} />
 
           <TheLichSu
             maHoSo={ho_so.id}
@@ -186,35 +133,7 @@ export default async function ChiTietDieuPhoi({
           <TheHan ho_so={ho_so} />
           <GhiChuMoLai hoSo={ho_so} />
           <TheThaoTac>
-            {/* Hồ sơ của chính mình: không có nút điều phối nào, chỉ còn nút của chủ hồ sơ
-                nếu có — nói rõ vì sao (#154) */}
-            {ho_so.requested_by_me && ho_so.allowed_transitions.length > 0 && (
-              <p style={{ margin: "0 0 10px", fontSize: "13px", color: "var(--f-p-ink)", lineHeight: 1.55 }}>
-                Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng.
-              </p>
-            )}
-            {/* Khóa có `updated_at`: gia hạn giữ nguyên trạng thái (#101), nên chỉ mã trạng
-                thái thì bảng không dựng lại, khung gia hạn vừa xong vẫn mở */}
-            <BangThaoTac
-              key={`${ho_so.state.code}-${ho_so.updated_at}`}
-              maHoSo={ho_so.id}
-              cacCanh={ho_so.allowed_transitions}
-              giaTriDau={giaTriDau}
-              goiY={goiYPhong ? { department_code: goiYPhong.code } : {}}
-              danhMuc={{
-                "request-types": thanhNhanCoMa(cacLoai),
-                priorities: thanhNhanCoMa(cacMuc),
-                departments: thanhNhanCoMa(cacPhong),
-              }}
-              hanhDong={chuyenTrangThaiDieuPhoi}
-              khiHet={{
-                // Bảng trống vì hai lý do khác hẳn nhau — nói đúng lý do (#154)
-                cau: ho_so.requested_by_me
-                  ? "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng."
-                  : "Hồ sơ đã rời khỏi tay điều phối viên. Không còn thao tác nào dành cho bạn ở trạng thái này.",
-                veHangDoi: "/dieu-phoi",
-              }}
-            />
+            <ThaoTacDieuPhoi d={d} />
           </TheThaoTac>
           {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
               đang ở phòng khác */}
