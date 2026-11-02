@@ -43,18 +43,20 @@ from app.workflow.assignment import (
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
-from app.workflow.engine import get_active_rule_set, my_primary_steps
+from app.workflow.engine import get_active_rule_set, my_primary_steps, rule_sets_in_use
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
 from app.workflow.routes import (
     _buoc_cua_toi,
-    _bang_trang_thai,
+    _bang_trang_thai_nhieu,
     _bao_loi,
     _bao_loi_nhan,
     _du_lieu_chi_tiet,
     _giu_danh_muc,
+    _gop_theo_ma,
     _ma_ho_so,
+    _o_trang_thai,
     _tom_tat,
 )
 from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
@@ -225,12 +227,18 @@ def hang_doi(
 
     Số đếm trạng thái và nhóm đi theo cùng bộ lọc `mine`, để con số và danh sách không bao giờ
     kể hai chuyện khác nhau.
+
+    Gồm hồ sơ của mọi bộ quy tắc còn hồ sơ đang mở (#299), mỗi hồ sơ xét theo trạng thái hàng đợi
+    và trạng thái theo dõi của chính bộ nó — như hàng đợi điều phối.
     """
-    bo = get_active_rule_set(session)
-    co_viec = trang_thai_hang_doi_phong_ban(session, bo.id)
-    theo_doi = _trang_thai_theo_doi(session, bo.id, co_viec)
-    ma_theo_doi = {t.code for t in theo_doi}
-    cac_trang_thai = sorted(co_viec + theo_doi, key=lambda t: t.display_order)
+    cac_bo = rule_sets_in_use(session)
+    co_viec_bo = {bo: trang_thai_hang_doi_phong_ban(session, bo) for bo in cac_bo}
+    theo_doi_bo = {bo: _trang_thai_theo_doi(session, bo, co_viec_bo[bo]) for bo in cac_bo}
+    ma_theo_doi = {(bo, t.code) for bo, ds in theo_doi_bo.items() for t in ds}
+    co_viec = _gop_theo_ma(list(co_viec_bo.values()))
+    cac_trang_thai = _gop_theo_ma(
+        [sorted(co_viec_bo[bo] + theo_doi_bo[bo], key=lambda t: t.display_order) for bo in cac_bo]
+    )
     ma_hang_doi = [t.code for t in cac_trang_thai]
 
     if state is not None and state not in ma_hang_doi:
@@ -243,9 +251,10 @@ def hang_doi(
         )
 
     dieu_kien = [
-        Request.rule_set_id == bo.id,
+        _o_trang_thai(
+            {bo: [t.code for t in co_viec_bo[bo] + theo_doi_bo[bo]] for bo in cac_bo}
+        ),
         Request.department_code.in_(actor.departments),
-        Request.current_state.in_(ma_hang_doi),
     ]
     if mine:
         dieu_kien.append(Request.assignee_id == actor.id)
@@ -253,8 +262,8 @@ def hang_doi(
     luc_vao = _luc_vao_trang_thai().label("luc_vao")
     ca_hang = session.execute(select(Request, luc_vao, giay_da_o_trang_thai()).where(*dieu_kien)).all()
     buoc = my_primary_steps(session, [ho_so for ho_so, _, _ in ca_hang], actor)
-    _danh_muc = _giu_danh_muc(session, bo.id)
-    canh_tu_di = canh_tu_di_theo_trang_thai(session, bo.id)
+    _danh_muc = _giu_danh_muc(session, cac_bo)
+    canh_tu_di = {bo: canh_tu_di_theo_trang_thai(session, bo) for bo in cac_bo}
 
     def hang(ho_so: Request, vao: dt.datetime, da_o: int) -> _Hang:
         gioi_han = gioi_han_giay(session, ho_so)
@@ -262,8 +271,8 @@ def hang_doi(
         qua = gioi_han is not None and da_dem > gioi_han
         sap = not qua and sap_het_han(session, ho_so)
         chay = ho_so.sla_segment_since is not None or ho_so.sla_running_seconds > 0
-        canh = canh_tu_di.get(ho_so.current_state)
-        if ho_so.current_state in ma_theo_doi:
+        canh = canh_tu_di[ho_so.rule_set_id].get(ho_so.current_state)
+        if (ho_so.rule_set_id, ho_so.current_state) in ma_theo_doi:
             nhom = _NHOM_THEO_DOI[0]
         elif qua:
             nhom = "qua-han"
@@ -329,13 +338,13 @@ def hang_doi(
     else:
         da_loc.sort(key=lambda d: (thu_tu[d.nhom], d.con_lai, d.vao, d.ho_so.id))
 
-    states = _bang_trang_thai(session, bo.id)
+    bang = _bang_trang_thai_nhieu(session, cac_bo)
     cac_muc = []
     for d in cat_trang(da_loc, trang):
         ho_so = d.ho_so
         cac_muc.append(
             MucHangDoiPhongBanRa(
-                **_tom_tat(session, ho_so, states),
+                **_tom_tat(session, ho_so, bang[ho_so.rule_set_id]),
                 **_buoc_cua_toi(buoc[ho_so.id]),
                 requester_label=ho_so.requester_label,
                 priority=_nhan_co_ma(
@@ -362,7 +371,7 @@ def hang_doi(
                 code=t.code,
                 label=t.label,
                 count=dem.get(t.code, 0),
-                watch_only=t.code in ma_theo_doi,
+                watch_only=(t.rule_set_id, t.code) in ma_theo_doi,
             )
             for t in cac_trang_thai
         ],

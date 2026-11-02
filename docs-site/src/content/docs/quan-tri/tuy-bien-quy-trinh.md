@@ -56,6 +56,12 @@ ký `postgres` chỉ ra lỗi — tốt hơn để một hồ sơ thật mắc k
 
 ## Đổi quy trình khi hệ thống đang chạy
 
-Mỗi hồ sơ ghi lại bộ quy tắc nó dùng lúc tạo (`requests.rule_set_id`) và đi tiếp theo đúng bộ đó.
-Màn quản trị để đổi quy trình ngay trên giao diện, và bài kiểm thử cho hai bộ quy tắc chạy song song,
-là việc đang làm (issue #255, #278). Hiện tại, đổi quy trình là sửa dữ liệu khởi tạo rồi dựng lại cụm.
+Mỗi hồ sơ ghi lại bộ quy tắc nó dùng lúc tạo (`requests.rule_set_id`) và đi tiếp theo đúng bộ đó
+tới khi kết thúc: nút, nhật ký sự kiện và đồng hồ hạn của hồ sơ cũ theo bộ cũ, hồ sơ tạo sau theo
+bộ đang bật. Hàng đợi, Hồ sơ của tôi và hộp thư giữ hồ sơ của mọi bộ còn hồ sơ đang mở. Bài kiểm
+thử chạy hai bộ song song nằm ở `backend/tests/test_hai_bo_quy_tac.py` (#278, #299); chi tiết ở
+`docs/ARCHITECTURE.md` mục 6.1.
+
+Chưa có lối bật bộ mới trên cụm đang chạy ngoài lệnh SQL trực tiếp: dữ liệu khởi tạo chỉ nạp khi
+dựng cụm mới, mà dựng lại thì mất hồ sơ cũ. Đưa cấu hình vào migration (#254) và màn quản trị để
+đổi quy trình ngay trên giao diện (#255) là việc đang làm.
