@@ -30,6 +30,7 @@ import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
+import { useAnCham } from "@/lib/chuyen-dong";
 import type { CanhDiDuoc, NhanCoMa } from "@/lib/kieu";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
@@ -159,6 +160,9 @@ export function BangThaoTac({
     CHUA_CO_LOI,
   );
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
+  // Khung xác nhận trượt ra rồi mới gỡ (#237)
+  const [dangAn, an] = useAnCham();
+  const dongKhung = () => an(() => datDangMo(null));
   const menu = useRef<HTMLDetailsElement>(null);
 
   if (cacCanh.length === 0) {
@@ -189,7 +193,8 @@ export function BangThaoTac({
         data-loai={chinh ? "chinh" : undefined}
         aria-expanded={mo}
         onClick={() => {
-          datDangMo(mo ? null : canh);
+          if (mo) dongKhung();
+          else datDangMo(canh);
           if (menu.current) menu.current.open = false;
         }}
         style={{ justifyContent: "space-between", width: "100%" }}
@@ -242,7 +247,8 @@ export function BangThaoTac({
           // Đổi thao tác thì dựng lại ô nhập, để giá trị điền sẵn không mang từ thao
           // tác trước sang.
           key={dangMo.to_state}
-          className="khung-xac-nhan"
+          className="khung-xac-nhan hien-ra"
+          data-an={dangAn ? "" : undefined}
           style={{
             padding: "15px",
             borderRadius: "11px",
@@ -324,7 +330,7 @@ export function BangThaoTac({
             >
               {dangChay ? "Đang gửi…" : `Xác nhận · ${dangMo.activity_label}`}
             </button>
-            <button type="button" className="nut" onClick={() => datDangMo(null)}>
+            <button type="button" className="nut" onClick={dongKhung}>
               Thôi
             </button>
           </div>

@@ -26,6 +26,22 @@ function theoVai(vai: Vai) {
   test.use({ storageState: tepPhien(vai) });
 }
 
+/**
+ * Ô "Chờ bạn" kể đúng số việc chờ: bằng số dòng của danh sách, hoặc — khi danh sách chạm trần số
+ * dòng mỗi vai — dòng ghi chú nói rõ đang hiện bao nhiêu trên tổng số (#237).
+ */
+async function kiemSoChoBan(page: Page) {
+  const soDong = await page.locator(".ds-viec .dong-viec").count();
+  const soCho = Number(await page.locator(".o-so", { hasText: "Chờ bạn" }).locator("strong").innerText());
+  if (await page.locator(".ghi-con-lai").isVisible()) {
+    expect(soDong).toBeLessThan(soCho);
+    await expect(page.locator(".ghi-con-lai")).toContainText(`Đang hiện ${soDong} trên ${soCho} việc`);
+  } else {
+    expect(soCho).toBe(soDong);
+  }
+  return soDong;
+}
+
 /** Thanh bên chỉ mở ở màn rộng; màn hẹp mở bằng nút menu. */
 async function thanhBen(page: Page) {
   await page.waitForLoadState("networkidle");
@@ -70,18 +86,18 @@ test.describe("điều phối viên", () => {
   });
 
   test("số liệu trang chủ khớp danh sách việc chờ", async ({ page }) => {
-    await page.goto("/");
-    const dong = page.locator(".ds-viec .dong-viec");
-    const soDong = await dong.count();
-    // Ô "Chờ bạn", câu chào và số dòng của danh sách kể cùng một con số
-    const oCho = page.locator(".o-so", { hasText: "Chờ bạn" }).locator("strong");
-    await expect(oCho).toHaveText(String(soDong));
-    if (soDong > 0) await expect(page.locator(".cau-chao")).toContainText(`${soDong} việc chờ bạn`);
+    await page.goto("/", { waitUntil: "networkidle" });
+    // Ô "Chờ bạn", câu chào và danh sách kể cùng một con số
+    await kiemSoChoBan(page);
+    const soCho = await page.locator(".o-so", { hasText: "Chờ bạn" }).locator("strong").innerText();
+    if (soCho !== "0") await expect(page.locator(".cau-chao")).toContainText(`${soCho} việc chờ bạn`);
   });
 
   test("hồ sơ vừa gửi nằm trong việc chờ, nút mở đúng bước", async ({ page }) => {
     const h = docHoSo();
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
+    // Cụm có hơn 200 việc chờ: hồ sơ mới nhất có thể nằm ngoài trần của trang chủ
+    test.skip(await page.locator(".ghi-con-lai").isVisible(), "danh sách trang chủ chạm trần số dòng");
     const dong = page.locator(".dong-viec", { hasText: h.tieuDe });
     await expect(dong).toBeVisible();
     const nut = dong.locator("a.nut");
@@ -107,7 +123,8 @@ test.describe("điều phối viên", () => {
     await expect(ngan.locator(".ngan-vi-tri")).toHaveText(/^1 trên \d+$/);
     // Màn hẹp: ngăn chiếm trọn chiều ngang; không màn nào cuộn ngang khi ngăn mở
     const rong = page.viewportSize()!.width;
-    if (rong < 768) expect((await ngan.boundingBox())!.width).toBe(rong);
+    // Làm tròn: lúc hiệu ứng trượt vào còn chạy, trình duyệt trả bề ngang lệch phần nghìn điểm ảnh
+    if (rong < 768) expect(Math.round((await ngan.boundingBox())!.width)).toBe(rong);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
     await chup(page, test.info().project.name, "dieu-phoi-xem-nhanh");
 
@@ -135,6 +152,54 @@ test.describe("điều phối viên", () => {
     await expect(ngan.getByRole("link", { name: "Mở trang đầy đủ" })).toHaveAttribute("href", `/dieu-phoi/${h.ma}`);
   });
 
+  test("chuyển động: không quá 300 ms, số trang chủ không đếm từ 0", async ({ page }) => {
+    // Ghi mọi hiệu ứng CSS bắt đầu chạy trên trang, kèm mốc kết thúc (thời lượng + độ trễ)
+    await page.addInitScript(() => {
+      const ghi: { ten: string; ms: number }[] = [];
+      (window as unknown as { __chuyenDong: typeof ghi }).__chuyenDong = ghi;
+      const nghe = (e: AnimationEvent | TransitionEvent) => {
+        const ten = "animationName" in e ? e.animationName : e.propertyName;
+        for (const a of (e.target as Element).getAnimations()) {
+          const t = a.effect?.getComputedTiming();
+          if (t && t.iterations !== Infinity) ghi.push({ ten, ms: Number(t.endTime) });
+        }
+      };
+      document.addEventListener("animationstart", nghe, true);
+      document.addEventListener("transitionrun", nghe, true);
+    });
+    const qua300 = () =>
+      page.evaluate(() =>
+        (window as unknown as { __chuyenDong: { ten: string; ms: number }[] }).__chuyenDong.filter((c) => c.ms > 300),
+      );
+
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expect(page.locator(".so-cuon[data-huong]"), "mở trang không cuộn số nào").toHaveCount(0);
+    if (await page.locator(".khoi-viec .nut-sx").isVisible()) {
+      await page.locator(".khoi-viec .nut-sx").click();
+      await page.keyboard.press("Escape");
+    }
+    expect(await qua300(), "trang chủ").toEqual([]);
+
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    await page.locator("a.lk-dong").first().click();
+    const ngan = page.locator("aside.ngan");
+    await expect(ngan).toBeVisible();
+    const menu = ngan.locator("details.menu-thao-tac > summary");
+    if (await menu.isVisible()) {
+      await menu.click();
+      await page.keyboard.press("Escape");
+    }
+    const chinh = ngan.locator(".ngan-chan .nut[data-loai='chinh']");
+    if (await chinh.isVisible()) {
+      await chinh.click();
+      await ngan.getByRole("button", { name: "Thôi" }).click();
+      await expect(ngan.locator(".khung-xac-nhan")).toHaveCount(0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(ngan).toHaveCount(0);
+    expect(await qua300(), "hàng đợi và ngăn xem nhanh").toEqual([]);
+  });
+
   test("thấy mục Điều phối, không thấy Hệ thống", async ({ page }) => {
     await page.goto("/");
     const sb = await thanhBen(page);
@@ -153,9 +218,8 @@ test.describe("trưởng phòng", () => {
   });
 
   test("số liệu trang chủ khớp danh sách việc chờ", async ({ page }) => {
-    await page.goto("/");
-    const soDong = await page.locator(".ds-viec .dong-viec").count();
-    await expect(page.locator(".o-so", { hasText: "Chờ bạn" }).locator("strong")).toHaveText(String(soDong));
+    await page.goto("/", { waitUntil: "networkidle" });
+    await kiemSoChoBan(page);
   });
 });
 

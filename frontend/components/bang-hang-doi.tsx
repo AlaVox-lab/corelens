@@ -76,7 +76,7 @@ function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: numbe
       className="dong vao"
       data-qua={d.cuoi.muc === "qua" ? "" : undefined}
       data-dang-xem={d.dangXem ? "" : undefined}
-      style={{ ["--i" as string]: Math.min(thuTu, 12) }}
+      style={{ ["--i" as string]: Math.min(thuTu, 6) }}
     >
       <td>
         <div className="o-ho-so">
