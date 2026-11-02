@@ -5,6 +5,32 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.8.0] - 2026-11-02
+
+### Kiểm thử
+
+- **h-portal:** Kịch bản kiểm tra giao diện qua đăng nhập thật ([#290](https://github.com/AlaVox-lab/dx-os-lab/issues/290)) ([78b9d28](https://github.com/AlaVox-lab/dx-os-lab/commit/78b9d28cdfb89b84228eb089b372e3ae3981e3e6))
+
+### Sửa lỗi
+
+- **h-auth:** Màn đăng nhập luôn tiếng Việt và hiện tên hệ thống ([#272](https://github.com/AlaVox-lab/dx-os-lab/issues/272)) ([ea49108](https://github.com/AlaVox-lab/dx-os-lab/commit/ea49108aab573cb7f1eee538419f01295a38d86b))
+- **h-portal:** Trao đổi chia phía theo người, căn giữa trang ([#280](https://github.com/AlaVox-lab/dx-os-lab/issues/280)) ([afd7f26](https://github.com/AlaVox-lab/dx-os-lab/commit/afd7f26f3ac7af461c1634b5daa1a0ff7f1470d0))
+- **p-workflow:** Giữ hồ sơ của bộ quy tắc cũ trong hàng đợi ([#300](https://github.com/AlaVox-lab/dx-os-lab/issues/300)) ([d4f88d7](https://github.com/AlaVox-lab/dx-os-lab/commit/d4f88d77f6889f9b1db6c6830e59ecd51c864767))
+
+### Tài liệu
+
+- **p-rules:** Ghi cơ sở và nguồn cho các con số quy trình mẫu ([#282](https://github.com/AlaVox-lab/dx-os-lab/issues/282)) ([8193bbd](https://github.com/AlaVox-lab/dx-os-lab/commit/8193bbd6ba16b6c4288c690503fb3bbcff2e9bf2))
+- So sánh với các sản phẩm quản lý yêu cầu cùng loại ([#284](https://github.com/AlaVox-lab/dx-os-lab/issues/284)) ([ce50b75](https://github.com/AlaVox-lab/dx-os-lab/commit/ce50b75e6b61c26ee4e01d17a6d651ad8b50faa1))
+- **state:** Cập nhật trạng thái cuối Tuần 13 ([#286](https://github.com/AlaVox-lab/dx-os-lab/issues/286)) ([83e9dd6](https://github.com/AlaVox-lab/dx-os-lab/commit/83e9dd62582aa39278e603d846a81eb8e438f376))
+- Dựng trang tài liệu theo người đọc và rút gọn README ([#288](https://github.com/AlaVox-lab/dx-os-lab/issues/288)) ([29200c3](https://github.com/AlaVox-lab/dx-os-lab/commit/29200c34bfe1b3d95d2aace37b206dff53983405))
+- **state:** Khép đợt giao diện Tuần 13 ([#297](https://github.com/AlaVox-lab/dx-os-lab/issues/297)) ([88c83ae](https://github.com/AlaVox-lab/dx-os-lab/commit/88c83ae39357010c630bbc49906b33b28627e69f))
+
+### Tính năng mới
+
+- **h-portal:** Phân trang và bộ lọc phía dịch vụ cho danh sách ([#292](https://github.com/AlaVox-lab/dx-os-lab/issues/292)) ([15b946e](https://github.com/AlaVox-lab/dx-os-lab/commit/15b946eb1d25f384184446f9f01a5ab593990b67))
+- **h-portal:** Ngăn xem nhanh hồ sơ ngay trong hàng đợi ([#294](https://github.com/AlaVox-lab/dx-os-lab/issues/294)) ([d379466](https://github.com/AlaVox-lab/dx-os-lab/commit/d379466a25aad1ab9bfcb00b09a6ea27755b9231))
+- **h-portal:** Quy tắc chuyển động thống nhất cho giao diện ([#296](https://github.com/AlaVox-lab/dx-os-lab/issues/296)) ([3f5fb3d](https://github.com/AlaVox-lab/dx-os-lab/commit/3f5fb3d741af64408d44db89f3d5eea019e71332))
+
 ## [0.7.0] - 2026-10-27
 
 ### Tích hợp liên tục

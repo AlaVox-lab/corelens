@@ -54,4 +54,4 @@ Thêm phòng ban mới phải thêm cả nhóm trong Keycloak lẫn dòng trong 
 ## Báo cáo
 
 Apache Superset (`http://localhost:8088`) đã có trong cụm với tài khoản chỉ đọc trên dữ liệu nghiệp
-vụ. Bảng điều khiển trên nhật ký sự kiện là giai đoạn kế tiếp, phiên bản `v0.8.0`.
+vụ. Bảng điều khiển trên nhật ký sự kiện là giai đoạn kế tiếp, phiên bản `v0.9.0`.

@@ -98,7 +98,10 @@ im, hạn theo mức ưu tiên và gia hạn; **`v0.6.0` (27/10) khép giai đo�
 trạng thái Không tiếp nhận (#102), đính kèm tệp (#80), thống nhất từ ngữ trên giao diện (#157);
 `v0.7.0` (28/10) hoàn thiện trước khi sang `D` — trang chủ theo việc cần làm và nhận diện mới
 (#226), cờ "cần tôi xử lý" (#227), trường thông tin riêng theo loại yêu cầu (#250), tích hợp liên
-tục (#241)
+tục (#241); `v0.8.0` (02/11) khép đợt làm mới giao diện — phân trang và bộ lọc phía dịch vụ
+(#232), ngăn xem nhanh hồ sơ (#233), quy tắc chuyển động (#237), kịch bản kiểm tra giao diện qua
+đăng nhập thật (#238), trang tài liệu (#279) — và hồ sơ đang chạy giữ bộ quy tắc cũ khi đổi quy
+trình (#278, #299)
 
 Mục tiêu: luồng nghiệp vụ chạy được **hoàn toàn thủ công**, không có AI. Đây là nền
 tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
@@ -149,7 +152,7 @@ diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày
 
 ## Giai đoạn 3 — Không gian D
 
-**Phiên bản dự kiến**: `v0.8.0`
+**Phiên bản dự kiến**: `v0.9.0`
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.
@@ -168,7 +171,7 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.9.0`
+**Phiên bản dự kiến**: `v0.10.0`
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. Ba tác vụ theo thứ tự
 tăng dần độ khó.

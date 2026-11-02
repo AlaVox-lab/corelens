@@ -53,6 +53,10 @@ commit_parsers = [
   { message = "^Merge", skip = true },
   { message = "^Initial commit", skip = true },
   { message = "^chore\\(release\\)", skip = true },
+  # Merge commit của PR #301 (dev → main) lỡ mang tiêu đề commit squash của PR #300 thay vì
+  # "Merge pull request", nên luật "^Merge" không bắt được và mục bị lặp. Không sửa lịch sử
+  # main — chỉ bỏ đúng commit này theo mã băm.
+  { sha = "031568e2a98bcc2f3c4f2b75f1fad4db68750eeb", skip = true },
 
   # Phân nhóm theo loại thay đổi
   { message = "^feat",     group = "Tính năng mới" },
