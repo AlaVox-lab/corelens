@@ -6,6 +6,8 @@
 // giao diện hay làm sai: số liệu trang chủ khớp danh sách, mục Hệ thống chỉ quản trị viên thấy, nút
 // trên dòng việc mở đúng bước.
 
+import { readFileSync } from "node:fs";
+
 import { type Page, expect, test } from "@playwright/test";
 
 import { type Vai, chup, docHoSo, tepPhien } from "./chung";
@@ -233,4 +235,27 @@ test.describe("quản trị viên", () => {
     await expect(page.getByText("Bộ quy tắc quy trình")).toBeVisible();
     await expect(page.getByText(/đã nạp/)).toBeVisible();
   });
+
+  test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Xuất nhật ký sự kiện" })).toBeVisible();
+    const [tep] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Tải CSV" }).click(),
+    ]);
+    expect(tep.suggestedFilename()).toMatch(/\.csv$/);
+    const noiDung = readFileSync((await tep.path()) as string);
+    // Có BOM để bảng tính nhận UTF-8, dòng đầu là đúng các cột của định dạng
+    expect([...noiDung.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    expect(noiDung.toString("utf-8").slice(1).split("\r\n")[0]).toBe(
+      "case_id,activity,timestamp,actor,from_state,to_state,request_type_code,department_code,priority_code,rule_set_id",
+    );
+  });
+});
+
+test("trưởng phòng không tải được nhật ký sự kiện (#306)", async ({ browser }) => {
+  const nc = await browser.newContext({ storageState: tepPhien("truong-phong") });
+  const tra = await nc.request.get("/api/xuat/nhat-ky?dinh-dang=csv");
+  expect(tra.status()).toBe(403);
+  await nc.close();
 });

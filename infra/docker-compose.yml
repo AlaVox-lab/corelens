@@ -122,12 +122,19 @@ services:
       SUPERSET_DATABASE_URI: postgresql+psycopg2://${DXLAB_DB_USER}:${DXLAB_DB_PASSWORD}@postgres:5432/${SUPERSET_DB_NAME}
       SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
       SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      # Bảng điều khiển đọc dữ liệu nghiệp vụ bằng tài khoản CHỈ ĐỌC (ADR-0003). Điểm vào thay
+      # chuỗi này vào tệp kết nối của bảng điều khiển lúc khởi động (#304)
+      SUPERSET_READONLY_URI: postgresql+psycopg2://${SUPERSET_READONLY_USER}:${SUPERSET_READONLY_PASSWORD}@postgres:5432/${DXLAB_DB_NAME}
     volumes:
       - superset-home:/app/superset_home
     ports:
       - "${SUPERSET_PORT}:8088"
     depends_on:
       postgres:
+        condition: service_healthy
+      # View báo cáo do migration của dịch vụ ứng dụng tạo; dịch vụ chỉ báo khỏe sau khi chạy
+      # xong migration, nên chờ nó thì bảng điều khiển nạp vào lúc view đã có
+      backend:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------

@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+dashboard_title: Vận hành yêu cầu
+description: null
+css: null
+slug: van-hanh-yeu-cau
+certified_by: null
+certification_details: null
+published: true
+uuid: facac626-8852-42d9-8816-b0defdf4fb75
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-1
+    - ROW-2
+    parents:
+    - ROOT_ID
+  HEADER_ID:
+    id: HEADER_ID
+    type: HEADER
+    meta:
+      text: Vận hành yêu cầu
+  ROW-1:
+    type: ROW
+    id: ROW-1
+    children:
+    - CHART-9
+    - CHART-10
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-9:
+    type: CHART
+    id: CHART-9
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      chartId: 9
+      width: 6
+      height: 55
+      uuid: 6c564b71-e64f-4d4d-b630-0fefc11d76e5
+  CHART-10:
+    type: CHART
+    id: CHART-10
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      chartId: 10
+      width: 6
+      height: 55
+      uuid: c5afc204-0a69-4ef6-8a3d-82e8b7372599
+  ROW-2:
+    type: ROW
+    id: ROW-2
+    children:
+    - CHART-11
+    - CHART-12
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-11:
+    type: CHART
+    id: CHART-11
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-2
+    meta:
+      chartId: 11
+      width: 6
+      height: 55
+      uuid: df6e2245-c79c-4722-942d-0da98275dcdd
+  CHART-12:
+    type: CHART
+    id: CHART-12
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-2
+    meta:
+      chartId: 12
+      width: 6
+      height: 55
+      uuid: 72c787af-05e8-4f58-a26a-9547f1374215
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: false
+theme_uuid: null
+version: 1.0.0

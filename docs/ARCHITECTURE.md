@@ -32,8 +32,9 @@ Số phiên bản xem `git tag` hoặc trang Releases.
 Đã cài đặt: hạ tầng sáu dịch vụ dựng bằng một lệnh, lược đồ cấu hình đầy đủ của
 engine máy trạng thái, **điểm chuyển trạng thái duy nhất**, **nhật ký sự kiện**, lời nhắn
 ngoài máy trạng thái, và cổng Next.js gồm cổng người gửi, buồng lái điều phối, buồng lái
-phòng ban, hộp thư chung. Chưa cài đặt: toàn bộ không gian `D` ngoài nhật ký sự kiện, và
-không gian `I`. Những mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
+phòng ban, hộp thư chung; ở không gian `D` có lớp báo cáo trên nhật ký sự kiện, bảng điều
+khiển phân tích dựng từ tệp cấu hình và xuất dữ liệu mở (mục 6.3). Chưa cài đặt: nhúng bảng
+điều khiển vào cổng (#305) và không gian `I`. Những mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
 
 **Ràng buộc quan trọng**: đề thi chính thức chỉ được công bố tháng 11/2026. Mọi thứ
 xây dựng trước thời điểm đó là **bộ khung tái sử dụng**, không phải sản phẩm cuối.
@@ -281,7 +282,7 @@ dx-os-lab/
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
-│   │   ├── analytics/           # [D] chưa cài đặt
+│   │   ├── analytics/           # [D] xuất nhật ký sự kiện CSV, JSON (#306)
 │   │   └── intelligence/        # [I] chưa cài đặt
 │   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
 │   ├── tests/
@@ -318,6 +319,7 @@ dx-os-lab/
 │   ├── keycloak/                # realm nạp lúc khởi động: vai trò là dữ liệu
 │   ├── seaweedfs/
 │   ├── superset/                # ảnh dẫn xuất, ảnh gốc thiếu trình điều khiển
+│   │   └── bang-dieu-khien/     # [D] dashboard dạng YAML, tự nạp lúc khởi động (#304)
 │   ├── postgres/init/           # LƯỢC ĐỒ — phần thuộc kiến trúc
 │   │   ├── 01-tao-cac-database.sh
 │   │   ├── 02-luoc-do-quy-trinh.sql
@@ -328,7 +330,8 @@ dx-os-lab/
 │       └── 99-kiem-tra-tinh-nhat-quan.sql
 ├── scripts/
 │   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
-│   └── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
+│   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
+│   └── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
 ├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
@@ -729,6 +732,64 @@ chưa tồn tại lúc người gửi chọn tệp ở bước 2 của biểu m�
 tệp lên chính hồ sơ đó; tải hỏng thì hồ sơ vẫn đã gửi và trang hồ sơ nhắc thêm tệp lại, để người
 gửi không bấm gửi lần nữa. Không quét vi-rút — nằm ngoài phạm vi, bù bằng danh sách đuôi chặt và
 kiểm chữ ký.
+
+### 6.3. Lớp báo cáo và dữ liệu mở (không gian `D`)
+
+**Đã cài đặt** — #304, #306. Nhúng vào cổng: #305, chưa cài đặt.
+
+Nhật ký sự kiện nuôi ba thứ đọc cùng một nguồn: bảng điều khiển phân tích, dữ liệu xuất, và về
+sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi — chúng nằm trong các **view
+`bao_cao_*`** của migration `0014`, tự chạy khi nâng cấp, không phải `down -v`:
+
+| View | Một dòng là | Dùng cho |
+|---|---|---|
+| `bao_cao_ho_so` | một hồ sơ: loại, phòng, trạng thái, đã kết thúc, đã qua phòng ban, giờ xử lý, ngưỡng hạn, giờ đồng hồ, vi phạm | nền của mọi view dưới, biểu đồ trung vị |
+| `bao_cao_ton_dong` | phòng × trạng thái của hồ sơ chưa kết thúc | Tồn đọng theo phòng ban |
+| `bao_cao_vi_pham` | phòng × loại: số hồ sơ đã xong, số vi phạm | Tỷ lệ vi phạm hạn |
+| `bao_cao_phan_bo_loai` | tuần gửi × phòng × loại | Phân bố loại yêu cầu |
+| `bao_cao_thoi_gian_xu_ly` | loại: trung vị giờ xử lý, tỷ lệ vi phạm toàn công ty | tóm tắt |
+| `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
+
+Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
+
+- **Không tra mã trạng thái.** Kết thúc hay chưa tra `states.is_terminal`; hồ sơ đã tới phòng ban
+  hay chưa tra `states.sla_running` — hồ sơ hủy trước khi tới phòng, hay *Không tiếp nhận*, không
+  bao giờ vào trạng thái chạy đồng hồ, nên tự rơi khỏi thời gian xử lý và tỷ lệ vi phạm. Mỗi hồ
+  sơ xét theo bộ quy tắc của chính nó (mục 6.1)
+- **Cùng phép đo với hệ thống.** Giờ xử lý đo bằng `so_giay_lam_viec` theo lịch mặc định; ngưỡng
+  hạn là hạn chuẩn của loại nhân hệ số ưu tiên cộng giờ gia hạn, như `gioi_han_giay`; vi phạm là
+  đồng hồ hạn của hồ sơ đã kết thúc vượt ngưỡng đó
+- **Mọi view bảng điều khiển đọc đều có `ma_phong`**, để bản nhúng lọc theo phòng của người xem
+  bằng một điều kiện trên cột đó. Trung vị không cộng gộp được giữa các phòng, nên biểu đồ trung
+  vị tính `PERCENTILE_CONT` trên `bao_cao_ho_so`, không trên bản tóm tắt
+
+View đặt ở schema `public` và chạy bằng quyền của chủ sở hữu: tài khoản chỉ đọc của Superset nhận
+quyền đọc mặc định cấp lúc dựng cụm, không đọc thẳng được gì nó không cần. Đổi một view thì tạo
+migration mới bằng `CREATE OR REPLACE VIEW`.
+
+**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, bốn biểu đồ và dashboard *Vận hành
+yêu cầu* nằm ở `infra/superset/bang-dieu-khien/` dạng YAML. Lúc khởi động, điểm vào của ảnh
+Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi chạy `superset import-directory
+--overwrite` — nạp đè theo uuid, khởi động lại không sinh bản trùng, cụm dựng mới có sẵn bảng
+điều khiển. Superset chờ dịch vụ ứng dụng báo khỏe, tức là đã chạy xong migration tạo view. Sửa
+bảng điều khiển: đăng nhập giao diện Superset bằng tài khoản quản trị, sửa, rồi `superset
+export-dashboards` và chép các tệp đã đổi về thư mục đó — không xuất lại thì lần khởi động sau
+nạp đè mất.
+
+**Dữ liệu mở.** `GET /analytics/event-log?format=csv|json&from=&to=`, chỉ quản trị viên, trên màn
+Hệ thống của cổng. Cột cố định (`app/analytics/xuat_du_lieu.py` `COT`), mốc UTC, khoảng ngày theo
+UTC; người thao tác bằng mã định danh, không có tên và ghi chú; CSV có BOM để bảng tính trên Windows
+hiện đúng chữ có dấu.
+
+**Dữ liệu trình diễn.** `scripts/nap_du_lieu_trinh_dien.py --xac-nhan` nạp vài trăm hồ sơ giả theo
+kịch bản của bộ sinh nhật ký ảo (#124), đi đúng bộ quy tắc đang bật và qua bước tự kiểm của bộ
+sinh. Đây là **lối ghi duy nhất ngoài `perform_transition`**: engine chỉ ghi được mốc hiện tại, còn
+lịch sử trình diễn phải lùi về quá khứ. Lệnh chỉ chạy INSERT — hồ sơ mang sẵn trạng thái cuối,
+nhật ký mang sẵn mốc cũ — nên nguyên tắc nhật ký chỉ ghi thêm vẫn giữ. Đồng hồ của bộ sinh được
+coi là giây làm việc và đổi sang giờ thật bằng `moc_sau_giay_lam_viec`: sự kiện rơi vào giờ hành
+chính, đồng hồ hạn đúng bằng cách hệ thống tự đo, không sự kiện nào ở tương lai. Lệnh từ chối
+chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang tiền tố `[Mẫu]` (trừ khi thêm
+`--cho-tron`). Hồ sơ mẫu không gỡ ra được — trigger chặn xóa nhật ký — nên muốn sạch thì `down -v`.
 
 ---
 

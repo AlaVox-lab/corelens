@@ -73,6 +73,13 @@ Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty
 | `cuong.le` | Người xử lý Công nghệ thông tin |
 | `khanh.vo` | Quản trị viên — màn Hệ thống |
 
+Bảng điều khiển phân tích ở `http://localhost:8088` (tài khoản quản trị trong `.env`). Muốn có số để
+xem, nạp vài trăm hồ sơ giả vào cụm thử — chạy ở gốc kho mã:
+
+```bash
+python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
+```
+
 Đủ mười ba tài khoản, kiểm cụm, cấu hình, sự cố thường gặp và nâng cấp: xem trang tài liệu, phần
 *Cài đặt và vận hành*.
 

@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+slice_name: Thời gian xử lý trung vị theo loại yêu cầu (giờ làm việc)
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 9__table
+  adhoc_filters:
+  - expressionType: SQL
+    clause: WHERE
+    sqlExpression: da_ket_thuc AND da_qua_phong_ban
+  row_limit: 10000
+  color_scheme: supersetColors
+  show_legend: true
+  rich_tooltip: true
+  orientation: horizontal
+  x_axis_title_margin: 15
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  truncateXAxis: true
+  sort_series_type: sum
+  zoomable: false
+  x_axis: loai_yeu_cau
+  groupby: []
+  metrics:
+  - expressionType: SQL
+    sqlExpression: ROUND(CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY gio_xu_ly) AS NUMERIC), 1)
+    label: Từ lúc gửi tới lúc kết thúc (trung vị)
+    hasCustomLabel: true
+    optionName: metric_3877856359
+  - expressionType: SQL
+    sqlExpression: ROUND(CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY gio_dong_ho) AS NUMERIC), 1)
+    label: Phòng ban xử lý — đồng hồ hạn (trung vị)
+    hasCustomLabel: true
+    optionName: metric_8735038582
+  - expressionType: SQL
+    sqlExpression: ROUND(AVG(gio_nguong), 1)
+    label: Ngưỡng hạn (trung bình)
+    hasCustomLabel: true
+    optionName: metric_9122063707
+  x_axis_title: ''
+  y_axis_title: ''
+  show_value: true
+query_context: null
+cache_timeout: null
+uuid: c5afc204-0a69-4ef6-8a3d-82e8b7372599
+version: 1.0.0
+dataset_uuid: 62e65111-d54b-45af-8694-c56b893dfdfb
