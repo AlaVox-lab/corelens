@@ -206,7 +206,7 @@ def test_danh_sach_ho_so_cua_toi_tra_co(session, rule_set, phong_ban):
     app.dependency_overrides[current_actor] = lambda: NGUOI_GUI
     try:
         with TestClient(app) as client:
-            ds = client.get("/requests").json()
+            ds = client.get("/requests").json()["items"]
             dong = {d["id"]: d["needs_my_action"] for d in ds}
             nhan = {d["id"]: d["next_step_label"] for d in ds}
             chi_tiet = client.get(f"/requests/{cho_toi.id}").json()

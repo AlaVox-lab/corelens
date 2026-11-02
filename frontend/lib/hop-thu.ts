@@ -10,6 +10,10 @@ import type { HoSoChiTiet } from "@/lib/kieu";
 /** Giá trị `kenh` trên địa chỉ trang của cuộc nội bộ. */
 export const KENH_NOI_BO = "noi-bo";
 
+/** Giá trị `loc` trên địa chỉ trang của hai chip lọc hộp thư (#232). */
+export const LOC_CHUA_DOC = "chua-doc";
+export const LOC_NOI_BO = "noi-bo";
+
 export function duongCuoc(maHoSo: number, noiBo: boolean): string {
   return `/hop-thu?ho-so=${maHoSo}${noiBo ? `&kenh=${KENH_NOI_BO}` : ""}`;
 }

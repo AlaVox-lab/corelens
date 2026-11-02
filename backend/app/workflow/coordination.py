@@ -21,7 +21,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -39,6 +39,7 @@ from app.models.workflow_config import (
     Transition,
     TransitionRole,
 )
+from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
@@ -51,9 +52,13 @@ from app.workflow.routes import (
     _bang_trang_thai,
     _bao_loi,
     _bao_loi_nhan,
+    _do_gap,
     _du_lieu_chi_tiet,
+    _giu_danh_muc,
+    _ma_ho_so,
     _tom_tat,
 )
+from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
     GuiLoiNhanVao,
@@ -170,16 +175,30 @@ def _dung_chi_tiet_dieu_phoi(
 def hang_doi(
     session: _Phien,
     actor: _Cua,
+    trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
     state: Annotated[str | None, Query(description="Chỉ lấy một trạng thái")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
+    priority: Annotated[str | None, Query(description="Chỉ một mức ưu tiên")] = None,
+    department: Annotated[str | None, Query(description="Chỉ hồ sơ đang gắn một phòng")] = None,
+    sort: Annotated[
+        Literal["cho", "gap", "moi"],
+        Query(description="cho: chờ lâu nhất · gap: gấp trước · moi: mới nhất"),
+    ] = "cho",
+    needs_action: Annotated[bool, Query(description="Chỉ hồ sơ đang chờ chính người xem")] = False,
 ) -> HangDoiRa:
-    """Hồ sơ đang chờ điều phối viên, chờ lâu nhất lên đầu.
+    """Hồ sơ đang chờ điều phối viên, mặc định chờ lâu nhất lên đầu, có phân trang (#232).
 
-    Xếp theo thời gian chờ ở trạng thái hiện tại chứ không theo hạn SLA: đồng hồ SLA
-    không chạy ở những trạng thái này — nó chỉ bắt đầu khi phòng ban nhận việc — nên ở
-    đây không có khái niệm "sắp quá hạn". Thời gian chờ mới là con số thật.
+    Mặc định xếp theo thời gian chờ ở trạng thái hiện tại chứ không theo hạn SLA: đồng hồ SLA
+    không chạy ở những trạng thái này — nó chỉ bắt đầu khi phòng ban nhận việc. "Gấp" ở đây là
+    hệ thống sắp tự đi thay.
 
-    Chỉ lấy hồ sơ của bộ quy tắc đang kích hoạt. Khi doanh nghiệp đổi bộ quy tắc, hồ
-    sơ cũ vẫn chạy theo bộ cũ, và hàng đợi của chúng sẽ cần xử lý riêng.
+    Hàng đợi chỉ gồm hồ sơ đang mở ở các trạng thái của điều phối, nên lớn theo khối việc đang
+    làm chứ không theo lịch sử: lọc và đếm làm trên cả hàng đợi, rồi mới cắt trang; tóm tắt đầy
+    đủ — phần tốn nhất — chỉ dựng cho hồ sơ của trang.
+
+    Chỉ lấy hồ sơ của bộ quy tắc đang kích hoạt. Khi doanh nghiệp đổi bộ quy tắc, hồ sơ cũ vẫn
+    chạy theo bộ cũ, và hàng đợi của chúng sẽ cần xử lý riêng.
     """
     bo = get_active_rule_set(session)
     cac_trang_thai = trang_thai_hang_doi_dieu_phoi(session, bo.id)
@@ -194,26 +213,53 @@ def hang_doi(
             },
         )
 
-    dem = dict(
-        session.execute(
-            select(Request.current_state, func.count())
-            .where(Request.rule_set_id == bo.id, Request.current_state.in_(ma_hang_doi))
-            .group_by(Request.current_state)
-        ).all()
-    )
-
     luc_vao = _luc_vao_trang_thai().label("luc_vao")
-    dong = session.execute(
-        select(Request, luc_vao)
-        .where(
-            Request.rule_set_id == bo.id,
-            Request.current_state.in_([state] if state else ma_hang_doi),
+    ca_hang = [
+        (ho_so, vao, da_o)
+        for ho_so, vao, da_o in session.execute(
+            select(Request, luc_vao, giay_da_o_trang_thai())
+            .where(Request.rule_set_id == bo.id, Request.current_state.in_(ma_hang_doi))
+            .order_by(luc_vao.asc(), Request.id)
         )
-        .order_by(luc_vao.asc(), Request.id)
-    ).all()
+    ]
+    buoc = my_primary_steps(session, [ho_so for ho_so, _, _ in ca_hang], actor)
+    # (quá hạn, sắp hạn) tính một lần cho cả hàng đợi: dải lọc, cách xếp "gấp" và chấm báo trên
+    # thanh bên cùng đọc, nên không kể hai chuyện
+    _danh_muc = _giu_danh_muc(session, bo.id)
+    canh_tu_di = canh_tu_di_theo_trang_thai(session, bo.id)
+    bao = {
+        ho_so.id: ho_so.current_state in canh_tu_di and da_toi_luc_bao(canh_tu_di[ho_so.current_state], da_o)
+        for ho_so, _, da_o in ca_hang
+    }
+    gap = {ho_so.id: _do_gap(session, ho_so, bao[ho_so.id]) for ho_so, _, _ in ca_hang}
+    cho_toi = [ho_so for ho_so, _, _ in ca_hang if buoc[ho_so.id] is not None]
+
+    def khop(ho_so: Request) -> bool:
+        return (
+            khop_tim(q, ho_so.title, ho_so.requester_label, _ma_ho_so(ho_so))
+            and (not request_type or ho_so.request_type_code == request_type)
+            and (not priority or ho_so.priority_code == priority)
+            and (not department or ho_so.department_code == department)
+            and (not needs_action or buoc[ho_so.id] is not None)
+        )
+
+    da_loc = [(h, vao) for h, vao, _ in ca_hang if khop(h)]
+    dem: dict[str, list[int]] = {}
+    for h, _ in da_loc:
+        o = dem.setdefault(h.current_state, [0, 0, 0])
+        qua, sap = gap[h.id]
+        o[0] += 1
+        o[1] += qua
+        o[2] += sap
+    if state:
+        da_loc = [(h, vao) for h, vao in da_loc if h.current_state == state]
+
+    if sort == "moi":
+        da_loc.sort(key=lambda d: (d[0].created_at, d[0].id), reverse=True)
+    elif sort == "gap":
+        da_loc.sort(key=lambda d: (not gap[d[0].id][0], not gap[d[0].id][1], d[1], d[0].id))
 
     states = _bang_trang_thai(session, bo.id)
-    buoc = my_primary_steps(session, [ho_so for ho_so, _ in dong], actor)
     cac_muc = [
         MucHangDoiRa(
             **_tom_tat(session, ho_so, states),
@@ -225,15 +271,22 @@ def hang_doi(
             state_entered_at=vao,
             requested_by_me=ho_so.requester_id == actor.id,
         )
-        for ho_so, vao in dong
+        for ho_so, vao in cat_trang(da_loc, trang)
     ]
 
     return HangDoiRa(
         groups=[
-            NhomHangDoiRa(code=t.code, label=t.label, count=dem.get(t.code, 0))
+            NhomHangDoiRa(code=t.code, label=t.label, count=o[0], overdue=o[1], due_soon=o[2])
             for t in cac_trang_thai
+            for o in [dem.get(t.code, [0, 0, 0])]
         ],
         items=cac_muc,
+        total=len(da_loc),
+        offset=trang.offset,
+        limit=trang.limit,
+        waiting_me=len(cho_toi),
+        # Gấp như chấm báo trên thanh bên (#230): quá hạn, hay hệ thống sắp tự đi
+        urgent=any(gap[h.id][0] or bao[h.id] for h in cho_toi),
     )
 
 

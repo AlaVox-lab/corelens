@@ -5,15 +5,18 @@
 //
 // Cột trái của hộp thư (#155): các cuộc trò chuyện gom theo người, ô tìm và chip "Chưa
 // đọc" — thêm chip "Nội bộ" khi có cuộc nội bộ (#156). Trang ở máy chủ đã gom nhóm và dịch
-// mỗi cuộc thành dòng chữ sẵn; ở đây chỉ lọc trên trình duyệt, không gọi dịch vụ. Bấm một
-// cuộc là đổi `?ho-so=` (và `kenh=`) trên địa chỉ trang — tải lại hay gửi đường dẫn đều mở
-// đúng cuộc đó.
+// mỗi cuộc thành dòng chữ sẵn. Bấm một cuộc là đổi `?ho-so=` (và `kenh=`) trên địa chỉ trang
+// — tải lại hay gửi đường dẫn đều mở đúng cuộc đó.
+//
+// Từ #232 hộp thư có phân trang: ô tìm (`?q=`), chip (`?loc=`) và trang (`?trang=`) cũng nằm
+// trên địa chỉ trang và đi tới dịch vụ. Mở một cuộc giữ nguyên bộ lọc và trang đang xem.
 
-import { FileText, Hourglass, Lock, Search } from "lucide-react";
+import { FileText, Hourglass, Lock } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-import { duongCuoc } from "@/lib/hop-thu";
+import { OTimUrl } from "@/components/loc-url";
+import { KENH_NOI_BO, LOC_CHUA_DOC, LOC_NOI_BO } from "@/lib/hop-thu";
 
 export type MucCuoc = {
   maHoSo: number;
@@ -26,8 +29,6 @@ export type MucCuoc = {
   luc: string;
   chuaDoc: number;
   choBan: boolean;
-  /** Chữ để tìm: tên người, mã, tiêu đề. */
-  tim: string;
 };
 
 export type NhomCuoc = {
@@ -40,83 +41,68 @@ export type NhomCuoc = {
   cuoc: MucCuoc[];
 };
 
-function chuanHoa(chu: string): string {
-  return chu.normalize("NFD").replace(/\p{M}/gu, "").replace(/[đĐ]/g, "d").toLowerCase();
-}
-
-type Loc = "tat-ca" | "chua-doc" | "noi-bo";
-
 export function DanhSachHopThu({
   nhom,
   chon,
+  soChuaDoc,
+  soNoiBo,
+  chan,
 }: {
+  /** Các cuộc của trang đang xem, dịch vụ đã lọc. */
   nhom: NhomCuoc[];
   /** Cuộc đang mở: hồ sơ và kênh. */
   chon: { maHoSo: number; noiBo: boolean } | null;
+  /** Số cuộc còn tin chưa đọc, số cuộc nội bộ — trên cả hộp thư khớp ô tìm. */
+  soChuaDoc: number;
+  soNoiBo: number;
+  /** Dòng chân "Đang xem … trên …" và nút chuyển trang. */
+  chan?: React.ReactNode;
 }) {
-  const [tim, datTim] = useState("");
-  const [loc, datLoc] = useState<Loc>("tat-ca");
-  const khoa = chuanHoa(tim.trim());
-  const tatCa = nhom.flatMap((n) => n.cuoc);
-  const tongChuaDoc = tatCa.filter((c) => c.chuaDoc > 0).length;
-  const coNoiBo = tatCa.some((c) => c.noiBo);
+  const sp = useSearchParams();
+  const loc = sp.get("loc");
 
-  const conLai = nhom
-    .map((n) => ({
-      ...n,
-      cuoc: n.cuoc.filter(
-        (c) =>
-          (loc !== "chua-doc" || c.chuaDoc > 0) &&
-          (loc !== "noi-bo" || c.noiBo) &&
-          (!khoa || chuanHoa(c.tim).includes(khoa)),
-      ),
-    }))
-    .filter((n) => n.cuoc.length > 0);
+  /** Đường dẫn giữ bộ lọc và trang đang xem, đổi vài tham số. */
+  const duong = (doi: Record<string, string | null>) => {
+    const q = new URLSearchParams(sp.toString());
+    for (const [ten, gt] of Object.entries(doi)) {
+      if (gt) q.set(ten, gt);
+      else q.delete(ten);
+    }
+    return `/hop-thu?${q.toString()}`;
+  };
+  const duongLoc = (gt: string | null) => duong({ loc: gt, trang: null });
+  const duongCuoc = (maHoSo: number, noiBo: boolean) =>
+    duong({ "ho-so": String(maHoSo), kenh: noiBo ? KENH_NOI_BO : null });
 
   return (
     <section className="ht-ds" aria-label="Các cuộc trò chuyện">
       <div className="ht-tim">
-        <label className="o-tim">
-          <Search aria-hidden />
-          <input
-            className="o-nhap"
-            type="search"
-            placeholder="Tìm người, mã hồ sơ"
-            aria-label="Tìm cuộc trò chuyện"
-            value={tim}
-            onChange={(e) => datTim(e.target.value)}
-          />
-        </label>
-        <div className="chip-hang">
-          <button className="chip" type="button" aria-pressed={loc === "tat-ca"} onClick={() => datLoc("tat-ca")}>
+        <OTimUrl goiY="Tìm người, mã hồ sơ" nhan="Tìm cuộc trò chuyện" />
+        <nav className="chip-hang" aria-label="Lọc cuộc trò chuyện">
+          <Link className="chip" href={duongLoc(null)} scroll={false} aria-pressed={!loc}>
             Tất cả
-          </button>
-          <button
-            className="chip"
-            type="button"
-            aria-pressed={loc === "chua-doc"}
-            onClick={() => datLoc("chua-doc")}
-          >
-            Chưa đọc {tongChuaDoc}
-          </button>
-          {coNoiBo && (
-            <button className="chip" type="button" aria-pressed={loc === "noi-bo"} onClick={() => datLoc("noi-bo")}>
+          </Link>
+          <Link className="chip" href={duongLoc(LOC_CHUA_DOC)} scroll={false} aria-pressed={loc === LOC_CHUA_DOC}>
+            Chưa đọc {soChuaDoc}
+          </Link>
+          {(soNoiBo > 0 || loc === LOC_NOI_BO) && (
+            <Link className="chip" href={duongLoc(LOC_NOI_BO)} scroll={false} aria-pressed={loc === LOC_NOI_BO}>
               <Lock aria-hidden />
               Nội bộ
-            </button>
+            </Link>
           )}
-        </div>
+        </nav>
       </div>
 
       <div className="ht-cuon">
-        {conLai.length === 0 && (
+        {nhom.length === 0 && (
           <p className="nhat" style={{ fontSize: "13px", margin: "12px 8px" }}>
-            {loc === "chua-doc" && !khoa
+            {loc === LOC_CHUA_DOC && !sp.get("q")
               ? "Không còn cuộc trò chuyện nào chưa đọc."
               : "Không có cuộc trò chuyện nào khớp."}
           </p>
         )}
-        {conLai.map((n) => (
+        {nhom.map((n) => (
           <div key={n.ma} style={{ display: "contents" }}>
             {n.ten !== null && (
               <div className="nhom-nguoi">
@@ -178,6 +164,7 @@ export function DanhSachHopThu({
           </div>
         ))}
       </div>
+      {chan}
     </section>
   );
 }
