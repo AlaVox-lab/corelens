@@ -15,10 +15,12 @@
 
 import { ArrowLeft, ArrowRight, EyeOff, Lock, MessagesSquare } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { guiLoiNhanDieuPhoi } from "@/app/dieu-phoi/thao-tac";
 import { guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
 import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
+import { ChanTrang } from "@/components/chan-trang";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
 import { DanhSachHopThu, type MucCuoc, type NhomCuoc } from "@/components/danh-sach-hop-thu";
 import { KhungChat } from "@/components/khung-chat";
@@ -29,10 +31,11 @@ import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { TuLamMoi } from "@/components/tu-lam-moi";
 import { docDichVu, goiDichVu } from "@/lib/api";
 import { chiGio, khoaNgay } from "@/lib/dinh-dang";
-import { duongCuoc, KENH_NOI_BO } from "@/lib/hop-thu";
+import { duongCuoc, KENH_NOI_BO, LOC_CHUA_DOC, LOC_NOI_BO } from "@/lib/hop-thu";
 import type { CuaMoHoSo, CuocTroChuyen, HoSoChiTiet, HopThu } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
 import { docDongHo } from "@/lib/sla";
+import { docThamSo, duongTrang, quaTrangCuoi, soTrang, truyVan, type ThamSo } from "@/lib/trang";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +72,6 @@ function thanhMuc(c: CuocTroChuyen, bayGio: Date): MucCuoc {
     luc: lucNgan(tin.created_at, bayGio),
     chuaDoc: c.unread,
     choBan: c.waiting_on_me,
-    tim: `${c.requester_label ?? ""} ${c.code} ${c.title}${c.internal ? " nội bộ" : ""}`,
   };
 }
 
@@ -241,13 +243,20 @@ async function CuocDangMo({ cuoc, bayGio }: { cuoc: CuocTroChuyen; bayGio: Date 
   );
 }
 
-export default async function TrangHopThu({
-  searchParams,
-}: {
-  searchParams: Promise<{ "ho-so"?: string; kenh?: string }>;
-}) {
-  const { "ho-so": hoSo, kenh } = await searchParams;
-  const hopThu = await goiDichVu<HopThu>("/inbox");
+export default async function TrangHopThu({ searchParams }: { searchParams: Promise<ThamSo> }) {
+  const sp = await searchParams;
+  const hoSo = docThamSo(sp, "ho-so");
+  const kenh = docThamSo(sp, "kenh");
+  const loc = docThamSo(sp, "loc");
+  const trang = soTrang(sp);
+  const coLoc = Boolean(docThamSo(sp, "q") || loc);
+  const hopThu = await goiDichVu<HopThu>(
+    `/inbox?${truyVan(trang, {
+      q: docThamSo(sp, "q"),
+      unread: loc === LOC_CHUA_DOC,
+      internal: loc === LOC_NOI_BO,
+    })}`,
+  );
   const bayGio = new Date();
   const tieuDe = <h1 className="an-di">Hộp thư</h1>;
 
@@ -268,7 +277,10 @@ export default async function TrangHopThu({
     );
   }
 
-  if (hopThu.items.length === 0) {
+  const cuoi = quaTrangCuoi("/hop-thu", sp, hopThu);
+  if (cuoi) redirect(cuoi);
+
+  if (hopThu.items.length === 0 && !coLoc) {
     return (
       <>
         {tieuDe}
@@ -283,8 +295,14 @@ export default async function TrangHopThu({
     );
   }
 
-  // Có `?ho-so=` thì mở đúng cuộc đó; không có thì mở cuộc mới nhất (trên màn rộng)
-  const chon = hoSo ? chonCuoc(hopThu.items, hoSo, kenh === KENH_NOI_BO) : hopThu.items[0];
+  // Có `?ho-so=` thì mở đúng cuộc đó — cuộc không nằm ở trang đang xem (mở từ trang hồ sơ,
+  // hay đã sang trang khác) thì hỏi riêng các cuộc của hồ sơ đó. Không có thì mở cuộc mới
+  // nhất (trên màn rộng).
+  let cacCuocCuaHoSo = hopThu.items;
+  if (hoSo && /^\d+$/.test(hoSo) && !hopThu.items.some((c) => String(c.case_id) === hoSo)) {
+    cacCuocCuaHoSo = (await goiDichVu<HopThu>(`/inbox?case_id=${hoSo}`))?.items ?? [];
+  }
+  const chon = hoSo ? chonCuoc(cacCuocCuaHoSo, hoSo, kenh === KENH_NOI_BO) : (hopThu.items[0] ?? null);
 
   return (
     <>
@@ -300,10 +318,25 @@ export default async function TrangHopThu({
         <DanhSachHopThu
           nhom={gomNhom(hopThu.items, bayGio)}
           chon={chon ? { maHoSo: chon.case_id, noiBo: chon.internal } : null}
+          soChuaDoc={hopThu.unread_conversations}
+          soNoiBo={hopThu.internal_conversations}
+          chan={
+            <ChanTrang
+              tong={hopThu.total}
+              tu={hopThu.offset}
+              soDong={hopThu.limit}
+              donVi="cuộc"
+              truoc={trang > 1 ? duongTrang("/hop-thu", sp, trang - 1) : null}
+              sau={hopThu.offset + hopThu.limit < hopThu.total ? duongTrang("/hop-thu", sp, trang + 1) : null}
+            />
+          }
         />
         <section className="ht-chat" aria-label="Cuộc trò chuyện">
           {chon ? (
             <CuocDangMo cuoc={chon} bayGio={bayGio} />
+          ) : !hoSo ? (
+            // Bộ lọc không còn cuộc nào: chưa có gì để mở
+            <Rong tieuDe="Không có cuộc trò chuyện nào khớp" cau="Đổi ô tìm hay bỏ bộ lọc để xem các cuộc khác." />
           ) : (
             <>
               <Rong

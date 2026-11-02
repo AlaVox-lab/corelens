@@ -19,21 +19,40 @@
 // Câu hỏi thứ hai — **hồ sơ này đang ở đâu** — trả lời ngay trên dòng của nó (#192): rê,
 // Tab hay chạm vào nhãn trạng thái thì hiện sơ đồ nhỏ của đường chính. Bảng giải thích
 // mười trạng thái từng nằm cuối trang đã bỏ: không ai đọc nó để biết hồ sơ của mình ở đâu.
+//
+// Danh sách này dài dần theo năm tháng, nên từ #232 dịch vụ trả từng trang. Tìm, lọc theo
+// trạng thái và loại yêu cầu, trang đang xem nằm trên địa chỉ trang. Dải nhắc đếm trên mọi hồ
+// sơ của người dùng (`waiting_me`), không chỉ trên trang đang xem.
 
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, SearchX } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { ChanTrang, ChipLoc } from "@/components/chan-trang";
 import { DauLoiNhan } from "@/components/dau-loi-nhan";
+import { ChonLoc, OTimUrl } from "@/components/loc-url";
 import { ManRong } from "@/components/man-rong";
 import { XemNhanhTrangThai } from "@/components/xem-nhanh-trang-thai";
 import { goiDichVu } from "@/lib/api";
 import { type Buoc, cacBuoc, duongChinh } from "@/lib/buoc";
 import { khoangCach, ngayGio } from "@/lib/dinh-dang";
-import type { HoSoChiTiet, HoSoTomTat, SuKien, TrangThai } from "@/lib/kieu";
+import type { DanhSachHoSo, HoSoChiTiet, HoSoTomTat, LoaiYeuCau, SuKien, TrangThai } from "@/lib/kieu";
 import { docDongHo, docTuDong } from "@/lib/sla";
-import { bienHoMau, dangChoNguoiDung, viecCuaBan } from "@/lib/trang-thai";
+import {
+  chipLoc,
+  docThamSo,
+  duongTrang,
+  nhanCua,
+  quaTrangCuoi,
+  soTrang,
+  truyVan,
+  type ThamSo,
+} from "@/lib/trang";
+import { bienHoMau, viecCuaBan } from "@/lib/trang-thai";
 
 export const dynamic = "force-dynamic";
+
+const GOC = "/yeu-cau";
 
 function Trong() {
   return (
@@ -125,7 +144,8 @@ function tinhViTri(
 }
 
 function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri: ViTri }) {
-  const choBan = dangChoNguoiDung(ho_so.state.code);
+  // Cờ của dịch vụ, tính từ bước chính trong dữ liệu (#227) — cùng nguồn với dải nhắc
+  const choBan = ho_so.needs_my_action === true;
   // Ngày làm việc cuối trước khi hồ sơ tự đóng (#144): câu đó thay câu đồng hồ, tô cam
   const tuDong = docTuDong(ho_so);
   const dongHo = tuDong?.canhBao ? tuDong : docDongHo(ho_so, "nguoi-gui");
@@ -247,15 +267,36 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
   );
 }
 
-export default async function HoSoCuaToi() {
-  const [danhSach, danhMucTrangThai] = await Promise.all([
-    goiDichVu<HoSoTomTat[]>("/requests"),
+export default async function HoSoCuaToi({ searchParams }: { searchParams: Promise<ThamSo> }) {
+  const sp = await searchParams;
+  const trang = soTrang(sp);
+  const [danhSach, danhMucTrangThai, cacLoai] = await Promise.all([
+    goiDichVu<DanhSachHoSo>(
+      `/requests?${truyVan(trang, {
+        q: docThamSo(sp, "q"),
+        state: docThamSo(sp, "trang-thai"),
+        request_type: docThamSo(sp, "loai"),
+      })}`,
+    ),
     goiDichVu<TrangThai[]>("/states"),
+    goiDichVu<LoaiYeuCau[]>("/request-types"),
   ]);
 
-  const cacHoSo = danhSach ?? [];
+  if (danhSach) {
+    const cuoi = quaTrangCuoi(GOC, sp, danhSach);
+    if (cuoi) redirect(cuoi);
+  }
+
+  const cacHoSo = danhSach?.items ?? [];
   const cacTrangThai = danhMucTrangThai ?? [];
   const bayGio = new Date();
+  const { chip, xoaHet } = chipLoc(GOC, sp, {
+    q: (gt) => `Tìm: “${gt}”`,
+    "trang-thai": (gt) => nhanCua(cacTrangThai, gt),
+    loai: (gt) => nhanCua(cacLoai, gt),
+  });
+  // Số hồ sơ khớp ô tìm và loại, trước khi lọc trạng thái — mỗi trạng thái một dòng của `groups`
+  const soDaGui = (danhSach?.groups ?? []).reduce((tong, g) => tong + g.count, 0);
 
   // Lịch sử chỉ cần cho hồ sơ đang ở nhánh phụ chưa kết thúc — thường không quá vài hồ sơ
   const duong = new Set(duongChinh(cacTrangThai).map((t) => t.code));
@@ -266,7 +307,7 @@ export default async function HoSoCuaToi() {
     canLichSu.map((h) => goiDichVu<HoSoChiTiet>(`/requests/${h.id}`)),
   );
   const lichSu = new Map(canLichSu.map((h, i) => [h.id, chiTiet[i]?.history]));
-  const soChoBan = cacHoSo.filter((h) => dangChoNguoiDung(h.state.code)).length;
+  const soChoBan = danhSach?.waiting_me ?? 0;
 
   return (
     <>
@@ -293,7 +334,7 @@ export default async function HoSoCuaToi() {
           </h1>
           <p style={{ margin: "7px 0 0", fontSize: "14.5px", color: "var(--ink-2)" }}>
             {cacHoSo.length > 0
-              ? `${cacHoSo.length} yêu cầu bạn đã gửi. Rê hoặc chạm vào nhãn trạng thái để xem nhanh hồ sơ đang ở bước nào; bấm vào dòng để mở hồ sơ.`
+              ? `${xoaHet ? `${soDaGui} yêu cầu khớp bộ lọc` : `${soDaGui} yêu cầu bạn đã gửi`}. Rê hoặc chạm vào nhãn trạng thái để xem nhanh hồ sơ đang ở bước nào; bấm vào dòng để mở hồ sơ.`
               : "Nơi theo dõi mọi yêu cầu bạn đã gửi."}
           </p>
         </div>
@@ -304,8 +345,37 @@ export default async function HoSoCuaToi() {
 
       {soChoBan > 0 && <DaiNhac so={soChoBan} />}
 
+      {(cacHoSo.length > 0 || xoaHet) && (
+        <div className="hang-cong-cu khong-in" style={{ marginTop: "18px" }}>
+          <div className="phai">
+            <OTimUrl goiY="Tìm mã, tiêu đề" />
+            <ChonLoc
+              ten="trang-thai"
+              nhan="Lọc theo trạng thái"
+              tatCa="Mọi trạng thái"
+              // Chỉ trạng thái đang có hồ sơ, kèm số — số đếm trên cả danh sách đã lọc
+              tuyChon={(danhSach?.groups ?? []).map((g) => ({ code: g.code, label: `${g.label} (${g.count})` }))}
+            />
+            <ChonLoc ten="loai" nhan="Lọc theo loại yêu cầu" tatCa="Mọi loại" tuyChon={cacLoai ?? []} />
+          </div>
+        </div>
+      )}
+      <ChipLoc chip={chip} xoaHet={xoaHet ?? GOC} />
+
       <div style={{ marginTop: "18px" }}>
-        {cacHoSo.length === 0 ? (
+        {cacHoSo.length === 0 && xoaHet ? (
+          <div className="the">
+            <ManRong
+              icon={SearchX}
+              tieuDe="Không có hồ sơ nào khớp"
+              cau="Không yêu cầu nào bạn đã gửi khớp ô tìm và bộ lọc đang bật."
+            >
+              <Link className="nut" href={xoaHet} scroll={false}>
+                Xóa bộ lọc
+              </Link>
+            </ManRong>
+          </div>
+        ) : cacHoSo.length === 0 ? (
           <Trong />
         ) : (
           <div className="the">
@@ -335,6 +405,16 @@ export default async function HoSoCuaToi() {
           </div>
         )}
       </div>
+      {danhSach && (
+        <ChanTrang
+          tong={danhSach.total}
+          tu={danhSach.offset}
+          soDong={danhSach.limit}
+          xep="mới gửi nhất"
+          truoc={trang > 1 ? duongTrang(GOC, sp, trang - 1) : null}
+          sau={danhSach.offset + danhSach.limit < danhSach.total ? duongTrang(GOC, sp, trang + 1) : null}
+        />
+      )}
     </>
   );
 }

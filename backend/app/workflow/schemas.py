@@ -133,6 +133,15 @@ class TuDongRa(BaseModel):
     warn: bool
 
 
+class TrangRa(BaseModel):
+    """Phần chung của mọi danh sách có phân trang (#232): tổng số dòng khớp bộ lọc, và trang đang
+    trả. Số đếm nhóm đi kèm luôn tính trên toàn tập đã lọc, không chỉ trên trang này."""
+
+    total: int
+    offset: int
+    limit: int
+
+
 class HoSoTomTatRa(BaseModel):
     id: int
     code: str
@@ -344,6 +353,19 @@ class NhomHangDoiRa(NhanCoMa):
     # Nhóm chỉ để theo dõi: hồ sơ của phòng đang chờ người gửi, người trong phòng không
     # có thao tác nào lúc này nhưng hồ sơ sẽ quay về (#99). Hàng đợi điều phối luôn False.
     watch_only: bool = False
+    # Trạng thái kết thúc — chỉ "Hồ sơ của tôi" có, để tách hồ sơ đang mở khỏi đã đóng (#232)
+    is_terminal: bool = False
+    # Số hồ sơ quá hạn và sắp hạn trong nhóm — dòng phụ trên dải lọc của điều phối (#232)
+    overdue: int = 0
+    due_soon: int = 0
+
+
+class NhomDoGapRa(NhanCoMa):
+    """Một nhóm độ gấp của hàng đợi phòng ban, kèm số hồ sơ và số đã quá hạn, sắp hạn."""
+
+    count: int
+    overdue: int = 0
+    due_soon: int = 0
 
 
 class MucHangDoiRa(HoSoTomTatRa):
@@ -360,9 +382,25 @@ class MucHangDoiRa(HoSoTomTatRa):
     requested_by_me: bool = False
 
 
-class HangDoiRa(BaseModel):
+class HangDoiRa(TrangRa):
     groups: list[NhomHangDoiRa]
     items: list[MucHangDoiRa]
+    # Số hồ sơ đang chờ chính người xem, trên cả hàng đợi — thanh bên và trang chủ đọc số này
+    waiting_me: int = 0
+    urgent: bool = False
+
+
+class DanhSachHoSoRa(TrangRa):
+    """Hồ sơ của người gửi, có phân trang (#232)."""
+
+    items: list[HoSoTomTatRa]
+    # Số hồ sơ theo trạng thái trên toàn tập đã lọc — nút lọc và cột tổng quan đọc từ đây
+    groups: list[NhomHangDoiRa]
+    # Hồ sơ chưa kết thúc của người gửi, không tính bộ lọc — số mờ trên thanh bên
+    open_count: int = 0
+    # Hồ sơ đang chờ chính người gửi (needs_my_action), trên mọi hồ sơ của họ
+    waiting_me: int = 0
+    urgent: bool = False
 
 
 class HoSoDieuPhoiRa(HoSoChiTietRa):
@@ -436,13 +474,20 @@ class MucHangDoiPhongBanRa(MucHangDoiRa):
     assignee_id: str | None = None
     assignee_label: str | None = None
     assigned_to_me: bool
+    # Nhóm độ gấp của hồ sơ trên hàng đợi (#232) — mã trong `urgency_groups`
+    urgency: str | None = None
 
 
-class HangDoiPhongBanRa(BaseModel):
+class HangDoiPhongBanRa(TrangRa):
     # Phòng của người đang xem — tiêu đề hàng đợi nói rõ đây là việc của phòng nào.
     departments: list[NhanCoMa]
     groups: list[NhomHangDoiRa]
+    # Nhóm theo độ gấp (#232): quá hạn, sắp hết hạn, trong hạn, từng trạng thái đồng hồ chưa
+    # chạy, chờ người gửi — dịch vụ chia trên toàn hàng đợi để số đếm đúng khi cắt trang
+    urgency_groups: list[NhomDoGapRa] = []
     items: list[MucHangDoiPhongBanRa]
+    waiting_me: int = 0
+    urgent: bool = False
 
 
 class HoSoPhongBanRa(HoSoChiTietRa):
@@ -494,10 +539,13 @@ class CuocTroChuyenRa(BaseModel):
     waiting_on_me: bool
 
 
-class HopThuRa(BaseModel):
+class HopThuRa(TrangRa):
     items: list[CuocTroChuyenRa]
     # Tổng số lời nhắn chưa đọc — con số trên thanh bên
     unread: int
+    # Số cuộc còn tin chưa đọc và số cuộc nội bộ, trên các cuộc khớp ô tìm — số trên chip lọc
+    unread_conversations: int = 0
+    internal_conversations: int = 0
 
 
 class SoChuaDocRa(BaseModel):

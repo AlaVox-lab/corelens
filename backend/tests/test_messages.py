@@ -464,7 +464,7 @@ def test_dau_hieu_dang_cho_tra_loi(client, session, rule_set, phong_ban, loai_th
         _goi_bang(client, _xu_ly(phong_ban))
         hang_doi = client.get("/department/queue").json()["items"]
         _goi_bang(client, NGUOI_GUI)
-        cua_toi = client.get("/requests").json()
+        cua_toi = client.get("/requests").json()["items"]
         return (_muc(hang_doi, ho_so.id)["last_message_from_requester"],
                 _muc(cua_toi, ho_so.id)["last_message_from_requester"])
 

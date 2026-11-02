@@ -173,7 +173,7 @@ def test_chi_thay_ho_so_cua_minh(client, session, rule_set):
     )
     session.commit()
 
-    ma_trong_danh_sach = {h["id"] for h in client.get("/requests").json()}
+    ma_trong_danh_sach = {h["id"] for h in client.get("/requests").json()["items"]}
     assert cua_toi["id"] in ma_trong_danh_sach
     assert cua_nguoi_khac.id not in ma_trong_danh_sach
 

@@ -15,7 +15,10 @@ phòng ban*. Mặc định xếp theo độ gấp; đổi được và trình du
 ![Trang chủ của điều phối viên](../../../assets/anh/trang-chu-dieu-phoi.png)
 
 Mục **Điều phối** (`/dieu-phoi`) là hàng đợi đầy đủ. Dải số trên đầu bấm để lọc theo trạng thái;
-cột *Việc tiếp theo* cho biết bước kế của từng hồ sơ.
+cột *Việc tiếp theo* cho biết bước kế của từng hồ sơ. Ô tìm khớp mã, tiêu đề, người gửi, gõ không
+dấu vẫn ra; ba ô chọn lọc theo loại yêu cầu, mức ưu tiên, phòng. Bộ lọc đang bật hiện thành chip
+bấm để bỏ. Mỗi trang 50 hồ sơ, dòng cuối ghi đang xem bao nhiêu trên tổng số; địa chỉ trang giữ
+bộ lọc và trang đang xem, nên gửi đường dẫn cho đồng nghiệp là họ thấy đúng danh sách đó.
 
 ![Hàng đợi điều phối](../../../assets/anh/hang-doi-dieu-phoi.png)
 

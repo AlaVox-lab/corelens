@@ -247,7 +247,7 @@ def test_danh_sach_ho_so_tra_ve_luc_tu_tra(session, phong_ban):
     app.dependency_overrides[current_actor] = lambda: nguoi_gui
     try:
         with TestClient(app) as c:
-            ds = c.get("/requests").json()
+            ds = c.get("/requests").json()["items"]
     finally:
         app.dependency_overrides.clear()
 

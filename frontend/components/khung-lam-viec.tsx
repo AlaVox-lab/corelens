@@ -25,7 +25,7 @@ import { ManRong } from "@/components/man-rong";
 import { NutDangNhap } from "@/components/nut-dang-nhap";
 import { docDichVu, goiDichVu, laHetPhien, type DanhTinh } from "@/lib/api";
 import { loiVaoCua } from "@/lib/khong-gian";
-import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
+import type { DanhSachHoSo, HangDoi, HangDoiPhongBan, NhanCoMa } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
 import { layPhien } from "@/lib/session";
 
@@ -99,42 +99,34 @@ function KhongVaoDuoc() {
 type SoDem = { dem: number | null; cho?: number; gap?: boolean; phongBan?: NhanCoMa[] };
 
 /**
- * Việc chờ chính người xem (#230): hồ sơ có `needs_my_action`, và có cái nào gấp không —
- * đã quá hạn, hay hệ thống sắp tự đi thay (`auto_transition.warn`). Cờ do dịch vụ tính từ
- * dữ liệu quy tắc, giao diện chỉ đếm.
- */
-function viecCho(ds: HoSoTomTat[]): Pick<SoDem, "cho" | "gap"> {
-  const cho = ds.filter((h) => h.needs_my_action);
-  return { cho: cho.length, gap: cho.some((h) => h.sla_overdue || h.auto_transition?.warn) };
-}
-
-/**
- * Số hồ sơ còn mở ở từng mục, đếm bằng chính điểm cuối mà trang của mục đó dùng — không
- * thêm điểm cuối riêng cho việc đếm, để dịch vụ không phải đổi gì (#158). Cùng cách đếm
- * với câu tóm tắt đầu mỗi trang:
+ * Số trên thanh bên, đọc từ chính điểm cuối mà trang của mục đó dùng. Từ #232 các điểm cuối có
+ * phân trang và trả kèm số đếm trên cả danh sách — `waiting_me` (việc chờ chính người xem, cờ do
+ * dịch vụ tính từ bước chính trong dữ liệu), `urgent` (có việc chờ mình đã quá hạn hay sắp tự
+ * đi) — nên chỉ xin một dòng (`limit=1`), không tải cả danh sách để đếm:
  *
- *   Hồ sơ của tôi — hồ sơ chưa ở trạng thái kết thúc (`is_terminal` tra từ dữ liệu)
- *   Điều phối     — mọi hồ sơ trong hàng đợi
+ *   Hồ sơ của tôi — hồ sơ chưa kết thúc (`open_count`)
+ *   Điều phối     — mọi hồ sơ trong hàng đợi (`total`)
  *   Phòng ban     — hồ sơ phòng phải làm, không tính nhóm chỉ để theo dõi
  *
  * Lỗi thì trả `null` và mục đó không hiện số — thanh bên không được làm hỏng trang.
  */
 const DEM: Record<string, () => Promise<SoDem>> = {
   "/yeu-cau": async () => {
-    const ds = await goiDichVu<HoSoTomTat[]>("/requests");
-    return ds ? { dem: ds.filter((h) => !h.state.is_terminal).length, ...viecCho(ds) } : { dem: null };
+    const ds = await goiDichVu<DanhSachHoSo>("/requests?limit=1");
+    return ds ? { dem: ds.open_count, cho: ds.waiting_me, gap: ds.urgent } : { dem: null };
   },
   "/dieu-phoi": async () => {
-    const hang = await goiDichVu<HangDoi>("/coordination/queue");
-    return hang ? { dem: hang.items.length, ...viecCho(hang.items) } : { dem: null };
+    const hang = await goiDichVu<HangDoi>("/coordination/queue?limit=1");
+    return hang ? { dem: hang.total, cho: hang.waiting_me, gap: hang.urgent } : { dem: null };
   },
   "/phong-ban": async () => {
-    const hang = await goiDichVu<HangDoiPhongBan>("/department/queue");
+    const hang = await goiDichVu<HangDoiPhongBan>("/department/queue?limit=1");
     if (!hang) return { dem: null };
-    const theoDoi = new Set(hang.groups.filter((g) => g.watch_only).map((g) => g.code));
+    const theoDoi = hang.groups.filter((g) => g.watch_only).reduce((tong, g) => tong + g.count, 0);
     return {
-      dem: hang.items.filter((m) => !theoDoi.has(m.state.code)).length,
-      ...viecCho(hang.items),
+      dem: hang.total - theoDoi,
+      cho: hang.waiting_me,
+      gap: hang.urgent,
       phongBan: hang.departments,
     };
   },

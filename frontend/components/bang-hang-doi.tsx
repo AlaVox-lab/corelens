@@ -5,21 +5,22 @@
 //
 // Bảng hàng đợi dùng chung cho buồng lái phòng ban và điều phối (#170).
 //
-// Trang ở máy chủ lấy hàng đợi, chia nhóm, dịch mỗi hồ sơ thành một dòng chữ sẵn; bảng
-// này chỉ lo phần thuộc về trình duyệt: ô tìm lọc ngay khi gõ, thu gọn từng nhóm. Cả dòng
-// bấm được nhờ một liên kết trong suốt phủ kín dòng — chuột, ngón tay, bàn phím đều mở
-// đúng hồ sơ, không cần mã. Không gọi dịch vụ lần nào — hàng đợi vài chục hồ sơ đã nằm sẵn trên
-// trang. Tìm không phân biệt dấu: gõ "may in" vẫn ra "Máy in".
+// Trang ở máy chủ lấy một trang của hàng đợi, chia nhóm, dịch mỗi hồ sơ thành một dòng chữ
+// sẵn. Từ #232 tìm, lọc, xếp và chuyển trang đều đi qua địa chỉ trang tới dịch vụ — lọc trên
+// trình duyệt chỉ lọc được trang đang tải. Bảng này lo hàng công cụ, thu gọn từng nhóm, và
+// dòng nào cũng bấm được nhờ một liên kết trong suốt phủ kín dòng — chuột, ngón tay, bàn
+// phím đều mở đúng hồ sơ, không cần mã.
 //
 // Tệp này không biết tên trạng thái hay vai trò nào: nhóm, nhãn, màu đều do trang truyền.
 
-import { AlarmClock, ChevronDown, CircleHelp, Clock, Inbox, MessageCircle, Search, Tag } from "lucide-react";
+import { AlarmClock, ChevronDown, CircleHelp, Clock, Inbox, MessageCircle, SearchX, Tag } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { MenuXepUrl, OTimUrl } from "@/components/loc-url";
 import { ManRong } from "@/components/man-rong";
-import { MenuXep, type CachXep } from "@/components/viec-can-lam";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { CACH_XEP_HANG, KHOA_XEP_HANG, type MaXepHang } from "@/lib/trang";
 
 export type DongHangDoi = {
   id: number;
@@ -44,8 +45,6 @@ export type DongHangDoi = {
    * đang chờ ai khác. Nhãn lấy từ dữ liệu (`next_step_label`, `auto_transition`).
    */
   tiepTheo?: { chu: string; cuaToi: boolean } | null;
-  /** Khóa sắp xếp (#231): 0 quá hạn, 1 sắp hạn, 2 bình thường; mốc chờ và mốc tạo (ms). */
-  xep: { gap: 0 | 1 | 2; cho: number; moi: number };
 };
 
 export type NhomHangDoi = {
@@ -53,6 +52,8 @@ export type NhomHangDoi = {
   /** `null`: bảng một nhóm, không có dòng tiêu đề nhóm. */
   ten: string | null;
   mau?: string;
+  /** Số hồ sơ của nhóm trên cả hàng đợi đã lọc — trang này có thể chỉ chứa một phần. */
+  tong?: number;
   dong: DongHangDoi[];
 };
 
@@ -65,25 +66,6 @@ export type CotHangDoi = {
   /** Tiêu đề cột cuối: "Hạn" hay "Đã chờ". */
   cuoi: string;
 };
-
-/** Cách xếp trong từng nhóm của hàng đợi (#231). Mặc định độ gấp, cùng quy tắc với trang chủ. */
-const CACH_XEP_HANG = [
-  { ma: "gap", ten: "Độ gấp", moTa: "Quá hạn → sắp hạn → chờ lâu nhất" },
-  { ma: "cho", ten: "Chờ lâu nhất", moTa: "Hồ sơ nằm im lâu nhất lên trước" },
-  { ma: "moi", ten: "Mới nhất", moTa: "Hồ sơ vừa tạo lên trước" },
-] as const satisfies readonly CachXep<string>[];
-type MaXepHang = (typeof CACH_XEP_HANG)[number]["ma"];
-const KHOA_XEP_HANG = "dxlab-xep-hang-doi";
-const SO_SANH_HANG: Record<MaXepHang, (a: DongHangDoi, b: DongHangDoi) => number> = {
-  gap: (a, b) => a.xep.gap - b.xep.gap || a.xep.cho - b.xep.cho,
-  cho: (a, b) => a.xep.cho - b.xep.cho,
-  moi: (a, b) => b.xep.moi - a.xep.moi,
-};
-
-/** Bỏ dấu và viết thường, để tìm "may in" ra "Máy in", "dung" ra "Dũng". */
-function chuanHoa(chu: string): string {
-  return chu.normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase();
-}
 
 function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: number }) {
   return (
@@ -179,47 +161,31 @@ export function BangHangDoi({
   trai,
   phai,
   goiYTim,
+  xepMacDinh,
+  chip,
+  chan,
+  xoaLoc,
   khiTrong,
 }: {
+  /** Một trang của hàng đợi, dịch vụ đã lọc và xếp. */
   nhom: NhomHangDoi[];
   cot: CotHangDoi;
-  /** Bên trái thanh công cụ — hàng tab lọc trạng thái. */
+  /** Bên trái thanh công cụ — dải số lọc theo trạng thái hay nhóm. */
   trai?: React.ReactNode;
-  /** Bên phải, sau ô tìm — nút "Giao cho tôi". */
+  /** Giữa ô tìm và menu xếp — ô chọn bộ lọc, nút "Giao cho tôi". */
   phai?: React.ReactNode;
   goiYTim: string;
+  xepMacDinh: MaXepHang;
+  /** Chip các bộ lọc đang bật, dưới hàng công cụ. */
+  chip?: React.ReactNode;
+  /** Dòng chân "Đang xem … trên …" và nút chuyển trang. */
+  chan?: React.ReactNode;
+  /** Có bộ lọc đang bật: đường dẫn bỏ hết bộ lọc, cho màn trống do lọc. */
+  xoaLoc: string | null;
   khiTrong: { tieuDe: string; cau: string };
 }) {
-  const [tim, datTim] = useState("");
-  const [xep, datXep] = useState<MaXepHang>("gap");
-  useEffect(() => {
-    try {
-      const luu = localStorage.getItem(KHOA_XEP_HANG) as MaXepHang | null;
-      if (luu && luu in SO_SANH_HANG) datXep(luu);
-    } catch {
-      // Trình duyệt chặn lưu trữ: giữ cách xếp mặc định
-    }
-  }, []);
-  const chonXep = (m: MaXepHang) => {
-    datXep(m);
-    try {
-      localStorage.setItem(KHOA_XEP_HANG, m);
-    } catch {
-      // Vẫn xếp được trong lần mở này, chỉ không nhớ
-    }
-  };
   const [thu, datThu] = useState<Set<string>>(new Set());
-  const khoa = chuanHoa(tim.trim());
-
-  const loc = nhom
-    .map((n) => ({
-      ...n,
-      dong: khoa
-        ? n.dong.filter((d) => chuanHoa(`${d.ma} ${d.tieuDe} ${d.nguoiGui ?? ""} ${d.phu}`).includes(khoa))
-        : n.dong,
-    }))
-    .map((n) => ({ ...n, dong: [...n.dong].sort(SO_SANH_HANG[xep]) }))
-    .filter((n) => n.dong.length > 0);
+  const loc = nhom.filter((n) => n.dong.length > 0);
 
   const soCot =
     2 + [cot.nguoiGui, cot.nguoiXuLy, cot.loai, cot.trangThai, cot.tiepTheo].filter(Boolean).length;
@@ -229,34 +195,25 @@ export function BangHangDoi({
       <div className="hang-cong-cu khong-in">
         {trai}
         <div className="phai">
-          <label className="o-tim">
-            <Search aria-hidden />
-            <input
-              className="o-nhap"
-              type="search"
-              placeholder={goiYTim}
-              aria-label="Tìm hồ sơ"
-              value={tim}
-              onChange={(e) => datTim(e.target.value)}
-            />
-          </label>
-          <MenuXep dang={xep} chon={chonXep} cacCach={CACH_XEP_HANG} />
+          <OTimUrl goiY={goiYTim} />
           {phai}
+          <MenuXepUrl cacCach={CACH_XEP_HANG} macDinh={xepMacDinh} khoaNho={KHOA_XEP_HANG} />
         </div>
       </div>
+      {chip}
 
       <div className="the">
         {loc.length === 0 ? (
-          khoa ? (
-            // Trống vì ô tìm (#234): nói rõ là do lọc, và cho xóa lọc ngay tại chỗ
+          xoaLoc ? (
+            // Trống vì bộ lọc (#234): nói rõ là do lọc, và cho xóa lọc ngay tại chỗ
             <ManRong
-              icon={Search}
+              icon={SearchX}
               tieuDe="Không có hồ sơ nào khớp"
-              cau={`Không hồ sơ nào trong danh sách có mã, tiêu đề hay người gửi chứa “${tim.trim()}”.`}
+              cau="Không hồ sơ nào trong hàng đợi khớp ô tìm và bộ lọc đang bật."
             >
-              <button className="nut" type="button" onClick={() => datTim("")}>
-                Xóa tìm kiếm
-              </button>
+              <Link className="nut" href={xoaLoc} scroll={false}>
+                Xóa bộ lọc
+              </Link>
             </ManRong>
           ) : (
             <ManRong icon={Inbox} tieuDe={khiTrong.tieuDe} cau={khiTrong.cau} />
@@ -298,7 +255,7 @@ export function BangHangDoi({
                           <ChevronDown aria-hidden />
                           <span className="dau-nhom" style={{ background: n.mau }} />
                           {n.ten}
-                          <span className="so">{n.dong.length}</span>
+                          <span className="so">{n.tong ?? n.dong.length}</span>
                         </button>
                       </th>
                     </tr>
@@ -310,6 +267,7 @@ export function BangHangDoi({
           </table>
         )}
       </div>
+      {chan}
     </>
   );
 }

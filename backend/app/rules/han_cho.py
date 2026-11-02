@@ -77,8 +77,39 @@ def tu_dong(session: Session, case: Request, luc: dt.datetime | None = None) -> 
         da_o = session.scalar(
             select(func.so_giay_lam_viec(vao, luc if luc is not None else func.now()))
         )
-        bao_truoc = da_o >= (canh.auto_after_hours - canh.warn_before_hours) * 3600
+        bao_truoc = da_toi_luc_bao(canh, da_o)
     return TuDong(canh=canh, luc=het, bao_truoc=bao_truoc)
+
+
+def da_toi_luc_bao(canh: Transition, da_o_giay: int) -> bool:
+    """Hồ sơ đã nằm ở trạng thái `da_o_giay` giây làm việc: đã vào khoảng báo trước khi cạnh tự
+    đi chưa. Cạnh không khai báo trước thì không bao giờ báo."""
+    if canh.warn_before_hours is None:
+        return False
+    return da_o_giay >= (canh.auto_after_hours - canh.warn_before_hours) * 3600
+
+
+def canh_tu_di_theo_trang_thai(session: Session, rule_set_id: int) -> dict[str, Transition]:
+    """Cạnh tự đi của từng trạng thái nguồn trong một bộ quy tắc (#232).
+
+    Hàng đợi xét báo trước cho mọi hồ sơ của nó; tra cạnh một lần cho cả hàng đợi thay vì mỗi
+    hồ sơ một lần như `tu_dong`. Mỗi trạng thái tối đa một cạnh tự đi, như `tu_dong` giả định.
+    """
+    return {
+        canh.from_state: canh
+        for canh in session.scalars(
+            select(Transition).where(
+                Transition.rule_set_id == rule_set_id,
+                Transition.auto_after_hours.is_not(None),
+            )
+        )
+    }
+
+
+def giay_da_o_trang_thai():
+    """Giây làm việc hồ sơ đã nằm ở trạng thái hiện tại tới bây giờ, dạng biểu thức SQL gắn với
+    `Request` — để hàng đợi tính cho mọi hồ sơ trong cùng một truy vấn (#232)."""
+    return func.so_giay_lam_viec(luc_vao_trang_thai(), func.now())
 
 
 def ho_so_het_han_cho(
