@@ -25,6 +25,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useAnCham } from "@/lib/chuyen-dong";
+
 export type DieuHuongNgan = {
   /** Vị trí trong danh sách đang lọc; `null` khi hồ sơ không còn trong danh sách. */
   viTri: { so: number; tong: number } | null;
@@ -61,10 +63,12 @@ export function KhungNgan({
   const [daGan, datDaGan] = useState(false);
   useEffect(() => datDaGan(true), []);
 
+  // Ngăn trượt ra rồi mới rời `?xem=` (#237); giữ cờ ẩn tới lúc trang điều hướng xong
+  const [dangAn, an] = useAnCham(true);
   const dongNgan = () => {
     // Trả tiêu điểm về đúng dòng trước khi ngăn biến mất — dòng vẫn ở đó, danh sách không dựng lại
     document.querySelector<HTMLElement>(`[data-xem-dong="${maHoSo}"]`)?.focus();
-    router.replace(dong, { scroll: false });
+    an(() => router.replace(dong, { scroll: false }));
   };
 
   useEffect(() => {
@@ -95,7 +99,7 @@ export function KhungNgan({
 
   if (!daGan) return null;
   return createPortal(
-    <aside className="ngan" aria-labelledby={idTieuDe}>
+    <aside className="ngan" aria-labelledby={idTieuDe} data-an={dangAn ? "" : undefined}>
       <div className="ngan-dau">
         <button type="button" className="nut-icon" onClick={dongNgan} aria-label="Đóng xem nhanh (Esc)">
           <X aria-hidden />

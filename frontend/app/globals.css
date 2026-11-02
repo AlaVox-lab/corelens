@@ -598,7 +598,6 @@ textarea.o-nhap {
   border-radius: 3px;
   background: var(--f-t-solid);
   transform-origin: left;
-  animation: vach 0.6s var(--nhanh) both;
 }
 
 .han[data-muc="qua"] .vach > i {
@@ -607,12 +606,6 @@ textarea.o-nhap {
 
 .han[data-muc="sap"] .vach > i {
   background: var(--f-a-solid);
-}
-
-@keyframes vach {
-  from {
-    transform: scaleX(0);
-  }
 }
 
 .han small {
@@ -2197,8 +2190,13 @@ textarea.o-nhap {
 }
 
 /* Số đặc rồi số mờ đứng sát nhau ở cuối mục */
-.sb-muc .so[data-moi] + .so[data-mo] {
+.sb-muc .so[data-moi]:not([data-trong]) + .so[data-mo] {
   margin-left: 6px;
+}
+
+/* Ô số bằng 0: vẫn ở trên trang để số đi từ 0 lên lúc đang xem còn cuộn (#237), chỉ ẩn đi */
+.sb-muc .so[data-trong] {
+  display: none !important;
 }
 
 .sb-muc .so {
@@ -2507,9 +2505,11 @@ textarea.o-nhap {
   }
 }
 
-/* --- Chuyển động (#158) -----------------------------------------------------
- * Ngắn, 150–300 ms, chỉ để mắt theo kịp chỗ vừa đổi: nội dung trang hiện lên, ngăn kéo
- * trượt, màu đổi khi chuyển sáng/tối. Máy bật "giảm chuyển động" thì tắt hết. */
+/* --- Chuyển động (#158, quy tắc chung từ #237 — bảng ở ARCHITECTURE.md mục 8.4) -------
+ * Chỉ để định hướng và báo phản hồi: mắt theo kịp chỗ vừa đổi. Thao tác lặp lại không quá
+ * 300 ms kể cả độ trễ, đường cong --nhanh; không hiệu ứng trang trí, không đếm số từ 0. Chỉ
+ * bằng CSS: trình duyệt không hỗ trợ thì không có hiệu ứng mà giao diện vẫn dùng được. Máy bật
+ * "giảm chuyển động" thì tắt hết (khối cuối mục này). */
 @keyframes vao {
   from {
     opacity: 0;
@@ -2522,9 +2522,66 @@ textarea.o-nhap {
   }
 }
 
+/* `backwards`, không `both`: sau khi chạy xong phần tử không còn giữ `transform`. Còn giữ thì
+ * `position: fixed` bên trong tính theo phần tử này chứ không theo cửa sổ (gặp ở #233).
+ * Dòng hàng đợi hiện lần lượt 20 ms một dòng, tối đa 6 dòng — cả lượt không quá 300 ms */
 .vao {
-  animation: vao 0.24s var(--nhanh) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
+  animation: vao 0.18s var(--nhanh) backwards;
+  animation-delay: calc(var(--i, 0) * 20ms);
+}
+
+/* Khối vừa hiện ra: hộp xác nhận, thông báo kết quả, menu thao tác */
+@keyframes hien-ra {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Khối đang ẩn đi (`data-an`, lib/chuyen-dong.ts): chạy xong mới gỡ khỏi trang. 140 ms —
+ * cùng số với THOI_LUONG_AN_MS */
+@keyframes an-di {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.hien-ra,
+[role="alert"],
+.menu-thao-tac[open] > .menu-thao-tac-ds {
+  animation: hien-ra 0.15s var(--nhanh);
+}
+
+.hien-ra[data-an] {
+  animation: an-di 0.14s ease-in forwards;
+}
+
+/* Chữ số cuộn vào từ phía số đi khi đổi giá trị lúc đang xem (components/so-cuon.tsx) */
+.so-cuon {
+  display: inline-block;
+}
+
+.so-cuon[data-huong] {
+  animation: so-cuon-len 0.2s var(--nhanh);
+}
+
+.so-cuon[data-huong="xuong"] {
+  animation-name: so-cuon-xuong;
+}
+
+@keyframes so-cuon-len {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+}
+
+@keyframes so-cuon-xuong {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5em);
+  }
 }
 
 /* Chỉ bật trong lúc vừa bấm nút sáng/tối, để màu chuyển êm thay vì giật. */
@@ -3487,7 +3544,8 @@ html.doi-mau * {
 /* --- Ngăn xem nhanh của hàng đợi (#233) ------------------------------------
  * Ngăn bám mép phải, dưới thanh đầu trang, không lớp phủ: danh sách bên trái vẫn bấm được để
  * đổi hồ sơ. Đầu ngăn và khối thao tác ở đáy đứng yên, phần giữa cuộn. Màn hẹp: toàn màn hình,
- * phủ cả thanh đầu trang. Hiện/ẩn có chuyển động là việc của #237. */
+ * phủ cả thanh đầu trang. Mở thì trượt vào từ mép phải; đổi hồ sơ trong ngăn không chạy lại
+ * hiệu ứng (ngăn vẫn là một phần tử); đóng thì trượt ra rồi mới rời `?xem=` (#237). */
 .ngan {
   position: fixed;
   top: 60px;
@@ -3500,6 +3558,25 @@ html.doi-mau * {
   background: var(--bg);
   border-left: 1px solid var(--line);
   box-shadow: -12px 0 32px rgb(0 0 0 / 0.08);
+  animation: ngan-vao 0.22s var(--nhanh);
+}
+
+.ngan[data-an] {
+  animation: ngan-ra 0.14s ease-in forwards;
+}
+
+@keyframes ngan-vao {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes ngan-ra {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
 }
 
 .ngan-dau {
@@ -3651,4 +3728,11 @@ html.doi-mau * {
   .menu-thao-tac > summary svg {
     transition: none;
   }
+}
+
+/* Danh sách việc chờ ở trang chủ chạm trần số dòng (#237): một dòng chữ nói phần còn lại ở đâu */
+.ghi-con-lai {
+  margin: 10px 4px 0;
+  font-size: 13px;
+  color: var(--ink-2);
 }

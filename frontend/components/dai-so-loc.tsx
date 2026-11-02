@@ -10,6 +10,8 @@
 import { AlarmClock, Clock } from "lucide-react";
 import Link from "next/link";
 
+import { SoCuon } from "@/components/so-cuon";
+
 export type OLoc = {
   href: string;
   nhan: string;
@@ -25,7 +27,9 @@ export function DaiSoLoc({ cacO, nhan }: { cacO: OLoc[]; nhan: string }) {
       {cacO.map((o) => (
         <Link key={o.href} href={o.href} className="o-loc" aria-current={o.chon ? "page" : undefined}>
           <span className="o-loc-nhan">{o.nhan}</span>
-          <strong>{o.so}</strong>
+          <strong>
+            <SoCuon so={o.so} />
+          </strong>
           {o.quaHan ? (
             <span className="o-loc-phu" data-muc="qua">
               <AlarmClock aria-hidden />

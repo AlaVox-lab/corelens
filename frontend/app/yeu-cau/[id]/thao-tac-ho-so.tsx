@@ -39,6 +39,7 @@ import { OTruong, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import { OTruongRieng } from "@/components/o-truong-rieng";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
+import { useAnCham } from "@/lib/chuyen-dong";
 import type { CanhDiDuoc, LoaiYeuCau } from "@/lib/kieu";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
@@ -81,6 +82,9 @@ export function ThaoTacHoSo({
 }) {
   const [ketQua, thucHien, dangChay] = useActionState(chuyenTrangThai, CHUA_CO_LOI);
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
+  // Bảng xác nhận trượt ra rồi mới gỡ (#237)
+  const [dangAn, an] = useAnCham();
+  const dongBang = () => an(() => datDangMo(null));
 
   if (cacCanh.length === 0) {
     return (
@@ -133,7 +137,7 @@ export function ThaoTacHoSo({
               type="button"
               className="nut"
               data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
-              onClick={() => datDangMo(dangMo?.to_state === canh.to_state ? null : canh)}
+              onClick={() => (dangMo?.to_state === canh.to_state ? dongBang() : datDangMo(canh))}
               aria-expanded={dangMo?.to_state === canh.to_state}
             >
               {canh.activity_label}
@@ -159,6 +163,8 @@ export function ThaoTacHoSo({
           Không phải mã nguồn ở đây. */}
       {dangMo && (
         <div
+          className="hien-ra"
+          data-an={dangAn ? "" : undefined}
           style={{
             marginTop: "14px",
             padding: "15px",
@@ -251,7 +257,7 @@ export function ThaoTacHoSo({
             >
               {dangChay ? "Đang gửi…" : `Xác nhận · ${dangMo.activity_label}`}
             </button>
-            <button type="button" className="nut" onClick={() => datDangMo(null)}>
+            <button type="button" className="nut" onClick={dongBang}>
               Thôi
             </button>
           </div>

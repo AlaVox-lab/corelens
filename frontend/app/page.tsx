@@ -23,6 +23,7 @@ import { AlarmClock, CircleCheck, Clock, FolderOpen, Hand } from "lucide-react";
 import Link from "next/link";
 
 import { KhongPhanHoi, KhungLamViec } from "@/components/khung-lam-viec";
+import { SoCuon } from "@/components/so-cuon";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
 import { ViecCanLam, type DongViec } from "@/components/viec-can-lam";
 import { docDichVu, goiDichVu, type DanhTinh } from "@/lib/api";
@@ -93,7 +94,9 @@ function OSo({ icon: Icon, nhan, so, phu, xau }: { icon: typeof Hand; nhan: stri
         </span>
         {nhan}
       </span>
-      <strong>{so}</strong>
+      <strong>
+        <SoCuon so={so} />
+      </strong>
       {phu ? <em data-xau={xau ? "" : undefined}>{phu}</em> : null}
     </div>
   );
@@ -213,7 +216,20 @@ export default async function TrangChu() {
         <div className="luoi-chu">
           <div className="cot-viec">
             {dong.length ? (
-              <ViecCanLam dong={dong} />
+              <>
+                <ViecCanLam dong={dong} />
+                {/* Mỗi vai tải tối đa 200 việc chờ (`CHO_TOI`); vượt trần thì nói rõ phần còn
+                    lại nằm ở đâu, để con số trên ô và danh sách không kể hai chuyện */}
+                {soCho > dong.length && (
+                  <p className="ghi-con-lai">
+                    Đang hiện {dong.length} trên {soCho} việc chờ bạn. Việc còn lại xem ở{" "}
+                    <Link href={coDieuPhoi ? "/dieu-phoi" : coPhongBan ? "/phong-ban" : "/yeu-cau"}>
+                      {coDieuPhoi ? "hàng đợi điều phối" : coPhongBan ? "hàng đợi phòng ban" : "Hồ sơ của tôi"}
+                    </Link>
+                    .
+                  </p>
+                )}
+              </>
             ) : (
               <section className="the khoi-viec">
                 <div className="khoi-dau">
