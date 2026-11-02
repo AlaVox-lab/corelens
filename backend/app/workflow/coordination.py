@@ -43,19 +43,21 @@ from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_d
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
-from app.workflow.engine import get_active_rule_set, my_primary_steps
+from app.workflow.engine import my_primary_steps, rule_sets_in_use
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
 from app.workflow.routes import (
     _buoc_cua_toi,
-    _bang_trang_thai,
+    _bang_trang_thai_nhieu,
     _bao_loi,
     _bao_loi_nhan,
     _do_gap,
     _du_lieu_chi_tiet,
     _giu_danh_muc,
+    _gop_theo_ma,
     _ma_ho_so,
+    _o_trang_thai,
     _tom_tat,
 )
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
@@ -197,11 +199,13 @@ def hang_doi(
     làm chứ không theo lịch sử: lọc và đếm làm trên cả hàng đợi, rồi mới cắt trang; tóm tắt đầy
     đủ — phần tốn nhất — chỉ dựng cho hồ sơ của trang.
 
-    Chỉ lấy hồ sơ của bộ quy tắc đang kích hoạt. Khi doanh nghiệp đổi bộ quy tắc, hồ sơ cũ vẫn
-    chạy theo bộ cũ, và hàng đợi của chúng sẽ cần xử lý riêng.
+    Gồm hồ sơ của mọi bộ quy tắc còn hồ sơ đang mở (#299): doanh nghiệp đổi bộ quy tắc thì hồ sơ
+    cũ vẫn chạy theo bộ cũ tới khi kết thúc, nên vẫn phải nằm trong hàng đợi — mỗi hồ sơ vào hàng
+    đợi theo các trạng thái điều phối của chính bộ nó.
     """
-    bo = get_active_rule_set(session)
-    cac_trang_thai = trang_thai_hang_doi_dieu_phoi(session, bo.id)
+    cac_bo = rule_sets_in_use(session)
+    theo_bo = {bo: trang_thai_hang_doi_dieu_phoi(session, bo) for bo in cac_bo}
+    cac_trang_thai = _gop_theo_ma(list(theo_bo.values()))
     ma_hang_doi = [t.code for t in cac_trang_thai]
 
     if state is not None and state not in ma_hang_doi:
@@ -218,19 +222,19 @@ def hang_doi(
         (ho_so, vao, da_o)
         for ho_so, vao, da_o in session.execute(
             select(Request, luc_vao, giay_da_o_trang_thai())
-            .where(Request.rule_set_id == bo.id, Request.current_state.in_(ma_hang_doi))
+            .where(_o_trang_thai({bo: [t.code for t in ds] for bo, ds in theo_bo.items()}))
             .order_by(luc_vao.asc(), Request.id)
         )
     ]
     buoc = my_primary_steps(session, [ho_so for ho_so, _, _ in ca_hang], actor)
     # (quá hạn, sắp hạn) tính một lần cho cả hàng đợi: dải lọc, cách xếp "gấp" và chấm báo trên
     # thanh bên cùng đọc, nên không kể hai chuyện
-    _danh_muc = _giu_danh_muc(session, bo.id)
-    canh_tu_di = canh_tu_di_theo_trang_thai(session, bo.id)
-    bao = {
-        ho_so.id: ho_so.current_state in canh_tu_di and da_toi_luc_bao(canh_tu_di[ho_so.current_state], da_o)
-        for ho_so, _, da_o in ca_hang
-    }
+    _danh_muc = _giu_danh_muc(session, cac_bo)
+    canh_tu_di = {bo: canh_tu_di_theo_trang_thai(session, bo) for bo in cac_bo}
+    bao = {}
+    for ho_so, _, da_o in ca_hang:
+        canh = canh_tu_di[ho_so.rule_set_id].get(ho_so.current_state)
+        bao[ho_so.id] = canh is not None and da_toi_luc_bao(canh, da_o)
     gap = {ho_so.id: _do_gap(session, ho_so, bao[ho_so.id]) for ho_so, _, _ in ca_hang}
     cho_toi = [ho_so for ho_so, _, _ in ca_hang if buoc[ho_so.id] is not None]
 
@@ -259,10 +263,10 @@ def hang_doi(
     elif sort == "gap":
         da_loc.sort(key=lambda d: (not gap[d[0].id][0], not gap[d[0].id][1], d[1], d[0].id))
 
-    states = _bang_trang_thai(session, bo.id)
+    bang = _bang_trang_thai_nhieu(session, cac_bo)
     cac_muc = [
         MucHangDoiRa(
-            **_tom_tat(session, ho_so, states),
+            **_tom_tat(session, ho_so, bang[ho_so.rule_set_id]),
             **_buoc_cua_toi(buoc[ho_so.id]),
             requester_label=ho_so.requester_label,
             priority=_nhan_co_ma(

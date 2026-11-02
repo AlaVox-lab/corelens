@@ -164,6 +164,29 @@ def get_active_rule_set(session: Session) -> RuleSet:
     return bo
 
 
+def rule_sets_in_use(session: Session) -> list[int]:
+    """Những bộ quy tắc còn hồ sơ chạy theo: bộ đang bật trước, rồi các bộ cũ còn hồ sơ chưa kết
+    thúc, mới trước cũ sau (#299).
+
+    Hàng đợi lấy hồ sơ của mọi bộ trong danh sách này và xét từng hồ sơ theo bộ của nó. Chỉ lấy bộ
+    đang bật thì ngay sau khi doanh nghiệp đổi quy trình, hồ sơ cũ còn mở biến khỏi hàng đợi — vẫn
+    chạy đồng hồ, vẫn tự leo thang, mà không ai thấy để bấm. Bộ cũ hết hồ sơ mở thì tự rơi khỏi
+    danh sách. Bộ đứng trước giữ nhãn khi hai bộ trùng mã trạng thái.
+    """
+    dang_bat = get_active_rule_set(session).id
+    bo_cu = session.scalars(
+        select(Request.rule_set_id)
+        .join(
+            State,
+            (State.rule_set_id == Request.rule_set_id) & (State.code == Request.current_state),
+        )
+        .where(Request.rule_set_id != dang_bat, State.is_terminal.is_(False))
+        .distinct()
+        .order_by(Request.rule_set_id.desc())
+    ).all()
+    return [dang_bat, *bo_cu]
+
+
 def kiem_loai_yeu_cau(session: Session, ma: str | None) -> str | None:
     """Đối chiếu một mã loại yêu cầu với danh mục đang hoạt động.
 

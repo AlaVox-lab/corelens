@@ -429,7 +429,7 @@ Mười sáu bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trin
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
-| Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng |
+| Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng — mục 6.1 |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
 | Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
@@ -602,6 +602,32 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
   định và, từ #127, hai trường nội dung; `current_state` và mọi trường `suggested_*` đều
   nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
+
+**Đổi quy trình giữa chừng: hồ sơ đi theo bộ quy tắc của chính nó** (#278, #299). `create_case`
+ghi vào hồ sơ `rule_set_id` của bộ đang bật, và cột đó giữ nguyên tới khi hồ sơ kết thúc. Mọi chỗ
+tra cấu hình đều tra theo bộ **của hồ sơ**, không theo bộ đang bật: cạnh đi được và nút trên giao
+diện (`allowed_transitions`, bước chính), bước 1 của `perform_transition`, cờ `sla_running` của
+đồng hồ hạn, bộ quét quá hạn và bộ quét hạn chờ. Doanh nghiệp bật một bộ mới thì:
+
+| | Hồ sơ tạo trước khi đổi | Hồ sơ tạo sau |
+|---|---|---|
+| Bộ quy tắc | bộ cũ, tới khi kết thúc | bộ đang bật |
+| Nút, cạnh đi được | cạnh của bộ cũ — cạnh bộ mới đã bỏ vẫn đi được | cạnh của bộ mới |
+| Nhật ký sự kiện | mã hoạt động của bộ cũ | mã hoạt động của bộ mới |
+| Đồng hồ hạn | chạy ở những trạng thái bộ cũ bật `sla_running` | theo bộ mới |
+| Hàng đợi, Hồ sơ của tôi, hộp thư | vẫn có mặt, xét theo trạng thái hàng đợi, nhãn, kết thúc của bộ cũ | như thường |
+
+Bật lại bộ cũ cũng chỉ đổi hồ sơ tạo sau đó. Không có đường chuyển một hồ sơ đang chạy sang bộ
+mới — nếu cần thì phải là một lần chuyển có dòng nhật ký, chưa có thiết kế. Nhật ký giữ đúng sự
+thật của lúc xảy ra, nên khai phá quy trình tách được từng phiên bản theo `rule_set_id`.
+
+Màn liệt kê lấy hồ sơ của mọi bộ trong `rule_sets_in_use` — bộ đang bật, rồi các bộ cũ còn hồ sơ
+chưa kết thúc — và chọn hồ sơ bằng cặp (bộ, trạng thái), không bằng mã trạng thái thôi: hai bộ có
+thể dùng cùng một mã cho hai vai khác nhau, ví dụ bộ mới giao cho điều phối viên một cạnh rời *Đang
+xử lý*. Dải lọc gộp nhóm theo mã, nhãn lấy từ bộ đang bật trước. Trước #299 hai hàng đợi chỉ lọc
+theo bộ đang bật: vừa đổi bộ là hồ sơ cũ còn mở biến khỏi hàng đợi, dù vẫn chạy đồng hồ và vẫn tự
+leo thang. `backend/tests/test_hai_bo_quy_tac.py` chép bộ đang bật thành bộ thứ hai ngay trong giao
+dịch của bài, đổi sáu chỗ như một lần đổi quy trình thật, rồi cho hồ sơ của cả hai bộ đi tiếp.
 
 Quyết định tự viết engine máy trạng thái thay vì lắp ghép nền tảng có sẵn xuất phát chính
 từ yêu cầu này — xem [ADR-0004](adr/0004-tu-viet-engine-may-trang-thai.md).
