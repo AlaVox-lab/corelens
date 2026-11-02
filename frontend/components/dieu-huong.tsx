@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { SU_KIEN_HOP_THU } from "@/components/danh-dau-da-doc";
+import { SoCuon } from "@/components/so-cuon";
 import type { TenIcon } from "@/lib/khong-gian";
 
 export type MucDieuHuong = {
@@ -130,16 +131,14 @@ function Muc({ muc, chon, dem }: { muc: MucDieuHuong; chon: boolean; dem?: numbe
         {muc.gap ? <span className="sb-cham" aria-hidden /> : null}
       </span>
       <span className="sb-nhan">{muc.nhan}</span>
-      {cho ? (
-        <span className="so" data-moi="" aria-hidden>
-          {cho}
-        </span>
-      ) : null}
-      {mo ? (
-        <span className="so" data-mo="" aria-hidden>
-          {mo}
-        </span>
-      ) : null}
+      {/* Ô số luôn có mặt, bằng 0 thì ẩn (#237): số đi từ 0 lên lúc đang xem vẫn cuộn —
+          gắn ô mới vào trang thì đó là lần dựng đầu, không có hiệu ứng */}
+      <span className="so" data-moi="" data-trong={cho ? undefined : ""} aria-hidden>
+        <SoCuon so={cho ?? 0} />
+      </span>
+      <span className="so" data-mo="" data-trong={mo ? undefined : ""} aria-hidden>
+        <SoCuon so={mo ?? 0} />
+      </span>
     </Link>
   );
 }

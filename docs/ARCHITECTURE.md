@@ -1119,7 +1119,8 @@ khi người gọi không nói gì. Ba quy ước:
 - **Số đếm nhóm tính trên cả tập đã lọc, trước khi lọc nhóm và cắt trang**: số trên dải lọc, chip
   hộp thư không đổi khi sang trang hay khi đang đứng ở một nhóm. Kèm `waiting_me` và `urgent` cho
   thanh bên và trang chủ — hai chỗ này gọi `limit=1` để lấy số, và trang chủ gọi thêm
-  `needs_action=true` để lấy đúng các việc chờ, không tải cả danh sách để đếm
+  `needs_action=true` để lấy đúng các việc chờ, không tải cả danh sách để đếm — tối đa 200 việc mỗi vai;
+  vượt trần thì dưới danh sách ghi "Đang hiện 200 trên 204 việc" kèm đường sang hàng đợi (#237)
 - **Hai cách cắt trang theo hình dạng dữ liệu**: `/requests` và `/inbox` phình theo lịch sử (mọi
   hồ sơ từng gửi, từng nhắn), nên lọc, đếm, cắt trang trong SQL; hộp thư lấy lời nhắn cuối của
   mọi cuộc bằng một truy vấn gom nhóm. Hai hàng đợi chỉ gồm hồ sơ đang mở, lớn theo khối việc chứ
@@ -1287,6 +1288,42 @@ dùng cuối đọc. Thông báo lỗi nói bằng
 **nhãn** của trạng thái và vai trò (tra từ bảng `states`, `roles`), không bao giờ bằng mã tiếng Anh.
 Chữ nằm ở mã (`frontend/`, `backend/`) đổi không cần `down -v`; chữ nằm trong dữ liệu (nhãn trạng thái,
 cạnh, ô ghi chú trong `infra/seed/`) thì phải.
+
+### 8.4. Chuyển động
+
+**Đã cài đặt** — #158, quy tắc chung từ #237.
+
+Chuyển động chỉ để **định hướng** (mắt theo kịp chỗ vừa đổi) và **báo phản hồi** (thao tác đã nhận).
+Không hạt, phát sáng hay hiệu ứng chỉ để trang trí; không con số nào đếm từ 0 khi mở trang — số việc
+cần làm thoáng hiện 0 thì người đọc lướt tưởng không có việc. Chỉ dùng CSS, tăng cường dần: trình duyệt
+không hỗ trợ thì không có hiệu ứng mà giao diện vẫn dùng được. Đường cong chung `--nhanh`
+(`cubic-bezier(0.2, 0.7, 0.2, 1)`), hiệu ứng ra dùng `ease-in`.
+
+| Khi nào | Hiệu ứng | Thời lượng |
+|---|---|---|
+| Rê, bấm nút, chip, dòng, ô nhập | đổi nền, viền, màu | 150 ms |
+| Trang mới hiện (`.vao`) | mờ dần vào, nhích 6 px | 180 ms |
+| Dòng hàng đợi hiện lần lượt | như trên, trễ 20 ms mỗi dòng, tối đa 6 dòng | ≤ 300 ms cả lượt |
+| Mở ngăn xem nhanh / đóng | trượt vào từ mép phải 24 px / trượt ra rồi mới rời `?xem=` | 220 / 140 ms |
+| Hộp xác nhận, thông báo kết quả (`role="alert"`), menu thao tác | hiện ra (`hien-ra`); hộp xác nhận ẩn đi (`data-an`) rồi mới gỡ | 150 / 140 ms |
+| Số đếm đổi giá trị lúc đang xem (`SoCuon`) | chữ số cuộn vào từ phía số đi: lên khi tăng, xuống khi giảm | 200 ms |
+| Menu sắp xếp, sơ đồ xem nhanh trạng thái, gạch dưới tab | hiện ra | 150–200 ms |
+| Mở, thu gọn thanh bên; mũi tên thu gọn nhóm, dòng thời gian | đổi bề ngang, xoay | 150–240 ms |
+| Ngăn kéo thanh bên ở màn hẹp | trượt, lớp phủ mờ dần | 250–300 ms |
+| Đổi sáng/tối | chuyển màu toàn trang, chỉ trong lúc vừa bấm | 220 ms |
+| Khung chờ (đang tải) | vạch sáng lặp | 1,2 s lặp — chỉ báo trạng thái, không phải thao tác |
+
+Thao tác lặp lại không quá **300 ms kể cả độ trễ**. Hiệu ứng ẩn chạy xong mới gỡ phần tử: `useAnCham`
+trong `lib/chuyen-dong.ts` đặt `data-an`, chờ `THOI_LUONG_AN_MS` (cùng số với CSS) rồi mới đóng. Hiện
+trang dùng `animation-fill-mode: backwards`, không `both`: phần tử còn giữ `transform` sau hiệu ứng thì
+`position: fixed` bên trong tính theo nó chứ không theo cửa sổ (gặp ở #233). Đã bỏ: vạch hạn chạy từ 0
+lên khi mở trang (0,6 s), dòng hàng đợi trễ 40 ms × 12 (tới 0,72 s).
+
+Máy bật **giảm chuyển động** thì khối cuối mục chuyển động trong `globals.css` tắt mọi hiệu ứng và
+chuyển tiếp, và `useAnCham` đóng ngay không chờ. Kịch bản kiểm tra giao diện (`e2e/`) giữ ba điều: không
+hiệu ứng nào quá 300 ms trên trang chủ, hàng đợi và ngăn xem nhanh; mở trang chủ không số nào cuộn; giảm
+chuyển động thì không phần tử nào còn khai hiệu ứng. Danh sách 200 việc chờ ở trang chủ cuộn và đổi cách
+xếp không có tác vụ nào trên 50 ms (đo 02/11/2026, Chrome, ba lượt liên tiếp).
 
 ---
 
