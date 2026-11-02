@@ -64,7 +64,7 @@ Nói thẳng để người đọc cân nhắc đúng:
   dự án dự thi, chưa triển khai thật ở doanh nghiệp nào.
 - **Chưa có màn quản trị cấu hình** — sửa quy trình hiện là sửa dữ liệu khởi tạo (#255).
 - **Chưa gửi thông báo thư điện tử** (#251), chưa có ứng dụng di động.
-- **Chưa có báo cáo và khai phá quy trình** — tầng Dữ liệu (v0.8.0) và Trí tuệ (v0.9.0) chưa làm.
+- **Chưa có báo cáo và khai phá quy trình** — tầng Dữ liệu (v0.9.0) và Trí tuệ (v0.10.0) chưa làm.
 - **Ít tích hợp.** Không có kho tích hợp sẵn với công cụ khác như các sản phẩm thương mại.
 - **Một bộ quy tắc mẫu.** Phần mềm phê duyệt trong nước có hàng trăm mẫu quy trình; DX-OS Lab có
   một bộ quy tắc mẫu cho bốn loại yêu cầu.
