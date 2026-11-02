@@ -3211,6 +3211,38 @@ html.doi-mau * {
 }
 
 /* --- Trường thông tin riêng theo loại yêu cầu (#250) ------------------------- */
+/* Xuất nhật ký sự kiện trên màn Hệ thống (#306) */
+.xuat-nhat-ky-than {
+  /* Cùng lề ngang với đầu thẻ và các dòng của thẻ Các dịch vụ */
+  padding: 14px 16px 16px;
+}
+
+.xuat-nhat-ky-giai-thich {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.xuat-nhat-ky {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.xuat-nhat-ky-nut {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .xuat-nhat-ky {
+    grid-template-columns: 1fr;
+  }
+}
+
 .o-truong-rieng {
   display: grid;
   gap: 14px;

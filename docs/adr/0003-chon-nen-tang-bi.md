@@ -189,12 +189,16 @@ Superset; danh tính người dùng đến từ Keycloak, Superset nhận vai tr
 
 - [x] Cập nhật `docs/ARCHITECTURE.md` mục 3 *(đã làm trong cùng công việc này)*
 - [x] Cập nhật `docs/dependencies.md` *(đã làm trong cùng công việc này)*
-- [ ] Dựng ảnh chứa dẫn xuất bổ sung trình điều khiển PostgreSQL
-- [ ] Bổ sung Superset vào `infra/docker-compose.yml` khi dựng hạ tầng thật
-- [ ] Chuyển từ máy chủ phát triển sang máy chủ WSGI cho bản sản phẩm
+- [x] Dựng ảnh chứa dẫn xuất bổ sung trình điều khiển PostgreSQL *(`infra/superset/Dockerfile`)*
+- [x] Bổ sung Superset vào `infra/docker-compose.yml` khi dựng hạ tầng thật
+- [x] Chuyển từ máy chủ phát triển sang máy chủ WSGI cho bản sản phẩm *(ảnh chính thức chạy
+      gunicorn qua `run-server.sh`; điểm vào của dự án bàn giao cho đúng tệp đó)*
 - [ ] Nối Superset với Keycloak, cấu hình cơ chế guest token
-- [ ] Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm trong `infra/seed/`
-- [ ] Tạo tài khoản chỉ đọc riêng cho Superset trên cơ sở dữ liệu nghiệp vụ
+- [x] Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm *(không vào `infra/seed/` mà thành lệnh chạy
+      tay `scripts/nap_du_lieu_trinh_dien.py`, #306: cụm sạch mặc định không mang hồ sơ giả)*
+- [x] Tạo tài khoản chỉ đọc riêng cho Superset trên cơ sở dữ liệu nghiệp vụ
+- [x] Bảng điều khiển dựng từ tệp cấu hình trong kho, tự nạp lúc khởi động (#304,
+      `docs/ARCHITECTURE.md` mục 6.3)
 
 ---
 

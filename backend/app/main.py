@@ -15,6 +15,7 @@ from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
@@ -107,6 +108,7 @@ app.include_router(router_giao_viec)
 app.include_router(router_phong_ban)
 app.include_router(router_hop_thu)
 app.include_router(router_tep)
+app.include_router(router_du_lieu_mo)
 
 
 @app.get("/health", tags=["Vận hành"])

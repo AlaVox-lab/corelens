@@ -3,5 +3,6 @@
 
 """[D] Truy vấn chỉ số và xuất dữ liệu mở."""
 
-# Gói còn trống. Mã nguồn thuộc về issue nêu trên — bộ khung #62 cố ý không
-# thêm nghiệp vụ nào, để ranh giới giữa các issue không bị nhòe.
+# Chỉ số tính trong các view `bao_cao_*` của migration 0014 (#304); bảng điều khiển phân tích
+# đọc chúng qua tài khoản chỉ đọc. Gói này giữ phần dịch vụ ứng dụng phải làm: xuất nhật ký
+# sự kiện (`xuat_du_lieu`, #306).
