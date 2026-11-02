@@ -44,10 +44,10 @@ from app.models.workflow_config import MessageKind, State
 from app.workflow.context import Actor
 from app.workflow.coordination import trang_thai_hang_doi_dieu_phoi, vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import rule_sets_in_use
 from app.workflow.messages import ma_loai_noi_bo, thay_noi_bo
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
-from app.workflow.routes import _ma_ho_so
+from app.workflow.routes import _ma_ho_so, _o_trang_thai
 from app.workflow.schemas import CuocTroChuyenRa, HopThuRa, LoiNhanCuoiRa, SoChuaDocRa, TrangThaiRa
 
 router = APIRouter(prefix="/inbox", tags=["Hộp thư"])
@@ -87,10 +87,15 @@ def _pham_vi(session: Session, cua: _Cua):
     if cua.phong_ban:
         dieu_kien.append(Request.department_code.in_(actor.departments))
     if cua.dieu_phoi:
-        rule_set = get_active_rule_set(session)
-        hang_doi = [t.code for t in trang_thai_hang_doi_dieu_phoi(session, rule_set.id)]
+        # Hàng đợi điều phối của mọi bộ quy tắc còn hồ sơ mở, mỗi hồ sơ theo bộ của nó (#299)
+        hang_doi = _o_trang_thai(
+            {
+                bo: [t.code for t in trang_thai_hang_doi_dieu_phoi(session, bo)]
+                for bo in rule_sets_in_use(session)
+            }
+        )
         da_nhan = select(CaseMessage.case_id).where(CaseMessage.author == actor.id)
-        dieu_kien.append(or_(Request.current_state.in_(hang_doi), Request.id.in_(da_nhan)))
+        dieu_kien.append(or_(hang_doi, Request.id.in_(da_nhan)))
     return or_(*dieu_kien) & Request.id.in_(select(CaseMessage.case_id))
 
 
@@ -195,15 +200,17 @@ def hop_thu(
         ).all()
     }
     ten_loai = {k.code: k.label for k in session.scalars(select(MessageKind)).all()}
-    rule_set_id = next(iter(cac_ho_so.values())).rule_set_id
+    # Hồ sơ của các cuộc có thể thuộc nhiều bộ quy tắc (#299): nhãn tra theo bộ của từng hồ sơ
     trang_thai = {
-        s.code: s
-        for s in session.scalars(select(State).where(State.rule_set_id == rule_set_id)).all()
+        (s.rule_set_id, s.code): s
+        for s in session.scalars(
+            select(State).where(State.rule_set_id.in_({h.rule_set_id for h, _, _ in trang_nay}))
+        ).all()
     }
 
     cac_cuoc = []
     for ho_so, noi_bo, ma_cuoi in trang_nay:
-        tt = trang_thai[ho_so.current_state]
+        tt = trang_thai[(ho_so.rule_set_id, ho_so.current_state)]
         cuoi = loi_nhan[ma_cuoi]
         tu_nguoi_gui = cuoi.author == ho_so.requester_id
         cac_cuoc.append(

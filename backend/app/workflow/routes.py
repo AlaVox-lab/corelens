@@ -17,7 +17,7 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
@@ -189,6 +189,40 @@ def _bang_trang_thai(session: Session, rule_set_id: int) -> dict[str, State]:
     }
 
 
+def _bang_trang_thai_nhieu(
+    session: Session, rule_set_ids: list[int]
+) -> dict[int, dict[str, State]]:
+    """`_bang_trang_thai` của nhiều bộ trong một truy vấn — danh sách gồm hồ sơ của nhiều bộ
+    tra nhãn từng hồ sơ theo bộ của chính nó (#299)."""
+    bang: dict[int, dict[str, State]] = {ma: {} for ma in rule_set_ids}
+    for s in session.scalars(select(State).where(State.rule_set_id.in_(rule_set_ids))):
+        bang[s.rule_set_id][s.code] = s
+    return bang
+
+
+def _gop_theo_ma(cac_bo: list[list[State]]) -> list[State]:
+    """Gộp trạng thái của nhiều bộ theo mã cho dải lọc (#299): bộ đứng trước giữ nhãn và thứ tự,
+    mã chỉ bộ sau có thì nối vào cuối. Phía gọi đưa bộ đang bật lên đầu."""
+    gop: dict[str, State] = {}
+    for cua_bo in cac_bo:
+        for t in cua_bo:
+            gop.setdefault(t.code, t)
+    return list(gop.values())
+
+
+def _o_trang_thai(theo_bo: dict[int, list[str]]):
+    """Điều kiện SQL: hồ sơ nằm ở một trong các trạng thái khai cho ĐÚNG bộ quy tắc của nó (#299).
+
+    Lọc `current_state IN (…)` thôi là sai khi các bộ đặt mã khác nhau: một mã của bộ mới có thể
+    trùng một trạng thái khác nghĩa của bộ cũ."""
+    return or_(
+        *(
+            and_(Request.rule_set_id == bo, Request.current_state.in_(ma))
+            for bo, ma in theo_bo.items()
+        )
+    )
+
+
 def _nhan(gia_tri, mac_dinh: str = "") -> str:
     return getattr(gia_tri, "label", mac_dinh) if gia_tri is not None else mac_dinh
 
@@ -208,7 +242,7 @@ def _truong_ra(t: RequestTypeField) -> TruongRiengRa:
     )
 
 
-def _giu_danh_muc(session: Session, rule_set_id: int) -> list:
+def _giu_danh_muc(session: Session, rule_set_ids: list[int]) -> list:
     """Nạp sẵn và giữ tham chiếu tới danh mục mà phép tính hạn tra theo từng hồ sơ (#232).
 
     Bản đồ định danh của phiên chỉ giữ tham chiếu yếu: `session.get(RequestType, …)` trong
@@ -219,7 +253,7 @@ def _giu_danh_muc(session: Session, rule_set_id: int) -> list:
     return [
         *session.scalars(select(RequestType)),
         *session.scalars(select(Priority)),
-        *session.scalars(select(State).where(State.rule_set_id == rule_set_id)),
+        *session.scalars(select(State).where(State.rule_set_id.in_(rule_set_ids))),
     ]
 
 
@@ -573,15 +607,30 @@ def ho_so_cua_toi(
     Danh sách này phình theo lịch sử — mọi hồ sơ từng gửi, kể cả đã đóng — nên lọc, đếm và cắt
     trang đều làm trong SQL; chỉ hồ sơ của trang mới được dựng tóm tắt đầy đủ. Cờ "đang chờ tôi"
     chỉ có thể bật ở hồ sơ chưa kết thúc, nên tính trên tập đó.
-    """
-    bo = get_active_rule_set(session)
-    states = _bang_trang_thai(session, bo.id)
-    ket_thuc = [ma for ma, s in states.items() if s.is_terminal]
-    _danh_muc = _giu_danh_muc(session, bo.id)
 
+    Hồ sơ của một người có thể thuộc nhiều bộ quy tắc khi doanh nghiệp đã đổi quy trình (#299):
+    kết thúc hay chưa, nhãn trạng thái đều tra theo bộ của từng hồ sơ.
+    """
     cua_toi = [Request.requester_id == actor.id]
+    dang_bat = get_active_rule_set(session).id
+    cua_nguoi_nay = set(session.scalars(select(Request.rule_set_id).where(*cua_toi).distinct()))
+    cac_bo = [dang_bat, *sorted(cua_nguoi_nay - {dang_bat}, reverse=True)]
+    bang = _bang_trang_thai_nhieu(session, cac_bo)
+    states = {
+        t.code: t
+        for t in _gop_theo_ma(
+            [sorted(bang[bo].values(), key=lambda s: s.display_order) for bo in cac_bo]
+        )
+    }
+    _danh_muc = _giu_danh_muc(session, cac_bo)
+
     dang_mo = session.scalars(
-        select(Request).where(*cua_toi, Request.current_state.not_in(ket_thuc))
+        select(Request)
+        .join(
+            State,
+            (State.rule_set_id == Request.rule_set_id) & (State.code == Request.current_state),
+        )
+        .where(*cua_toi, State.is_terminal.is_(False))
     ).all()
     buoc_mo = my_primary_steps(session, dang_mo, actor)
     cho_toi = [h for h in dang_mo if buoc_mo[h.id] is not None]
@@ -613,7 +662,10 @@ def ho_so_cua_toi(
     ).all()
     buoc = my_primary_steps(session, cac_ho_so, actor)
     return DanhSachHoSoRa(
-        items=[HoSoTomTatRa(**_tom_tat(session, h, states), **_buoc_cua_toi(buoc[h.id])) for h in cac_ho_so],
+        items=[
+            HoSoTomTatRa(**_tom_tat(session, h, bang[h.rule_set_id]), **_buoc_cua_toi(buoc[h.id]))
+            for h in cac_ho_so
+        ],
         total=tong,
         offset=trang.offset,
         limit=trang.limit,
