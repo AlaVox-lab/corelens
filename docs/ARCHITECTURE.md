@@ -1145,6 +1145,22 @@ trang cuối. Bộ lọc đang bật hiện thành chip bỏ được, từ hai 
 đợi phòng ban từ khoảng 1,7 giây xuống 0,44–0,48 giây. Gấp đôi lịch sử, thời gian hàng đợi không
 tăng.
 
+**Từ #233, bấm một dòng hàng đợi mở ngăn xem nhanh bên phải** thay vì rời danh sách. Hồ sơ đang
+xem nằm trên địa chỉ trang (`?xem=<mã>`, hay `dau`/`cuoi` khi nút trước/sau sang trang kế), nên
+ngăn gửi đường dẫn được; trang chi tiết đầy đủ vẫn mở thẳng như cũ. Ba quy ước:
+
+- **Không nhân đôi logic**: nạp dữ liệu, hàng thông tin và khối thao tác của một hồ sơ nằm ở
+  `app/dieu-phoi/ho-so.tsx` và `app/phong-ban/ho-so.tsx`, trang chi tiết và ngăn cùng gọi; nội dung
+  ngăn (`components/ngan-ho-so.tsx`) ghép đúng các khối của trang chi tiết
+- **Nút chính dựng từ dữ liệu**: mỗi cạnh trong `allowed_transitions` mang `is_primary` — dịch vụ
+  đánh dấu bằng `my_primary_steps()`, cùng nguồn với cờ `needs_my_action` (mục 7.3). Ở đáy ngăn,
+  bước chính thành nút chính, các thao tác còn lại vào menu; gửi xong thì ngăn sang hồ sơ kế
+- **Bàn phím và tiêu điểm** (`components/khung-ngan.tsx`): mở ngăn thì tiêu điểm vào tiêu đề hồ sơ,
+  mũi tên sang hồ sơ trước/sau theo thứ tự danh sách ("2 trên 14"), Esc đóng và trả tiêu điểm về
+  đúng dòng — trừ khi đang gõ trong ô nhập hay một menu đã nhận phím đó. Ngăn gắn thẳng vào
+  `<body>`: khung nội dung mang `transform` của hiệu ứng hiện trang, `position: fixed` bên trong nó
+  tính theo khung đó chứ không theo cửa sổ. Màn hẹp: ngăn chiếm toàn màn hình
+
 **Từ #155, hộp thư chung gom lời nhắn theo người** (`backend/app/workflow/inbox.py`,
 `frontend/app/hop-thu/`). Không có kho tin nhắn thứ hai: mỗi cuộc trò chuyện là lời nhắn
 `case_messages` của một hồ sơ. Hộp thư không viết lại cửa nhìn thấy — một hồ sơ vào hộp

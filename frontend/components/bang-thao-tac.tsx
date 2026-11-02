@@ -16,9 +16,15 @@
 // người bấm thấy rõ hồ sơ sẽ chuyển sang trạng thái nào trước khi bấm, và chỉ ô nhập
 // của đúng thao tác đang mở nằm trong biểu mẫu — không có chuyện ô của thao tác này lọt
 // vào lần gửi của thao tác kia.
+//
+// Ở đáy ngăn xem nhanh của hàng đợi (#233, `ngan`), bước chính đang chờ người xem
+// (`is_primary`, dịch vụ đánh dấu từ dữ liệu quy tắc) thành nút chính chiếm trọn hàng, các
+// thao tác còn lại vào menu "Thao tác khác". Gửi xong thì chuyển sang hồ sơ kế của danh sách.
 
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useRef, useState } from "react";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
@@ -42,6 +48,8 @@ type Props = {
   hanhDong: (truoc: KetQuaThaoTac, duLieu: FormData) => Promise<KetQuaThaoTac>;
   /** Khi không còn thao tác nào: câu giải thích và đường về hàng đợi. */
   khiHet: { cau: string; veHangDoi: string };
+  /** Bảng nằm ở đáy ngăn xem nhanh (#233): gửi xong thì sang `sauKhiXong`. */
+  ngan?: { sauKhiXong: string };
 };
 
 const KIEU_NHAN: React.CSSProperties = { fontSize: "13px", fontWeight: 600 };
@@ -135,9 +143,23 @@ export function BangThaoTac({
   danhMuc,
   hanhDong,
   khiHet,
+  ngan,
 }: Props) {
-  const [ketQua, thucHien, dangChay] = useActionState(hanhDong, CHUA_CO_LOI);
+  const router = useRouter();
+  // Trong ngăn: thao tác thành công thì sang hồ sơ kế. Server Action trả `CHUA_CO_LOI` cả khi
+  // chưa gửi lẫn khi gửi xong, nên bắt thành công ngay tại lần gọi.
+  const [ketQua, thucHien, dangChay] = useActionState(
+    ngan
+      ? async (truoc: KetQuaThaoTac, duLieu: FormData) => {
+          const kq = await hanhDong(truoc, duLieu);
+          if (!kq.loi) router.replace(ngan.sauKhiXong, { scroll: false });
+          return kq;
+        }
+      : hanhDong,
+    CHUA_CO_LOI,
+  );
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
+  const menu = useRef<HTMLDetailsElement>(null);
 
   if (cacCanh.length === 0) {
     return (
@@ -145,44 +167,82 @@ export function BangThaoTac({
         <p style={{ margin: 0, fontSize: "13.5px", color: "var(--ink-2)", lineHeight: 1.6 }}>
           {khiHet.cau}
         </p>
-        <Link href={khiHet.veHangDoi} className="nut" data-loai="chinh">
-          ← Về hàng đợi
-        </Link>
+        {/* Trong ngăn, danh sách đã ở ngay bên cạnh */}
+        {!ngan && (
+          <Link href={khiHet.veHangDoi} className="nut" data-loai="chinh">
+            ← Về hàng đợi
+          </Link>
+        )}
       </div>
     );
   }
+
+  const nutCanh = (canh: CanhDiDuoc, chinh: boolean) => {
+    const mo = dangMo?.to_state === canh.to_state;
+    return (
+      <button
+        key={canh.to_state}
+        type="button"
+        className="nut"
+        // Thao tác cần nhập liệu là việc chính; thao tác chỉ cần lý do là ngoại lệ.
+        // Suy từ dữ liệu của cạnh, không tra bảng. Trong ngăn: bước chính.
+        data-loai={chinh ? "chinh" : undefined}
+        aria-expanded={mo}
+        onClick={() => {
+          datDangMo(mo ? null : canh);
+          if (menu.current) menu.current.open = false;
+        }}
+        style={{ justifyContent: "space-between", width: "100%" }}
+      >
+        <span>{canh.activity_label}</span>
+        <span aria-hidden="true">{mo ? "−" : "+"}</span>
+      </button>
+    );
+  };
+
+  const buocChinh = ngan ? cacCanh.find((c) => c.is_primary) : undefined;
+  const conLai = cacCanh.filter((c) => c !== buocChinh);
 
   return (
     <form id="thao-tac" action={thucHien} style={{ display: "grid", gap: "12px", scrollMarginTop: "72px" }}>
       <input type="hidden" name="case_id" value={maHoSo} />
 
-      <div style={{ display: "grid", gap: "8px" }}>
-        {cacCanh.map((canh) => {
-          const mo = dangMo?.to_state === canh.to_state;
-          return (
-            <button
-              key={canh.to_state}
-              type="button"
-              className="nut"
-              // Thao tác cần nhập liệu là việc chính; thao tác chỉ cần lý do là ngoại lệ.
-              // Suy từ dữ liệu của cạnh, không tra bảng.
-              data-loai={canh.fields.length > 0 ? "chinh" : undefined}
-              aria-expanded={mo}
-              onClick={() => datDangMo(mo ? null : canh)}
-              style={{ justifyContent: "space-between", width: "100%" }}
+      {ngan ? (
+        <div className="hang-nut-ngan">
+          {buocChinh && nutCanh(buocChinh, true)}
+          {conLai.length > 0 && (
+            <details
+              className="menu-thao-tac"
+              ref={menu}
+              // Thẻ gốc không tự đóng bằng Esc: đóng và trả tiêu điểm về nút mở menu. Ngăn
+              // xem nhanh thấy phím đã được dùng nên không đóng theo.
+              onKeyDown={(e) => {
+                if (e.key !== "Escape" || !menu.current?.open) return;
+                e.preventDefault();
+                menu.current.open = false;
+                menu.current.querySelector("summary")?.focus();
+              }}
             >
-              <span>{canh.activity_label}</span>
-              <span aria-hidden="true">{mo ? "−" : "+"}</span>
-            </button>
-          );
-        })}
-      </div>
+              <summary className="nut">
+                {buocChinh ? "Thao tác khác" : "Thao tác"}
+                <ChevronDown aria-hidden />
+              </summary>
+              <div className="menu-thao-tac-ds">{conLai.map((c) => nutCanh(c, false))}</div>
+            </details>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: "8px" }}>
+          {cacCanh.map((canh) => nutCanh(canh, canh.fields.length > 0))}
+        </div>
+      )}
 
       {dangMo && (
         <div
           // Đổi thao tác thì dựng lại ô nhập, để giá trị điền sẵn không mang từ thao
           // tác trước sang.
           key={dangMo.to_state}
+          className="khung-xac-nhan"
           style={{
             padding: "15px",
             borderRadius: "11px",

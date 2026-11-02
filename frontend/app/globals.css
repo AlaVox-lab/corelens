@@ -3483,3 +3483,172 @@ html.doi-mau * {
     max-width: none;
   }
 }
+
+/* --- Ngăn xem nhanh của hàng đợi (#233) ------------------------------------
+ * Ngăn bám mép phải, dưới thanh đầu trang, không lớp phủ: danh sách bên trái vẫn bấm được để
+ * đổi hồ sơ. Đầu ngăn và khối thao tác ở đáy đứng yên, phần giữa cuộn. Màn hẹp: toàn màn hình,
+ * phủ cả thanh đầu trang. Hiện/ẩn có chuyển động là việc của #237. */
+.ngan {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-left: 1px solid var(--line);
+  box-shadow: -12px 0 32px rgb(0 0 0 / 0.08);
+}
+
+.ngan-dau {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.ngan-dau > .nut {
+  margin-left: auto;
+}
+
+.ngan-dau svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ngan-di {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ngan-di [aria-disabled="true"] {
+  opacity: 0.35;
+}
+
+.ngan-vi-tri {
+  min-width: 9ch;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Flex cột, không lưới: thẻ có `overflow` khác `visible` thì hàng lưới được co về 0 khi khối
+ * thao tác ở đáy cao lên, và nội dung thẻ bị cắt */
+.ngan-than {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ngan-than > * {
+  flex: none;
+}
+
+.ngan-than .h1-ho-so {
+  font-size: 17px;
+}
+
+.ngan-than .h1-ho-so:focus {
+  outline: none;
+}
+
+/* Đáy ngăn không cắt nội dung — menu "Thao tác khác" mở lên trên nó; chỉ khung xác nhận cuộn */
+.ngan-chan {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* Nút chính chiếm phần còn lại của hàng, menu "Thao tác khác" bên phải */
+.hang-nut-ngan {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.hang-nut-ngan > .nut {
+  flex: 1;
+}
+
+.menu-thao-tac {
+  position: relative;
+  flex: none;
+}
+
+.hang-nut-ngan > .menu-thao-tac:only-child {
+  flex: 1;
+}
+
+.menu-thao-tac > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.menu-thao-tac > summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-thao-tac > summary svg {
+  width: 16px;
+  height: 16px;
+  transition: rotate 0.15s var(--nhanh);
+}
+
+.menu-thao-tac[open] > summary svg {
+  rotate: 180deg;
+}
+
+.menu-thao-tac-ds {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 1;
+  min-width: 240px;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+}
+
+.menu-thao-tac-ds .nut {
+  border-color: transparent;
+}
+
+.ngan-chan .khung-xac-nhan {
+  max-height: 45vh;
+  overflow: auto;
+}
+
+/* Dòng đang mở trong ngăn */
+.bang tr.dong[data-dang-xem] td {
+  background: var(--chon);
+}
+
+@media (max-width: 767px) {
+  .ngan {
+    top: 0;
+    z-index: 45;
+    width: 100%;
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-thao-tac > summary svg {
+    transition: none;
+  }
+}

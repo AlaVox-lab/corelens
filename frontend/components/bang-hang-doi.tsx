@@ -24,7 +24,10 @@ import { CACH_XEP_HANG, KHOA_XEP_HANG, type MaXepHang } from "@/lib/trang";
 
 export type DongHangDoi = {
   id: number;
+  /** Đường mở hồ sơ trong ngăn xem nhanh (`?xem=`), giữ bộ lọc và trang (#233). */
   href: string;
+  /** Hồ sơ đang mở trong ngăn. */
+  dangXem?: boolean;
   ma: string;
   tieuDe: string;
   /** Dòng phụ dưới tiêu đề, sau mã hồ sơ: loại yêu cầu hay người gửi. */
@@ -72,11 +75,20 @@ function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: numbe
     <tr
       className="dong vao"
       data-qua={d.cuoi.muc === "qua" ? "" : undefined}
+      data-dang-xem={d.dangXem ? "" : undefined}
       style={{ ["--i" as string]: Math.min(thuTu, 12) }}
     >
       <td>
         <div className="o-ho-so">
-          <Link href={d.href} className="lk-dong" aria-label={`${d.ma} · ${d.tieuDe}`} />
+          {/* Bấm dòng mở ngăn xem nhanh ngay bên cạnh (#233); trang đầy đủ ở nút trong ngăn */}
+          <Link
+            href={d.href}
+            className="lk-dong"
+            aria-label={`${d.ma} · ${d.tieuDe}`}
+            aria-current={d.dangXem ? "true" : undefined}
+            data-xem-dong={d.id}
+            scroll={false}
+          />
           <b title={d.tieuDe}>{d.tieuDe}</b>
           <span>
             <span className="mono">{d.ma}</span> · {d.phu}
@@ -166,6 +178,7 @@ export function BangHangDoi({
   chan,
   xoaLoc,
   khiTrong,
+  ngan,
 }: {
   /** Một trang của hàng đợi, dịch vụ đã lọc và xếp. */
   nhom: NhomHangDoi[];
@@ -183,6 +196,8 @@ export function BangHangDoi({
   /** Có bộ lọc đang bật: đường dẫn bỏ hết bộ lọc, cho màn trống do lọc. */
   xoaLoc: string | null;
   khiTrong: { tieuDe: string; cau: string };
+  /** Ngăn xem nhanh của hồ sơ đang mở (#233), cạnh bảng. */
+  ngan?: React.ReactNode;
 }) {
   const [thu, datThu] = useState<Set<string>>(new Set());
   const loc = nhom.filter((n) => n.dong.length > 0);
@@ -268,6 +283,7 @@ export function BangHangDoi({
         )}
       </div>
       {chan}
+      {ngan}
     </>
   );
 }

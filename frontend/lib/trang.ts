@@ -100,6 +100,55 @@ export function quaTrangCuoi(
   return duongTrang(goc, sp, Math.ceil(ds.total / ds.limit));
 }
 
+/**
+ * Hồ sơ đang mở trong ngăn xem nhanh (#233) và đường đi của ngăn, từ `?xem=` và trang đang xem.
+ *
+ * `?xem=` là mã hồ sơ, hay `dau`/`cuoi` — hồ sơ đầu, cuối của trang: ở mép trang, nút trước/sau
+ * sang trang kế mà chưa biết mã hồ sơ ở đó. Vị trí đếm trên cả danh sách đã lọc ("51 trên 230").
+ * Hồ sơ không có trên trang — vừa xử lý xong nên rời danh sách, hay đường dẫn cũ — vẫn mở được,
+ * chỉ không có vị trí và nút trước/sau.
+ */
+export function xemNhanh(
+  goc: string,
+  sp: ThamSo,
+  trang: number,
+  ds: { items: { id: number }[]; offset: number; total: number },
+): {
+  ma: number;
+  viTri: { so: number; tong: number } | null;
+  truoc: string | null;
+  sau: string | null;
+  dong: string;
+  dayDu: string;
+} | null {
+  const xem = docThamSo(sp, "xem");
+  const ids = ds.items.map((m) => m.id);
+  const ma = xem === "dau" ? ids[0] : xem === "cuoi" ? ids.at(-1) : Number.parseInt(xem ?? "", 10);
+  if (ma === undefined || !Number.isFinite(ma) || ma <= 0) return null;
+
+  const i = ids.indexOf(ma);
+  const toi = (id: number | string, trangMoi = trang) =>
+    duongVoi(goc, sp, { xem: String(id), trang: trangMoi > 1 ? String(trangMoi) : null }, true);
+  return {
+    ma,
+    viTri: i >= 0 ? { so: ds.offset + i + 1, tong: ds.total } : null,
+    truoc: i > 0 ? toi(ids[i - 1]) : i === 0 && trang > 1 ? toi("cuoi", trang - 1) : null,
+    sau:
+      i >= 0 && i < ids.length - 1
+        ? toi(ids[i + 1])
+        : i >= 0 && ds.offset + ids.length < ds.total
+          ? toi("dau", trang + 1)
+          : null,
+    dong: duongVoi(goc, sp, { xem: null }, true),
+    dayDu: `${goc}/${ma}`,
+  };
+}
+
+/** Đường mở một hồ sơ trong ngăn xem nhanh, giữ bộ lọc và trang đang xem. */
+export function duongXem(goc: string, sp: ThamSo, ma: number): string {
+  return duongVoi(goc, sp, { xem: String(ma) }, true);
+}
+
 /** Chuỗi truy vấn gửi dịch vụ: trang đang xem cộng các bộ lọc có giá trị. */
 export function truyVan(trang: number, loc: Record<string, string | boolean | undefined>): string {
   const q = new URLSearchParams({ limit: String(SO_DONG), offset: String((trang - 1) * SO_DONG) });

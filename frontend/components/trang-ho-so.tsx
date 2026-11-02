@@ -12,20 +12,39 @@
 import { Check, Info } from "lucide-react";
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { TheTruongRieng } from "@/components/the-truong-rieng";
 import type { Buoc } from "@/lib/buoc";
 import { thoiLuongLamViec } from "@/lib/dinh-dang";
-import type { HoSoTomTat } from "@/lib/kieu";
+import type { HoSoChiTiet, HoSoTomTat } from "@/lib/kieu";
 import { docDongHo, docTuDong, vachHan } from "@/lib/sla";
 
 export type MucMeta = { icon: React.ReactNode; chu: string };
 
-/** Mã, tiêu đề, một hàng thông tin có icon, và nhãn trạng thái to bên phải. */
-export function DauHoSo({ ho_so, meta }: { ho_so: HoSoTomTat; meta: MucMeta[] }) {
+/**
+ * Mã, tiêu đề, một hàng thông tin có icon, và nhãn trạng thái to bên phải. Trong ngăn xem nhanh
+ * (#233) tiêu đề là cấp 2 — cấp 1 của trang vẫn là tên hàng đợi — và nhận tiêu điểm khi ngăn mở.
+ */
+export function DauHoSo({
+  ho_so,
+  meta,
+  trongNgan,
+}: {
+  ho_so: HoSoTomTat;
+  meta: MucMeta[];
+  /** `id` của tiêu đề trong ngăn, để ngăn gọi tên mình và đặt tiêu điểm vào đó. */
+  trongNgan?: { idTieuDe: string };
+}) {
   return (
     <div className="dau-ho-so">
       <div className="trai">
         <span className="ma">{ho_so.code}</span>
-        <h1 className="h1-ho-so">{ho_so.title}</h1>
+        {trongNgan ? (
+          <h2 className="h1-ho-so" id={trongNgan.idTieuDe} tabIndex={-1}>
+            {ho_so.title}
+          </h2>
+        ) : (
+          <h1 className="h1-ho-so">{ho_so.title}</h1>
+        )}
         <div className="meta">
           {meta.map((m) => (
             <span key={m.chu}>
@@ -111,6 +130,18 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
           </small>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Nội dung người gửi viết: trường riêng theo loại (#250) đứng trước mô tả tự do. */
+export function TheNoiDung({ ho_so }: { ho_so: HoSoChiTiet }) {
+  if (!ho_so.description && (ho_so.detail_fields?.length ?? 0) === 0) return null;
+  return (
+    <div className="the khoi">
+      <div className="khoi-dau">Nội dung yêu cầu</div>
+      <TheTruongRieng cacTruong={ho_so.detail_fields ?? []} giaTri={ho_so.details ?? {}} />
+      {ho_so.description ? <p className="mo-ta">{ho_so.description}</p> : null}
     </div>
   );
 }

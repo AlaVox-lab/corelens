@@ -75,6 +75,10 @@ class CanhDiDuocRa(BaseModel):
     # hay sửa nội dung (ADR-0005). Giao diện nói "giữ nguyên trạng thái" thay cho "chuyển
     # sang" chính trạng thái hồ sơ đang ở.
     keeps_state: bool = False
+    # Cạnh là bước chính đang chờ chính người xem (#227) — ngăn xem nhanh của hàng đợi đặt nó
+    # thành nút chính ở đáy, các thao tác còn lại vào menu (#233). Cùng nguồn với cờ
+    # `needs_my_action` trên danh sách: `my_primary_steps()`.
+    is_primary: bool = False
 
     # Những trường mà cạnh này cho đặt, lấy thẳng từ `permitted_fields()` — tức từ
     # ràng buộc gắn trên cạnh (#78). Giao diện dựng ô nhập từ danh sách này, cùng lý do

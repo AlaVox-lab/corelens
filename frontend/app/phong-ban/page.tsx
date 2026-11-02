@@ -22,16 +22,21 @@
 //
 // Cả phòng nhìn chung một hàng đợi, nhưng nút "Giao cho tôi" thu về đúng phần việc của
 // mình — bộ lọc gửi sang dịch vụ để số đếm đi cùng bộ lọc, và nằm trên địa chỉ trang.
+//
+// Bấm một dòng mở ngăn xem nhanh bên phải (#233, `?xem=<mã>`) mà không rời danh sách; ngăn
+// dựng từ cùng các khối và cùng khối thao tác với trang chi tiết (`app/phong-ban/ho-so.tsx`).
 
 import { User } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { metaPhongBan, napHoSoPhongBan, ThaoTacPhongBan } from "@/app/phong-ban/ho-so";
 import { BangHangDoi, type DongHangDoi, type NhomHangDoi } from "@/components/bang-hang-doi";
 import { ChanTrang, ChipLoc } from "@/components/chan-trang";
 import { DaiSoLoc } from "@/components/dai-so-loc";
 import { TenCapCon } from "@/components/khung-ung-dung";
 import { ChonLoc } from "@/components/loc-url";
+import { NganHoSo, NganLoi } from "@/components/ngan-ho-so";
 import { goiDichVu } from "@/lib/api";
 import type { HangDoiPhongBan, LoaiYeuCau, MucHangDoiPhongBan, MucUuTien } from "@/lib/kieu";
 import { chuCaiDau, mauTheo } from "@/lib/nguoi";
@@ -42,10 +47,12 @@ import {
   docXep,
   duongTrang,
   duongVoi,
+  duongXem,
   nhanCua,
   quaTrangCuoi,
   soTrang,
   truyVan,
+  xemNhanh,
   type ThamSo,
 } from "@/lib/trang";
 import { trinhBayTrangThai } from "@/lib/trang-thai";
@@ -62,7 +69,7 @@ const MAU_NHOM: Record<string, string> = {
   "cho-nguoi-gui": "var(--ink-3)",
 };
 
-function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
+function thanhDong(m: MucHangDoiPhongBan, href: string, dangXem: boolean): DongHangDoi {
   // Hồ sơ sắp tự đi vì nằm im quá hạn chờ (#142): câu đó quan trọng hơn câu cam kết chưa
   // chạy, nên thay chỗ trong khoảng báo trước
   const tuDong = docTuDong(m);
@@ -70,7 +77,8 @@ function thanhDong(m: MucHangDoiPhongBan): DongHangDoi {
   const tenGiao = m.assigned_to_me ? "Bạn" : (m.assignee_label ?? "Một người trong phòng");
   return {
     id: m.id,
-    href: `/phong-ban/${m.id}`,
+    href,
+    dangXem,
     ma: m.code,
     tieuDe: m.title,
     phu: m.request_type?.label ?? "Chưa rõ loại",
@@ -154,13 +162,31 @@ export default async function HangDoiPhongBan({ searchParams }: { searchParams: 
   const cuoi = quaTrangCuoi(GOC, sp, tatCa);
   if (cuoi) redirect(cuoi);
 
+  // Ngăn xem nhanh (#233): chỉ nạp hồ sơ khi địa chỉ có `?xem=`. Thứ tự trước/sau là thứ tự
+  // dòng trên trang — dịch vụ đã xếp theo nhóm nên khớp thứ tự đọc từ trên xuống
+  const xem = xemNhanh(GOC, sp, trang, tatCa);
+  const hoSoXem = xem ? await napHoSoPhongBan(String(xem.ma)) : null;
+  const ngan = !xem ? null : hoSoXem?.ok ? (
+    <NganHoSo
+      ho_so={hoSoXem.duLieu.ho_so}
+      meta={metaPhongBan(hoSoXem.duLieu.ho_so)}
+      lienHe={hoSoXem.duLieu.lienHe}
+      thaoTac={<ThaoTacPhongBan d={hoSoXem.duLieu} ngan={{ sauKhiXong: xem.sau ?? xem.dong }} />}
+      dieuHuong={xem}
+    />
+  ) : (
+    <NganLoi maHoSo={xem.ma} dieuHuong={xem} cau={hoSoXem && !hoSoXem.ok ? hoSoXem.thongDiep : "Hệ thống không phản hồi."} />
+  );
+
   // Dịch vụ xếp theo thứ tự nhóm trước, nên các dòng của trang nằm liền nhau theo nhóm
   const nhom: NhomHangDoi[] = tatCa.urgency_groups.map((g) => ({
     ma: g.code,
     ten: g.label,
     mau: MAU_NHOM[g.code] ?? `var(--f-${trinhBayTrangThai(g.code).ho}-solid)`,
     tong: g.count,
-    dong: tatCa.items.filter((m) => m.urgency === g.code).map(thanhDong),
+    dong: tatCa.items
+      .filter((m) => m.urgency === g.code)
+      .map((m) => thanhDong(m, duongXem(GOC, sp, m.id), xem?.ma === m.id)),
   }));
 
   // "Giao cho tôi" là chế độ xem của hàng đợi, không phải bộ lọc có chip: nó có nút riêng
@@ -176,6 +202,7 @@ export default async function HangDoiPhongBan({ searchParams }: { searchParams: 
       {tieuDe}
       <BangHangDoi
         nhom={nhom}
+        ngan={ngan}
         trai={
           <DaiSoLoc
             nhan="Lọc theo nhóm"
