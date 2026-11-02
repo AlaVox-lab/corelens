@@ -20,6 +20,11 @@ dấu vẫn ra; ba ô chọn lọc theo loại yêu cầu, mức ưu tiên, phò
 bấm để bỏ. Mỗi trang 50 hồ sơ, dòng cuối ghi đang xem bao nhiêu trên tổng số; địa chỉ trang giữ
 bộ lọc và trang đang xem, nên gửi đường dẫn cho đồng nghiệp là họ thấy đúng danh sách đó.
 
+Bấm một dòng thì hồ sơ mở trong **ngăn xem nhanh** bên phải, danh sách vẫn ở nguyên chỗ. Ngăn có
+hạn, nội dung, dòng thời gian, liên hệ người gửi; nút ở đáy là bước bạn cần làm, các thao tác khác
+nằm trong *Thao tác khác*. Làm xong thì ngăn tự sang hồ sơ kế. Phím mũi tên lên/xuống chuyển hồ
+sơ, Esc đóng ngăn; *Mở trang đầy đủ* để xem trao đổi và tệp đính kèm.
+
 ![Hàng đợi điều phối](../../../assets/anh/hang-doi-dieu-phoi.png)
 
 ## Một hồ sơ qua tay điều phối

@@ -76,6 +76,8 @@ export type CanhDiDuoc = {
    * (ADR-0005). Giao diện nói "giữ nguyên trạng thái" thay cho "chuyển sang".
    */
   keeps_state: boolean;
+  /** Bước chính đang chờ chính người xem (#227) — nút chính ở đáy ngăn xem nhanh (#233). */
+  is_primary?: boolean;
   /**
    * Trường mà cạnh này cho đặt, từ ràng buộc gắn trên cạnh (#78). Giao diện dựng ô
    * nhập từ đây, cùng lý do nó dựng nút bấm từ danh sách cạnh. Cạnh của người gửi chỉ

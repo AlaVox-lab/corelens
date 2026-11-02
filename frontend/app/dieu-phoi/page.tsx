@@ -14,14 +14,19 @@
 // Từ #232 dịch vụ trả từng trang: tìm, lọc theo loại yêu cầu, mức ưu tiên, phòng, cách xếp
 // và trang đang xem nằm trên địa chỉ trang và đi thẳng tới dịch vụ. Số trên các tab tính
 // trên cả hàng đợi đã lọc, không đổi khi sang trang.
+//
+// Bấm một dòng mở ngăn xem nhanh bên phải (#233, `?xem=<mã>`) mà không rời danh sách; ngăn
+// dựng từ cùng các khối và cùng khối thao tác với trang chi tiết (`app/dieu-phoi/ho-so.tsx`).
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { metaDieuPhoi, napHoSoDieuPhoi, ThaoTacDieuPhoi } from "@/app/dieu-phoi/ho-so";
 import { BangHangDoi, type DongHangDoi } from "@/components/bang-hang-doi";
 import { ChanTrang, ChipLoc } from "@/components/chan-trang";
 import { DaiSoLoc } from "@/components/dai-so-loc";
 import { ChonLoc } from "@/components/loc-url";
+import { NganHoSo, NganLoi } from "@/components/ngan-ho-so";
 import { goiDichVu } from "@/lib/api";
 import { thoiLuong } from "@/lib/dinh-dang";
 import type { HangDoi, LoaiYeuCau, MucHangDoi, MucUuTien, PhongBan } from "@/lib/kieu";
@@ -32,10 +37,12 @@ import {
   docXep,
   duongTrang,
   duongVoi,
+  duongXem,
   nhanCua,
   quaTrangCuoi,
   soTrang,
   truyVan,
+  xemNhanh,
   type ThamSo,
 } from "@/lib/trang";
 
@@ -43,12 +50,13 @@ export const dynamic = "force-dynamic";
 
 const GOC = "/dieu-phoi";
 
-function thanhDong(m: MucHangDoi, bayGio: Date): DongHangDoi {
+function thanhDong(m: MucHangDoi, bayGio: Date, href: string, dangXem: boolean): DongHangDoi {
   const giay = Math.max(0, (bayGio.getTime() - new Date(m.state_entered_at).getTime()) / 1000);
   const tuDong = docTuDong(m);
   return {
     id: m.id,
-    href: `/dieu-phoi/${m.id}`,
+    href,
+    dangXem,
     ma: m.code,
     tieuDe: m.title,
     phu: m.requester_label ?? "Không rõ người gửi",
@@ -110,6 +118,21 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
   const cuoi = quaTrangCuoi(GOC, sp, tatCa);
   if (cuoi) redirect(cuoi);
 
+  // Ngăn xem nhanh (#233): chỉ nạp hồ sơ khi địa chỉ có `?xem=`
+  const xem = xemNhanh(GOC, sp, trang, tatCa);
+  const hoSoXem = xem ? await napHoSoDieuPhoi(String(xem.ma)) : null;
+  const ngan = !xem ? null : hoSoXem?.ok ? (
+    <NganHoSo
+      ho_so={hoSoXem.duLieu.ho_so}
+      meta={metaDieuPhoi(hoSoXem.duLieu.ho_so)}
+      lienHe={hoSoXem.duLieu.lienHe}
+      thaoTac={<ThaoTacDieuPhoi d={hoSoXem.duLieu} ngan={{ sauKhiXong: xem.sau ?? xem.dong }} />}
+      dieuHuong={xem}
+    />
+  ) : (
+    <NganLoi maHoSo={xem.ma} dieuHuong={xem} cau={hoSoXem && !hoSoXem.ok ? hoSoXem.thongDiep : "Hệ thống không phản hồi."} />
+  );
+
   const bayGio = new Date();
   const { chip, xoaHet } = chipLoc(GOC, sp, {
     q: (gt) => `Tìm: “${gt}”`,
@@ -124,7 +147,14 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
     <>
       {tieuDe}
       <BangHangDoi
-        nhom={[{ ma: "tat-ca", ten: null, dong: tatCa.items.map((m) => thanhDong(m, bayGio)) }]}
+        nhom={[
+          {
+            ma: "tat-ca",
+            ten: null,
+            dong: tatCa.items.map((m) => thanhDong(m, bayGio, duongXem(GOC, sp, m.id), xem?.ma === m.id)),
+          },
+        ]}
+        ngan={ngan}
         cot={{ loai: true, trangThai: true, tiepTheo: true, cuoi: "Đã chờ" }}
         goiYTim="Tìm mã, tiêu đề, người gửi"
         xepMacDinh="cho"

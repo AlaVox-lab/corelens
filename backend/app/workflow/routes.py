@@ -773,6 +773,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     }
 
     canh_di_duoc = allowed_transitions(session, ho_so, actor)
+    buoc_chinh = my_primary_steps(session, [ho_so], actor)[ho_so.id]
     di_duoc = [
         CanhDiDuocRa(
             to_state=t.to_state,
@@ -786,6 +787,7 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             requires_note=t.requires_note,
             note_label=t.note_label,
             keeps_state=t.from_state == t.to_state,
+            is_primary=buoc_chinh is not None and buoc_chinh.id == t.id,
             fields=xep_o_nhap(permitted_fields(t.guard_codes)),
         )
         for t in canh_di_duoc

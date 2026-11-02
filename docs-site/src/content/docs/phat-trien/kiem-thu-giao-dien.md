@@ -53,7 +53,7 @@ Rồi chạy cùng một bộ bài ở **bốn cấu hình**: rộng 1440 px n�
 | Vai | Màn | Điều kiện |
 |---|---|---|
 | Người gửi `an.nguyen` | Trang chủ, Gửi yêu cầu, Hồ sơ của tôi, hồ sơ vừa gửi, Hộp thư | Hồ sơ vừa gửi có trong danh sách; không thấy mục Hệ thống, mở thẳng `/he-thong` thì bị từ chối |
-| Điều phối viên `binh.tran` | Trang chủ, Hàng đợi điều phối, hồ sơ vừa gửi | Số ở ô *Chờ bạn*, câu chào và số dòng *Cần bạn xử lý* khớp nhau; hồ sơ vừa gửi nằm trong việc chờ với nút *Phân loại yêu cầu*, bấm vào mở đúng bước đó ở bảng thao tác; thấy mục Điều phối, không thấy Hệ thống |
+| Điều phối viên `binh.tran` | Trang chủ, Hàng đợi điều phối, hồ sơ vừa gửi | Số ở ô *Chờ bạn*, câu chào và số dòng *Cần bạn xử lý* khớp nhau; hồ sơ vừa gửi nằm trong việc chờ với nút *Phân loại yêu cầu*, bấm vào mở đúng bước đó ở bảng thao tác; ngăn xem nhanh mở từ dòng, duyệt tới 10 hồ sơ bằng phím mũi tên, Esc đóng và trả tiêu điểm về dòng, ở 375 px chiếm toàn màn hình; mở thẳng `?xem=` thì nút chính là bước chính của hồ sơ; thấy mục Điều phối, không thấy Hệ thống |
 | Trưởng phòng `dung.pham` | Trang chủ, Hàng đợi phòng ban, Hộp thư | Số ở ô *Chờ bạn* khớp số dòng việc chờ |
 | Quản trị viên `khanh.vo` | Trang chủ, Hệ thống | Thấy mục Hệ thống; màn báo bộ quy tắc quy trình đã nạp |
 
@@ -61,7 +61,8 @@ Mọi màn đều phải: mở được, không có lỗi phía trình duyệt, 
 chuyển động, không phần tử nào trên trang chủ còn hiệu ứng chạy.
 
 Bộ bài đã qua phép thử đột biến: cố ý làm sai con số *Chờ bạn* trên trang chủ thì hai bài kiểm số
-liệu hỏng đúng chỗ.
+liệu hỏng đúng chỗ; bỏ bước trả tiêu điểm khi đóng ngăn xem nhanh, hay cho nút "sau" đứng yên, thì
+bài xem nhanh hỏng đúng chỗ.
 
 ## Khi nào chạy
 
