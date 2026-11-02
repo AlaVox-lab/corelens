@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-01 |
-| Phiên bản hiện tại | **`v0.7.0`** (28/10) — cổng theo việc cần làm. `v0.6.0` (27/10) khép Giai đoạn 2. `main` đã có thêm bản sửa đăng nhập (#236), #274, #275 và hai tài liệu #276, #277 chưa phát hành |
+| Cập nhật lần cuối | 2026-11-02 |
+| Phiên bản hiện tại | **`v0.7.0`** (28/10) — cổng theo việc cần làm. `v0.6.0` (27/10) khép Giai đoạn 2. `main` đã có thêm, chưa phát hành: bản sửa đăng nhập (#236), #274, #275, tài liệu #276 #277, trang tài liệu `docs-site/` (#279), kịch bản kiểm tra giao diện `e2e/` (#238), phân trang (#232), ngăn xem nhanh (#233), chuyển động (#237) |
 | Giai đoạn | **Giai đoạn 2 đã khép** (`v0.6.0`). Tuần 13 làm mới giao diện theo việc cần làm, thêm tích hợp liên tục và trường riêng theo loại yêu cầu (`v0.7.0`); báo cáo trước ba thầy ngày 29/10. Kế tiếp: Giai đoạn 3 — không gian `D`, `v0.8.0` |
-| Mốc công việc | **Tuần 13 — Làm mới giao diện** (hạn 08/11): **12 issue đóng**, còn mở #226 (issue gốc), #232, #233, #237, #238, #239. **Tuần 14 — Nền tảng vận hành** (hạn 15/11): 2 đóng (#241, #250), 16 còn mở |
+| Mốc công việc | **Tuần 13 — Làm mới giao diện** (hạn 08/11): **17 issue đóng**, còn mở #239 (thẻ gợi ý, tầng `I` — làm sau `D`). **Tuần 14 — Nền tảng vận hành** (hạn 15/11): 3 đóng (#241, #250, #279), 15 còn mở |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung và màn Hệ thống cho quản trị viên. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
-| Issue đang mở | **22** — 6 ở Tuần 13, 16 ở Tuần 14 (danh sách ở *Việc tiếp theo*) |
+| Issue đang mở | **16** — 1 ở Tuần 13, 15 ở Tuần 14 (danh sách ở *Việc tiếp theo*) |
 | Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
 | Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **446 bài**, chạy trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241). Mọi issue từ #78 đều qua phép thử đột biến, trừ phần chỉ có ở giao diện — frontend chưa có bộ kiểm thử, kiểm bằng đăng nhập OIDC thật và kịch bản đầu–cuối |
+| Bộ kiểm thử tự động | **462 bài** pytest, chạy trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241). Giao diện có **kịch bản Playwright `e2e/`** (#238): bốn vai đăng nhập thật, bốn cấu hình hiển thị, **54 bài** — chạy trên cụm thử trước khi mở pull request sửa giao diện, chưa nằm trong tích hợp liên tục (#249). Mọi issue từ #78 đều qua phép thử đột biến, kể cả phần giao diện từ #238 |
 | Tổng bộ nhớ toàn cụm | **1,4 GB lúc rảnh**, đo lại ngày 15/10 khi viết hướng dẫn cài đặt (#206); Keycloak chiếm gần một nửa. Ảnh chứa khoảng 3,9 GB. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
-| Số ngày còn lại tới chấm kho mã | **36 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 01/11 |
+| Số ngày còn lại tới chấm kho mã | **35 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 02/11 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
@@ -53,7 +53,9 @@ nằm im ở ba trạng thái chờ thì được báo trước rồi **tự tr�
 Mở cổng lên là thấy **việc đang chờ chính mình**, xếp theo độ gấp, nút mang đúng tên bước —
 cờ "cần tôi xử lý" tính từ bước chính khai trong dữ liệu. Biểu mẫu gửi có **trường riêng
 theo loại yêu cầu**, cũng khai trong dữ liệu. Giao diện có chế độ sáng và tối, màn đăng nhập
-Keycloak bằng tiếng Việt.
+Keycloak bằng tiếng Việt. Mọi danh sách **phân trang, tìm và lọc ở dịch vụ**, gõ không dấu vẫn ra; bấm một
+dòng hàng đợi là mở **ngăn xem nhanh** bên phải, duyệt bằng phím mũi tên, làm bước chính ngay trong
+ngăn. Tài liệu cho người dùng và người triển khai nằm ở trang tài liệu `docs-site/`.
 
 Luồng thủ công đã đủ theo các quyết định của giảng viên. Tầng `D` và `I` chưa cài đặt.
 
@@ -635,7 +637,7 @@ trò thay vì mã tiếng Anh. Chỉ một nhãn nằm trong dữ liệu (*Chuy�
 
 **Issue đã đóng**: #80, #102, #157
 
-### Tuần 13 — `v0.6.0`, cổng theo việc cần làm, `v0.7.0` và buổi báo cáo 29/10
+### Tuần 13 — `v0.6.0`, cổng theo việc cần làm, `v0.7.0`, buổi báo cáo 29/10 và khép đợt giao diện
 
 **Phát hành `v0.6.0`** (27/10, #256/#257) khép Giai đoạn 2 — mở lại có giới hạn, đính kèm tệp,
 rà từ ngữ. ROADMAP dời `D` sang `v0.8.0`, `I` sang `v0.9.0`.
@@ -705,16 +707,53 @@ tự đóng và ngưỡng cảnh báo đối chiếu giá trị mặc định c�
 có nguồn ghi rõ là giá trị mẫu; #277 tài liệu so sánh với tám sản phẩm cùng loại
 (`docs/so-sanh-san-pham.md`).
 
-**Bộ kiểm thử lên 446 bài.**
+**Trang tài liệu và README gọn** (#279, 01/11). Trang `docs-site/` dựng bằng Starlight (MIT), chia
+theo người đọc: người dùng theo vai, người cài đặt, người phát triển; 19 trang, 9 ảnh chụp. README
+rút từ 418 xuống 139 dòng, trỏ sang trang tài liệu; thêm `CODE_OF_CONDUCT.md`, `SECURITY.md`. Tích hợp
+liên tục thêm kiểm tra thứ tư: dựng trang tài liệu. Trang chỉ dựng trên máy cho tới khi kho công khai
+— lúc đó đăng qua GitHub Pages hoặc Vercel.
 
-**Issue đã đóng**: #227, #228, #229, #230, #231, #234, #235, #236, #241, #250, #274, #275, #276, #277
+**Kịch bản kiểm tra giao diện qua đăng nhập thật** (#238, 01/11). Playwright trong `e2e/`: bốn tài
+khoản đăng nhập qua trang của Keycloak — không tự đúc cookie, vì cookie tự đúc từng che lỗi #87 — rồi
+chạy cùng bộ bài ở bốn cấu hình (rộng sáng, rộng tối, 375 px, giảm chuyển động). Mỗi màn: mở được,
+không lỗi phía trình duyệt, không cuộn ngang; cộng các điều kiện nghiệp vụ như số trên trang chủ khớp
+danh sách việc chờ.
+
+**Danh sách có phân trang, ngăn xem nhanh, chuyển động** — ba issue cuối của đợt giao diện, ba pull
+request (02/11):
+
+- **Phân trang và bộ lọc phía dịch vụ** (#232): bốn danh sách nhận `limit` (mặc định 50, trần 200),
+  `offset`, ô tìm `q` và bộ lọc, trả kèm tổng số; số đếm nhóm tính trên cả tập đã lọc nên không đổi khi
+  sang trang. Tìm không phân biệt dấu ở cả SQL lẫn Python. Đo trên cụm thử với 6.001 hồ sơ, phần lớn đã
+  hủy: *Hồ sơ của tôi* từ 9,1 giây xuống 0,08 giây; hàng đợi điều phối từ 1,1 giây xuống 0,09 giây và
+  không tăng khi gấp đôi lịch sử — xem Ghi chú kỹ thuật
+- **Ngăn xem nhanh** (#233): bấm dòng hàng đợi mở hồ sơ ở ngăn bên phải (`?xem=`), nút trước/sau
+  "2 trên 14", phím mũi tên, Esc trả tiêu điểm về đúng dòng, toàn màn hình ở 375 px. Nút chính ở đáy
+  ngăn là bước chính — dịch vụ đánh dấu `is_primary` trên từng cạnh đi được, cùng nguồn với cờ "cần tôi
+  xử lý"; làm xong thì ngăn sang hồ sơ kế. Trang chi tiết và ngăn dùng chung phần nạp dữ liệu và khối
+  thao tác
+- **Chuyển động thống nhất** (#237): bảng quy tắc ở `ARCHITECTURE.md` mục 8.4 — chỉ để định hướng và báo
+  phản hồi, thao tác lặp lại không quá 300 ms, không đếm số từ 0, giảm chuyển động thì tắt hết. Ngăn
+  xem nhanh và hộp xác nhận có hiệu ứng hiện và ẩn; thông báo kết quả chỉ có hiệu ứng hiện. Chữ số cuộn
+  khi đổi giá trị lúc đang xem. Bỏ vạch hạn chạy từ 0 mỗi lần mở trang
+
+Danh sách việc chờ ở trang chủ tải tối đa 200 việc mỗi vai; vượt trần thì ghi "Đang hiện 200 trên N"
+kèm đường sang hàng đợi.
+
+**Navigator đổi nhịp pull request** (02/11): một nhánh và một pull request vào `dev` gom một tới ba
+issue liên quan, và một pull request phát hành `dev → main` cho cả đợt thay vì sau từng nhánh.
+
+**Bộ kiểm thử lên 462 bài pytest và 54 bài giao diện.**
+
+**Issue đã đóng**: #226 (issue gốc), #227, #228, #229, #230, #231, #232, #233, #234, #235, #236, #237,
+#238, #241, #250, #274, #275, #276, #277, #279
 
 ---
 
 ## Đang làm
 
-Không có issue nào đang làm dở. Kế tiếp là #279 (trang tài liệu) — navigator muốn thảo luận
-trước khi làm: chọn công cụ dựng trang, nơi đăng khi kho còn riêng tư.
+Không có issue nào đang làm dở. Đợt giao diện Tuần 13 đã khép; #239 (thẻ gợi ý của hệ thống) thuộc
+tầng `I`, làm sau `D`.
 
 Ba bản ghi ADR-0006, ADR-0007 và ADR-0008 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp
 nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và mở issue tích hợp.
@@ -725,17 +764,16 @@ nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và
 
 ### Theo thứ tự
 
-1. **#279 trang tài liệu và README** — thảo luận trước: công cụ dựng trang (giấy phép OSI), nơi
-   đăng, chia theo người đọc
+1. **Cắt bản phát hành cho đợt giao diện** — `main` có thêm phân trang, ngăn xem nhanh, chuyển động,
+   trang tài liệu và kịch bản giao diện chưa phát hành. Có `feat` nên theo Semantic Versioning là bản
+   MINOR, trong khi ROADMAP đang giữ `v0.8.0` cho không gian `D` — navigator chốt số phiên bản
 2. **#278** kiểm thử hồ sơ đang chạy giữ bộ quy tắc cũ khi bật bộ mới — trả lời câu hỏi của các thầy
-3. Phần còn lại của Tuần 13: #232 phân trang phía dịch vụ, #233 xem nhanh hồ sơ trong hàng đợi,
-   #237 chuyển động, #238 kịch bản kiểm tra giao diện; #239 thẻ gợi ý thuộc tầng `I`, làm sau `D`
-4. **Giai đoạn 3 — không gian `D`** (`v0.8.0`): bảng điều khiển Superset trên nhật ký sự kiện,
-   xuất CSV/JSON. Hỏi navigator trước khi tạo issue. Tầng `I` chỉ tích hợp sau khi `P` và `D` ổn định
-5. Tuần 14 — nền tảng vận hành: #242–#249, #251–#255; sáu issue cần thảo luận trước
-6. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
-7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
-   viên giao từ 15/10; nên gửi bản `v0.7.0`
+3. **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện, xuất CSV/JSON.
+   Hỏi navigator trước khi tạo issue. Tầng `I` chỉ tích hợp sau khi `P` và `D` ổn định — #239 chờ ở đây
+4. Tuần 14 — nền tảng vận hành: #242–#249, #251–#255; sáu issue cần thảo luận trước
+5. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
+6. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
+   viên giao từ 15/10; nên gửi bản phát hành mới ở mục 1
 
 ### Chờ giảng viên
 
@@ -763,12 +801,11 @@ Gom vào một buổi:
 
 ### Việc vận hành, không cần issue
 
-1. Thêm `CODE_OF_CONDUCT.md`
-2. Bật bắt buộc dấu xanh của tích hợp liên tục trước khi merge — chỉ có hiệu lực khi kho công
+1. Bật bắt buộc dấu xanh của tích hợp liên tục trước khi merge — chỉ có hiệu lực khi kho công
    khai (`CONTRIBUTING.md` mục 2.6)
-3. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
-   `delete_branch_on_merge` an toàn
-4. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
+2. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
+   `delete_branch_on_merge` an toàn, và đăng trang tài liệu `docs-site/`
+3. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
    trước để nhóm không quên
 
 ---
@@ -1343,6 +1380,22 @@ Qdrant chỉ dựng chỉ mục HNSW khi đoạn dữ liệu vượt `indexing_t
 và dưới `full_scan_threshold` thì quét vét cạn. Đo trên tập vài nghìn véc-tơ mà không hạ hai
 ngưỡng đó là đang đo quét chính xác. Véc-tơ ngẫu nhiên lại là trường hợp xấu nhất của HNSW,
 nên số recall trên dữ liệu ngẫu nhiên thấp hơn dữ liệu thật.
+
+**Bản đồ định danh của SQLAlchemy chỉ giữ tham chiếu yếu** (#232)
+
+`session.get(RequestType, ma)` trả đối tượng từ bản đồ định danh nếu nó còn ở đó — nhưng bản đồ chỉ
+giữ tham chiếu yếu, nên đối tượng bị thu gom ngay khi hàm tính hạn trả về, và hồ sơ kế tiếp lại hỏi
+cơ sở dữ liệu. Hàng đợi vài trăm hồ sơ vì thế tốn vài trăm truy vấn chỉ để đọc lại cùng một loại yêu
+cầu. Cách chữa: nạp sẵn danh mục và giữ biến suốt lời gọi (`routes._giu_danh_muc`). Cùng đợt, giờ đã
+nằm ở trạng thái tính ngay trong câu truy vấn hàng đợi thay vì mỗi hồ sơ một truy vấn — hàng đợi điều
+phối 271 hồ sơ từ khoảng 1,1 giây xuống 0,09 giây.
+
+**`position: fixed` lệch trong phần tử còn giữ hiệu ứng `transform`** (#233, #237)
+
+Hiệu ứng hiện trang `.vao` chạy với `animation-fill-mode: both` nên sau khi xong khung nội dung vẫn mang
+`transform`, và mọi phần tử `fixed` bên trong tính vị trí theo khung đó chứ không theo cửa sổ: ngăn xem
+nhanh lệch xuống, khối thao tác ở đáy rơi khỏi màn hình. Ngăn gắn thẳng vào `<body>`; từ #237 hiệu ứng
+hiện trang dùng `backwards`, không để lại `transform`.
 
 ---
 
