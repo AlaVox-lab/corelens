@@ -3367,3 +3367,119 @@ html.doi-mau * {
   flex: 1;
   min-width: 0;
 }
+
+/* Từ #232 hàng công cụ có thêm ô chọn bộ lọc: dải số chiếm trọn một hàng để mọi ô đều hiện,
+ * ô tìm, bộ lọc và menu xếp xuống hàng dưới, ô tìm dạt trái */
+.hang-cong-cu > .dai-so-loc:has(+ .phai) {
+  flex-basis: 100%;
+}
+
+.hang-cong-cu > .dai-so-loc + .phai {
+  margin-left: 0;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.hang-cong-cu > .dai-so-loc + .phai > :last-child {
+  margin-left: auto;
+}
+
+/* --- Phân trang và bộ lọc trên địa chỉ trang (#232) -------------------------
+ * Ô chọn bộ lọc cùng chiều cao với ô tìm; chip bộ lọc đang bật nằm dưới hàng công cụ; dòng
+ * chân "Đang xem … trên …" dưới bảng, nút trang trước/sau dạt phải. */
+.o-chon-loc {
+  width: auto;
+  max-width: 200px;
+  height: 38px;
+  padding: 0 30px 0 12px;
+  font-size: 13px;
+}
+
+.chip-loc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: -4px 0 14px;
+}
+
+.chip-loc .chip {
+  height: 30px;
+  border-radius: 15px;
+  padding: 0 8px 0 12px;
+}
+
+.chip-loc .chip svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+}
+
+.xoa-het {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 0 6px;
+}
+
+.chan-trang {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.chan-trang p {
+  margin: 0;
+}
+
+.chan-trang b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.chan-trang-nut {
+  display: flex;
+  gap: 6px;
+}
+
+.chan-trang-nut svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chan-trang-nut [aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Trong cột danh sách của hộp thư: dòng chân bám đáy cột, chữ nhỏ hơn */
+.ht-ds .chan-trang {
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.ht-ds .chan-trang .nut-nho {
+  padding: 4px 8px;
+}
+
+@media (max-width: 767px) {
+  .hang-cong-cu .phai {
+    flex-wrap: wrap;
+  }
+
+  /* Ô tìm chiếm trọn một hàng, ô chọn và menu xếp chia hàng dưới */
+  .hang-cong-cu .phai .o-tim {
+    flex-basis: 100%;
+  }
+
+  .o-chon-loc {
+    flex: 1 1 140px;
+    max-width: none;
+  }
+}

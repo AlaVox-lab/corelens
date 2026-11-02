@@ -279,6 +279,11 @@ export type NhomHangDoi = NhanCoMa & {
    * Dịch vụ suy từ bộ quy tắc; hàng đợi điều phối luôn `false`.
    */
   watch_only: boolean;
+  /** Trạng thái kết thúc — chỉ "Hồ sơ của tôi" có (#232). */
+  is_terminal?: boolean;
+  /** Số hồ sơ quá hạn, sắp hạn trong nhóm — hàng đợi điều phối (#232). */
+  overdue?: number;
+  due_soon?: number;
 };
 
 export type MucHangDoi = HoSoTomTat & {
@@ -290,10 +295,39 @@ export type MucHangDoi = HoSoTomTat & {
   requested_by_me?: boolean;
 };
 
-export type HangDoi = {
-  groups: NhomHangDoi[];
-  items: MucHangDoi[];
+/**
+ * Phần chung của mọi danh sách có phân trang (#232): tổng số dòng khớp bộ lọc và trang đang trả.
+ * Số đếm nhóm đi kèm luôn tính trên cả tập đã lọc, không chỉ trên trang này.
+ */
+export type Trang = {
+  total: number;
+  offset: number;
+  limit: number;
 };
+
+/** Số đếm cho thanh bên và trang chủ, tính trên cả danh sách — không phải tải hết để đếm. */
+export type DemViec = {
+  /** Hồ sơ đang chờ chính người xem (needs_my_action). */
+  waiting_me: number;
+  /** Có hồ sơ chờ mình đã quá hạn, hay hệ thống sắp tự đi thay. */
+  urgent: boolean;
+};
+
+export type HangDoi = Trang &
+  DemViec & {
+    groups: NhomHangDoi[];
+    items: MucHangDoi[];
+  };
+
+/** Hồ sơ của người gửi, có phân trang (#232). */
+export type DanhSachHoSo = Trang &
+  DemViec & {
+    items: HoSoTomTat[];
+    /** Số hồ sơ theo trạng thái trên cả tập đã lọc. */
+    groups: NhomHangDoi[];
+    /** Hồ sơ chưa kết thúc, không tính bộ lọc. */
+    open_count: number;
+  };
 
 export type HoSoDieuPhoi = HoSoChiTiet & {
   requester_label: string | null;
@@ -314,14 +348,21 @@ export type MucHangDoiPhongBan = MucHangDoi & {
   assignee_id: string | null;
   assignee_label: string | null;
   assigned_to_me: boolean;
+  /** Nhóm độ gấp của hồ sơ — mã trong `urgency_groups` (#232). */
+  urgency: string | null;
 };
 
-export type HangDoiPhongBan = {
-  /** Phòng của người đang xem. */
-  departments: NhanCoMa[];
-  groups: NhomHangDoi[];
-  items: MucHangDoiPhongBan[];
-};
+/** Một nhóm độ gấp của hàng đợi phòng ban, dịch vụ chia trên cả hàng đợi (#232). */
+export type NhomDoGap = NhanCoMa & { count: number; overdue: number; due_soon: number };
+
+export type HangDoiPhongBan = Trang &
+  DemViec & {
+    /** Phòng của người đang xem. */
+    departments: NhanCoMa[];
+    groups: NhomHangDoi[];
+    urgency_groups: NhomDoGap[];
+    items: MucHangDoiPhongBan[];
+  };
 
 export type HoSoPhongBan = HoSoChiTiet & {
   requester_label: string | null;
@@ -389,7 +430,10 @@ export type CuocTroChuyen = {
   waiting_on_me: boolean;
 };
 
-export type HopThu = {
+export type HopThu = Trang & {
   items: CuocTroChuyen[];
   unread: number;
+  /** Số cuộc còn tin chưa đọc, số cuộc nội bộ — trên các cuộc khớp ô tìm (#232). */
+  unread_conversations: number;
+  internal_conversations: number;
 };

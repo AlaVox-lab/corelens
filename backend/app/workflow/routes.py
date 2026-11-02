@@ -16,8 +16,8 @@ import json
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
@@ -67,6 +67,7 @@ from app.workflow.errors import (
     TransitionError,
     TransitionNotAllowed,
 )
+from app.workflow.phan_trang import ThamSoTrang, dieu_kien_tim, tham_so_trang
 from app.workflow.messages import (
     MessageRejected,
     cac_loi_nhan,
@@ -82,7 +83,9 @@ from app.workflow.schemas import (
     GuiLoiNhanVao,
     HoSoChiTietRa,
     HoSoLienQuanRa,
+    DanhSachHoSoRa,
     HoSoTomTatRa,
+    NhomHangDoiRa,
     LoaiLoiNhanRa,
     LoaiYeuCauRa,
     LoiNhanRa,
@@ -203,6 +206,41 @@ def _truong_ra(t: RequestTypeField) -> TruongRiengRa:
         code=t.code, label=t.label, kind=t.kind, required=t.required,
         help_text=t.help_text, unit=t.unit, options=t.options,
     )
+
+
+def _giu_danh_muc(session: Session, rule_set_id: int) -> list:
+    """Nạp sẵn và giữ tham chiếu tới danh mục mà phép tính hạn tra theo từng hồ sơ (#232).
+
+    Bản đồ định danh của phiên chỉ giữ tham chiếu yếu: `session.get(RequestType, …)` trong
+    `rules.sla` trả đối tượng, đối tượng bị thu gom ngay khi hàm trả về, và hồ sơ kế tiếp lại hỏi
+    cơ sở dữ liệu. Danh sách trả về giữ chúng sống suốt lời gọi — hàng đợi vài trăm hồ sơ bớt
+    vài trăm truy vấn. Phía gọi chỉ cần giữ biến.
+    """
+    return [
+        *session.scalars(select(RequestType)),
+        *session.scalars(select(Priority)),
+        *session.scalars(select(State).where(State.rule_set_id == rule_set_id)),
+    ]
+
+
+def _do_gap(session: Session, ho_so: Request, bao_tu_di: bool) -> tuple[bool, bool]:
+    """(quá hạn, sắp hạn) của một hồ sơ — sắp hạn gồm cả lúc hệ thống sắp tự đi thay vì hết hạn
+    chờ (#142), phía gọi tính sẵn (`bao_tu_di`) cho cả danh sách. Cùng điều kiện với dòng phụ
+    "quá hạn / sắp hạn" của dải lọc ở giao diện."""
+    gioi_han = gioi_han_giay(session, ho_so)
+    if gioi_han is not None and da_chay_giay(session, ho_so) > gioi_han:
+        return True, False
+    return False, bao_tu_di or sap_het_han(session, ho_so)
+
+
+def _gap(session: Session, ho_so: Request) -> bool:
+    """Hồ sơ gấp: đã quá hạn xử lý, hay hệ thống sắp tự đi thay vì hết hạn chờ (#230). Cùng điều
+    kiện với chấm báo trên thanh bên, để số đếm ở dịch vụ và giao diện không kể hai chuyện."""
+    gioi_han = gioi_han_giay(session, ho_so)
+    if gioi_han is not None and da_chay_giay(session, ho_so) > gioi_han:
+        return True
+    td = tu_dong(session, ho_so)
+    return bool(td and td.bao_truoc)
 
 
 def _buoc_cua_toi(canh: Transition | None) -> dict:
@@ -520,24 +558,74 @@ def tao_ho_so(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router.get("/requests", response_model=list[HoSoTomTatRa])
+@router.get("/requests", response_model=DanhSachHoSoRa)
 def ho_so_cua_toi(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
-) -> list[HoSoTomTatRa]:
-    """Danh sách hồ sơ của người đang đăng nhập, mới nhất trước."""
+    trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề")] = None,
+    state: Annotated[str | None, Query(description="Chỉ một trạng thái")] = None,
+    request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
+    needs_action: Annotated[bool, Query(description="Chỉ hồ sơ đang chờ chính người xem")] = False,
+) -> DanhSachHoSoRa:
+    """Hồ sơ của người đang đăng nhập, mới nhất trước, có phân trang (#232).
+
+    Danh sách này phình theo lịch sử — mọi hồ sơ từng gửi, kể cả đã đóng — nên lọc, đếm và cắt
+    trang đều làm trong SQL; chỉ hồ sơ của trang mới được dựng tóm tắt đầy đủ. Cờ "đang chờ tôi"
+    chỉ có thể bật ở hồ sơ chưa kết thúc, nên tính trên tập đó.
+    """
+    bo = get_active_rule_set(session)
+    states = _bang_trang_thai(session, bo.id)
+    ket_thuc = [ma for ma, s in states.items() if s.is_terminal]
+    _danh_muc = _giu_danh_muc(session, bo.id)
+
+    cua_toi = [Request.requester_id == actor.id]
+    dang_mo = session.scalars(
+        select(Request).where(*cua_toi, Request.current_state.not_in(ket_thuc))
+    ).all()
+    buoc_mo = my_primary_steps(session, dang_mo, actor)
+    cho_toi = [h for h in dang_mo if buoc_mo[h.id] is not None]
+
+    loc = list(cua_toi)
+    tim = dieu_kien_tim(q)
+    if tim is not None:
+        loc.append(tim)
+    if request_type:
+        loc.append(Request.request_type_code == request_type)
+    if needs_action:
+        loc.append(Request.id.in_([h.id for h in cho_toi]))
+
+    dem = dict(
+        session.execute(
+            select(Request.current_state, func.count()).where(*loc).group_by(Request.current_state)
+        ).all()
+    )
+    if state:
+        loc.append(Request.current_state == state)
+    tong = session.scalar(select(func.count()).select_from(Request).where(*loc)) or 0
+
     cac_ho_so = session.scalars(
         select(Request)
-        .where(Request.requester_id == actor.id)
-        .order_by(Request.created_at.desc())
+        .where(*loc)
+        .order_by(Request.created_at.desc(), Request.id.desc())
+        .offset(trang.offset)
+        .limit(trang.limit)
     ).all()
-
-    if not cac_ho_so:
-        return []
-
-    states = _bang_trang_thai(session, cac_ho_so[0].rule_set_id)
     buoc = my_primary_steps(session, cac_ho_so, actor)
-    return [HoSoTomTatRa(**_tom_tat(session, h, states), **_buoc_cua_toi(buoc[h.id])) for h in cac_ho_so]
+    return DanhSachHoSoRa(
+        items=[HoSoTomTatRa(**_tom_tat(session, h, states), **_buoc_cua_toi(buoc[h.id])) for h in cac_ho_so],
+        total=tong,
+        offset=trang.offset,
+        limit=trang.limit,
+        groups=[
+            NhomHangDoiRa(code=ma, label=s.label, count=dem[ma], is_terminal=s.is_terminal)
+            for ma, s in sorted(states.items(), key=lambda m: m[1].display_order)
+            if dem.get(ma)
+        ],
+        open_count=len(dang_mo),
+        waiting_me=len(cho_toi),
+        urgent=any(_gap(session, h) for h in cho_toi),
+    )
 
 
 @router.get("/requests/{case_id}", response_model=HoSoChiTietRa)

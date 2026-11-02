@@ -21,8 +21,10 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import math
-from typing import Annotated
+from dataclasses import dataclass
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -51,8 +53,13 @@ from app.workflow.routes import (
     _bao_loi,
     _bao_loi_nhan,
     _du_lieu_chi_tiet,
+    _giu_danh_muc,
+    _ma_ho_so,
     _tom_tat,
 )
+from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
+from app.rules.sla import da_chay_giay, gioi_han_giay, sap_het_han
+from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
     GuiLoiNhanVao,
@@ -61,6 +68,7 @@ from app.workflow.schemas import (
     LienHeNguoiGuiRa,
     MucHangDoiPhongBanRa,
     NhanCoMa,
+    NhomDoGapRa,
     NhomHangDoiRa,
 )
 
@@ -166,23 +174,57 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoPhongB
 # ---------------------------------------------------------------------------
 
 
+@dataclass
+class _Hang:
+    """Một hồ sơ của hàng đợi kèm các cờ hạn cần để chia nhóm và xếp — tính cho cả hàng đợi,
+    rẻ hơn nhiều so với tóm tắt đầy đủ mà chỉ hồ sơ của trang mới được dựng."""
+
+    ho_so: Request
+    vao: dt.datetime
+    qua_han: bool
+    sap_han: bool
+    bao_tu_di: bool
+    con_lai: float
+    nhom: str
+
+
+# Nhóm độ gấp cố định của hàng đợi phòng ban — tên nhóm, không phải tên trạng thái. Nhóm theo
+# trạng thái (đồng hồ chưa chạy) lấy nhãn từ bộ quy tắc.
+_NHOM_HAN = {"qua-han": "Quá hạn", "sap-het-han": "Sắp hết hạn", "trong-han": "Trong hạn"}
+_NHOM_THEO_DOI = ("cho-nguoi-gui", "Chờ người gửi")
+
+
 @router.get("/queue", response_model=HangDoiPhongBanRa)
 def hang_doi(
     session: _Phien,
     actor: _Cua,
+    trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
     state: Annotated[str | None, Query(description="Chỉ lấy một trạng thái")] = None,
     mine: Annotated[bool, Query(description="Chỉ lấy hồ sơ giao cho người đang xem")] = False,
+    group: Annotated[str | None, Query(description="Chỉ một nhóm độ gấp")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
+    priority: Annotated[str | None, Query(description="Chỉ một mức ưu tiên")] = None,
+    sort: Annotated[
+        Literal["gap", "cho", "moi"],
+        Query(description="gap: độ gấp · cho: chờ lâu nhất · moi: mới nhất"),
+    ] = "gap",
+    needs_action: Annotated[bool, Query(description="Chỉ hồ sơ đang chờ chính người xem")] = False,
 ) -> HangDoiPhongBanRa:
-    """Hồ sơ của phòng mình, quá hạn lên đầu rồi tới hồ sơ gần hạn nhất.
+    """Hồ sơ của phòng mình, mặc định quá hạn lên đầu rồi tới hồ sơ gần hạn nhất (#232).
 
     Khác hàng đợi điều phối — xếp theo thời gian chờ — vì ở đây đồng hồ SLA đang chạy:
     thời hạn còn lại mới là con số người trong phòng cần nhìn. Hồ sơ chưa có ngưỡng SLA
-    xếp sau cùng, theo thời gian chờ.
+    xếp sau cùng, theo thời gian chờ. Hồ sơ đang ở lượt người gửi (nhóm theo dõi, #99) xếp sau
+    mọi hồ sơ có việc phải làm.
 
-    Chỉ hồ sơ thuộc phòng của người đang xem. Số đếm trên nút lọc đi theo cùng bộ lọc
-    `mine`, để con số và danh sách không bao giờ kể hai chuyện khác nhau.
+    Nhóm độ gấp — quá hạn, sắp hết hạn, trong hạn, từng trạng thái đồng hồ chưa chạy, chờ người
+    gửi — chia ở đây trên cả hàng đợi đã lọc, để số trên dải lọc đúng dù chỉ trả một trang. Hàng
+    đợi chỉ gồm hồ sơ đang mở của phòng, nên lớn theo khối việc chứ không theo lịch sử; tóm tắt
+    đầy đủ — phần tốn nhất — chỉ dựng cho hồ sơ của trang.
 
-    Hồ sơ đang ở lượt người gửi (nhóm theo dõi, #99) xếp sau mọi hồ sơ có việc phải làm.
+    Số đếm trạng thái và nhóm đi theo cùng bộ lọc `mine`, để con số và danh sách không bao giờ
+    kể hai chuyện khác nhau.
     """
     bo = get_active_rule_set(session)
     co_viec = trang_thai_hang_doi_phong_ban(session, bo.id)
@@ -208,47 +250,104 @@ def hang_doi(
     if mine:
         dieu_kien.append(Request.assignee_id == actor.id)
 
-    dem = dict(
-        session.execute(
-            select(Request.current_state, func.count())
-            .where(*dieu_kien)
-            .group_by(Request.current_state)
-        ).all()
-    )
-
     luc_vao = _luc_vao_trang_thai().label("luc_vao")
-    truy_van = select(Request, luc_vao).where(*dieu_kien)
+    ca_hang = session.execute(select(Request, luc_vao, giay_da_o_trang_thai()).where(*dieu_kien)).all()
+    buoc = my_primary_steps(session, [ho_so for ho_so, _, _ in ca_hang], actor)
+    _danh_muc = _giu_danh_muc(session, bo.id)
+    canh_tu_di = canh_tu_di_theo_trang_thai(session, bo.id)
+
+    def hang(ho_so: Request, vao: dt.datetime, da_o: int) -> _Hang:
+        gioi_han = gioi_han_giay(session, ho_so)
+        da_dem = da_chay_giay(session, ho_so)
+        qua = gioi_han is not None and da_dem > gioi_han
+        sap = not qua and sap_het_han(session, ho_so)
+        chay = ho_so.sla_segment_since is not None or ho_so.sla_running_seconds > 0
+        canh = canh_tu_di.get(ho_so.current_state)
+        if ho_so.current_state in ma_theo_doi:
+            nhom = _NHOM_THEO_DOI[0]
+        elif qua:
+            nhom = "qua-han"
+        elif sap:
+            nhom = "sap-het-han"
+        elif chay:
+            nhom = "trong-han"
+        else:
+            nhom = ho_so.current_state
+        return _Hang(
+            ho_so=ho_so,
+            vao=vao,
+            qua_han=qua,
+            sap_han=sap,
+            bao_tu_di=canh is not None and da_toi_luc_bao(canh, da_o),
+            con_lai=(gioi_han - da_dem) if gioi_han is not None else math.inf,
+            nhom=nhom,
+        )
+
+    ca = [hang(h, vao, da_o) for h, vao, da_o in ca_hang]
+    cho_toi = [d for d in ca if buoc[d.ho_so.id] is not None]
+
+    da_loc = [
+        d
+        for d in ca
+        if khop_tim(q, d.ho_so.title, d.ho_so.requester_label, _ma_ho_so(d.ho_so))
+        and (not request_type or d.ho_so.request_type_code == request_type)
+        and (not priority or d.ho_so.priority_code == priority)
+        and (not needs_action or buoc[d.ho_so.id] is not None)
+    ]
+
+    # Số đếm trên cả tập đã lọc, trước khi lọc theo nhóm hay trạng thái
+    dem: dict[str, int] = {}
+    for d in da_loc:
+        dem[d.ho_so.current_state] = dem.get(d.ho_so.current_state, 0) + 1
+    nhan_nhom = {**_NHOM_HAN, **{t.code: t.label for t in co_viec}, _NHOM_THEO_DOI[0]: _NHOM_THEO_DOI[1]}
+    nhom_do_gap = []
+    for ma in nhan_nhom:
+        trong = [d for d in da_loc if d.nhom == ma]
+        if trong:
+            nhom_do_gap.append(
+                NhomDoGapRa(
+                    code=ma,
+                    label=nhan_nhom[ma],
+                    count=len(trong),
+                    overdue=sum(1 for d in trong if d.qua_han),
+                    due_soon=sum(1 for d in trong if (d.sap_han or d.bao_tu_di) and not d.qua_han),
+                )
+            )
+
+    if group:
+        da_loc = [d for d in da_loc if d.nhom == group]
     if state:
-        truy_van = truy_van.where(Request.current_state == state)
+        da_loc = [d for d in da_loc if d.ho_so.current_state == state]
+
+    # Giao diện chia trang thành các nhóm độ gấp, nên mọi cách xếp đều xếp theo thứ tự nhóm
+    # trước: trang sau nối tiếp đúng nhóm trang trước dừng, cách xếp chỉ đổi thứ tự trong nhóm
+    thu_tu = {ma: i for i, ma in enumerate(nhan_nhom)}
+    if sort == "cho":
+        da_loc.sort(key=lambda d: (thu_tu[d.nhom], d.vao, d.ho_so.id))
+    elif sort == "moi":
+        da_loc.sort(key=lambda d: (thu_tu[d.nhom], -d.ho_so.created_at.timestamp(), -d.ho_so.id))
+    else:
+        da_loc.sort(key=lambda d: (thu_tu[d.nhom], d.con_lai, d.vao, d.ho_so.id))
 
     states = _bang_trang_thai(session, bo.id)
-    dong = session.execute(truy_van).all()
-    buoc = my_primary_steps(session, [ho_so for ho_so, _ in dong], actor)
     cac_muc = []
-    for ho_so, vao in dong:
-        tom_tat = _tom_tat(session, ho_so, states)
+    for d in cat_trang(da_loc, trang):
+        ho_so = d.ho_so
         cac_muc.append(
             MucHangDoiPhongBanRa(
-                **tom_tat,
+                **_tom_tat(session, ho_so, states),
                 **_buoc_cua_toi(buoc[ho_so.id]),
                 requester_label=ho_so.requester_label,
                 priority=_nhan_co_ma(
                     session.get(Priority, ho_so.priority_code) if ho_so.priority_code else None
                 ),
-                state_entered_at=vao,
+                state_entered_at=d.vao,
                 assignee_id=ho_so.assignee_id,
                 assignee_label=ho_so.assignee_label,
                 assigned_to_me=ho_so.assignee_id == actor.id,
+                urgency=d.nhom,
             )
         )
-
-    def do_gap(m: MucHangDoiPhongBanRa) -> tuple:
-        con_lai = (
-            m.sla_limit_seconds - m.sla_running_seconds
-            if m.sla_limit_seconds is not None
-            else math.inf
-        )
-        return (m.state.code in ma_theo_doi, not m.sla_overdue, con_lai, m.state_entered_at, m.id)
 
     phong = session.scalars(
         select(Department)
@@ -267,7 +366,13 @@ def hang_doi(
             )
             for t in cac_trang_thai
         ],
-        items=sorted(cac_muc, key=do_gap),
+        urgency_groups=nhom_do_gap,
+        items=cac_muc,
+        total=len(da_loc),
+        offset=trang.offset,
+        limit=trang.limit,
+        waiting_me=len(cho_toi),
+        urgent=any(d.qua_han or d.bao_tu_di for d in cho_toi),
     )
 
 

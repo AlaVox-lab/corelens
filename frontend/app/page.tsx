@@ -14,6 +14,10 @@
 //
 // Trang chưa đăng nhập không còn bảng trạng thái hệ thống: tình trạng cụm chỉ có nghĩa với
 // người vận hành, và họ xem ở màn Hệ thống sau khi đăng nhập (navigator chốt 27/10).
+//
+// Từ #232 các danh sách có phân trang. Trang chủ không tải cả danh sách: với mỗi vai, một lần
+// gọi một dòng (`limit=1`) lấy số đếm trên cả danh sách — cùng lời gọi với thanh bên — và một
+// lần gọi kèm `needs_action=true` lấy đúng những hồ sơ đang chờ người xem.
 
 import { AlarmClock, CircleCheck, Clock, FolderOpen, Hand } from "lucide-react";
 import Link from "next/link";
@@ -22,12 +26,15 @@ import { KhongPhanHoi, KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
 import { ViecCanLam, type DongViec } from "@/components/viec-can-lam";
 import { docDichVu, goiDichVu, type DanhTinh } from "@/lib/api";
-import type { HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
+import type { DanhSachHoSo, HangDoi, HangDoiPhongBan, HoSoTomTat, NhanCoMa } from "@/lib/kieu";
 import { docDongHo, docTuDong, type NguoiXem } from "@/lib/sla";
 
 export const dynamic = "force-dynamic";
 
 const XA_NHAT = Number.MAX_SAFE_INTEGER;
+
+/** Việc chờ một người ở một vai — trần của dịch vụ (`GIOI_HAN_TOI_DA`), vượt mức đó là chuyện khác. */
+const CHO_TOI = "needs_action=true&limit=200";
 
 function ChuaDangNhap() {
   // Căn giữa màn, ngắn, nút đăng nhập nổi bật (#236) — không còn bảng kỹ thuật (#229)
@@ -113,13 +120,6 @@ function TongQuan({ tieuDe, href, dong }: { tieuDe: string; href: string; dong: 
   );
 }
 
-/** Đếm theo nhãn trạng thái, giữ thứ tự xuất hiện. */
-function demTheoTrangThai(ds: HoSoTomTat[]): { nhan: string; so: number }[] {
-  const dem = new Map<string, number>();
-  for (const h of ds) dem.set(h.state.label, (dem.get(h.state.label) ?? 0) + 1);
-  return [...dem].map(([nhan, so]) => ({ nhan, so }));
-}
-
 export default async function TrangChu() {
   const ketQua = await docDichVu<DanhTinh>("/me");
   // Dịch vụ không phản hồi: trang lỗi chung, không giả làm trang chưa đăng nhập (#235)
@@ -128,30 +128,35 @@ export default async function TrangChu() {
   const danhTinh = ketQua.duLieu;
 
   const kg = danhTinh.workspaces ?? ["portal"];
-  const [cuaToi, dieuPhoi, phongBan, sucKhoe] = await Promise.all([
-    goiDichVu<HoSoTomTat[]>("/requests"),
-    kg.includes("coordination") ? goiDichVu<HangDoi>("/coordination/queue") : null,
-    kg.includes("department") ? goiDichVu<HangDoiPhongBan>("/department/queue") : null,
+  const coDieuPhoi = kg.includes("coordination");
+  const coPhongBan = kg.includes("department");
+  const [cuaToi, choCuaToi, dieuPhoi, choDieuPhoi, phongBan, choPhongBan, sucKhoe] = await Promise.all([
+    goiDichVu<DanhSachHoSo>("/requests?limit=1"),
+    goiDichVu<DanhSachHoSo>(`/requests?${CHO_TOI}`),
+    coDieuPhoi ? goiDichVu<HangDoi>("/coordination/queue?limit=1") : null,
+    coDieuPhoi ? goiDichVu<HangDoi>(`/coordination/queue?${CHO_TOI}`) : null,
+    coPhongBan ? goiDichVu<HangDoiPhongBan>("/department/queue?limit=1") : null,
+    coPhongBan ? goiDichVu<HangDoiPhongBan>(`/department/queue?${CHO_TOI}`) : null,
     kg.includes("system") ? docSucKhoe() : null,
   ]);
 
   const cacNguon = ([
-    cuaToi && {
-      ds: cuaToi,
+    choCuaToi && {
+      ds: choCuaToi.items,
       href: (h: HoSoTomTat) => `/yeu-cau/${h.id}`,
       vai: "Người gửi",
       nguoiXem: "nguoi-gui" as const,
       phu: () => null,
     },
-    dieuPhoi && {
-      ds: dieuPhoi.items,
+    choDieuPhoi && {
+      ds: choDieuPhoi.items,
       href: (h: HoSoTomTat) => `/dieu-phoi/${h.id}`,
       vai: "Điều phối",
       nguoiXem: "noi-bo" as const,
       phu: (h: HoSoTomTat) => (h as HoSoTomTat & { requester_label?: string }).requester_label ?? null,
     },
-    phongBan && {
-      ds: phongBan.items,
+    choPhongBan && {
+      ds: choPhongBan.items,
       href: (h: HoSoTomTat) => `/phong-ban/${h.id}`,
       vai: "Phòng ban",
       nguoiXem: "noi-bo" as const,
@@ -162,23 +167,25 @@ export default async function TrangChu() {
     },
   ] as (Nguon | null)[]).filter((n): n is Nguon => n !== null);
 
-  const coViec = cacNguon.filter((n) => n.ds.some((h) => h.needs_my_action));
+  // Dịch vụ đã lọc đúng hồ sơ đang chờ người xem (`needs_action`)
+  const coViec = cacNguon.filter((n) => n.ds.length > 0);
   const nhieuVai = coViec.length > 1;
-  const dong = coViec.flatMap((n) => n.ds.filter((h) => h.needs_my_action).map((h) => thanhDong(h, n, nhieuVai)));
+  const dong = coViec.flatMap((n) => n.ds.map((h) => thanhDong(h, n, nhieuVai)));
 
+  // Số chờ đếm trên cả danh sách của từng vai, không phụ thuộc trần số dòng đã tải
+  const soCho = [choCuaToi, choDieuPhoi, choPhongBan].reduce((tong, ds) => tong + (ds?.waiting_me ?? 0), 0);
   const quaHan = dong.filter((d) => d.gap === 0).length;
   const sapHan = dong.filter((d) => d.gap === 1).length;
-  const moCuaToi = (cuaToi ?? []).filter((h) => !h.state.is_terminal);
-  const theoDoi = new Set((phongBan?.groups ?? []).filter((g) => g.watch_only).map((g) => g.code));
+  const theoDoi = (phongBan?.groups ?? []).filter((g) => g.watch_only).reduce((tong, g) => tong + g.count, 0);
   const oCuoi = dieuPhoi
-    ? { nhan: "Trong hàng đợi điều phối", so: dieuPhoi.items.length }
+    ? { nhan: "Trong hàng đợi điều phối", so: dieuPhoi.total }
     : phongBan
-      ? { nhan: "Phòng đang giữ", so: phongBan.items.filter((m) => !theoDoi.has(m.state.code)).length }
-      : { nhan: "Hồ sơ của tôi đang mở", so: moCuaToi.length };
+      ? { nhan: "Phòng đang giữ", so: phongBan.total - theoDoi }
+      : { nhan: "Hồ sơ của tôi đang mở", so: cuaToi?.open_count ?? 0 };
 
   const ten = danhTinh.name ?? danhTinh.username ?? danhTinh.id;
-  const cauChao = dong.length
-    ? `Hôm nay có ${dong.length} việc chờ bạn${quaHan ? `, trong đó ${quaHan} việc đã quá hạn` : ""}.`
+  const cauChao = soCho
+    ? `Hôm nay có ${soCho} việc chờ bạn${quaHan ? `, trong đó ${quaHan} việc đã quá hạn` : ""}.`
     : "Hôm nay không có việc nào chờ bạn.";
   const loiTiep = kg.includes("coordination")
     ? { href: "/dieu-phoi", nhan: "Mở hàng đợi điều phối" }
@@ -197,7 +204,7 @@ export default async function TrangChu() {
         <p className="cau-chao">{cauChao}</p>
 
         <div className="dai-so">
-          <OSo icon={Hand} nhan="Chờ bạn" so={dong.length} />
+          <OSo icon={Hand} nhan="Chờ bạn" so={soCho} />
           <OSo icon={AlarmClock} nhan="Quá hạn" so={quaHan} phu={quaHan ? "Làm trước tiên" : undefined} xau />
           <OSo icon={Clock} nhan="Sắp hạn hoặc sắp tự đi" so={sapHan} />
           <OSo icon={FolderOpen} nhan={oCuoi.nhan} so={oCuoi.so} />
@@ -241,7 +248,11 @@ export default async function TrangChu() {
                 dong={phongBan.groups.map((g) => ({ nhan: g.label, so: g.count }))}
               />
             ) : null}
-            <TongQuan tieuDe="Hồ sơ của tôi đang mở" href="/yeu-cau" dong={demTheoTrangThai(moCuaToi)} />
+            <TongQuan
+              tieuDe="Hồ sơ của tôi đang mở"
+              href="/yeu-cau"
+              dong={(cuaToi?.groups ?? []).filter((g) => !g.is_terminal).map((g) => ({ nhan: g.label, so: g.count }))}
+            />
             {kg.includes("system") ? <TheHeThong sucKhoe={sucKhoe} /> : null}
           </div>
         </div>

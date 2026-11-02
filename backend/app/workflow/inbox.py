@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -46,6 +46,7 @@ from app.workflow.coordination import trang_thai_hang_doi_dieu_phoi, vao_duoc_bu
 from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.engine import get_active_rule_set
 from app.workflow.messages import ma_loai_noi_bo, thay_noi_bo
+from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.routes import _ma_ho_so
 from app.workflow.schemas import CuocTroChuyenRa, HopThuRa, LoiNhanCuoiRa, SoChuaDocRa, TrangThaiRa
 
@@ -128,67 +129,123 @@ def _loc_kenh(cau, noi_bo: bool):
 
 
 @router.get("", response_model=HopThuRa)
-def hop_thu(session: _Phien, actor: _NguoiGoi) -> HopThuRa:
-    """Các cuộc trò chuyện của người đang đăng nhập, lời nhắn mới nhất lên đầu."""
-    cua = _Cua(session, actor)
-    cac_ho_so = session.scalars(select(Request).where(_pham_vi(session, cua))).all()
-    if not cac_ho_so:
-        return HopThuRa(items=[], unread=0)
+def hop_thu(
+    session: _Phien,
+    actor: _NguoiGoi,
+    trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    unread: Annotated[bool, Query(description="Chỉ cuộc còn lời nhắn chưa đọc")] = False,
+    internal: Annotated[
+        bool | None, Query(description="true: chỉ cuộc nội bộ · false: chỉ cuộc với người gửi")
+    ] = None,
+    case_id: Annotated[
+        int | None, Query(description="Chỉ các cuộc của một hồ sơ — cuộc đang mở không ở trang này")
+    ] = None,
+) -> HopThuRa:
+    """Các cuộc trò chuyện của người đang đăng nhập, lời nhắn mới nhất lên đầu, có phân trang (#232).
 
-    chua_doc = _so_chua_doc(session, actor, [h.id for h in cac_ho_so])
+    Hộp thư phình theo lịch sử — mọi hồ sơ từng nhắn trong phạm vi — nên lời nhắn cuối của mọi
+    cuộc lấy bằng MỘT truy vấn gom nhóm, không mỗi hồ sơ một truy vấn; số chưa đọc cũng một truy
+    vấn. Chỉ cuộc của trang mới được dựng đầy đủ. Tổng số chưa đọc vẫn tính trên mọi cuộc — con số
+    trên thanh bên.
+    """
+    cua = _Cua(session, actor)
+    cac_ho_so = {h.id: h for h in session.scalars(select(Request).where(_pham_vi(session, cua))).all()}
+    if not cac_ho_so:
+        return HopThuRa(items=[], unread=0, total=0, offset=trang.offset, limit=trang.limit)
+
+    noi_bo_cot = MessageKind.hidden_from_requester
+    cuoi_moi_cuoc = session.execute(
+        select(CaseMessage.case_id, noi_bo_cot, func.max(CaseMessage.id))
+        .join(MessageKind, MessageKind.code == CaseMessage.kind)
+        .where(CaseMessage.case_id.in_(list(cac_ho_so)))
+        .group_by(CaseMessage.case_id, noi_bo_cot)
+    ).all()
+    chua_doc = _so_chua_doc(session, actor, list(cac_ho_so))
+
+    # Mỗi cuộc: (hồ sơ, nội bộ hay không, mã lời nhắn cuối). Cuộc nội bộ chỉ người thấy được
+    # nội bộ của hồ sơ đó mới có (#156).
+    cac_khoa = [
+        (cac_ho_so[ma], bool(nb), cuoi)
+        for ma, nb, cuoi in cuoi_moi_cuoc
+        if not nb or thay_noi_bo(cac_ho_so[ma], actor)
+    ]
+    tong_chua_doc = sum(chua_doc.get((h.id, nb), 0) for h, nb, _ in cac_khoa)
+
+    # Số trên chip lọc tính trên các cuộc khớp ô tìm, trước khi lọc theo chip
+    khop = [
+        (h, nb, cuoi)
+        for h, nb, cuoi in cac_khoa
+        if khop_tim(q, h.title, h.requester_label, _ma_ho_so(h))
+        and (case_id is None or h.id == case_id)
+    ]
+    da_loc = [
+        (h, nb, cuoi)
+        for h, nb, cuoi in khop
+        if (not unread or chua_doc.get((h.id, nb), 0) > 0) and (internal is None or nb == internal)
+    ]
+    # Mã lời nhắn tăng dần theo thời gian ghi, nên xếp theo mã cuối là xếp theo lời nhắn mới nhất
+    da_loc.sort(key=lambda k: k[2], reverse=True)
+    trang_nay = cat_trang(da_loc, trang)
+
+    loi_nhan = {
+        m.id: m
+        for m in session.scalars(
+            select(CaseMessage).where(CaseMessage.id.in_([cuoi for _, _, cuoi in trang_nay]))
+        ).all()
+    }
     ten_loai = {k.code: k.label for k in session.scalars(select(MessageKind)).all()}
+    rule_set_id = next(iter(cac_ho_so.values())).rule_set_id
     trang_thai = {
         s.code: s
-        for s in session.scalars(
-            select(State).where(State.rule_set_id == cac_ho_so[0].rule_set_id)
-        ).all()
+        for s in session.scalars(select(State).where(State.rule_set_id == rule_set_id)).all()
     }
 
     cac_cuoc = []
-    for ho_so in cac_ho_so:
+    for ho_so, noi_bo, ma_cuoi in trang_nay:
         tt = trang_thai[ho_so.current_state]
-        for noi_bo in (False, True) if thay_noi_bo(ho_so, actor) else (False,):
-            cuoi = session.scalars(
-                _loc_kenh(select(CaseMessage).where(CaseMessage.case_id == ho_so.id), noi_bo)
-                .order_by(CaseMessage.created_at.desc(), CaseMessage.id.desc())
-                .limit(1)
-            ).first()
-            if cuoi is None:
-                continue
-            tu_nguoi_gui = cuoi.author == ho_so.requester_id
-            cac_cuoc.append(
-                CuocTroChuyenRa(
-                    case_id=ho_so.id,
-                    code=_ma_ho_so(ho_so),
-                    title=ho_so.title,
-                    state=TrangThaiRa(code=tt.code, label=tt.label, is_terminal=tt.is_terminal),
-                    requester_id=ho_so.requester_id,
-                    requester_label=ho_so.requester_label,
-                    workspace=cua.noi_mo(ho_so),
-                    internal=noi_bo,
-                    last_message=LoiNhanCuoiRa(
-                        author_label=cuoi.author_label,
-                        kind_label=ten_loai.get(cuoi.kind, cuoi.kind),
-                        body=cuoi.body,
-                        created_at=cuoi.created_at,
-                        mine=cuoi.author == actor.id,
-                        from_requester=tu_nguoi_gui,
-                    ),
-                    unread=chua_doc.get((ho_so.id, noi_bo), 0),
-                    # Phía bên kia nhắn sau cùng: người gửi chờ nhân viên, hoặc ngược lại.
-                    # Hồ sơ kết thúc thì không ai còn phải trả lời. Cuộc nội bộ không bao giờ
-                    # có dấu này (navigator chốt 06/10/2026): người gửi không nhắn được nội
-                    # bộ, nên mọi tin của cuộc đó đều ở phía nhân viên.
-                    waiting_on_me=(
-                        not tt.is_terminal
-                        and cuoi.author != actor.id
-                        and tu_nguoi_gui != (ho_so.requester_id == actor.id)
-                    ),
-                )
+        cuoi = loi_nhan[ma_cuoi]
+        tu_nguoi_gui = cuoi.author == ho_so.requester_id
+        cac_cuoc.append(
+            CuocTroChuyenRa(
+                case_id=ho_so.id,
+                code=_ma_ho_so(ho_so),
+                title=ho_so.title,
+                state=TrangThaiRa(code=tt.code, label=tt.label, is_terminal=tt.is_terminal),
+                requester_id=ho_so.requester_id,
+                requester_label=ho_so.requester_label,
+                workspace=cua.noi_mo(ho_so),
+                internal=noi_bo,
+                last_message=LoiNhanCuoiRa(
+                    author_label=cuoi.author_label,
+                    kind_label=ten_loai.get(cuoi.kind, cuoi.kind),
+                    body=cuoi.body,
+                    created_at=cuoi.created_at,
+                    mine=cuoi.author == actor.id,
+                    from_requester=tu_nguoi_gui,
+                ),
+                unread=chua_doc.get((ho_so.id, noi_bo), 0),
+                # Phía bên kia nhắn sau cùng: người gửi chờ nhân viên, hoặc ngược lại.
+                # Hồ sơ kết thúc thì không ai còn phải trả lời. Cuộc nội bộ không bao giờ
+                # có dấu này (navigator chốt 06/10/2026): người gửi không nhắn được nội
+                # bộ, nên mọi tin của cuộc đó đều ở phía nhân viên.
+                waiting_on_me=(
+                    not tt.is_terminal
+                    and cuoi.author != actor.id
+                    and tu_nguoi_gui != (ho_so.requester_id == actor.id)
+                ),
             )
+        )
 
-    cac_cuoc.sort(key=lambda c: c.last_message.created_at, reverse=True)
-    return HopThuRa(items=cac_cuoc, unread=sum(c.unread for c in cac_cuoc))
+    return HopThuRa(
+        items=cac_cuoc,
+        unread=tong_chua_doc,
+        unread_conversations=sum(1 for h, nb, _ in khop if chua_doc.get((h.id, nb), 0) > 0),
+        internal_conversations=sum(1 for _, nb, _ in khop if nb),
+        total=len(da_loc),
+        offset=trang.offset,
+        limit=trang.limit,
+    )
 
 
 @router.get("/unread", response_model=SoChuaDocRa)

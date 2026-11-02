@@ -1104,13 +1104,46 @@ thanh chấm của đường chính suy bằng chính `lib/buoc.ts` ở trên, c
   ngoài hay Esc thì đóng; mỗi lúc chỉ một sơ đồ mở
 
 **Từ #170, hai hàng đợi dùng chung một bảng** (`components/bang-hang-doi.tsx`). Trang ở máy
-chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng ở trình duyệt chỉ lọc theo ô tìm (không
-phân biệt dấu, không gọi dịch vụ) và thu gọn nhóm. Hàng đợi phòng ban chia nhóm theo mức gấp
-suy từ cờ của dịch vụ: Quá hạn (`sla_overdue`), Sắp hết hạn (`sla_due_soon`, #175), Trong
-hạn (đồng hồ đang chạy), mỗi trạng thái
-đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo dõi
-(`watch_only`). Hàng đợi điều phối lọc bằng hàng tab dựng từ `groups`, bộ lọc nằm trên địa
-chỉ trang. Không tệp nào liệt kê tên trạng thái.
+chủ chia nhóm và dịch mỗi hồ sơ thành một dòng; bảng lo hàng công cụ và thu gọn nhóm. Hàng đợi
+phòng ban chia nhóm theo mức gấp: Quá hạn, Sắp hết hạn (#175), Trong hạn (đồng hồ đang chạy),
+mỗi trạng thái đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo
+dõi (`watch_only`) — từ #232 dịch vụ chia (`urgency_groups`, `urgency` trên từng dòng). Hàng đợi
+điều phối lọc bằng hàng tab dựng từ `groups`. Không tệp nào liệt kê tên trạng thái.
+
+**Từ #232, mọi danh sách có phân trang, và tìm, lọc, xếp đều ở dịch vụ.** Bốn điểm cuối —
+`GET /requests`, `/coordination/queue`, `/department/queue`, `/inbox` — nhận `limit` (mặc định
+50, trần 200, `backend/app/workflow/phan_trang.py`), `offset`, `q` và bộ lọc riêng (loại yêu cầu,
+mức ưu tiên, phòng, trạng thái, nhóm), trả kèm `total`. Không điểm cuối danh sách nào trả cả tập
+khi người gọi không nói gì. Ba quy ước:
+
+- **Số đếm nhóm tính trên cả tập đã lọc, trước khi lọc nhóm và cắt trang**: số trên dải lọc, chip
+  hộp thư không đổi khi sang trang hay khi đang đứng ở một nhóm. Kèm `waiting_me` và `urgent` cho
+  thanh bên và trang chủ — hai chỗ này gọi `limit=1` để lấy số, và trang chủ gọi thêm
+  `needs_action=true` để lấy đúng các việc chờ, không tải cả danh sách để đếm
+- **Hai cách cắt trang theo hình dạng dữ liệu**: `/requests` và `/inbox` phình theo lịch sử (mọi
+  hồ sơ từng gửi, từng nhắn), nên lọc, đếm, cắt trang trong SQL; hộp thư lấy lời nhắn cuối của
+  mọi cuộc bằng một truy vấn gom nhóm. Hai hàng đợi chỉ gồm hồ sơ đang mở, lớn theo khối việc chứ
+  không theo lịch sử, nên lọc và tính cờ hạn trên cả hàng đợi rồi mới cắt; tóm tắt đầy đủ — phần
+  tốn nhất — chỉ dựng cho dòng của trang. Cờ hạn cả hàng đợi tính gọn: giờ làm việc đã nằm ở trạng
+  thái tính ngay trong câu truy vấn hàng đợi (`han_cho.giay_da_o_trang_thai`), cạnh tự đi tra một
+  lần (`canh_tu_di_theo_trang_thai`), và danh mục loại, mức ưu tiên, trạng thái được giữ tham chiếu
+  suốt lời gọi (`routes._giu_danh_muc`) — bản đồ định danh của phiên chỉ giữ tham chiếu yếu, không
+  giữ thì mỗi hồ sơ lại hỏi cơ sở dữ liệu một lần. Hàng đợi phòng ban xếp theo thứ tự nhóm trước
+  rồi mới theo cách xếp đã chọn, để trang sau nối tiếp đúng nhóm trang trước
+- **Tìm không phân biệt dấu ở cả hai phía**: SQL bỏ dấu bằng `translate` có sẵn của PostgreSQL
+  (không cần phần mở rộng), Python bằng `unicodedata` — một bài kiểm thử giữ hai bảng khớp nhau
+
+Giao diện đặt trang, ô tìm, bộ lọc và cách xếp lên địa chỉ trang (`?trang=`, `?q=`, `?xep=`,
+`?loai=`, `?uu-tien=`, …; `lib/trang.ts`, `components/loc-url.tsx`): tải lại, bấm lùi hay gửi
+đường dẫn đều giữ nguyên. Đổi bộ lọc thì về trang đầu; trang vượt trang cuối thì chuyển sang
+trang cuối. Bộ lọc đang bật hiện thành chip bỏ được, từ hai chip có "Xóa tất cả"; dòng chân ghi
+"Đang xem 51–100 trên 230 hồ sơ · xếp theo …" kèm trang trước, trang sau.
+
+Đo trên cụm thử (gọi trong tiến trình, trung vị 7 lần, hàng đợi điều phối 271 hồ sơ, phòng ban
+250): với 3.001 rồi 6.001 hồ sơ — phần lớn đã hủy — `GET /requests` từ 5,6 giây và 9,1 giây xuống
+0,22 giây và 0,08 giây; hàng đợi điều phối từ khoảng 1,1 giây xuống 0,09 giây ở cả hai mức; hàng
+đợi phòng ban từ khoảng 1,7 giây xuống 0,44–0,48 giây. Gấp đôi lịch sử, thời gian hàng đợi không
+tăng.
 
 **Từ #155, hộp thư chung gom lời nhắn theo người** (`backend/app/workflow/inbox.py`,
 `frontend/app/hop-thu/`). Không có kho tin nhắn thứ hai: mỗi cuộc trò chuyện là lời nhắn
@@ -1175,7 +1208,8 @@ dựng từ `allowed_transitions` vẫn là chỗ duy nhất gửi lệnh chuy�
 hạn trước, rồi sắp hạn hay sắp bị hệ thống tự đi (`sla_due_soon`, `auto_transition.warn`), rồi chờ lâu
 nhất; người dùng đổi được sang hạn gần nhất, chờ lâu nhất, mới nhất — trình duyệt nhớ lựa chọn.
 Thanh bên đếm cùng cờ đó: số đặc là việc chờ mình, số mờ là hồ sơ đang mở, chấm đỏ khi có việc chờ
-mình đã quá hạn hoặc sắp tự đi.
+mình đã quá hạn hoặc sắp tự đi. Từ #232 cả hai đọc số từ `waiting_me`, `urgent`, `total`,
+`open_count` mà dịch vụ đếm trên cả danh sách (mục 7.2).
 
 ---
 
