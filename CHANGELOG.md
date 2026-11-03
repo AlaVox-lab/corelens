@@ -5,6 +5,13 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.9.0] - 2026-11-03
+
+### Tính năng mới
+
+- **d-analytics:** Lớp báo cáo, bảng điều khiển và dữ liệu mở ([#308](https://github.com/AlaVox-lab/dx-os-lab/issues/308)) ([dea7913](https://github.com/AlaVox-lab/dx-os-lab/commit/dea7913983c8a927f1fa7cb01a0073b7822e6e0b))
+- **d-analytics:** Nhúng bảng điều khiển vào cổng theo phòng ([#309](https://github.com/AlaVox-lab/dx-os-lab/issues/309)) ([d8a919a](https://github.com/AlaVox-lab/dx-os-lab/commit/d8a919ae8f79920cf36e4291368675a1ea0c4ad1))
+
 ## [0.8.0] - 2026-11-02
 
 ### Kiểm thử

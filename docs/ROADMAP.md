@@ -152,17 +152,19 @@ diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày
 
 ## Giai đoạn 3 — Không gian D
 
-**Phiên bản dự kiến**: `v0.9.0`
+**Trạng thái**: Hoàn thành · **Phiên bản**: `v0.9.0` (03/11) — lớp báo cáo trên nhật ký sự kiện và
+bảng điều khiển dựng từ tệp cấu hình (#304), nhúng trong cổng lọc theo phòng của người xem (#305),
+xuất nhật ký CSV và JSON cùng lệnh nạp dữ liệu trình diễn (#306)
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.
 
 - [x] Chuẩn hóa bảng nhật ký sự kiện — sáu trường bắt buộc, cộng lý do và lịch sử thay đổi
-- [ ] Tích hợp nền tảng kinh doanh thông minh
-- [ ] Bảng điều khiển: tồn đọng theo bộ phận, thời gian xử lý trung vị, tỷ lệ vi
+- [x] Tích hợp nền tảng kinh doanh thông minh
+- [x] Bảng điều khiển: tồn đọng theo bộ phận, thời gian xử lý trung vị, tỷ lệ vi
       phạm SLA, phân bố loại yêu cầu
-- [ ] Xuất dữ liệu mở định dạng CSV và JSON
-- [ ] Dữ liệu khởi tạo đủ lớn để bảng điều khiển có ý nghĩa khi trình diễn
+- [x] Xuất dữ liệu mở định dạng CSV và JSON
+- [x] Dữ liệu khởi tạo đủ lớn để bảng điều khiển có ý nghĩa khi trình diễn
 
 **Tiêu chí hoàn thành giai đoạn**: mở bảng điều khiển thấy được chỉ số thật, thay
 đổi theo thao tác trên hệ thống.
