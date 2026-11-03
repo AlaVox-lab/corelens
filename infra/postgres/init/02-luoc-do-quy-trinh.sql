@@ -58,7 +58,12 @@ CREATE TABLE roles (
     code           TEXT      PRIMARY KEY,
     label          TEXT      NOT NULL,
     description    TEXT,
-    display_order  SMALLINT  NOT NULL DEFAULT 0
+    display_order  SMALLINT  NOT NULL DEFAULT 0,
+
+    -- Phạm vi xem bảng điều khiển phân tích nhúng trong cổng (#305): `department` là phòng
+    -- của chính người xem, `all` là toàn công ty, NULL là không thấy mục Báo cáo. Người mang
+    -- nhiều vai trò nhận phạm vi rộng nhất. Cụm dựng trước #305 nhận cột này qua migration 0015.
+    report_scope   TEXT      CHECK (report_scope IN ('department', 'all'))
 );
 
 COMMENT ON TABLE roles IS 'Năm vai trò nghiệp vụ. Mã phải trùng tên vai trò realm trong Keycloak.';

@@ -27,21 +27,21 @@ INSERT INTO rule_sets (id, version, label, effective_from, is_active, note) VALU
 -- ---------------------------------------------------------------------------
 -- Mã phải trùng tên vai trò realm trong infra/keycloak/realm-dx-os-lab.json.
 
-INSERT INTO roles (code, label, description, display_order) VALUES
+INSERT INTO roles (code, label, description, display_order, report_scope) VALUES
     ('requester',     'Người tạo yêu cầu',
-     'Gửi yêu cầu, sửa nội dung trước khi tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1),
+     'Gửi yêu cầu, sửa nội dung trước khi tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1, NULL),
 
     ('classifier',    'Người phân loại yêu cầu',
-     'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối', 2),
+     'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối', 2, 'all'),
 
     ('approver',      'Người xét duyệt yêu cầu',
-     'Quyết định phòng ban nhận hay không nhận, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang', 3),
+     'Quyết định phòng ban nhận hay không nhận, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang', 3, 'department'),
 
     ('handler',       'Người xử lý yêu cầu',
-     'Nhận việc về mình khi hồ sơ chưa giao ai, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành', 4),
+     'Nhận việc về mình khi hồ sơ chưa giao ai, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành', 4, NULL),
 
     ('administrator', 'Quản trị viên',
-     'Không đi cạnh nào. Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại sang phòng', 5);
+     'Không đi cạnh nào. Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại sang phòng', 5, 'all');
 
 
 -- ---------------------------------------------------------------------------

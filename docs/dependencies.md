@@ -108,13 +108,16 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | openid-client | `6.8.8` | MIT | Có | Có | Luồng mã ủy quyền OIDC. **Bản cài đặt được OpenID Foundation chứng nhận** — chọn nó thay vì `next-auth` vì bản v5 của `next-auth` còn beta, và vì giao thức thì nên lắp ghép thư viện chuẩn |
 | jose | `6.2.12` | MIT | Có | Có | Mã hóa cookie phiên. Cũng là phụ thuộc của `openid-client` |
 | lucide-react | `1.52.0` | ISC | Có | Có | Bộ icon của thanh bên và nút bấm (#158). Không kéo phụ thuộc nào khác; chỉ icon được `import` mới vào bản dựng. Dùng qua gói chứ không chép đường vẽ SVG vào kho |
+| @superset-ui/embedded-sdk | `0.4.0` | Apache-2.0 | Có | Có | Thư viện nhúng chính thức của Superset: dựng khung nhúng bảng điều khiển ở mục Báo cáo và tự xin lại token khách trước khi hết hạn (#305). Chọn thay vì tự viết khung và giao thức trao đổi tin nhắn với Superset — lắp ghép thư viện của chính nền tảng |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
 
-Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`.
+Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`;
+`@superset-ui/switchboard` (Apache-2.0) và `jwt-decode` (MIT) — kênh tin nhắn với khung nhúng và
+đọc hạn của token khách, đi kèm `@superset-ui/embedded-sdk`.
 
-Toàn bộ cây phụ thuộc có **63 gói**. Đã rà giấy phép từng gói bằng siêu dữ liệu trong
-tệp khóa, không dựa vào trí nhớ: 27 MIT, 17 Apache-2.0, 14 gói `sharp`/`libvips` mang
-LGPL, 2 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
+Toàn bộ cây phụ thuộc có **67 gói** (đếm lại ở #305). Đã rà giấy phép từng gói bằng siêu dữ liệu
+trong tệp khóa, không dựa vào trí nhớ: 28 MIT, 19 Apache-2.0, 14 gói `sharp`/`libvips` mang
+LGPL, 3 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
 Lưu ý về giấy phép copyleft.
 
 ---

@@ -123,6 +123,12 @@ jobs:
           for bang in $(q superset 'SELECT table_name FROM tables'); do
             docker exec dxlab-postgres psql -U superset_readonly -d dxlab -At -c "SELECT count(*) FROM $bang"
           done
+          # Vai khách của bản nhúng trong cổng (#305) đọc được kết nối dữ liệu, không thì khung trống
+          test "$(q superset "SELECT count(*) FROM ab_permission_view_role pvr
+            JOIN ab_role r ON r.id = pvr.role_id
+            JOIN ab_permission_view pv ON pv.id = pvr.permission_view_id
+            JOIN ab_permission p ON p.id = pv.permission_id
+            WHERE r.name = 'Gamma' AND p.name = 'database_access'")" = 1
       - name: Nhật ký cụm khi hỏng
         if: failure()
         run: $COMPOSE logs --no-color --tail=200 postgres backend superset

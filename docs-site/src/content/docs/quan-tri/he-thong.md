@@ -67,8 +67,14 @@ tồn đọng theo phòng ban, thời gian xử lý trung vị theo loại yêu 
 ban, phân bố loại yêu cầu theo tuần. Superset đọc dữ liệu nghiệp vụ bằng tài khoản chỉ đọc; dashboard
 nạp từ tệp trong `infra/superset/bang-dieu-khien/` mỗi lần khởi động. Đăng nhập Superset bằng tài
 khoản quản trị trong `.env` (`SUPERSET_ADMIN_USER`) để sửa; sửa xong phải xuất lại ra thư mục đó —
-cách làm ở `docs/ARCHITECTURE.md` mục 6.3. Nhúng dashboard vào cổng cho trưởng phòng và điều phối
-viên: #305.
+cách làm ở `docs/ARCHITECTURE.md` mục 6.3.
+
+Người dùng cổng xem dashboard ở mục **Báo cáo** trên thanh bên, không đăng nhập Superset: trưởng
+phòng thấy số của phòng mình, điều phối viên và quản trị viên thấy toàn công ty. Vai trò nào xem được
+và xem tới đâu là cột `report_scope` của bảng `roles` (`department`, `all`, hay để trống) — đổi bằng
+dữ liệu, không sửa mã. Superset tắt thì mục Báo cáo báo không phản hồi, phần còn lại của cổng vẫn
+chạy. Đổi cổng công bố của cổng người dùng (`FRONTEND_PORT`) thì dựng lại Superset, vì nó chỉ cho
+đúng địa chỉ đó nhúng bảng điều khiển.
 
 **Dữ liệu trình diễn.** Cụm mới dựng chỉ có vài hồ sơ, biểu đồ gần như trống. Trên cụm thử hay cụm
 trình diễn, nạp vài trăm hồ sơ giả trải ba tháng, đi đúng bộ quy tắc đang bật:

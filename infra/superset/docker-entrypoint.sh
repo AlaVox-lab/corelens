@@ -46,5 +46,10 @@ PY
 superset import-directory --overwrite /tmp/bang-dieu-khien
 rm -rf /tmp/bang-dieu-khien
 
+# Bảng điều khiển nhúng trong cổng (#305) vẽ bằng token khách: vai khách cần quyền đọc kết nối
+# dữ liệu vừa nạp, ảnh gốc không cấp. Chạy sau bước nạp vì quyền gắn theo tên kết nối.
+echo "==> Cấp quyền đọc cho vai khách của bảng điều khiển nhúng"
+python /app/dxlab/cap_quyen_khach.py
+
 echo "==> Bàn giao cho máy chủ"
 exec /app/docker/entrypoints/run-server.sh

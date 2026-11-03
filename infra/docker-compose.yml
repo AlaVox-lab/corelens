@@ -125,6 +125,8 @@ services:
       # Bảng điều khiển đọc dữ liệu nghiệp vụ bằng tài khoản CHỈ ĐỌC (ADR-0003). Điểm vào thay
       # chuỗi này vào tệp kết nối của bảng điều khiển lúc khởi động (#304)
       SUPERSET_READONLY_URI: postgresql+psycopg2://${SUPERSET_READONLY_USER}:${SUPERSET_READONLY_PASSWORD}@postgres:5432/${DXLAB_DB_NAME}
+      # Trang duy nhất được nhúng bảng điều khiển: cổng người dùng (#305), xem superset_config.py
+      PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
     volumes:
       - superset-home:/app/superset_home
     ports:
@@ -180,6 +182,14 @@ services:
       DXLAB_ATTACHMENT_MAX_MB: ${ATTACHMENT_MAX_MB:-10}
       DXLAB_ATTACHMENT_MAX_FILES: ${ATTACHMENT_MAX_FILES:-5}
       DXLAB_ATTACHMENT_MAX_FILES_PER_CASE: ${ATTACHMENT_MAX_FILES_PER_CASE:-20}
+      # Bảng điều khiển nhúng trong cổng (#305): dịch vụ xin token khách qua địa chỉ nội bộ,
+      # trình duyệt tải bảng điều khiển qua địa chỉ công khai. Cố ý KHÔNG depends_on superset
+      # (chính Superset chờ dịch vụ này): Superset tắt thì chỉ mục Báo cáo báo không phản hồi.
+      DXLAB_SUPERSET_INTERNAL_URL: http://superset:8088
+      DXLAB_SUPERSET_PUBLIC_URL: http://localhost:${SUPERSET_PORT}
+      DXLAB_SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      DXLAB_SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      DXLAB_PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:
