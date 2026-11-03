@@ -118,6 +118,23 @@ class Settings(BaseSettings):
     attachment_max_files: int = 5
     attachment_max_files_per_case: int = 20
 
+    # --- Bảng điều khiển phân tích nhúng trong cổng, xem #305 và ADR-0003 ---------
+    #
+    # Hai địa chỉ cho cùng một Superset, như Keycloak ở trên: dịch vụ xin token khách qua địa chỉ
+    # nội bộ, còn trình duyệt tải bảng điều khiển nhúng từ địa chỉ công khai — dịch vụ trả địa
+    # chỉ đó cho cổng cùng với token, để giao diện không giữ cấu hình nào.
+    superset_internal_url: str = "http://superset:8088"
+    superset_public_url: str = "http://localhost:8088"
+    # Tài khoản quản trị của Superset, chỉ dùng để xin token khách. Người xem không bao giờ
+    # đăng nhập Superset: danh tính và vai trò vẫn đến từ token Keycloak của cổng.
+    superset_admin_user: str = "admin"
+    superset_admin_password: str = ""
+    # Dashboard nhúng, tra theo `slug` trong tệp cấu hình ở infra/superset/bang-dieu-khien/
+    superset_dashboard_slug: str = "van-hanh-yeu-cau"
+    # Gốc của cổng — Superset chỉ cho trang này nhúng bảng điều khiển (allowed_domains)
+    portal_public_url: str = "http://localhost:3000"
+    superset_timeout_seconds: float = 5.0
+
 
 @lru_cache
 def get_settings() -> Settings:

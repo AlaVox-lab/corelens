@@ -51,7 +51,39 @@ trong `.env`):
 Thêm phòng ban mới phải thêm cả nhóm trong Keycloak lẫn dòng trong bảng `departments` — xem
 [Danh mục và các con số](../danh-muc-va-con-so/).
 
+## Xuất nhật ký sự kiện
+
+Khối **Xuất nhật ký sự kiện** trên màn Hệ thống tải nhật ký dạng CSV hoặc JSON, chọn khoảng ngày (theo
+UTC) hay bỏ trống để lấy hết. Mỗi dòng một sự kiện: `case_id`, `activity`, `timestamp` (UTC),
+`actor`, `from_state`, `to_state`, cùng loại yêu cầu, phòng ban, mức ưu tiên và bộ quy tắc của hồ
+sơ; mỗi hồ sơ mở đầu bằng sự kiện `create-case` lúc tạo. Người thao tác chỉ ghi bằng mã định danh,
+không có tên và ghi chú. Tệp CSV mở thẳng bằng bảng tính, chữ có dấu hiện đúng. Công cụ khác gọi
+`GET /analytics/event-log?format=csv&from=2026-11-01&to=2026-11-30` bằng token của quản trị viên.
+
 ## Báo cáo
 
-Apache Superset (`http://localhost:8088`) đã có trong cụm với tài khoản chỉ đọc trên dữ liệu nghiệp
-vụ. Bảng điều khiển trên nhật ký sự kiện là giai đoạn kế tiếp, phiên bản `v0.9.0`.
+Apache Superset (`http://localhost:8088`) có sẵn dashboard **Vận hành yêu cầu** ngay khi dựng cụm:
+tồn đọng theo phòng ban, thời gian xử lý trung vị theo loại yêu cầu, tỷ lệ vi phạm hạn theo phòng
+ban, phân bố loại yêu cầu theo tuần. Superset đọc dữ liệu nghiệp vụ bằng tài khoản chỉ đọc; dashboard
+nạp từ tệp trong `infra/superset/bang-dieu-khien/` mỗi lần khởi động. Đăng nhập Superset bằng tài
+khoản quản trị trong `.env` (`SUPERSET_ADMIN_USER`) để sửa; sửa xong phải xuất lại ra thư mục đó —
+cách làm ở `docs/ARCHITECTURE.md` mục 6.3.
+
+Người dùng cổng xem dashboard ở mục **Báo cáo** trên thanh bên, không đăng nhập Superset: trưởng
+phòng thấy số của phòng mình, điều phối viên và quản trị viên thấy toàn công ty. Vai trò nào xem được
+và xem tới đâu là cột `report_scope` của bảng `roles` (`department`, `all`, hay để trống) — đổi bằng
+dữ liệu, không sửa mã. Superset tắt thì mục Báo cáo báo không phản hồi, phần còn lại của cổng vẫn
+chạy. Đổi cổng công bố của cổng người dùng (`FRONTEND_PORT`) thì dựng lại Superset, vì nó chỉ cho
+đúng địa chỉ đó nhúng bảng điều khiển.
+
+**Dữ liệu trình diễn.** Cụm mới dựng chỉ có vài hồ sơ, biểu đồ gần như trống. Trên cụm thử hay cụm
+trình diễn, nạp vài trăm hồ sơ giả trải ba tháng, đi đúng bộ quy tắc đang bật:
+
+```bash
+python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
+```
+
+Chạy ở gốc kho mã khi cụm đang chạy, chỉ cần Python 3.10 trở lên. Hồ sơ mẫu mang tiền tố `[Mẫu]` và
+**không gỡ ra được** — nhật ký sự kiện chỉ ghi thêm — nên muốn sạch lại thì `down -v`. Lệnh dừng khi
+cụm đã có hồ sơ thật; trên cụm thử có vài hồ sơ tạo tay thì thêm `--cho-tron`. Đổi số hồ sơ và số
+ngày bằng `--so-ho-so`, `--so-ngay`.

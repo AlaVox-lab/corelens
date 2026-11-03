@@ -439,3 +439,14 @@ export type HopThu = Trang & {
   unread_conversations: number;
   internal_conversations: number;
 };
+
+/** Token khách cho bảng điều khiển nhúng ở mục Báo cáo (#305). */
+export type TokenBaoCao = {
+  token: string;
+  /** Mã nhúng của dashboard bên Superset, không phải số id. */
+  dashboard_id: string;
+  /** Địa chỉ công khai của Superset, trình duyệt tải khung nhúng từ đây. */
+  superset_url: string;
+  /** Phạm vi số liệu người xem thấy: toàn công ty, hay các phòng của mình. */
+  scope: { all: boolean; departments: NhanCoMa[] };
+};

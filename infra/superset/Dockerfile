@@ -28,6 +28,8 @@ RUN VIRTUAL_ENV=/app/.venv uv pip install --no-cache \
         "psycopg2-binary==${PSYCOPG2_VERSION}"
 
 COPY superset_config.py   /app/pythonpath/superset_config.py
+COPY bang-dieu-khien      /app/dxlab/bang-dieu-khien
+COPY cap_quyen_khach.py   /app/dxlab/cap_quyen_khach.py
 COPY docker-entrypoint.sh /usr/local/bin/dxlab-entrypoint.sh
 RUN chmod +x /usr/local/bin/dxlab-entrypoint.sh
 

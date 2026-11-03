@@ -24,7 +24,7 @@ Quy ước đầy đủ ở
 
 ## Kiểm thử và tích hợp liên tục
 
-Mỗi pull request tự chạy bốn kiểm tra:
+Mỗi pull request tự chạy năm kiểm tra:
 
 | Kiểm tra | Chạy tay ở máy |
 |---|---|
@@ -32,6 +32,7 @@ Mỗi pull request tự chạy bốn kiểm tra:
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` |
 | Cụm — toàn bộ kiểm thử dịch vụ trên PostgreSQL và Keycloak thật | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
+| Bảng điều khiển — Superset tự nạp dashboard từ tệp cấu hình, đọc được view báo cáo | mở `http://localhost:8088` sau khi dựng cụm |
 
 Tính năng ở dịch vụ còn được thử bằng **phép thử đột biến**: cố ý cài lỗi vào mã, bài kiểm thử phải
 bắt được.

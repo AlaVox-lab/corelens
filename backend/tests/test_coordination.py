@@ -126,7 +126,8 @@ def test_nguoi_khong_phai_dieu_phoi_bi_chan_o_ca_ba_diem_cuoi(client, session, r
 
 def test_me_bao_khong_gian_lam_viec_theo_vai_tro(session, rule_set):
     """Giao diện dựng thanh điều hướng từ đây, không tự đọc tên vai trò."""
-    assert me(DIEU_PHOI, {}, session)["workspaces"] == ["portal", "coordination"]
+    # Điều phối viên còn xem được Báo cáo toàn công ty (#305, cột roles.report_scope)
+    assert me(DIEU_PHOI, {}, session)["workspaces"] == ["portal", "coordination", "reports"]
     assert me(NGUOI_GUI, {}, session)["workspaces"] == ["portal"]
 
 

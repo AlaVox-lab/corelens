@@ -6,6 +6,8 @@
 // giao diện hay làm sai: số liệu trang chủ khớp danh sách, mục Hệ thống chỉ quản trị viên thấy, nút
 // trên dòng việc mở đúng bước.
 
+import { readFileSync } from "node:fs";
+
 import { type Page, expect, test } from "@playwright/test";
 
 import { type Vai, chup, docHoSo, tepPhien } from "./chung";
@@ -24,6 +26,23 @@ async function moMan(page: Page, duong: string, anh: string) {
 
 function theoVai(vai: Vai) {
   test.use({ storageState: tepPhien(vai) });
+}
+
+/**
+ * Mục Báo cáo (#305): bảng điều khiển nhúng hiện trong khung, không đòi đăng nhập Superset, đúng
+ * phạm vi của người xem. Tên biểu đồ đọc trong khung — có tên là Superset đã nhận token khách và
+ * dựng được dashboard; trang đăng nhập của Superset thì không có các tên đó.
+ */
+async function kiemBaoCao(page: Page, phamVi: string, anh: string) {
+  await page.goto("/");
+  await expect((await thanhBen(page)).getByRole("link", { name: "Báo cáo" })).toBeVisible();
+  await moMan(page, "/bao-cao", anh);
+  await expect(page.locator(".bao-cao-pham-vi")).toHaveText(`Phạm vi số liệu: ${phamVi}`);
+  const khung = page.frameLocator(".bao-cao-khung iframe");
+  for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban"]) {
+    await expect(khung.getByText(new RegExp(ten)).first()).toBeVisible({ timeout: 30_000 });
+  }
+  await chup(page, test.info().project.name, `${anh}-da-ve`);
 }
 
 /**
@@ -72,6 +91,15 @@ test.describe("người gửi", () => {
     await expect((await thanhBen(page)).getByRole("link", { name: "Hệ thống" })).toHaveCount(0);
     await page.goto("/he-thong");
     await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
+  });
+
+  test("không thấy mục Báo cáo, mở thẳng thì bị từ chối (#305)", async ({ page }) => {
+    await page.goto("/");
+    await expect((await thanhBen(page)).getByRole("link", { name: "Báo cáo" })).toHaveCount(0);
+    await page.goto("/bao-cao");
+    await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
+    await expect(page.locator(".bao-cao-khung")).toHaveCount(0);
+    expect((await page.request.post("/api/bao-cao/token")).status()).toBe(403);
   });
 });
 
@@ -200,6 +228,10 @@ test.describe("điều phối viên", () => {
     expect(await qua300(), "hàng đợi và ngăn xem nhanh").toEqual([]);
   });
 
+  test("Báo cáo có số của toàn công ty (#305)", async ({ page }) => {
+    await kiemBaoCao(page, "toàn công ty", "dieu-phoi-bao-cao");
+  });
+
   test("thấy mục Điều phối, không thấy Hệ thống", async ({ page }) => {
     await page.goto("/");
     const sb = await thanhBen(page);
@@ -221,6 +253,10 @@ test.describe("trưởng phòng", () => {
     await page.goto("/", { waitUntil: "networkidle" });
     await kiemSoChoBan(page);
   });
+
+  test("Báo cáo chỉ có số của phòng mình (#305)", async ({ page }) => {
+    await kiemBaoCao(page, "Công nghệ thông tin", "truong-phong-bao-cao");
+  });
 });
 
 test.describe("quản trị viên", () => {
@@ -233,4 +269,27 @@ test.describe("quản trị viên", () => {
     await expect(page.getByText("Bộ quy tắc quy trình")).toBeVisible();
     await expect(page.getByText(/đã nạp/)).toBeVisible();
   });
+
+  test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Xuất nhật ký sự kiện" })).toBeVisible();
+    const [tep] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Tải CSV" }).click(),
+    ]);
+    expect(tep.suggestedFilename()).toMatch(/\.csv$/);
+    const noiDung = readFileSync((await tep.path()) as string);
+    // Có BOM để bảng tính nhận UTF-8, dòng đầu là đúng các cột của định dạng
+    expect([...noiDung.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    expect(noiDung.toString("utf-8").slice(1).split("\r\n")[0]).toBe(
+      "case_id,activity,timestamp,actor,from_state,to_state,request_type_code,department_code,priority_code,rule_set_id",
+    );
+  });
+});
+
+test("trưởng phòng không tải được nhật ký sự kiện (#306)", async ({ browser }) => {
+  const nc = await browser.newContext({ storageState: tepPhien("truong-phong") });
+  const tra = await nc.request.get("/api/xuat/nhat-ky?dinh-dang=csv");
+  expect(tra.status()).toBe(403);
+  await nc.close();
 });

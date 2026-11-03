@@ -2,7 +2,7 @@
 # Copyright (c) 2026 AlaVox-lab
 #
 # Tích hợp liên tục (#241): chạy trên mỗi pull request vào dev và main. Không chạy lại khi
-# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Bốn việc tách thành bốn job chạy song song để kết quả hiện
+# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Năm việc tách thành năm job chạy song song để kết quả hiện
 # riêng trên pull request; tên job là tên kiểm tra sẽ đặt bắt buộc khi kho công khai
 # (CONTRIBUTING.md mục 2.6).
 
@@ -100,3 +100,35 @@ jobs:
       - name: Nhật ký cụm khi hỏng
         if: failure()
         run: $COMPOSE logs --no-color --tail=200 postgres keycloak seaweedfs backend
+
+  bang-dieu-khien:
+    name: Bảng điều khiển — dựng và tự nạp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp infra/.env.example infra/.env
+      # Superset chờ dịch vụ ứng dụng chạy xong migration tạo view báo cáo, rồi nạp dashboard từ
+      # infra/superset/bang-dieu-khien/ (#304). Keycloak không cần cho bước này.
+      - name: Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset
+        run: $COMPOSE up -d --build --wait --wait-timeout 600 postgres backend superset
+      - name: Dashboard và bốn biểu đồ đã nạp, đọc được view báo cáo
+        run: |
+          q() { docker exec dxlab-postgres psql -U dxlab -d "$1" -At -c "$2"; }
+          test "$(q superset 'SELECT count(*) FROM dashboards')" = 1
+          test "$(q superset 'SELECT count(*) FROM slices')" = 4
+          test "$(q superset 'SELECT count(*) FROM dashboard_slices')" = 4
+          for bang in $(q superset 'SELECT table_name FROM tables'); do
+            docker exec dxlab-postgres psql -U superset_readonly -d dxlab -At -c "SELECT count(*) FROM $bang"
+          done
+          # Vai khách của bản nhúng trong cổng (#305) đọc được kết nối dữ liệu, không thì khung trống
+          test "$(q superset "SELECT count(*) FROM ab_permission_view_role pvr
+            JOIN ab_role r ON r.id = pvr.role_id
+            JOIN ab_permission_view pv ON pv.id = pvr.permission_view_id
+            JOIN ab_permission p ON p.id = pv.permission_id
+            WHERE r.name = 'Gamma' AND p.name = 'database_access'")" = 1
+      - name: Nhật ký cụm khi hỏng
+        if: failure()
+        run: $COMPOSE logs --no-color --tail=200 postgres backend superset

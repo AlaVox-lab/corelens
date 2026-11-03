@@ -8,6 +8,8 @@
 import { KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
 
+import { XuatNhatKy } from "./xuat-nhat-ky";
+
 export const dynamic = "force-dynamic";
 
 export default async function ManHeThong() {
@@ -20,6 +22,9 @@ export default async function ManHeThong() {
       </p>
       <div style={{ marginTop: "20px", maxWidth: "720px" }}>
         <TheHeThong sucKhoe={sucKhoe} tieuDe="Các dịch vụ" />
+      </div>
+      <div style={{ marginTop: "20px", maxWidth: "720px" }}>
+        <XuatNhatKy />
       </div>
     </KhungLamViec>
   );

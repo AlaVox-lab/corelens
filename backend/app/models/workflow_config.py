@@ -50,6 +50,8 @@ class Role(Base):
     label: Mapped[str] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text, default=None)
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    # Phạm vi xem bảng điều khiển phân tích (#305): `department`, `all`, hay không thấy
+    report_scope: Mapped[str | None] = mapped_column(Text, default=None)
 
 
 class State(Base):

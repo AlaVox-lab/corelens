@@ -106,6 +106,7 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
 | Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
+| Bảng điều khiển — dựng và tự nạp | Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset; dashboard *Vận hành yêu cầu* đủ bốn biểu đồ đã tự nạp từ `infra/superset/bang-dieu-khien/`, tài khoản chỉ đọc đọc được mọi view mà dataset trỏ tới (#304) | `docker compose ... up -d --build --wait postgres backend superset` rồi mở `http://localhost:8088` |
 
 **Kiểm thử giao diện qua đăng nhập thật** (#238) chạy tay trước khi mở pull request có sửa giao diện,
 trên cụm thử: `npm ci`, `npm run cai-trinh-duyet` (lần đầu), `npm run kiem` trong `e2e/`. Kịch bản đăng
@@ -123,12 +124,12 @@ dịch vụ khi hỏng. Sửa trên cùng nhánh, push tiếp, quy trình tự c
 **Khi kho chuyển công khai**, quy tắc bảo vệ nhánh mới có hiệu lực. Bật thêm cho cả `main` và
 `dev` (*Settings → Branches*):
 
-- *Require status checks to pass before merging*, chọn đủ bốn kiểm tra ở bảng trên
+- *Require status checks to pass before merging*, chọn đủ năm kiểm tra ở bảng trên
 - *Require branches to be up to date before merging*
 - Giữ nguyên các tùy chọn đã có: bắt buộc pull request, 1 phê duyệt, bỏ phê duyệt cũ khi có
   commit mới, giải quyết hết hội thoại, cấm force push, cấm xóa nhánh
 
-Tới lúc đó, pull request lỡ đặt `base: main` (như #215) vẫn phải chờ bốn kiểm tra xanh mới
+Tới lúc đó, pull request lỡ đặt `base: main` (như #215) vẫn phải chờ năm kiểm tra xanh mới
 merge được.
 
 ---
