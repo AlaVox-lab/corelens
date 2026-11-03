@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v0.9.0` | Khép Giai đoạn 3 — không gian Dữ liệu: lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình và nhúng trong cổng theo phòng của người xem, xuất nhật ký CSV và JSON, dữ liệu trình diễn |
 | `v0.8.0` | Khép đợt làm mới giao diện: phân trang và bộ lọc phía dịch vụ, ngăn xem nhanh hồ sơ, quy tắc chuyển động, kiểm tra giao diện qua đăng nhập thật, trang tài liệu; hồ sơ đang chạy giữ bộ quy tắc cũ khi đổi quy trình |
 | `v0.7.0` | Cổng theo việc cần làm: trang chủ theo vai, thanh bên, hàng đợi có dải số, trường riêng theo loại yêu cầu, đăng nhập tiếng Việt, tích hợp liên tục |
 | `v0.6.0` | Khép Giai đoạn 2: mở lại có giới hạn, trạng thái *Không tiếp nhận*, tệp đính kèm, rà từ ngữ |
@@ -24,8 +25,8 @@ lịch sử commit.
 | `v0.1.0` | Bộ khung kho mã và tài liệu chuẩn |
 
 Xem đầy đủ ở trang Releases. Lộ trình các bản tới ở
-[`docs/ROADMAP.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/ROADMAP.md): tầng Dữ liệu
-ở `v0.9.0`, tầng Trí tuệ ở `v0.10.0`.
+[`docs/ROADMAP.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/ROADMAP.md): tầng Trí tuệ
+từ `v0.10.0`.
 
 ## Giấy phép
 

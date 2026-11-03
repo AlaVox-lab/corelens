@@ -36,7 +36,7 @@ So sánh với các sản phẩm cùng loại: [`docs/so-sanh-san-pham.md`](docs
 |---|---|---|---|
 | **H** | Nhân sự — định danh, phân quyền theo vai | Keycloak `26.7.3` (Apache-2.0) | Đã chạy |
 | **P** | Quy trình — máy trạng thái, Poka-yoke, hạn xử lý | **Engine tự viết** (MIT) | Đã chạy |
-| **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện | Apache Superset `6.1.0` (Apache-2.0) | `v0.9.0` |
+| **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện | Apache Superset `6.1.0` (Apache-2.0) | Đã chạy |
 | **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại | Đề xuất PM4Py, pgvector | `v0.10.0` |
 
 Nền chung: Next.js, FastAPI, PostgreSQL, SeaweedFS (tệp đính kèm), Docker Compose. Nền tảng phổ thông
