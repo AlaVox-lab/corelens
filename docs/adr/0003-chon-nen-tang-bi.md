@@ -193,7 +193,10 @@ Superset; danh tính người dùng đến từ Keycloak, Superset nhận vai tr
 - [x] Bổ sung Superset vào `infra/docker-compose.yml` khi dựng hạ tầng thật
 - [x] Chuyển từ máy chủ phát triển sang máy chủ WSGI cho bản sản phẩm *(ảnh chính thức chạy
       gunicorn qua `run-server.sh`; điểm vào của dự án bàn giao cho đúng tệp đó)*
-- [ ] Nối Superset với Keycloak, cấu hình cơ chế guest token
+- [x] Cấu hình cơ chế guest token *(#305: dịch vụ ứng dụng kiểm vai trò bằng token Keycloak rồi
+      xin token khách kèm điều kiện lọc theo phòng; người xem không đăng nhập Superset, nên không cần
+      nối đăng nhập Superset với Keycloak — tài khoản quản trị Superset chỉ dành cho người dựng báo
+      cáo. `docs/ARCHITECTURE.md` mục 6.3)*
 - [x] Chuyển bộ sinh dữ liệu ảo thành mã sản phẩm *(không vào `infra/seed/` mà thành lệnh chạy
       tay `scripts/nap_du_lieu_trinh_dien.py`, #306: cụm sạch mặc định không mang hồ sơ giả)*
 - [x] Tạo tài khoản chỉ đọc riêng cho Superset trên cơ sở dữ liệu nghiệp vụ

@@ -15,6 +15,8 @@ from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.analytics.bang_dieu_khien import pham_vi_cua
+from app.analytics.bang_dieu_khien import router as router_bang_dieu_khien
 from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
@@ -109,6 +111,7 @@ app.include_router(router_phong_ban)
 app.include_router(router_hop_thu)
 app.include_router(router_tep)
 app.include_router(router_du_lieu_mo)
+app.include_router(router_bang_dieu_khien)
 
 
 @app.get("/health", tags=["Vận hành"])
@@ -191,6 +194,10 @@ def me(
         khong_gian.append("coordination")
     if vao_duoc_phong_ban(session, actor):
         khong_gian.append("department")
+    # Báo cáo (#305): vai trò nào xem được là cột `roles.report_scope`, tra cùng một hàm với
+    # điểm cuối cấp token — mục trên thanh bên và quyền mở bảng điều khiển không lệch nhau.
+    if pham_vi_cua(session, actor) is not None:
+        khong_gian.append("reports")
     # Màn Hệ thống (#229): tình trạng các dịch vụ chỉ có nghĩa với người vận hành cụm, nên
     # chỉ quản trị viên thấy — cùng vai trò gác điểm cuối /sla/scan ngay dưới.
     if VAI_TRO_QUAN_TRI in actor.roles:

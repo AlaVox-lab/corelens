@@ -735,7 +735,7 @@ kiểm chữ ký.
 
 ### 6.3. Lớp báo cáo và dữ liệu mở (không gian `D`)
 
-**Đã cài đặt** — #304, #306. Nhúng vào cổng: #305, chưa cài đặt.
+**Đã cài đặt** — #304, #306, nhúng vào cổng #305.
 
 Nhật ký sự kiện nuôi ba thứ đọc cùng một nguồn: bảng điều khiển phân tích, dữ liệu xuất, và về
 sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi — chúng nằm trong các **view
@@ -775,6 +775,31 @@ Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi ch�
 bảng điều khiển: đăng nhập giao diện Superset bằng tài khoản quản trị, sửa, rồi `superset
 export-dashboards` và chép các tệp đã đổi về thư mục đó — không xuất lại thì lần khởi động sau
 nạp đè mất.
+
+**Nhúng trong cổng, lọc theo phòng (#305).** Mục *Báo cáo* trên thanh bên mở bảng điều khiển trong
+khung nhúng, không đăng nhập lần hai. Luồng:
+
+1. Thư viện nhúng chính thức của Superset (`@superset-ui/embedded-sdk`) gọi `/api/bao-cao/token` của
+   cổng; Route Handler chuyển sang `POST /analytics/dashboard/guest-token` kèm token Keycloak
+2. Dịch vụ tra **phạm vi** của người gọi trong cột `roles.report_scope` (migration `0015`, giá trị ở
+   dữ liệu khởi tạo): `all` — toàn công ty, `department` — phòng của chính người xem theo claim
+   `groups`, trống — không xem. Nhiều vai trò thì lấy phạm vi rộng nhất. Không có phạm vi, hay
+   trưởng phòng chưa thuộc phòng nào: 403. Cùng một hàm `pham_vi_cua` quyết cả mục `reports` trong
+   `workspaces` của `/me`, nên thanh bên và quyền mở không lệch nhau
+3. Dịch vụ đăng nhập API Superset bằng tài khoản quản trị, bật cấu hình nhúng cho dashboard (lần đầu,
+   chỉ cho gốc của cổng nhúng) rồi xin **token khách** sống 5 phút cho đúng dashboard đó, kèm điều
+   kiện lọc theo dòng `ma_phong IN (...)`. Mã phòng đối chiếu bảng `departments` trước — không chuỗi
+   nào từ token đi thẳng vào điều kiện. Superset gắn điều kiện vào mọi câu truy vấn của dashboard
+   và ký token, nên trình duyệt không nới được phạm vi
+4. Thư viện dựng khung từ địa chỉ công khai của Superset mà dịch vụ trả kèm, tự xin lại token trước
+   khi hết hạn; khung theo chế độ sáng/tối của cổng, ẩn tiêu đề và thanh bộ lọc gốc
+
+Hai thứ phía Superset để token khách vẽ được: vai khách (`GUEST_ROLE_NAME`) được cấp quyền đọc kết
+nối *Dữ liệu nghiệp vụ* lúc khởi động (`infra/superset/cap_quyen_khach.py`), và CSP
+`frame-ancestors` cho phép gốc của cổng đặt Superset trong khung (`superset_config.py`). Superset
+tắt thì điểm cuối trả 503 và mục Báo cáo hiện màn "không phản hồi", phần còn lại của cổng chạy
+bình thường. Lưới của Superset không xếp lại dưới 768 px, nên màn hẹp giữ khung rộng 760 px và cuộn
+ngang trong khung.
 
 **Dữ liệu mở.** `GET /analytics/event-log?format=csv|json&from=&to=`, chỉ quản trị viên, trên màn
 Hệ thống của cổng. Cột cố định (`app/analytics/xuat_du_lieu.py` `COT`), mốc UTC, khoảng ngày theo

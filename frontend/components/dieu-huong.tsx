@@ -14,6 +14,7 @@
 
 import {
   Activity,
+  ChartColumn,
   FolderOpen,
   GitFork,
   House,
@@ -51,6 +52,7 @@ const ICON: Record<TenIcon, LucideIcon> = {
   "ho-so": FolderOpen,
   "dieu-phoi": GitFork,
   "phong-ban": Inbox,
+  "bao-cao": ChartColumn,
   "hop-thu": MessagesSquare,
   "he-thong": Activity,
 };

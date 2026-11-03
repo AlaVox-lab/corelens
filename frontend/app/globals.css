@@ -3768,3 +3768,74 @@ html.doi-mau * {
   font-size: 13px;
   color: var(--ink-2);
 }
+
+/* --- Báo cáo: bảng điều khiển phân tích nhúng (#305) ------------------------ */
+.bao-cao-pham-vi {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.bao-cao-pham-vi strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.bao-cao-cho {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.bao-cao-cho-o {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.bao-cao-khung {
+  margin-top: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Lưới của Superset không xếp lại thành một cột: màn hẹp giữ bề rộng đọc được và cuộn ngang trong
+   khung, trang thì không cuộn ngang */
+.bao-cao-cuon-ngang {
+  display: none;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+/* Khung nhúng vẫn phải được dựng lúc đang chờ để Superset tải song song — chỉ giấu đi */
+.bao-cao-khung[data-an] {
+  height: 0;
+  margin-top: 0;
+}
+
+.bao-cao-khung iframe {
+  display: block;
+  width: 100%;
+  min-height: 720px;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .bao-cao-cho {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bao-cao-khung {
+    overflow-x: auto;
+  }
+
+  .bao-cao-khung iframe {
+    min-width: 760px;
+  }
+
+  .bao-cao-cuon-ngang {
+    display: block;
+  }
+}

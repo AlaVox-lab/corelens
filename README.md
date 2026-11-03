@@ -73,8 +73,10 @@ Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty
 | `cuong.le` | Người xử lý Công nghệ thông tin |
 | `khanh.vo` | Quản trị viên — màn Hệ thống |
 
-Bảng điều khiển phân tích ở `http://localhost:8088` (tài khoản quản trị trong `.env`). Muốn có số để
-xem, nạp vài trăm hồ sơ giả vào cụm thử — chạy ở gốc kho mã:
+Bảng điều khiển phân tích ở mục **Báo cáo** của cổng: trưởng phòng thấy số của phòng mình, điều phối
+viên và quản trị viên thấy toàn công ty. Người dựng báo cáo sửa bảng điều khiển trên Superset ở
+`http://localhost:8088` (tài khoản quản trị trong `.env`). Muốn có số để xem, nạp vài trăm hồ sơ giả
+vào cụm thử — chạy ở gốc kho mã:
 
 ```bash
 python scripts/nap_du_lieu_trinh_dien.py --xac-nhan

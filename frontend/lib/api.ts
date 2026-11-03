@@ -104,7 +104,8 @@ export type DanhTinh = {
   roles: string[];
   departments: string[];
   /**
-   * Không gian làm việc người này vào được — `portal`, `coordination`, `department`.
+   * Không gian làm việc người này vào được — `portal`, `coordination`, `department`,
+   * `reports` (#305), `system`.
    * Dịch vụ quyết dựa trên vai trò, để mã giao diện không phải chứa tên vai trò nào cả.
    */
   workspaces: string[];

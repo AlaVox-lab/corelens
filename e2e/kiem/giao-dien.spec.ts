@@ -29,6 +29,23 @@ function theoVai(vai: Vai) {
 }
 
 /**
+ * Mục Báo cáo (#305): bảng điều khiển nhúng hiện trong khung, không đòi đăng nhập Superset, đúng
+ * phạm vi của người xem. Tên biểu đồ đọc trong khung — có tên là Superset đã nhận token khách và
+ * dựng được dashboard; trang đăng nhập của Superset thì không có các tên đó.
+ */
+async function kiemBaoCao(page: Page, phamVi: string, anh: string) {
+  await page.goto("/");
+  await expect((await thanhBen(page)).getByRole("link", { name: "Báo cáo" })).toBeVisible();
+  await moMan(page, "/bao-cao", anh);
+  await expect(page.locator(".bao-cao-pham-vi")).toHaveText(`Phạm vi số liệu: ${phamVi}`);
+  const khung = page.frameLocator(".bao-cao-khung iframe");
+  for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban"]) {
+    await expect(khung.getByText(new RegExp(ten)).first()).toBeVisible({ timeout: 30_000 });
+  }
+  await chup(page, test.info().project.name, `${anh}-da-ve`);
+}
+
+/**
  * Ô "Chờ bạn" kể đúng số việc chờ: bằng số dòng của danh sách, hoặc — khi danh sách chạm trần số
  * dòng mỗi vai — dòng ghi chú nói rõ đang hiện bao nhiêu trên tổng số (#237).
  */
@@ -74,6 +91,15 @@ test.describe("người gửi", () => {
     await expect((await thanhBen(page)).getByRole("link", { name: "Hệ thống" })).toHaveCount(0);
     await page.goto("/he-thong");
     await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
+  });
+
+  test("không thấy mục Báo cáo, mở thẳng thì bị từ chối (#305)", async ({ page }) => {
+    await page.goto("/");
+    await expect((await thanhBen(page)).getByRole("link", { name: "Báo cáo" })).toHaveCount(0);
+    await page.goto("/bao-cao");
+    await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
+    await expect(page.locator(".bao-cao-khung")).toHaveCount(0);
+    expect((await page.request.post("/api/bao-cao/token")).status()).toBe(403);
   });
 });
 
@@ -202,6 +228,10 @@ test.describe("điều phối viên", () => {
     expect(await qua300(), "hàng đợi và ngăn xem nhanh").toEqual([]);
   });
 
+  test("Báo cáo có số của toàn công ty (#305)", async ({ page }) => {
+    await kiemBaoCao(page, "toàn công ty", "dieu-phoi-bao-cao");
+  });
+
   test("thấy mục Điều phối, không thấy Hệ thống", async ({ page }) => {
     await page.goto("/");
     const sb = await thanhBen(page);
@@ -222,6 +252,10 @@ test.describe("trưởng phòng", () => {
   test("số liệu trang chủ khớp danh sách việc chờ", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
     await kiemSoChoBan(page);
+  });
+
+  test("Báo cáo chỉ có số của phòng mình (#305)", async ({ page }) => {
+    await kiemBaoCao(page, "Công nghệ thông tin", "truong-phong-bao-cao");
   });
 });
 

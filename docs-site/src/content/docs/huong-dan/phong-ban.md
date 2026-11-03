@@ -31,6 +31,10 @@ khoản đã khóa. Danh bạ không trả lời thì vẫn nhận được hồ
 **Đã nhận là không trả về**: sau khi xác duyệt, hồ sơ không quay lại điều phối được nữa — vấn đề
 phát sinh do chính phòng xử lý.
 
+**Báo cáo** trên thanh bên mở bảng điều khiển của phòng bạn: hồ sơ đang mở theo trạng thái, thời gian
+xử lý trung vị theo loại yêu cầu so với ngưỡng hạn, tỷ lệ trễ hạn, số yêu cầu mỗi tuần. Chỉ có số của
+phòng mình — dòng *Phạm vi số liệu* dưới tiêu đề ghi rõ.
+
 ## Người xử lý
 
 | Khi hồ sơ ở *Đang xử lý* | |
