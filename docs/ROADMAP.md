@@ -154,7 +154,8 @@ diện thật. Lượt kiểm thử tổng thể đạt 54/54 kịch bản ngày
 
 **Trạng thái**: Hoàn thành · **Phiên bản**: `v0.9.0` (03/11) — lớp báo cáo trên nhật ký sự kiện và
 bảng điều khiển dựng từ tệp cấu hình (#304), nhúng trong cổng lọc theo phòng của người xem (#305),
-xuất nhật ký CSV và JSON cùng lệnh nạp dữ liệu trình diễn (#306)
+xuất nhật ký CSV và JSON cùng lệnh nạp dữ liệu trình diễn (#306). Bản vá `v0.9.1` (08/11) nâng khung
+giao diện của cổng để vá cảnh báo bảo mật (#313)
 
 Mục tiêu: dữ liệu từ `P` được chuẩn hóa và trực quan hóa, đủ để cấp quản lý ra
 quyết định.

@@ -5,6 +5,16 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.9.1] - 2026-11-08
+
+### Sửa lỗi
+
+- **h-portal:** Nâng Next.js 16.4.5 để vá cảnh báo bảo mật ([#324](https://github.com/AlaVox-lab/dx-os-lab/issues/324)) ([4ea7b8b](https://github.com/AlaVox-lab/dx-os-lab/commit/4ea7b8b762a18e21f463e5507b410b569c127526))
+
+### Tài liệu
+
+- **state:** Cập nhật trạng thái cuối Tuần 14–15 ([#323](https://github.com/AlaVox-lab/dx-os-lab/issues/323)) ([f671511](https://github.com/AlaVox-lab/dx-os-lab/commit/f67151154ac8b5157167d1fde09b68ace63fbe61))
+
 ## [0.9.0] - 2026-11-03
 
 ### Tính năng mới
