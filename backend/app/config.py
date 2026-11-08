@@ -11,6 +11,11 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Bộ quét im quá chừng này chu kỳ mà không có lượt thành công nào thì coi là quá lâu. Năm chu kỳ:
+# một vài lượt trượt (cơ sở dữ liệu khởi động lại, một bản khác đang giữ khóa) không làm đèn đỏ,
+# nhưng bộ quét chết thật thì phát hiện được trong vài phút ở chu kỳ mặc định.
+BOI_SO_CHU_KY_QUA_LAU = 5
+
 
 class Settings(BaseSettings):
     """Cấu hình đọc từ biến môi trường mang tiền tố DXLAB_."""
@@ -95,6 +100,42 @@ class Settings(BaseSettings):
     # Sáu mươi giây là đủ mịn cho ngưỡng tính bằng giờ. Giảm xuống vài giây khi cần
     # trình diễn việc tự leo thang mà không phải ngồi chờ.
     sla_scan_interval_seconds: int = 60
+
+    # --- Nhịp bộ quét và ngưỡng cảnh báo, xem #253 ----------------------------
+    #
+    # Chạy nhiều bản dịch vụ thì mỗi lượt chỉ một bản quét (khóa tư vấn của PostgreSQL), bản kia
+    # bỏ lượt. Mỗi lượt ghi nhịp vào bảng `scanner_heartbeats`; `/health` báo `degraded` khi bộ
+    # quét im quá lâu hoặc hỏng liên tiếp. Hai con số dưới đây là ngưỡng đó.
+    #
+    # Quá bao nhiêu giây không có lượt quét thành công thì coi là quá lâu. 0 là để dịch vụ tự tính
+    # bằng `BOI_SO_CHU_KY_QUA_LAU` lần chu kỳ quét: đổi chu kỳ thì ngưỡng đi theo, không phải nhớ
+    # sửa hai chỗ.
+    sla_scan_stale_after_seconds: int = 0
+
+    # Số lượt quét hỏng liên tiếp tới mức coi bộ quét là đang hỏng
+    sla_scan_max_consecutive_errors: int = 3
+
+    # --- Giới hạn tốc độ, xem #243 ---------------------------------------------
+    #
+    # Mỗi giới hạn là một cặp: số lần tối đa mỗi người dùng trong một cửa sổ thời gian cố định.
+    # Vượt thì dịch vụ trả 429 kèm `Retry-After`. Đặt số lần tối đa bằng 0 để tắt giới hạn đó.
+    # Bộ đếm nằm trong PostgreSQL nên đúng khi chạy nhiều bản dịch vụ.
+    #
+    # Mặc định đủ rộng để người dùng thật không bao giờ chạm tới, mà vẫn chặn một vòng lặp hay một
+    # nút bấm bị kẹt gửi hàng trăm hồ sơ mỗi phút.
+    rate_limit_create_case_max: int = 30
+    rate_limit_create_case_window_seconds: int = 60
+    rate_limit_upload_max: int = 20
+    rate_limit_upload_window_seconds: int = 60
+    rate_limit_message_max: int = 60
+    rate_limit_message_window_seconds: int = 60
+
+    @property
+    def sla_scan_stale_threshold_seconds(self) -> int:
+        """Ngưỡng "quá lâu không quét thành công" đang áp dụng, tính bằng giây."""
+        if self.sla_scan_stale_after_seconds > 0:
+            return self.sla_scan_stale_after_seconds
+        return BOI_SO_CHU_KY_QUA_LAU * self.sla_scan_interval_seconds
 
     # --- Tệp đính kèm, xem #80 và ADR-0002 ----------------------------------
     #

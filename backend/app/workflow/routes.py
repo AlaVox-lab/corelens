@@ -102,6 +102,7 @@ from app.workflow.schemas import (
     TuDongRa,
 )
 from app.db import get_session
+from app.rate_limit import gioi_han_toc_do
 
 router = APIRouter(tags=["Yêu cầu"])
 
@@ -557,7 +558,12 @@ def danh_muc_phong_ban(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/requests", response_model=HoSoChiTietRa, status_code=201)
+@router.post(
+    "/requests",
+    response_model=HoSoChiTietRa,
+    status_code=201,
+    dependencies=[Depends(gioi_han_toc_do("create-case"))],
+)
 def tao_ho_so(
     du_lieu: TaoHoSoVao,
     session: Annotated[Session, Depends(get_session)],
@@ -756,7 +762,11 @@ def chuyen_trang_thai(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router.post("/requests/{case_id}/messages", response_model=HoSoChiTietRa)
+@router.post(
+    "/requests/{case_id}/messages",
+    response_model=HoSoChiTietRa,
+    dependencies=[Depends(gioi_han_toc_do("send-message"))],
+)
 def gui_loi_nhan(
     case_id: int,
     du_lieu: GuiLoiNhanVao,

@@ -36,6 +36,28 @@ export function docHoSo(): HoSoThu {
   return JSON.parse(fs.readFileSync(TEP_HO_SO, "utf8"));
 }
 
+/**
+ * Bắt vi phạm chính sách nội dung (#243) ở tài liệu chính của trang. Trình duyệt chỉ ghi vi phạm
+ * vào bảng điều khiển, không ném lỗi trang, nên bài kiểm thử chỉ nhìn `pageerror` sẽ bỏ lọt. Phải
+ * gọi TRƯỚC `goto`; gọi nhiều lần vẫn chỉ cài một bộ nghe. Khung nhúng (Superset) có tài liệu và
+ * chính sách riêng, không tính ở đây.
+ */
+export async function theoDoiCsp(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __viPhamCsp?: string[] };
+    if (w.__viPhamCsp) return;
+    w.__viPhamCsp = [];
+    document.addEventListener("securitypolicyviolation", (e) => {
+      w.__viPhamCsp!.push(`${e.violatedDirective} ← ${e.blockedURI || "(nội tuyến)"}`);
+    });
+  });
+}
+
+/** Các vi phạm chính sách nội dung đã gom từ lúc `theoDoiCsp`; mảng rỗng là sạch. */
+export function viPhamCsp(page: Page): Promise<string[]> {
+  return page.evaluate(() => (window as unknown as { __viPhamCsp?: string[] }).__viPhamCsp ?? []);
+}
+
 /** Ảnh chụp theo cấu hình hiển thị và vai: ket-qua/anh/<cấu hình>/<vai>-<màn>.png */
 export async function chup(page: Page, cauHinh: string, ten: string) {
   await page.mouse.move(0, 0);

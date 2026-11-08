@@ -299,6 +299,7 @@ dx-os-lab/
 │   ├── app/
 │   │   ├── main.py              # điểm vào, điểm cuối kiểm tra sức khỏe
 │   │   ├── config.py            # cấu hình từ biến môi trường
+│   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
@@ -321,7 +322,8 @@ dx-os-lab/
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
-│   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu
+│   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu, chính sách nội dung
+│   ├── proxy.ts                 # [H] CSP theo lượt, giới hạn đăng nhập quay về (#243)
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── docs/
 │   ├── adr/                     # bản ghi quyết định kiến trúc, kèm mẫu 0000
@@ -1059,6 +1061,33 @@ Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ q
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
 Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
 
+**Chạy nhiều bản dịch vụ: khóa và nhịp của bộ quét** (#253). Hai bộ quét (`BO_QUET` trong
+`escalation.py`: `sla-escalation`, `wait-expiry`) chạy trong tiến trình của dịch vụ ứng dụng, nên
+chạy hai bản thì cả hai cùng quét. Dữ liệu không hỏng — cổng chuyển trạng thái khóa dòng hồ sơ —
+nhưng làm việc trùng và sinh nhiễu nhật ký. `chay_luot_quet` (`workflow/nhip_quet.py`) bọc mỗi lượt:
+
+- **Khóa.** Đầu giao dịch của lượt xin `pg_try_advisory_xact_lock` theo tên bộ quét. Bản nào xin
+  được thì quét; bản kia **bỏ lượt** — không chờ, không tính là lỗi. Khóa mức giao dịch nên tự nhả
+  khi giao dịch kết thúc, kể cả khi tiến trình chết giữa chừng: không có khóa treo cần dọn. Mỗi bộ
+  quét một khóa, nên hai bộ vẫn chạy song song được trên hai bản. Chạy một bản thì lúc nào cũng
+  giành được khóa, hành vi như trước.
+- **Nhịp.** Bảng `scanner_heartbeats` (migration `0017`) một dòng mỗi bộ quét: lần chạy cuối, lần
+  thành công cuối, lần lỗi cuối và câu lỗi, **số lỗi liên tiếp**, bản nào chạy (tên máy chủ, mã tiến
+  trình). Lượt thành công ghi nhịp cùng giao dịch với kết quả quét rồi đặt số lỗi liên tiếp về 0.
+  Lượt hỏng **hoàn tác trước, rồi mới ghi lỗi ở giao dịch riêng** — ghi chung thì chính dấu vết của
+  lượt hỏng bị hoàn tác theo.
+- **Tín hiệu.** `/health` (xem 7.4) báo `degraded` khi một bộ quét hỏng liên tiếp tới
+  `SLA_SCAN_MAX_CONSECUTIVE_ERRORS` lượt (mặc định 3), hoặc lần thành công cuối đã quá
+  `SLA_SCAN_STALE_AFTER_SECONDS` (mặc định 0 = tự tính, năm lần chu kỳ quét). Vế "quá lâu" chỉ xét
+  khi chính tiến trình đã chạy quá ngưỡng: vừa khởi động lại sau thời gian dừng dài thì bộ quét
+  chưa có cơ hội chạy, không báo đỏ ngay. Tắt bộ quét bằng `SLA_SCAN_ENABLED=false` là chủ ý của
+  người vận hành, không phải sự cố.
+
+Bộ quét hỏng **không** làm `/health` trả 503: dịch vụ vẫn phục vụ yêu cầu bình thường, chỉ hồ sơ quá
+hạn không tự leo thang. Healthcheck của Docker và các dịch vụ chờ `service_healthy` (cổng, Superset)
+không được rớt hay kẹt vì một bộ quét trượt — họ đọc `status` nếu cần phân biệt. Nhịp chi tiết hiện ở
+màn Hệ thống.
+
 ### 7.2. Giao diện không giữ bản sao của bộ quy tắc
 
 **Đã cài đặt** — `frontend/app/yeu-cau/` từ #44, kéo dài sang `frontend/app/dieu-phoi/` ở #82.
@@ -1363,6 +1392,77 @@ nhất; người dùng đổi được sang hạn gần nhất, chờ lâu nhấ
 Thanh bên đếm cùng cờ đó: số đặc là việc chờ mình, số mờ là hồ sơ đang mở, chấm đỏ khi có việc chờ
 mình đã quá hạn hoặc sắp tự đi. Từ #232 cả hai đọc số từ `waiting_me`, `urgent`, `total`,
 `open_count` mà dịch vụ đếm trên cả danh sách (mục 7.2).
+
+### 7.4. Lớp biên: tiêu đề bảo mật, giới hạn tốc độ và `/health`
+
+**Đã cài đặt** — #243. Ba việc ở rìa hệ thống, cùng một nguyên tắc: chặt vừa đủ để giao diện vẫn
+chạy, và thứ gì lộ ra cho người chưa đăng nhập thì chỉ là thứ không có hại khi lộ.
+
+**Tiêu đề bảo mật ở cổng.** Hai nơi, chia theo việc tiêu đề có đổi theo yêu cầu hay không:
+
+- `frontend/next.config.ts` đặt tĩnh cho mọi đường dẫn, kể cả tệp tĩnh và tuyến API:
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Strict-Transport-Security`, `Permissions-Policy` tắt camera, micro, vị trí, và `X-Frame-Options:
+  DENY` cho trình duyệt cũ chưa hiểu `frame-ancestors`. Trình duyệt bỏ qua HSTS trên `http`, nên cụm
+  thử ở `http://localhost` không bị ảnh hưởng.
+- `frontend/proxy.ts` (Next.js 16 đổi tên `middleware.ts` thành `proxy.ts`) sinh **số dùng một lần
+  mỗi yêu cầu** và đặt `Content-Security-Policy`. Số nằm cả ở header yêu cầu để Next gắn vào script
+  của chính nó, và ở `x-nonce` để `app/layout.tsx` gắn vào đoạn chống nháy sáng/tối tự viết. Vì cần
+  số mới mỗi lượt nên mọi trang dựng động — layout gốc đọc header nên đã vậy. Chính sách dựng ở
+  `lib/bao-mat.ts`:
+
+  ```
+  default-src 'self'; script-src 'self' 'nonce-<mỗi lượt>' 'strict-dynamic'; style-src 'self'
+  'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src
+  <gốc công khai của Superset>; object-src 'none'; base-uri 'self'; form-action 'self' <gốc Keycloak>;
+  frame-ancestors 'none'
+  ```
+
+  Chế độ phát triển thêm `'unsafe-eval'` vào `script-src` (React cần để dựng lại dấu vết lỗi) và
+  `ws: wss:` vào `connect-src` (nạp nóng). `style-src` cho `'unsafe-inline'` có chủ đích: giao diện
+  dùng thuộc tính `style={{…}}` của React ở rất nhiều chỗ, và CSP không cho nối số dùng một lần vào
+  thuộc tính style. Rủi ro còn lại là chèn kiểu dáng, không phải chạy mã — `script-src` vẫn chặt.
+  `frame-src` chỉ nhận gốc Superset (biến `SUPERSET_PUBLIC_URL` của cổng, cùng giá trị dịch vụ ứng
+  dụng đã dùng ở #305); `form-action` thêm gốc Keycloak vì đăng nhập, đăng xuất chuyển hướng qua đó
+  và Chrome kiểm `form-action` cả trên đích chuyển hướng.
+
+Bài kiểm tra giao diện (`e2e/`) bắt sự kiện `securitypolicyviolation` ở mọi màn, kể cả Báo cáo nhúng
+Superset: vi phạm chính sách chỉ ghi vào bảng điều khiển của trình duyệt, không ném lỗi trang, nên
+chỉ nghe `pageerror` thì bỏ lọt.
+
+**Giới hạn tốc độ.** Hai tầng, hai nơi đếm — vì hai tầng có hai hoàn cảnh khác nhau:
+
+- *Dịch vụ ứng dụng* (`backend/app/rate_limit.py`) giới hạn ba thao tác ghi: **tạo hồ sơ**, **tải tệp
+  lên**, **gửi lời nhắn** (cả ba cửa của lời nhắn). Bộ đếm nằm trong **PostgreSQL**, bảng
+  `rate_limit_hits(key, window_start, hits)` (migration `0017`): cửa sổ thời gian cố định, tăng bằng
+  một câu `INSERT … ON CONFLICT DO UPDATE … RETURNING` nguyên tử, nên đúng khi chạy nhiều bản dịch vụ
+  mà không cần khóa. Khóa đếm là `<tên giới hạn>:<định danh người dùng>`: hai người đếm riêng, và
+  tạo hồ sơ nhiều không ăn vào hạn mức nhắn tin. Dùng đồng hồ của cơ sở dữ liệu nên các bản không
+  lệch cửa sổ. Phụ thuộc `gioi_han_toc_do(tên)` gắn ở decorator của điểm cuối, chạy **sau** kiểm
+  token (người lạ nhận 401, không tiêu hao hạn mức của ai) và **commit ngay** khi đếm xong: điểm
+  cuối của dự án `rollback()` khi từ chối, nên đếm chung giao dịch thì chính những yêu cầu hỏng —
+  loại lạm dụng cần chặn nhất — lại được đếm rồi bị hoàn tác. Vượt giới hạn trả `429`, header
+  `Retry-After`, `detail = {code: "rate-limited", message: "Bạn gửi yêu cầu quá nhanh. Thử lại sau N
+  giây."}` — cùng dạng với lỗi nghiệp vụ nên `lib/api.ts` chuyển thẳng thành thông báo cho biểu mẫu,
+  không trang 500. Số lần tối đa và độ dài cửa sổ của từng giới hạn là biến môi trường
+  (`RATE_LIMIT_*`, `infra/.env.example`; 0 là tắt giới hạn đó), không nằm trong hàm. Dòng đếm cũ
+  được dọn trong vòng của bộ quét nền.
+- *Cổng* giới hạn **đăng nhập quay về** (`/api/auth/callback`) theo địa chỉ IP ở `proxy.ts`. Cổng
+  không chạm cơ sở dữ liệu nên bộ đếm nằm trong **bộ nhớ tiến trình**, và giới hạn **từng bản**:
+  chạy N bản cổng thì mỗi bản đếm riêng, giới hạn thực tế lỏng hơn theo N. Chấp nhận, vì mục đích là
+  chặn vòng lặp thử đổi mã ủy quyền dồn dập chứ không phải chặn tuyệt đối. Địa chỉ IP lấy từ
+  `X-Forwarded-For`, nên chỉ có nghĩa khi cổng đứng sau reverse proxy đặt header đó; không có header
+  thì mọi người dùng chung một bộ đếm. Vượt thì trang `429` tiếng Việt kèm `Retry-After`.
+
+**`/health` công khai chỉ trả trạng thái chung.** `{"service": …, "status": "ok" | "degraded"}` và
+mã `503` khi cơ sở dữ liệu hay lược đồ quy trình không dùng được. Không phiên bản, không tên cơ sở
+dữ liệu, không câu lỗi: trước #243 nhánh lỗi trả `str(lỗi)[:200]`, mà câu lỗi của trình điều khiển có
+thể mang tên máy chủ, cổng và tên tài khoản cho người chưa đăng nhập. Chi tiết lỗi **chỉ ghi vào nhật
+ký** (`logging`) và hiện ở `GET /system/health`, điểm cuối chỉ quản trị viên — cùng hàm đo
+(`_do_suc_khoe` trong `main.py`) với `/health`, nên hai nơi không thể kể hai chuyện khác nhau. Màn
+Hệ thống (#229) đọc đúng điểm cuối này, không có đường thứ hai: phiên bản, bộ quy tắc đã nạp, nhịp
+từng bộ quét (mục 7.1), và `detail` khi hỏng. Bộ quét hỏng làm `status` thành `degraded` nhưng mã
+vẫn `200` — lý do ở mục 7.1.
 
 ---
 

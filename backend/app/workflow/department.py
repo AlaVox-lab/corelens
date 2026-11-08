@@ -34,6 +34,7 @@ from app.auth.dependencies import current_actor
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import EventLog, Request
+from app.rate_limit import gioi_han_toc_do
 from app.models.workflow_config import Department, Priority, State, Transition
 from app.workflow.assignment import (
     kiem_nguoi_duoc_giao,
@@ -476,7 +477,11 @@ def chuyen_trang_thai(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router.post("/requests/{case_id}/messages", response_model=HoSoPhongBanRa)
+@router.post(
+    "/requests/{case_id}/messages",
+    response_model=HoSoPhongBanRa,
+    dependencies=[Depends(gioi_han_toc_do("send-message"))],
+)
 def nhan_tin(
     case_id: int, du_lieu: GuiLoiNhanVao, session: _Phien, actor: _Cua
 ) -> HoSoPhongBanRa:

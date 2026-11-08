@@ -171,6 +171,17 @@ services:
       # tự leo thang mà không phải ngồi chờ.
       DXLAB_SLA_SCAN_ENABLED: ${SLA_SCAN_ENABLED}
       DXLAB_SLA_SCAN_INTERVAL_SECONDS: ${SLA_SCAN_INTERVAL_SECONDS}
+      # Ngưỡng cảnh báo của bộ quét (#253). Có giá trị mặc định để tệp .env cũ vẫn chạy được.
+      # Ngưỡng "quá lâu" bằng 0 là tự tính: năm lần chu kỳ quét.
+      DXLAB_SLA_SCAN_STALE_AFTER_SECONDS: ${SLA_SCAN_STALE_AFTER_SECONDS:-0}
+      DXLAB_SLA_SCAN_MAX_CONSECUTIVE_ERRORS: ${SLA_SCAN_MAX_CONSECUTIVE_ERRORS:-3}
+      # Giới hạn tốc độ theo người dùng (#243): số lần tối đa mỗi cửa sổ giây, 0 là tắt
+      DXLAB_RATE_LIMIT_CREATE_CASE_MAX: ${RATE_LIMIT_CREATE_CASE_MAX:-30}
+      DXLAB_RATE_LIMIT_CREATE_CASE_WINDOW_SECONDS: ${RATE_LIMIT_CREATE_CASE_WINDOW_SECONDS:-60}
+      DXLAB_RATE_LIMIT_UPLOAD_MAX: ${RATE_LIMIT_UPLOAD_MAX:-20}
+      DXLAB_RATE_LIMIT_UPLOAD_WINDOW_SECONDS: ${RATE_LIMIT_UPLOAD_WINDOW_SECONDS:-60}
+      DXLAB_RATE_LIMIT_MESSAGE_MAX: ${RATE_LIMIT_MESSAGE_MAX:-60}
+      DXLAB_RATE_LIMIT_MESSAGE_WINDOW_SECONDS: ${RATE_LIMIT_MESSAGE_WINDOW_SECONDS:-60}
       # Tệp đính kèm (#80) qua S3 API của SeaweedFS, trong mạng của Compose. Có giá trị mặc
       # định để tệp .env cũ chưa có các biến này vẫn chạy được. Cố ý KHÔNG depends_on
       # seaweedfs: kho tệp tắt thì dịch vụ vẫn lên, chỉ phần đính kèm báo lỗi.
@@ -223,6 +234,13 @@ services:
       # sẽ trỏ về http://0.0.0.0:3000 và trình duyệt đi tới đó sẽ lạc.
       PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
       PORTAL_SESSION_SECRET: ${PORTAL_SESSION_SECRET}
+      # Gốc công khai của Superset (#243): chính sách nội dung chỉ cho cổng nhúng khung từ đây.
+      # Cùng giá trị với DXLAB_SUPERSET_PUBLIC_URL của dịch vụ ứng dụng.
+      SUPERSET_PUBLIC_URL: http://localhost:${SUPERSET_PORT}
+      # Giới hạn đăng nhập quay về theo địa chỉ IP (#243), đếm trong bộ nhớ của cổng. Có giá trị
+      # mặc định để tệp .env cũ vẫn chạy được.
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-30}
+      RATE_LIMIT_LOGIN_WINDOW_SECONDS: ${RATE_LIMIT_LOGIN_WINDOW_SECONDS:-60}
     ports:
       - "${FRONTEND_PORT}:3000"
     depends_on:
