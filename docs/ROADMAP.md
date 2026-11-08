@@ -173,33 +173,37 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.10.0`
+**Phiên bản dự kiến**: `v0.10.0` cho khai phá quy trình, các bản sau cho gợi ý · **Mốc**: *Giai đoạn 4 —
+Không gian I*, hạn 29/11 · **Issue gốc**: #322
 
-Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. Ba tác vụ theo thứ tự
-tăng dần độ khó.
+Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. **Khai phá quy trình làm trước**
+(navigator chốt 04/11): đó là điểm sáng tạo của đề tài, và chỉ chờ ADR-0007. Phân loại và truy xuất
+chờ ADR-0008.
 
 **Nguyên tắc xuyên suốt**: AI chỉ ghi vào trường gợi ý, người quyết định. Mọi tác vụ
 đều phải có đường điều chỉnh thủ công.
 
-### 4.1. Phân loại và định tuyến tự động
+### 4.1. Khai phá quy trình
 
-- [ ] Tự phân loại yêu cầu vào nhóm
-- [ ] Gợi ý người xử lý phù hợp
-- [ ] Giao diện cho phép điều phối viên ghi đè gợi ý
-- [ ] Ghi lại tỷ lệ ghi đè để đo độ chính xác thực tế
+- [ ] Khai phá quy trình thực tế từ nhật ký sự kiện (#314)
+- [ ] Đối chiếu quy trình thực tế với luồng chính của quy trình thiết kế (#314)
+- [ ] Chỉ ra điểm nghẽn và nhánh lệch chuẩn trên màn quy trình thực tế trong cổng (#315)
+- [ ] Sinh khuyến nghị cải tiến bằng ngôn ngữ tự nhiên (#320)
 
-### 4.2. Truy xuất tri thức
+### 4.2. Phân loại và định tuyến tự động
 
-- [ ] Lập chỉ mục kho tri thức và các hồ sơ đã giải quyết
-- [ ] Gợi ý câu trả lời ngay khi người dùng đang soạn yêu cầu
-- [ ] Đo tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý
+- [ ] Giao diện cho phép điều phối viên giữ hoặc ghi đè gợi ý, ghi lại tỷ lệ ghi đè để đo độ chính
+      xác thực tế (#239)
+- [ ] Dịch vụ mô hình ngôn ngữ cục bộ, bật theo lựa chọn (#316)
+- [ ] Tự gợi ý loại yêu cầu, mức ưu tiên và phòng ban (#317)
+- [ ] Gợi ý người xử lý phù hợp (#318)
 
-### 4.3. Khai phá quy trình
+### 4.3. Truy xuất tri thức
 
-- [ ] Khai phá quy trình thực tế từ nhật ký sự kiện
-- [ ] Đối chiếu quy trình thực tế với quy trình thiết kế
-- [ ] Chỉ ra điểm nghẽn và nhánh lệch chuẩn
-- [ ] Sinh khuyến nghị cải tiến bằng ngôn ngữ tự nhiên
+- [ ] Lập chỉ mục các hồ sơ đã giải quyết, gợi ý hồ sơ tương tự ngay khi người dùng đang soạn yêu cầu
+      (#319)
+- [ ] Đo tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý (#319)
+- [ ] Kho tri thức — nhóm đề xuất để ngoài phạm vi thi, làm khi còn thời gian (#321)
 
 **Tiêu chí hoàn thành giai đoạn**: gỡ tầng `I` ra thì hệ thống suy giảm rõ rệt về
 giá trị, chứ không phải không đổi gì.
