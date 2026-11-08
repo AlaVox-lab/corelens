@@ -12,12 +12,14 @@ Hai nhóm bảng, hai chủ sở hữu khác nhau:
 - `workflow_config` — mười ba bảng cấu hình, do lược đồ khởi tạo trong `infra/` tạo
   và nạp. Alembic được cấu hình bỏ qua chúng
 - `case` — hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ, do Alembic sở hữu
+- `van_hanh` — nhịp bộ quét nền và bộ đếm giới hạn tốc độ (#243, #253), do Alembic sở hữu
 
 Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên `alembic/env.py` chỉ cần
 một dòng import.
 """
 
 from app.models.case import CaseAttachment, CaseMessage, EventLog, Request
+from app.models.van_hanh import RateLimitHit, ScannerHeartbeat
 from app.models.workflow_config import (
     Department,
     Guard,
@@ -43,11 +45,13 @@ __all__ = [
     "MessageKind",
     "MessageKindRole",
     "Priority",
+    "RateLimitHit",
     "Request",
     "RequestType",
     "RequestTypeRouting",
     "Role",
     "RuleSet",
+    "ScannerHeartbeat",
     "State",
     "Transition",
     "TransitionGuard",

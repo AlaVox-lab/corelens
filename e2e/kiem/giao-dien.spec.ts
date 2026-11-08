@@ -10,15 +10,17 @@ import { readFileSync } from "node:fs";
 
 import { type Browser, type Page, expect, test } from "@playwright/test";
 
-import { type HoSoThu, type Vai, chup, docHoSo, guiYeuCauThu, tepPhien } from "./chung";
+import { type HoSoThu, type Vai, chup, docHoSo, guiYeuCauThu, tepPhien, theoDoiCsp, viPhamCsp } from "./chung";
 
 /** Mở một màn, gom lỗi phía trình duyệt, kiểm không cuộn ngang, chụp ảnh. */
 async function moMan(page: Page, duong: string, anh: string) {
   const loi: string[] = [];
   page.on("pageerror", (e) => loi.push(e.message));
+  await theoDoiCsp(page);
   const tl = await page.goto(duong, { waitUntil: "networkidle" });
   expect(tl?.status(), `mở ${duong}`).toBeLessThan(400);
   expect(loi, `lỗi phía trình duyệt ở ${duong}`).toEqual([]);
+  expect(await viPhamCsp(page), `vi phạm chính sách nội dung ở ${duong}`).toEqual([]);
   const cuonNgang = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(cuonNgang, `thanh cuộn ngang ở ${duong}`).toBe(false);
   await chup(page, test.info().project.name, anh);
@@ -72,6 +74,8 @@ async function kiemBaoCao(page: Page, phamVi: string, anh: string) {
   for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban", "Tỷ lệ ghi đè gợi ý"]) {
     await expect(khung.getByText(new RegExp(ten)).first()).toBeVisible({ timeout: 30_000 });
   }
+  // Khung Superset đã dựng xong: chính sách nội dung của cổng (frame-src) không được chặn nó
+  expect(await viPhamCsp(page), "vi phạm chính sách nội dung sau khi nhúng Superset").toEqual([]);
   await chup(page, test.info().project.name, `${anh}-da-ve`);
 }
 
@@ -410,6 +414,9 @@ test.describe("quản trị viên", () => {
     await moMan(page, "/he-thong", "quan-tri-he-thong");
     await expect(page.getByText("Bộ quy tắc quy trình")).toBeVisible();
     await expect(page.getByText(/đã nạp/)).toBeVisible();
+    // Nhịp hai bộ quét nền (#253) đọc từ điểm cuối chi tiết của quản trị viên
+    await expect(page.getByText("Bộ quét quá hạn SLA")).toBeVisible();
+    await expect(page.getByText("Bộ quét hạn chờ")).toBeVisible();
   });
 
   test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {

@@ -60,6 +60,24 @@ Giao diện hỏi dịch vụ các giới hạn này, nên đổi một chỗ l�
 |---|---|---|
 | `SLA_SCAN_ENABLED` | `true` | Bộ quét nền tự leo thang hồ sơ quá hạn và đi các bước tự động khi hồ sơ nằm im |
 | `SLA_SCAN_INTERVAL_SECONDS` | `60` | Hạ xuống `5` khi cần trình diễn leo thang mà không phải chờ |
+| `SLA_SCAN_STALE_AFTER_SECONDS` | `0` | Quá chừng này giây không có lượt quét thành công thì `/health` báo `degraded`. `0` là tự tính: năm lần chu kỳ quét |
+| `SLA_SCAN_MAX_CONSECUTIVE_ERRORS` | `3` | Số lượt quét hỏng liên tiếp tới mức coi bộ quét là đang hỏng |
+
+Chạy nhiều bản dịch vụ ứng dụng thì mỗi lượt chỉ một bản quét, bản kia bỏ lượt. Hai biến cuối có mặc
+định trong `docker-compose.yml`, nên tệp `.env` cũ không cần thêm.
 
 Ngưỡng hạn của từng loại yêu cầu **không** nằm ở đây — xem
 [Danh mục và các con số](../../quan-tri/danh-muc-va-con-so/).
+
+## Giới hạn tốc độ
+
+Mỗi người dùng chỉ được gọi một số lần nhất định trong một cửa sổ thời gian cố định; vượt thì thao tác
+báo "Bạn … quá nhanh. Thử lại sau N giây." thay vì thực hiện. Đặt số lần tối đa bằng `0` để tắt giới
+hạn đó. Cả tám biến có mặc định trong `docker-compose.yml`, nên tệp `.env` cũ không cần thêm.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `RATE_LIMIT_CREATE_CASE_MAX` / `_WINDOW_SECONDS` | `30` / `60` | Gửi yêu cầu mới |
+| `RATE_LIMIT_UPLOAD_MAX` / `_WINDOW_SECONDS` | `20` / `60` | Tải tệp đính kèm lên |
+| `RATE_LIMIT_MESSAGE_MAX` / `_WINDOW_SECONDS` | `60` / `60` | Gửi lời nhắn, ở cả ba buồng lái |
+| `RATE_LIMIT_LOGIN_MAX` / `_WINDOW_SECONDS` | `30` / `60` | Đăng nhập quay về, theo địa chỉ IP. Đếm trong bộ nhớ của từng bản cổng; địa chỉ IP lấy từ `X-Forwarded-For` nên cần reverse proxy đặt header đó |

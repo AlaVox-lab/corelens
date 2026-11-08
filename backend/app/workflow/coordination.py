@@ -31,6 +31,7 @@ from app.auth.dependencies import require_roles
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import EventLog, Request
+from app.rate_limit import gioi_han_toc_do
 from app.models.workflow_config import (
     Priority,
     State,
@@ -378,7 +379,11 @@ def chuyen_trang_thai(
     return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
 
 
-@router.post("/requests/{case_id}/messages", response_model=HoSoDieuPhoiRa)
+@router.post(
+    "/requests/{case_id}/messages",
+    response_model=HoSoDieuPhoiRa,
+    dependencies=[Depends(gioi_han_toc_do("send-message"))],
+)
 def nhan_tin(
     case_id: int, du_lieu: GuiLoiNhanVao, session: _Phien, actor: _Cua
 ) -> HoSoDieuPhoiRa:

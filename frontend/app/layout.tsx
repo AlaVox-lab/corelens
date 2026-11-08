@@ -18,6 +18,7 @@
 
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
+import { headers } from "next/headers";
 
 import "./globals.css";
 
@@ -54,15 +55,20 @@ export const metadata: Metadata = {
 // trong nut-dong-thoi-gian.tsx. Không có thì dòng thời gian thu gọn, chỉ hiện bước hiện tại.
 const DOC_CHE_DO = `try{var d=document.documentElement,t=localStorage.getItem("dxlab-theme");if(t==="dark"||t==="light")d.dataset.theme=t;if(localStorage.getItem("dxlab-dong-thoi-gian")==="mo")d.dataset.dongThoiGian="mo"}catch(e){}`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Số dùng một lần của yêu cầu này, do proxy.ts đặt (#243). Chính sách nội dung chỉ cho chạy script
+  // mang đúng số; đoạn chống nháy bên dưới do ta tự viết nên phải gắn tay, còn script của Next thì
+  // Next tự gắn. Đọc header khiến mọi trang dựng động — đúng điều CSP theo lượt đòi hỏi.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     // suppressHydrationWarning: đoạn mã đầu trang đặt `data-theme` trước khi React nhận
     // trang, nên thuộc tính đó khác bản dựng ở máy chủ là đúng ý, không phải lỗi.
     <html lang="vi" className={`${beVietnam.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: DOC_CHE_DO }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: DOC_CHE_DO }} />
       </head>
       <body
         style={{

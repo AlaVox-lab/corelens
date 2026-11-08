@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import current_actor
 from app.db import get_session
 from app.models.case import CaseAttachment, Request
+from app.rate_limit import gioi_han_toc_do
 from app.storage import objects
 from app.workflow.attachments import TepBiTuChoi, chinh_sach, them_tep
 from app.workflow.context import Actor
@@ -73,7 +74,12 @@ def chinh_sach_tep(_actor: _Cua) -> ChinhSachTepRa:
     )
 
 
-@router.post("/requests/{case_id}/attachments", response_model=list[TepDinhKemRa], status_code=201)
+@router.post(
+    "/requests/{case_id}/attachments",
+    response_model=list[TepDinhKemRa],
+    status_code=201,
+    dependencies=[Depends(gioi_han_toc_do("upload-attachment"))],
+)
 def tai_len(
     case_id: int,
     session: _Phien,

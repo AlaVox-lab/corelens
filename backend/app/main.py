@@ -8,6 +8,7 @@
 
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -21,6 +22,7 @@ from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
+from app.rate_limit import don_dong_cu
 from app.workflow.assignment import router as router_giao_viec
 from app.workflow.attachment_routes import router as router_tep
 from app.workflow.context import Actor
@@ -28,8 +30,13 @@ from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import router as router_phong_ban
 from app.workflow.department import vao_duoc_phong_ban
-from app.workflow.escalation import quet_het_han_cho, quet_va_leo_thang
+from app.workflow.escalation import (
+    BO_QUET,
+    TEN_BO_QUET_HAN_CHO,
+    TEN_BO_QUET_SLA,
+)
 from app.workflow.inbox import router as router_hop_thu
+from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau
 
 logger = logging.getLogger(__name__)
@@ -46,16 +53,48 @@ logging.basicConfig(
 
 settings = get_settings()
 
-def _quet_mot_lan() -> tuple[list[int], list[int]]:
+# Mốc khởi động của tiến trình, để `/health` biết bộ quét chưa có lượt thành công là vì chưa
+# kịp chạy hay vì đã chết (#253)
+THOI_DIEM_KHOI_DONG = time.monotonic()
+
+
+def _quet_mot_lan() -> tuple[list[int], list[int], list[str]]:
     """Một lượt quét hồ sơ quá hạn SLA rồi hồ sơ hết hạn chờ (#142), mỗi bộ quét một giao
-    dịch riêng. Trả về (hồ sơ đã leo thang, hồ sơ đã tự đi)."""
+    dịch riêng. Trả về (hồ sơ đã leo thang, hồ sơ đã tự đi, tên các bộ quét bỏ lượt).
+
+    Mỗi bộ quét xin khóa tư vấn của riêng nó (#253): chạy nhiều bản dịch vụ thì bản nào giành
+    được khóa mới quét, bản kia bỏ lượt và danh sách hồ sơ của bộ đó trống. Một bộ hỏng không
+    cản bộ kia chạy — lỗi đầu tiên được ném lại sau khi cả hai đã thử.
+    """
+    ket_qua: dict[str, list[int]] = {bo.ten: [] for bo in BO_QUET}
+    bo_qua: list[str] = []
+    loi_dau: Exception | None = None
+
+    for bo in BO_QUET:
+        try:
+            with SessionLocal() as phien:
+                luot = chay_luot_quet(phien, bo.ten, bo.ham)
+        except Exception as loi:  # noqa: BLE001 — bộ kia vẫn phải được chạy
+            logger.error("Bộ quét '%s' thất bại: %s", bo.ten, loi)
+            loi_dau = loi_dau or loi
+            continue
+        if luot.da_chay:
+            ket_qua[bo.ten] = luot.ket_qua
+        else:
+            bo_qua.append(bo.ten)
+
+    if loi_dau is not None:
+        raise loi_dau
+    return ket_qua[TEN_BO_QUET_SLA], ket_qua[TEN_BO_QUET_HAN_CHO], bo_qua
+
+
+def _don_dong_cu_gioi_han() -> None:
+    """Dọn các dòng đếm giới hạn tốc độ của những cửa sổ đã qua (#243)."""
     with SessionLocal() as phien:
-        da_leo_thang = quet_va_leo_thang(phien)
+        so_dong = don_dong_cu(phien)
         phien.commit()
-    with SessionLocal() as phien:
-        da_tu_di = quet_het_han_cho(phien)
-        phien.commit()
-    return da_leo_thang, da_tu_di
+    if so_dong:
+        logger.info("Đã dọn %d dòng đếm giới hạn tốc độ cũ", so_dong)
 
 
 async def _vong_quet_sla() -> None:
@@ -72,6 +111,10 @@ async def _vong_quet_sla() -> None:
             await asyncio.to_thread(_quet_mot_lan)
         except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
             logger.exception("Lượt quét SLA thất bại, sẽ thử lại ở lượt sau")
+        try:
+            await asyncio.to_thread(_don_dong_cu_gioi_han)
+        except Exception:  # noqa: BLE001 — dọn dẹp hỏng không được cản lượt quét kế tiếp
+            logger.exception("Dọn dòng đếm giới hạn tốc độ thất bại")
 
 
 @asynccontextmanager
@@ -114,49 +157,112 @@ app.include_router(router_du_lieu_mo)
 app.include_router(router_bang_dieu_khien)
 
 
-@app.get("/health", tags=["Vận hành"])
-def health(response: Response, session: Session = Depends(get_session)) -> dict:
-    """Báo trạng thái dịch vụ và kết nối cơ sở dữ liệu.
+def _do_suc_khoe(session: Session) -> dict:
+    """Đo sức khỏe của dịch vụ, đủ chi tiết. Phía gọi quyết định lộ ra bao nhiêu.
 
-    Trả về 503 khi cơ sở dữ liệu không dùng được. Điểm này quan trọng: một điểm cuối
-    kiểm tra sức khỏe luôn trả 200 thì vô dụng. Nhóm đã vấp đúng bẫy đó với Apache
-    Superset ở #38 — container báo `healthy` trong khi không ai đăng nhập được.
+    Hai bậc suy giảm, khác nhau ở chỗ có làm dịch vụ ngừng phục vụ hay không:
+    - `unavailable` — cơ sở dữ liệu không dùng được, hoặc lược đồ quy trình chưa nạp: dịch vụ
+      không làm được việc. `/health` trả 503.
+    - `degraded` mà không `unavailable` — bộ quét nền im quá lâu hoặc hỏng liên tiếp (#253).
+      Dịch vụ vẫn phục vụ yêu cầu bình thường; chỉ hồ sơ quá hạn không tự leo thang. `/health`
+      vẫn trả 200: container healthcheck của Docker và các dịch vụ chờ `service_healthy` (cổng
+      người dùng, Superset) không được bị chặn hay đánh dấu hỏng vì một bộ quét trượt, mà phải
+      đọc `status` để biết.
+
+    Chi tiết lỗi (`detail`) chỉ ghi vào nhật ký và trả cho quản trị viên ở `/system/health`;
+    câu lỗi của trình điều khiển có thể mang tên máy chủ, tên cơ sở dữ liệu, tên tài khoản.
     """
-    thong_tin: dict = {
-        "service": "dx-os-lab-backend",
-        "version": settings.app_version,
-    }
+    ket_qua: dict = {"status": "ok", "database": "ok", "unavailable": False}
 
     try:
         session.execute(text("SELECT 1"))
     except Exception as loi:  # noqa: BLE001 — cần bắt mọi lỗi kết nối để báo 503
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        thong_tin["status"] = "degraded"
-        thong_tin["database"] = "unreachable"
-        thong_tin["detail"] = str(loi)[:200]
-        return thong_tin
-
-    thong_tin["status"] = "ok"
-    thong_tin["database"] = "ok"
+        logger.warning("Kiểm tra sức khỏe: cơ sở dữ liệu không dùng được: %s", loi)
+        ket_qua.update(
+            status="degraded", database="unreachable", unavailable=True, detail=str(loi)[:200]
+        )
+        return ket_qua
 
     # Đếm trạng thái của bộ quy tắc đang kích hoạt. Con số này chứng minh cả chuỗi
     # khởi tạo đã chạy: lược đồ được tạo, dữ liệu khởi tạo được nạp, các phép kiểm
     # tra tính nhất quán đều qua. Bằng không thì cụm dựng lên nhưng rỗng ruột.
     try:
-        so_trang_thai = session.execute(
+        ket_qua["active_rule_set_states"] = session.execute(
             text(
                 "SELECT count(*) FROM states s"
                 " JOIN rule_sets r ON r.id = s.rule_set_id"
                 " WHERE r.is_active"
             )
         ).scalar_one()
-        thong_tin["active_rule_set_states"] = so_trang_thai
-    except Exception:  # noqa: BLE001 — lược đồ chưa nạp thì vẫn coi là suy giảm
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        thong_tin["status"] = "degraded"
-        thong_tin["detail"] = "Chưa nạp được lược đồ quy trình"
+    except Exception as loi:  # noqa: BLE001 — lược đồ chưa nạp thì vẫn coi là suy giảm
+        logger.warning("Kiểm tra sức khỏe: chưa nạp được lược đồ quy trình: %s", loi)
+        ket_qua.update(
+            status="degraded", unavailable=True, detail="Chưa nạp được lược đồ quy trình"
+        )
+        return ket_qua
 
-    return thong_tin
+    # Nhịp bộ quét (#253). Bộ quét tắt bằng cấu hình là chủ ý, không phải sự cố
+    try:
+        ket_qua["scanners"] = danh_gia_bo_quet(
+            session,
+            {bo.ten: bo.nhan for bo in BO_QUET},
+            nguong_qua_lau_giay=settings.sla_scan_stale_threshold_seconds,
+            loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+            da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            dang_bat=settings.sla_scan_enabled,
+        )
+    except Exception as loi:  # noqa: BLE001 — không đọc được nhịp thì không dám nói là khỏe
+        logger.warning("Kiểm tra sức khỏe: không đọc được nhịp bộ quét: %s", loi)
+        ket_qua.update(status="degraded", scanners=None, detail="Không đọc được nhịp bộ quét")
+        return ket_qua
+
+    if co_bo_quet_xau(ket_qua["scanners"]):
+        ket_qua["status"] = "degraded"
+    return ket_qua
+
+
+@app.get("/health", tags=["Vận hành"])
+def health(response: Response, session: Session = Depends(get_session)) -> dict:
+    """Báo trạng thái chung của dịch vụ: `ok` hoặc `degraded`. Công khai, không cần đăng nhập.
+
+    Trả về 503 khi cơ sở dữ liệu không dùng được. Điểm này quan trọng: một điểm cuối
+    kiểm tra sức khỏe luôn trả 200 thì vô dụng. Nhóm đã vấp đúng bẫy đó với Apache
+    Superset ở #38 — container báo `healthy` trong khi không ai đăng nhập được.
+
+    Chỉ trả đúng trạng thái chung (#243): điểm cuối này mở cho cả người chưa đăng nhập, nên không
+    có phiên bản, không tên cơ sở dữ liệu, không câu lỗi nào. Chi tiết ở `/system/health`.
+    """
+    suc_khoe = _do_suc_khoe(session)
+    if suc_khoe["unavailable"]:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return {"service": "dx-os-lab-backend", "status": suc_khoe["status"]}
+
+
+@app.get("/system/health", tags=["Vận hành"])
+def system_health(
+    actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
+    session: Annotated[Session, Depends(get_session)],
+) -> dict:
+    """Sức khỏe chi tiết cho màn Hệ thống (#229, #243, #253): phiên bản, cơ sở dữ liệu, bộ quy
+    tắc đã nạp, nhịp từng bộ quét và ngưỡng cảnh báo. Chỉ quản trị viên.
+
+    Luôn trả 200 kể cả khi cơ sở dữ liệu hỏng — đây là điểm cuối dữ liệu cho màn hình, không phải
+    điểm cuối cho bộ giám sát; `/health` mới là cái đổi mã trạng thái. Cùng một hàm đo với
+    `/health`, nên hai nơi không thể kể hai chuyện khác nhau.
+    """
+    suc_khoe = _do_suc_khoe(session)
+    suc_khoe.pop("unavailable")
+    return {
+        "service": "dx-os-lab-backend",
+        "version": settings.app_version,
+        **suc_khoe,
+        "scan_settings": {
+            "enabled": settings.sla_scan_enabled,
+            "interval_seconds": settings.sla_scan_interval_seconds,
+            "stale_after_seconds": settings.sla_scan_stale_threshold_seconds,
+            "max_consecutive_errors": settings.sla_scan_max_consecutive_errors,
+        },
+    }
 
 
 @app.get("/", tags=["Vận hành"])
@@ -227,11 +333,13 @@ def sla_scan(
     nhất, nên người bấm nút không ghi đè được luật nào — nhật ký vẫn ghi tác nhân là
     hệ thống, không phải người này.
     """
-    da_leo_thang, da_tu_di = _quet_mot_lan()
+    da_leo_thang, da_tu_di, bo_qua = _quet_mot_lan()
     return {
         "escalated_count": len(da_leo_thang),
         "escalated_case_ids": da_leo_thang,
         # Hồ sơ hết hạn chờ đã được hệ thống tự đi thay (#142)
         "auto_moved_case_ids": da_tu_di,
+        # Bộ quét mà bản dịch vụ khác đang giữ khóa nên lượt này bỏ qua (#253); trống khi chạy một bản
+        "skipped_scanners": bo_qua,
         "triggered_by": actor.id,
     }

@@ -8,9 +8,11 @@ sidebar:
 ## Màn Hệ thống
 
 Quản trị viên (tài khoản mẫu `khanh.vo`) mở **Hệ thống** (`/he-thong`) để xem tình trạng cụm, đọc
-từ điểm kiểm tra sức khỏe của dịch vụ ứng dụng: cổng người dùng, dịch vụ ứng dụng và phiên bản, cơ sở
-dữ liệu, bộ quy tắc quy trình đã nạp và có bao nhiêu trạng thái. Người dùng khác không thấy
-mục này — trang chủ của họ chỉ có việc cần làm, không có chữ kỹ thuật.
+từ điểm cuối chi tiết `GET /system/health` của dịch vụ ứng dụng (chỉ quản trị viên gọi được): cổng
+người dùng, dịch vụ ứng dụng và phiên bản, cơ sở dữ liệu, bộ quy tắc quy trình đã nạp và có bao nhiêu
+trạng thái, và **nhịp hai bộ quét nền** — lần quét thành công cuối cách đây bao lâu, bản dịch vụ nào đã
+chạy, hỏng liên tiếp mấy lượt và câu lỗi gần nhất. Người dùng khác không thấy mục này — trang chủ của
+họ chỉ có việc cần làm, không có chữ kỹ thuật.
 
 ![Màn Hệ thống của quản trị viên](../../../assets/anh/he-thong.png)
 
@@ -19,13 +21,24 @@ nào.
 
 ## Kiểm sức khỏe không cần đăng nhập
 
-`http://localhost:8000/health` trả tình trạng dịch vụ ứng dụng — dùng được cho công cụ giám sát.
+`http://localhost:8000/health` trả tình trạng chung của dịch vụ ứng dụng — dùng được cho công cụ giám
+sát. Chỉ có `{"service": …, "status": "ok"}` hoặc `"degraded"`, không phiên bản, không chi tiết lỗi.
+
+- `200` + `ok` — khỏe.
+- `200` + `degraded` — dịch vụ vẫn phục vụ nhưng bộ quét nền im quá lâu hoặc hỏng liên tiếp: hồ sơ quá
+  hạn có thể không tự leo thang. Mở màn Hệ thống xem bộ quét nào, lỗi gì.
+- `503` — cơ sở dữ liệu hay lược đồ quy trình không dùng được. Chi tiết chỉ nằm ở nhật ký
+  (`docker compose logs backend`) và màn Hệ thống.
 
 ## Bộ quét hạn
 
-Dịch vụ ứng dụng chạy một bộ quét nền, mặc định mỗi 60 giây: leo thang hồ sơ quá hạn và đi các bước
+Dịch vụ ứng dụng chạy hai bộ quét nền, mặc định mỗi 60 giây: leo thang hồ sơ quá hạn và đi các bước
 tự động khi hồ sơ nằm im quá hạn chờ. Bật tắt và chu kỳ ở `SLA_SCAN_ENABLED`,
 `SLA_SCAN_INTERVAL_SECONDS` trong `.env`. Quản trị viên chạy được một lượt ngay bằng `POST /sla/scan`.
+
+Chạy nhiều bản dịch vụ ứng dụng thì mỗi lượt chỉ một bản quét (khóa tư vấn của PostgreSQL), bản kia bỏ
+lượt. Mỗi lượt ghi nhịp vào cơ sở dữ liệu; ngưỡng cảnh báo ở `SLA_SCAN_STALE_AFTER_SECONDS` và
+`SLA_SCAN_MAX_CONSECUTIVE_ERRORS` — xem [Cấu hình](../../cai-dat/cau-hinh/).
 
 **Thử leo thang mà không phải chờ hết hạn thật** (chỉ trên cụm thử): đẩy một hồ sơ đang xử lý sang quá
 hạn — lùi cả mốc vào trạng thái, không thì hồ sơ còn nằm trong ân hạn — rồi chờ một lượt quét:
