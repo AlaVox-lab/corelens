@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-02 |
-| Phiên bản hiện tại | **`v0.7.0`** (28/10) — cổng theo việc cần làm. `v0.6.0` (27/10) khép Giai đoạn 2. `main` đã có thêm, chưa phát hành: bản sửa đăng nhập (#236), #274, #275, tài liệu #276 #277, trang tài liệu `docs-site/` (#279), kịch bản kiểm tra giao diện `e2e/` (#238), phân trang (#232), ngăn xem nhanh (#233), chuyển động (#237) |
-| Giai đoạn | **Giai đoạn 2 đã khép** (`v0.6.0`). Tuần 13 làm mới giao diện theo việc cần làm, thêm tích hợp liên tục và trường riêng theo loại yêu cầu (`v0.7.0`); báo cáo trước ba thầy ngày 29/10. Kế tiếp: Giai đoạn 3 — không gian `D`, `v0.8.0` |
-| Mốc công việc | **Tuần 13 — Làm mới giao diện** (hạn 08/11): **17 issue đóng**, còn mở #239 (thẻ gợi ý, tầng `I` — làm sau `D`). **Tuần 14 — Nền tảng vận hành** (hạn 15/11): 3 đóng (#241, #250, #279), 15 còn mở |
+| Cập nhật lần cuối | 2026-11-08 |
+| Phiên bản hiện tại | **`v0.9.0`** (03/11) — khép Giai đoạn 3, không gian `D`. `v0.8.0` (02/11) khép đợt giao diện Tuần 13. `main` không có gì chưa phát hành |
+| Giai đoạn | **Giai đoạn 3 đã khép** (`v0.9.0`): lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình, nhúng trong cổng lọc theo phòng, xuất dữ liệu mở. **Giai đoạn 4 — không gian `I`** đã có issue (#322 và các issue con), chưa viết mã: khai phá quy trình làm trước, chờ giảng viên chấp nhận ADR-0007 |
+| Mốc công việc | **Tuần 15 — Không gian D** (đóng): 4 issue đóng (#304–#307). **Giai đoạn 4 — Không gian I** (hạn 29/11): 11 issue mở. **Tuần 14 — Nền tảng vận hành** hết hạn 15/11 với 10 đóng, 14 còn mở — dời sang **Tuần 16 — Nền tảng vận hành** (hạn 29/11) và đóng mốc cũ ngày 08/11 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung và màn Hệ thống cho quản trị viên. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
-| Issue đang mở | **16** — 1 ở Tuần 13, 15 ở Tuần 14 (danh sách ở *Việc tiếp theo*) |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, mục Báo cáo nhúng bảng điều khiển và màn Hệ thống cho quản trị viên. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
+| Issue đang mở | **25** — 11 ở Giai đoạn 4, 14 ở Tuần 16 (danh sách ở *Việc tiếp theo*) |
 | Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
-| Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên |
+| Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên — đã hỏi trên #46, #47, #48 ngày 03/11, nhắc lại ở #322 ngày 08/11 |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **462 bài** pytest, chạy trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241). Giao diện có **kịch bản Playwright `e2e/`** (#238): bốn vai đăng nhập thật, bốn cấu hình hiển thị, **54 bài** — chạy trên cụm thử trước khi mở pull request sửa giao diện, chưa nằm trong tích hợp liên tục (#249). Mọi issue từ #78 đều qua phép thử đột biến, kể cả phần giao diện từ #238 |
+| Bộ kiểm thử tự động | **507 bài** pytest, chạy trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241); tích hợp liên tục có **năm kiểm tra**, kiểm tra thứ năm dựng Superset và kiểm bảng điều khiển tự nạp cùng quyền của vai khách (#304, #305). Giao diện có **kịch bản Playwright `e2e/`** (#238): bốn vai đăng nhập thật, bốn cấu hình hiển thị, **74 bài** — chạy trên cụm thử trước khi mở pull request sửa giao diện, chưa nằm trong tích hợp liên tục (#249). Mọi issue từ #78 đều qua phép thử đột biến, kể cả phần giao diện từ #238 |
 | Tổng bộ nhớ toàn cụm | **1,4 GB lúc rảnh**, đo lại ngày 15/10 khi viết hướng dẫn cài đặt (#206); Keycloak chiếm gần một nửa. Ảnh chứa khoảng 3,9 GB. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
-| Số ngày còn lại tới chấm kho mã | **35 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 02/11 |
+| Số ngày còn lại tới chấm kho mã | **29 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 08/11 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
@@ -57,7 +57,11 @@ Keycloak bằng tiếng Việt. Mọi danh sách **phân trang, tìm và lọc �
 dòng hàng đợi là mở **ngăn xem nhanh** bên phải, duyệt bằng phím mũi tên, làm bước chính ngay trong
 ngăn. Tài liệu cho người dùng và người triển khai nằm ở trang tài liệu `docs-site/`.
 
-Luồng thủ công đã đủ theo các quyết định của giảng viên. Tầng `D` và `I` chưa cài đặt.
+Trưởng phòng, điều phối viên và quản trị viên mở mục **Báo cáo** là thấy bảng điều khiển phân tích
+ngay trong cổng, không đăng nhập lần hai: trưởng phòng chỉ thấy số của phòng mình. Quản trị viên tải
+**nhật ký sự kiện** dạng CSV hay JSON ở màn Hệ thống.
+
+Luồng thủ công đã đủ theo các quyết định của giảng viên, tầng `D` đã chạy. Tầng `I` chưa cài đặt.
 
 ---
 
@@ -750,13 +754,63 @@ issue liên quan, và một pull request phát hành `dev → main` cho cả đ�
 
 ---
 
+### Tuần 14–15 — `v0.8.0`, không gian `D`, `v0.9.0` và mở Giai đoạn 4
+
+**Đổi quy trình thì hồ sơ đang chạy ra sao** (#278, #299, 02/11) — câu hỏi của buổi báo cáo 29/10.
+Engine đã đúng thiết kế: hồ sơ giữ bộ quy tắc lúc tạo, nút, nhật ký và đồng hồ hạn tra theo bộ của
+hồ sơ. Bài kiểm thử mới chép bộ đang bật thành bộ thứ hai ngay trong giao dịch của bài, đổi sáu chỗ
+như một lần đổi quy trình thật, rồi cho hồ sơ của cả hai bộ đi tiếp. Bài lộ ra một lỗi, tách thành
+#299: hai hàng đợi chỉ lọc theo bộ đang bật, nên vừa đổi bộ là hồ sơ cũ còn mở biến khỏi hàng đợi dù
+vẫn chạy đồng hồ và vẫn tự leo thang. Nay mọi màn liệt kê lấy hồ sơ của mọi bộ còn hồ sơ đang mở và
+chọn hồ sơ bằng cặp bộ cùng trạng thái. `ARCHITECTURE.md` mục 6.1 ghi câu trả lời.
+
+**Phát hành `v0.8.0`** (02/11, #302/#303) — khép đợt giao diện Tuần 13. ROADMAP dời `D` sang `v0.9.0`,
+`I` sang `v0.10.0`.
+
+**Không gian `D`** — mốc Tuần 15, issue gốc #307, hai pull request:
+
+- **Lớp báo cáo và bảng điều khiển dựng từ tệp cấu hình** (#304). Chỉ số nằm trong các view
+  `bao_cao_*` (migration `0014`, tự chạy). View không tra mã trạng thái nào: kết thúc tra
+  `is_terminal`, đã tới phòng ban tra `sla_running`, mỗi hồ sơ theo bộ quy tắc của chính nó; giờ xử lý
+  đo bằng giờ làm việc. Dashboard *Vận hành yêu cầu* với bốn biểu đồ của ROADMAP lưu thành YAML trong
+  `infra/superset/bang-dieu-khien/`; Superset tự nạp đè theo uuid mỗi lần khởi động, sau khi dịch vụ
+  ứng dụng chạy xong migration. Tích hợp liên tục thêm kiểm tra thứ năm cho dashboard tự nạp
+- **Dữ liệu mở và dữ liệu trình diễn** (#306). Quản trị viên tải nhật ký sự kiện dạng CSV hay JSON ở
+  màn Hệ thống: cột cố định, mốc UTC, có sự kiện mở đầu từ lúc tạo hồ sơ, người thao tác chỉ bằng mã
+  định danh. `scripts/nap_du_lieu_trinh_dien.py` dùng lại kịch bản của bộ sinh nhật ký ảo, đổi đồng hồ
+  sang giờ làm việc thật và chỉ ghi thêm — biểu đồ có số mà nhật ký vẫn không bị sửa
+- **Nhúng bảng điều khiển vào cổng, lọc theo phòng** (#305). Mục *Báo cáo* trên thanh bên nhúng
+  dashboard bằng thư viện nhúng chính thức của Superset, không đăng nhập lần hai: dịch vụ ứng dụng kiểm
+  vai trò bằng token Keycloak rồi xin Superset một token khách sống 5 phút, kèm điều kiện lọc theo dòng
+  `ma_phong`. Ai xem được và xem tới đâu là cột `roles.report_scope` trong dữ liệu (migration `0015`
+  thêm cột cho cụm cũ, nên không phải `down -v`); mã phòng trong token được đối chiếu bảng
+  `departments` trước khi vào điều kiện lọc. Trưởng phòng thấy phòng mình, điều phối viên và quản trị
+  viên thấy toàn công ty, người gửi và người xử lý không thấy mục và nhận 403 khi gọi thẳng. Superset
+  tắt thì mục hiện màn không phản hồi. Kiểm bằng mắt điều kiện lọc trên 600 hồ sơ trình diễn; 11 phép
+  thử đột biến đều bị bắt
+
+**Phát hành `v0.9.0`** (03/11, #311/#312) — khép Giai đoạn 3.
+
+**Mở Giai đoạn 4 ở mức issue** (03/11). Kế hoạch tầng `I` chia bốn đợt; navigator chốt **khai phá quy
+trình làm trước** phân loại, làm cả bốn đợt trước 07/12, một mốc *Giai đoạn 4 — Không gian I* hạn
+29/11. Issue gốc #322, con #239 và #314–#320; #313 nâng khung giao diện có cảnh báo bảo mật; #321 kho
+tri thức để khi còn thời gian. Chưa viết mã issue nào của tầng `I`: ba bản ghi ADR-0006/0007/0008 vẫn
+ở *Đề xuất*. Nhóm hỏi giảng viên bằng bình luận trên từng issue ngày 03/11 — ba bản ghi và sáu issue
+cần thảo luận của Tuần 14 — và nhắc lại ở #322 ngày 08/11.
+
+**Bộ kiểm thử lên 507 bài pytest và 74 bài giao diện.**
+
+**Issue đã đóng**: #278, #299, #304, #305, #306, #307 (issue gốc)
+
+---
+
 ## Đang làm
 
-Không có issue nào đang làm dở. Đợt giao diện Tuần 13 đã khép; #239 (thẻ gợi ý của hệ thống) thuộc
-tầng `I`, làm sau `D`.
+Không có issue nào đang làm dở. Giai đoạn 3 đã khép; Giai đoạn 4 mới có issue.
 
 Ba bản ghi ADR-0006, ADR-0007 và ADR-0008 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp
-nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và mở issue tích hợp.
+nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và viết mã các issue tầng `I`
+phụ thuộc vào chúng.
 
 ---
 
@@ -764,26 +818,38 @@ nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và
 
 ### Theo thứ tự
 
-1. **Cắt bản phát hành cho đợt giao diện** — `main` có thêm phân trang, ngăn xem nhanh, chuyển động,
-   trang tài liệu và kịch bản giao diện chưa phát hành. Có `feat` nên theo Semantic Versioning là bản
-   MINOR, trong khi ROADMAP đang giữ `v0.8.0` cho không gian `D` — navigator chốt số phiên bản
-2. **#278** kiểm thử hồ sơ đang chạy giữ bộ quy tắc cũ khi bật bộ mới — trả lời câu hỏi của các thầy
-3. **Giai đoạn 3 — không gian `D`**: bảng điều khiển Superset trên nhật ký sự kiện, xuất CSV/JSON.
-   Hỏi navigator trước khi tạo issue. Tầng `I` chỉ tích hợp sau khi `P` và `D` ổn định — #239 chờ ở đây
-4. Tuần 14 — nền tảng vận hành: #242–#249, #251–#255; sáu issue cần thảo luận trước
-5. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
-6. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
-   viên giao từ 15/10; nên gửi bản phát hành mới ở mục 1
+1. **#313 nâng khung giao diện và các gói có cảnh báo bảo mật** — không chờ ai; cùng cập nhật này
+   lên `main` và cắt bản vá **`v0.9.1`** (navigator chốt 08/11)
+2. **#239 thẻ gợi ý có xác nhận hoặc ghi đè** — không cần bản ghi nào được chấp nhận: ghi lại người
+   giữ hay ghi đè gợi ý vào nhật ký, view đo tỷ lệ ghi đè. Lên `main` cùng đợt khai phá ở `v0.10.0`
+3. **Khi ADR-0007 được chấp nhận: #314 khai phá quy trình + #315 màn quy trình thực tế** — một pull
+   request, phát hành `v0.10.0`. Dịch vụ khai phá có tài khoản cơ sở dữ liệu chỉ đọc riêng, tạo ở lược
+   đồ khởi tạo, nên cả nhóm `down -v` một lần lúc phát hành. Cùng pull request sửa `CLAUDE.md` mục 5.2,
+   `ARCHITECTURE.md` mục 3, `dependencies.md`
+4. **Khi ADR-0008 được chấp nhận**: #316 dịch vụ mô hình (tùy chọn) → #317 gợi ý loại, ưu tiên, phòng
+   → #318 gợi ý người xử lý → #319 hồ sơ tương tự → #320 khuyến nghị bằng câu chữ. #321 khi còn thời gian
+5. Tuần 16 — nền tảng vận hành: #243 #249 #253 #254 làm được ngay; #247 #248 #251 làm sau tầng `I`;
+   sáu issue cần thảo luận chờ giảng viên
+6. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
+7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
+   viên giao từ 15/10; gửi bản phát hành mới nhất
 
 ### Chờ giảng viên
 
-Gom vào một buổi:
+Đã hỏi bằng bình luận trên từng issue ngày 03/11, nhắc lại ở #322 ngày 08/11:
 
-- **Chấp nhận ADR-0006, ADR-0007 và ADR-0008**. Riêng ADR-0007: chấp nhận thì câu *"không
-  nhúng thư viện vào mã nguồn dự án"* ở `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3.3 và
-  `dependencies.md` phải sửa thành "chỉ trong dịch vụ tách riêng" — PM4Py là thư viện, không
-  phải ứng dụng chạy nguyên ảnh như Wiki.js. ADR-0008 kéo theo khoảng 2,8 GiB bộ nhớ cho tầng
-  `I` — nhóm đề xuất để tầng này sau một hồ sơ Compose riêng
+- **Chấp nhận ADR-0007** (#48) — chặn #314, #315. Chấp nhận thì câu *"không nhúng thư viện vào mã
+  nguồn dự án"* ở `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3.3 và `dependencies.md` phải sửa thành
+  "chỉ trong dịch vụ tách riêng, giao tiếp qua HTTP" — PM4Py là thư viện, không phải ứng dụng chạy
+  nguyên ảnh như Wiki.js
+- **Chấp nhận ADR-0008** (#47) — chặn #316–#320. Kéo theo khoảng 2,8 GiB bộ nhớ, nên dịch vụ mô hình
+  là tùy chọn, cụm mặc định vẫn chạy đủ ở chế độ thủ công; gợi ý phòng của mô hình chỉ thay bảng ánh
+  xạ khi đúng từ 80 % trên bộ hồ sơ mẫu có nhãn
+- **ADR-0006** (#46) — nhóm đề xuất để kho tri thức ngoài phạm vi thi (#321); truy xuất tri thức ở
+  Giai đoạn 4 chỉ làm trên hồ sơ đã giải quyết
+- **Sáu issue Tuần 16 cần thảo luận**: #242, #244, #245 (chạm "triển khai lên máy chủ thật" ngoài phạm
+  vi), #246 (lưu giữ và xóa dữ liệu cá nhân), #252 (ủy quyền khi vắng mặt), #255 (màn quản trị cấu hình
+  quy trình)
 - **Xác nhận các con số navigator đã đặt tạm trong dữ liệu** — cơ sở và nguồn của từng số đã
   ghi ở `process-flow.md` mục 9 (#276). Những số còn ghi "giá trị mẫu, chưa có nguồn": gia hạn
   50 % mỗi lần, ân hạn một phần tư hạn, cửa sổ mở lại 7 ngày, hạn chuẩn theo loại; giới hạn tệp
@@ -817,7 +883,7 @@ Gom vào một buổi:
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. Tuần 11–12 có ba, cùng ngày 26/10: #102 và #80 đổi lược đồ và dữ liệu khởi tạo, #157 đổi một nhãn; kéo `dev` từ trước 26/10 về thì `down -v` một lần. #80 còn thêm biến vào `infra/.env.example` — có giá trị mặc định trong Compose nên `.env` cũ vẫn chạy. Tuần 13 có ba: #227 (cột `primary_scope`), #250 (bảng `request_type_fields`), #236 (realm, chủ đề đăng nhập); kéo `dev` qua 28/10 thì `down -v` một lần |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. Tuần 11–12 có ba, cùng ngày 26/10: #102 và #80 đổi lược đồ và dữ liệu khởi tạo, #157 đổi một nhãn; kéo `dev` từ trước 26/10 về thì `down -v` một lần. #80 còn thêm biến vào `infra/.env.example` — có giá trị mặc định trong Compose nên `.env` cũ vẫn chạy. Tuần 13 có ba: #227 (cột `primary_scope`), #250 (bảng `request_type_fields`), #236 (realm, chủ đề đăng nhập); kéo `dev` qua 28/10 thì `down -v` một lần. Tuần 14–15 **không có lần nào**: #304 chỉ thêm migration; #305 đổi lược đồ và dữ liệu khởi tạo nhưng kèm migration `0015` thêm cột cho cụm cũ — lệnh kiểm vẫn báo `down -v`, chỉ cần `up -d --build`. Lần tới là lúc phát hành đợt khai phá quy trình (tài khoản chỉ đọc mới) |
 | **Máy thành viên không đủ tài nguyên dựng cụm** | #48 phải chuyển người làm: bản dựng ảnh chứa hỏng giữa chừng với lỗi `EOF` trên một máy còn khoảng 7,5 GB trống. **Nguyên nhân chưa xác nhận** — nghi ổ gần đầy, hoặc Docker mất kết nối khi dựng nhiều ảnh cùng lúc. Con số 15 GB mà một trợ lý AI đòi cũng chưa đo. Ở #47, đĩa ảo Docker nằm trên ổ C gần đầy làm ảnh vừa kéo báo lỗi đọc ghi và ghi đồng bộ chỉ vài kB/s — số đo trên máy đó bỏ đi | Giao cho máy đó việc không cần dựng cụm — tài liệu, review pull request — cho tới khi giải phóng được ổ đĩa. Trước khi dựng hay đo, chuyển *Disk image location* của Docker Desktop sang ổ còn trống. Con số này cũng là dữ liệu cho mục **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
@@ -874,7 +940,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Lý do *Từ chối vì sai chuyên môn* **bắt buộc** | Là cờ `requires_note` trong dữ liệu |
 | **Ranh giới máy trạng thái** — ADR-0005 | Thao tác đổi hồ sơ — trạng thái, trường quyết định, nội dung — đi qua cửa chuyển trạng thái; lời nhắn đi bảng riêng. Người gửi sửa được nội dung khi hồ sơ chưa tới phòng ban. Giảng viên duyệt 24/09 |
 | Mức ưu tiên vẫn chỉ điều phối viên đặt | Ví dụ của giảng viên ở #81 có nhắc người gửi đổi mức ưu tiên; nhóm giữ ràng buộc Poka-yoke và đã báo lại |
-| Nhịp phát hành: **mỗi issue một pull request `dev → main`** | Từ 22/09. Issue đóng ngay; nhật ký thay đổi vẫn tách đúng từng mục |
+| Nhịp phát hành: **gom một tới ba issue mỗi pull request vào `dev`, một pull request `dev → main` cho cả đợt** | Từ 02/11, thay nhịp "mỗi issue một pull request `dev → main`" dùng từ 22/09. Nhật ký thay đổi vẫn mỗi commit squash một mục; đợt khép ít nhất mỗi cuối tuần. Navigator chốt 02/11 |
 | Mọi trợ lý AI đọc chung một bộ quy tắc | `AGENTS.md` trỏ về `CLAUDE.md`, để Antigravity và Codex cũng không tự commit — #117 |
 | Đổi hồ sơ mà giữ trạng thái là **cạnh tự trỏ** | Nhận việc về mình, sửa nội dung — đi qua cửa chuyển trạng thái để nhật ký giữ giá trị cũ. Mỗi trạng thái tối đa một cạnh tự trỏ, không có ở trạng thái chờ người khác — #127 |
 | Lời nhắn **không phải cạnh** | Bảng riêng chỉ ghi thêm, không vào nhật ký sự kiện, không chạm dòng hồ sơ. Hai chiều; ai mở được hồ sơ thì nhắn được; hồ sơ kết thúc thì chỉ đọc — #128 |
@@ -906,6 +972,13 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Tích hợp liên tục **chỉ chạy trên pull request** | Không chạy khi nhánh nhận commit, tránh sáu kiểm tra trùng. Navigator chốt 28/10 — #241 |
 | Khung trao đổi **chia phía theo người viết** | Bên phải chỉ là tin của chính người xem; tin của người gửi có nền riêng. Navigator góp ý 28/10 — #274 |
 | Con số của quy trình mẫu **có cơ sở hoặc ghi rõ là giá trị mẫu** | Bảng ở `process-flow.md` mục 9; mọi con số vẫn là dữ liệu doanh nghiệp tự đặt. Theo góp ý buổi báo cáo 29/10 — #276 |
+| Đổi quy trình: hồ sơ đang chạy **giữ bộ quy tắc lúc tạo** tới khi kết thúc | Mọi màn liệt kê lấy hồ sơ của mọi bộ còn hồ sơ đang mở; không chuyển hồ sơ sang bộ mới giữa chừng — #278, #299 |
+| Chỉ số báo cáo nằm trong **view cơ sở dữ liệu**, không tra mã trạng thái | View tra cờ trên bảng trạng thái và bộ quy tắc của từng hồ sơ, nên đổi quy trình không phải sửa view; bảng điều khiển là tệp YAML trong kho, Superset tự nạp — #304 |
+| Phạm vi xem báo cáo là **cột `roles.report_scope`** | `department` (phòng mình), `all` (toàn công ty), để trống là không xem; không tra tên vai trò trong mã. Navigator chốt 03/11 — #305 |
+| Bảng điều khiển **nhúng bằng thư viện chính thức**, cổng tự ghi tiêu đề và phạm vi | Không tự viết khung nhúng; ẩn tiêu đề và thanh lọc tiếng Anh của Superset. Navigator chốt 03/11 — #305 |
+| Tầng `I`: **khai phá quy trình làm trước** phân loại | Đổi thứ tự ROADMAP (trước đó phân loại → truy xuất → khai phá): khai phá là điểm sáng tạo của đề tài và chỉ chờ một bản ghi. Navigator chốt 04/11 — #322 |
+| Lệch chuẩn trong khai phá đo **so với luồng chính**, không so với cạnh thiết kế | Engine chỉ cho đi cạnh có trong bộ quy tắc, nên so với thiết kế luôn ra không lệch; đo làm lại, leo thang, mở lại, chuyển phòng nhiều lần và điểm nghẽn theo thời gian chờ — #314 |
+| Dịch vụ khai phá có **tài khoản cơ sở dữ liệu chỉ đọc riêng** | Không dùng chung tài khoản chỉ đọc của Superset; tạo ở lược đồ khởi tạo, cả nhóm `down -v` một lần lúc phát hành. Navigator chốt 04/11 — #314 |
 
 ---
 
@@ -1396,6 +1469,17 @@ Hiệu ứng hiện trang `.vao` chạy với `animation-fill-mode: both` nên s
 `transform`, và mọi phần tử `fixed` bên trong tính vị trí theo khung đó chứ không theo cửa sổ: ngăn xem
 nhanh lệch xuống, khối thao tác ở đáy rơi khỏi màn hình. Ngăn gắn thẳng vào `<body>`; từ #237 hiệu ứng
 hiện trang dùng `backwards`, không để lại `transform`.
+
+**Token khách của Superset: ba chỗ hỏng im lặng** (#305)
+
+Luồng ở `ARCHITECTURE.md` mục 6.3; đây là những chỗ làm mất thời gian điều tra. Thứ nhất, API xin token
+khách và API bật cấu hình nhúng đòi **phiên cookie cùng header `X-CSRFToken`** — chỉ gửi token
+đăng nhập dạng bearer thì bị từ chối. Thứ hai, token khách chỉ tới dashboard theo **id số của
+dashboard**, không theo uuid của cấu hình nhúng, dù thư viện nhúng ở trình duyệt lại nhận uuid. Thứ
+ba, ảnh gốc của Superset **không cấp cho vai khách quyền đọc kết nối dữ liệu**: token vẫn ký được, khung
+vẫn mở, nhưng biểu đồ trống hoặc trả 404 mà không có thông báo nào chỉ ra quyền — vì vậy quyền được cấp
+bằng kịch bản lúc khởi động, và kiểm tra thứ năm của tích hợp liên tục kiểm luôn quyền này. Ngoài ra,
+Superset mặc định gửi `X-Frame-Options: SAMEORIGIN`; cổng khác cổng thì phải đặt CSP `frame-ancestors`.
 
 ---
 

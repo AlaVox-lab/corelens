@@ -101,7 +101,7 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 
 | Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|
-| next | `16.3.5` | MIT | Có | Có | Khung ứng dụng. Dựng ở chế độ `standalone` để ảnh chứa không phải mang cả `node_modules` |
+| next | `16.4.5` | MIT | Có | Có | Khung ứng dụng. Dựng ở chế độ `standalone` để ảnh chứa không phải mang cả `node_modules`. Nâng từ `16.3.5` ở #313 để vá các cảnh báo mức nghiêm trọng của `npm audit`; kéo theo `sharp` 0.35.5 và `source-map-js` 1.2.2 (gián tiếp) |
 | react | `19.3.0` | MIT | Có | Có | |
 | react-dom | `19.3.0` | MIT | Có | Có | |
 | typescript | `5.9.3` | Apache-2.0 | Có | Có | Giữ ở nhánh 5.x. Bản 7 là bản viết lại bằng Go, mới ra và chưa rõ Next 16 đã theo kịp — chưa đáng mạo hiểm |
