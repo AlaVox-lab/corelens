@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+slice_name: Tỷ lệ ghi đè gợi ý của hệ thống (% lượt điều phối viên chọn khác)
+description: Cột là tỷ lệ ghi đè theo loại gợi ý và nguồn, chấm là số lượt làm mẫu (trục bên phải).
+certified_by: null
+certification_details: null
+viz_type: mixed_timeseries
+params:
+  viz_type: mixed_timeseries
+  datasource: 12__table
+  x_axis: nhan_goi_y
+  adhoc_filters: []
+  adhoc_filters_b: []
+  groupby: []
+  groupby_b: []
+  metrics:
+  - expressionType: SQL
+    sqlExpression: ROUND(100.0 * SUM(so_ghi_de) / NULLIF(COUNT(*), 0), 1)
+    label: Tỷ lệ ghi đè (%)
+    hasCustomLabel: true
+    optionName: metric_ghi_de_ty_le
+  metrics_b:
+  - expressionType: SQL
+    sqlExpression: COUNT(*)
+    label: Số lượt
+    hasCustomLabel: true
+    optionName: metric_ghi_de_so_luot
+  seriesType: bar
+  seriesTypeB: scatter
+  yAxisIndex: 0
+  yAxisIndexB: 1
+  row_limit: 10000
+  row_limit_b: 10000
+  color_scheme: supersetColors
+  show_legend: true
+  rich_tooltip: true
+  show_value: true
+  show_value_B: true
+  zoomable: false
+  truncateXAxis: true
+  x_axis_title: ''
+  y_axis_title: Tỷ lệ ghi đè (%)
+  y_axis_title_B: Số lượt
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  y_axis_bounds:
+  - 0
+  - 100
+query_context: null
+cache_timeout: null
+uuid: ae4666ca-b34f-4297-9d62-a93161744f2f
+version: 1.0.0
+dataset_uuid: 31396452-78a8-4371-8f3d-8aefd43edaea

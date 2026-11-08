@@ -24,15 +24,16 @@
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { TheGoiY } from "@/components/the-goi-y";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import { useAnCham } from "@/lib/chuyen-dong";
-import type { CanhDiDuoc, NhanCoMa } from "@/lib/kieu";
-import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
+import type { CanhDiDuoc, GoiY, LoaiYeuCau, NhanCoMa } from "@/lib/kieu";
+import { kieuTruong, type KieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
 /** Lựa chọn cho một ô chọn, hoặc lý do không nạp được chúng. */
 export type NguonLuaChon = NhanCoMa[] | { loi: string };
@@ -42,8 +43,13 @@ type Props = {
   cacCanh: CanhDiDuoc[];
   /** Giá trị điền sẵn cho từng trường: giá trị hồ sơ đang có, hoặc gợi ý. */
   giaTriDau: Record<string, string>;
-  /** Giá trị nào là gợi ý của hệ thống, để đánh dấu trong ô chọn. */
-  goiY: Record<string, string>;
+  /** Gợi ý của hệ thống theo trường (#239): hiện thành thẻ ngay trên ô chọn của trường đó. */
+  goiY: Record<string, GoiY>;
+  /**
+   * Danh mục loại yêu cầu kèm gợi ý của từng loại. Có thì thẻ gợi ý của ô phụ thuộc loại đổi theo
+   * khi người dùng đổi loại trong cùng biểu mẫu; không có thì thẻ đứng yên.
+   */
+  cacLoai?: LoaiYeuCau[];
   danhMuc: Partial<Record<NguonDanhMuc, NguonLuaChon>>;
   /** Thao tác gửi đi — một server action của buồng lái đang dùng bảng này. */
   hanhDong: (truoc: KetQuaThaoTac, duLieu: FormData) => Promise<KetQuaThaoTac>;
@@ -63,11 +69,14 @@ export function OTruong({
   truong,
   giaTriDau,
   goiY,
+  cacLoai,
   nguon,
 }: {
   truong: string;
   giaTriDau: string;
-  goiY?: string;
+  goiY?: GoiY;
+  /** Xem `Props.cacLoai`. */
+  cacLoai?: LoaiYeuCau[];
   nguon?: NguonLuaChon;
 }) {
   const kieu = kieuTruong(truong);
@@ -113,26 +122,100 @@ export function OTruong({
     );
   }
 
+  return (
+    <OChon
+      ten={ten}
+      kieu={kieu}
+      giaTriDau={giaTriDau}
+      goiY={goiY}
+      cacLoai={cacLoai}
+      lua={nguon}
+    />
+  );
+}
+
+/**
+ * Ô chọn, kèm thẻ gợi ý khi trường có gợi ý (#239).
+ *
+ * Gợi ý điền sẵn ô; người dùng đổi tùy ý và xác nhận bằng nút của bảng. Hai quy tắc của thẻ:
+ * - Thẻ nói "bạn đang chọn khác gợi ý" khi giá trị ô khác giá trị gợi ý — không chặn gì.
+ * - Nếu trường có gợi ý theo loại (`goiYTheoLoai`) và gợi ý đang có không phải của mô hình, đổi ô
+ *   loại trong cùng biểu mẫu thì thẻ và giá trị điền sẵn đổi theo loại mới. Người dùng đã tự đổi
+ *   ô này, hay hồ sơ đã có sẵn giá trị khác gợi ý, thì chỉ thẻ đổi, giá trị của họ giữ nguyên.
+ *   Gợi ý của mô hình đọc từ nội dung hồ sơ chứ không từ loại nên không đổi theo loại.
+ */
+function OChon({
+  ten,
+  kieu,
+  giaTriDau,
+  goiY,
+  cacLoai,
+  lua,
+}: {
+  ten: string;
+  kieu: KieuTruong;
+  giaTriDau: string;
+  goiY?: GoiY;
+  cacLoai?: LoaiYeuCau[];
+  lua: NhanCoMa[];
+}) {
+  const id = useId();
+  const idThe = `${id}-goi-y`;
+  const oChon = useRef<HTMLSelectElement>(null);
+
   // Giá trị đang có mà không còn trong danh sách — người xử lý đã rời phòng chẳng hạn —
   // thì để trống. Không có ô trống, trình duyệt sẽ âm thầm chọn mục đầu tiên, và một
   // cú bấm xác nhận vội sẽ giao hồ sơ cho người không ai chọn.
-  const coSan = nguon.some((m) => m.code === giaTriDau);
+  const [chon, datChon] = useState(lua.some((m) => m.code === giaTriDau) ? giaTriDau : "");
+  const [goiYHienTai, datGoiY] = useState<GoiY | null>(goiY ?? null);
+  // Người dùng đã tự quyết ô này: đã đổi tay, hoặc hồ sơ vào đây với một giá trị khác gợi ý
+  const daTuQuyet = useRef(giaTriDau !== "" && giaTriDau !== goiY?.code);
+
+  const theoLoai = kieu.goiYTheoLoai;
+  const gocGoiY = goiY?.source;
+  useEffect(() => {
+    if (!theoLoai || !cacLoai || gocGoiY === "model") return;
+    const oLoai = oChon.current?.form?.elements.namedItem(`${TIEN_TO_TRUONG}${theoLoai.truong}`);
+    if (!(oLoai instanceof HTMLSelectElement)) return;
+    const doi = () => {
+      const loai = cacLoai.find((l) => l.code === oLoai.value);
+      const moi = (loai && theoLoai.lay(loai)) ?? null;
+      datGoiY(moi);
+      if (!daTuQuyet.current) datChon(moi && lua.some((m) => m.code === moi.code) ? moi.code : "");
+    };
+    oLoai.addEventListener("change", doi);
+    return () => oLoai.removeEventListener("change", doi);
+  }, [theoLoai, cacLoai, gocGoiY, lua]);
 
   return (
-    <label style={{ display: "grid", gap: "6px" }}>
-      <span style={KIEU_NHAN}>{kieu.nhan}</span>
-      <select name={ten} defaultValue={coSan ? giaTriDau : ""} className="o-nhap">
+    <div style={{ display: "grid", gap: "6px" }}>
+      <label htmlFor={id} style={KIEU_NHAN}>
+        {kieu.nhan}
+      </label>
+      {goiYHienTai && <TheGoiY id={idThe} goiY={goiYHienTai} dangChon={chon} />}
+      <select
+        id={id}
+        ref={oChon}
+        name={ten}
+        value={chon}
+        onChange={(e) => {
+          daTuQuyet.current = true;
+          datChon(e.target.value);
+        }}
+        aria-describedby={goiYHienTai ? idThe : undefined}
+        className="o-nhap"
+      >
         {/* Không có giá trị sẵn thì để trống. Gửi đi trống thì ràng buộc trên cạnh
             sẽ nói rõ phải chọn gì — không đoán hộ người dùng. */}
-        {!coSan && <option value="">— Chọn {kieu.nhan.toLowerCase()} —</option>}
-        {nguon.map((m) => (
+        {chon === "" && <option value="">— Chọn {kieu.nhan.toLowerCase()} —</option>}
+        {lua.map((m) => (
           <option key={m.code} value={m.code}>
             {m.label}
-            {m.code === goiY ? " · gợi ý" : ""}
+            {m.code === goiYHienTai?.code ? " · gợi ý" : ""}
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -141,6 +224,7 @@ export function BangThaoTac({
   cacCanh,
   giaTriDau,
   goiY,
+  cacLoai,
   danhMuc,
   hanhDong,
   khiHet,
@@ -284,6 +368,7 @@ export function BangThaoTac({
                 truong={truong}
                 giaTriDau={giaTriDau[truong] ?? ""}
                 goiY={goiY[truong]}
+                cacLoai={cacLoai}
                 nguon={nguonMa ? danhMuc[nguonMa] : undefined}
               />
             );

@@ -15,6 +15,8 @@
 //
 // Gặp trường lạ thì hiện ô nhập chữ kèm tên trường, không vỡ trang.
 
+import type { GoiY, LoaiYeuCau } from "@/lib/kieu";
+
 export type NguonDanhMuc = "priorities" | "departments" | "request-types" | "assignees";
 
 export type KieuTruong = {
@@ -27,12 +29,22 @@ export type KieuTruong = {
   so?: boolean;
   /** Bộ trường riêng theo loại (#250): ô ẩn mang JSON, dựng bằng `OTruongRieng`. */
   rieng?: boolean;
+  /**
+   * Gợi ý của trường này đổi theo loại yêu cầu đang chọn trong cùng biểu mẫu (#239): `truong` là
+   * ô loại cần nghe, `lay` đọc gợi ý của loại từ danh mục `/request-types`. Danh mục do dịch vụ
+   * trả; ở đây chỉ nói gợi ý nằm ở thuộc tính nào của loại.
+   */
+  goiYTheoLoai?: { truong: string; lay: (loai: LoaiYeuCau) => GoiY | null | undefined };
 };
 
 const BANG: Record<string, KieuTruong> = {
   request_type_code: { nhan: "Loại yêu cầu", nguon: "request-types" },
   priority_code: { nhan: "Mức ưu tiên", nguon: "priorities" },
-  department_code: { nhan: "Phòng ban phụ trách", nguon: "departments" },
+  department_code: {
+    nhan: "Phòng ban phụ trách",
+    nguon: "departments",
+    goiYTheoLoai: { truong: "request_type_code", lay: (loai) => loai.suggested_department },
+  },
   // Danh mục tra từ danh bạ Keycloak (#84), theo phòng đang giữ hồ sơ. Giá trị gửi đi
   // là định danh, nhãn hiển thị là tên thật.
   assignee_id: { nhan: "Người xử lý", nguon: "assignees" },

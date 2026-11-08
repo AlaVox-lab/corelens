@@ -81,6 +81,29 @@ Trong lược đồ dữ liệu, tách rõ hai nhóm trường:
 Đồng thời ghi lại việc con người có ghi đè gợi ý của AI hay không, phục vụ đo lường
 độ chính xác thực tế của mô hình.
 
+**Khuôn gợi ý và ghi đè — đã cài đặt (#239).**
+
+- **Một gợi ý** là `GoiY(field, code, label, reason, source, confidence)` trong
+  `backend/app/intelligence/goi_y.py`. `confidence` để trống khi nguồn không có con số thật — bảng
+  ánh xạ không có, nên giao diện không vẽ độ tin cậy nào cho nó
+- **Nguồn, theo thứ tự**: cột `suggested_*` của hồ sơ có giá trị (tầng `I` ghi, nguồn `model`) thì
+  dùng nó; trống thì tra bảng ánh xạ của dữ liệu khởi tạo (`request_type_routing`, nguồn `routing`)
+  theo **loại cuối cùng** của hồ sơ — kể cả loại vừa đổi trong cùng thao tác. Không nguồn nào có gì
+  thì không có gợi ý, ô chọn vẫn dùng tay. Thêm gợi ý cho một trường quyết định mới là thêm một hàm
+  vào `_NGUON_GOI_Y`
+- **Một hàm cho cả hai đầu**: màn điều phối vẽ thẻ gợi ý và cửa chuyển trạng thái đem so đều gọi
+  cùng hàm, nên thứ người dùng thấy đúng là thứ được ghi. Danh mục `/request-types` mang phòng gợi
+  ý của từng loại, để thẻ đổi theo ngay khi điều phối viên đổi loại
+- **Xác nhận bằng chính thao tác thật.** Gợi ý chỉ điền sẵn ô; không có nút "chấp nhận" riêng, không
+  có "hoàn tác" — chuyển trạng thái không quay lui và nhật ký chỉ ghi thêm
+- **Dấu giữ hay ghi đè ghi ở cửa chuyển trạng thái** (mục 6.1, bước 4), vào cột riêng
+  `event_log.suggestion` = `{trường: {suggested, chosen, overridden, source, confidence}}` — mỗi
+  trường có gợi ý mà người dùng gửi kèm. Cột riêng chứ không trộn vào `changes`, để `changes` giữ
+  đúng một nghĩa "trường nào đổi từ gì sang gì". Không lưu dấu nào trên dòng hồ sơ: hồ sơ chỉ mang
+  giá trị hiện tại, còn mỗi lần xác nhận là một sự kiện
+- **Đo trên lớp báo cáo**: view `bao_cao_goi_y` (mục 6.3), biểu đồ tỷ lệ ghi đè theo trường và nguồn
+  trên bảng điều khiển. Đây là con số quyết định khi nào gợi ý của mô hình được thay bảng ánh xạ
+
 Ba lý do: đúng nguyên lý Human-in-the-loop mà đề bài nêu; nếu AI phân luồng sai thì
 người dùng vẫn điều chỉnh được; và nếu mô hình lỗi vào ngày trình diễn, hệ thống
 vẫn vận hành ở chế độ thủ công.
@@ -283,7 +306,7 @@ dx-os-lab/
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký sự kiện CSV, JSON (#306)
-│   │   └── intelligence/        # [I] chưa cài đặt
+│   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239)
 │   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
@@ -749,6 +772,7 @@ sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi —
 | `bao_cao_phan_bo_loai` | tuần gửi × phòng × loại | Phân bố loại yêu cầu |
 | `bao_cao_thoi_gian_xu_ly` | loại: trung vị giờ xử lý, tỷ lệ vi phạm toàn công ty | tóm tắt |
 | `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
+| `bao_cao_goi_y` | một gợi ý đã được giữ hay ghi đè: trường, nguồn, giá trị gợi ý và giá trị chọn (migration `0016`, #239) | Tỷ lệ ghi đè gợi ý |
 
 Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
 
@@ -767,7 +791,7 @@ View đặt ở schema `public` và chạy bằng quyền của chủ sở hữu
 quyền đọc mặc định cấp lúc dựng cụm, không đọc thẳng được gì nó không cần. Đổi một view thì tạo
 migration mới bằng `CREATE OR REPLACE VIEW`.
 
-**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, bốn biểu đồ và dashboard *Vận hành
+**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, năm biểu đồ (thứ năm là tỷ lệ ghi đè gợi ý, #239) và dashboard *Vận hành
 yêu cầu* nằm ở `infra/superset/bang-dieu-khien/` dạng YAML. Lúc khởi động, điểm vào của ảnh
 Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi chạy `superset import-directory
 --overwrite` — nạp đè theo uuid, khởi động lại không sinh bản trùng, cụm dựng mới có sẵn bảng

@@ -44,7 +44,11 @@ def _thay_doi_truong(ctx: TransitionContext, assignee_label: str | None) -> dict
 
 
 def record_event(
-    session: Session, ctx: TransitionContext, *, assignee_label: str | None = None
+    session: Session,
+    ctx: TransitionContext,
+    *,
+    assignee_label: str | None = None,
+    suggestion: dict | None = None,
 ) -> EventLog:
     """Ghi một bản ghi nhật ký cho lần chuyển trạng thái đang diễn ra.
 
@@ -58,6 +62,8 @@ def record_event(
 
     Phải gọi TRƯỚC khi hồ sơ được cập nhật: phần "từ → sang" đọc giá trị cũ từ chính
     hồ sơ. `assignee_label` là tên người được giao mới, do phía gọi tra từ danh bạ.
+    `suggestion` là dấu giữ hay ghi đè gợi ý (#239), do cửa chuyển trạng thái tính bằng
+    `app.intelligence.goi_y.ghi_nhan_goi_y` — đi vào cột riêng, không trộn vào `changes`.
     """
     su_kien = EventLog(
         case_id=ctx.case.id,
@@ -68,6 +74,7 @@ def record_event(
         to_state=ctx.transition.to_state,
         note=ctx.note,
         changes=_thay_doi_truong(ctx, assignee_label),
+        suggestion=suggestion,
     )
     session.add(su_kien)
 

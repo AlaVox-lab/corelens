@@ -25,6 +25,7 @@ position:
     children:
     - ROW-1
     - ROW-2
+    - ROW-3
     parents:
     - ROOT_ID
   HEADER_ID:
@@ -106,6 +107,29 @@ position:
       width: 6
       height: 55
       uuid: 72c787af-05e8-4f58-a26a-9547f1374215
+  ROW-3:
+    type: ROW
+    id: ROW-3
+    children:
+    - CHART-13
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-13:
+    type: CHART
+    id: CHART-13
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-3
+    meta:
+      chartId: 13
+      width: 12
+      height: 55
+      uuid: ae4666ca-b34f-4297-9d62-a93161744f2f
 metadata:
   color_scheme: supersetColors
   refresh_frequency: 0

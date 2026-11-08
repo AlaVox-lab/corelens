@@ -32,9 +32,7 @@ from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import EventLog, Request
 from app.models.workflow_config import (
-    Department,
     Priority,
-    RequestTypeRouting,
     State,
     Transition,
     TransitionRole,
@@ -59,7 +57,9 @@ from app.workflow.routes import (
     _ma_ho_so,
     _o_trang_thai,
     _tom_tat,
+    goi_y_ra,
 )
+from app.intelligence.goi_y import goi_y_phong
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
@@ -135,21 +135,6 @@ def _nhan_co_ma(ban_ghi) -> NhanCoMa | None:
     return NhanCoMa(code=ban_ghi.code, label=ban_ghi.label) if ban_ghi else None
 
 
-def _phong_goi_y(session: Session, ho_so: Request) -> Department | None:
-    """Phòng ban mặc định cho loại yêu cầu của hồ sơ, nếu có."""
-    if not ho_so.request_type_code:
-        return None
-    return session.scalars(
-        select(Department)
-        .join(RequestTypeRouting, RequestTypeRouting.department_code == Department.code)
-        .where(
-            RequestTypeRouting.request_type_code == ho_so.request_type_code,
-            RequestTypeRouting.is_default,
-            Department.is_active,
-        )
-    ).first()
-
-
 def _dung_chi_tiet_dieu_phoi(
     session: Session, ho_so: Request, actor: Actor
 ) -> HoSoDieuPhoiRa:
@@ -163,7 +148,8 @@ def _dung_chi_tiet_dieu_phoi(
         requester_label=ho_so.requester_label,
         priority=_nhan_co_ma(uu_tien),
         state_entered_at=luc_vao or ho_so.created_at,
-        suggested_department=_nhan_co_ma(_phong_goi_y(session, ho_so)),
+        # Cùng hàm cửa chuyển trạng thái dùng để ghi giữ hay ghi đè (#239)
+        suggested_department=goi_y_ra(goi_y_phong(session, ho_so, ho_so.request_type_code)),
         requested_by_me=ho_so.requester_id == actor.id,
     )
 
