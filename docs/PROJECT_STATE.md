@@ -15,7 +15,7 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-08 |
-| Phiên bản hiện tại | **`v0.9.0`** (03/11) — khép Giai đoạn 3, không gian `D`. `v0.8.0` (02/11) khép đợt giao diện Tuần 13. `main` không có gì chưa phát hành |
+| Phiên bản hiện tại | **`v0.9.1`** (08/11) — bản vá cảnh báo bảo mật của khung giao diện (#313). `v0.9.0` (03/11) khép Giai đoạn 3, không gian `D`. `main` không có gì chưa phát hành |
 | Giai đoạn | **Giai đoạn 3 đã khép** (`v0.9.0`): lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình, nhúng trong cổng lọc theo phòng, xuất dữ liệu mở. **Giai đoạn 4 — không gian `I`** đã có issue (#322 và các issue con), chưa viết mã: khai phá quy trình làm trước, chờ giảng viên chấp nhận ADR-0007 |
 | Mốc công việc | **Tuần 15 — Không gian D** (đóng): 4 issue đóng (#304–#307). **Giai đoạn 4 — Không gian I** (hạn 29/11): 11 issue mở. **Tuần 14 — Nền tảng vận hành** hết hạn 15/11 với 10 đóng, 14 còn mở — dời sang **Tuần 16 — Nền tảng vận hành** (hạn 29/11) và đóng mốc cũ ngày 08/11 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
@@ -818,8 +818,7 @@ phụ thuộc vào chúng.
 
 ### Theo thứ tự
 
-1. **#313 nâng khung giao diện và các gói có cảnh báo bảo mật** — không chờ ai; cùng cập nhật này
-   lên `main` và cắt bản vá **`v0.9.1`** (navigator chốt 08/11)
+1. ~~#313 nâng khung giao diện và các gói có cảnh báo bảo mật~~ — xong 08/11, bản vá **`v0.9.1`**
 2. **#239 thẻ gợi ý có xác nhận hoặc ghi đè** — không cần bản ghi nào được chấp nhận: ghi lại người
    giữ hay ghi đè gợi ý vào nhật ký, view đo tỷ lệ ghi đè. Lên `main` cùng đợt khai phá ở `v0.10.0`
 3. **Khi ADR-0007 được chấp nhận: #314 khai phá quy trình + #315 màn quy trình thực tế** — một pull
