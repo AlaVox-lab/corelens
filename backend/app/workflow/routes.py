@@ -76,7 +76,9 @@ from app.workflow.messages import (
     thay_noi_bo,
 )
 from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
+from app.intelligence.goi_y import GoiY, goi_y_phong_theo_loai
 from app.workflow.schemas import (
+    GoiYRa,
     TruongRiengRa,
     CanhDiDuocRa,
     ChuyenTrangThaiVao,
@@ -478,9 +480,24 @@ def danh_muc_loai_yeu_cau(
             description=l.description,
             sla_hours=l.sla_hours,
             fields=[_truong_ra(t) for t in truong_cua_loai(session, l.code)],
+            suggested_department=goi_y_ra(goi_y_phong_theo_loai(session, l.code)),
         )
         for l in cac_loai
     ]
+
+
+def goi_y_ra(goi_y: GoiY | None) -> GoiYRa | None:
+    """Gợi ý của tầng I thành dạng trả cho giao diện (#239)."""
+    if goi_y is None:
+        return None
+    return GoiYRa(
+        code=goi_y.code,
+        label=goi_y.label,
+        reason=goi_y.reason,
+        source=goi_y.source,
+        source_label=goi_y.source_label,
+        confidence=goi_y.confidence,
+    )
 
 
 @router.get("/states", response_model=list[TrangThaiRa])

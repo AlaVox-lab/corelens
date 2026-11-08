@@ -102,9 +102,10 @@ class Request(Base):
     # NGUYÊN TẮC BẤT DI DỊCH của đề tài: AI chỉ gợi ý, con người quyết định. Tầng I
     # không bao giờ được ghi vào bốn trường quyết định ở trên — xem CLAUDE.md mục 4.3.
     #
-    # Không có cột riêng ghi "người dùng có ghi đè gợi ý hay không": con số đó tính
-    # được bằng truy vấn `WHERE suggested_x IS DISTINCT FROM x`. Một cột lưu sẵn sẽ
-    # lệch khỏi sự thật ngay lần đầu ai đó quên cập nhật nó.
+    # Không có cột nào trên hồ sơ ghi "người dùng có ghi đè gợi ý hay không": một cột lưu
+    # sẵn sẽ lệch khỏi sự thật ngay lần đầu ai đó quên cập nhật nó, và một hồ sơ có thể được
+    # xác nhận nhiều lần. Mỗi lần xác nhận là một sự kiện — dấu giữ hay ghi đè nằm ở
+    # `EventLog.suggestion`, do cửa chuyển trạng thái ghi (#239).
     suggested_request_type_code: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_department_code: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_priority_code: Mapped[str | None] = mapped_column(Text, default=None)
@@ -209,6 +210,16 @@ class EventLog(Base):
     # người xử lý kèm thêm "from_label", "to_label" là tên tại thời điểm đổi (#100).
     # Hồ sơ chỉ mang giá trị hiện tại; lịch sử đổi nằm ở đây. NULL khi không đổi gì.
     changes: Mapped[dict | None] = mapped_column(JSONB, default=None)
+
+    # Người giữ hay ghi đè gợi ý của hệ thống ở lần chuyển này (#239), dạng {trường:
+    # {"suggested", "chosen", "overridden", "source", "confidence"}} — xem
+    # `app/intelligence/goi_y.py`. Cột riêng chứ không nằm trong `changes`, để `changes` giữ
+    # đúng một nghĩa "trường nào đổi từ gì sang gì". NULL khi lần chuyển không gửi trường nào
+    # có gợi ý, hoặc không nguồn gợi ý nào có giá trị.
+    #
+    # `none_as_null`: không có nó, SQLAlchemy ghi `None` thành giá trị JSON `null` chứ không phải
+    # SQL NULL, và `jsonb_each` của lớp báo cáo nổ "non-object" trên mọi dòng không có gợi ý.
+    suggestion: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), default=None)
 
     case: Mapped[Request] = relationship(back_populates="events")
 

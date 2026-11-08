@@ -101,7 +101,8 @@ export function ThaoTacDieuPhoi({ d, ngan }: { d: DuLieuDieuPhoi; ngan?: { sauKh
         maHoSo={ho_so.id}
         cacCanh={ho_so.allowed_transitions}
         giaTriDau={giaTriDau}
-        goiY={goiYPhong ? { department_code: goiYPhong.code } : {}}
+        goiY={goiYPhong ? { department_code: goiYPhong } : {}}
+        cacLoai={cacLoai ?? undefined}
         danhMuc={{
           "request-types": thanhNhanCoMa(cacLoai),
           priorities: thanhNhanCoMa(cacMuc),
