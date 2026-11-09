@@ -5,6 +5,18 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.10.0] - 2026-11-09
+
+### Kiểm thử
+
+- Đưa công cụ kiểm chứng vào kho để người khác chạy lại ([#331](https://github.com/AlaVox-lab/dx-os-lab/issues/331)) ([51bf37c](https://github.com/AlaVox-lab/dx-os-lab/commit/51bf37cfa78046ba93d2f1f9e89168665b8ad684))
+
+### Tính năng mới
+
+- **i-classify:** Thẻ gợi ý có xác nhận và đo tỷ lệ ghi đè ([#328](https://github.com/AlaVox-lab/dx-os-lab/issues/328)) ([53af88b](https://github.com/AlaVox-lab/dx-os-lab/commit/53af88babc38cdda5b1a5264bacce3a80fbc6b46))
+- **infra:** Tiêu đề bảo mật, giới hạn tốc độ và nhịp bộ quét ([#329](https://github.com/AlaVox-lab/dx-os-lab/issues/329)) ([193c609](https://github.com/AlaVox-lab/dx-os-lab/commit/193c6095052137a6f32322ee425ea32b81620980))
+- **d-schema:** Đưa cấu hình vào migration, nâng cấp giữ dữ liệu ([#330](https://github.com/AlaVox-lab/dx-os-lab/issues/330)) ([23322cf](https://github.com/AlaVox-lab/dx-os-lab/commit/23322cf09c9e940475d7a4dba882016a56d5dd50))
+
 ## [0.9.1] - 2026-11-08
 
 ### Sửa lỗi
