@@ -131,7 +131,7 @@ số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/
 thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
 đó, kiểm tra sự tồn tại trước thay vì giả định.
 
-**Bốn quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
+**Năm quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
 thứ gì thuộc bốn mảng này:
 
 | Không gian | Quyết định | Bản ghi |
@@ -140,6 +140,7 @@ thứ gì thuộc bốn mảng này:
 | `core` | SeaweedFS `4.45` làm kho lưu trữ tệp đính kèm | ADR-0002 |
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
+| `I` | PM4Py `2.7.23.8` trong **dịch vụ khai phá tách riêng** (`services/khai-pha/`), kèm bộ máy dự phòng không dùng thư viện đó | ADR-0007 |
 
 Bản ghi mang trạng thái *Đề xuất* **chưa phải quyết định**. Không viết mã theo nó cho tới
 khi nó chuyển sang *Đã chấp nhận*. ADR-0005 — ranh giới máy trạng thái với thao tác không
@@ -293,19 +294,24 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
+| Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later |
 
-Ba nền tảng Open-Core cuối bảng đều **chạy như dịch vụ độc lập**, giao tiếp qua giao
-thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng.
+Ba nền tảng Keycloak, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
+thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
+khai phá chỉ được `import` trong dịch vụ khai phá, dịch vụ ứng dụng gọi nó qua HTTP (mục 5.2).
 
 **Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
 với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.
 
-Ba mảng khảo sát còn lại của giai đoạn đầu đều đã có bản ghi ở trạng thái *Đề xuất*, chờ
-giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006), thư viện khai phá quy trình
-cho `I` (#48, ADR-0007), cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ cho `I` (#47, ADR-0008).
+ADR-0007 (thư viện khai phá quy trình cho `I`, #48) đã được navigator chấp nhận ngày 08/11/2026 và
+cài đặt ở #314; giảng viên chưa xác nhận — không nhận thì đổi sang bộ máy dự phòng bằng một biến môi
+trường (`services/khai-pha/README.md`). Các mảng khảo sát còn lại đã có bản ghi ở trạng thái *Đề xuất*, chờ
+giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006 — navigator để ngoài phạm vi thi), cơ sở
+dữ liệu véc-tơ và mô hình ngôn ngữ cho `I` (#47, ADR-0008 — navigator đã chấp nhận, đổi trạng thái khi
+cài đặt ở #316).
 
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
-nghệ mới** — bốn quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
+nghệ mới** — năm quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
 
 ### 5.1. Header giấy phép — bắt buộc trên mọi tệp mã mới
 
@@ -331,8 +337,11 @@ Nhiều nền tảng tự nhận nguồn mở nhưng dùng giấy phép **không
 BSL, SSPL, Elastic License, Commons Clause, fair-code. Dùng chúng sẽ khiến dự án
 không được chấm điểm.
 
-Với AGPL (hợp lệ nhưng copyleft mạnh): chỉ dùng dưới dạng dịch vụ độc lập giao tiếp
-qua HTTP/API, không nhúng thư viện vào mã nguồn.
+Với AGPL (hợp lệ nhưng copyleft mạnh): chỉ dùng trong **một dịch vụ tách riêng** — thư mục riêng,
+ảnh chứa riêng, giao tiếp với phần còn lại qua HTTP/API. Một nền tảng AGPL chạy nguyên khối như dịch
+vụ độc lập, hoặc một thư viện AGPL được `import` **chỉ bên trong** dịch vụ tách riêng đó (ADR-0007:
+PM4Py chỉ nằm trong `services/khai-pha/`). Dịch vụ ứng dụng và cổng không bao giờ `import` thư viện
+AGPL; CI chặn điều đó. Mã của nhóm trong dịch vụ tách riêng vẫn mang header MIT.
 
 Khi đề xuất bất kỳ thư viện hay nền tảng nào, **luôn nêu giấy phép của nó**.
 

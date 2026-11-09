@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     # Thư mục dữ liệu khởi tạo (infra/seed/ gắn vào container), bộ nạp đọc lần đầu dựng cụm (#254)
     seed_dir: str = "/seed"
 
+    # --- Dịch vụ khai phá quy trình (#314, ADR-0007) ------------------------
+    #
+    # Dịch vụ riêng, chỉ nghe trong mạng của Compose; chỉ dịch vụ này gọi nó, sau khi đã kiểm vai trò
+    # và gắn phạm vi phòng. Tắt thì chỉ màn quy trình thực tế báo không phản hồi.
+    mining_url: str = "http://khai-pha:8000"
+    mining_timeout_seconds: float = 30.0
+    # Tài khoản cơ sở dữ liệu chỉ đọc riêng của dịch vụ khai phá — migration 0019 tạo và cấp quyền
+    mining_db_user: str = "khai_pha_readonly"
+    mining_db_password: str = ""
+
     # --- Định danh tập trung, xem ADR-0001 và #43 --------------------------
     #
     # Vì sao hai địa chỉ khác nhau cho cùng một Keycloak: trình duyệt đi qua

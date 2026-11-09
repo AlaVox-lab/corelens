@@ -1,0 +1,15 @@
+# Phụ thuộc của dịch vụ khai phá quy trình (#314). Ghim bằng ==, cùng khuôn với backend/.
+#
+# pm4py là thư viện AGPL-3.0-or-later (ADR-0007): chỉ dịch vụ này cài và nhập nó. Phần mở rộng
+# [stable] của chính pm4py ghim sẵn bộ numpy, pandas, scipy, matplotlib… đã thử cùng bản này, nên ai
+# dựng lại cũng nhận đúng một bộ phiên bản. Giấy phép từng gói: docs/dependencies.md.
+#
+# Gỡ pm4py (đặt KHAI_PHA_BO_MAY=noi_bo) thì xóa dòng pm4py; pandas vẫn không cần cho bộ máy dự phòng.
+
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+psycopg[binary]==3.3.5
+pm4py[stable]==2.7.23.8
+pandas==3.0.5
+pytest==9.1.1
+httpx==0.28.1

@@ -37,7 +37,7 @@ from .chung import (
     GOC_KHO,
 )
 
-DICH_VU_KHONG_SUPERSET = ("postgres", "keycloak", "seaweedfs", "backend", "frontend")
+DICH_VU_KHONG_SUPERSET = ("postgres", "keycloak", "seaweedfs", "backend", "frontend", "khai-pha")
 
 
 def cong_dang_dung(cong: int) -> bool:

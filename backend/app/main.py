@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.analytics.bang_dieu_khien import pham_vi_cua
 from app.analytics.bang_dieu_khien import router as router_bang_dieu_khien
+from app.analytics.khai_pha import router as router_khai_pha
 from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
@@ -155,6 +156,7 @@ app.include_router(router_hop_thu)
 app.include_router(router_tep)
 app.include_router(router_du_lieu_mo)
 app.include_router(router_bang_dieu_khien)
+app.include_router(router_khai_pha)
 
 
 def _do_suc_khoe(session: Session) -> dict:

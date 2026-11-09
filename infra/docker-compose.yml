@@ -140,6 +140,28 @@ services:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------
+  # Dịch vụ khai phá quy trình — không gian I (#314, ADR-0007)
+  # Dịch vụ riêng, nơi duy nhất dùng thư viện AGPL pm4py. KHÔNG mở cổng ra máy: chỉ dịch vụ ứng
+  # dụng gọi nó trong mạng của Compose, sau khi đã kiểm vai trò và gắn phạm vi phòng
+  # ---------------------------------------------------------------------------
+  khai-pha:
+    build:
+      context: ../services/khai-pha
+    image: dxlab-khai-pha:${DXLAB_VERSION}
+    container_name: dxlab-khai-pha
+    restart: unless-stopped
+    environment:
+      # Tài khoản CHỈ ĐỌC riêng, do migration 0019 của dịch vụ ứng dụng tạo với cùng tên và mật khẩu
+      KHAI_PHA_DATABASE_URI: postgresql://${MINING_READONLY_USER:-khai_pha_readonly}:${MINING_READONLY_PASSWORD:-doi_mat_khau_nay_truoc_khi_trien_khai}@postgres:5432/${DXLAB_DB_NAME}
+      # pm4py (mặc định) hay noi_bo — bộ máy dự phòng không dùng thư viện khai phá, xem README dịch vụ
+      KHAI_PHA_BO_MAY: ${MINING_ENGINE:-pm4py}
+      KHAI_PHA_BOI_SO_NGHEN: ${MINING_BOTTLENECK_FACTOR:-2}
+    depends_on:
+      # Tài khoản chỉ đọc và view báo cáo do migration của dịch vụ ứng dụng tạo
+      backend:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
   # Dịch vụ ứng dụng — FastAPI
   # Toàn bộ nghiệp vụ nằm trong bảng dữ liệu, xem ARCHITECTURE.md mục 5.2
   # ---------------------------------------------------------------------------
@@ -201,6 +223,12 @@ services:
       DXLAB_SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
       DXLAB_SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
       DXLAB_PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
+      # Dịch vụ khai phá quy trình (#314). Cố ý KHÔNG depends_on khai-pha (chính nó chờ dịch vụ này):
+      # dịch vụ khai phá tắt thì chỉ màn quy trình thực tế báo không phản hồi. Migration 0019 tạo tài
+      # khoản chỉ đọc của nó bằng tên và mật khẩu dưới đây.
+      DXLAB_MINING_URL: http://khai-pha:8000
+      DXLAB_MINING_DB_USER: ${MINING_READONLY_USER:-khai_pha_readonly}
+      DXLAB_MINING_DB_PASSWORD: ${MINING_READONLY_PASSWORD:-doi_mat_khau_nay_truoc_khi_trien_khai}
     volumes:
       # Dữ liệu khởi tạo (#254): bộ nạp chạy sau Alembic, nạp lần đầu khi chưa có bộ quy tắc nào
       # rồi lần nào khởi động cũng kiểm nhất quán đồ thị — app/cau_hinh/khoi_tao.py

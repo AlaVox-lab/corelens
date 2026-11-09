@@ -129,10 +129,11 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
+| Khai phá quy trình | PM4Py `2.7.23.8` | AGPL-3.0-or-later | Không gian `I`. Chỉ nằm trong **dịch vụ khai phá tách riêng** `services/khai-pha/`, giao tiếp qua HTTP; có bộ máy dự phòng không dùng thư viện này. Xem [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) và mục 6.4 |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Cả bảy thành phần đã chốt đều dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với
-MIT của sản phẩm.
+Bảy thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
+mang AGPL nên bị giữ sau ranh giới dịch vụ — mục 3.3.
 
 **Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
 leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết** trong cổng Next.js.
@@ -255,14 +256,13 @@ nơi tạo ra giá trị của đề tài, và không nền tảng nào sinh s�
 ### 3.2. Đã khảo sát, chờ duyệt
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Ba nhóm thành phần sau đã khảo sát xong, mỗi nhóm có một bản ghi ở trạng
-thái *Đề xuất*. **Chưa phải quyết định**: chưa có thành phần nào trong số này được tích hợp,
+yêu cầu Open-Core. Hai nhóm thành phần sau đã khảo sát xong, mỗi nhóm có một bản ghi ở trạng
+thái *Đề xuất* (nhóm thứ ba — thư viện khai phá quy trình, ADR-0007 — đã chấp nhận và nằm ở mục 3.1). **Chưa phải quyết định**: chưa có thành phần nào trong số này được tích hợp,
 và mục 3.1 chỉ nhận chúng khi bản ghi chuyển sang *Đã chấp nhận*.
 
 | Không gian | Thành phần | Bản ghi | Đề xuất |
 |---|---|---|---|
 | `H` | Hệ thống quản trị tri thức | [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) | Wiki.js — vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
-| `I` | Thư viện khai phá quy trình | [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) | PM4Py trong một dịch vụ tách riêng |
 | `I` | Cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ | [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) | pgvector ngay trên PostgreSQL, llama.cpp server với hai mô hình Apache-2.0, không dùng khung LLM |
 
 ### 3.3. Quy tắc kiểm tra giấy phép
@@ -276,9 +276,13 @@ Trước khi thêm bất kỳ phụ thuộc nào:
 Cảnh giác với các giấy phép **không** thuộc danh sách OSI: BSL, SSPL, Elastic
 License, Commons Clause, fair-code. Dùng chúng khiến dự án không được chấm điểm.
 
-Với giấy phép copyleft mạnh (AGPL): hợp lệ vì được OSI công nhận, nhưng chỉ dùng
-dưới dạng dịch vụ độc lập giao tiếp qua HTTP, không nhúng thư viện vào mã nguồn.
-Ghi rõ ranh giới này trong bản ghi quyết định.
+Với giấy phép copyleft mạnh (AGPL): hợp lệ vì được OSI công nhận, nhưng chỉ dùng trong **một
+dịch vụ tách riêng** — thư mục riêng, ảnh chứa riêng, giao tiếp với phần còn lại qua HTTP. Hoặc cả
+nền tảng chạy nguyên khối như dịch vụ độc lập, hoặc thư viện được `import` chỉ bên trong dịch vụ đó
+(ADR-0007: PM4Py chỉ trong `services/khai-pha/`, đúng một tệp `app/bo_may/pm4py_bo_may.py`). Dịch vụ
+ứng dụng và cổng không bao giờ `import` thư viện AGPL — CI có bước `grep` chặn. Mã của nhóm trong dịch
+vụ đó vẫn mang header MIT (MIT tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Ghi rõ
+ranh giới này trong bản ghi quyết định và `docs/dependencies.md`.
 
 ---
 
@@ -306,13 +310,18 @@ dx-os-lab/
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
-│   │   ├── analytics/           # [D] xuất nhật ký sự kiện CSV, JSON (#306)
+│   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
 │   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239)
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
 │   │   └── sql/                 # SQL thô của bản gốc 0000 và hàm kiểm 0018, không sửa nữa
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
+├── services/
+│   └── khai-pha/                # [I] dịch vụ khai phá quy trình (#314) — nơi DUY NHẤT dùng PM4Py (AGPL)
+│       ├── app/du_lieu.py       # mọi câu SQL, chỉ đọc lớp báo cáo + cờ của bộ quy tắc
+│       ├── app/phan_tich.py     # nhánh lệch, thời gian chờ, điểm nghẽn — chung cho hai bộ máy
+│       └── app/bo_may/          # pm4py (mặc định) và noi_bo (dự phòng, Python thuần)
 ├── frontend/                    # Next.js — cổng người dùng
 │   ├── app/
 │   │   ├── api/auth/            # [H] ba chặng của luồng đăng nhập OIDC
@@ -918,6 +927,62 @@ coi là giây làm việc và đổi sang giờ thật bằng `moc_sau_giay_lam_
 chính, đồng hồ hạn đúng bằng cách hệ thống tự đo, không sự kiện nào ở tương lai. Lệnh từ chối
 chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang tiền tố `[Mẫu]` (trừ khi thêm
 `--cho-tron`). Hồ sơ mẫu không gỡ ra được — trigger chặn xóa nhật ký — nên muốn sạch thì `down -v`.
+
+### 6.4. Khai phá quy trình (không gian `I`)
+
+**Đã cài đặt** — #314, theo [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md). Màn trình bày ở
+cổng: #315.
+
+Đây là vòng phản hồi tự soi quy trình của `CLAUDE.md` mục 4.1: từ nhật ký sự kiện, vẽ lại quy trình
+đang thật sự chạy và chỉ ra chỗ cần cải tiến. Engine chỉ cho đi cạnh có trong bộ quy tắc, nên đối chiếu
+"cạnh có hay không" với thiết kế luôn ra không lệch. Thứ đáng khai phá là hồ sơ đi **ra khỏi luồng
+chính** bao nhiêu, ở đâu, tốn bao lâu.
+
+**Ba lớp, ranh giới giấy phép ở lớp giữa:**
+
+```
+Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch vụ khai phá (MIT + thư viện AGPL)  ──SQL chỉ đọc──► PostgreSQL
+         GET /analytics/process-mining       POST /khai-pha
+         kiểm vai, gắn phạm vi phòng          không mở cổng ra máy, không tự kiểm danh tính
+```
+
+- **Dịch vụ ứng dụng** (`app/analytics/khai_pha.py`) dùng đúng `pham_vi_cua` của bảng điều khiển (#305):
+  `roles.report_scope` quyết ai xem và tới đâu. Danh sách phòng gửi đi đã đối chiếu với bảng. 403 khi vai
+  không được xem, 422 khi khoảng ngày sai (tối đa 366 ngày), 503 khi dịch vụ khai phá không phản hồi
+- **Dịch vụ khai phá** (`services/khai-pha/`) chỉ nghe trong mạng của Compose; người gọi duy nhất là dịch
+  vụ ứng dụng. Tắt nó thì cổng, bảng điều khiển và mọi luồng nghiệp vụ vẫn chạy (không dịch vụ nào
+  `depends_on` nó)
+- **Tài khoản cơ sở dữ liệu chỉ đọc riêng** (migration `0019`, nhờ #254 không cần `down -v`): SELECT đúng
+  bảy bảng/view phép khai phá đọc, phiên mặc định chỉ đọc, không quyền đọc mặc định trên bảng mới. Không
+  dùng chung tài khoản của Superset
+
+**Phân tích — mọi tiêu chí là cờ trong dữ liệu, không mã trạng thái nào trong mã:**
+
+| Kết quả | Cách tính |
+|---|---|
+| Hồ sơ xét | Hồ sơ **gửi** trong khoảng ngày (ngày theo múi giờ của lịch làm việc mặc định), trong phạm vi phòng; mỗi hồ sơ theo bộ quy tắc của chính nó |
+| Lượt | Mỗi lần hồ sơ vào một trạng thái — sự kiện mở đầu (view `bao_cao_nhat_ky`) hay cạnh đổi trạng thái; cạnh tự trỏ (ADR-0005) không tính. Hoạt động = trạng thái vào, theo ghi chú của ADR-0007 |
+| Đồ thị | Đồ thị trực tiếp trên chuỗi lượt (bộ máy); mỗi cạnh kèm số hồ sơ và loại theo cờ của cạnh đã đi |
+| Luồng chính thiết kế | Cạnh người, không `is_rework`, không `reopen_window_hours`, có đổi trạng thái |
+| Nhánh lệch | `rework` — đi cạnh `is_rework` · `escalation` — cạnh hệ thống **không** `auto_after_hours` (cùng tiêu chí với bộ quét SLA) · `wait_expiry` — cạnh hệ thống **có** `auto_after_hours` · `reopen` — cạnh `reopen_window_hours` · `multiple_routing` — `event_log.changes` đặt `department_code` từ hai lần |
+| Thời gian chờ | `so_giay_lam_viec(vào, ra)` mỗi lượt — cùng phép đo với đồng hồ hạn và bảng điều khiển; lượt còn dở tính tới bây giờ; trạng thái kết thúc không có |
+| Điểm nghẽn | Trạng thái xếp theo thời gian chờ trung vị; nghẽn khi trung vị gấp từ `KHAI_PHA_BOI_SO_NGHEN` (mặc định 2) lần trung vị chung của mọi lượt ở trạng thái chưa kết thúc |
+| Biến thể | Chuỗi trạng thái của từng hồ sơ (bộ máy), `KHAI_PHA_SO_BIEN_THE` biến thể nhiều nhất |
+
+**Hai bộ máy, một hợp đồng.** Phần thuật toán — đồ thị trực tiếp và biến thể — đứng sau giao diện
+`BoMay`: `pm4py` (mặc định) và `noi_bo` (dự phòng, Python thuần). Phần còn lại ở `app/phan_tich.py`, chung
+cho cả hai. Bài kiểm thử có đáp án biết trước chạy trên cả hai và đòi kết quả giống hệt. Không dùng được
+AGPL thì `MINING_ENGINE=noi_bo` và xóa dòng `pm4py` khỏi `requirements.txt` — dịch vụ ứng dụng và cổng
+không đổi gì.
+
+**Hợp đồng trả về** (khóa tiếng Anh như mọi API của dự án): `range`, `departments`, `engine`,
+`cases_count`, `events_count`, `states[]` (`code`, `label`, `is_initial`, `is_terminal`, `visits`, `cases`,
+`median_wait_seconds`, `is_bottleneck`), `edges[]` (`from`, `to`, `count`, `cases`, `is_main`, `kinds`),
+`designed_main_flow[]`, `deviations[]` (`kind`, `cases_count`, `ratio`, `cases`), `bottlenecks`
+(`overall_median_wait_seconds`, `factor`, `threshold_seconds`, `ranking[]`), `variants[]` (`sequence`,
+`cases_count`, `ratio`, `cases`), `other_variants_cases`; dịch vụ ứng dụng thêm `scope`.
+
+**Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 
 ---
 
