@@ -36,11 +36,26 @@ class TruongRiengRa(BaseModel):
     options: list[str] | None = None
 
 
+class GoiYRa(NhanCoMa):
+    """Một gợi ý của hệ thống cho trường quyết định (#239): giá trị, lý do, nguồn.
+
+    `confidence` trống khi nguồn không có con số thật — giao diện chỉ hiện độ tin cậy khi có.
+    """
+
+    reason: str
+    source: str
+    source_label: str
+    confidence: float | None = None
+
+
 class LoaiYeuCauRa(NhanCoMa):
     description: str | None = None
     sla_hours: int
     # Trường riêng của loại này, theo thứ tự hiển thị (#250)
     fields: list[TruongRiengRa] = Field(default_factory=list)
+    # Phòng mặc định của loại trong bảng ánh xạ (#239): đổi loại trên màn điều phối thì thẻ gợi
+    # ý đổi theo ngay, không phải hỏi lại dịch vụ
+    suggested_department: GoiYRa | None = None
 
 
 class TrangThaiRa(NhanCoMa):
@@ -412,10 +427,11 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     priority: NhanCoMa | None = None
     state_entered_at: dt.datetime
 
-    # Phòng ban mặc định cho loại yêu cầu của hồ sơ, tra từ `request_type_routing`.
-    # Chỉ là gợi ý để ô chọn điền sẵn: điều phối viên được chọn khác, và chính những
-    # lần chọn khác đó là tín hiệu cho khai phá quy trình biết bảng ánh xạ đang sai.
-    suggested_department: NhanCoMa | None = None
+    # Gợi ý phòng ban (#239): cột `suggested_department_code` nếu tầng I đã ghi, không thì phòng
+    # mặc định của loại yêu cầu trong `request_type_routing`. Chỉ điền sẵn ô chọn: điều phối viên
+    # được chọn khác, và cửa chuyển trạng thái ghi lại họ giữ hay ghi đè — cùng một hàm sinh gợi
+    # ý, nên thứ hiện trên thẻ đúng là thứ được đem so.
+    suggested_department: GoiYRa | None = None
 
     # Hồ sơ do chính người đang xem gửi (#154): bảng thao tác trống vì ràng buộc
     # `actor-not-requester`, không phải vì hồ sơ đã rời hàng đợi.

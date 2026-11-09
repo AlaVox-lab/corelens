@@ -106,13 +106,17 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
 | Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
-| Bảng điều khiển — dựng và tự nạp | Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset; dashboard *Vận hành yêu cầu* đủ bốn biểu đồ đã tự nạp từ `infra/superset/bang-dieu-khien/`, tài khoản chỉ đọc đọc được mọi view mà dataset trỏ tới (#304) | `docker compose ... up -d --build --wait postgres backend superset` rồi mở `http://localhost:8088` |
+| Bảng điều khiển — dựng và tự nạp | Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset; dashboard *Vận hành yêu cầu* đủ năm biểu đồ đã tự nạp từ `infra/superset/bang-dieu-khien/`, tài khoản chỉ đọc đọc được mọi view mà dataset trỏ tới (#304) | `docker compose ... up -d --build --wait postgres backend superset` rồi mở `http://localhost:8088` |
 
 **Kiểm thử giao diện qua đăng nhập thật** (#238) chạy tay trước khi mở pull request có sửa giao diện,
 trên cụm thử: `npm ci`, `npm run cai-trinh-duyet` (lần đầu), `npm run kiem` trong `e2e/`. Kịch bản đăng
 nhập bốn vai qua Keycloak, kiểm các màn chính ở bốn cấu hình hiển thị và chụp ảnh — chi tiết ở trang tài
 liệu, phần *Phát triển → Kiểm thử giao diện*. Kịch bản gửi một hồ sơ thật, nên không chạy trên hệ thống
 đang dùng thật.
+
+**Công cụ kiểm chứng** (#249) — dựng cụm thử cách ly, dò đăng nhập thật, tạo hồ sơ thử theo từng trạng
+thái, chạy phép thử đột biến — nằm ở `scripts/kiem_chung/`, hướng dẫn ở trang tài liệu *Phát triển →
+Công cụ kiểm chứng* (`docs-site/src/content/docs/phat-trien/kiem-chung.md`).
 
 Trong quy trình, bài kiểm thử bị **bỏ qua** cũng tính là hỏng (biến `DXLAB_CAM_BO_QUA=1`): bộ
 kiểm thử tự bỏ qua khi không gọi được PostgreSQL hay Keycloak, nên không có cờ này thì cụm

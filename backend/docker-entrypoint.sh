@@ -11,11 +11,15 @@ set -euo pipefail
 
 echo "==> Áp dụng migration"
 
-# Hiện chưa có bản sửa nào: lược đồ cấu hình của engine máy trạng thái do PostgreSQL
-# tạo lúc khởi tạo thực thể, và Alembic được cấu hình bỏ qua mười một bảng đó — xem
-# alembic/env.py. Lệnh dưới đây là lệnh rỗng cho tới khi #41 thêm bảng hồ sơ và bảng
-# nhật ký sự kiện. Đặt sẵn để không ai quên khi tới lúc đó.
+# Từ #254 Alembic sở hữu cả lược đồ cấu hình của engine (bản sửa gốc 0000), nên cụm dựng
+# mới đi trọn chuỗi từ cơ sở dữ liệu trống, còn cụm cũ chỉ chạy các bản sửa còn thiếu.
 alembic upgrade head
+
+echo "==> Nạp và kiểm tra cấu hình quy trình"
+
+# Lần đầu nạp dữ liệu khởi tạo từ /seed (infra/seed/); lần nào cũng kiểm nhất quán đồ thị.
+# Cấu hình hỏng thì lệnh thoát mã lỗi và dịch vụ không lên — xem app/cau_hinh/khoi_tao.py.
+python -m app.cau_hinh.khoi_tao
 
 echo "==> Khởi động máy chủ ứng dụng"
 

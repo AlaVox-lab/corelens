@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -120,3 +122,24 @@ def quet_het_han_cho(session: Session, luc: dt.datetime | None = None) -> list[i
         logger.info("Đã tự đi %d hồ sơ hết hạn chờ", len(da_di))
 
     return da_di
+
+
+@dataclass(frozen=True, slots=True)
+class BoQuet:
+    """Một bộ quét nền: tên ổn định (khóa tư vấn và dòng nhịp lấy theo tên), nhãn cho màn Hệ thống,
+    và hàm quét nhận một phiên."""
+
+    ten: str
+    nhan: str
+    ham: Callable[[Session], list[int]]
+
+
+# Mọi bộ quét của vòng nền, theo thứ tự chạy. Mỗi bộ có khóa và dòng nhịp riêng (#253), nên một
+# bộ hỏng không che nhịp của bộ kia. Tên là định danh vận hành, không phải dữ liệu nghiệp vụ.
+TEN_BO_QUET_SLA = "sla-escalation"
+TEN_BO_QUET_HAN_CHO = "wait-expiry"
+
+BO_QUET: tuple[BoQuet, ...] = (
+    BoQuet(TEN_BO_QUET_SLA, "Bộ quét quá hạn SLA", quet_va_leo_thang),
+    BoQuet(TEN_BO_QUET_HAN_CHO, "Bộ quét hạn chờ", quet_het_han_cho),
+)

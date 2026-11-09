@@ -3,5 +3,5 @@
 
 """[I] Phân loại tự động, truy xuất tri thức, khai phá quy trình."""
 
-# Gói còn trống. Mã nguồn thuộc về issue nêu trên — bộ khung #62 cố ý không
-# thêm nghiệp vụ nào, để ranh giới giữa các issue không bị nhòe.
+# `goi_y.py` — gợi ý cho trường quyết định và dấu giữ hay ghi đè (#239). Tầng I chỉ đọc dữ liệu
+# và ghi trường gợi ý; trường quyết định chỉ đổi qua cửa chuyển trạng thái, do người bấm.

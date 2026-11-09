@@ -1,33 +1,55 @@
 ---
 title: Nâng cấp
-description: Lên bản mới — khi nào chỉ cần dựng lại, khi nào phải xóa dữ liệu khởi tạo, và cách tự kiểm.
+description: Lên bản mới mà không mất dữ liệu, cách tự kiểm, và những bản cũ vẫn phải dựng lại.
 sidebar:
   order: 4
 ---
 
-## Hai loại thay đổi
+## Từ v0.9.1 trở đi: dựng lại là xong
 
-| Thay đổi | Cách nạp | Phải làm khi nâng cấp |
-|---|---|---|
-| **Migration** trong `backend/alembic/versions/` | Tự chạy lúc dịch vụ ứng dụng khởi động | Chỉ `up -d --build` |
-| **Lược đồ và dữ liệu khởi tạo** — `infra/postgres/init/`, `infra/seed/`, realm `infra/keycloak/` | Chỉ nạp **một lần**, lúc PostgreSQL tạo thực thể lần đầu | `down -v` rồi `up -d --build` — **mất dữ liệu trong cụm** |
+Cụm dựng từ `v0.9.1` trở đi lên bản mới **giữ nguyên hồ sơ, nhật ký sự kiện, lời nhắn và tệp đính
+kèm**. Lý do:
 
-## Tự kiểm sau khi kéo mã mới
+| Phần | Nạp thế nào |
+|---|---|
+| **Lược đồ** — mọi bảng, kể cả bảng cấu hình quy trình | Migration trong `backend/alembic/versions/`, tự chạy lúc dịch vụ ứng dụng khởi động; chỉ bản còn thiếu được chạy |
+| **Dữ liệu khởi tạo** — `infra/seed/` | Dịch vụ ứng dụng nạp **lần đầu**, khi cơ sở dữ liệu chưa có bộ quy tắc nào; lần sau không nạp lại |
+| **Đổi quy trình** của một bản mới | Bản sửa dữ liệu tạo bộ quy tắc phiên bản mới: hồ sơ đang chạy giữ luật cũ, hồ sơ mới theo luật mới |
+| **Realm Keycloak** — `infra/keycloak/` | Chỉ nạp lần đầu Keycloak khởi động — xem cuối trang |
 
-Đứng ở gốc kho mã, sau `git pull`:
+Mỗi lần khởi động, dịch vụ còn kiểm tính nhất quán của quy trình (ngõ cụt, trạng thái không tới
+được, cạnh không ai đi được…). Cấu hình hỏng thì dịch vụ không lên, thay vì chạy với luồng hỏng.
+
+Các bước, trong `infra/`:
+
+1. Giải nén bản mới đè lên (hoặc `git pull` nếu dùng kho mã)
+2. Mở `.env.example`, chép những dòng mới sang `.env` — biến mới thường có giá trị mặc định nên bỏ
+   qua vẫn chạy, nhưng muốn đổi thì phải chép
+3. Dựng lại:
 
 ```bash
-git diff --name-only "HEAD@{1}" HEAD -- infra
+docker compose --env-file .env up -d --build
 ```
 
-| Thấy tệp nào | Phải làm |
-|---|---|
-| `infra/postgres/init/…`, `infra/seed/…`, `infra/keycloak/…` | `down -v` rồi `up -d --build` |
-| `infra/.env.example` | Mở tệp, chép những dòng mới sang `infra/.env` |
-| `infra/docker-compose.yml` | `up -d --build` |
-| Không có gì | `up -d --build` nếu muốn chạy bản mới; migration tự chạy |
+## Tự kiểm không mất dữ liệu
 
-Lệnh đầy đủ, chạy trong `infra/`:
+Chụp số liệu trước khi nâng, so sau khi nâng — đứng ở gốc kho mã:
+
+```bash
+python scripts/kiem_nang_cap.py chup truoc-nang-cap.json
+# … nâng cấp như trên …
+python scripts/kiem_nang_cap.py so truoc-nang-cap.json
+```
+
+Lệnh chỉ đọc. Nó so số dòng và mã băm các cột không bao giờ đổi của hồ sơ, nhật ký, lời nhắn, tệp
+đính kèm, và hỏi kho tệp xem từng tệp còn đủ kích thước không. Dòng mới sinh trong lúc nâng — bộ quét
+tự leo thang một hồ sơ quá hạn chẳng hạn — chỉ được báo thêm, không tính là lệch. Cụm đổi tên container
+thì thêm `--container` và `--backend`.
+
+## Bản cũ hơn v0.9.1: phải dựng lại
+
+Trước `v0.9.1`, lược đồ cấu hình và dữ liệu khởi tạo do PostgreSQL nạp đúng một lần lúc tạo thực thể,
+nên đổi cấu hình là phải xóa dữ liệu:
 
 ```bash
 docker compose --env-file .env down -v
@@ -39,11 +61,8 @@ docker compose --env-file .env up -d --build
 Superset. Realm và dữ liệu khởi tạo tự nạp lại.
 :::
 
-## Các bản cần `down -v`
+## Realm Keycloak
 
-Ghi chú phát hành của từng bản ([Releases](https://github.com/AlaVox-lab/dx-os-lab/releases))
-nêu thay đổi lược đồ. Gần đây nhất, `v0.7.0` có ba lần: cột bước chính trên bảng cạnh, bảng
-trường riêng theo loại yêu cầu, và chủ đề đăng nhập trong realm.
-
-Chuyển dữ liệu thật qua các bản mà không xóa là việc đang làm — đưa lược đồ cấu hình vào
-migration (issue #254).
+Keycloak chỉ nạp `infra/keycloak/realm-dx-os-lab.json` khi realm chưa có. Bản mới đổi realm (vai trò,
+client, chủ đề đăng nhập) thì ghi chú phát hành ([Releases](https://github.com/AlaVox-lab/dx-os-lab/releases))
+nêu rõ; khi đó sửa tay trong trang quản trị Keycloak, hoặc dựng lại cụm.

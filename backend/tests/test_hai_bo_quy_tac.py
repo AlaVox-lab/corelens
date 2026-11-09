@@ -26,6 +26,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
 from app.auth.dependencies import current_actor
+from app.cau_hinh.bo_quy_tac import kich_hoat, sao_chep
 from app.db import get_session
 from app.main import app
 from app.models.case import EventLog
@@ -74,64 +75,17 @@ def _canh(
 
 
 def _chep_bo(session, cu: int, doi_ma: tuple[str, str]) -> int:
-    """Chép trạng thái, cạnh, vai trò và ràng buộc của bộ `cu` sang một bộ mới chưa bật, đổi mã
-    một trạng thái `doi_ma = (mã cũ, mã mới)` trên đường chép — khóa ngoại không cho đổi sau."""
+    """Chép bộ `cu` sang một bộ mới chưa bật, đổi mã một trạng thái `doi_ma = (mã cũ, mã mới)`
+    trên đường chép — khóa ngoại không cho đổi sau. Dùng đúng công cụ của bản sửa dữ liệu (#254)."""
     tu, sang = doi_ma
-
-    def ma(cot: str) -> str:
-        return f"CASE WHEN {cot} = '{tu}' THEN '{sang}' ELSE {cot} END"
-
-    moi = session.execute(text("SELECT max(id) + 1 FROM rule_sets")).scalar_one()
-    session.execute(
-        text(
-            "INSERT INTO rule_sets (id, version, label, effective_from, is_active) "
-            "VALUES (:moi, 'thu-278', 'Bộ quy tắc thử #278', now(), FALSE)"
-        ),
-        {"moi": moi},
+    return sao_chep(
+        session, cu, "thu-278", "Bộ quy tắc thử #278", doi_ma_trang_thai={tu: sang}
     )
-    session.execute(
-        text(
-            "INSERT INTO states (rule_set_id, code, label, description, is_initial, is_terminal, "
-            "sla_running, display_order) "
-            f"SELECT :moi, {ma('code')}, label, description, is_initial, is_terminal, sla_running, "
-            "display_order FROM states WHERE rule_set_id = :cu"
-        ),
-        {"moi": moi, "cu": cu},
-    )
-    cot = (
-        "activity_code, activity_label, is_system, requires_note, "
-        "note_label, display_order, is_rework, from_is_terminal, reopen_window_hours, "
-        "restarts_sla, accepts_attachments, auto_after_hours, warn_before_hours, primary_scope"
-    )
-    session.execute(
-        text(
-            f"INSERT INTO transitions (rule_set_id, from_state, to_state, {cot}) "
-            f"SELECT :moi, {ma('from_state')}, {ma('to_state')}, {cot} "
-            "FROM transitions WHERE rule_set_id = :cu"
-        ),
-        {"moi": moi, "cu": cu},
-    )
-    # Cạnh mới có định danh mới: ghép với cạnh cũ theo khóa duy nhất của bảng
-    ghep = (
-        "FROM transitions c JOIN transitions m ON m.rule_set_id = :moi AND c.rule_set_id = :cu "
-        f"AND m.from_state = {ma('c.from_state')} AND m.to_state = {ma('c.to_state')} "
-        "AND m.is_system = c.is_system"
-    )
-    for bang, cot_phu in (("transition_roles", "role_code"), ("transition_guards", "guard_code")):
-        session.execute(
-            text(
-                f"INSERT INTO {bang} (transition_id, {cot_phu}) "
-                f"SELECT m.id, x.{cot_phu} {ghep} JOIN {bang} x ON x.transition_id = c.id"
-            ),
-            {"moi": moi, "cu": cu},
-        )
-    return moi
 
 
 def _bat_bo(session, ma: int) -> None:
-    """Đổi bộ đang bật. Hai câu lệnh: chỉ mục duy nhất từng phần không cho hai bộ cùng bật."""
-    session.execute(text("UPDATE rule_sets SET is_active = FALSE WHERE is_active"))
-    session.execute(text("UPDATE rule_sets SET is_active = TRUE WHERE id = :ma"), {"ma": ma})
+    """Đổi bộ đang bật qua `kich_hoat` — kiểm nhất quán đồ thị trước, như bản sửa dữ liệu thật."""
+    kich_hoat(session, ma)
     session.expire_all()
 
 

@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.events.log import record_event
+from app.intelligence.goi_y import ghi_nhan_goi_y
 from app.models.case import EventLog, Request
 from app.models.workflow_config import (
     Department,
@@ -524,7 +525,16 @@ def perform_transition(
     # --- Bước 4: ghi nhật ký TRƯỚC -----------------------------------------
     # Lúc này hồ sơ chưa bị ghi đè, nên nhật ký còn đọc được giá trị cũ để ghi phần
     # "từ → sang" (#100). Sau bước 5 thì giá trị cũ mất.
-    record_event(session, ctx, assignee_label=assignee_label)
+    #
+    # Dấu giữ hay ghi đè gợi ý (#239) cũng tính ở đây: sau khi `thay_doi` đã đủ — kể cả loại
+    # yêu cầu vừa đổi trong cùng thao tác — và bằng đúng hàm màn điều phối dùng để vẽ thẻ gợi ý.
+    # Chỉ đọc, không ghi trường quyết định nào; gợi ý không có thì thao tác vẫn đi như cũ.
+    record_event(
+        session,
+        ctx,
+        assignee_label=assignee_label,
+        suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi),
+    )
 
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------
     for truong, gia_tri in thay_doi.items():

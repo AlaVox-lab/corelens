@@ -8,20 +8,52 @@
 
 import { readFileSync } from "node:fs";
 
-import { type Page, expect, test } from "@playwright/test";
+import { type Browser, type Page, expect, test } from "@playwright/test";
 
-import { type Vai, chup, docHoSo, tepPhien } from "./chung";
+import { type HoSoThu, type Vai, chup, docHoSo, guiYeuCauThu, tepPhien, theoDoiCsp, viPhamCsp } from "./chung";
 
 /** Mở một màn, gom lỗi phía trình duyệt, kiểm không cuộn ngang, chụp ảnh. */
 async function moMan(page: Page, duong: string, anh: string) {
   const loi: string[] = [];
   page.on("pageerror", (e) => loi.push(e.message));
+  await theoDoiCsp(page);
   const tl = await page.goto(duong, { waitUntil: "networkidle" });
   expect(tl?.status(), `mở ${duong}`).toBeLessThan(400);
   expect(loi, `lỗi phía trình duyệt ở ${duong}`).toEqual([]);
+  expect(await viPhamCsp(page), `vi phạm chính sách nội dung ở ${duong}`).toEqual([]);
   const cuonNgang = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(cuonNgang, `thanh cuộn ngang ở ${duong}`).toBe(false);
   await chup(page, test.info().project.name, anh);
+}
+
+/**
+ * Dựng một hồ sơ mới tới bước "Chuyển về phòng ban" bằng giao diện, như người thật: người gửi gửi
+ * qua biểu mẫu, điều phối viên (phiên của `page`) phân loại. Mỗi bài tự dựng hồ sơ riêng vì bài
+ * chuyển phòng làm hồ sơ rời hàng đợi.
+ */
+async function dungHoSoChoChuyenPhong(browser: Browser, page: Page, nhan: string): Promise<HoSoThu> {
+  const nguoiGui = await browser.newContext({ storageState: tepPhien("nguoi-gui") });
+  const tieuDe = `${nhan} ${test.info().project.name} ${new Date().toISOString().slice(0, 19)}`;
+  const ma = await guiYeuCauThu(await nguoiGui.newPage(), tieuDe);
+  await nguoiGui.close();
+
+  await page.goto(`/dieu-phoi/${ma}`, { waitUntil: "networkidle" });
+  const thaoTac = page.locator("#thao-tac");
+  await thaoTac.getByRole("button", { name: "Phân loại yêu cầu", exact: true }).click();
+  await thaoTac.getByRole("button", { name: /^Xác nhận · Phân loại yêu cầu/ }).click();
+  await expect(thaoTac.getByRole("button", { name: "Chuyển về phòng ban", exact: true })).toBeVisible();
+  return { ma, tieuDe };
+}
+
+/** Mở bảng "Chuyển về phòng ban" của hồ sơ và trả ô chọn phòng cùng thẻ gợi ý trên nó. */
+async function moBangChuyenPhong(page: Page) {
+  const thaoTac = page.locator("#thao-tac");
+  await thaoTac.getByRole("button", { name: "Chuyển về phòng ban", exact: true }).click();
+  return {
+    thaoTac,
+    the: thaoTac.locator(".the-goi-y"),
+    oPhong: thaoTac.locator('select[name="truong:department_code"]'),
+  };
 }
 
 function theoVai(vai: Vai) {
@@ -39,9 +71,11 @@ async function kiemBaoCao(page: Page, phamVi: string, anh: string) {
   await moMan(page, "/bao-cao", anh);
   await expect(page.locator(".bao-cao-pham-vi")).toHaveText(`Phạm vi số liệu: ${phamVi}`);
   const khung = page.frameLocator(".bao-cao-khung iframe");
-  for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban"]) {
+  for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban", "Tỷ lệ ghi đè gợi ý"]) {
     await expect(khung.getByText(new RegExp(ten)).first()).toBeVisible({ timeout: 30_000 });
   }
+  // Khung Superset đã dựng xong: chính sách nội dung của cổng (frame-src) không được chặn nó
+  expect(await viPhamCsp(page), "vi phạm chính sách nội dung sau khi nhúng Superset").toEqual([]);
   await chup(page, test.info().project.name, `${anh}-da-ve`);
 }
 
@@ -228,6 +262,118 @@ test.describe("điều phối viên", () => {
     expect(await qua300(), "hàng đợi và ngăn xem nhanh").toEqual([]);
   });
 
+  test("thẻ gợi ý phòng ban: có lý do và nguồn, không độ tin cậy giả, không hoàn tác, đổi phòng thì thẻ báo chọn khác (#239)", async ({ browser, page }) => {
+    const loi: string[] = [];
+    page.on("pageerror", (e) => loi.push(e.message));
+    const h = await dungHoSoChoChuyenPhong(browser, page, "Thẻ gợi ý");
+    const { thaoTac, the, oPhong } = await moBangChuyenPhong(page);
+
+    // Thẻ nằm ngay trên ô chọn phòng và nói đủ ba điều: gợi ý gì, vì sao, từ đâu
+    await expect(the).toBeVisible();
+    await expect(the.locator(".the-goi-y-dau")).toContainText("Gợi ý:");
+    const goiY = await the.locator(".the-goi-y-dau strong").innerText();
+    expect(goiY.trim(), "thẻ nêu tên phòng gợi ý").not.toBe("");
+    await expect(the.locator(".the-goi-y-ly-do")).not.toBeEmpty();
+    await expect(the.locator(".the-goi-y-nguon")).toContainText("Nguồn:");
+    // Nguồn là bảng ánh xạ, không có con số thật: không được vẽ độ tin cậy
+    await expect(the).not.toContainText(/tin cậy/i);
+    await expect(the).not.toContainText("%");
+    // Gợi ý điền sẵn ô, và ô trỏ vào thẻ để trình đọc màn hình đọc cùng nhau
+    await expect(oPhong.locator("option:checked")).toContainText(goiY);
+    await expect(oPhong).toHaveAttribute("aria-describedby", (await the.getAttribute("id"))!);
+    // Chuyển trạng thái không quay lui và nhật ký chỉ ghi thêm: không có nút hoàn tác hay chấp nhận riêng
+    await expect(thaoTac.getByRole("button", { name: /hoàn tác|chấp nhận/i })).toHaveCount(0);
+    await expect(thaoTac.getByRole("button", { name: /^Xác nhận · Chuyển về phòng ban/ })).toBeVisible();
+    await expect(the.locator(".the-goi-y-khac")).toHaveText("");
+    await chup(page, test.info().project.name, "dieu-phoi-the-goi-y");
+
+    // Đổi sang phòng khác: thẻ nói nhẹ là đang chọn khác gợi ý, không chặn gì
+    const maGoiY = await oPhong.inputValue();
+    const cacMa = await oPhong.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+    const maKhac = cacMa.find((v) => v !== "" && v !== maGoiY);
+    expect(maKhac, "danh mục có ít nhất một phòng khác gợi ý").toBeTruthy();
+    await oPhong.selectOption(maKhac!);
+    await expect(the.locator(".the-goi-y-khac")).toHaveText(/Bạn đang chọn khác gợi ý/);
+    await expect(the).toHaveAttribute("data-khac", "");
+    await expect(thaoTac.getByRole("button", { name: /^Xác nhận · Chuyển về phòng ban/ })).toBeEnabled();
+    await chup(page, test.info().project.name, "dieu-phoi-the-goi-y-chon-khac");
+    // Chọn lại đúng gợi ý thì lời nhắc biến mất
+    await oPhong.selectOption(maGoiY);
+    await expect(the.locator(".the-goi-y-khac")).toHaveText("");
+    await expect(the).not.toHaveAttribute("data-khac", "");
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), "cuộn ngang").toBe(false);
+    expect(loi, `lỗi phía trình duyệt ở hồ sơ ${h.ma}`).toEqual([]);
+  });
+
+  test("giữ gợi ý phòng ban rồi bấm chuyển phòng: hồ sơ sang trạng thái mới, đúng phòng gợi ý (#239)", async ({ browser, page }) => {
+    await dungHoSoChoChuyenPhong(browser, page, "Giữ gợi ý");
+    const { thaoTac, the, oPhong } = await moBangChuyenPhong(page);
+    const goiY = await the.locator(".the-goi-y-dau strong").innerText();
+    await expect(oPhong.locator("option:checked")).toContainText(goiY);
+
+    await thaoTac.getByRole("button", { name: /^Xác nhận · Chuyển về phòng ban/ }).click();
+    // Chuyển xong: trạng thái mới, phòng là phòng được gợi ý, và không còn thao tác chuyển phòng nào
+    await expect(page.getByText("Chờ phòng ban xác duyệt").first()).toBeVisible();
+    await expect(page.locator("main")).toContainText(goiY);
+    await expect(page.locator("#thao-tac").getByRole("button", { name: "Chuyển về phòng ban", exact: true })).toHaveCount(0);
+  });
+
+  test("đổi sang phòng khác gợi ý rồi chuyển phòng: hồ sơ đến đúng phòng đã chọn (#239)", async ({ browser, page }) => {
+    await dungHoSoChoChuyenPhong(browser, page, "Ghi đè gợi ý");
+    const { thaoTac, oPhong } = await moBangChuyenPhong(page);
+    const maGoiY = await oPhong.inputValue();
+    const khac = await oPhong
+      .locator("option")
+      .evaluateAll((os, ma) => os.map((o) => ({ v: (o as HTMLOptionElement).value, t: o.textContent ?? "" })).find((o) => o.v && o.v !== ma), maGoiY);
+    expect(khac, "danh mục có ít nhất một phòng khác gợi ý").toBeTruthy();
+    await oPhong.selectOption(khac!.v);
+
+    await thaoTac.getByRole("button", { name: /^Xác nhận · Chuyển về phòng ban/ }).click();
+    await expect(page.getByText("Chờ phòng ban xác duyệt").first()).toBeVisible();
+    await expect(page.locator("main")).toContainText(khac!.t.trim());
+  });
+
+  test("đổi loại yêu cầu thì thẻ và phòng điền sẵn đổi theo, trừ khi đã tự chọn phòng (#239)", async ({ browser, page }) => {
+    await dungHoSoChoChuyenPhong(browser, page, "Thẻ đổi theo loại");
+    const { thaoTac, the, oPhong } = await moBangChuyenPhong(page);
+    const oLoai = thaoTac.locator('select[name="truong:request_type_code"]');
+    const goiYDau = await the.locator(".the-goi-y-dau strong").innerText();
+    const maLoaiDau = await oLoai.inputValue();
+    const cacLoai = await oLoai
+      .locator("option")
+      .evaluateAll((os) => os.map((o) => ({ v: (o as HTMLOptionElement).value, t: (o.textContent ?? "").trim() })).filter((o) => o.v));
+
+    // Thử lần lượt các loại khác cho tới khi gặp loại có phòng gợi ý khác — dữ liệu quyết, không mã cứng
+    let loaiMoi: { v: string; t: string } | undefined;
+    for (const loai of cacLoai.filter((l) => l.v !== maLoaiDau)) {
+      await oLoai.selectOption(loai.v);
+      if ((await the.locator(".the-goi-y-dau strong").innerText()) !== goiYDau) {
+        loaiMoi = loai;
+        break;
+      }
+    }
+    expect(loaiMoi, "có loại yêu cầu gợi ý phòng khác loại đầu").toBeTruthy();
+    // Thẻ nói đúng loại mới, và ô phòng điền sẵn theo gợi ý mới vì người dùng chưa đụng vào nó
+    const goiYMoi = await the.locator(".the-goi-y-dau strong").innerText();
+    await expect(the.locator(".the-goi-y-ly-do")).toContainText(loaiMoi!.t);
+    await expect(oPhong.locator("option:checked")).toContainText(goiYMoi);
+    await expect(the.locator(".the-goi-y-khac")).toHaveText("");
+
+    // Tự chọn một phòng khác gợi ý, rồi quay lại loại đầu: thẻ đổi, phòng của người dùng giữ nguyên
+    const maGoiYMoi = await oPhong.inputValue();
+    const phongTay = await oPhong
+      .locator("option")
+      .evaluateAll((os, ma) => os.map((o) => (o as HTMLOptionElement).value).find((v) => v && v !== ma), maGoiYMoi);
+    await oPhong.selectOption(phongTay!);
+    await oLoai.selectOption(maLoaiDau);
+    await expect(the.locator(".the-goi-y-dau strong")).toHaveText(goiYDau);
+    await expect(oPhong).toHaveValue(phongTay!);
+    // Phòng người dùng chọn có thể trùng đúng gợi ý của loại đầu; khi khác thì thẻ phải nói
+    const oPhongKhacGoiY = !(await oPhong.locator("option:checked").innerText()).includes(goiYDau);
+    if (oPhongKhacGoiY) await expect(the.locator(".the-goi-y-khac")).toHaveText(/Bạn đang chọn khác gợi ý/);
+  });
+
   test("Báo cáo có số của toàn công ty (#305)", async ({ page }) => {
     await kiemBaoCao(page, "toàn công ty", "dieu-phoi-bao-cao");
   });
@@ -268,6 +414,9 @@ test.describe("quản trị viên", () => {
     await moMan(page, "/he-thong", "quan-tri-he-thong");
     await expect(page.getByText("Bộ quy tắc quy trình")).toBeVisible();
     await expect(page.getByText(/đã nạp/)).toBeVisible();
+    // Nhịp hai bộ quét nền (#253) đọc từ điểm cuối chi tiết của quản trị viên
+    await expect(page.getByText("Bộ quét quá hạn SLA")).toBeVisible();
+    await expect(page.getByText("Bộ quét hạn chờ")).toBeVisible();
   });
 
   test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {

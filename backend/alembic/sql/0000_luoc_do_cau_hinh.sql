@@ -12,10 +12,11 @@
 -- Ràng buộc Poka-yoke được diễn đạt bằng việc thiếu vắng dữ liệu và bằng khóa
 -- ngoại, chứ không bằng câu lệnh if trong mã nguồn.
 --
--- PostgreSQL chạy tệp này đúng một lần, lúc khởi tạo thực thể, trên database
--- nghiệp vụ (biến POSTGRES_DB). Xóa volume thì nó chạy lại.
-
-\set ON_ERROR_STOP on
+-- Từ #254 tệp này là nội dung của bản sửa gốc `0000_luoc_do_cau_hinh` — Alembic chạy nó
+-- đúng một lần trên cụm dựng mới, trước mọi bản sửa khác. Cụm dựng từ v0.9.x trở về trước đã
+-- có các bảng này (do lược đồ khởi tạo cũ tạo), nên Alembic coi bản sửa gốc là đã chạy và
+-- không chạy lại. Vì thế tệp này là ẢNH CHỤP lược đồ tại v0.9.1: không sửa nữa. Đổi lược đồ
+-- cấu hình từ nay là một bản sửa mới trong backend/alembic/versions/, như mọi bảng khác.
 
 
 -- ===========================================================================

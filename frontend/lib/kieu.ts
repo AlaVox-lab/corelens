@@ -32,9 +32,26 @@ export type TruongRieng = {
   options: string[] | null;
 };
 
+/**
+ * Một gợi ý của hệ thống cho một trường quyết định (#239). Hệ thống chỉ gợi ý: giá trị điền sẵn
+ * ô chọn, người xác nhận bằng chính thao tác của quy trình. `confidence` chỉ có khi nguồn có con
+ * số thật — bảng ánh xạ thì luôn `null`, và giao diện không bao giờ vẽ một độ tin cậy giả.
+ */
+export type GoiY = NhanCoMa & {
+  /** Lý do ngắn, dịch vụ viết sẵn. */
+  reason: string;
+  /** Mã nguồn gợi ý — `routing` (bảng ánh xạ), `model` (mô hình, về sau). */
+  source: string;
+  /** Tên nguồn để hiện cho người đọc. */
+  source_label: string;
+  confidence: number | null;
+};
+
 export type LoaiYeuCau = NhanCoMa & {
   description: string | null;
   sla_hours: number;
+  /** Phòng mặc định của loại theo bảng ánh xạ (#239); đổi loại thì thẻ gợi ý đổi theo. */
+  suggested_department?: GoiY | null;
   /** Trường riêng của loại này, theo thứ tự hiển thị (#250). */
   fields?: TruongRieng[];
 };
@@ -335,8 +352,8 @@ export type HoSoDieuPhoi = HoSoChiTiet & {
   requester_label: string | null;
   priority: NhanCoMa | null;
   state_entered_at: string;
-  /** Phòng mặc định cho loại yêu cầu, để ô chọn điền sẵn. Chỉ là gợi ý. */
-  suggested_department: NhanCoMa | null;
+  /** Gợi ý phòng ban để ô chọn điền sẵn: từ mô hình nếu có, không thì từ bảng ánh xạ loại. */
+  suggested_department: GoiY | null;
   /** Hồ sơ do chính người đang xem gửi: người khác phải điều phối nó (#154). */
   requested_by_me: boolean;
 };

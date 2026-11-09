@@ -433,6 +433,77 @@ select.o-nhap {
   cursor: pointer;
 }
 
+/* --- Thẻ gợi ý của hệ thống (#239) -------------------------------------------
+ * Nằm ngay trên ô chọn có gợi ý: gợi ý là gì, vì sao, từ nguồn nào. Màu nhấn dịu — gợi ý không
+ * phải cảnh báo. Khi người dùng chọn khác gợi ý, thẻ đổi sang tông hổ phách nhạt kèm một dòng
+ * chữ; không chặn, không hỏi lại. */
+.the-goi-y {
+  display: grid;
+  gap: 2px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.the-goi-y p {
+  margin: 0;
+}
+
+.the-goi-y-dau {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+
+.the-goi-y-dau svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.the-goi-y-dau strong {
+  font-weight: 600;
+}
+
+.the-goi-y-nguon {
+  font-size: 12.5px;
+}
+
+.the-goi-y-khac {
+  font-size: 12.5px;
+  color: var(--f-a-ink);
+}
+
+.the-goi-y-khac:not(:empty) {
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.the-goi-y[data-khac] {
+  background: var(--f-a-bg);
+  border-color: var(--f-a-line);
+}
+
+.the-goi-y[data-khac] .the-goi-y-dau svg {
+  color: var(--f-a-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .the-goi-y {
+    transition: none;
+  }
+}
+
 /* --- Bố cục buồng lái (#82) ------------------------------------------------
  * Màn hẹp: một cột, bảng thao tác nằm dưới. Màn rộng: bảng thao tác sang cột phải và
  * bám theo khi cuộn — điều phối viên xử lý hàng chục hồ sơ mỗi ngày, một nút phải

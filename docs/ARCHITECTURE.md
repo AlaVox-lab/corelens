@@ -81,6 +81,29 @@ Trong lược đồ dữ liệu, tách rõ hai nhóm trường:
 Đồng thời ghi lại việc con người có ghi đè gợi ý của AI hay không, phục vụ đo lường
 độ chính xác thực tế của mô hình.
 
+**Khuôn gợi ý và ghi đè — đã cài đặt (#239).**
+
+- **Một gợi ý** là `GoiY(field, code, label, reason, source, confidence)` trong
+  `backend/app/intelligence/goi_y.py`. `confidence` để trống khi nguồn không có con số thật — bảng
+  ánh xạ không có, nên giao diện không vẽ độ tin cậy nào cho nó
+- **Nguồn, theo thứ tự**: cột `suggested_*` của hồ sơ có giá trị (tầng `I` ghi, nguồn `model`) thì
+  dùng nó; trống thì tra bảng ánh xạ của dữ liệu khởi tạo (`request_type_routing`, nguồn `routing`)
+  theo **loại cuối cùng** của hồ sơ — kể cả loại vừa đổi trong cùng thao tác. Không nguồn nào có gì
+  thì không có gợi ý, ô chọn vẫn dùng tay. Thêm gợi ý cho một trường quyết định mới là thêm một hàm
+  vào `_NGUON_GOI_Y`
+- **Một hàm cho cả hai đầu**: màn điều phối vẽ thẻ gợi ý và cửa chuyển trạng thái đem so đều gọi
+  cùng hàm, nên thứ người dùng thấy đúng là thứ được ghi. Danh mục `/request-types` mang phòng gợi
+  ý của từng loại, để thẻ đổi theo ngay khi điều phối viên đổi loại
+- **Xác nhận bằng chính thao tác thật.** Gợi ý chỉ điền sẵn ô; không có nút "chấp nhận" riêng, không
+  có "hoàn tác" — chuyển trạng thái không quay lui và nhật ký chỉ ghi thêm
+- **Dấu giữ hay ghi đè ghi ở cửa chuyển trạng thái** (mục 6.1, bước 4), vào cột riêng
+  `event_log.suggestion` = `{trường: {suggested, chosen, overridden, source, confidence}}` — mỗi
+  trường có gợi ý mà người dùng gửi kèm. Cột riêng chứ không trộn vào `changes`, để `changes` giữ
+  đúng một nghĩa "trường nào đổi từ gì sang gì". Không lưu dấu nào trên dòng hồ sơ: hồ sơ chỉ mang
+  giá trị hiện tại, còn mỗi lần xác nhận là một sự kiện
+- **Đo trên lớp báo cáo**: view `bao_cao_goi_y` (mục 6.3), biểu đồ tỷ lệ ghi đè theo trường và nguồn
+  trên bảng điều khiển. Đây là con số quyết định khi nào gợi ý của mô hình được thay bảng ánh xạ
+
 Ba lý do: đúng nguyên lý Human-in-the-loop mà đề bài nêu; nếu AI phân luồng sai thì
 người dùng vẫn điều chỉnh được; và nếu mô hình lỗi vào ngày trình diễn, hệ thống
 vẫn vận hành ở chế độ thủ công.
@@ -276,6 +299,7 @@ dx-os-lab/
 │   ├── app/
 │   │   ├── main.py              # điểm vào, điểm cuối kiểm tra sức khỏe
 │   │   ├── config.py            # cấu hình từ biến môi trường
+│   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
@@ -283,8 +307,10 @@ dx-os-lab/
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký sự kiện CSV, JSON (#306)
-│   │   └── intelligence/        # [I] chưa cài đặt
-│   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
+│   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254)
+│   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239)
+│   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
+│   │   └── sql/                 # SQL thô của bản gốc 0000 và hàm kiểm 0018, không sửa nữa
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── frontend/                    # Next.js — cổng người dùng
@@ -298,7 +324,8 @@ dx-os-lab/
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
-│   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu
+│   ├── lib/                     # gọi dịch vụ, phiên, định dạng, siêu dữ liệu, chính sách nội dung
+│   ├── proxy.ts                 # [H] CSP theo lượt, giới hạn đăng nhập quay về (#243)
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── docs/
 │   ├── adr/                     # bản ghi quyết định kiến trúc, kèm mẫu 0000
@@ -315,23 +342,29 @@ dx-os-lab/
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── infra/                       # dựng cả cụm bằng một lệnh
 │   ├── docker-compose.yml
+│   ├── docker-compose.cum-thu.yml # tệp ghi đè dựng cụm thử cách ly cạnh cụm chính (#249)
 │   ├── .env.example
 │   ├── keycloak/                # realm nạp lúc khởi động: vai trò là dữ liệu
 │   ├── seaweedfs/
 │   ├── superset/                # ảnh dẫn xuất, ảnh gốc thiếu trình điều khiển
 │   │   └── bang-dieu-khien/     # [D] dashboard dạng YAML, tự nạp lúc khởi động (#304)
-│   ├── postgres/init/           # LƯỢC ĐỒ — phần thuộc kiến trúc
-│   │   ├── 01-tao-cac-database.sh
-│   │   ├── 02-luoc-do-quy-trinh.sql
-│   │   └── 03-nap-du-lieu-khoi-tao.sh
-│   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa
+│   ├── postgres/init/           # chỉ tạo hai database còn lại và tài khoản chỉ đọc
+│   │   └── 01-tao-cac-database.sh
+│   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa, nạp lần đầu dựng cụm
 │       ├── 01-quy-tac-quy-trinh.sql
 │       ├── 02-co-cau-to-chuc.sql
-│       └── 99-kiem-tra-tinh-nhat-quan.sql
+│       └── 03-lich-lam-viec.sql
 ├── scripts/
 │   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
-│   └── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
+│   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
+│   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
+│   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
+│       ├── cum_thu.py           # dựng, hỏi trạng thái, gỡ cụm thử cách ly (tên, nhãn ảnh, cổng riêng)
+│       ├── do_dang_nhap.py      # đăng nhập thật qua OIDC, mở trang, kiểm chuỗi mong đợi
+│       ├── tao_ho_so_thu.py     # tạo hồ sơ ở từng trạng thái, qua engine; phần trong container ở tao_ho_so_trong_cum.py
+│       ├── dot_bien.py          # phép thử đột biến theo tệp mô tả
+│       └── vi_du/               # tệp mô tả đột biến chạy được (actor_not_requester.json)
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
 ├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
@@ -428,20 +461,22 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 5.2. Lược đồ cấu hình đã hiện thực
 
-Mười sáu bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia năm nhóm:
+Mười bảy bảng, định nghĩa ở bản sửa gốc `0000_luoc_do_cau_hinh` của Alembic (SQL thô ở
+`backend/alembic/sql/`, từ #254 — trước đó là lược đồ khởi tạo của PostgreSQL), chia năm nhóm:
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
 | Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng — mục 6.1 |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
-| Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
+| Cơ cấu tổ chức | `departments` · `request_types` · `request_type_fields` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên; trường riêng theo loại ở mục 5.3 |
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
 | Lịch làm việc | `work_calendars` · `work_hours` · `holidays` | Giờ làm theo thứ, ngày nghỉ, múi giờ (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định — xem mục 7.1 |
 
-**Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
-vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
-mà công ty khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò
-giữa hai loại nội dung khác hẳn nhau.
+**Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong chuỗi migration vì nó
+thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu mà công ty
+khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò giữa hai loại nội
+dung khác hẳn nhau. Dữ liệu khởi tạo nạp **một lần**, lúc dựng cụm, và đổi cấu hình của cụm
+đang chạy là việc của bản sửa dữ liệu — mục 5.4.
 
 **Ba lớp bảo vệ, không lớp nào nằm trong mã ứng dụng:**
 
@@ -453,14 +488,16 @@ giữa hai loại nội dung khác hẳn nhau.
    hẳn; "kết thúc" nay nghĩa là hết chu kỳ hồ sơ, chưa hẳn là không còn đường ra
 2. **Chỉ mục duy nhất từng phần** bảo đảm mỗi bộ quy tắc có đúng một trạng thái bắt đầu,
    mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
-3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
+3. **Kiểm tra mức đồ thị** — hàm `kiem_tra_cau_hinh()` trong cơ sở dữ liệu (bản sửa `0018`,
+   #254; trước đó là khối `infra/seed/99-…` chỉ chạy lúc nạp) — bắt những
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
    là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
    ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được, từ #199 là lịch
-   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Sai một điều thì
-   **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
-   kẹt mới lộ ra
+   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Hàm chạy
+   mỗi lần dịch vụ khởi động và trước mỗi lần kích hoạt bộ quy tắc mới; sai một điều thì
+   **dịch vụ dừng khởi động** hay **bản cập nhật bị từ chối**, thay vì chạy với luồng hỏng rồi
+   để một hồ sơ thật mắc kẹt mới lộ ra
 
 Hai ràng buộc Poka-yoke quan trọng nhất **không có dòng dữ liệu nào** vì chúng được thực
 thi bằng sự vắng mặt: *đã nhận là không trả về* và *chỉ hủy trước khi vào xử lý*. Không
@@ -509,7 +546,72 @@ hỏi thêm người gửi nếu cần.
 
 `create_case` chỉ kiểm khi được truyền `details`: `None` là lối gọi nội bộ chưa có trường riêng
 (bộ sinh dữ liệu, kiểm thử cũ). Điểm cuối gửi yêu cầu luôn truyền một bộ, nên người dùng không
-lách được phép kiểm. Đổi bảng cấu hình thì phải `down -v`, như mọi bảng cấu hình khác.
+lách được phép kiểm. Đổi bảng cấu hình là một bản sửa Alembic, như mọi bảng cấu hình khác
+(mục 5.4).
+
+### 5.4. Nâng cấp giữ nguyên dữ liệu
+
+**Đã cài đặt** — #254. Mốc bắt đầu là `v0.9.1`: cụm dựng từ bản đó trở đi nâng lên bản mới bằng
+`up -d --build`, không mất hồ sơ, nhật ký hay tệp; bản cũ hơn vẫn phải dựng lại.
+
+Trước #254, bảng cấu hình do lược đồ khởi tạo của PostgreSQL tạo, dữ liệu do `infra/seed/` nạp — cả
+hai chạy đúng một lần lúc tạo thực thể, ngoài tầm Alembic. Mọi thay đổi cấu hình buộc `down -v`, và
+hai nguồn sự thật cho lược đồ làm nâng cấp không đồng nhất. Nay mỗi loại thay đổi có đúng một đường:
+
+| Thay đổi | Đi đường nào | Cụm đang chạy |
+|---|---|---|
+| Lược đồ — bảng, cột, ràng buộc, hàm, view | Bản sửa Alembic mới trong `backend/alembic/versions/` | Tự chạy lúc dịch vụ khởi động |
+| Dữ liệu quy trình — trạng thái, cạnh, vai trò đi cạnh, ràng buộc trên cạnh | Bản sửa dữ liệu tạo **bộ quy tắc phiên bản mới** (dưới) | Hồ sơ đang chạy giữ bộ cũ, hồ sơ mới nhận bộ mới |
+| Dữ liệu dùng chung — phòng ban, loại yêu cầu, lịch, loại lời nhắn | Bản sửa dữ liệu sửa thẳng dòng, rồi gọi `kiem_tra_cau_hinh()` | Áp ngay cho mọi hồ sơ |
+| Dữ liệu mẫu cho cụm dựng mới | Sửa `infra/seed/` | Không đụng — bộ nạp không nạp lại |
+
+**Khởi động dịch vụ, ba bước** (`backend/docker-entrypoint.sh`):
+
+1. `alembic upgrade head`. Cụm dựng mới đi trọn chuỗi từ bản gốc `0000` (tạo mười bảy bảng cấu hình và
+   hai hàm giờ làm việc). Cụm từ v0.9.x đã ghi một bản sau trong `alembic_version`, nên Alembic coi
+   `0000` là tổ tiên đã chạy và chỉ chạy bản còn thiếu — đây là lý do bản gốc được chèn **trước** `0001`
+   mà không cụm cũ nào phải chạy lại nó. SQL của `0000` là ảnh chụp lược đồ tại v0.9.1: không sửa nữa
+2. `python -m app.cau_hinh.khoi_tao`: xin khóa tư vấn (chạy nhiều bản dịch vụ thì một bản nạp, các bản
+   kia chờ); chưa có bộ quy tắc nào thì chạy lần lượt `infra/seed/*.sql` (gắn vào container ở `/seed`);
+   lần nào cũng gọi `kiem_tra_cau_hinh()`. Một giao dịch: nạp dở hay kiểm hỏng thì không gì được ghi,
+   lệnh thoát mã lỗi, dịch vụ không lên
+3. Máy chủ ứng dụng
+
+PostgreSQL chỉ còn `infra/postgres/init/01-…`: tạo hai database của Keycloak, Superset và tài khoản
+chỉ đọc kèm quyền đọc mặc định — bảng do migration tạo về sau vẫn đọc được, vì cùng chủ sở hữu.
+
+**Bộ quy tắc phiên bản mới** (`app/cau_hinh/bo_quy_tac.py`). Hồ sơ ghim `rule_set_id` lúc tạo, engine
+chỉ tra trạng thái và cạnh trong đúng bộ đó, hàng đợi thấy mọi bộ còn hồ sơ mở (#278). Nên đổi luồng
+không sửa bộ đang chạy, mà trong **một** bản sửa Alembic:
+
+```python
+from alembic import op
+from sqlalchemy import text
+
+from app.cau_hinh.bo_quy_tac import kich_hoat, sao_chep
+
+
+def upgrade() -> None:
+    ket_noi = op.get_bind()
+    cu = ket_noi.execute(text("SELECT id FROM rule_sets WHERE is_active")).scalar_one()
+    moi = sao_chep(ket_noi, cu, "v2", "Thêm bước xác nhận của trưởng phòng")
+    ket_noi.execute(text("INSERT INTO transitions (rule_set_id, from_state, …) VALUES (:moi, …)"),
+                    {"moi": moi})
+    kich_hoat(ket_noi, moi)  # gọi kiem_tra_cau_hinh() trước khi đổi bộ đang bật
+```
+
+`sao_chep` chép trạng thái, cạnh, vai trò đi cạnh và ràng buộc trên cạnh sang một bộ chưa bật — cột
+tra từ `information_schema` lúc chạy, nên thêm cột cấu hình về sau vẫn chép đủ; đổi được mã trạng
+thái ngay trên đường chép. `kich_hoat` gọi `kiem_tra_cau_hinh()` rồi mới đổi bộ đang bật (hai câu
+`UPDATE` riêng vì chỉ mục duy nhất từng phần). Bộ mới tạo ngõ cụt hay trạng thái không tới được thì
+PostgreSQL ném lỗi, cả bản sửa hoàn tác, dịch vụ không lên với cấu hình hỏng.
+
+**Kiểm chứng.** `tests/test_cau_hinh.py` dựng một lược đồ PostgreSQL tạm trong giao dịch của bài, chạy
+SQL của `0000` và `0018` rồi bộ nạp — cấu hình ra phải y hệt cụm đang chạy, lần sau không nạp lại; chép
+bộ đang bật, thêm một cạnh, kích hoạt — hồ sơ mới đi được cạnh mới, hồ sơ cũ thì không; bộ có ngõ cụt
+bị từ chối và không để lại gì. Lần nâng thật kiểm bằng `scripts/kiem_nang_cap.py`: chụp số dòng và mã
+băm cột cố định của hồ sơ, nhật ký, lời nhắn, tệp đính kèm cùng sự có mặt của từng tệp trong kho trước
+khi nâng, rồi so sau khi nâng. Cách nâng cho người dùng: README mục nâng cấp và trang tài liệu.
 
 ---
 
@@ -749,6 +851,7 @@ sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi —
 | `bao_cao_phan_bo_loai` | tuần gửi × phòng × loại | Phân bố loại yêu cầu |
 | `bao_cao_thoi_gian_xu_ly` | loại: trung vị giờ xử lý, tỷ lệ vi phạm toàn công ty | tóm tắt |
 | `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
+| `bao_cao_goi_y` | một gợi ý đã được giữ hay ghi đè: trường, nguồn, giá trị gợi ý và giá trị chọn (migration `0016`, #239) | Tỷ lệ ghi đè gợi ý |
 
 Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
 
@@ -767,7 +870,7 @@ View đặt ở schema `public` và chạy bằng quyền của chủ sở hữu
 quyền đọc mặc định cấp lúc dựng cụm, không đọc thẳng được gì nó không cần. Đổi một view thì tạo
 migration mới bằng `CREATE OR REPLACE VIEW`.
 
-**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, bốn biểu đồ và dashboard *Vận hành
+**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, năm biểu đồ (thứ năm là tỷ lệ ghi đè gợi ý, #239) và dashboard *Vận hành
 yêu cầu* nằm ở `infra/superset/bang-dieu-khien/` dạng YAML. Lúc khởi động, điểm vào của ảnh
 Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi chạy `superset import-directory
 --overwrite` — nạp đè theo uuid, khởi động lại không sinh bản trùng, cụm dựng mới có sẵn bảng
@@ -1031,9 +1134,36 @@ cho "không có" và "của người khác" để không lộ hồ sơ của ng�
 nhật ký (§6), nên liên kết hiện qua hai trường `parent` và `children` của trang hồ sơ chứ không
 qua một mốc trên dòng thời gian của hồ sơ cũ.
 
-Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
+Hai phép kiểm tra trong `kiem_tra_cau_hinh()` canh bộ quy tắc: phải
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
 Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
+
+**Chạy nhiều bản dịch vụ: khóa và nhịp của bộ quét** (#253). Hai bộ quét (`BO_QUET` trong
+`escalation.py`: `sla-escalation`, `wait-expiry`) chạy trong tiến trình của dịch vụ ứng dụng, nên
+chạy hai bản thì cả hai cùng quét. Dữ liệu không hỏng — cổng chuyển trạng thái khóa dòng hồ sơ —
+nhưng làm việc trùng và sinh nhiễu nhật ký. `chay_luot_quet` (`workflow/nhip_quet.py`) bọc mỗi lượt:
+
+- **Khóa.** Đầu giao dịch của lượt xin `pg_try_advisory_xact_lock` theo tên bộ quét. Bản nào xin
+  được thì quét; bản kia **bỏ lượt** — không chờ, không tính là lỗi. Khóa mức giao dịch nên tự nhả
+  khi giao dịch kết thúc, kể cả khi tiến trình chết giữa chừng: không có khóa treo cần dọn. Mỗi bộ
+  quét một khóa, nên hai bộ vẫn chạy song song được trên hai bản. Chạy một bản thì lúc nào cũng
+  giành được khóa, hành vi như trước.
+- **Nhịp.** Bảng `scanner_heartbeats` (migration `0017`) một dòng mỗi bộ quét: lần chạy cuối, lần
+  thành công cuối, lần lỗi cuối và câu lỗi, **số lỗi liên tiếp**, bản nào chạy (tên máy chủ, mã tiến
+  trình). Lượt thành công ghi nhịp cùng giao dịch với kết quả quét rồi đặt số lỗi liên tiếp về 0.
+  Lượt hỏng **hoàn tác trước, rồi mới ghi lỗi ở giao dịch riêng** — ghi chung thì chính dấu vết của
+  lượt hỏng bị hoàn tác theo.
+- **Tín hiệu.** `/health` (xem 7.4) báo `degraded` khi một bộ quét hỏng liên tiếp tới
+  `SLA_SCAN_MAX_CONSECUTIVE_ERRORS` lượt (mặc định 3), hoặc lần thành công cuối đã quá
+  `SLA_SCAN_STALE_AFTER_SECONDS` (mặc định 0 = tự tính, năm lần chu kỳ quét). Vế "quá lâu" chỉ xét
+  khi chính tiến trình đã chạy quá ngưỡng: vừa khởi động lại sau thời gian dừng dài thì bộ quét
+  chưa có cơ hội chạy, không báo đỏ ngay. Tắt bộ quét bằng `SLA_SCAN_ENABLED=false` là chủ ý của
+  người vận hành, không phải sự cố.
+
+Bộ quét hỏng **không** làm `/health` trả 503: dịch vụ vẫn phục vụ yêu cầu bình thường, chỉ hồ sơ quá
+hạn không tự leo thang. Healthcheck của Docker và các dịch vụ chờ `service_healthy` (cổng, Superset)
+không được rớt hay kẹt vì một bộ quét trượt — họ đọc `status` nếu cần phân biệt. Nhịp chi tiết hiện ở
+màn Hệ thống.
 
 ### 7.2. Giao diện không giữ bản sao của bộ quy tắc
 
@@ -1339,6 +1469,77 @@ nhất; người dùng đổi được sang hạn gần nhất, chờ lâu nhấ
 Thanh bên đếm cùng cờ đó: số đặc là việc chờ mình, số mờ là hồ sơ đang mở, chấm đỏ khi có việc chờ
 mình đã quá hạn hoặc sắp tự đi. Từ #232 cả hai đọc số từ `waiting_me`, `urgent`, `total`,
 `open_count` mà dịch vụ đếm trên cả danh sách (mục 7.2).
+
+### 7.4. Lớp biên: tiêu đề bảo mật, giới hạn tốc độ và `/health`
+
+**Đã cài đặt** — #243. Ba việc ở rìa hệ thống, cùng một nguyên tắc: chặt vừa đủ để giao diện vẫn
+chạy, và thứ gì lộ ra cho người chưa đăng nhập thì chỉ là thứ không có hại khi lộ.
+
+**Tiêu đề bảo mật ở cổng.** Hai nơi, chia theo việc tiêu đề có đổi theo yêu cầu hay không:
+
+- `frontend/next.config.ts` đặt tĩnh cho mọi đường dẫn, kể cả tệp tĩnh và tuyến API:
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Strict-Transport-Security`, `Permissions-Policy` tắt camera, micro, vị trí, và `X-Frame-Options:
+  DENY` cho trình duyệt cũ chưa hiểu `frame-ancestors`. Trình duyệt bỏ qua HSTS trên `http`, nên cụm
+  thử ở `http://localhost` không bị ảnh hưởng.
+- `frontend/proxy.ts` (Next.js 16 đổi tên `middleware.ts` thành `proxy.ts`) sinh **số dùng một lần
+  mỗi yêu cầu** và đặt `Content-Security-Policy`. Số nằm cả ở header yêu cầu để Next gắn vào script
+  của chính nó, và ở `x-nonce` để `app/layout.tsx` gắn vào đoạn chống nháy sáng/tối tự viết. Vì cần
+  số mới mỗi lượt nên mọi trang dựng động — layout gốc đọc header nên đã vậy. Chính sách dựng ở
+  `lib/bao-mat.ts`:
+
+  ```
+  default-src 'self'; script-src 'self' 'nonce-<mỗi lượt>' 'strict-dynamic'; style-src 'self'
+  'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src
+  <gốc công khai của Superset>; object-src 'none'; base-uri 'self'; form-action 'self' <gốc Keycloak>;
+  frame-ancestors 'none'
+  ```
+
+  Chế độ phát triển thêm `'unsafe-eval'` vào `script-src` (React cần để dựng lại dấu vết lỗi) và
+  `ws: wss:` vào `connect-src` (nạp nóng). `style-src` cho `'unsafe-inline'` có chủ đích: giao diện
+  dùng thuộc tính `style={{…}}` của React ở rất nhiều chỗ, và CSP không cho nối số dùng một lần vào
+  thuộc tính style. Rủi ro còn lại là chèn kiểu dáng, không phải chạy mã — `script-src` vẫn chặt.
+  `frame-src` chỉ nhận gốc Superset (biến `SUPERSET_PUBLIC_URL` của cổng, cùng giá trị dịch vụ ứng
+  dụng đã dùng ở #305); `form-action` thêm gốc Keycloak vì đăng nhập, đăng xuất chuyển hướng qua đó
+  và Chrome kiểm `form-action` cả trên đích chuyển hướng.
+
+Bài kiểm tra giao diện (`e2e/`) bắt sự kiện `securitypolicyviolation` ở mọi màn, kể cả Báo cáo nhúng
+Superset: vi phạm chính sách chỉ ghi vào bảng điều khiển của trình duyệt, không ném lỗi trang, nên
+chỉ nghe `pageerror` thì bỏ lọt.
+
+**Giới hạn tốc độ.** Hai tầng, hai nơi đếm — vì hai tầng có hai hoàn cảnh khác nhau:
+
+- *Dịch vụ ứng dụng* (`backend/app/rate_limit.py`) giới hạn ba thao tác ghi: **tạo hồ sơ**, **tải tệp
+  lên**, **gửi lời nhắn** (cả ba cửa của lời nhắn). Bộ đếm nằm trong **PostgreSQL**, bảng
+  `rate_limit_hits(key, window_start, hits)` (migration `0017`): cửa sổ thời gian cố định, tăng bằng
+  một câu `INSERT … ON CONFLICT DO UPDATE … RETURNING` nguyên tử, nên đúng khi chạy nhiều bản dịch vụ
+  mà không cần khóa. Khóa đếm là `<tên giới hạn>:<định danh người dùng>`: hai người đếm riêng, và
+  tạo hồ sơ nhiều không ăn vào hạn mức nhắn tin. Dùng đồng hồ của cơ sở dữ liệu nên các bản không
+  lệch cửa sổ. Phụ thuộc `gioi_han_toc_do(tên)` gắn ở decorator của điểm cuối, chạy **sau** kiểm
+  token (người lạ nhận 401, không tiêu hao hạn mức của ai) và **commit ngay** khi đếm xong: điểm
+  cuối của dự án `rollback()` khi từ chối, nên đếm chung giao dịch thì chính những yêu cầu hỏng —
+  loại lạm dụng cần chặn nhất — lại được đếm rồi bị hoàn tác. Vượt giới hạn trả `429`, header
+  `Retry-After`, `detail = {code: "rate-limited", message: "Bạn gửi yêu cầu quá nhanh. Thử lại sau N
+  giây."}` — cùng dạng với lỗi nghiệp vụ nên `lib/api.ts` chuyển thẳng thành thông báo cho biểu mẫu,
+  không trang 500. Số lần tối đa và độ dài cửa sổ của từng giới hạn là biến môi trường
+  (`RATE_LIMIT_*`, `infra/.env.example`; 0 là tắt giới hạn đó), không nằm trong hàm. Dòng đếm cũ
+  được dọn trong vòng của bộ quét nền.
+- *Cổng* giới hạn **đăng nhập quay về** (`/api/auth/callback`) theo địa chỉ IP ở `proxy.ts`. Cổng
+  không chạm cơ sở dữ liệu nên bộ đếm nằm trong **bộ nhớ tiến trình**, và giới hạn **từng bản**:
+  chạy N bản cổng thì mỗi bản đếm riêng, giới hạn thực tế lỏng hơn theo N. Chấp nhận, vì mục đích là
+  chặn vòng lặp thử đổi mã ủy quyền dồn dập chứ không phải chặn tuyệt đối. Địa chỉ IP lấy từ
+  `X-Forwarded-For`, nên chỉ có nghĩa khi cổng đứng sau reverse proxy đặt header đó; không có header
+  thì mọi người dùng chung một bộ đếm. Vượt thì trang `429` tiếng Việt kèm `Retry-After`.
+
+**`/health` công khai chỉ trả trạng thái chung.** `{"service": …, "status": "ok" | "degraded"}` và
+mã `503` khi cơ sở dữ liệu hay lược đồ quy trình không dùng được. Không phiên bản, không tên cơ sở
+dữ liệu, không câu lỗi: trước #243 nhánh lỗi trả `str(lỗi)[:200]`, mà câu lỗi của trình điều khiển có
+thể mang tên máy chủ, cổng và tên tài khoản cho người chưa đăng nhập. Chi tiết lỗi **chỉ ghi vào nhật
+ký** (`logging`) và hiện ở `GET /system/health`, điểm cuối chỉ quản trị viên — cùng hàm đo
+(`_do_suc_khoe` trong `main.py`) với `/health`, nên hai nơi không thể kể hai chuyện khác nhau. Màn
+Hệ thống (#229) đọc đúng điểm cuối này, không có đường thứ hai: phiên bản, bộ quy tắc đã nạp, nhịp
+từng bộ quét (mục 7.1), và `detail` khi hỏng. Bộ quét hỏng làm `status` thành `degraded` nhưng mã
+vẫn `200` — lý do ở mục 7.1.
 
 ---
 
