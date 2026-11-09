@@ -53,7 +53,9 @@ GPL, AGPL đều **được OSI công nhận** nên hợp lệ về mặt thể 
 Nếu buộc phải dùng một nền tảng copyleft mạnh:
 
 - Triển khai như **dịch vụ độc lập**, giao tiếp qua HTTP hoặc giao thức mạng
-- **Không** nhúng thư viện của nó vào mã nguồn dự án
+- **Không** nhúng thư viện của nó vào dịch vụ ứng dụng hay cổng. Thư viện copyleft mạnh chỉ được
+  `import` bên trong **một dịch vụ tách riêng** (thư mục, ảnh chứa riêng, giao tiếp HTTP) — trường hợp
+  duy nhất hiện nay là PM4Py trong `services/khai-pha/` (ADR-0007); CI chặn `import pm4py` ở nơi khác
 - Ghi rõ ranh giới kiến trúc này vào `ARCHITECTURE.md` và bản ghi quyết định tương ứng
 
 ### Các trường hợp đang áp dụng
@@ -64,6 +66,8 @@ Nếu buộc phải dùng một nền tảng copyleft mạnh:
 | **psycopg 3** | LGPL-3.0-only | Trình điều khiển PostgreSQL của **dịch vụ ứng dụng**. Đây là phụ thuộc copyleft đầu tiên nằm trong mã nguồn của chính nhóm, nên ranh giới phải nói rõ: dự án chỉ `import` nó như thư viện, không sao chép mã, không sửa mã. LGPL cho phép đúng cách dùng này. Người dùng thay thế được bằng cách sửa một dòng trong `backend/requirements.txt` và một tiền tố trong chuỗi kết nối — hai bản lùi permissive là `pg8000` (BSD-3-Clause) và `asyncpg` (Apache-2.0) |
 | **sharp** và `@img/sharp-libvips-*` | Apache-2.0 (sharp) · LGPL-3.0-or-later (libvips) | Phụ thuộc **tùy chọn** mà Next.js kéo theo để tối ưu ảnh. Thư viện gốc `libvips` là nhị phân dựng sẵn, nạp động, thay thế được — đúng điều kiện LGPL cho phép. Cổng người dùng hiện **không dùng ảnh nào**; nếu muốn loại bỏ hẳn thì đặt `images: { unoptimized: true }` trong `next.config.ts` |
 | **lightningcss** | MPL-2.0 | Công cụ xử lý CSS mà Astro dùng **lúc dựng** trang tài liệu. MPL-2.0 là copyleft theo từng tệp: chỉ ràng buộc khi sửa chính tệp của thư viện. Dự án dùng qua trình quản lý gói, không sửa, không chép mã; kết quả dựng là CSS do dự án viết |
+| **PM4Py** | AGPL-3.0-or-later — dòng đầu `LICENSE` trong gói đã cài: `GNU AFFERO GENERAL PUBLIC LICENSE` | Chỉ cài trong ảnh của **dịch vụ khai phá** `services/khai-pha/`, chỉ một tệp `import` (`app/bo_may/pm4py_bo_may.py`). Dịch vụ ứng dụng và cổng nhận JSON qua HTTP — tác phẩm riêng biệt gộp chung, AGPL không lan sang. Mã của nhóm trong dịch vụ vẫn MIT (tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Không sửa, không chép mã thư viện. Có bộ máy dự phòng Python thuần: `MINING_ENGINE=noi_bo` rồi xóa dòng pm4py — xem ADR-0007 |
+| **cvxopt** | GPL-3.0-or-later — `LICENSE` trong gói đã cài: *"GNU General Public License … either version 3"* | Phụ thuộc gián tiếp **bắt buộc** của PM4Py, cùng nằm sau ranh giới dịch vụ khai phá. GPL-3.0 và AGPL-3.0 kết hợp được (điều 13 của cả hai). Dự án không gọi trực tiếp; gỡ PM4Py thì gỡ luôn |
 | **Metabase** *(đã loại)* | AGPL-3.0 | Không dùng — xem ADR-0003 |
 | **Garage**, **MinIO** *(phương án lùi)* | AGPL-3.0 | Nếu phải dùng thì chỉ chạy như dịch vụ độc lập qua S3 API — xem ADR-0002 |
 
@@ -88,7 +92,7 @@ Ghi lại ở đây để nếu ban giám khảo tra `package-lock.json` thì đ
 | Docker Engine | 24+ | Apache-2.0 | Có | Có | Đóng gói và dựng hệ thống |
 | Docker Compose | v2 | Apache-2.0 | Có | Có | Dựng toàn hệ thống bằng một lệnh |
 | PostgreSQL | `16-alpine` | PostgreSQL License | Có | Có | Một thực thể, ba database: `dxlab`, `keycloak`, `superset` |
-| Python *(ảnh nền)* | `3.13-slim` | Python-2.0 | Có | Có | Ảnh nền của dịch vụ ứng dụng — `backend/Dockerfile` |
+| Python *(ảnh nền)* | `3.13-slim` | Python-2.0 | Có | Có | Ảnh nền của dịch vụ ứng dụng (`backend/Dockerfile`) và dịch vụ khai phá (`services/khai-pha/Dockerfile`) |
 | Node.js *(ảnh nền)* | `24-alpine` | MIT | Có | Có | Ảnh nền của cổng người dùng — `frontend/Dockerfile` |
 | psycopg2-binary | `2.9.13` | LGPL kèm ngoại lệ | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Cài vào **ảnh dẫn xuất của Superset** vì ảnh gốc không kèm sẵn — xem `infra/superset/Dockerfile`. Không nhúng vào mã nguồn dự án, không sửa mã thư viện. Chi tiết ràng buộc ở mục Lưu ý về giấy phép copyleft |
 
@@ -188,6 +192,33 @@ này được OSI công nhận và là copyleft ở mức từng tệp: ràng bu
 **sửa tệp nguồn của chính gói đó**, mà điều đó thì CLAUDE.md mục 2.3 đã cấm sẵn.
 `certifi` cũng chỉ là một bó chứng thư số CA đi kèm, không phải mã nguồn chạy trong
 sản phẩm.
+
+## Phụ thuộc dịch vụ khai phá quy trình
+
+Khai báo và ghim trong `services/khai-pha/requirements.txt` bằng `==` (#314, ADR-0007). Phần mở rộng
+`[stable]` của chính PM4Py ghim sẵn bộ thư viện số học kéo theo, nên ai dựng lại cũng nhận đúng bộ phiên
+bản dưới đây. Mọi gói trong bảng **chỉ nằm trong ảnh của dịch vụ khai phá**, không nằm trong dịch vụ ứng
+dụng hay cổng. Giấy phép đọc từ siêu dữ liệu gói đã cài trong ảnh; gói nào siêu dữ liệu không ghi thì
+đã mở tệp `LICENSE` trong gói.
+
+| Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
+|---|---|---|---|---|---|
+| pm4py[stable] | `2.7.23.8` | AGPL-3.0-or-later | Có | Có, **có điều kiện** | Khám phá đồ thị trực tiếp và biến thể. Ranh giới ở mục Lưu ý về giấy phép copyleft |
+| fastapi | `0.141.1` | MIT | Có | Có | Cùng bản với dịch vụ ứng dụng |
+| uvicorn[standard] | `0.53.0` | BSD-3-Clause | Có | Có | |
+| psycopg[binary] | `3.3.5` | LGPL-3.0-only | Có | Có, **có điều kiện** | Như dịch vụ ứng dụng — chỉ `import`, không sửa |
+| pandas | `3.0.5` | BSD-3-Clause | Có | Có | Bảng sự kiện đưa vào PM4Py; bộ máy dự phòng không cần |
+| pytest | `9.1.1` | MIT | Có | Có | Bài kiểm thử đáp án biết trước, chạy trong container |
+| httpx | `0.28.1` | BSD-3-Clause | Có | Có | `TestClient` của FastAPI |
+| cvxopt *(gián tiếp)* | `1.3.3` | GPL-3.0-or-later | Có | Có, **có điều kiện** | Bắt buộc của PM4Py; xem mục copyleft |
+| numpy *(gián tiếp)* | `2.5.1` | BSD-3-Clause AND 0BSD AND MIT AND Zlib… | Có | Có | |
+| scipy *(gián tiếp)* | `1.18.0` | BSD-3-Clause | Có | Có | |
+| networkx *(gián tiếp)* | `3.6.1` | BSD-3-Clause | Có | Có | |
+| lxml *(gián tiếp)* | `6.1.1` | BSD-3-Clause | Có | Có | |
+| matplotlib *(gián tiếp)* | `3.11.1` | Matplotlib License (dựa trên PSF License) | Văn bản gốc PSF-2.0 có trong danh sách OSI; bản của Matplotlib chỉ đổi tên bên cấp phép | Có | Dễ dãi kiểu BSD. PM4Py kéo theo để vẽ, dịch vụ không vẽ gì. Ghi riêng để người chấm thấy đã xét |
+| pillow, contourpy, cycler, kiwisolver, fonttools, pyparsing *(gián tiếp, cùng matplotlib)* | theo `[stable]` | MIT-CMU · BSD-3-Clause · BSD-3-Clause · BSD-3-Clause · MIT · MIT | Có | Có | |
+| graphviz *(gián tiếp, gói Python)* | `0.21` | MIT | Có | Có | Chỉ là lớp gọi; ảnh không cài chương trình Graphviz |
+| pytz, python-dateutil, six, tqdm, packaging *(gián tiếp)* | theo `[stable]` | MIT · Apache-2.0 hoặc BSD-3-Clause · MIT · MPL-2.0 AND MIT · Apache-2.0 hoặc BSD-2-Clause | Có | Có | tqdm MPL-2.0 theo từng tệp, không sửa tệp nào |
 
 ---
 

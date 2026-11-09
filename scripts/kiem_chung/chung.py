@@ -40,7 +40,7 @@ MAT_KHAU_MAU = "matkhau123"
 DU_AN_CUM_CHINH = "dx-os-lab"
 TIEN_TO_CUM_CHINH = "dxlab-"
 
-DICH_VU = ("postgres", "keycloak", "seaweedfs", "superset", "backend", "frontend")
+DICH_VU = ("postgres", "keycloak", "seaweedfs", "superset", "backend", "frontend", "khai-pha")
 KHOA_CONG = ("POSTGRES_PORT", "KEYCLOAK_PORT", "SEAWEEDFS_S3_PORT", "SUPERSET_PORT", "BACKEND_PORT", "FRONTEND_PORT")
 
 
@@ -201,7 +201,7 @@ class CumThu:
 
     @property
     def ten_cac_anh(self) -> list[str]:
-        return [self.anh(t) for t in ("backend", "frontend", "superset")]
+        return [self.anh(t) for t in ("backend", "frontend", "superset", "khai-pha")]
 
     # --- tệp biến môi trường ---
 
