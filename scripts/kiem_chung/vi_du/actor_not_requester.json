@@ -1,0 +1,40 @@
+{
+  "mo_ta": "Ví dụ: ràng buộc actor-not-requester (#154) — điều phối viên không tự điều phối hồ sơ do chính mình gửi. Mỗi đột biến làm hỏng ràng buộc một kiểu; ba bài kiểm thử trong backend/tests/test_coordination.py phải đỏ.",
+  "bai": [
+    "tests/test_coordination.py::test_dieu_phoi_khong_dieu_phoi_ho_so_cua_minh",
+    "tests/test_coordination.py::test_nguoi_khac_dieu_phoi_ho_so_do_binh_thuong",
+    "tests/test_coordination.py::test_rang_buoc_gan_dung_moi_canh_cua_vai_dieu_phoi"
+  ],
+  "dot_bien": [
+    {
+      "ten": "ràng buộc không bao giờ chặn (điều kiện luôn sai)",
+      "tep": "backend/app/rules/guards.py",
+      "goc": "    if ctx.actor.id == ctx.case.requester_id:\n        raise GuardViolation(\n            \"actor-not-requester\",",
+      "thay": "    if False:\n        raise GuardViolation(\n            \"actor-not-requester\","
+    },
+    {
+      "ten": "đảo so sánh: chặn người khác, thả chính chủ",
+      "tep": "backend/app/rules/guards.py",
+      "goc": "    if ctx.actor.id == ctx.case.requester_id:\n        raise GuardViolation(\n            \"actor-not-requester\",",
+      "thay": "    if ctx.actor.id != ctx.case.requester_id:\n        raise GuardViolation(\n            \"actor-not-requester\","
+    },
+    {
+      "ten": "không chạy lúc chào nút: nút của điều phối vẫn hiện trên hồ sơ của mình",
+      "tep": "backend/app/rules/guards.py",
+      "goc": "\"actor-not-requester\": Guard(actor_not_requester, input_free=True),",
+      "thay": "\"actor-not-requester\": Guard(actor_not_requester, input_free=False),"
+    },
+    {
+      "ten": "đăng ký nhầm hàm của ràng buộc khác (requester-owns-case)",
+      "tep": "backend/app/rules/guards.py",
+      "goc": "\"actor-not-requester\": Guard(actor_not_requester, input_free=True),",
+      "thay": "\"actor-not-requester\": Guard(requester_owns_case, input_free=True),"
+    },
+    {
+      "ten": "lời báo bị đổi: người dùng không biết vì sao bị từ chối",
+      "tep": "backend/app/rules/guards.py",
+      "goc": "một điều phối viên khác sẽ phân loại và chuyển phòng.",
+      "thay": "hãy thử lại sau."
+    }
+  ]
+}
