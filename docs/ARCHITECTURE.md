@@ -307,8 +307,10 @@ dx-os-lab/
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký sự kiện CSV, JSON (#306)
+│   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239)
-│   ├── alembic/                 # migration cho bảng do ứng dụng sở hữu
+│   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
+│   │   └── sql/                 # SQL thô của bản gốc 0000 và hàm kiểm 0018, không sửa nữa
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── frontend/                    # Next.js — cổng người dùng
@@ -345,18 +347,17 @@ dx-os-lab/
 │   ├── seaweedfs/
 │   ├── superset/                # ảnh dẫn xuất, ảnh gốc thiếu trình điều khiển
 │   │   └── bang-dieu-khien/     # [D] dashboard dạng YAML, tự nạp lúc khởi động (#304)
-│   ├── postgres/init/           # LƯỢC ĐỒ — phần thuộc kiến trúc
-│   │   ├── 01-tao-cac-database.sh
-│   │   ├── 02-luoc-do-quy-trinh.sql
-│   │   └── 03-nap-du-lieu-khoi-tao.sh
-│   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa
+│   ├── postgres/init/           # chỉ tạo hai database còn lại và tài khoản chỉ đọc
+│   │   └── 01-tao-cac-database.sh
+│   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa, nạp lần đầu dựng cụm
 │       ├── 01-quy-tac-quy-trinh.sql
 │       ├── 02-co-cau-to-chuc.sql
-│       └── 99-kiem-tra-tinh-nhat-quan.sql
+│       └── 03-lich-lam-viec.sql
 ├── scripts/
 │   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
-│   └── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
+│   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
+│   └── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
 ├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
@@ -453,20 +454,22 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 
 ### 5.2. Lược đồ cấu hình đã hiện thực
 
-Mười sáu bảng, định nghĩa ở `infra/postgres/init/02-luoc-do-quy-trinh.sql`, chia năm nhóm:
+Mười bảy bảng, định nghĩa ở bản sửa gốc `0000_luoc_do_cau_hinh` của Alembic (SQL thô ở
+`backend/alembic/sql/`, từ #254 — trước đó là lược đồ khởi tạo của PostgreSQL), chia năm nhóm:
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
 | Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng — mục 6.1 |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
-| Cơ cấu tổ chức | `departments` · `request_types` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên |
+| Cơ cấu tổ chức | `departments` · `request_types` · `request_type_fields` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên; trường riêng theo loại ở mục 5.3 |
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
 | Lịch làm việc | `work_calendars` · `work_hours` · `holidays` | Giờ làm theo thứ, ngày nghỉ, múi giờ (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định — xem mục 7.1 |
 
-**Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong `infra/postgres/init/`
-vì nó thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu
-mà công ty khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò
-giữa hai loại nội dung khác hẳn nhau.
+**Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong chuỗi migration vì nó
+thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu mà công ty
+khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò giữa hai loại nội
+dung khác hẳn nhau. Dữ liệu khởi tạo nạp **một lần**, lúc dựng cụm, và đổi cấu hình của cụm
+đang chạy là việc của bản sửa dữ liệu — mục 5.4.
 
 **Ba lớp bảo vệ, không lớp nào nằm trong mã ứng dụng:**
 
@@ -478,14 +481,16 @@ giữa hai loại nội dung khác hẳn nhau.
    hẳn; "kết thúc" nay nghĩa là hết chu kỳ hồ sơ, chưa hẳn là không còn đường ra
 2. **Chỉ mục duy nhất từng phần** bảo đảm mỗi bộ quy tắc có đúng một trạng thái bắt đầu,
    mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
-3. **Kiểm tra mức đồ thị** trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` bắt những
+3. **Kiểm tra mức đồ thị** — hàm `kiem_tra_cau_hinh()` trong cơ sở dữ liệu (bản sửa `0018`,
+   #254; trước đó là khối `infra/seed/99-…` chỉ chạy lúc nạp) — bắt những
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
    là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
    ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được, từ #199 là lịch
-   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Sai một điều thì
-   **cụm Docker dừng khởi động**, thay vì chạy với luồng hỏng rồi để một hồ sơ thật mắc
-   kẹt mới lộ ra
+   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Hàm chạy
+   mỗi lần dịch vụ khởi động và trước mỗi lần kích hoạt bộ quy tắc mới; sai một điều thì
+   **dịch vụ dừng khởi động** hay **bản cập nhật bị từ chối**, thay vì chạy với luồng hỏng rồi
+   để một hồ sơ thật mắc kẹt mới lộ ra
 
 Hai ràng buộc Poka-yoke quan trọng nhất **không có dòng dữ liệu nào** vì chúng được thực
 thi bằng sự vắng mặt: *đã nhận là không trả về* và *chỉ hủy trước khi vào xử lý*. Không
@@ -534,7 +539,72 @@ hỏi thêm người gửi nếu cần.
 
 `create_case` chỉ kiểm khi được truyền `details`: `None` là lối gọi nội bộ chưa có trường riêng
 (bộ sinh dữ liệu, kiểm thử cũ). Điểm cuối gửi yêu cầu luôn truyền một bộ, nên người dùng không
-lách được phép kiểm. Đổi bảng cấu hình thì phải `down -v`, như mọi bảng cấu hình khác.
+lách được phép kiểm. Đổi bảng cấu hình là một bản sửa Alembic, như mọi bảng cấu hình khác
+(mục 5.4).
+
+### 5.4. Nâng cấp giữ nguyên dữ liệu
+
+**Đã cài đặt** — #254. Mốc bắt đầu là `v0.9.1`: cụm dựng từ bản đó trở đi nâng lên bản mới bằng
+`up -d --build`, không mất hồ sơ, nhật ký hay tệp; bản cũ hơn vẫn phải dựng lại.
+
+Trước #254, bảng cấu hình do lược đồ khởi tạo của PostgreSQL tạo, dữ liệu do `infra/seed/` nạp — cả
+hai chạy đúng một lần lúc tạo thực thể, ngoài tầm Alembic. Mọi thay đổi cấu hình buộc `down -v`, và
+hai nguồn sự thật cho lược đồ làm nâng cấp không đồng nhất. Nay mỗi loại thay đổi có đúng một đường:
+
+| Thay đổi | Đi đường nào | Cụm đang chạy |
+|---|---|---|
+| Lược đồ — bảng, cột, ràng buộc, hàm, view | Bản sửa Alembic mới trong `backend/alembic/versions/` | Tự chạy lúc dịch vụ khởi động |
+| Dữ liệu quy trình — trạng thái, cạnh, vai trò đi cạnh, ràng buộc trên cạnh | Bản sửa dữ liệu tạo **bộ quy tắc phiên bản mới** (dưới) | Hồ sơ đang chạy giữ bộ cũ, hồ sơ mới nhận bộ mới |
+| Dữ liệu dùng chung — phòng ban, loại yêu cầu, lịch, loại lời nhắn | Bản sửa dữ liệu sửa thẳng dòng, rồi gọi `kiem_tra_cau_hinh()` | Áp ngay cho mọi hồ sơ |
+| Dữ liệu mẫu cho cụm dựng mới | Sửa `infra/seed/` | Không đụng — bộ nạp không nạp lại |
+
+**Khởi động dịch vụ, ba bước** (`backend/docker-entrypoint.sh`):
+
+1. `alembic upgrade head`. Cụm dựng mới đi trọn chuỗi từ bản gốc `0000` (tạo mười bảy bảng cấu hình và
+   hai hàm giờ làm việc). Cụm từ v0.9.x đã ghi một bản sau trong `alembic_version`, nên Alembic coi
+   `0000` là tổ tiên đã chạy và chỉ chạy bản còn thiếu — đây là lý do bản gốc được chèn **trước** `0001`
+   mà không cụm cũ nào phải chạy lại nó. SQL của `0000` là ảnh chụp lược đồ tại v0.9.1: không sửa nữa
+2. `python -m app.cau_hinh.khoi_tao`: xin khóa tư vấn (chạy nhiều bản dịch vụ thì một bản nạp, các bản
+   kia chờ); chưa có bộ quy tắc nào thì chạy lần lượt `infra/seed/*.sql` (gắn vào container ở `/seed`);
+   lần nào cũng gọi `kiem_tra_cau_hinh()`. Một giao dịch: nạp dở hay kiểm hỏng thì không gì được ghi,
+   lệnh thoát mã lỗi, dịch vụ không lên
+3. Máy chủ ứng dụng
+
+PostgreSQL chỉ còn `infra/postgres/init/01-…`: tạo hai database của Keycloak, Superset và tài khoản
+chỉ đọc kèm quyền đọc mặc định — bảng do migration tạo về sau vẫn đọc được, vì cùng chủ sở hữu.
+
+**Bộ quy tắc phiên bản mới** (`app/cau_hinh/bo_quy_tac.py`). Hồ sơ ghim `rule_set_id` lúc tạo, engine
+chỉ tra trạng thái và cạnh trong đúng bộ đó, hàng đợi thấy mọi bộ còn hồ sơ mở (#278). Nên đổi luồng
+không sửa bộ đang chạy, mà trong **một** bản sửa Alembic:
+
+```python
+from alembic import op
+from sqlalchemy import text
+
+from app.cau_hinh.bo_quy_tac import kich_hoat, sao_chep
+
+
+def upgrade() -> None:
+    ket_noi = op.get_bind()
+    cu = ket_noi.execute(text("SELECT id FROM rule_sets WHERE is_active")).scalar_one()
+    moi = sao_chep(ket_noi, cu, "v2", "Thêm bước xác nhận của trưởng phòng")
+    ket_noi.execute(text("INSERT INTO transitions (rule_set_id, from_state, …) VALUES (:moi, …)"),
+                    {"moi": moi})
+    kich_hoat(ket_noi, moi)  # gọi kiem_tra_cau_hinh() trước khi đổi bộ đang bật
+```
+
+`sao_chep` chép trạng thái, cạnh, vai trò đi cạnh và ràng buộc trên cạnh sang một bộ chưa bật — cột
+tra từ `information_schema` lúc chạy, nên thêm cột cấu hình về sau vẫn chép đủ; đổi được mã trạng
+thái ngay trên đường chép. `kich_hoat` gọi `kiem_tra_cau_hinh()` rồi mới đổi bộ đang bật (hai câu
+`UPDATE` riêng vì chỉ mục duy nhất từng phần). Bộ mới tạo ngõ cụt hay trạng thái không tới được thì
+PostgreSQL ném lỗi, cả bản sửa hoàn tác, dịch vụ không lên với cấu hình hỏng.
+
+**Kiểm chứng.** `tests/test_cau_hinh.py` dựng một lược đồ PostgreSQL tạm trong giao dịch của bài, chạy
+SQL của `0000` và `0018` rồi bộ nạp — cấu hình ra phải y hệt cụm đang chạy, lần sau không nạp lại; chép
+bộ đang bật, thêm một cạnh, kích hoạt — hồ sơ mới đi được cạnh mới, hồ sơ cũ thì không; bộ có ngõ cụt
+bị từ chối và không để lại gì. Lần nâng thật kiểm bằng `scripts/kiem_nang_cap.py`: chụp số dòng và mã
+băm cột cố định của hồ sơ, nhật ký, lời nhắn, tệp đính kèm cùng sự có mặt của từng tệp trong kho trước
+khi nâng, rồi so sau khi nâng. Cách nâng cho người dùng: README mục nâng cấp và trang tài liệu.
 
 ---
 
@@ -1057,7 +1127,7 @@ cho "không có" và "của người khác" để không lộ hồ sơ của ng�
 nhật ký (§6), nên liên kết hiện qua hai trường `parent` và `children` của trang hồ sơ chứ không
 qua một mốc trên dòng thời gian của hồ sơ cũ.
 
-Hai phép kiểm tra ở `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` canh bộ quy tắc: phải
+Hai phép kiểm tra trong `kiem_tra_cau_hinh()` canh bộ quy tắc: phải
 có ít nhất một trạng thái chạy đồng hồ, và trạng thái kết thúc không được chạy đồng hồ.
 Thiếu điều kiện đầu thì cơ chế leo thang thành mã chết mà không ai biết.
 

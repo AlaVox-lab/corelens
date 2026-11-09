@@ -26,10 +26,10 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 class Base(DeclarativeBase):
     """Lớp gốc cho mọi mô hình dữ liệu.
 
-    Lưu ý quan trọng cho #62 và về sau: mười một bảng cấu hình của engine máy trạng
-    thái KHÔNG khai báo ở đây. Chúng do infra/postgres/init/02-luoc-do-quy-trinh.sql
-    tạo lúc khởi tạo thực thể, và Alembic được cấu hình bỏ qua chúng — xem
-    alembic/env.py. Khai lại ở đây sẽ tạo ra hai nơi cùng sở hữu lược đồ.
+    Lưu ý quan trọng cho #62 và về sau: lược đồ các bảng cấu hình của engine máy trạng
+    thái KHÔNG sinh từ đây. Chúng viết bằng SQL thô trong bản sửa gốc
+    alembic/versions/0000_luoc_do_cau_hinh.py (#254), và autogenerate được cấu hình bỏ
+    qua chúng — xem alembic/env.py. Mô hình trong app/models/workflow_config.py chỉ để đọc.
     """
 
 

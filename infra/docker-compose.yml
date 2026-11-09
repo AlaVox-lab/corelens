@@ -34,9 +34,9 @@ services:
       SUPERSET_READONLY_PASSWORD: ${SUPERSET_READONLY_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # Chỉ tạo hai database còn lại và tài khoản chỉ đọc. Lược đồ cấu hình do Alembic tạo,
+      # dữ liệu khởi tạo do dịch vụ ứng dụng nạp sau đó (#254) — xem dịch vụ backend dưới.
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
-      # Dữ liệu khởi tạo, kịch bản 03 trong thư mục trên đọc từ đây
-      - ./seed:/seed:ro
     ports:
       - "${POSTGRES_PORT}:5432"
     healthcheck:
@@ -201,6 +201,10 @@ services:
       DXLAB_SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
       DXLAB_SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
       DXLAB_PORTAL_PUBLIC_URL: http://localhost:${FRONTEND_PORT}
+    volumes:
+      # Dữ liệu khởi tạo (#254): bộ nạp chạy sau Alembic, nạp lần đầu khi chưa có bộ quy tắc nào
+      # rồi lần nào khởi động cũng kiểm nhất quán đồ thị — app/cau_hinh/khoi_tao.py
+      - ./seed:/seed:ro
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:

@@ -4,12 +4,12 @@
 # Tạo bảng hồ sơ yêu cầu và bảng nhật ký sự kiện.
 #
 # Mã bản sửa    : 0001_ho_so_va_nhat_ky
-# Sửa đổi từ    : (bản đầu tiên)
+# Sửa đổi từ    : 0000_luoc_do_cau_hinh (từ #254; trước đó là bản đầu tiên)
 #
-# Migration này giả định mười một bảng cấu hình của engine máy trạng thái ĐÃ TỒN TẠI,
-# do infra/postgres/init/02-luoc-do-quy-trinh.sql tạo lúc PostgreSQL khởi tạo thực thể.
-# Chạy trên một cơ sở dữ liệu trống hoàn toàn sẽ thất bại ở bước tạo khóa ngoại — và
-# đó là thất bại đúng, nó báo rằng nền lược đồ chưa được dựng.
+# Migration này cần các bảng cấu hình của engine máy trạng thái đã tồn tại. Trước #254 chúng
+# do lược đồ khởi tạo của PostgreSQL tạo; từ #254 do bản sửa gốc 0000 tạo, nên chuỗi chạy được
+# trên một cơ sở dữ liệu trống. Đổi bản cha không làm cụm cũ chạy lại gì: bản này đã ghi trong
+# alembic_version của chúng, và bản gốc là tổ tiên của nó.
 
 from collections.abc import Sequence
 
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "0001_ho_so_va_nhat_ky"
-down_revision: str | None = None
+down_revision: str | None = "0000_luoc_do_cau_hinh"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

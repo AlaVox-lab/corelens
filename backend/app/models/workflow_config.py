@@ -3,11 +3,13 @@
 #
 # Ánh xạ các bảng cấu hình của engine máy trạng thái.
 #
-# CHỈ ĐỌC từ phía mã nguồn. Mười ba bảng này do
-# infra/postgres/init/02-luoc-do-quy-trinh.sql tạo và infra/seed/ nạp dữ liệu,
-# nên Alembic được cấu hình bỏ qua chúng — xem alembic/env.py.
+# CHỈ ĐỌC từ phía mã nguồn. Lược đồ các bảng này do bản sửa gốc
+# alembic/versions/0000_luoc_do_cau_hinh.py tạo (#254), dữ liệu do bộ nạp
+# app/cau_hinh/khoi_tao.py nạp từ infra/seed/ lần đầu dựng cụm; autogenerate được cấu hình
+# bỏ qua chúng — xem alembic/env.py.
 #
-# Sửa quy trình nghiệp vụ nghĩa là sửa dữ liệu trong infra/seed/, không sửa tệp này.
+# Sửa quy trình nghiệp vụ nghĩa là sửa dữ liệu (infra/seed/ cho cụm mới, bản sửa dữ liệu dùng
+# app/cau_hinh/bo_quy_tac.py cho cụm đang chạy), không sửa tệp này.
 
 from __future__ import annotations
 

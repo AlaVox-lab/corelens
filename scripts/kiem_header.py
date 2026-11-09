@@ -26,14 +26,21 @@ SO_DONG_DAU = 10
 
 
 def tep_can_kiem() -> list[Path]:
-    """Lấy danh sách tệp từ git để bỏ qua node_modules, .next và tệp sinh ra lúc dựng."""
+    """Lấy danh sách tệp từ git để bỏ qua node_modules, .next và tệp sinh ra lúc dựng.
+
+    Gồm cả tệp mới chưa `git add` (không nằm trong .gitignore) và bỏ tệp đã xóa mà chưa commit,
+    để chạy ở máy trước khi commit kiểm đúng thứ sắp vào kho."""
     ket_qua = subprocess.run(
-        ["git", "ls-files", "-z"], capture_output=True, check=True
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+        capture_output=True,
+        check=True,
     ).stdout.decode("utf-8")
     return [
         Path(ten)
-        for ten in ket_qua.split("\0")
-        if ten and (Path(ten).suffix in DUOI_TEP_MA or Path(ten).name in TEN_TEP_MA)
+        for ten in dict.fromkeys(ket_qua.split("\0"))
+        if ten
+        and (Path(ten).suffix in DUOI_TEP_MA or Path(ten).name in TEN_TEP_MA)
+        and Path(ten).is_file()
     ]
 
 
