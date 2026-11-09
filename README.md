@@ -85,6 +85,27 @@ python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
 Đủ mười ba tài khoản, kiểm cụm, cấu hình, sự cố thường gặp và nâng cấp: xem trang tài liệu, phần
 *Cài đặt và vận hành*.
 
+### Nâng cấp
+
+Cụm dựng từ `v0.9.1` trở đi lên bản mới **mà không mất hồ sơ, nhật ký hay tệp đính kèm**: lược đồ do
+migration quản lý và tự chạy lúc dịch vụ khởi động, dữ liệu cấu hình chỉ nạp lần đầu. Giải nén bản mới
+(hoặc `git pull`), chép biến mới từ `.env.example` sang `.env` nếu có, rồi trong `infra/`:
+
+```bash
+docker compose --env-file .env up -d --build
+```
+
+Muốn chứng minh không mất gì, chụp số liệu trước khi nâng và so sau khi nâng — ở gốc kho mã:
+
+```bash
+python scripts/kiem_nang_cap.py chup truoc-nang-cap.json
+python scripts/kiem_nang_cap.py so truoc-nang-cap.json
+```
+
+Cụm dựng từ bản cũ hơn `v0.9.1` thì phải dựng lại (`down -v`). Đổi quy trình trên cụm đang chạy là một
+bản sửa dữ liệu tạo bộ quy tắc phiên bản mới — hồ sơ đang chạy giữ luật cũ; khuôn mẫu ở
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) mục 5.4.
+
 > **Bảo mật**: mọi mật khẩu trong `.env.example` là giá trị mẫu công khai, chỉ để dựng thử. Đổi trước
 > khi triển khai thật — xem [`SECURITY.md`](SECURITY.md).
 

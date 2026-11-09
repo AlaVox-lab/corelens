@@ -48,11 +48,11 @@ dịch.
 
 ## Khai sai thì cụm không lên
 
-Tệp
-[`infra/seed/99-kiem-tra-tinh-nhat-quan.sql`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/infra/seed/99-kiem-tra-tinh-nhat-quan.sql)
-kiểm cả đồ thị sau khi nạp: trạng thái không tới được, ngõ cụt không phải trạng thái kết thúc, bước
-không vai nào đi được, nơi hỏi thêm mà thiếu đường quay về… Sai thì **cụm dừng khởi động** và nhật
-ký `postgres` chỉ ra lỗi — tốt hơn để một hồ sơ thật mắc kẹt giữa chừng.
+Hàm `kiem_tra_cau_hinh()` trong cơ sở dữ liệu kiểm cả đồ thị mỗi lần dịch vụ khởi động: trạng thái
+không tới được, ngõ cụt không phải trạng thái kết thúc, bước không vai nào đi được, nơi hỏi thêm mà
+thiếu đường quay về… Sai thì **dịch vụ ứng dụng dừng khởi động** và nhật ký `backend` chỉ ra lỗi — tốt
+hơn để một hồ sơ thật mắc kẹt giữa chừng. Lần đầu dựng cụm, dữ liệu trong `infra/seed/` được nạp rồi
+kiểm ngay; sửa `infra/seed/` sau đó chỉ có tác dụng với cụm dựng mới.
 
 ## Đổi quy trình khi hệ thống đang chạy
 
@@ -62,6 +62,7 @@ bộ đang bật. Hàng đợi, Hồ sơ của tôi và hộp thư giữ hồ s�
 thử chạy hai bộ song song nằm ở `backend/tests/test_hai_bo_quy_tac.py` (#278, #299); chi tiết ở
 `docs/ARCHITECTURE.md` mục 6.1.
 
-Chưa có lối bật bộ mới trên cụm đang chạy ngoài lệnh SQL trực tiếp: dữ liệu khởi tạo chỉ nạp khi
-dựng cụm mới, mà dựng lại thì mất hồ sơ cũ. Đưa cấu hình vào migration (#254) và màn quản trị để
-đổi quy trình ngay trên giao diện (#255) là việc đang làm.
+Bật bộ mới trên cụm đang chạy là một **bản sửa dữ liệu** của Alembic (#254): chép bộ đang bật thành
+phiên bản mới, sửa phiên bản đó, rồi kích hoạt — bước kích hoạt chạy `kiem_tra_cau_hinh()` trước, bộ
+mới hỏng thì cả bản sửa hoàn tác. Hồ sơ cũ không mất, không cần dựng lại cụm. Mẫu mã ở
+`docs/ARCHITECTURE.md` mục 5.4. Màn quản trị để đổi quy trình ngay trên giao diện (#255) là việc sau.

@@ -219,7 +219,7 @@ cạnh tự trỏ không làm rối đồ thị:
 - Mỗi trạng thái **tối đa một** cạnh tự trỏ của người — lược đồ giữ `UNIQUE (bộ quy tắc, từ,
   sang, is_system)`
 - **Không có** cạnh tự trỏ ở trạng thái chờ người khác, như *Chờ bổ sung thông tin* — phép
-  kiểm đồ thị số 7 trong `infra/seed/99-kiem-tra-tinh-nhat-quan.sql` từ chối dữ liệu như vậy
+  kiểm đồ thị số 7 trong hàm `kiem_tra_cau_hinh()` (bản sửa `0018`, #254) từ chối dữ liệu như vậy
 - Dòng nhật ký tự trỏ không đưa hồ sơ vào trạng thái nào, nên ràng buộc
   `return-to-previous-state` bỏ qua nó khi tìm chỗ cũ, và dòng thời gian không gọi nó là
   quay lui

@@ -36,16 +36,15 @@ target_metadata = Base.metadata
 # ---------------------------------------------------------------------------
 # HÀNG RÀO QUAN TRỌNG NHẤT CỦA TỆP NÀY
 # ---------------------------------------------------------------------------
-# Mười ba bảng cấu hình của engine máy trạng thái do PostgreSQL tạo lúc khởi tạo
-# thực thể, từ infra/postgres/init/02-luoc-do-quy-trinh.sql. Alembic KHÔNG sở hữu
-# chúng.
+# Các bảng cấu hình của engine máy trạng thái viết bằng SQL thô trong bản sửa gốc
+# 0000_luoc_do_cau_hinh (#254; trước đó do lược đồ khởi tạo của PostgreSQL tạo). Mô hình
+# SQLAlchemy chỉ khai một phần cột của vài bảng trong số đó, để đọc.
 #
-# Không có hàng rào này thì `alembic revision --autogenerate` nhìn thấy mười ba
-# bảng trong cơ sở dữ liệu mà không thấy trong target_metadata, và sinh ra một
-# migration DROP sạch toàn bộ cấu hình quy trình. Chạy migration đó là mất trắng
-# bộ quy tắc.
+# Không có hàng rào này thì `alembic revision --autogenerate` thấy bảng trong cơ sở dữ
+# liệu mà không thấy (hay thấy thiếu cột) trong target_metadata, và sinh ra một migration
+# DROP sạch cấu hình quy trình. Đổi bảng cấu hình thì viết bản sửa bằng tay.
 #
-# Thêm bảng mới vào danh sách này mỗi khi lược đồ khởi tạo có thêm bảng.
+# Thêm bảng cấu hình mới vào danh sách này.
 TABLES_OWNED_BY_INIT_SQL = frozenset(
     {
         "rule_sets",
@@ -62,6 +61,11 @@ TABLES_OWNED_BY_INIT_SQL = frozenset(
         # Loại lời nhắn trên hồ sơ (#128) — bản thân lời nhắn thì Alembic sở hữu
         "message_kinds",
         "message_kind_roles",
+        # Bốn bảng thêm sau mà danh sách từng bỏ sót (#250, #199)
+        "request_type_fields",
+        "work_calendars",
+        "work_hours",
+        "holidays",
     }
 )
 

@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Bật chế độ gỡ lỗi của SQLAlchemy. Không bao giờ bật ở bản triển khai thật.
     database_echo: bool = False
 
+    # Thư mục dữ liệu khởi tạo (infra/seed/ gắn vào container), bộ nạp đọc lần đầu dựng cụm (#254)
+    seed_dir: str = "/seed"
+
     # --- Định danh tập trung, xem ADR-0001 và #43 --------------------------
     #
     # Vì sao hai địa chỉ khác nhau cho cùng một Keycloak: trình duyệt đi qua

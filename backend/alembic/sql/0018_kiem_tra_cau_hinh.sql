@@ -1,23 +1,27 @@
 -- SPDX-License-Identifier: MIT
 -- Copyright (c) 2026 AlaVox-lab
 --
--- Kiểm tra tính nhất quán của bộ quy tắc sau khi nạp dữ liệu khởi tạo.
+-- Hàm kiểm tra tính nhất quán của cấu hình quy trình — nội dung bản sửa 0018 (#254).
 --
--- Vì sao cần tệp này: khóa ngoại và ràng buộc duy nhất bắt được lỗi ở mức từng
--- dòng, nhưng không bắt được lỗi ở mức ĐỒ THỊ. Một quản trị viên tùy biến sản
--- phẩm cho doanh nghiệp của họ có thể tạo ra bộ quy tắc mà mọi dòng đều hợp lệ
--- nhưng cả luồng thì hỏng — có trạng thái không ai tới được, có ngõ cụt không
--- phải trạng thái đóng, có cạnh không vai trò nào đi được.
+-- Vì sao cần: khóa ngoại và ràng buộc duy nhất bắt được lỗi ở mức từng dòng, nhưng không bắt
+-- được lỗi ở mức ĐỒ THỊ. Một bộ quy tắc có thể mọi dòng đều hợp lệ mà cả luồng thì hỏng — có
+-- trạng thái không ai tới được, có ngõ cụt không phải trạng thái đóng, có cạnh không vai trò nào
+-- đi được. Không chặn thì lỗi chỉ lộ ra khi một hồ sơ thật mắc kẹt giữa chừng.
 --
--- Những lỗi đó nếu không chặn ở đây thì chỉ lộ ra khi một hồ sơ thật mắc kẹt
--- giữa chừng. Tệp này làm cụm Docker DỪNG KHỞI ĐỘNG thay vì chạy với luồng hỏng.
+-- Trước #254 các phép kiểm này là một khối DO trong infra/seed/99-…, chạy đúng một lần lúc nạp
+-- dữ liệu khởi tạo. Thành hàm thì gọi lại được sau MỖI lần cập nhật cấu hình:
 --
--- Tệp đánh số 99 để luôn chạy sau cùng. Cùng bộ phép kiểm tra này nên được gọi lại
--- mỗi khi quản trị viên sửa bộ quy tắc lúc hệ thống đang chạy.
+--   - bộ nạp khởi tạo (app/cau_hinh/khoi_tao.py) gọi mỗi lần dịch vụ khởi động — hỏng thì dịch vụ
+--     không lên, như cụm cũ dừng khởi động ở bước nạp dữ liệu;
+--   - bản sửa dữ liệu cấu hình gọi trước khi kích hoạt bộ quy tắc mới (app/cau_hinh/bo_quy_tac.py)
+--     — hỏng thì cả bản sửa hoàn tác, không gì đổi.
+--
+-- Hàm ném lỗi ở phép kiểm đầu tiên không đạt, đạt hết thì trả về bình thường. Thêm phép kiểm mới
+-- là một bản sửa mới dùng CREATE OR REPLACE, không sửa tệp này.
 
-\set ON_ERROR_STOP on
-
-DO $$
+CREATE OR REPLACE FUNCTION kiem_tra_cau_hinh() RETURNS void
+LANGUAGE plpgsql
+AS $$
 DECLARE
     bo         RECORD;
     toi_duoc   TEXT[];
@@ -254,3 +258,6 @@ BEGIN
 
     RAISE NOTICE 'Lịch làm việc hợp lệ: một lịch mặc định, có giờ làm, không khung nào chồng nhau';
 END $$;
+
+COMMENT ON FUNCTION kiem_tra_cau_hinh() IS
+    'Kiểm tính nhất quán mức đồ thị của mọi bộ quy tắc, cơ cấu tổ chức, loại lời nhắn và lịch làm việc. Ném lỗi ở phép kiểm đầu tiên không đạt (#254).';

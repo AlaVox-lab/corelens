@@ -113,9 +113,9 @@ def rule_set(session) -> RuleSet:
     bo = session.scalars(select(RuleSet).where(RuleSet.is_active)).one_or_none()
     if bo is None:
         pytest.skip(
-            "Chưa có bộ quy tắc nào được kích hoạt. Dữ liệu khởi tạo chỉ nạp một "
-            "lần lúc PostgreSQL tạo thực thể — dựng lại bằng: "
-            "docker compose --env-file .env down -v && ... up -d"
+            "Chưa có bộ quy tắc nào được kích hoạt. Dữ liệu khởi tạo do dịch vụ ứng dụng "
+            "nạp lúc khởi động (app/cau_hinh/khoi_tao.py) — dựng cụm bằng docker compose up "
+            "rồi chạy lại."
         )
     return bo
 
