@@ -114,6 +114,10 @@ nhập bốn vai qua Keycloak, kiểm các màn chính ở bốn cấu hình hi�
 liệu, phần *Phát triển → Kiểm thử giao diện*. Kịch bản gửi một hồ sơ thật, nên không chạy trên hệ thống
 đang dùng thật.
 
+**Công cụ kiểm chứng** (#249) — dựng cụm thử cách ly, dò đăng nhập thật, tạo hồ sơ thử theo từng trạng
+thái, chạy phép thử đột biến — nằm ở `scripts/kiem_chung/`, hướng dẫn ở trang tài liệu *Phát triển →
+Công cụ kiểm chứng* (`docs-site/src/content/docs/phat-trien/kiem-chung.md`).
+
 Trong quy trình, bài kiểm thử bị **bỏ qua** cũng tính là hỏng (biến `DXLAB_CAM_BO_QUA=1`): bộ
 kiểm thử tự bỏ qua khi không gọi được PostgreSQL hay Keycloak, nên không có cờ này thì cụm
 dựng hỏng vẫn ra xanh. Chạy tay ở máy thì không đặt biến, giữ cách cũ.

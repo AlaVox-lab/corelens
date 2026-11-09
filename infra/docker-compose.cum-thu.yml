@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Tệp ghi đè để dựng CỤM THỬ CÁCH LY cạnh cụm đang dùng (#249). Không dùng một mình — luôn đi sau
+# docker-compose.yml, và do scripts/kiem_chung/cum_thu.py gọi:
+#
+#     python -m scripts.kiem_chung.cum_thu dung
+#
+# Cụm thử khác cụm chính ở ba chỗ, và cả ba đều là chỗ đã từng gây hỏng việc:
+#
+#   - Tên container có tiền tố riêng. Trùng tên thì `up` thay thế container của người dùng.
+#   - Ba ảnh tự dựng (dịch vụ ứng dụng, cổng người dùng, Superset) mang NHÃN RIÊNG. Tên ảnh mặc
+#     định dxlab-*:<phiên bản> dùng chung với cụm chính, nên `--build` ở cụm thử sẽ ghi đè ảnh
+#     của người dùng. Riêng ảnh Superset hay bị bỏ sót vì nhãn của nó lấy từ SUPERSET_VERSION chứ
+#     không từ DXLAB_VERSION.
+#   - Tên dự án Compose (đặt bằng cờ -p) khác, nên mạng và các volume dữ liệu cũng tách riêng.
+#
+# Cổng do tệp biến môi trường sinh ra quyết định, không nằm ở đây. Hai biến dưới đây bắt buộc có:
+# thiếu thì Compose dừng thay vì lặng lẽ dùng tên của cụm chính.
+
+services:
+  postgres:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}postgres
+  keycloak:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}keycloak
+  seaweedfs:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}seaweedfs
+  superset:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}superset
+    image: dxlab-superset:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}
+  backend:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}backend
+    image: dxlab-backend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}
+  frontend:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}frontend
+    image: dxlab-frontend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}

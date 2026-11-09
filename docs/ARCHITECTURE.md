@@ -342,6 +342,7 @@ dx-os-lab/
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── infra/                       # dựng cả cụm bằng một lệnh
 │   ├── docker-compose.yml
+│   ├── docker-compose.cum-thu.yml # tệp ghi đè dựng cụm thử cách ly cạnh cụm chính (#249)
 │   ├── .env.example
 │   ├── keycloak/                # realm nạp lúc khởi động: vai trò là dữ liệu
 │   ├── seaweedfs/
@@ -357,7 +358,13 @@ dx-os-lab/
 │   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
-│   └── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
+│   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
+│   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
+│       ├── cum_thu.py           # dựng, hỏi trạng thái, gỡ cụm thử cách ly (tên, nhãn ảnh, cổng riêng)
+│       ├── do_dang_nhap.py      # đăng nhập thật qua OIDC, mở trang, kiểm chuỗi mong đợi
+│       ├── tao_ho_so_thu.py     # tạo hồ sơ ở từng trạng thái, qua engine; phần trong container ở tao_ho_so_trong_cum.py
+│       ├── dot_bien.py          # phép thử đột biến theo tệp mô tả
+│       └── vi_du/               # tệp mô tả đột biến chạy được (actor_not_requester.json)
 ├── .gitattributes               # chuẩn hóa ký tự kết thúc dòng
 ├── .gitignore
 ├── AGENTS.md                    # lối vào cho Antigravity, Codex — trỏ về CLAUDE.md
