@@ -174,8 +174,9 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.10.0` cho khai phá quy trình, các bản sau cho gợi ý · **Mốc**: *Giai đoạn 4 —
-Không gian I*, hạn 29/11 · **Issue gốc**: #322
+**Phiên bản dự kiến**: `v0.11.0` cho khai phá quy trình (dời từ `v0.10.0`, navigator chốt 09/11), các
+bản sau cho gợi ý. `v0.10.0` (09/11) đưa trước thẻ gợi ý có xác nhận (#239) cùng đợt nền tảng vận hành ·
+**Mốc**: *Giai đoạn 4 — Không gian I*, hạn 29/11 · **Issue gốc**: #322
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. **Khai phá quy trình làm trước**
 (navigator chốt 04/11): đó là điểm sáng tạo của đề tài, và chỉ chờ ADR-0007. Phân loại và truy xuất
@@ -193,8 +194,8 @@ chờ ADR-0008.
 
 ### 4.2. Phân loại và định tuyến tự động
 
-- [ ] Giao diện cho phép điều phối viên giữ hoặc ghi đè gợi ý, ghi lại tỷ lệ ghi đè để đo độ chính
-      xác thực tế (#239)
+- [x] Giao diện cho phép điều phối viên giữ hoặc ghi đè gợi ý, ghi lại tỷ lệ ghi đè để đo độ chính
+      xác thực tế (#239, `v0.10.0`)
 - [ ] Dịch vụ mô hình ngôn ngữ cục bộ, bật theo lựa chọn (#316)
 - [ ] Tự gợi ý loại yêu cầu, mức ưu tiên và phòng ban (#317)
 - [ ] Gợi ý người xử lý phù hợp (#318)

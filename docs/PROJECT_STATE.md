@@ -15,7 +15,7 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-08 |
-| Phiên bản hiện tại | **`v0.9.1`** (08/11) — bản vá cảnh báo bảo mật của khung giao diện (#313). `v0.9.0` (03/11) khép Giai đoạn 3, không gian `D`. `main` không có gì chưa phát hành |
+| Phiên bản hiện tại | **`v0.10.0`** (09/11) — nâng cấp giữ dữ liệu (#254), bảo mật lớp biên và nhịp bộ quét (#243, #253), công cụ kiểm chứng (#249), thẻ gợi ý có xác nhận (#239). `v0.9.1` (08/11) bản vá khung giao diện. `main` không có gì chưa phát hành |
 | Giai đoạn | **Giai đoạn 3 đã khép** (`v0.9.0`): lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình, nhúng trong cổng lọc theo phòng, xuất dữ liệu mở. **Giai đoạn 4 — không gian `I`** đã có issue (#322 và các issue con), chưa viết mã: khai phá quy trình làm trước, chờ giảng viên chấp nhận ADR-0007 |
 | Mốc công việc | **Tuần 15 — Không gian D** (đóng): 4 issue đóng (#304–#307). **Giai đoạn 4 — Không gian I** (hạn 29/11): 11 issue mở. **Tuần 14 — Nền tảng vận hành** hết hạn 15/11 với 10 đóng, 14 còn mở — dời sang **Tuần 16 — Nền tảng vận hành** (hạn 29/11) và đóng mốc cũ ngày 08/11 |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
@@ -819,15 +819,15 @@ phụ thuộc vào chúng.
 ### Theo thứ tự
 
 1. ~~#313 nâng khung giao diện và các gói có cảnh báo bảo mật~~ — xong 08/11, bản vá **`v0.9.1`**
-2. **#239 thẻ gợi ý có xác nhận hoặc ghi đè** — không cần bản ghi nào được chấp nhận: ghi lại người
-   giữ hay ghi đè gợi ý vào nhật ký, view đo tỷ lệ ghi đè. Lên `main` cùng đợt khai phá ở `v0.10.0`
-3. **Khi ADR-0007 được chấp nhận: #314 khai phá quy trình + #315 màn quy trình thực tế** — một pull
-   request, phát hành `v0.10.0`. Dịch vụ khai phá có tài khoản cơ sở dữ liệu chỉ đọc riêng, tạo ở lược
-   đồ khởi tạo, nên cả nhóm `down -v` một lần lúc phát hành. Cùng pull request sửa `CLAUDE.md` mục 5.2,
-   `ARCHITECTURE.md` mục 3, `dependencies.md`
+2. ~~#239 thẻ gợi ý có xác nhận hoặc ghi đè~~ — xong, lên `main` ở **`v0.10.0`** (09/11), trước khai phá
+3. **#314 khai phá quy trình + #315 màn quy trình thực tế** — phát hành **`v0.11.0`** (dời từ `v0.10.0`,
+   navigator chốt 09/11). Navigator chốt dùng thư viện của ADR-0007 trước, kèm mô-đun dự phòng không
+   dùng thư viện đó, đổi bằng một biến môi trường nếu giảng viên không chấp nhận ranh giới giấy phép.
+   Tài khoản chỉ đọc riêng của dịch vụ khai phá tạo bằng migration (#254), không cần `down -v`. Cùng
+   pull request sửa `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3, `dependencies.md`
 4. **Khi ADR-0008 được chấp nhận**: #316 dịch vụ mô hình (tùy chọn) → #317 gợi ý loại, ưu tiên, phòng
    → #318 gợi ý người xử lý → #319 hồ sơ tương tự → #320 khuyến nghị bằng câu chữ. #321 khi còn thời gian
-5. Tuần 16 — nền tảng vận hành: #243 #249 #253 #254 làm được ngay; #247 #248 #251 làm sau tầng `I`;
+5. Tuần 16 — nền tảng vận hành: ~~#243 #249 #253 #254~~ xong ở `v0.10.0`; #247 #248 #251 làm sau tầng `I`;
    sáu issue cần thảo luận chờ giảng viên
 6. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
 7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
