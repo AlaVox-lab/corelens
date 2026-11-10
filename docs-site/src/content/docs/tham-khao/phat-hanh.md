@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v0.11.0` | Khai phá quy trình thực tế từ nhật ký sự kiện trong dịch vụ riêng, có bộ máy dự phòng; màn Quy trình thực tế trong mục Báo cáo: sơ đồ tương tác, câu kết luận dựng từ số liệu, điểm nghẽn và nhánh lệch bấm ra đúng hồ sơ |
 | `v0.10.0` | Nền tảng vận hành: nâng cấp từ `v0.9.1` không mất dữ liệu (lược đồ cấu hình trong migration, bộ quy tắc phiên bản mới), tiêu đề bảo mật và giới hạn tốc độ, bộ quét có khóa và nhịp sức khỏe, công cụ kiểm chứng chạy lại được; thẻ gợi ý có xác nhận và đo tỷ lệ ghi đè — mảnh đầu của không gian Trí tuệ |
 | `v0.9.1` | Bản vá: nâng khung giao diện của cổng lên bản đã sửa các cảnh báo bảo mật, không đổi hành vi |
 | `v0.9.0` | Khép Giai đoạn 3 — không gian Dữ liệu: lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình và nhúng trong cổng theo phòng của người xem, xuất nhật ký CSV và JSON, dữ liệu trình diễn |
