@@ -330,6 +330,8 @@ dx-os-lab/
 │   │   ├── dieu-phoi/           # [H] buồng lái điều phối viên — #82
 │   │   ├── phong-ban/           # [H] buồng lái phòng ban — #83
 │   │   ├── hop-thu/             # [H] hộp thư chung, kể cả trò chuyện nội bộ — #155, #156
+│   │   ├── bao-cao/             # [D] bảng điều khiển nhúng (#305); quy-trinh/ là màn quy trình thực tế (#315)
+│   │   ├── api/bao-cao/         # [D] token khách Superset; quy-trinh/ chuyển JSON khai phá (#315)
 │   │   ├── globals.css          # token màu OKLCH, ba chế độ sáng/tối/in
 │   │   └── layout.tsx           # phông chữ tải lúc dựng, không gọi ra ngoài
 │   ├── components/              # bộ phận dùng lại giữa nhiều màn
@@ -931,7 +933,7 @@ chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang ti�
 ### 6.4. Khai phá quy trình (không gian `I`)
 
 **Đã cài đặt** — #314, theo [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md). Màn trình bày ở
-cổng: #315.
+cổng (#315): xem đoạn **Màn ở cổng** cuối mục này.
 
 Đây là vòng phản hồi tự soi quy trình của `CLAUDE.md` mục 4.1: từ nhật ký sự kiện, vẽ lại quy trình
 đang thật sự chạy và chỉ ra chỗ cần cải tiến. Engine chỉ cho đi cạnh có trong bộ quy tắc, nên đối chiếu
@@ -968,6 +970,8 @@ Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch v�
 | Thời gian chờ | `so_giay_lam_viec(vào, ra)` mỗi lượt — cùng phép đo với đồng hồ hạn và bảng điều khiển; lượt còn dở tính tới bây giờ; trạng thái kết thúc không có |
 | Điểm nghẽn | Trạng thái xếp theo thời gian chờ trung vị; nghẽn khi trung vị gấp từ `KHAI_PHA_BOI_SO_NGHEN` (mặc định 2) lần trung vị chung của mọi lượt ở trạng thái chưa kết thúc |
 | Biến thể | Chuỗi trạng thái của từng hồ sơ (bộ máy), `KHAI_PHA_SO_BIEN_THE` biến thể nhiều nhất |
+| Tách nhóm (#315) | Nhánh lệch đếm theo loại yêu cầu và phòng **hiện tại** của hồ sơ, kèm tỷ lệ trên tổng hồ sơ của nhóm; thời gian chờ mỗi trạng thái lấy trung vị theo từng nhóm. Nhóm rỗng (hồ sơ chưa chuyển phòng) xếp cuối |
+| Hồ sơ chờ lâu nhất (#315) | Mỗi trạng thái chưa kết thúc: hồ sơ xếp theo tổng giây làm việc mọi lượt ở đó, kèm số lượt và cờ hồ sơ còn nằm ở đó; tối đa `KHAI_PHA_SO_HO_SO_MOI_NHOM` hồ sơ |
 
 **Hai bộ máy, một hợp đồng.** Phần thuật toán — đồ thị trực tiếp và biến thể — đứng sau giao diện
 `BoMay`: `pm4py` (mặc định) và `noi_bo` (dự phòng, Python thuần). Phần còn lại ở `app/phan_tich.py`, chung
@@ -976,11 +980,33 @@ AGPL thì `MINING_ENGINE=noi_bo` và xóa dòng `pm4py` khỏi `requirements.txt
 không đổi gì.
 
 **Hợp đồng trả về** (khóa tiếng Anh như mọi API của dự án): `range`, `departments`, `engine`,
-`cases_count`, `events_count`, `states[]` (`code`, `label`, `is_initial`, `is_terminal`, `visits`, `cases`,
-`median_wait_seconds`, `is_bottleneck`), `edges[]` (`from`, `to`, `count`, `cases`, `is_main`, `kinds`),
-`designed_main_flow[]`, `deviations[]` (`kind`, `cases_count`, `ratio`, `cases`), `bottlenecks`
+`cases_count`, `events_count`, `groups` (`request_types[]`, `departments[]`: `code`, `cases_count`),
+`states[]` (`code`, `label`, `is_initial`, `is_terminal`, `visits`, `cases`, `median_wait_seconds`,
+`is_bottleneck`, `longest_waits[]` — `case`, `seconds`, `visits`, `current` —, `by_request_type[]` và
+`by_department[]` — `code`, `visits`, `median_wait_seconds`), `edges[]` (`from`, `to`, `count`, `cases`,
+`is_main`, `kinds`), `designed_main_flow[]` (`from`, `to`, `from_label`, `to_label` — bước chưa ai đi vẫn có
+nhãn), `deviations[]` (`kind`, `cases_count`, `ratio`, `cases`,
+`by_request_type[]` và `by_department[]` — `code`, `cases_count`, `ratio`), `bottlenecks`
 (`overall_median_wait_seconds`, `factor`, `threshold_seconds`, `ranking[]`), `variants[]` (`sequence`,
-`cases_count`, `ratio`, `cases`), `other_variants_cases`; dịch vụ ứng dụng thêm `scope`.
+`cases_count`, `ratio`, `cases`), `other_variants_cases`. Dịch vụ khai phá chỉ trả **mã** nhóm; dịch vụ
+ứng dụng thêm `scope`, `labels` (`request_types`, `departments`: mã → nhãn, đọc từ bảng danh mục) và
+`case_codes` (mã hồ sơ → mã hiển thị `YC-2026-0184` của mọi hồ sơ kết quả nêu tên, cùng hàm với trang hồ sơ) —
+tài khoản chỉ đọc của dịch vụ khai phá không cần thêm quyền.
+
+**Màn ở cổng (#315).** Trang con `/bao-cao/quy-trinh` của mục Báo cáo; hai màn của mục (bảng điều khiển
+và quy trình thực tế) là hai trang riêng, nối bằng thanh `ThanhBaoCao`, nên mở màn này không tải khung
+Superset. Cùng cửa `reports` với bảng điều khiển. Trình duyệt gọi Route Handler
+`frontend/app/api/bao-cao/quy-trinh/route.ts` (`GET ?tu&den`), nó chuyển sang
+`GET /analytics/process-mining` qua `lib/api.ts` — token Keycloak không tới trình duyệt — và đổi mã lỗi
+về 401, 403, 422 (kèm thông điệp) hay 503. Khoảng ngày nằm trên địa chỉ trang, mặc định 90 ngày. Sơ đồ
+vẽ bằng `@xyflow/react` với bố cục `@dagrejs/dagre` (`lib/bo-cuc-quy-trinh.ts`, hàm thuần); màu lấy từ
+biến CSS của cổng nên theo sáng/tối. **Câu kết luận dựng tất định**: `lib/ket-luan-quy-trinh.ts` là hàm
+thuần từ JSON ra câu tiếng Việt bằng mẫu cố định, cùng JSON luôn cùng câu, không mô hình ngôn ngữ. Tên
+trạng thái, loại yêu cầu, phòng đều đọc từ JSON (`states[].label`, `labels`); chỉ năm mã nhánh lệch của
+hợp đồng có bảng nhãn trong mã vì đó là loại phân tích do dịch vụ khai phá định nghĩa. Bấm một trạng
+thái, nhánh lệch hay đường đi mở ngăn danh sách hồ sơ (`longest_waits`, `deviations[].cases`,
+`variants[].cases`); mã hồ sơ dẫn tới buồng lái điều phối hoặc phòng ban tùy `workspaces` của `/me`
+(`duongDanHoSo` ở `lib/khong-gian.ts`). Hướng dẫn người dùng: `docs-site` — *Quy trình thực tế*.
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 

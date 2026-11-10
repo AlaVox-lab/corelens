@@ -37,5 +37,18 @@ test("giảm chuyển động: không hiệu ứng nào chạy", async ({ browse
   // Đóng ngăn không chờ hiệu ứng ra: rời `?xem=` ngay
   await page.keyboard.press("Escape");
   await expect(ngan).toHaveCount(0, { timeout: 2000 });
+
+  // Màn quy trình thực tế (#315): sơ đồ, khối xếp hạng và ngăn danh sách hồ sơ cũng không chạy hiệu ứng
+  await page.goto("/bao-cao/quy-trinh", { waitUntil: "networkidle" });
+  await expect(page.locator(".qt-ket-qua:not([data-dang-tai]), .rong").first()).toBeVisible({ timeout: 30_000 });
+  expect(await conChuyenDong(page), "quy trình thực tế").toBe(0);
+  const nutTrangThai = page.locator(".sdq-nut[aria-pressed]").first();
+  if (await nutTrangThai.isVisible()) {
+    await nutTrangThai.click();
+    await expect(page.locator("aside.ngan")).toBeVisible();
+    expect(await conChuyenDong(page), "ngăn danh sách hồ sơ quy trình").toBe(0);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("aside.ngan")).toHaveCount(0, { timeout: 2000 });
+  }
   await nc.close();
 });

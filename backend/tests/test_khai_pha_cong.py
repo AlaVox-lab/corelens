@@ -15,13 +15,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.analytics.khai_pha import KhaiPhaClient, KhaiPhaKhongPhanHoi, khai_pha_client
 from app.auth.dependencies import current_actor, current_claims
 from app.config import get_settings
 from app.db import get_session
 from app.main import app
+from app.models.workflow_config import Department, RequestType
 from app.workflow.context import Actor
+from app.workflow.engine import create_case
 
 TU, DEN = "2026-10-01", "2026-10-31"
 
@@ -30,12 +33,13 @@ class KhaiPhaGia:
     def __init__(self) -> None:
         self.lan_goi: list[tuple[dt.date, dt.date, list[str] | None]] = []
         self.hong = False
+        self.ket_qua: dict = {"engine": "gia", "cases_count": 0, "states": [], "edges": []}
 
     def khai_pha(self, tu, den, phong):
         if self.hong:
             raise KhaiPhaKhongPhanHoi("tắt")
         self.lan_goi.append((tu, den, phong))
-        return {"engine": "gia", "cases_count": 0, "states": [], "edges": []}
+        return self.ket_qua
 
 
 @pytest.fixture
@@ -95,6 +99,39 @@ def test_khoang_ngay_sai_nhan_422_va_khong_hoi_dich_vu(client, tu, den):
     r = _hoi(client, Actor(id="dp-314", roles=frozenset({"classifier"})), tu=tu, den=den)
     assert r.status_code == 422
     assert client.gia.lan_goi == []
+
+
+def test_kem_nhan_loai_yeu_cau_va_phong_ban_tu_bang(client, session, phong_ban):
+    # #315: dịch vụ khai phá tách nhóm theo mã; nhãn đọc từ hai bảng danh mục, không mã cứng. Loại đã
+    # ngừng dùng vẫn có nhãn, vì hồ sơ cũ trong khoảng ngày có thể mang mã đó
+    session.add(RequestType(code="loai-cu-315", label="Loại đã ngừng 315", sla_hours=8, is_active=False))
+    session.flush()
+    r = _hoi(client, Actor(id="dp-315", roles=frozenset({"classifier"})))
+    assert r.status_code == 200, r.text
+    nhan = r.json()["labels"]
+    assert nhan["departments"][phong_ban] == session.get(Department, phong_ban).label
+    loai = session.scalars(select(RequestType)).all()
+    assert loai and nhan["request_types"] == {t.code: t.label for t in loai}
+    assert nhan["request_types"]["loai-cu-315"] == "Loại đã ngừng 315"
+
+
+def test_kem_ma_hien_thi_cua_moi_ho_so_duoc_neu_ten(client, session, rule_set):
+    # #315: hồ sơ trong nhánh lệch, chờ lâu nhất, biến thể đều có mã như trang hồ sơ (YC-năm-0000)
+    hs = [create_case(session, title=f"Hồ sơ khai phá 315 số {i}", requester_id="ng-315") for i in range(3)]
+    a, b, c = (h.id for h in hs)
+    client.gia.ket_qua = {
+        "deviations": [{"kind": "rework", "cases": [a]}],
+        "states": [{"code": "x", "longest_waits": [{"case": b, "seconds": 9, "visits": 1, "current": True}]}],
+        "variants": [{"sequence": ["x"], "cases": [a, c]}],
+    }
+    r = _hoi(client, Actor(id="dp-315", roles=frozenset({"classifier"})))
+    assert r.status_code == 200, r.text
+    assert r.json()["case_codes"] == {str(h.id): f"YC-{h.created_at.year}-{h.id:04d}" for h in hs}
+
+
+def test_ket_qua_khong_neu_ho_so_nao_thi_ma_hien_thi_rong(client):
+    r = _hoi(client, Actor(id="dp-315", roles=frozenset({"classifier"})))
+    assert r.json()["case_codes"] == {}
 
 
 def test_dich_vu_khai_pha_tat_thi_503(client):

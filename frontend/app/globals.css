@@ -3910,3 +3910,876 @@ html.doi-mau * {
     display: block;
   }
 }
+
+/* --- Báo cáo: quy trình thực tế (#315) -------------------------------------
+ * Hai màn của mục Báo cáo chia nhau một thanh chuyển (`.thanh-bao-cao`, kiểu `.tab-dem`). Màn quy
+ * trình thực tế: thanh công cụ khoảng ngày, câu kết luận, sơ đồ (`.sdq-*`, @xyflow/react), ba khối
+ * xếp hạng, và ngăn danh sách hồ sơ dùng lại lớp `.ngan` của hàng đợi. Màu đều lấy từ token của
+ * cổng nên tự theo sáng/tối; chữ không nhỏ hơn 12px. */
+.thanh-bao-cao {
+  margin-top: 16px;
+}
+
+/* Màu theo loại cạnh: một biến `--kenh` dùng chung cho nét vẽ, mũi tên, chip số, chấm và chú giải.
+ * Loại lạ (dịch vụ thêm nhánh mới) rơi về màu xám trung tính. Luồng chính xanh dương; bốn nhánh lệch
+ * mỗi nhánh một sắc, đủ xa nhau để phân biệt cả khi nét mảnh. */
+[data-kenh="main"],
+.sdq-canh-main,
+.sdq-mui-main {
+  --kenh: var(--f-b-solid);
+}
+
+[data-kenh="rework"],
+.sdq-canh-rework,
+.sdq-mui-rework {
+  --kenh: var(--f-o-solid);
+}
+
+[data-kenh="escalation"],
+.sdq-canh-escalation,
+.sdq-mui-escalation {
+  --kenh: var(--f-r-solid);
+}
+
+[data-kenh="wait_expiry"],
+.sdq-canh-wait_expiry,
+.sdq-mui-wait_expiry {
+  --kenh: var(--f-t-solid);
+}
+
+[data-kenh="reopen"],
+.sdq-canh-reopen,
+.sdq-mui-reopen {
+  --kenh: var(--f-p-solid);
+}
+
+[data-kenh="multiple_routing"] {
+  --kenh: var(--f-g-solid);
+}
+
+/* Thanh công cụ: nút chọn nhanh bên trái, hai ô ngày bên phải */
+.qt-cong-cu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 16px;
+}
+
+.qt-nut-nhanh {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qt-o-ngay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.qt-o-ngay label {
+  display: grid;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.qt-o-ngay .o-nhap {
+  width: 170px;
+  height: 38px;
+  padding: 6px 12px;
+  font-size: 13.5px;
+}
+
+.qt-loi-ngay {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--f-r-ink);
+}
+
+/* Kết quả */
+.qt-ket-qua {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  transition: opacity 0.15s;
+  /* Cột của ba khối xếp theo bề rộng của chính vùng này chứ không theo cửa sổ: ngăn danh sách hồ sơ
+   * mở thì vùng nội dung hẹp đi (`html[data-qt-ngan]` bên dưới) mà cửa sổ vẫn rộng */
+  container-type: inline-size;
+}
+
+/* Ngăn danh sách hồ sơ mở ở màn rộng thì chừa chỗ cho nó, để các khối bên phải và các ô bên phải của
+ * sơ đồ không bị ngăn che mất — bấm tiếp được một trạng thái hay đường đi khác mà không phải đóng ngăn */
+@media (min-width: 768px) {
+  html[data-qt-ngan] .noi-dung {
+    padding-right: min(420px, 100%);
+  }
+}
+
+/* Ngăn của màn này hẹp hơn ngăn xem nhanh của hàng đợi: nó ở cạnh nội dung chứ không đè lên */
+html[data-qt-ngan] .ngan {
+  width: min(420px, 100%);
+}
+
+/* Đang tải khoảng khác: số liệu cũ mờ đi một chút cho tới khi số mới về */
+.qt-ket-qua[data-dang-tai] {
+  opacity: 0.6;
+}
+
+.qt-khoi {
+  padding: 16px 18px;
+}
+
+.qt-khoi-dau {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.qt-khoi-hang {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.qt-ghi-chu {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.qt-con-lai {
+  padding: 0 10px;
+}
+
+.qt-rong {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+
+.qt-cau {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.qt-cau li::marker {
+  color: var(--ink-3);
+}
+
+.qt-bao-loi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--f-r-ink);
+  background: var(--f-r-bg);
+  border-color: var(--f-r-line);
+}
+
+.qt-chan {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* Ba khối xếp hạng: 3 cột khi vùng đủ rộng, 2 cột ở vùng vừa (khối thứ ba trải hai cột), 1 cột ở vùng hẹp */
+.qt-luoi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@container (min-width: 640px) {
+  .qt-luoi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qt-luoi > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (min-width: 1040px) {
+  .qt-luoi {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .qt-luoi > :last-child {
+    grid-column: auto;
+  }
+}
+
+.qt-ds {
+  display: grid;
+  gap: 2px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qt-dong {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  text-align: left;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+button.qt-dong:hover {
+  background: var(--hover);
+}
+
+button.qt-dong[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.qt-dong[data-trong] {
+  color: var(--ink-3);
+}
+
+.qt-dong-ten {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.qt-dong-so {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.qt-dong[data-trong] .qt-dong-so {
+  color: var(--ink-3);
+}
+
+/* Đường đi phổ biến: chuỗi trạng thái dài nên số đứng dưới, không chen cạnh */
+.qt-dong-chuoi {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.qt-chuoi {
+  overflow-wrap: anywhere;
+}
+
+.qt-dong-chuoi .qt-dong-so {
+  text-align: left;
+}
+
+.qt-hang {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  background: var(--surface-3);
+}
+
+.qt-cham {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--kenh, var(--f-x-solid));
+}
+
+.qt-the-nghen,
+.sdq-the-nghen {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--f-a-on);
+  background: var(--f-a-solid);
+}
+
+.qt-the-dang-cho {
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--f-b-line);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--f-b-ink);
+  background: var(--f-b-bg);
+}
+
+/* Chú giải sơ đồ */
+.qt-chu-giai {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.qt-chu-giai li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qt-chu-giai-ghi {
+  color: var(--ink-3);
+}
+
+.qt-net {
+  width: 26px;
+  height: 0;
+  border-top: 3px solid var(--kenh, var(--f-x-solid));
+  border-radius: 2px;
+}
+
+.qt-net[data-chua-di] {
+  border-top: 3px dashed var(--ink-3);
+  opacity: 0.7;
+}
+
+/* Khung chờ của sơ đồ */
+.qt-khung-cho-so-do {
+  height: 360px;
+}
+
+/* --- Sơ đồ ---------------------------------------------------------------- */
+.qt-so-do-dau {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 14px 18px;
+}
+
+.sdq-khung {
+  position: relative;
+  height: 520px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.sdq-khung .react-flow {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font);
+}
+
+.sdq-khung .react-flow__node {
+  cursor: default;
+}
+
+.sdq-khung .react-flow__node:hover,
+.sdq-khung .react-flow__node:focus-within {
+  z-index: 10 !important;
+}
+
+/* Khai báo mũi tên nằm ngoài luồng bố cục, không chiếm chỗ */
+.sdq-mui-dinh {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.sdq-mui {
+  fill: var(--kenh, var(--f-x-solid));
+}
+
+.sdq-mui-chua-di {
+  fill: var(--ink-3);
+  opacity: 0.6;
+}
+
+/* Tiền tố `.sdq-khung`: CSS nền của React Flow (nạp sau tệp này) đặt `stroke` cho cùng lớp
+ * `.react-flow__edge-path` với độ ưu tiên ngang nhau, nên phải nâng độ ưu tiên để màu theo loại thắng */
+.sdq-khung .sdq-canh {
+  fill: none;
+  stroke: var(--kenh, var(--f-x-solid));
+  stroke-linecap: round;
+  transition: opacity 0.15s;
+}
+
+.sdq-khung .sdq-canh.sdq-canh-chua-di {
+  stroke: var(--ink-3);
+  stroke-dasharray: 7 7;
+  opacity: 0.55;
+}
+
+.sdq-khung .sdq-canh.sdq-mo {
+  opacity: 0.15;
+}
+
+/* Nút trạng thái */
+.sdq-tay {
+  min-width: 0;
+  min-height: 0;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sdq-nut {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 144px;
+  height: 88px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line-2);
+  border-radius: 12px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface);
+  cursor: pointer;
+  /* Nút nằm trong khung nút của React Flow; khung đó không nhận chuột khi nút không kéo, không chọn
+   * được (pointer-events: none) và con kế thừa — phải đặt lại ở đây */
+  pointer-events: all;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s,
+    opacity 0.15s;
+}
+
+.sdq-nut:hover {
+  border-color: var(--accent);
+}
+
+.sdq-nut[aria-disabled="true"] {
+  cursor: default;
+}
+
+.sdq-nut[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+
+.sdq-nut[data-ket-thuc] {
+  background: var(--surface-3);
+}
+
+.sdq-nut[data-nghen] {
+  border: 2.5px solid var(--f-a-solid);
+  background: var(--f-a-bg);
+}
+
+.sdq-nut[data-chua-co-so] {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.65;
+}
+
+.sdq-nut[data-mo] {
+  opacity: 0.3;
+}
+
+.sdq-nut-ten {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.sdq-nut-so {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+
+.sdq-the-nghen {
+  position: absolute;
+  top: -12px;
+  right: 10px;
+}
+
+/* Trạng thái bắt đầu / kết thúc: nhãn chữ ở góc trên trái, đối xứng với nhãn Nghẽn bên phải */
+.sdq-the-moc {
+  position: absolute;
+  top: -12px;
+  left: 10px;
+  padding: 0 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--ink-2);
+  background: var(--surface);
+}
+
+/* Chip số trên cạnh */
+.sdq-nhan-canh {
+  position: absolute;
+  z-index: 2;
+  pointer-events: all;
+  transition: opacity 0.15s;
+}
+
+.sdq-nhan-canh:hover,
+.sdq-nhan-canh:focus-within {
+  z-index: 20;
+}
+
+.sdq-nhan-canh[data-mo] {
+  opacity: 0.25;
+}
+
+.sdq-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1.5px solid var(--kenh, var(--line-2));
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+
+button.sdq-chip {
+  cursor: pointer;
+}
+
+button.sdq-chip:hover,
+.sdq-nhan-canh[data-chon] .sdq-chip {
+  background: var(--surface-3);
+}
+
+.sdq-nhan-canh[data-chon] .sdq-chip {
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+
+.sdq-nhan-canh[data-chua-di] .sdq-chip {
+  border: 1.5px dashed var(--ink-3);
+  color: var(--ink-2);
+}
+
+/* Chú thích khi rê chuột hay lấy tiêu điểm: vẽ trong khung, không dùng thuộc tính title */
+.sdq-chu-thich {
+  position: absolute;
+  z-index: 30;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+  pointer-events: none;
+  animation: hien-ra 0.15s var(--nhanh);
+}
+
+.sdq-chu-thich strong {
+  font-size: 13px;
+}
+
+.sdq-chu-thich span {
+  color: var(--ink-2);
+}
+
+/* Công cụ phóng, thu, về giữa */
+.sdq-cong-cu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: calc(100% - 20px);
+}
+
+.sdq-cong-cu-nut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  transition: background 0.15s;
+}
+
+.sdq-cong-cu-nut:hover {
+  background: var(--hover);
+}
+
+.sdq-cong-cu-nut svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sdq-chi-man-hep {
+  display: none;
+}
+
+/* Dòng ghi công của thư viện: chữ không nhỏ hơn 12px, màu theo token */
+.sdq-khung .react-flow__attribution {
+  margin: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+  background: var(--surface);
+}
+
+.sdq-khung .react-flow__attribution a {
+  color: var(--ink-3);
+}
+
+/* Lớp phủ toàn màn hình của sơ đồ (màn hẹp) */
+.sdq-toan-man {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.sdq-toan-man-dau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.sdq-toan-man-than {
+  flex: 1;
+  min-height: 0;
+}
+
+.sdq-toan-man .sdq-khung {
+  height: 100%;
+  border-top: 0;
+}
+
+/* Ngăn danh sách hồ sơ (dùng lại lớp `.ngan`) */
+.qt-ngan-tieu-de {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.qt-ngan-tieu-de:focus {
+  outline: none;
+}
+
+.qt-ngan-tom-tat {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.qt-tach {
+  display: grid;
+  gap: 6px;
+}
+
+.qt-tach h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.qt-tach ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qt-tach li {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  background: var(--surface);
+}
+
+.qt-tach li strong {
+  color: var(--ink);
+}
+
+.qt-ds-cho {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.qt-ds-cho li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.qt-ds-cho li:first-child {
+  border-top: 0;
+}
+
+.qt-cho-giay {
+  flex: 1;
+  min-width: 10ch;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.qt-cho-luot {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.qt-luoi-ma {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qt-ma {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font: 500 13px var(--mono);
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.qt-ds-cho .qt-ma {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+span.qt-ma {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  /* Thứ tự đọc ở màn hẹp: kết luận → ba khối xếp hạng → sơ đồ. DOM xếp theo màn rộng (kết luận → sơ đồ → khối) */
+  .qt-ket-qua > .qt-ket-luan {
+    order: 1;
+  }
+
+  .qt-ket-qua > .qt-luoi {
+    order: 2;
+  }
+
+  .qt-ket-qua > .qt-so-do {
+    order: 3;
+  }
+
+  .qt-ket-qua > .qt-chan {
+    order: 4;
+  }
+
+  .qt-o-ngay {
+    width: 100%;
+  }
+
+  .qt-o-ngay label {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .qt-o-ngay .o-nhap {
+    width: 100%;
+  }
+
+  .sdq-khung {
+    height: 420px;
+  }
+
+  .sdq-chi-man-hep {
+    display: inline-flex;
+  }
+}
