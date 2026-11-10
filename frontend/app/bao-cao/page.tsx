@@ -4,10 +4,11 @@
 // Mục Báo cáo (#305): bảng điều khiển phân tích nhúng, không đăng nhập lần hai. Dịch vụ quyết ai
 // thấy mục này qua danh sách không gian của `/me` (`reports`, tra cột `roles.report_scope`);
 // người khác mở thẳng đường dẫn thì gặp lời báo không vào được của khung, và điểm cuối cấp token
-// cũng tự từ chối.
+// cũng tự từ chối. Từ #315 đầu trang có thanh chuyển sang màn Quy trình thực tế (`/bao-cao/quy-trinh`).
 
 import { BangDieuKhienNhung } from "@/components/bang-dieu-khien-nhung";
 import { KhungLamViec } from "@/components/khung-lam-viec";
+import { ThanhBaoCao } from "@/components/thanh-bao-cao";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default function ManBaoCao() {
         Tồn đọng theo phòng ban, thời gian xử lý, tỷ lệ trễ hạn và các loại yêu cầu — tính từ nhật
         ký sự kiện, cập nhật theo từng thao tác trên hồ sơ.
       </p>
+      <ThanhBaoCao dang="bang-dieu-khien" />
       <BangDieuKhienNhung />
     </KhungLamViec>
   );

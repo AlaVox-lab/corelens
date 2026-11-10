@@ -78,12 +78,25 @@ jobs:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
       - uses: actions/checkout@v4
+      # Ranh giới AGPL (ADR-0007): PM4Py chỉ được nhập trong services/khai-pha/. Bước rẻ nhất nên đứng
+      # đầu — vi phạm thì dừng trước khi dựng ảnh. `git grep` thoát 0 khi TÌM THẤY, nên tìm thấy là hỏng.
+      - name: Ranh giới AGPL — không nhập pm4py ngoài dịch vụ khai phá
+        run: |
+          if git grep -nE '^[[:space:]]*(import|from)[[:space:]]+pm4py([[:space:].]|$)' \
+            -- '*.py' '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs' '*.sh' ':(exclude)services/khai-pha'; then
+            echo "pm4py (AGPL-3.0-or-later) chỉ được nhập trong services/khai-pha/ — xem ADR-0007"; exit 1
+          fi
+          if git grep -nEi 'pm4py' \
+            -- 'backend/requirements*.txt' 'backend/pyproject.toml' 'frontend/package.json' \
+            'frontend/package-lock.json' 'docs-site/package.json' 'docs-site/package-lock.json'; then
+            echo "pm4py không được khai làm phụ thuộc của dịch vụ ứng dụng, cổng hay trang tài liệu — xem ADR-0007"; exit 1
+          fi
       # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa.
       - run: cp infra/.env.example infra/.env
-      - name: Dựng ảnh dịch vụ và giao diện
-        run: $COMPOSE build backend frontend
-      - name: Bật PostgreSQL, Keycloak, SeaweedFS và dịch vụ ứng dụng
-        run: $COMPOSE up -d postgres keycloak seaweedfs backend
+      - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
+        run: $COMPOSE build backend khai-pha frontend
+      - name: Bật PostgreSQL, Keycloak, SeaweedFS, dịch vụ ứng dụng và dịch vụ khai phá
+        run: $COMPOSE up -d postgres keycloak seaweedfs backend khai-pha
       - name: Chờ dịch vụ và Keycloak sẵn sàng
         run: |
           for i in $(seq 1 90); do
@@ -94,12 +107,26 @@ jobs:
             sleep 2
           done
           echo "Hết thời gian chờ cụm khởi động"; exit 1
+      # Dịch vụ khai phá chờ dịch vụ ứng dụng (migration tạo tài khoản chỉ đọc của nó) rồi mới lên; ảnh
+      # nạp sẵn PM4Py nên thường vài giây, healthcheck cho tối đa 60 giây khởi động.
+      - name: Chờ dịch vụ khai phá sẵn sàng
+        run: |
+          for i in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' dxlab-khai-pha)" = healthy ]; then
+              echo "Sẵn sàng sau $((i * 3)) giây"; exit 0
+            fi
+            sleep 3
+          done
+          echo "Dịch vụ khai phá không lên được"; exit 1
       # Bài bị bỏ qua cũng tính là hỏng: thiếu PostgreSQL hay Keycloak thì phải ra đỏ.
       - name: Kiểm thử dịch vụ ứng dụng
         run: docker exec -e DXLAB_CAM_BO_QUA=1 dxlab-backend python -m pytest -p no:cacheprovider -q
+      # Bài có đáp án biết trước, chạy trong ảnh của dịch vụ khai phá với cả hai bộ máy (pm4py và noi_bo)
+      - name: Kiểm thử dịch vụ khai phá
+        run: docker exec -e DXLAB_CAM_BO_QUA=1 dxlab-khai-pha python -m pytest -p no:cacheprovider -q
       - name: Nhật ký cụm khi hỏng
         if: failure()
-        run: $COMPOSE logs --no-color --tail=200 postgres keycloak seaweedfs backend
+        run: $COMPOSE logs --no-color --tail=200 postgres keycloak seaweedfs backend khai-pha
 
   bang-dieu-khien:
     name: Bảng điều khiển — dựng và tự nạp

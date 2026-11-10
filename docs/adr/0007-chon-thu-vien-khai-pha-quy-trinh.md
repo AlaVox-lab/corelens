@@ -2,11 +2,11 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | Đề xuất |
+| Trạng thái | Đã chấp nhận (2026-11-08) |
 | Ngày | 2026-09-28 |
 | Không gian kiến trúc | `I` |
 | Issue liên quan | #48 |
-| Người quyết định | Navigator (`AlaVox-lab`) và giảng viên hướng dẫn — chưa chốt |
+| Người quyết định | Navigator (`AlaVox-lab`) chấp nhận ngày 2026-11-08 (bình luận ở #48); giảng viên hướng dẫn chưa xác nhận — xem mục Quyết định |
 
 ---
 
@@ -140,11 +140,15 @@ Quá trình khảo sát, số liệu đo và nguồn ghi trong
 
 ## Quyết định
 
-Đề xuất chọn **PM4Py `2.7.23.8`** làm thư viện khai phá quy trình cho không gian `I`, chạy
-trong **một dịch vụ khai phá tách riêng**, giao tiếp với phần còn lại qua HTTP.
+Chọn **PM4Py `2.7.23.8`** làm thư viện khai phá quy trình cho không gian `I`, chạy trong **một
+dịch vụ khai phá tách riêng**, giao tiếp với phần còn lại qua HTTP.
 
-Đây chưa phải quyết định đã chấp nhận. Navigator và giảng viên cần xem xét trước khi đổi
-trạng thái.
+Navigator chấp nhận ngày 2026-11-08 và cài đặt ở #314 (`services/khai-pha/`). Giảng viên chưa xác
+nhận ranh giới AGPL, nên phần thuật toán được đặt sau một giao diện hẹp với **hai bộ máy cho cùng kết
+quả**: `pm4py` (mặc định) và `noi_bo` (Python thuần, không thư viện khai phá nào). Bài kiểm thử có đáp
+án biết trước chạy trên cả hai. Giảng viên không nhận ranh giới AGPL thì đặt `MINING_ENGINE=noi_bo` và
+xóa dòng `pm4py` khỏi `services/khai-pha/requirements.txt` — dịch vụ ứng dụng, cổng và hợp đồng JSON
+không đổi. Phương án pm4js ở dưới vẫn là lối đi nếu cần thêm thuật toán mà không dùng AGPL.
 
 ---
 
@@ -158,7 +162,8 @@ dụng và đang được phát triển tích cực.
 **Giấy phép là cái giá, và trả được.** AGPL buộc ranh giới dịch vụ riêng — cùng cách dự án
 đã tính cho Metabase, Garage và MinIO. Bộ nhớ 174 MiB nằm trong ngân sách, cỡ Superset.
 
-**pm4js là phương án lùi**, dùng nếu giảng viên muốn tránh hẳn copyleft: nhẹ, giấy phép dễ
+**pm4js từng là phương án lùi** (trước khi có bộ máy dự phòng tự viết ở #314), dùng nếu giảng viên
+muốn tránh hẳn copyleft mà vẫn cần thư viện: nhẹ, giấy phép dễ
 dãi, bắt lệch đúng bằng gióng hàng trên DFG. Nó không được chọn vì bản `0.0.x`, ít thuật
 toán, đưa Node vào tầng `I`, và vẫn có tệp CC BY-SA phải giải trình.
 
@@ -224,14 +229,15 @@ ghi vào bất kỳ trường quyết định nào của hồ sơ.
 
 **Việc phải làm tiếp sau quyết định này**
 
-- [ ] Navigator và giảng viên chấp nhận hoặc yêu cầu sửa bản ghi
-- [ ] Nếu chấp nhận, cập nhật `docs/ARCHITECTURE.md` mục 3 và câu quy tắc AGPL ở mục 3.3
-- [ ] Nếu chấp nhận, cập nhật `docs/dependencies.md` với PM4Py, AGPL-3.0-or-later và ranh
-      giới dịch vụ; sửa câu tương ứng ở `CLAUDE.md` mục 5.2
-- [ ] Tạo issue riêng cho dịch vụ khai phá và bước xuất nhật ký của tầng `D` — làm sau khi
-      `P` và `D` ổn định
+- [x] Navigator chấp nhận (2026-11-08); giảng viên chưa xác nhận — có bộ máy dự phòng
+- [x] Cập nhật `docs/ARCHITECTURE.md` mục 3 và câu quy tắc AGPL ở mục 3.3; khuôn khai phá ở mục 6.4 (#314)
+- [x] Cập nhật `docs/dependencies.md` với PM4Py, AGPL-3.0-or-later và ranh giới dịch vụ; sửa câu
+      tương ứng ở `CLAUDE.md` mục 5.2 (#314)
+- [x] Issue riêng cho dịch vụ khai phá (#314) và màn trình bày (#315); bước xuất nhật ký của tầng
+      `D` đã có từ #306
 - [ ] Chạy lại phân tích trên nhật ký thật khi hệ thống có dữ liệu vận hành
-- [ ] Đo kích thước ảnh chứa và bộ nhớ khi dịch vụ vào cụm thật
+- [x] Đo kích thước ảnh chứa khi dịch vụ vào cụm (#314): 982 MB, vì bộ thư viện số học; khởi động
+      khoảng 7 giây nhờ biên dịch sẵn lúc dựng ảnh. Bộ nhớ khi chạy: chưa đo
 
 ---
 

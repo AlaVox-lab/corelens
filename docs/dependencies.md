@@ -53,7 +53,9 @@ GPL, AGPL đều **được OSI công nhận** nên hợp lệ về mặt thể 
 Nếu buộc phải dùng một nền tảng copyleft mạnh:
 
 - Triển khai như **dịch vụ độc lập**, giao tiếp qua HTTP hoặc giao thức mạng
-- **Không** nhúng thư viện của nó vào mã nguồn dự án
+- **Không** nhúng thư viện của nó vào dịch vụ ứng dụng hay cổng. Thư viện copyleft mạnh chỉ được
+  `import` bên trong **một dịch vụ tách riêng** (thư mục, ảnh chứa riêng, giao tiếp HTTP) — trường hợp
+  duy nhất hiện nay là PM4Py trong `services/khai-pha/` (ADR-0007); CI chặn `import pm4py` ở nơi khác
 - Ghi rõ ranh giới kiến trúc này vào `ARCHITECTURE.md` và bản ghi quyết định tương ứng
 
 ### Các trường hợp đang áp dụng
@@ -64,6 +66,8 @@ Nếu buộc phải dùng một nền tảng copyleft mạnh:
 | **psycopg 3** | LGPL-3.0-only | Trình điều khiển PostgreSQL của **dịch vụ ứng dụng**. Đây là phụ thuộc copyleft đầu tiên nằm trong mã nguồn của chính nhóm, nên ranh giới phải nói rõ: dự án chỉ `import` nó như thư viện, không sao chép mã, không sửa mã. LGPL cho phép đúng cách dùng này. Người dùng thay thế được bằng cách sửa một dòng trong `backend/requirements.txt` và một tiền tố trong chuỗi kết nối — hai bản lùi permissive là `pg8000` (BSD-3-Clause) và `asyncpg` (Apache-2.0) |
 | **sharp** và `@img/sharp-libvips-*` | Apache-2.0 (sharp) · LGPL-3.0-or-later (libvips) | Phụ thuộc **tùy chọn** mà Next.js kéo theo để tối ưu ảnh. Thư viện gốc `libvips` là nhị phân dựng sẵn, nạp động, thay thế được — đúng điều kiện LGPL cho phép. Cổng người dùng hiện **không dùng ảnh nào**; nếu muốn loại bỏ hẳn thì đặt `images: { unoptimized: true }` trong `next.config.ts` |
 | **lightningcss** | MPL-2.0 | Công cụ xử lý CSS mà Astro dùng **lúc dựng** trang tài liệu. MPL-2.0 là copyleft theo từng tệp: chỉ ràng buộc khi sửa chính tệp của thư viện. Dự án dùng qua trình quản lý gói, không sửa, không chép mã; kết quả dựng là CSS do dự án viết |
+| **PM4Py** | AGPL-3.0-or-later — dòng đầu `LICENSE` trong gói đã cài: `GNU AFFERO GENERAL PUBLIC LICENSE` | Chỉ cài trong ảnh của **dịch vụ khai phá** `services/khai-pha/`, chỉ một tệp `import` (`app/bo_may/pm4py_bo_may.py`). Dịch vụ ứng dụng và cổng nhận JSON qua HTTP — tác phẩm riêng biệt gộp chung, AGPL không lan sang. Mã của nhóm trong dịch vụ vẫn MIT (tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Không sửa, không chép mã thư viện. Có bộ máy dự phòng Python thuần: `MINING_ENGINE=noi_bo` rồi xóa dòng pm4py — xem ADR-0007 |
+| **cvxopt** | GPL-3.0-or-later — `LICENSE` trong gói đã cài: *"GNU General Public License … either version 3"* | Phụ thuộc gián tiếp **bắt buộc** của PM4Py, cùng nằm sau ranh giới dịch vụ khai phá. GPL-3.0 và AGPL-3.0 kết hợp được (điều 13 của cả hai). Dự án không gọi trực tiếp; gỡ PM4Py thì gỡ luôn |
 | **Metabase** *(đã loại)* | AGPL-3.0 | Không dùng — xem ADR-0003 |
 | **Garage**, **MinIO** *(phương án lùi)* | AGPL-3.0 | Nếu phải dùng thì chỉ chạy như dịch vụ độc lập qua S3 API — xem ADR-0002 |
 
@@ -88,7 +92,7 @@ Ghi lại ở đây để nếu ban giám khảo tra `package-lock.json` thì đ
 | Docker Engine | 24+ | Apache-2.0 | Có | Có | Đóng gói và dựng hệ thống |
 | Docker Compose | v2 | Apache-2.0 | Có | Có | Dựng toàn hệ thống bằng một lệnh |
 | PostgreSQL | `16-alpine` | PostgreSQL License | Có | Có | Một thực thể, ba database: `dxlab`, `keycloak`, `superset` |
-| Python *(ảnh nền)* | `3.13-slim` | Python-2.0 | Có | Có | Ảnh nền của dịch vụ ứng dụng — `backend/Dockerfile` |
+| Python *(ảnh nền)* | `3.13-slim` | Python-2.0 | Có | Có | Ảnh nền của dịch vụ ứng dụng (`backend/Dockerfile`) và dịch vụ khai phá (`services/khai-pha/Dockerfile`) |
 | Node.js *(ảnh nền)* | `24-alpine` | MIT | Có | Có | Ảnh nền của cổng người dùng — `frontend/Dockerfile` |
 | psycopg2-binary | `2.9.13` | LGPL kèm ngoại lệ | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Cài vào **ảnh dẫn xuất của Superset** vì ảnh gốc không kèm sẵn — xem `infra/superset/Dockerfile`. Không nhúng vào mã nguồn dự án, không sửa mã thư viện. Chi tiết ràng buộc ở mục Lưu ý về giấy phép copyleft |
 
@@ -109,16 +113,37 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | jose | `6.2.12` | MIT | Có | Có | Mã hóa cookie phiên. Cũng là phụ thuộc của `openid-client` |
 | lucide-react | `1.52.0` | ISC | Có | Có | Bộ icon của thanh bên và nút bấm (#158). Không kéo phụ thuộc nào khác; chỉ icon được `import` mới vào bản dựng. Dùng qua gói chứ không chép đường vẽ SVG vào kho |
 | @superset-ui/embedded-sdk | `0.4.0` | Apache-2.0 | Có | Có | Thư viện nhúng chính thức của Superset: dựng khung nhúng bảng điều khiển ở mục Báo cáo và tự xin lại token khách trước khi hết hạn (#305). Chọn thay vì tự viết khung và giao thức trao đổi tin nhắn với Superset — lắp ghép thư viện của chính nền tảng |
+| @xyflow/react | `12.12.0` | MIT | Có | Có | Vẽ sơ đồ quy trình thực tế ở màn Báo cáo → Quy trình thực tế (#315): nút, cạnh, kéo, phóng to. Chỉ chạy ở trình duyệt, nạp CSS nền `base.css` của gói rồi chỉnh màu bằng biến CSS của cổng — không sửa mã gói. Dòng đầu `LICENSE`: `MIT License` |
+| @dagrejs/dagre | `3.1.3` | MIT | Có | Có | Bố cục sơ đồ quy trình thực tế (#315): xếp trạng thái theo hàng và dẫn đường cho cạnh quay ngược. Hàm thuần trong `lib/bo-cuc-quy-trinh.ts`. Dòng đầu `LICENSE`: `Copyright (c) 2012-2014 Chris Pettitt` (giấy phép MIT) |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
+
+Hai gói của sơ đồ (#315) ghim **chính xác** `12.12.0` và `3.1.3`: các bản mới hơn tại thời điểm thêm
+(10/11/2026) chưa đủ hai tuần phát hành, nên không lấy bản mới nhất.
 
 Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`;
 `@superset-ui/switchboard` (Apache-2.0) và `jwt-decode` (MIT) — kênh tin nhắn với khung nhúng và
 đọc hạn của token khách, đi kèm `@superset-ui/embedded-sdk`.
 
-Toàn bộ cây phụ thuộc có **67 gói** (đếm lại ở #305). Đã rà giấy phép từng gói bằng siêu dữ liệu
-trong tệp khóa, không dựa vào trí nhớ: 28 MIT, 19 Apache-2.0, 14 gói `sharp`/`libvips` mang
-LGPL, 3 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
-Lưu ý về giấy phép copyleft.
+Phụ thuộc gián tiếp của sơ đồ (#315), 20 gói do hai gói trên kéo theo. Mở tệp giấy phép thật trong
+`node_modules` của từng gói để ghi; cột cuối là dòng đầu của tệp đó:
+
+| Gói | Phiên bản | Giấy phép | Kéo theo bởi · dùng để | Dòng đầu tệp giấy phép |
+|---|---|---|---|---|
+| @xyflow/system | `0.0.83` | MIT | `@xyflow/react` · lõi tính toán khung nhìn, đường đi | `MIT License` |
+| zustand | `4.5.7` | MIT | `@xyflow/react` · kho trạng thái của sơ đồ | `MIT License` |
+| classcat | `5.0.5` | MIT | `@xyflow/react` · nối tên lớp CSS | `Copyright © Jorge Bucaran <<https://jorgebucaran.com>>` (`LICENSE.md`) |
+| use-sync-external-store | `1.7.0` | MIT | `zustand` · đăng ký kho với React | `MIT License` |
+| @dagrejs/graphlib | `4.0.6` | MIT | `@dagrejs/dagre` · cấu trúc đồ thị | `Copyright (c) 2012-2014 Chris Pettitt` |
+| d3-color · d3-dispatch · d3-drag · d3-interpolate · d3-selection · d3-timer · d3-transition · d3-zoom | `3.1.1` · `3.0.2` · `3.0.1` · `3.0.2` · `3.0.1` · `3.0.2` · `3.0.2` · `3.0.1` | ISC | `@xyflow/system` · kéo và phóng khung nhìn | `Copyright 2010-2026 Mike Bostock` (văn bản ISC) |
+| d3-ease | `3.0.2` | BSD-3-Clause | `d3-transition` · đường cong chuyển động | `Copyright 2010-2026 Mike Bostock` (văn bản BSD 3 điều khoản) |
+| @types/d3-color · d3-drag · d3-interpolate · d3-selection · d3-transition · d3-zoom | `3.1.3` · `3.0.7` · `3.0.4` · `3.0.12` · `3.0.9` · `3.0.9` | MIT | `@xyflow/system` · chỉ là khai báo kiểu | `MIT License` |
+
+Cả hai giấy phép ngoài MIT — ISC và BSD-3-Clause — đều thuộc danh sách OSI và tương thích MIT.
+
+Toàn bộ cây phụ thuộc có **89 gói** (đếm lại ở #315, trước đó 67 gói ở #305). Đã rà giấy phép từng
+gói bằng siêu dữ liệu trong tệp khóa, không dựa vào trí nhớ: 41 MIT, 19 Apache-2.0, 14 gói
+`sharp`/`libvips` mang LGPL, 11 ISC, 2 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích
+ở mục Lưu ý về giấy phép copyleft.
 
 ---
 
@@ -188,6 +213,33 @@ này được OSI công nhận và là copyleft ở mức từng tệp: ràng bu
 **sửa tệp nguồn của chính gói đó**, mà điều đó thì CLAUDE.md mục 2.3 đã cấm sẵn.
 `certifi` cũng chỉ là một bó chứng thư số CA đi kèm, không phải mã nguồn chạy trong
 sản phẩm.
+
+## Phụ thuộc dịch vụ khai phá quy trình
+
+Khai báo và ghim trong `services/khai-pha/requirements.txt` bằng `==` (#314, ADR-0007). Phần mở rộng
+`[stable]` của chính PM4Py ghim sẵn bộ thư viện số học kéo theo, nên ai dựng lại cũng nhận đúng bộ phiên
+bản dưới đây. Mọi gói trong bảng **chỉ nằm trong ảnh của dịch vụ khai phá**, không nằm trong dịch vụ ứng
+dụng hay cổng. Giấy phép đọc từ siêu dữ liệu gói đã cài trong ảnh; gói nào siêu dữ liệu không ghi thì
+đã mở tệp `LICENSE` trong gói.
+
+| Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
+|---|---|---|---|---|---|
+| pm4py[stable] | `2.7.23.8` | AGPL-3.0-or-later | Có | Có, **có điều kiện** | Khám phá đồ thị trực tiếp và biến thể. Ranh giới ở mục Lưu ý về giấy phép copyleft |
+| fastapi | `0.141.1` | MIT | Có | Có | Cùng bản với dịch vụ ứng dụng |
+| uvicorn[standard] | `0.53.0` | BSD-3-Clause | Có | Có | |
+| psycopg[binary] | `3.3.5` | LGPL-3.0-only | Có | Có, **có điều kiện** | Như dịch vụ ứng dụng — chỉ `import`, không sửa |
+| pandas | `3.0.5` | BSD-3-Clause | Có | Có | Bảng sự kiện đưa vào PM4Py; bộ máy dự phòng không cần |
+| pytest | `9.1.1` | MIT | Có | Có | Bài kiểm thử đáp án biết trước, chạy trong container |
+| httpx | `0.28.1` | BSD-3-Clause | Có | Có | `TestClient` của FastAPI |
+| cvxopt *(gián tiếp)* | `1.3.3` | GPL-3.0-or-later | Có | Có, **có điều kiện** | Bắt buộc của PM4Py; xem mục copyleft |
+| numpy *(gián tiếp)* | `2.5.1` | BSD-3-Clause AND 0BSD AND MIT AND Zlib… | Có | Có | |
+| scipy *(gián tiếp)* | `1.18.0` | BSD-3-Clause | Có | Có | |
+| networkx *(gián tiếp)* | `3.6.1` | BSD-3-Clause | Có | Có | |
+| lxml *(gián tiếp)* | `6.1.1` | BSD-3-Clause | Có | Có | |
+| matplotlib *(gián tiếp)* | `3.11.1` | Matplotlib License (dựa trên PSF License) | Văn bản gốc PSF-2.0 có trong danh sách OSI; bản của Matplotlib chỉ đổi tên bên cấp phép | Có | Dễ dãi kiểu BSD. PM4Py kéo theo để vẽ, dịch vụ không vẽ gì. Ghi riêng để người chấm thấy đã xét |
+| pillow, contourpy, cycler, kiwisolver, fonttools, pyparsing *(gián tiếp, cùng matplotlib)* | theo `[stable]` | MIT-CMU · BSD-3-Clause · BSD-3-Clause · BSD-3-Clause · MIT · MIT | Có | Có | |
+| graphviz *(gián tiếp, gói Python)* | `0.21` | MIT | Có | Có | Chỉ là lớp gọi; ảnh không cài chương trình Graphviz |
+| pytz, python-dateutil, six, tqdm, packaging *(gián tiếp)* | theo `[stable]` | MIT · Apache-2.0 hoặc BSD-3-Clause · MIT · MPL-2.0 AND MIT · Apache-2.0 hoặc BSD-2-Clause | Có | Có | tqdm MPL-2.0 theo từng tệp, không sửa tệp nào |
 
 ---
 

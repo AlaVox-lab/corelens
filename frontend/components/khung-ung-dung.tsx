@@ -13,7 +13,7 @@
 import { ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huong";
@@ -46,20 +46,21 @@ function doiCheDo() {
 }
 
 /** Trang con đặt tên cấp con lên thanh đầu, ví dụ mã hồ sơ (#169). */
-const DatTenCon = createContext<(ten: string | null) => void>(() => {});
+const DatTenCon = createContext<(ten: string | null, chuThuong?: boolean) => void>(() => {});
 
 /**
  * Đặt tên cấp con cho thanh đầu trang — "Phòng ban › YC-2026-0005" ở trang một hồ sơ,
  * "Phòng ban · Công nghệ thông tin" ở trang của chính mục (#170). Trang chạy ở máy chủ
  * nên không chạm được thanh đầu; thành phần rỗng này chuyển tên lên qua context, và trả
- * tên về mặc định khi rời trang.
+ * tên về mặc định khi rời trang. Tên là mã hồ sơ thì vẽ chữ đơn cách; trang con của mục (như
+ * Báo cáo › Quy trình thực tế, #315) đặt `chuThuong` để vẽ chữ thường.
  */
-export function TenCapCon({ ten }: { ten: string }) {
+export function TenCapCon({ ten, chuThuong = false }: { ten: string; chuThuong?: boolean }) {
   const dat = useContext(DatTenCon);
   useEffect(() => {
-    dat(ten);
+    dat(ten, chuThuong);
     return () => dat(null);
-  }, [ten, dat]);
+  }, [ten, chuThuong, dat]);
   return null;
 }
 
@@ -98,6 +99,11 @@ export function KhungUngDung({
   const dang = mucDangDung(duongDan, cacMuc);
   const [moMenu, setMoMenu] = useState(false);
   const [tenCon, setTenCon] = useState<string | null>(null);
+  const [tenConChuThuong, setTenConChuThuong] = useState(false);
+  const datTenCon = useCallback((ten: string | null, chuThuong = false) => {
+    setTenCon(ten);
+    setTenConChuThuong(chuThuong);
+  }, []);
   // Đọc lựa chọn sau khi dựng xong, để bản dựng ở máy chủ và ở trình duyệt khớp nhau
   const [thuGon, setThuGon] = useState(false);
   useEffect(() => {
@@ -196,7 +202,7 @@ export function KhungUngDung({
             <p className="cha">
               <Link href={dang.duongDan}>{dang.nhan}</Link>
               <ChevronRight aria-hidden />
-              {tenCon ? <span className="mono">{tenCon}</span> : <span>Hồ sơ</span>}
+              {tenCon ? <span className={tenConChuThuong ? undefined : "mono"}>{tenCon}</span> : <span>Hồ sơ</span>}
             </p>
           ) : (
             // Ở trang của mục, tên con là phần nói rõ thêm: "Phòng ban · Công nghệ thông tin"
@@ -206,7 +212,7 @@ export function KhungUngDung({
         </header>
 
         <main className="vung vao">
-          <DatTenCon.Provider value={setTenCon}>{children}</DatTenCon.Provider>
+          <DatTenCon.Provider value={datTenCon}>{children}</DatTenCon.Provider>
         </main>
       </div>
     </div>
