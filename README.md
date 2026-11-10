@@ -37,7 +37,7 @@ So sánh với các sản phẩm cùng loại: [`docs/so-sanh-san-pham.md`](docs
 | **H** | Nhân sự — định danh, phân quyền theo vai | Keycloak `26.7.3` (Apache-2.0) | Đã chạy |
 | **P** | Quy trình — máy trạng thái, Poka-yoke, hạn xử lý | **Engine tự viết** (MIT) | Đã chạy |
 | **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện | Apache Superset `6.1.0` (Apache-2.0) | Đã chạy |
-| **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); đề xuất pgvector | Thẻ gợi ý có xác nhận (`v0.10.0`); khai phá `v0.11.0` |
+| **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); đề xuất pgvector | Thẻ gợi ý có xác nhận (`v0.10.0`); khai phá quy trình và màn quy trình thực tế (`v0.11.0`) |
 
 Nền chung: Next.js, FastAPI, PostgreSQL, SeaweedFS (tệp đính kèm), Docker Compose. Nền tảng phổ thông
 được lắp ghép và chạy như dịch vụ độc lập; engine quy trình — phần lõi tạo khác biệt — nhóm tự viết.

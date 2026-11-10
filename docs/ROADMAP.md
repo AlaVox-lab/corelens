@@ -174,8 +174,8 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.11.0` cho khai phá quy trình (dời từ `v0.10.0`, navigator chốt 09/11), các
-bản sau cho gợi ý. `v0.10.0` (09/11) đưa trước thẻ gợi ý có xác nhận (#239) cùng đợt nền tảng vận hành ·
+**Phiên bản dự kiến**: `v0.11.0` (10/11, đã phát hành) cho khai phá quy trình — dịch vụ khai phá và màn
+quy trình thực tế trong cổng; các bản sau cho gợi ý. `v0.10.0` (09/11) đưa trước thẻ gợi ý có xác nhận (#239) cùng đợt nền tảng vận hành ·
 **Mốc**: *Giai đoạn 4 — Không gian I*, hạn 29/11 · **Issue gốc**: #322
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. **Khai phá quy trình làm trước**
@@ -187,9 +187,9 @@ chờ ADR-0008.
 
 ### 4.1. Khai phá quy trình
 
-- [ ] Khai phá quy trình thực tế từ nhật ký sự kiện (#314)
-- [ ] Đối chiếu quy trình thực tế với luồng chính của quy trình thiết kế (#314)
-- [ ] Chỉ ra điểm nghẽn và nhánh lệch chuẩn trên màn quy trình thực tế trong cổng (#315)
+- [x] Khai phá quy trình thực tế từ nhật ký sự kiện (#314)
+- [x] Đối chiếu quy trình thực tế với luồng chính của quy trình thiết kế (#314)
+- [x] Chỉ ra điểm nghẽn và nhánh lệch chuẩn trên màn quy trình thực tế trong cổng (#315)
 - [ ] Sinh khuyến nghị cải tiến bằng ngôn ngữ tự nhiên (#320)
 
 ### 4.2. Phân loại và định tuyến tự động
