@@ -5,6 +5,13 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.11.0] - 2026-11-10
+
+### Tính năng mới
+
+- **i-mining:** Dịch vụ khai phá quy trình thực tế từ nhật ký ([#335](https://github.com/AlaVox-lab/dx-os-lab/issues/335)) ([02d19ef](https://github.com/AlaVox-lab/dx-os-lab/commit/02d19ef24df9f8d90e962df0475d4258943755f8))
+- **i-mining:** Màn quy trình thực tế trong mục Báo cáo ([#336](https://github.com/AlaVox-lab/dx-os-lab/issues/336)) ([4e9f9f8](https://github.com/AlaVox-lab/dx-os-lab/commit/4e9f9f896444003f4063412f6bb2ed322e9a324c))
+
 ## [0.10.0] - 2026-11-09
 
 ### Kiểm thử
