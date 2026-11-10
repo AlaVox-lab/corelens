@@ -25,23 +25,25 @@
 # 08:00-12:00 và 13:00-17:00 các ngày thứ Hai tới thứ Sáu, nên mọi mốc đặt trong giờ làm việc để số
 # giây chờ tính tay được; bài `test_lich_dung_gia_dinh` kiểm đúng giả định đó trước hết.
 #
-#   hồ sơ  phòng  đường đi (chỉ trạng thái vào)                          điểm đặc biệt
-#   1      A      moi cho-1 xu-ly xong                                   luồng thường
-#   2      A      moi cho-1 xu-ly xong                                   hai lần đổi ưu tiên: KHÔNG phải đặt phòng
-#   3      A      moi cho-1 xu-ly xong                                   thêm một lần xu-ly → xu-ly (tự trỏ)
-#   4      A      moi cho-1 xu-ly cho-1 xu-ly xong                       làm lại 1 lần
-#   5      A      moi cho-1 (xu-ly cho-1)x2 xu-ly xong                   làm lại 2 lần
-#   6      B      moi cho-1 cho-2 xu-ly xong                             leo thang
-#   7      B      moi cho-1 xu-ly cho-kh xu-ly xong                      chờ bổ sung, người đi tiếp
-#   8      B      moi cho-1 xu-ly cho-kh huy                             hết hạn chờ
-#   9      A      moi cho-1 xu-ly xong xu-ly xong                        mở lại
-#   10     B      moi cho-1 xu-ly xong                                   đặt phòng HAI lần (nhan, giao)
-#   11     C      moi cho-1 xu-ly xong                                   đặt phòng MỘT lần
-#   12     A      moi cho-1 xu-ly cho-1 xu-ly xong                       gửi 23:59:59 ngày 08/03: NGOÀI khoảng
-#   13     B      moi cho-1 xu-ly xong                                   gửi 00:00:00 ngày 14/03: NGOÀI khoảng
-#   14     A      moi cho-1 xu-ly xong                                   gửi đúng 00:00:00 ngày 09/03: TRONG
-#   15     B      moi cho-1 xu-ly xong                                   gửi 23:59:59 ngày 13/03: TRONG (ngày cuối tính cả ngày)
-#   16     (rỗng) moi cho-1 xu-ly xong                                   chưa chuyển phòng
+#   hồ sơ  phòng  loại   đường đi (chỉ trạng thái vào)                          điểm đặc biệt
+#   1      A      may    moi cho-1 xu-ly xong                                   luồng thường
+#   2      A      may    moi cho-1 xu-ly xong                                   hai lần đổi ưu tiên: KHÔNG phải đặt phòng
+#   3      A      may    moi cho-1 xu-ly xong                                   thêm một lần xu-ly → xu-ly (tự trỏ)
+#   4      A      quyen  moi cho-1 xu-ly cho-1 xu-ly xong                       làm lại 1 lần
+#   5      A      quyen  moi cho-1 (xu-ly cho-1)x2 xu-ly xong                   làm lại 2 lần
+#   6      B      may    moi cho-1 cho-2 xu-ly xong                             leo thang
+#   7      B      giay   moi cho-1 xu-ly cho-kh xu-ly xong                      chờ bổ sung, người đi tiếp
+#   8      B      giay   moi cho-1 xu-ly cho-kh huy                             hết hạn chờ
+#   9      A      quyen  moi cho-1 xu-ly xong xu-ly xong                        mở lại
+#   10     B      may    moi cho-1 xu-ly xong                                   đặt phòng HAI lần (nhan, giao)
+#   11     C      giay   moi cho-1 xu-ly xong                                   đặt phòng MỘT lần
+#   12     A      quyen  moi cho-1 xu-ly cho-1 xu-ly xong                       gửi 23:59:59 ngày 08/03: NGOÀI khoảng
+#   13     B      may    moi cho-1 xu-ly xong                                   gửi 00:00:00 ngày 14/03: NGOÀI khoảng
+#   14     A      may    moi cho-1 xu-ly xong                                   gửi đúng 00:00:00 ngày 09/03: TRONG
+#   15     B      giay   moi cho-1 xu-ly xong                                   gửi 23:59:59 ngày 13/03: TRONG (ngày cuối tính cả ngày)
+#   16     rỗng   may    moi cho-1 xu-ly xong                                   chưa chuyển phòng
+#
+# Loại yêu cầu (may, quyen, giay) dùng cho phép tách nhóm của #315.
 #
 # Hồ sơ 12-15 đặt ở sát biên để bắt lỗi tính ngày theo UTC thay vì theo múi giờ của lịch. Mọi hồ sơ
 # kết thúc ở trạng thái kết thúc, nên không lượt nào còn dở tính tới `now()` và đáp án không đổi theo giờ chạy.
@@ -113,6 +115,7 @@ class SuKienThu(NamedTuple):
 class HoSoThu:
     ma: int
     phong: str | None
+    loai: str
     tao: str
     su_kien: tuple[SuKienThu, ...]
 
@@ -122,30 +125,30 @@ def _sk(hoat_dong: str, den: str, luc: str, thay_doi: dict | None = None) -> SuK
 
 
 HO_SO = (
-    HoSoThu(1, "A", "2026-03-09 09:00:00", (
+    HoSoThu(1, "A", "may", "2026-03-09 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-09 09:10:00"),
         _sk("giao", "xu-ly", "2026-03-09 10:00:00"),
         _sk("hoan-tat", "xong", "2026-03-09 11:00:00"),
     )),
-    HoSoThu(2, "A", "2026-03-09 09:00:00", (
+    HoSoThu(2, "A", "may", "2026-03-09 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-09 09:30:00"),
         _sk("giao", "xu-ly", "2026-03-09 10:30:00", {"priority_code": "cao"}),
         _sk("hoan-tat", "xong", "2026-03-09 11:30:00", {"priority_code": "thap"}),
     )),
-    HoSoThu(3, "A", "2026-03-10 08:30:00", (
+    HoSoThu(3, "A", "may", "2026-03-10 08:30:00", (
         _sk("nhan", "cho-1", "2026-03-10 08:40:00"),
         _sk("giao", "xu-ly", "2026-03-10 09:00:00"),
         _sk("tu-xet", "xu-ly", "2026-03-10 09:30:00"),
         _sk("hoan-tat", "xong", "2026-03-10 10:00:00"),
     )),
-    HoSoThu(4, "A", "2026-03-10 09:00:00", (
+    HoSoThu(4, "A", "quyen", "2026-03-10 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-10 09:05:00"),
         _sk("giao", "xu-ly", "2026-03-10 09:45:00"),
         _sk("tra-lai", "cho-1", "2026-03-10 10:30:00"),
         _sk("giao", "xu-ly", "2026-03-10 11:00:00"),
         _sk("hoan-tat", "xong", "2026-03-10 11:30:00"),
     )),
-    HoSoThu(5, "A", "2026-03-10 13:00:00", (
+    HoSoThu(5, "A", "quyen", "2026-03-10 13:00:00", (
         _sk("nhan", "cho-1", "2026-03-10 13:10:00"),
         _sk("giao", "xu-ly", "2026-03-10 13:30:00"),
         _sk("tra-lai", "cho-1", "2026-03-10 14:00:00"),
@@ -154,65 +157,65 @@ HO_SO = (
         _sk("giao", "xu-ly", "2026-03-10 15:20:00"),
         _sk("hoan-tat", "xong", "2026-03-10 16:00:00"),
     )),
-    HoSoThu(6, "B", "2026-03-11 09:00:00", (
+    HoSoThu(6, "B", "may", "2026-03-11 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-11 09:05:00"),
         _sk("len-cap", "cho-2", "2026-03-11 11:00:00"),
         _sk("giao-cap-2", "xu-ly", "2026-03-11 11:30:00"),
         _sk("hoan-tat", "xong", "2026-03-11 13:30:00"),
     )),
-    HoSoThu(7, "B", "2026-03-11 13:00:00", (
+    HoSoThu(7, "B", "giay", "2026-03-11 13:00:00", (
         _sk("nhan", "cho-1", "2026-03-11 13:10:00"),
         _sk("giao", "xu-ly", "2026-03-11 13:40:00"),
         _sk("can-bo-sung", "cho-kh", "2026-03-11 14:00:00"),
         _sk("bo-sung", "xu-ly", "2026-03-11 15:30:00"),
         _sk("hoan-tat", "xong", "2026-03-11 16:30:00"),
     )),
-    HoSoThu(8, "B", "2026-03-12 08:30:00", (
+    HoSoThu(8, "B", "giay", "2026-03-12 08:30:00", (
         _sk("nhan", "cho-1", "2026-03-12 08:40:00"),
         _sk("giao", "xu-ly", "2026-03-12 09:00:00"),
         _sk("can-bo-sung", "cho-kh", "2026-03-12 09:30:00"),
         _sk("het-han-cho", "huy", "2026-03-13 09:30:00"),
     )),
-    HoSoThu(9, "A", "2026-03-12 09:00:00", (
+    HoSoThu(9, "A", "quyen", "2026-03-12 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-12 09:05:00"),
         _sk("giao", "xu-ly", "2026-03-12 09:30:00"),
         _sk("hoan-tat", "xong", "2026-03-12 10:00:00"),
         _sk("mo-lai", "xu-ly", "2026-03-12 14:00:00"),
         _sk("hoan-tat", "xong", "2026-03-12 15:00:00"),
     )),
-    HoSoThu(10, "B", "2026-03-12 13:00:00", (
+    HoSoThu(10, "B", "may", "2026-03-12 13:00:00", (
         _sk("nhan", "cho-1", "2026-03-12 13:10:00", {"department_code": "B"}),
         _sk("giao", "xu-ly", "2026-03-12 13:30:00", {"department_code": "B"}),
         _sk("hoan-tat", "xong", "2026-03-12 15:00:00"),
     )),
-    HoSoThu(11, "C", "2026-03-13 09:00:00", (
+    HoSoThu(11, "C", "giay", "2026-03-13 09:00:00", (
         _sk("nhan", "cho-1", "2026-03-13 09:10:00", {"department_code": "C"}),
         _sk("giao", "xu-ly", "2026-03-13 09:40:00"),
         _sk("hoan-tat", "xong", "2026-03-13 10:40:00"),
     )),
-    HoSoThu(12, "A", "2026-03-08 23:59:59", (
+    HoSoThu(12, "A", "quyen", "2026-03-08 23:59:59", (
         _sk("nhan", "cho-1", "2026-03-09 09:00:00"),
         _sk("giao", "xu-ly", "2026-03-09 09:30:00"),
         _sk("tra-lai", "cho-1", "2026-03-09 10:00:00"),
         _sk("giao", "xu-ly", "2026-03-09 10:30:00"),
         _sk("hoan-tat", "xong", "2026-03-09 11:00:00"),
     )),
-    HoSoThu(13, "B", "2026-03-14 00:00:00", (
+    HoSoThu(13, "B", "may", "2026-03-14 00:00:00", (
         _sk("nhan", "cho-1", "2026-03-16 08:30:00"),
         _sk("giao", "xu-ly", "2026-03-16 09:00:00"),
         _sk("hoan-tat", "xong", "2026-03-16 09:30:00"),
     )),
-    HoSoThu(14, "A", "2026-03-09 00:00:00", (
+    HoSoThu(14, "A", "may", "2026-03-09 00:00:00", (
         _sk("nhan", "cho-1", "2026-03-09 09:00:00"),
         _sk("giao", "xu-ly", "2026-03-09 09:30:00"),
         _sk("hoan-tat", "xong", "2026-03-09 10:00:00"),
     )),
-    HoSoThu(15, "B", "2026-03-13 23:59:59", (
+    HoSoThu(15, "B", "giay", "2026-03-13 23:59:59", (
         _sk("nhan", "cho-1", "2026-03-16 09:00:00"),
         _sk("giao", "xu-ly", "2026-03-16 09:30:00"),
         _sk("hoan-tat", "xong", "2026-03-16 10:00:00"),
     )),
-    HoSoThu(16, None, "2026-03-13 10:00:00", (
+    HoSoThu(16, None, "may", "2026-03-13 10:00:00", (
         _sk("nhan", "cho-1", "2026-03-13 10:10:00"),
         _sk("giao", "xu-ly", "2026-03-13 10:40:00"),
         _sk("hoan-tat", "xong", "2026-03-13 11:10:00"),
@@ -231,7 +234,8 @@ TAO_BANG = (
         from_state text, to_state text, changes jsonb)""",
     """CREATE TEMP TABLE bao_cao_nhat_ky (
         case_id bigint, activity text, "timestamp" timestamptz, actor text, from_state text,
-        to_state text, department_code text, rule_set_id smallint, thu_tu bigint)""",
+        to_state text, department_code text, rule_set_id smallint, thu_tu bigint,
+        request_type_code text)""",
 )
 
 CAU_MOC = "%s::timestamp AT TIME ZONE %s"
@@ -253,8 +257,8 @@ def nap(ket_noi: psycopg.Connection, mui_gio: str) -> None:
         for ho_so in HO_SO:
             hien_tai = BAT_DAU
             c.execute(
-                f"INSERT INTO bao_cao_nhat_ky VALUES (%s, 'create-case', {CAU_MOC}, 'nguoi-gui', NULL, %s, %s, %s, 0)",
-                (ho_so.ma, ho_so.tao, mui_gio, BAT_DAU, ho_so.phong, BO_QUY_TAC),
+                f"INSERT INTO bao_cao_nhat_ky VALUES (%s, 'create-case', {CAU_MOC}, 'nguoi-gui', NULL, %s, %s, %s, 0, %s)",
+                (ho_so.ma, ho_so.tao, mui_gio, BAT_DAU, ho_so.phong, BO_QUY_TAC, ho_so.loai),
             )
             for sk in ho_so.su_kien:
                 ma_su_kien += 1
@@ -264,9 +268,9 @@ def nap(ket_noi: psycopg.Connection, mui_gio: str) -> None:
                      Jsonb(sk.thay_doi) if sk.thay_doi is not None else None),
                 )
                 c.execute(
-                    f"INSERT INTO bao_cao_nhat_ky VALUES (%s, %s, {CAU_MOC}, 'nguoi-xu-ly', %s, %s, %s, %s, %s)",
+                    f"INSERT INTO bao_cao_nhat_ky VALUES (%s, %s, {CAU_MOC}, 'nguoi-xu-ly', %s, %s, %s, %s, %s, %s)",
                     (ho_so.ma, sk.hoat_dong, sk.luc, mui_gio, hien_tai, sk.den, ho_so.phong,
-                     BO_QUY_TAC, ma_su_kien),
+                     BO_QUY_TAC, ma_su_kien, ho_so.loai),
                 )
                 hien_tai = sk.den
 

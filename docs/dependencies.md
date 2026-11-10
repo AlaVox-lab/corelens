@@ -113,16 +113,37 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | jose | `6.2.12` | MIT | Có | Có | Mã hóa cookie phiên. Cũng là phụ thuộc của `openid-client` |
 | lucide-react | `1.52.0` | ISC | Có | Có | Bộ icon của thanh bên và nút bấm (#158). Không kéo phụ thuộc nào khác; chỉ icon được `import` mới vào bản dựng. Dùng qua gói chứ không chép đường vẽ SVG vào kho |
 | @superset-ui/embedded-sdk | `0.4.0` | Apache-2.0 | Có | Có | Thư viện nhúng chính thức của Superset: dựng khung nhúng bảng điều khiển ở mục Báo cáo và tự xin lại token khách trước khi hết hạn (#305). Chọn thay vì tự viết khung và giao thức trao đổi tin nhắn với Superset — lắp ghép thư viện của chính nền tảng |
+| @xyflow/react | `12.12.0` | MIT | Có | Có | Vẽ sơ đồ quy trình thực tế ở màn Báo cáo → Quy trình thực tế (#315): nút, cạnh, kéo, phóng to. Chỉ chạy ở trình duyệt, nạp CSS nền `base.css` của gói rồi chỉnh màu bằng biến CSS của cổng — không sửa mã gói. Dòng đầu `LICENSE`: `MIT License` |
+| @dagrejs/dagre | `3.1.3` | MIT | Có | Có | Bố cục sơ đồ quy trình thực tế (#315): xếp trạng thái theo hàng và dẫn đường cho cạnh quay ngược. Hàm thuần trong `lib/bo-cuc-quy-trinh.ts`. Dòng đầu `LICENSE`: `Copyright (c) 2012-2014 Chris Pettitt` (giấy phép MIT) |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
+
+Hai gói của sơ đồ (#315) ghim **chính xác** `12.12.0` và `3.1.3`: các bản mới hơn tại thời điểm thêm
+(10/11/2026) chưa đủ hai tuần phát hành, nên không lấy bản mới nhất.
 
 Phụ thuộc gián tiếp đáng kể: `oauth4webapi` (MIT) — lõi giao thức của `openid-client`;
 `@superset-ui/switchboard` (Apache-2.0) và `jwt-decode` (MIT) — kênh tin nhắn với khung nhúng và
 đọc hạn của token khách, đi kèm `@superset-ui/embedded-sdk`.
 
-Toàn bộ cây phụ thuộc có **67 gói** (đếm lại ở #305). Đã rà giấy phép từng gói bằng siêu dữ liệu
-trong tệp khóa, không dựa vào trí nhớ: 28 MIT, 19 Apache-2.0, 14 gói `sharp`/`libvips` mang
-LGPL, 3 ISC, 1 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích ở mục
-Lưu ý về giấy phép copyleft.
+Phụ thuộc gián tiếp của sơ đồ (#315), 20 gói do hai gói trên kéo theo. Mở tệp giấy phép thật trong
+`node_modules` của từng gói để ghi; cột cuối là dòng đầu của tệp đó:
+
+| Gói | Phiên bản | Giấy phép | Kéo theo bởi · dùng để | Dòng đầu tệp giấy phép |
+|---|---|---|---|---|
+| @xyflow/system | `0.0.83` | MIT | `@xyflow/react` · lõi tính toán khung nhìn, đường đi | `MIT License` |
+| zustand | `4.5.7` | MIT | `@xyflow/react` · kho trạng thái của sơ đồ | `MIT License` |
+| classcat | `5.0.5` | MIT | `@xyflow/react` · nối tên lớp CSS | `Copyright © Jorge Bucaran <<https://jorgebucaran.com>>` (`LICENSE.md`) |
+| use-sync-external-store | `1.7.0` | MIT | `zustand` · đăng ký kho với React | `MIT License` |
+| @dagrejs/graphlib | `4.0.6` | MIT | `@dagrejs/dagre` · cấu trúc đồ thị | `Copyright (c) 2012-2014 Chris Pettitt` |
+| d3-color · d3-dispatch · d3-drag · d3-interpolate · d3-selection · d3-timer · d3-transition · d3-zoom | `3.1.1` · `3.0.2` · `3.0.1` · `3.0.2` · `3.0.1` · `3.0.2` · `3.0.2` · `3.0.1` | ISC | `@xyflow/system` · kéo và phóng khung nhìn | `Copyright 2010-2026 Mike Bostock` (văn bản ISC) |
+| d3-ease | `3.0.2` | BSD-3-Clause | `d3-transition` · đường cong chuyển động | `Copyright 2010-2026 Mike Bostock` (văn bản BSD 3 điều khoản) |
+| @types/d3-color · d3-drag · d3-interpolate · d3-selection · d3-transition · d3-zoom | `3.1.3` · `3.0.7` · `3.0.4` · `3.0.12` · `3.0.9` · `3.0.9` | MIT | `@xyflow/system` · chỉ là khai báo kiểu | `MIT License` |
+
+Cả hai giấy phép ngoài MIT — ISC và BSD-3-Clause — đều thuộc danh sách OSI và tương thích MIT.
+
+Toàn bộ cây phụ thuộc có **89 gói** (đếm lại ở #315, trước đó 67 gói ở #305). Đã rà giấy phép từng
+gói bằng siêu dữ liệu trong tệp khóa, không dựa vào trí nhớ: 41 MIT, 19 Apache-2.0, 14 gói
+`sharp`/`libvips` mang LGPL, 11 ISC, 2 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích
+ở mục Lưu ý về giấy phép copyleft.
 
 ---
 

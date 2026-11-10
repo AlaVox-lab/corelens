@@ -38,6 +38,7 @@ WITH ho_so AS (
       AND (%(tat_ca)s OR department_code = ANY(%(phong)s::text[]))
 )
 SELECT n.case_id, n.thu_tu, n.activity, n.timestamp, n.from_state, n.to_state, n.rule_set_id,
+       n.request_type_code, n.department_code,
        coalesce(e.changes ? 'department_code', FALSE) AS doi_phong,
        coalesce(t.is_rework, FALSE) AS lam_lai,
        coalesce(t.is_system AND t.auto_after_hours IS NULL, FALSE) AS leo_thang,
@@ -137,11 +138,21 @@ class TrangThai:
 
 
 @dataclass(frozen=True)
+class HoSo:
+    """Thuộc tính của hồ sơ dùng để tách nhóm (#315). View báo cáo lấy hai mã này từ `requests` ở
+    mọi dòng, nên đó là loại và phòng HIỆN TẠI của hồ sơ — hồ sơ chưa chuyển phòng có phòng rỗng."""
+
+    loai: str | None
+    phong: str | None
+
+
+@dataclass(frozen=True)
 class DuLieu:
     su_kien: list[SuKien]
     luot: list[Luot]
     trang_thai: dict[str, TrangThai]
     luong_chinh: list[tuple[str, str]]
+    ho_so: dict[int, HoSo]
 
 
 def doc_du_lieu(
@@ -154,15 +165,16 @@ def doc_du_lieu(
         mui_gio = c.execute(CAU_MUI_GIO).fetchone()
         tham_so = {"tu": tu, "den": den, "tat_ca": phong is None, "phong": phong or [],
                    "mui_gio": mui_gio["time_zone"] if mui_gio else "UTC"}
-        su_kien = [
-            SuKien(
+        su_kien: list[SuKien] = []
+        ho_so: dict[int, HoSo] = {}
+        for d in c.execute(CAU_SU_KIEN, tham_so):
+            su_kien.append(SuKien(
                 ho_so=d["case_id"], hoat_dong=d["activity"], luc=d["timestamp"], tu=d["from_state"],
                 den=d["to_state"], bo_quy_tac=d["rule_set_id"], doi_phong=d["doi_phong"],
                 lam_lai=d["lam_lai"], leo_thang=d["leo_thang"], het_han_cho=d["het_han_cho"],
                 mo_lai=d["mo_lai"],
-            )
-            for d in c.execute(CAU_SU_KIEN, tham_so)
-        ]
+            ))
+            ho_so.setdefault(d["case_id"], HoSo(loai=d["request_type_code"], phong=d["department_code"]))
         luot = [
             Luot(ho_so=d["case_id"], trang_thai=d["to_state"], luc_vao=d["luc_vao"],
                  ket_thuc=d["is_terminal"], so_giay=d["so_giay"])
@@ -175,7 +187,7 @@ def doc_du_lieu(
             for d in c.execute(CAU_TRANG_THAI, {"bo": bo})
         }
         luong_chinh = [(d["from_state"], d["to_state"]) for d in c.execute(CAU_LUONG_CHINH, {"bo": bo})]
-    return DuLieu(su_kien=su_kien, luot=luot, trang_thai=trang_thai, luong_chinh=luong_chinh)
+    return DuLieu(su_kien=su_kien, luot=luot, trang_thai=trang_thai, luong_chinh=luong_chinh, ho_so=ho_so)
 
 
 def mo_ket_noi(database_uri: str) -> psycopg.Connection:

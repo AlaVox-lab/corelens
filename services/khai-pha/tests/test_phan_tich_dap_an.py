@@ -141,6 +141,20 @@ def test_luong_chinh_theo_thiet_ke_doc_tu_bo_quy_tac(ket_noi_thu, bo_may):
         ("xu-ly", "cho-kh"),
         ("cho-kh", "xu-ly"),
     }
+    # Nhãn đọc từ bộ quy tắc (#315), để giao diện vẽ được cả bước chưa hồ sơ nào đi qua
+    nhan = {ma: ten for ma, ten, *_ in dap_an.TRANG_THAI}
+    for c in kq["designed_main_flow"]:
+        assert (c["from_label"], c["to_label"]) == (nhan[c["from"]], nhan[c["to"]])
+
+
+def test_buoc_thiet_ke_chua_ai_di_van_co_nhan(ket_noi_thu, bo_may):
+    # Phạm vi phòng C chỉ có hồ sơ 11 (moi cho-1 xu-ly xong): cho-2 và cho-kh không có lượt vào nào,
+    # nên không nằm trong `states`, nhưng bước thiết kế chạm chúng vẫn mang nhãn
+    kq = chay_phan_tich(ket_noi_thu, bo_may, phong=["C"])
+    assert {t["code"] for t in kq["states"]} == {"moi", "cho-1", "xu-ly", "xong"}
+    buoc = {(c["from"], c["to"]): (c["from_label"], c["to_label"]) for c in kq["designed_main_flow"]}
+    assert buoc[("cho-2", "xu-ly")] == ("Chờ cấp 2", "Đang xử lý")
+    assert buoc[("xu-ly", "cho-kh")] == ("Đang xử lý", "Chờ bổ sung")
 
 
 # --- 2. Phạm vi phòng và khoảng ngày ------------------------------------------------------------------
@@ -410,3 +424,124 @@ def test_doi_nhan_va_co_trang_thai_thi_ket_qua_doi_theo(ket_noi_thu, bo_may):
     assert cho_kh["median_wait_seconds"] is None
     assert "cho-kh" not in {r["code"] for r in kq["bottlenecks"]["ranking"]}
     assert {t["code"] for t in kq["states"] if t["is_bottleneck"]} == set()
+
+
+# --- 6. Tách nhóm và hồ sơ chờ lâu nhất (#315) ----------------------------------------------------------
+#
+# Loại và phòng của từng hồ sơ ở bảng đầu tests/dap_an.py. Trong khoảng thử: may 7 hồ sơ (1 2 3 6 10 14
+# 16), giay 4 (7 8 11 15), quyen 3 (4 5 9); phòng A 7, B 5, C 1, rỗng 1 (hồ sơ 16).
+
+
+def bo_ba(ds: list[dict], *khoa: str) -> list[tuple]:
+    return [tuple(m[k] for k in khoa) for m in ds]
+
+
+def test_tong_ho_so_theo_loai_va_phong(ket_noi_thu, bo_may):
+    nhom = chay_phan_tich(ket_noi_thu, bo_may)["groups"]
+    # Nhiều hồ sơ nhất trước; bằng nhau theo mã; nhóm rỗng (chưa có phòng) xuống cuối
+    assert bo_ba(nhom["request_types"], "code", "cases_count") == [("may", 7), ("giay", 4), ("quyen", 3)]
+    assert bo_ba(nhom["departments"], "code", "cases_count") == [("A", 7), ("B", 5), ("C", 1), (None, 1)]
+    # Phạm vi phòng B chỉ còn hồ sơ của phòng B
+    nhom_b = chay_phan_tich(ket_noi_thu, bo_may, phong=["B"])["groups"]
+    assert bo_ba(nhom_b["departments"], "code", "cases_count") == [("B", 5)]
+    assert bo_ba(nhom_b["request_types"], "code", "cases_count") == [("giay", 3), ("may", 2)]
+
+
+# nhánh lệch → (theo loại, theo phòng): (mã, số hồ sơ, tỷ lệ trên tổng hồ sơ của nhóm đó)
+NHANH_THEO_NHOM = {
+    "rework": ([("quyen", 2, 0.6667)], [("A", 2, 0.2857)]),
+    "escalation": ([("may", 1, 0.1429)], [("B", 1, 0.2)]),
+    "wait_expiry": ([("giay", 1, 0.25)], [("B", 1, 0.2)]),
+    "reopen": ([("quyen", 1, 0.3333)], [("A", 1, 0.1429)]),
+    "multiple_routing": ([("may", 1, 0.1429)], [("B", 1, 0.2)]),
+}
+
+
+def test_nhanh_lech_tach_theo_loai_va_phong(ket_noi_thu, bo_may):
+    kq = chay_phan_tich(ket_noi_thu, bo_may)
+    for d in kq["deviations"]:
+        theo_loai, theo_phong = NHANH_THEO_NHOM[d["kind"]]
+        assert bo_ba(d["by_request_type"], "code", "cases_count", "ratio") == theo_loai, d["kind"]
+        assert bo_ba(d["by_department"], "code", "cases_count", "ratio") == theo_phong, d["kind"]
+        # Tách nhóm không làm mất hay đẻ thêm hồ sơ
+        assert sum(m["cases_count"] for m in d["by_request_type"]) == d["cases_count"]
+        assert sum(m["cases_count"] for m in d["by_department"]) == d["cases_count"]
+
+
+def test_nhanh_lech_nhieu_nhom_xep_dung_va_nhom_rong_xuong_cuoi(ket_noi_thu, bo_may):
+    # Coi cạnh giao là làm lại: 13 hồ sơ (mọi hồ sơ trừ 6) vào nhánh làm lại, trải đủ các nhóm
+    cap_nhat_canh(ket_noi_thu, "is_rework = true", "giao")
+    lam_lai = nhanh(chay_phan_tich(ket_noi_thu, bo_may), "rework")
+    assert bo_ba(lam_lai["by_request_type"], "code", "cases_count", "ratio") == [
+        ("may", 6, 0.8571), ("giay", 4, 1.0), ("quyen", 3, 1.0)]
+    assert bo_ba(lam_lai["by_department"], "code", "cases_count", "ratio") == [
+        ("A", 7, 1.0), ("B", 4, 0.8), ("C", 1, 1.0), (None, 1, 1.0)]
+
+
+def test_nhanh_lech_rong_khong_co_nhom(ket_noi_thu, bo_may):
+    lam_lai = nhanh(chay_phan_tich(ket_noi_thu, bo_may, phong=["B"]), "rework")
+    assert lam_lai["by_request_type"] == [] and lam_lai["by_department"] == []
+
+
+# Hồ sơ chờ lâu nhất ở cho-1: (hồ sơ, tổng giây mọi lượt ở đó, số lượt). Hồ sơ 4 vào cho-1 hai lần
+# (2400 + 1800), hồ sơ 5 ba lần (3 × 1200): xếp theo TỔNG, bằng nhau theo mã hồ sơ
+CHO_1_LAU_NHAT = [
+    (6, 6900, 1), (4, 4200, 2), (2, 3600, 1), (5, 3600, 3), (1, 3000, 1),
+    (7, 1800, 1), (11, 1800, 1), (14, 1800, 1), (15, 1800, 1), (16, 1800, 1),
+    (9, 1500, 1), (3, 1200, 1), (8, 1200, 1), (10, 1200, 1),
+]
+
+
+def test_ho_so_cho_lau_nhat_o_mot_trang_thai(ket_noi_thu, bo_may):
+    theo_ma = {t["code"]: t for t in chay_phan_tich(ket_noi_thu, bo_may)["states"]}
+    assert bo_ba(theo_ma["cho-1"]["longest_waits"], "case", "seconds", "visits") == CHO_1_LAU_NHAT
+    assert bo_ba(theo_ma["cho-kh"]["longest_waits"], "case", "seconds", "visits") == [(8, 28800, 1), (7, 5400, 1)]
+    # Mọi hồ sơ thử đã kết thúc: không hồ sơ nào còn nằm ở trạng thái chưa kết thúc
+    assert not any(c["current"] for t in theo_ma.values() for c in t["longest_waits"])
+
+
+def test_ho_so_cho_lau_nhat_cong_du_thoi_gian_cho(ket_noi_thu, bo_may):
+    # Ở mọi trạng thái, cộng các hồ sơ lại ra đúng tổng giây và số lượt của bảng GIAY_CHO
+    for t in chay_phan_tich(ket_noi_thu, bo_may)["states"]:
+        if t["is_terminal"]:
+            assert t["longest_waits"] == [] and t["by_request_type"] == [] and t["by_department"] == []
+            continue
+        assert sum(c["seconds"] for c in t["longest_waits"]) == sum(GIAY_CHO[t["code"]]), t["code"]
+        assert sum(c["visits"] for c in t["longest_waits"]) == len(GIAY_CHO[t["code"]]), t["code"]
+        assert sum(m["visits"] for m in t["by_request_type"]) == len(GIAY_CHO[t["code"]]), t["code"]
+        assert sum(m["visits"] for m in t["by_department"]) == len(GIAY_CHO[t["code"]]), t["code"]
+
+
+def test_ho_so_cho_lau_nhat_gioi_han_so_ho_so(ket_noi_thu, bo_may):
+    kq = chay_phan_tich(ket_noi_thu, bo_may, so_ho_so_moi_nhom=2)
+    cho_1 = next(t for t in kq["states"] if t["code"] == "cho-1")
+    assert [c["case"] for c in cho_1["longest_waits"]] == [6, 4]
+    assert cho_1["cases"] == 14  # số hồ sơ vẫn đếm đủ
+
+
+def test_ho_so_dang_nam_o_trang_thai_duoc_danh_dau(ket_noi_thu, bo_may):
+    # Bỏ lần hoàn tất của hồ sơ 7: hồ sơ còn nằm ở xu-ly, lượt dở tính tới bây giờ nên chờ lâu nhất
+    ket_noi_thu.execute(
+        "DELETE FROM pg_temp.bao_cao_nhat_ky WHERE case_id = 7 AND activity = 'hoan-tat'"
+    )
+    xu_ly = next(t for t in chay_phan_tich(ket_noi_thu, bo_may)["states"] if t["code"] == "xu-ly")
+    dau = xu_ly["longest_waits"][0]
+    assert dau["case"] == 7 and dau["current"] is True and dau["visits"] == 2
+    assert dau["seconds"] > 28800
+    assert [c["case"] for c in xu_ly["longest_waits"] if c["current"]] == [7]
+
+
+# Trung vị chờ theo nhóm ở cho-1: (mã, số lượt, trung vị). Chậm nhất trước; bằng nhau theo mã, rỗng cuối
+#   giay: 1800 1200 1800 1800 → 1800        may: 3000 3600 1200 6900 1200 1800 1800 → 1800
+#   quyen: 2400 1800 1200 1200 1200 1500 → 1350
+#   A: 10 lượt → (1500 + 1800) / 2 = 1650    B: 6900 1800 1200 1200 1800 → 1800   C, rỗng: 1800
+def test_trung_vi_cho_theo_loai_va_phong(ket_noi_thu, bo_may):
+    theo_ma = {t["code"]: t for t in chay_phan_tich(ket_noi_thu, bo_may)["states"]}
+    cho_1 = theo_ma["cho-1"]
+    assert bo_ba(cho_1["by_request_type"], "code", "visits", "median_wait_seconds") == [
+        ("giay", 4, 1800), ("may", 7, 1800), ("quyen", 6, 1350)]
+    assert bo_ba(cho_1["by_department"], "code", "visits", "median_wait_seconds") == [
+        ("B", 5, 1800), ("C", 1, 1800), (None, 1, 1800), ("A", 10, 1650)]
+    cho_kh = theo_ma["cho-kh"]
+    assert bo_ba(cho_kh["by_request_type"], "code", "visits", "median_wait_seconds") == [("giay", 2, 17100)]
+    assert bo_ba(cho_kh["by_department"], "code", "visits", "median_wait_seconds") == [("B", 2, 17100)]

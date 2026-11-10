@@ -467,3 +467,95 @@ export type TokenBaoCao = {
   /** Phạm vi số liệu người xem thấy: toàn công ty, hay các phòng của mình. */
   scope: { all: boolean; departments: NhanCoMa[] };
 };
+
+// ---------------------------------------------------------------------------
+// Quy trình thực tế (#314, #315) — hợp đồng JSON ở ARCHITECTURE.md mục 6.4
+// ---------------------------------------------------------------------------
+
+/** Số hồ sơ của một nhóm. `code` rỗng là nhóm chưa có mã — hồ sơ chưa chuyển phòng. */
+export type NhomDemKhaiPha = { code: string | null; cases_count: number; ratio?: number };
+
+/** Thời gian chờ trung vị của một trạng thái trong một nhóm (loại yêu cầu hay phòng). */
+export type NhomChoKhaiPha = { code: string | null; visits: number; median_wait_seconds: number };
+
+/** Một hồ sơ chờ lâu ở một trạng thái: tổng giây làm việc mọi lượt của hồ sơ ở đó. */
+export type HoSoChoLau = { case: number; seconds: number; visits: number; current: boolean };
+
+export type TrangThaiKhaiPha = {
+  code: string;
+  label: string;
+  is_initial: boolean;
+  is_terminal: boolean;
+  visits: number;
+  cases: number;
+  /** Rỗng với trạng thái kết thúc: hồ sơ không chờ ở đó. */
+  median_wait_seconds: number | null;
+  is_bottleneck: boolean;
+  longest_waits: HoSoChoLau[];
+  by_request_type: NhomChoKhaiPha[];
+  by_department: NhomChoKhaiPha[];
+};
+
+export type CanhKhaiPha = {
+  from: string;
+  to: string;
+  /** Số lần đi qua cạnh. */
+  count: number;
+  /** Số hồ sơ khác nhau đã đi qua. */
+  cases: number;
+  is_main: boolean;
+  /** Số lần theo loại: `main`, `rework`, `escalation`, `wait_expiry`, `reopen`. */
+  kinds: Record<string, number>;
+};
+
+export type NhanhLechKhaiPha = {
+  kind: string;
+  cases_count: number;
+  ratio: number;
+  cases: number[];
+  by_request_type: NhomDemKhaiPha[];
+  by_department: NhomDemKhaiPha[];
+};
+
+export type XepHangNghen = {
+  code: string;
+  label: string;
+  median_wait_seconds: number;
+  visits: number;
+  is_bottleneck: boolean;
+};
+
+export type BienTheKhaiPha = {
+  sequence: string[];
+  cases_count: number;
+  ratio: number;
+  cases: number[];
+};
+
+/** Kết quả `GET /analytics/process-mining` — dịch vụ ứng dụng đã gắn `scope`, `labels` và `case_codes`. */
+export type QuyTrinhThucTe = {
+  range: { from: string; to: string };
+  departments: string[] | null;
+  engine: string;
+  cases_count: number;
+  events_count: number;
+  groups: { request_types: NhomDemKhaiPha[]; departments: NhomDemKhaiPha[] };
+  states: TrangThaiKhaiPha[];
+  edges: CanhKhaiPha[];
+  /** Bước của luồng chính theo thiết kế, kèm nhãn — bước chưa ai đi có thể chạm trạng thái không có trong `states`. */
+  designed_main_flow: { from: string; to: string; from_label: string; to_label: string }[];
+  deviations: NhanhLechKhaiPha[];
+  bottlenecks: {
+    overall_median_wait_seconds: number | null;
+    factor: number;
+    threshold_seconds: number | null;
+    ranking: XepHangNghen[];
+  };
+  variants: BienTheKhaiPha[];
+  other_variants_cases: number;
+  scope: { all: boolean; departments: NhanCoMa[] };
+  /** Mã → nhãn của loại yêu cầu và phòng ban, đọc từ bảng danh mục. */
+  labels: { request_types: Record<string, string>; departments: Record<string, string> };
+  /** Mã hồ sơ (chuỗi số) → mã hiển thị `YC-2026-0184`, cho mọi hồ sơ kết quả nêu tên. */
+  case_codes: Record<string, string>;
+};

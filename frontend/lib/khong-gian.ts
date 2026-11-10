@@ -92,3 +92,14 @@ const LOI_VAO: Record<string, LoiVao[]> = {
 export function loiVaoCua(khongGian: string[]): LoiVao[] {
   return khongGian.flatMap((k) => LOI_VAO[k] ?? []);
 }
+
+/**
+ * Trang hồ sơ mà người có các không gian này mở được, cho một mã hồ sơ cho trước (#315): buồng
+ * lái điều phối nếu có, không thì buồng lái phòng ban. Không có cả hai thì không có trang nào để
+ * dẫn tới — phía gọi hiện mã hồ sơ dạng chữ thường thay vì liên kết gãy.
+ */
+export function duongDanHoSo(ma: number, khongGian: string[]): string | null {
+  if (khongGian.includes("coordination")) return `/dieu-phoi/${ma}`;
+  if (khongGian.includes("department")) return `/phong-ban/${ma}`;
+  return null;
+}
