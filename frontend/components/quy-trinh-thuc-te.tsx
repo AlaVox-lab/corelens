@@ -17,6 +17,9 @@
 // yêu cầu, phòng ban đều đọc từ JSON — tệp này không biết trạng thái nào (CLAUDE.md mục 1.2).
 //
 // "Hệ thống không phản hồi" khi dịch vụ khai phá tắt (mục 8.3): cổng, hồ sơ và bảng điều khiển vẫn chạy.
+//
+// Chân màn có dòng dẫn tới mã nguồn của dịch vụ khai phá (AGPL-3.0-or-later, điều 13 — #340). Địa
+// chỉ do máy chủ đọc từ biến môi trường rồi truyền xuống, không mã cứng ở đây.
 
 import { FileSearch, ServerCrash } from "lucide-react";
 import Link from "next/link";
@@ -502,10 +505,13 @@ function KhungChoQuyTrinh() {
 export function QuyTrinhThucTe({
   khoangBanDau,
   khongGian,
+  nguonMaKhaiPha,
 }: {
   khoangBanDau: KhoangNgay;
   /** Không gian làm việc của người xem (`/me`), để biết mã hồ sơ dẫn tới buồng lái nào. */
   khongGian: string[];
+  /** Địa chỉ mã nguồn của dịch vụ khai phá (AGPL), máy chủ đọc từ `MINING_SOURCE_URL`. */
+  nguonMaKhaiPha: string;
 }) {
   const [khoang, datKhoang] = useState<KhoangNgay>(khoangBanDau);
   const [duLieu, datDuLieu] = useState<QuyTrinhThucTe | null>(null);
@@ -750,6 +756,14 @@ export function QuyTrinhThucTe({
           <NoiDungNgan d={duLieu} chon={chon} khongGian={khongGian} />
         </NganHoSoQuyTrinh>
       ) : null}
+
+      {/* Điều 13 của AGPL: người dùng qua mạng lấy được mã nguồn của dịch vụ khai phá (#340) */}
+      <p className="qt-nguon-ma">
+        Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 —{" "}
+        <a href={nguonMaKhaiPha} target="_blank" rel="noopener noreferrer">
+          mã nguồn
+        </a>
+      </p>
     </>
   );
 }

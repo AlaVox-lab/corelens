@@ -33,11 +33,21 @@ từ `v0.10.0`.
 
 ## Giấy phép
 
-Dự án phát hành theo giấy phép [MIT](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSE).
-Mọi tệp mã nguồn mang định danh giấy phép SPDX ở đầu tệp.
+Kho theo mô hình nhiều giấy phép, bảng đầy đủ ở
+[`LICENSES.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSES.md):
 
-Mọi phụ thuộc đều có giấy phép thuộc danh sách OSI và tương thích MIT, ghi trong
-[`docs/dependencies.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/dependencies.md).
+| Phần | Giấy phép |
+|---|---|
+| Dịch vụ ứng dụng, cổng, kiểm thử giao diện, kịch bản, hạ tầng, tài liệu | [MIT](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSE) |
+| Dịch vụ khai phá quy trình `services/khai-pha/` | [AGPL-3.0-or-later](https://github.com/AlaVox-lab/dx-os-lab/blob/main/services/khai-pha/LICENSE) |
+
+Dịch vụ khai phá dùng thư viện PM4Py (AGPL-3.0-or-later) nên cả thư mục theo AGPL; phần còn lại chỉ
+trao đổi JSON với nó qua HTTP. Mọi tệp mã nguồn mang định danh giấy phép SPDX đúng thư mục ở đầu
+tệp. Màn Quy trình thực tế có dòng dẫn tới mã nguồn của dịch vụ khai phá (điều 13 của AGPL).
+
+Mọi phụ thuộc đều có giấy phép thuộc danh sách OSI và tương thích với giấy phép của phần dùng nó, ghi
+trong [`docs/dependencies.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/dependencies.md);
+thông báo bên thứ ba ở [`NOTICE`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/NOTICE).
 Các nền tảng lắp ghép — Keycloak, SeaweedFS, Apache Superset — đều Apache-2.0, chạy như dịch vụ
 độc lập, không sửa mã nguồn.
 

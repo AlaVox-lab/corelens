@@ -3,7 +3,7 @@
 > Cổng vận hành yêu cầu nội bộ cho doanh nghiệp, theo kiến trúc Open-Core H-P-D-I — Dự án dự thi
 > Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
 
-[![Giấy phép: MIT](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT-blue.svg)](LICENSE)
+[![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
 **Tài liệu đầy đủ:** trang tài liệu trong [`docs-site/`](docs-site/) — bắt đầu nhanh, cài đặt, hướng
 dẫn theo từng vai, quản trị và tùy biến, phát triển. Cách xem ở mục [Tài liệu](#tài-liệu).
@@ -165,5 +165,13 @@ trách không gian nào.
 
 ## Giấy phép
 
-Dự án phát hành theo giấy phép [MIT](LICENSE). Mọi tệp mã nguồn mang định danh giấy phép SPDX ở đầu
-tệp. Danh mục phụ thuộc kèm giấy phép ở [`docs/dependencies.md`](docs/dependencies.md).
+Kho theo mô hình **nhiều giấy phép** — bảng đầy đủ ở [`LICENSES.md`](LICENSES.md):
+
+| Phần | Giấy phép |
+|---|---|
+| Dịch vụ ứng dụng, cổng, kiểm thử giao diện, kịch bản, hạ tầng, tài liệu | [MIT](LICENSE) |
+| Dịch vụ khai phá quy trình [`services/khai-pha/`](services/khai-pha/) | [AGPL-3.0-or-later](services/khai-pha/LICENSE) |
+
+Dịch vụ khai phá dùng thư viện PM4Py (AGPL) nên cả thư mục theo AGPL; phần còn lại chỉ trao đổi JSON với
+nó qua HTTP. Mọi tệp mã nguồn mang định danh SPDX đúng giấy phép của thư mục ở đầu tệp. Thông báo bên
+thứ ba ở [`NOTICE`](NOTICE); danh mục phụ thuộc kèm giấy phép ở [`docs/dependencies.md`](docs/dependencies.md).

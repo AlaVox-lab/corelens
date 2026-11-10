@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Bộ máy khai phá: phần thuật toán, tách sau một giao diện hẹp để thay được (ADR-0007, #314).

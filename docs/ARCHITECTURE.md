@@ -133,7 +133,7 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
 Bảy thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
-mang AGPL nên bị giữ sau ranh giới dịch vụ — mục 3.3.
+mang AGPL nên bị giữ sau ranh giới dịch vụ, và cả thư mục dịch vụ khai phá theo AGPL — mục 3.3.
 
 **Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
 leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết** trong cổng Next.js.
@@ -270,7 +270,8 @@ và mục 3.1 chỉ nhận chúng khi bản ghi chuyển sang *Đã chấp nhậ
 Trước khi thêm bất kỳ phụ thuộc nào:
 
 1. Đối chiếu tên giấy phép với danh sách chính thức tại `opensource.org/licenses`
-2. Kiểm tra tương thích với MIT
+2. Kiểm tra tương thích với giấy phép của thư mục dùng nó — MIT, hoặc AGPL-3.0-or-later trong
+   `services/khai-pha/`
 3. Ghi kết quả vào `docs/dependencies.md`
 
 Cảnh giác với các giấy phép **không** thuộc danh sách OSI: BSL, SSPL, Elastic
@@ -280,9 +281,26 @@ Với giấy phép copyleft mạnh (AGPL): hợp lệ vì được OSI công nh�
 dịch vụ tách riêng** — thư mục riêng, ảnh chứa riêng, giao tiếp với phần còn lại qua HTTP. Hoặc cả
 nền tảng chạy nguyên khối như dịch vụ độc lập, hoặc thư viện được `import` chỉ bên trong dịch vụ đó
 (ADR-0007: PM4Py chỉ trong `services/khai-pha/`, đúng một tệp `app/bo_may/pm4py_bo_may.py`). Dịch vụ
-ứng dụng và cổng không bao giờ `import` thư viện AGPL — CI có bước `grep` chặn. Mã của nhóm trong dịch
-vụ đó vẫn mang header MIT (MIT tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Ghi rõ
-ranh giới này trong bản ghi quyết định và `docs/dependencies.md`.
+ứng dụng và cổng không bao giờ `import` thư viện AGPL — CI có bước `grep` chặn. Ghi rõ ranh giới này
+trong bản ghi quyết định và `docs/dependencies.md`.
+
+**Mô hình nhiều giấy phép (#340).** Kho không còn một giấy phép duy nhất:
+
+| Thư mục | Giấy phép | Tệp toàn văn |
+|---|---|---|
+| `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | `services/khai-pha/LICENSE` |
+| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ trên |
+
+- Bảng đầy đủ và lý do ở `LICENSES.md`; thông báo bên thứ ba (PM4Py và các gói copyleft nó kéo theo, các
+  nền tảng chạy như dịch vụ riêng) ở `NOTICE`
+- Header SPDX theo thư mục; `scripts/kiem_header.py` (CI) báo lỗi tệp mang giấy phép của thư mục khác.
+  Thêm một thư mục mang giấy phép riêng thì sửa cùng lúc bảng `GIAY_PHEP_THEO_THU_MUC` trong kịch bản đó
+  và `LICENSES.md`
+- **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên màn Quy trình thực
+  tế có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
+  cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa
+- Chiều MIT sang AGPL tương thích, nên mã MIT của kho dùng lại được trong dịch vụ khai phá; chiều ngược
+  lại thì không — **không chép mã từ `services/khai-pha/` sang thư mục MIT**
 
 ---
 
@@ -319,6 +337,7 @@ dx-os-lab/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── services/
 │   └── khai-pha/                # [I] dịch vụ khai phá quy trình (#314) — nơi DUY NHẤT dùng PM4Py (AGPL)
+│       ├── LICENSE              # AGPL-3.0 toàn văn: cả thư mục theo AGPL-3.0-or-later (#340)
 │       ├── app/du_lieu.py       # mọi câu SQL, chỉ đọc lớp báo cáo + cờ của bộ quy tắc
 │       ├── app/phan_tich.py     # nhánh lệch, thời gian chờ, điểm nghẽn — chung cho hai bộ máy
 │       └── app/bo_may/          # pm4py (mặc định) và noi_bo (dự phòng, Python thuần)
@@ -382,7 +401,9 @@ dx-os-lab/
 ├── CHANGELOG.md                 # sinh tự động bằng git-cliff
 ├── CLAUDE.md                    # quy tắc cho mọi trợ lý AI làm việc trên kho
 ├── CONTRIBUTING.md              # quy trình làm việc và quy ước mã nguồn
-├── LICENSE                      # MIT toàn văn
+├── LICENSE                      # MIT toàn văn, kèm ngoại lệ cho services/khai-pha/
+├── LICENSES.md                  # bảng giấy phép theo thư mục, nghĩa vụ AGPL (#340)
+├── NOTICE                       # thông báo bên thứ ba
 ├── README.md
 └── cliff.toml                   # cấu hình sinh nhật ký thay đổi
 ```
@@ -943,7 +964,7 @@ chính** bao nhiêu, ở đâu, tốn bao lâu.
 **Ba lớp, ranh giới giấy phép ở lớp giữa:**
 
 ```
-Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch vụ khai phá (MIT + thư viện AGPL)  ──SQL chỉ đọc──► PostgreSQL
+Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch vụ khai phá (AGPL, cả mã nhóm lẫn thư viện)  ──SQL chỉ đọc──► PostgreSQL
          GET /analytics/process-mining       POST /khai-pha
          kiểm vai, gắn phạm vi phòng          không mở cổng ra máy, không tự kiểm danh tính
 ```
@@ -1006,7 +1027,10 @@ trạng thái, loại yêu cầu, phòng đều đọc từ JSON (`states[].labe
 hợp đồng có bảng nhãn trong mã vì đó là loại phân tích do dịch vụ khai phá định nghĩa. Bấm một trạng
 thái, nhánh lệch hay đường đi mở ngăn danh sách hồ sơ (`longest_waits`, `deviations[].cases`,
 `variants[].cases`); mã hồ sơ dẫn tới buồng lái điều phối hoặc phòng ban tùy `workspaces` của `/me`
-(`duongDanHoSo` ở `lib/khong-gian.ts`). Hướng dẫn người dùng: `docs-site` — *Quy trình thực tế*.
+(`duongDanHoSo` ở `lib/khong-gian.ts`). Chân màn luôn có dòng *"Phân tích bởi dịch vụ khai phá quy
+trình, giấy phép AGPL-3.0 — mã nguồn"* (#340, điều 13 — mục 3.3): trang máy chủ đọc `MINING_SOURCE_URL`,
+chỉ nhận `http(s)`, truyền xuống thành phần; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site`
+— *Quy trình thực tế*.
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 

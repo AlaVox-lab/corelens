@@ -217,6 +217,29 @@ test.describe("điều phối viên", () => {
     await expect(page.locator(".qt-ket-qua:not([data-dang-tai]), .rong").first()).toBeVisible({ timeout: 30_000 });
   });
 
+  test("chân màn có dòng mã nguồn AGPL dẫn đúng địa chỉ cấu hình, cả khi màn rỗng", async ({ page }) => {
+    // Điều 13 của AGPL (#340). Địa chỉ cấu hình ở MINING_SOURCE_URL của cổng; chạy bài với cụm đặt
+    // giá trị khác thì truyền cùng biến cho Playwright.
+    const diaChi =
+      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/dx-os-lab/tree/main/services/khai-pha";
+    const kiemDong = async () => {
+      const dong = page.locator(".qt-nguon-ma");
+      await expect(dong).toHaveCount(1);
+      await expect(dong).toContainText("Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0");
+      const lienKet = dong.getByRole("link", { name: "mã nguồn" });
+      await expect(lienKet).toHaveAttribute("href", diaChi);
+      await expect(lienKet).toHaveAttribute("rel", /noopener/);
+      // Màn không nêu tên bộ máy khai phá
+      await expect(dong).not.toContainText(/pm4py|noi_bo/i);
+    };
+    await moMan(page);
+    await kiemDong();
+    // Khoảng không có hồ sơ nào: màn rỗng vẫn giữ dòng này
+    await moMan(page, `${DUONG_DAN}?tu=2001-01-01&den=2001-01-31`);
+    await expect(page.getByText("Không có hồ sơ nào gửi trong khoảng này")).toBeVisible();
+    await kiemDong();
+  });
+
   test("màn hẹp: nút Xem toàn màn hình mở lớp phủ, Esc đóng và trả tiêu điểm", async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 1440) >= 768, "nút này chỉ có ở màn hẹp (dưới 768 px)");
     await moMan(page);

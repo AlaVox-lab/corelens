@@ -66,7 +66,7 @@ Nếu buộc phải dùng một nền tảng copyleft mạnh:
 | **psycopg 3** | LGPL-3.0-only | Trình điều khiển PostgreSQL của **dịch vụ ứng dụng**. Đây là phụ thuộc copyleft đầu tiên nằm trong mã nguồn của chính nhóm, nên ranh giới phải nói rõ: dự án chỉ `import` nó như thư viện, không sao chép mã, không sửa mã. LGPL cho phép đúng cách dùng này. Người dùng thay thế được bằng cách sửa một dòng trong `backend/requirements.txt` và một tiền tố trong chuỗi kết nối — hai bản lùi permissive là `pg8000` (BSD-3-Clause) và `asyncpg` (Apache-2.0) |
 | **sharp** và `@img/sharp-libvips-*` | Apache-2.0 (sharp) · LGPL-3.0-or-later (libvips) | Phụ thuộc **tùy chọn** mà Next.js kéo theo để tối ưu ảnh. Thư viện gốc `libvips` là nhị phân dựng sẵn, nạp động, thay thế được — đúng điều kiện LGPL cho phép. Cổng người dùng hiện **không dùng ảnh nào**; nếu muốn loại bỏ hẳn thì đặt `images: { unoptimized: true }` trong `next.config.ts` |
 | **lightningcss** | MPL-2.0 | Công cụ xử lý CSS mà Astro dùng **lúc dựng** trang tài liệu. MPL-2.0 là copyleft theo từng tệp: chỉ ràng buộc khi sửa chính tệp của thư viện. Dự án dùng qua trình quản lý gói, không sửa, không chép mã; kết quả dựng là CSS do dự án viết |
-| **PM4Py** | AGPL-3.0-or-later — dòng đầu `LICENSE` trong gói đã cài: `GNU AFFERO GENERAL PUBLIC LICENSE` | Chỉ cài trong ảnh của **dịch vụ khai phá** `services/khai-pha/`, chỉ một tệp `import` (`app/bo_may/pm4py_bo_may.py`). Dịch vụ ứng dụng và cổng nhận JSON qua HTTP — tác phẩm riêng biệt gộp chung, AGPL không lan sang. Mã của nhóm trong dịch vụ vẫn MIT (tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Không sửa, không chép mã thư viện. Có bộ máy dự phòng Python thuần: `MINING_ENGINE=noi_bo` rồi xóa dòng pm4py — xem ADR-0007 |
+| **PM4Py** | AGPL-3.0-or-later — dòng đầu `LICENSE` trong gói đã cài: `GNU AFFERO GENERAL PUBLIC LICENSE` | Chỉ cài trong ảnh của **dịch vụ khai phá** `services/khai-pha/`, chỉ một tệp `import` (`app/bo_may/pm4py_bo_may.py`). Dịch vụ ứng dụng và cổng nhận JSON qua HTTP — tác phẩm riêng biệt gộp chung, AGPL không lan sang. Cả thư mục dịch vụ, kể cả mã của nhóm, theo AGPL-3.0-or-later (toàn văn `services/khai-pha/LICENSE`, bảng theo thư mục ở `LICENSES.md`); màn Quy trình thực tế dẫn tới mã nguồn của dịch vụ để đáp ứng điều 13. Không sửa, không chép mã thư viện. Có bộ máy dự phòng Python thuần: `MINING_ENGINE=noi_bo` rồi xóa dòng pm4py — xem ADR-0007 |
 | **cvxopt** | GPL-3.0-or-later — `LICENSE` trong gói đã cài: *"GNU General Public License … either version 3"* | Phụ thuộc gián tiếp **bắt buộc** của PM4Py, cùng nằm sau ranh giới dịch vụ khai phá. GPL-3.0 và AGPL-3.0 kết hợp được (điều 13 của cả hai). Dự án không gọi trực tiếp; gỡ PM4Py thì gỡ luôn |
 | **Metabase** *(đã loại)* | AGPL-3.0 | Không dùng — xem ADR-0003 |
 | **Garage**, **MinIO** *(phương án lùi)* | AGPL-3.0 | Nếu phải dùng thì chỉ chạy như dịch vụ độc lập qua S3 API — xem ADR-0002 |
@@ -221,6 +221,12 @@ Khai báo và ghim trong `services/khai-pha/requirements.txt` bằng `==` (#314,
 bản dưới đây. Mọi gói trong bảng **chỉ nằm trong ảnh của dịch vụ khai phá**, không nằm trong dịch vụ ứng
 dụng hay cổng. Giấy phép đọc từ siêu dữ liệu gói đã cài trong ảnh; gói nào siêu dữ liệu không ghi thì
 đã mở tệp `LICENSE` trong gói.
+
+Mã do nhóm viết trong `services/khai-pha/` mang **AGPL-3.0-or-later**, khác phần còn lại của kho (MIT) —
+mô hình nhiều giấy phép ở [`LICENSES.md`](../LICENSES.md), thông báo bên thứ ba ở [`NOTICE`](../NOTICE) (#340).
+Cột *Tương thích MIT* dưới đây vì vậy chỉ còn ý nghĩa khi so với phần MIT của kho; trong dịch vụ này mọi
+gói đều phải tương thích AGPL-3.0, và đều đạt: MIT, BSD, Apache-2.0, MPL-2.0, PSF, LGPL-3.0 và
+GPL-3.0-or-later đều kết hợp được với AGPL-3.0.
 
 | Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|

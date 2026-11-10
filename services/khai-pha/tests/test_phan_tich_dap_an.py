@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Phép phân tích trên bộ dữ liệu ĐÁP ÁN BIẾT TRƯỚC (tests/dap_an.py), chạy với cả hai bộ máy.
