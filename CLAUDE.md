@@ -170,7 +170,8 @@ Phát triển bền vững (chấm qua **tài liệu kỹ thuật**) · Phong c�
 
 ### 2.3. Hệ quả trực tiếp khi viết code
 
-- **Mọi tệp mã nguồn mới bắt buộc có header giấy phép** (xem mục 5.1)
+- **Mọi tệp mã nguồn mới bắt buộc có header giấy phép đúng thư mục** (xem mục 5.1): kho theo mô
+  hình nhiều giấy phép (`LICENSES.md`) — `services/khai-pha/` mang AGPL-3.0-or-later, mọi nơi khác MIT
 - **Không bao giờ sửa mã nguồn thư viện bên thứ ba.** Nếu cần đổi hành vi,
   dùng cấu hình, plugin, hoặc lớp bọc
 - **Không sao chép mã thư viện vào kho.** Khai báo qua trình quản lý gói kèm tệp khóa
@@ -184,7 +185,8 @@ Phát triển bền vững (chấm qua **tài liệu kỹ thuật**) · Phong c�
   không tồn tại với ban giám khảo
 - **Luôn giữ hệ thống dựng được bằng một lệnh** `docker compose up` trên máy sạch
 - Trước khi thêm bất kỳ phụ thuộc mới nào: kiểm tra giấy phép có thuộc danh sách
-  OSI-approved và tương thích MIT không, ghi vào `docs/dependencies.md`
+  OSI-approved và tương thích với giấy phép của thư mục dùng nó không (MIT; AGPL-3.0-or-later
+  trong `services/khai-pha/`), ghi vào `docs/dependencies.md`
 
 ---
 
@@ -294,18 +296,22 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
-| Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later |
+| Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later (cả thư viện lẫn mã của nhóm trong thư mục đó) |
 
 Ba nền tảng Keycloak, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
 thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
 khai phá chỉ được `import` trong dịch vụ khai phá, dịch vụ ứng dụng gọi nó qua HTTP (mục 5.2).
 
+Kho theo **mô hình nhiều giấy phép** (#340): thư mục `services/khai-pha/` theo AGPL-3.0-or-later, có
+toàn văn riêng ở `services/khai-pha/LICENSE`; mọi thư mục khác theo MIT (`LICENSE` ở gốc, ghi rõ ngoại
+lệ). Bảng theo thư mục ở `LICENSES.md`, thông báo bên thứ ba ở `NOTICE`.
+
 **Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
 với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.
 
-ADR-0007 (thư viện khai phá quy trình cho `I`, #48) đã được navigator chấp nhận ngày 08/11/2026 và
-cài đặt ở #314; giảng viên chưa xác nhận — không nhận thì đổi sang bộ máy dự phòng bằng một biến môi
-trường (`services/khai-pha/README.md`). Các mảng khảo sát còn lại đã có bản ghi ở trạng thái *Đề xuất*, chờ
+ADR-0007 (thư viện khai phá quy trình cho `I`, #48) đã được navigator chấp nhận ngày 08/11/2026,
+cài đặt ở #314, và giảng viên xác nhận ngày 10/11/2026 với điều kiện kho mô tả đúng mô hình nhiều giấy
+phép (#340). Bộ máy dự phòng không dùng thư viện AGPL vẫn giữ (`services/khai-pha/README.md`). Các mảng khảo sát còn lại đã có bản ghi ở trạng thái *Đề xuất*, chờ
 giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006 — navigator để ngoài phạm vi thi), cơ sở
 dữ liệu véc-tơ và mô hình ngôn ngữ cho `I` (#47, ADR-0008 — navigator đã chấp nhận, đổi trạng thái khi
 cài đặt ở #316).
@@ -329,7 +335,15 @@ TypeScript / JavaScript:
 // Copyright (c) 2026 AlaVox-lab
 ```
 
-Thiếu header này bị trừ 5 điểm. Khi tạo tệp mã mới, luôn thêm header ngay.
+**Riêng mọi tệp mã trong `services/khai-pha/`** (kể cả `tests/`, `Dockerfile`) dùng AGPL:
+
+```python
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 AlaVox-lab
+```
+
+Thiếu header này bị trừ 5 điểm. Khi tạo tệp mã mới, luôn thêm header ngay, đúng giấy phép theo thư
+mục — `scripts/kiem_header.py` (chạy trong CI) báo lỗi cả tệp thiếu lẫn tệp mang giấy phép sai thư mục.
 
 ### 5.2. Cảnh báo về giấy phép
 
@@ -341,7 +355,9 @@ Với AGPL (hợp lệ nhưng copyleft mạnh): chỉ dùng trong **một dịch
 ảnh chứa riêng, giao tiếp với phần còn lại qua HTTP/API. Một nền tảng AGPL chạy nguyên khối như dịch
 vụ độc lập, hoặc một thư viện AGPL được `import` **chỉ bên trong** dịch vụ tách riêng đó (ADR-0007:
 PM4Py chỉ nằm trong `services/khai-pha/`). Dịch vụ ứng dụng và cổng không bao giờ `import` thư viện
-AGPL; CI chặn điều đó. Mã của nhóm trong dịch vụ tách riêng vẫn mang header MIT.
+AGPL; CI chặn điều đó. Mã của nhóm trong dịch vụ tách riêng mang **AGPL-3.0-or-later** như thư viện,
+có tệp giấy phép toàn văn riêng trong thư mục đó; dịch vụ phục vụ người dùng qua mạng thì giao diện
+phải dẫn được tới mã nguồn của nó (điều 13 — màn Quy trình thực tế, biến `MINING_SOURCE_URL`).
 
 Khi đề xuất bất kỳ thư viện hay nền tảng nào, **luôn nêu giấy phép của nó**.
 

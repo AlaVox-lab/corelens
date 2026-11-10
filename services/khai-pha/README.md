@@ -5,19 +5,25 @@ Dịch vụ riêng của không gian `I` (#314, [ADR-0007](../../docs/adr/0007-c
 lệch, điểm nghẽn và biến thể dưới dạng JSON. Không ghi gì vào cơ sở dữ liệu, không ghi vào trường quyết
 định nào của hồ sơ.
 
-## Ranh giới giấy phép
+## Giấy phép
+
+**Cả thư mục này theo AGPL-3.0-or-later** — khác phần còn lại của kho (MIT). Toàn văn ở
+[`LICENSE`](LICENSE) cạnh tệp này; bảng giấy phép theo thư mục ở [`LICENSES.md`](../../LICENSES.md).
 
 | Phần | Giấy phép |
 |---|---|
-| Mã trong thư mục này (`app/`, `tests/`, `Dockerfile`) | MIT, như cả kho |
+| Mã của nhóm trong thư mục này (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later — header `SPDX-License-Identifier: AGPL-3.0-or-later` |
 | Thư viện [PM4Py](https://github.com/process-intelligence-solutions/pm4py) `2.7.23.8` | AGPL-3.0-or-later |
 
 - **Chỉ thư mục này** cài và nhập `pm4py` — đúng một tệp: `app/bo_may/pm4py_bo_may.py`. Dịch vụ ứng
   dụng (`backend/`) và cổng (`frontend/`) không bao giờ nhập nó; chúng nhận JSON qua HTTP, nên AGPL không
-  lan sang phần còn lại (tác phẩm riêng biệt gộp chung, điều 5 của AGPL)
-- Khi chạy, dịch vụ này là một chương trình dùng thư viện AGPL. Điều 13 đòi người dùng qua mạng lấy được
-  mã nguồn tương ứng: kho mã công khai đáp ứng sẵn. Không sửa mã PM4Py, không chép mã thư viện vào kho
-- Danh sách phụ thuộc và giấy phép từng gói: [`docs/dependencies.md`](../../docs/dependencies.md)
+  lan sang phần còn lại (tác phẩm riêng biệt gộp chung, điều 5 của AGPL). CI chặn nhập `pm4py` ở nơi khác
+- **Điều 13**: người dùng thấy kết quả của dịch vụ này ở màn *Báo cáo → Quy trình thực tế*; chân màn luôn
+  có dòng dẫn tới mã nguồn của thư mục này. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`).
+  Tự triển khai mà sửa dịch vụ này thì công khai bản sửa và trỏ biến đó về nơi chứa nó
+- Không sửa mã PM4Py, không chép mã thư viện vào kho. Không chép mã từ thư mục này sang thư mục MIT
+- Danh sách phụ thuộc và giấy phép từng gói: [`docs/dependencies.md`](../../docs/dependencies.md); thông
+  báo bên thứ ba: [`NOTICE`](../../NOTICE)
 
 ## Bộ máy dự phòng
 
@@ -29,8 +35,8 @@ kiểm thử có đáp án biết trước kiểm:
 | `pm4py` (mặc định) | PM4Py khám phá đồ thị trực tiếp và biến thể |
 | `noi_bo` | Python thuần, không thư viện khai phá nào |
 
-Không dùng được AGPL thì đặt `KHAI_PHA_BO_MAY=noi_bo` và xóa dòng `pm4py` trong `requirements.txt` —
-dịch vụ ứng dụng và cổng không phải sửa gì.
+Muốn bỏ thư viện PM4Py thì đặt `KHAI_PHA_BO_MAY=noi_bo` và xóa dòng `pm4py` trong `requirements.txt` —
+dịch vụ ứng dụng và cổng không phải sửa gì. Mã của thư mục này vẫn phát hành theo AGPL-3.0-or-later.
 
 ## Cấu hình
 

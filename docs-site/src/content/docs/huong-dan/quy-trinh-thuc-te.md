@@ -123,3 +123,14 @@ khiển và mọi thao tác khác vẫn bình thường, vì không dịch vụ 
 
 Chưa có hồ sơ nào gửi trong khoảng thì màn hiện "Không có hồ sơ nào gửi trong khoảng này" — thử chọn
 khoảng dài hơn.
+
+## Mã nguồn của dịch vụ khai phá
+
+Dịch vụ khai phá dùng thư viện PM4Py nên theo giấy phép **AGPL-3.0-or-later**, khác phần còn lại của
+DX-OS Lab (MIT). Điều 13 của AGPL đòi người dùng qua mạng lấy được mã nguồn, nên cuối màn luôn có dòng
+*"Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 — mã nguồn"*, kể cả khi khoảng ngày
+không có hồ sơ nào.
+
+Liên kết **mã nguồn** đọc từ biến môi trường `MINING_SOURCE_URL` của cổng (tệp `infra/.env`, mặc định
+thư mục `services/khai-pha` trên kho GitHub của dự án). Doanh nghiệp tự triển khai mà **sửa** dịch vụ
+khai phá thì phải trỏ biến này về kho chứa bản đã sửa, rồi khởi động lại cổng.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Ảnh chứa của dịch vụ khai phá quy trình (#314, ADR-0007). Dịch vụ riêng, thư mục riêng, ảnh riêng:

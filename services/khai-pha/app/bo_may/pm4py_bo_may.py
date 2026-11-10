@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Bộ máy khai phá dùng PM4Py (AGPL-3.0-or-later, ADR-0007).
 #
 # Tệp này là nơi DUY NHẤT trong kho `import pm4py`. Dịch vụ ứng dụng và cổng không bao giờ nhập
 # thư viện này: chúng chỉ nhận JSON qua HTTP từ dịch vụ khai phá (ranh giới ở ADR-0007 và
-# docs/ARCHITECTURE.md mục 3.3). Tệp của nhóm vẫn mang giấy phép MIT; khi chạy, cả dịch vụ khai phá là
-# một chương trình dùng thư viện AGPL, mã nguồn công khai trong kho đáp ứng điều 13.
+# docs/ARCHITECTURE.md mục 3.3). Cả thư mục dịch vụ khai phá, kể cả tệp này, theo AGPL-3.0-or-later
+# (LICENSES.md ở gốc kho); màn quy trình thực tế dẫn tới mã nguồn của dịch vụ để đáp ứng điều 13.
 #
 # Không sửa mã thư viện, chỉ gọi hàm cấp cao: `discover_dfg` cho đồ thị trực tiếp,
 # `split_by_process_variant` cho biến thể kèm hồ sơ của từng biến thể.
@@ -21,6 +21,9 @@ from . import LuotVao
 COT_HO_SO = "case:concept:name"
 COT_HOAT_DONG = "concept:name"
 COT_THOI_DIEM = "time:timestamp"
+# `format_dataframe` tự đổi cột chuỗi trông như ngày sang kiểu thời điểm: mã hồ sơ "1049" từng thành
+# năm 1049. Gắn tiền tố chữ để mã không bao giờ đọc ra ngày, bỏ tiền tố khi trả kết quả.
+TIEN_TO_HO_SO = "hs-"
 
 
 def _bang(luot: list[LuotVao]) -> pd.DataFrame:
@@ -29,7 +32,7 @@ def _bang(luot: list[LuotVao]) -> pd.DataFrame:
     xep = sorted(luot, key=lambda l: (l.ho_so, l.luc, l.thu_tu))
     bang = pd.DataFrame(
         {
-            COT_HO_SO: [str(l.ho_so) for l in xep],
+            COT_HO_SO: [f"{TIEN_TO_HO_SO}{l.ho_so}" for l in xep],
             COT_HOAT_DONG: [l.trang_thai for l in xep],
             COT_THOI_DIEM: pd.to_datetime([l.luc for l in xep], utc=True),
         }
@@ -53,6 +56,6 @@ class BoMayPm4py:
             return {}
         ket_qua: dict[tuple[str, ...], list[int]] = {}
         for chuoi, bang_con in pm4py.split_by_process_variant(_bang(luot)):
-            ho_so = sorted(int(x) for x in bang_con[COT_HO_SO].unique())
+            ho_so = sorted(int(str(x).removeprefix(TIEN_TO_HO_SO)) for x in bang_con[COT_HO_SO].unique())
             ket_qua[tuple(chuoi)] = ho_so
         return ket_qua

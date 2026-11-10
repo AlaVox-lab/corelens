@@ -3,8 +3,10 @@
 Cảm ơn bạn đã quan tâm tới dự án. Tài liệu này mô tả quy trình làm việc,
 quy ước mã nguồn và các tiêu chuẩn mà mọi đóng góp cần tuân thủ.
 
-Dự án được phát hành theo giấy phép MIT. Khi gửi đóng góp, bạn đồng ý rằng
-phần đóng góp của mình được phát hành theo cùng giấy phép này.
+Dự án theo mô hình nhiều giấy phép (bảng ở [`LICENSES.md`](LICENSES.md)): thư mục
+`services/khai-pha/` theo AGPL-3.0-or-later, phần còn lại của kho theo MIT. Khi gửi
+đóng góp, bạn đồng ý rằng phần đóng góp của mình được phát hành theo giấy phép của
+thư mục chứa nó.
 
 ---
 
@@ -102,7 +104,7 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 
 | Kiểm tra | Làm gì | Chạy tay ở máy |
 |---|---|---|
-| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng SPDX và dòng bản quyền | `python scripts/kiem_header.py` |
+| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục | `python scripts/kiem_header.py` |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
 | Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
@@ -263,15 +265,26 @@ Lưu ý: GitHub chỉ tự động đóng issue khi thay đổi được đưa v
 ### 5.1. Header giấy phép
 
 Mọi tệp mã nguồn mới phải bắt đầu bằng khối chú thích sau, dùng cú pháp
-chú thích phù hợp với ngôn ngữ:
+chú thích phù hợp với ngôn ngữ. Giấy phép theo **thư mục chứa tệp**:
+
+| Thư mục | Khối chú thích |
+|---|---|
+| `services/khai-pha/` (cả `app/`, `tests/`, `Dockerfile`) | `SPDX-License-Identifier: AGPL-3.0-or-later` |
+| Mọi nơi khác | `SPDX-License-Identifier: MIT` |
 
 ```
 SPDX-License-Identifier: MIT
 Copyright (c) 2026 AlaVox-lab
 ```
 
+```
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (c) 2026 AlaVox-lab
+```
+
 Yêu cầu này bắt nguồn từ tiêu chí chấm điểm của cuộc thi: mã nguồn không ghi
-giấy phép trong từng tệp sẽ bị trừ điểm.
+giấy phép trong từng tệp sẽ bị trừ điểm. `scripts/kiem_header.py` báo lỗi cả tệp
+thiếu header lẫn tệp mang giấy phép của thư mục khác.
 
 ### 5.2. Thư viện bên thứ ba
 
@@ -280,7 +293,8 @@ giấy phép trong từng tệp sẽ bị trừ điểm.
 - Không chỉnh sửa mã nguồn của thư viện bên thứ ba. Nếu cần thay đổi hành vi,
   dùng cơ chế cấu hình, plugin hoặc lớp bọc
 - Trước khi thêm một phụ thuộc mới, kiểm tra giấy phép của nó có nằm trong
-  danh sách được OSI công nhận và có tương thích với MIT hay không.
+  danh sách được OSI công nhận và có tương thích với giấy phép của thư mục dùng nó
+  (MIT, hoặc AGPL-3.0-or-later trong `services/khai-pha/`) hay không.
   Ghi kết quả kiểm tra vào `docs/dependencies.md`
 
 ### 5.3. Tệp khóa phiên bản
