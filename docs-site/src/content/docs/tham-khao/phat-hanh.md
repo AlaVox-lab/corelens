@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v0.13.0` | Gợi ý người xử lý cho trưởng phòng theo tải việc và kinh nghiệm; hồ sơ đã giải quyết tương tự khi người gửi đang soạn (pgvector); khuyến nghị cải tiến trên màn quy trình thực tế, mọi con số tra được từ kết quả khai phá |
 | `v0.12.0` | Mô hình ngôn ngữ chạy trong cụm, bật theo lựa chọn: gợi ý loại yêu cầu, mức ưu tiên, phòng ban cho điều phối viên, người giữ hay đổi bằng thao tác cũ; kho ghi rõ mô hình nhiều giấy phép (dịch vụ khai phá theo AGPL-3.0) |
 | `v0.11.0` | Khai phá quy trình thực tế từ nhật ký sự kiện trong dịch vụ riêng, có bộ máy dự phòng; màn Quy trình thực tế trong mục Báo cáo: sơ đồ tương tác, câu kết luận dựng từ số liệu, điểm nghẽn và nhánh lệch bấm ra đúng hồ sơ |
 | `v0.10.0` | Nền tảng vận hành: nâng cấp từ `v0.9.1` không mất dữ liệu (lược đồ cấu hình trong migration, bộ quy tắc phiên bản mới), tiêu đề bảo mật và giới hạn tốc độ, bộ quét có khóa và nhịp sức khỏe, công cụ kiểm chứng chạy lại được; thẻ gợi ý có xác nhận và đo tỷ lệ ghi đè — mảnh đầu của không gian Trí tuệ |
