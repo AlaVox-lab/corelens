@@ -131,7 +131,7 @@ số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/
 thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
 đó, kiểm tra sự tồn tại trước thay vì giả định.
 
-**Năm quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
+**Sáu quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
 thứ gì thuộc bốn mảng này:
 
 | Không gian | Quyết định | Bản ghi |
@@ -141,6 +141,7 @@ thứ gì thuộc bốn mảng này:
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 | `I` | PM4Py `2.7.23.8` trong **dịch vụ khai phá tách riêng** (`services/khai-pha/`), kèm bộ máy dự phòng không dùng thư viện đó | ADR-0007 |
+| `I` | llama.cpp server + Qwen2.5-1.5B-Instruct (Apache-2.0) làm mô hình ngôn ngữ **tùy chọn** (hồ sơ Compose `tri-tue`), gọi qua một lớp duy nhất `backend/app/intelligence/mo_hinh.py`; pgvector và mô hình nhúng để #319 | ADR-0008 |
 
 Bản ghi mang trạng thái *Đề xuất* **chưa phải quyết định**. Không viết mã theo nó cho tới
 khi nó chuyển sang *Đã chấp nhận*. ADR-0005 — ranh giới máy trạng thái với thao tác không
@@ -297,6 +298,7 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
 | Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later (cả thư viện lẫn mã của nhóm trong thư mục đó) |
+| Mô hình ngôn ngữ (tùy chọn) | llama.cpp server `b11889` + tệp Qwen2.5-1.5B-Instruct GGUF `q4_k_m` trong volume | MIT (máy chủ) · Apache-2.0 (mô hình) |
 
 Ba nền tảng Keycloak, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
 thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
@@ -312,12 +314,12 @@ với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem AD
 ADR-0007 (thư viện khai phá quy trình cho `I`, #48) đã được navigator chấp nhận ngày 08/11/2026,
 cài đặt ở #314, và giảng viên xác nhận ngày 10/11/2026 với điều kiện kho mô tả đúng mô hình nhiều giấy
 phép (#340). Bộ máy dự phòng không dùng thư viện AGPL vẫn giữ (`services/khai-pha/README.md`). Các mảng khảo sát còn lại đã có bản ghi ở trạng thái *Đề xuất*, chờ
-giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006 — navigator để ngoài phạm vi thi), cơ sở
-dữ liệu véc-tơ và mô hình ngôn ngữ cho `I` (#47, ADR-0008 — navigator đã chấp nhận, đổi trạng thái khi
-cài đặt ở #316).
+giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006 — navigator để ngoài phạm vi thi).
+ADR-0008 (cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ cho `I`, #47) đã chấp nhận ngày 08/11/2026; phần sinh
+văn bản cài ở #316/#317, phần nhúng véc-tơ và pgvector để #319.
 
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
-nghệ mới** — năm quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
+nghệ mới** — sáu quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
 
 ### 5.1. Header giấy phép — bắt buộc trên mọi tệp mã mới
 

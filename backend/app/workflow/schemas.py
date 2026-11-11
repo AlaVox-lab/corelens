@@ -433,6 +433,11 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     # ý, nên thứ hiện trên thẻ đúng là thứ được đem so.
     suggested_department: GoiYRa | None = None
 
+    # Gợi ý loại yêu cầu và mức ưu tiên của mô hình ngôn ngữ (#317), cùng khuôn với gợi ý phòng ban.
+    # Trống khi mô hình tắt hay chưa trả lời — màn điều phối như trước khi có gợi ý.
+    suggested_request_type: GoiYRa | None = None
+    suggested_priority: GoiYRa | None = None
+
     # Hồ sơ do chính người đang xem gửi (#154): bảng thao tác trống vì ràng buộc
     # `actor-not-requester`, không phải vì hồ sơ đã rời hàng đợi.
     requested_by_me: bool = False

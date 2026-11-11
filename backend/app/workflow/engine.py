@@ -533,7 +533,7 @@ def perform_transition(
         session,
         ctx,
         assignee_label=assignee_label,
-        suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi),
+        suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi, actor.id),
     )
 
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------

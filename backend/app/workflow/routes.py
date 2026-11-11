@@ -16,7 +16,7 @@ import json
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -77,6 +77,8 @@ from app.workflow.messages import (
 )
 from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
 from app.intelligence.goi_y import GoiY, goi_y_phong_theo_loai
+from app.intelligence.phan_loai import goi_y_sau_khi_gui
+from app.config import get_settings
 from app.workflow.schemas import (
     GoiYRa,
     TruongRiengRa,
@@ -568,6 +570,7 @@ def tao_ho_so(
     du_lieu: TaoHoSoVao,
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
+    tac_vu_nen: BackgroundTasks,
 ) -> HoSoChiTietRa:
     """Gửi một yêu cầu mới.
 
@@ -575,6 +578,10 @@ def tao_ho_so(
 
     Mức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì
     người gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.
+
+    Mô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên
+    (#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô
+    hình hỏng không làm hỏng lần gửi.
     """
     try:
         goc = kiem_ho_so_goc(session, du_lieu.parent_request_id, actor.id)
@@ -612,6 +619,8 @@ def tao_ho_so(
 
     session.commit()
     session.refresh(ho_so)
+    if get_settings().llm_enabled:
+        tac_vu_nen.add_task(goi_y_sau_khi_gui, ho_so.id)
     return _dung_chi_tiet(session, ho_so, actor)
 
 

@@ -2,11 +2,11 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | Đề xuất |
+| Trạng thái | Đã chấp nhận (2026-11-08) — đợt #316/#317 cài phần sinh văn bản; nhúng véc-tơ và pgvector để #319 |
 | Ngày | 2026-10-10 |
 | Không gian kiến trúc | `I` |
-| Issue liên quan | #47 |
-| Người quyết định | Navigator (`AlaVox-lab`) và giảng viên hướng dẫn — chưa chốt |
+| Issue liên quan | #47 · #316 · #317 · #319 |
+| Người quyết định | Navigator (`AlaVox-lab`) chấp nhận ngày 2026-11-08 |
 
 ---
 
@@ -150,9 +150,18 @@ vụ phụ, ngược ràng buộc ít dịch vụ.
 
 ## Quyết định
 
-Đề xuất **pgvector** làm nơi lưu véc-tơ ngay trên PostgreSQL của hệ thống, **llama.cpp server**
+Chọn **pgvector** làm nơi lưu véc-tơ ngay trên PostgreSQL của hệ thống, **llama.cpp server**
 chạy hai mô hình Qwen giấy phép Apache-2.0 (sinh văn bản `Qwen2.5-1.5B-Instruct` Q4_K_M, nhúng
 `Qwen3-Embedding-0.6B` Q8_0), gọi bằng **HTTP và SQL trực tiếp, không dùng khung LLM**.
+
+Navigator chấp nhận ngày 2026-11-08. Cài đặt chia hai đợt:
+
+- **Đợt 1 — #316, #317 (đã cài):** dịch vụ `mo-hinh` (ảnh `ghcr.io/ggml-org/llama.cpp:server-b11889`,
+  phát hành 2026-10-25) dưới hồ sơ Compose `tri-tue`, mô hình sinh văn bản trong volume `mo-hinh`
+  (tải bằng `scripts/tai_mo_hinh.py`, ghim commit kho và SHA-256). Dịch vụ ứng dụng gọi qua đúng một
+  lớp, `backend/app/intelligence/mo_hinh.py`, để gợi ý loại yêu cầu, mức ưu tiên, phòng ban
+- **Đợt 2 — #319 (chưa cài):** mô hình nhúng và pgvector cho truy xuất tri thức. Cho tới đợt đó ảnh
+  PostgreSQL của cụm không đổi
 
 ---
 
@@ -205,9 +214,11 @@ chạy hai mô hình Qwen giấy phép Apache-2.0 (sinh văn bản `Qwen2.5-1.5B
 
 **Việc phải làm tiếp sau quyết định này**
 
-- [ ] Cập nhật `docs/ARCHITECTURE.md` mục 3
-- [ ] Cập nhật `docs/dependencies.md` — pgvector, llama.cpp server, hai mô hình
-- [ ] Bổ sung vào `docker-compose.yml` dưới hồ sơ riêng cho tầng `I`
+- [x] Cập nhật `docs/ARCHITECTURE.md` — mục 3.4 và khuôn mẫu lớp gọi mô hình (#316)
+- [x] Cập nhật `docs/dependencies.md` — llama.cpp server và mô hình sinh văn bản (#316); pgvector và
+  mô hình nhúng thêm ở #319
+- [x] Bổ sung vào `docker-compose.yml` dưới hồ sơ riêng cho tầng `I` — hồ sơ `tri-tue` (#316)
+- [ ] Mô hình nhúng và pgvector (#319)
 - [ ] Đánh giá đổi ảnh PostgreSQL trên cụm có dữ liệu thật
 - [ ] Đo lại với bài thật của kho tri thức khi ADR-0006 được chấp nhận; so thêm một mô hình nhúng thứ hai
 

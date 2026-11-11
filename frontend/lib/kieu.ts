@@ -40,7 +40,7 @@ export type TruongRieng = {
 export type GoiY = NhanCoMa & {
   /** Lý do ngắn, dịch vụ viết sẵn. */
   reason: string;
-  /** Mã nguồn gợi ý — `routing` (bảng ánh xạ), `model` (mô hình, về sau). */
+  /** Mã nguồn gợi ý — `routing` (bảng ánh xạ), `model` (mô hình ngôn ngữ, #317). */
   source: string;
   /** Tên nguồn để hiện cho người đọc. */
   source_label: string;
@@ -354,6 +354,9 @@ export type HoSoDieuPhoi = HoSoChiTiet & {
   state_entered_at: string;
   /** Gợi ý phòng ban để ô chọn điền sẵn: từ mô hình nếu có, không thì từ bảng ánh xạ loại. */
   suggested_department: GoiY | null;
+  /** Gợi ý loại yêu cầu và mức ưu tiên của mô hình ngôn ngữ (#317); trống khi mô hình tắt. */
+  suggested_request_type?: GoiY | null;
+  suggested_priority?: GoiY | null;
   /** Hồ sơ do chính người đang xem gửi: người khác phải điều phối nó (#154). */
   requested_by_me: boolean;
 };
