@@ -14,6 +14,11 @@ trạng thái, và **nhịp hai bộ quét nền** — lần quét thành công 
 chạy, hỏng liên tiếp mấy lượt và câu lỗi gần nhất. Người dùng khác không thấy mục này — trang chủ của
 họ chỉ có việc cần làm, không có chữ kỹ thuật.
 
+Dòng **Mô hình ngôn ngữ** cho biết mô hình gợi ý đang *tắt* (mặc định — điều phối thủ công), *sẵn sàng*,
+hay *không phản hồi* kèm lý do. Khi mô hình bật, màn có thêm dòng nhịp của *Bộ quét gợi ý phân loại*.
+Mô hình là tùy chọn, nên "không phản hồi" không làm tình trạng chung xấu đi — xem
+[Mô hình ngôn ngữ](../../cai-dat/mo-hinh-ngon-ngu/).
+
 ![Màn Hệ thống của quản trị viên](../../../assets/anh/he-thong.png)
 
 Quản trị viên **không đứng trong quy trình**: không đi bước nào trên hồ sơ, không mở hồ sơ ở buồng lái

@@ -94,6 +94,8 @@ Ghi lại ở đây để nếu ban giám khảo tra `package-lock.json` thì đ
 | PostgreSQL | `16-alpine` | PostgreSQL License | Có | Có | Một thực thể, ba database: `dxlab`, `keycloak`, `superset` |
 | Python *(ảnh nền)* | `3.13-slim` | Python-2.0 | Có | Có | Ảnh nền của dịch vụ ứng dụng (`backend/Dockerfile`) và dịch vụ khai phá (`services/khai-pha/Dockerfile`) |
 | Node.js *(ảnh nền)* | `24-alpine` | MIT | Có | Có | Ảnh nền của cổng người dùng — `frontend/Dockerfile` |
+| llama.cpp server *(ảnh)* | `ghcr.io/ggml-org/llama.cpp:server-b11889` | MIT | Có | Có | Dịch vụ `mo-hinh`, **tùy chọn** (hồ sơ Compose `tri-tue`, #316, ADR-0008). Thẻ ghim cụ thể, phát hành 2026-10-25 (bản dựng `org.opencontainers.image.revision` `d854d98`). Dòng đầu `LICENSE` ở thẻ `b11889` của kho `ggml-org/llama.cpp`: `MIT License` — `Copyright (c) 2023-2026 The ggml authors`. Chạy như dịch vụ độc lập, gọi qua HTTP kiểu OpenAI; không nhúng, không sửa |
+| Qwen2.5-1.5B-Instruct GGUF *(tệp mô hình)* | `qwen2.5-1.5b-instruct-q4_k_m.gguf`, kho `Qwen/Qwen2.5-1.5B-Instruct-GGUF` commit `91cad51` | Apache-2.0 | Có | Có | Trọng số mô hình sinh văn bản cho gợi ý (#317). **Không** nằm trong kho mã hay ảnh: `scripts/tai_mo_hinh.py` tải vào volume `mo-hinh`, kiểm SHA-256 `6a1a2eb6…407e`. `LICENSE` của kho Hugging Face: `Apache License Version 2.0, January 2004` — `Copyright 2024 Alibaba Cloud`. Ghi công trong `NOTICE` |
 | psycopg2-binary | `2.9.13` | LGPL kèm ngoại lệ | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Cài vào **ảnh dẫn xuất của Superset** vì ảnh gốc không kèm sẵn — xem `infra/superset/Dockerfile`. Không nhúng vào mã nguồn dự án, không sửa mã thư viện. Chi tiết ràng buộc ở mục Lưu ý về giấy phép copyleft |
 
 ---

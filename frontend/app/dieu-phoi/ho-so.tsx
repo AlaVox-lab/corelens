@@ -54,7 +54,9 @@ export function metaDieuPhoi(ho_so: HoSoDieuPhoi): MucMeta[] {
       icon: <Building2 aria-hidden />,
       chu:
         ho_so.department?.label ??
-        (goiYPhong ? `Chưa chuyển phòng · gợi ý theo loại: ${goiYPhong.label}` : "Chưa chuyển phòng"),
+        (goiYPhong
+          ? `Chưa chuyển phòng · ${goiYPhong.source === "model" ? "mô hình gợi ý" : "gợi ý theo loại"}: ${goiYPhong.label}`
+          : "Chưa chuyển phòng"),
     },
     {
       icon: <Flag aria-hidden />,
@@ -75,12 +77,16 @@ export function ThaoTacDieuPhoi({ d, ngan }: { d: DuLieuDieuPhoi; ngan?: { sauKh
   const { ho_so, cacLoai, cacMuc, cacPhong } = d;
   const macDinh = cacMuc?.find((m) => m.is_default)?.code ?? "";
   const goiYPhong = ho_so.suggested_department;
+  const goiYLoai = ho_so.suggested_request_type ?? null;
+  const goiYMuc = ho_so.suggested_priority ?? null;
 
   // Điền sẵn: giá trị hồ sơ đang có trước, rồi mới tới gợi ý và mặc định. Điều phối
   // viên vẫn đổi được mọi ô — gợi ý chỉ để trường hợp thường gặp chỉ cần một cú bấm.
+  // Loại yêu cầu luôn có giá trị — người gửi đã chọn — nên ô giữ lựa chọn của người, thẻ gợi ý của
+  // mô hình (#317) nằm trên ô và nói khi hai bên khác nhau; điều phối viên đổi bằng một cú chọn.
   const giaTriDau: Record<string, string> = {
-    request_type_code: ho_so.request_type?.code ?? "",
-    priority_code: ho_so.priority?.code ?? macDinh,
+    request_type_code: ho_so.request_type?.code ?? goiYLoai?.code ?? "",
+    priority_code: ho_so.priority?.code ?? goiYMuc?.code ?? macDinh,
     department_code: ho_so.department?.code ?? goiYPhong?.code ?? "",
     assignee_id: ho_so.assignee_id ?? "",
   };
@@ -101,7 +107,11 @@ export function ThaoTacDieuPhoi({ d, ngan }: { d: DuLieuDieuPhoi; ngan?: { sauKh
         maHoSo={ho_so.id}
         cacCanh={ho_so.allowed_transitions}
         giaTriDau={giaTriDau}
-        goiY={goiYPhong ? { department_code: goiYPhong } : {}}
+        goiY={{
+          ...(goiYLoai ? { request_type_code: goiYLoai } : {}),
+          ...(goiYMuc ? { priority_code: goiYMuc } : {}),
+          ...(goiYPhong ? { department_code: goiYPhong } : {}),
+        }}
         cacLoai={cacLoai ?? undefined}
         danhMuc={{
           "request-types": thanhNhanCoMa(cacLoai),

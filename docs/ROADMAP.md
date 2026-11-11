@@ -196,8 +196,8 @@ chờ ADR-0008.
 
 - [x] Giao diện cho phép điều phối viên giữ hoặc ghi đè gợi ý, ghi lại tỷ lệ ghi đè để đo độ chính
       xác thực tế (#239, `v0.10.0`)
-- [ ] Dịch vụ mô hình ngôn ngữ cục bộ, bật theo lựa chọn (#316)
-- [ ] Tự gợi ý loại yêu cầu, mức ưu tiên và phòng ban (#317)
+- [x] Dịch vụ mô hình ngôn ngữ cục bộ, bật theo lựa chọn (#316)
+- [x] Tự gợi ý loại yêu cầu, mức ưu tiên và phòng ban (#317)
 - [ ] Gợi ý người xử lý phù hợp (#318)
 
 ### 4.3. Truy xuất tri thức
