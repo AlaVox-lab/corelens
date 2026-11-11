@@ -5,6 +5,12 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.13.0] - 2026-11-11
+
+### Tính năng mới
+
+- **i-rag:** Gợi ý người xử lý, hồ sơ tương tự và khuyến nghị ([#346](https://github.com/AlaVox-lab/dx-os-lab/issues/346)) ([ac7f5b0](https://github.com/AlaVox-lab/dx-os-lab/commit/ac7f5b04c6adc380f1f9b059769e553d735ab952))
+
 ## [0.12.0] - 2026-11-11
 
 ### Tài liệu
