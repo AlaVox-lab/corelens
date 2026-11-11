@@ -69,6 +69,36 @@ Chạy nhiều bản dịch vụ ứng dụng thì mỗi lượt chỉ một b�
 Ngưỡng hạn của từng loại yêu cầu **không** nằm ở đây — xem
 [Danh mục và các con số](../../quan-tri/danh-muc-va-con-so/).
 
+## Gợi ý người xử lý
+
+Thẻ gợi ý trên ô chọn người xử lý của trưởng phòng (#318). Không cần mô hình ngôn ngữ. Mỗi người nhận
+được việc trong phòng được điểm *trọng số kinh nghiệm × ln(1 + số hồ sơ cùng loại đã làm xong) − trọng
+số tải × số việc đang giữ*; người điểm cao nhất được gợi ý. Cả bốn biến có mặc định trong
+`docker-compose.yml`.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `ASSIGNEE_SUGGEST_ENABLED` | `true` | `false` thì ô chọn người như trước, không thẻ gợi ý |
+| `ASSIGNEE_SUGGEST_LOAD_WEIGHT` | `1.0` | Mỗi việc đang giữ trừ chừng này điểm |
+| `ASSIGNEE_SUGGEST_EXPERIENCE_WEIGHT` | `1.0` | Nhân với ln(1 + số hồ sơ cùng loại đã làm xong) |
+| `ASSIGNEE_SUGGEST_HISTORY_DAYS` | `365` | Kinh nghiệm chỉ đếm hồ sơ làm xong trong chừng này ngày |
+
+## Hồ sơ tương tự và khuyến nghị cải tiến
+
+Hai gợi ý của tầng `I` cần mô hình (hồ sơ Compose `tri-tue`); cách bật ở
+[Mô hình ngôn ngữ](../mo-hinh-ngon-ngu/). Mọi biến có mặc định trong `docker-compose.yml`.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `EMBEDDING_URL` | rỗng | Dịch vụ mô hình nhúng (`http://mo-hinh-nhung:8080`). **Rỗng là tắt** hồ sơ tương tự trên biểu mẫu Gửi yêu cầu |
+| `SIMILAR_TIMEOUT_SECONDS` | `2` | Hạn chót một lần tìm khi người gửi đang gõ; quá hạn thì không hiện gì |
+| `SIMILAR_MAX_RESULTS` | `3` | Số hồ sơ tương tự tối đa |
+| `SIMILAR_MIN_SCORE` | `0.55` | Độ tương đồng cosine tối thiểu để một hồ sơ được hiện |
+| `SIMILAR_ABANDON_AFTER_MINUTES` | `30` | Xem gợi ý mà quá chừng này phút không gửi thì tính là yêu cầu được ngăn chặn |
+| `RECOMMENDATION_ENABLED` | `true` | Khuyến nghị cải tiến trên màn Quy trình thực tế; cần cả `LLM_URL` |
+| `RECOMMENDATION_TIMEOUT_SECONDS` | `90` | Hạn chót một lần sinh (chạy nền, màn không chờ) |
+| `RECOMMENDATION_MAX_SENTENCES` | `4` | Số câu tối đa mô hình được viết; câu sai số bị bỏ |
+
 ## Giới hạn tốc độ
 
 Mỗi người dùng chỉ được gọi một số lần nhất định trong một cửa sổ thời gian cố định; vượt thì thao tác

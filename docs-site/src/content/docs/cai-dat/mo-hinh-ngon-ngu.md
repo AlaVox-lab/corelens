@@ -1,6 +1,6 @@
 ---
 title: Mô hình ngôn ngữ (tùy chọn)
-description: Bật mô hình ngôn ngữ cục bộ để gợi ý loại yêu cầu, mức ưu tiên, phòng ban cho điều phối viên — tải mô hình, biến môi trường, bộ nhớ cần, cách tắt, và kết quả đo độ chính xác.
+description: Bật mô hình ngôn ngữ cục bộ — gợi ý loại yêu cầu, mức ưu tiên, phòng ban cho điều phối viên, hồ sơ đã giải quyết tương tự cho người gửi, khuyến nghị cải tiến trên màn Quy trình thực tế — tải mô hình, biến môi trường, cách tắt, và kết quả đo.
 sidebar:
   order: 5
 ---
@@ -20,6 +20,12 @@ có gợi ý — không thao tác nào bị chặn hay chậm đi.
 |---|---|---|
 | llama.cpp server (dịch vụ `mo-hinh`) | ảnh `ghcr.io/ggml-org/llama.cpp:server-b11889` | MIT |
 | Mô hình Qwen2.5-1.5B-Instruct, bản nén `q4_k_m` | tệp GGUF 1,12 GB, kho `Qwen/Qwen2.5-1.5B-Instruct-GGUF` | Apache-2.0 |
+| llama.cpp server chế độ nhúng (dịch vụ `mo-hinh-nhung`) | cùng ảnh trên, `--embeddings` | MIT |
+| Mô hình nhúng Qwen3-Embedding-0.6B, bản `Q8_0` | tệp GGUF 639 MB, kho `Qwen/Qwen3-Embedding-0.6B-GGUF` | Apache-2.0 |
+| pgvector — phần mở rộng tìm véc-tơ trong PostgreSQL | ảnh `pgvector/pgvector:0.8.6-pg16` (là ảnh PostgreSQL của cụm, kể cả khi tắt mô hình) | PostgreSQL License |
+
+Mô hình sinh văn bản lo gợi ý phân loại (#317) và khuyến nghị cải tiến (#320); mô hình nhúng lo hồ sơ đã
+giải quyết tương tự trên biểu mẫu Gửi yêu cầu (#319). Bật riêng từng cái bằng hai biến địa chỉ dưới đây.
 
 Quyết định và lý do: ADR-0008 trong `docs/adr/`.
 
@@ -47,6 +53,7 @@ Rồi trong `infra/.env` đặt địa chỉ mô hình, và dựng lại với h
 ```bash
 # infra/.env
 LLM_URL=http://mo-hinh:8080
+EMBEDDING_URL=http://mo-hinh-nhung:8080
 ```
 
 ```bash
@@ -69,6 +76,10 @@ phản hồi* kèm lý do (ví dụ đang nạp mô hình). Cùng tình trạng 
 | `SUGGEST_MAX_ATTEMPTS` | `3` | Số lần thử tối đa cho một hồ sơ khi mô hình trả lời hỏng |
 | `SUGGEST_RETRY_AFTER_SECONDS` | `600` | Khoảng cách tối thiểu giữa hai lần thử |
 | `SUGGEST_DEPARTMENT_FROM_MODEL` | `false` | Cho gợi ý phòng ban của mô hình thay gợi ý theo bảng ánh xạ |
+| `EMBEDDING_URL` | rỗng | Địa chỉ dịch vụ mô hình nhúng. **Rỗng là tắt** hồ sơ tương tự |
+| `EMBEDDING_CONTEXT_SIZE` | `8192` | Ngữ cảnh của dịch vụ nhúng |
+| `SIMILAR_TIMEOUT_SECONDS`, `SIMILAR_MAX_RESULTS`, `SIMILAR_MIN_SCORE`, `SIMILAR_ABANDON_AFTER_MINUTES` | `2`, `3`, `0.55`, `30` | Hồ sơ tương tự — xem *Cấu hình* |
+| `RECOMMENDATION_ENABLED`, `RECOMMENDATION_TIMEOUT_SECONDS`, `RECOMMENDATION_MAX_SENTENCES` | `true`, `90`, `4` | Khuyến nghị cải tiến — xem *Cấu hình* |
 
 Gợi ý sinh theo hai đường: ngay sau khi hồ sơ được gửi (chạy nền, người gửi không phải chờ), và một
 **bộ quét bù** chạy định kỳ cho hồ sơ còn chờ điều phối mà chưa có gợi ý — ví dụ hồ sơ gửi lúc mô hình
@@ -129,3 +140,54 @@ lệ ghi đè trên bảng điều khiển cho biết độ chính xác thật t
 
 Đã thử cho mô hình viết lý do trước khi chọn mã: loại yêu cầu tụt xuống 81,2 %, mức ưu tiên 33,8 % —
 nên giữ thứ tự chọn mã trước.
+
+## Hồ sơ đã giải quyết tương tự — đo recall@3
+
+Chỉ mục chỉ gồm hồ sơ **người gửi đã xác nhận đạt**; bộ lập chỉ mục `similar-index` (màn Hệ thống) tự nhặt
+hồ sơ mới đóng. Dữ liệu trình diễn (`scripts/nap_du_lieu_trinh_dien.py`) gắn 60 hồ sơ đã giải quyết có nội
+dung thật (`scripts/du_lieu/ho_so_da_giai_quyet.json`) vào hồ sơ mẫu đóng đạt. Bộ đo
+`backend/tests/du_lieu/bo_do_tuong_tu.json` có 40 câu người gửi có thể gõ, **viết khác chữ** với hồ sơ gốc,
+mỗi câu kèm hồ sơ đúng. Trên cụm đã bật mô hình nhúng và nạp dữ liệu trình diễn, ở gốc kho mã:
+
+```bash
+python scripts/do_ho_so_tuong_tu.py
+```
+
+Lệnh chờ chỉ mục đủ 60 hồ sơ, rồi chạy từng câu qua đúng hàm tìm của dịch vụ ứng dụng (nhúng câu, quét
+pgvector) và in recall@3, MRR, tỷ lệ thấy hồ sơ đúng như người gửi thấy (đúng ngưỡng và số gợi ý đang cấu
+hình), và thời gian mỗi lần tìm.
+
+### Kết quả đo — 11/11/2026
+
+> Bộ 60 hồ sơ và 40 câu do nhóm soạn bằng công cụ, không lấy từ hồ sơ thật; chưa ai duyệt nội dung.
+
+`qwen3-embedding-0.6b-q8_0`, llama.cpp server `b11889`, chỉ CPU — Intel Core i7-13700HX, Docker Desktop
+trên WSL2. Chỉ mục 144 hồ sơ đóng đạt (60 hồ sơ của bộ đo và 84 hồ sơ mẫu nội dung ảo).
+
+| Chỉ số | Kết quả |
+|---|---|
+| recall@3 (xếp hạng, không ngưỡng) | 40/40 = **100 %** |
+| MRR@10 | **1,000** — hồ sơ đúng luôn đứng đầu |
+| Như người gửi thấy (tối đa 3 gợi ý, ngưỡng 0,55) | thấy hồ sơ đúng 40/40; trung bình 1,45 gợi ý mỗi câu |
+| Thời gian một lần tìm (nhúng + quét) | trung vị 0,18 giây, dài nhất 0,27 giây — hạn chót biểu mẫu 2 giây |
+
+Độ tương đồng của hồ sơ đúng: thấp nhất 0,60, trung vị 0,76; hồ sơ đứng thứ hai trung vị 0,54. Ba câu
+không liên quan (xin nghỉ phép, tổ chức tiệc, cửa nhà vệ sinh kẹt) không hiện gợi ý nào. **Đọc số cho
+đúng**: 60 hồ sơ của bộ đo là 60 vấn đề khác nhau, không có cặp hồ sơ gần nhau để gây nhầm, nên bộ đo này
+dễ; với kho hồ sơ thật nhiều vấn đề na ná nhau, số sẽ thấp hơn. Tỷ lệ yêu cầu được ngăn chặn thật đo trên
+bảng điều khiển.
+
+## Khuyến nghị cải tiến
+
+Màn **Quy trình thực tế** có thêm khối *Khuyến nghị cải tiến* khi `LLM_URL` đặt. Mô hình sinh văn bản đọc
+danh sách vấn đề rút từ kết quả khai phá (trạng thái chờ lâu, nhánh lệch), chọn vấn đề và viết việc nên
+làm; câu hiện ra gắn **căn cứ là dòng số liệu của hệ thống**. Phần mô hình viết mà có con số hay tên trạng
+thái, loại, phòng không thuộc đúng dòng căn cứ thì bị bỏ. Sinh ở nền, nhớ theo khoảng ngày, phạm vi và
+chính kết quả khai phá.
+
+Đo trên dữ liệu trình diễn ngày 11/11/2026 (90 ngày, toàn công ty và bốn phòng, năm lần sinh): mỗi lần
+8,6–11,6 giây; giữ 11 câu, **bỏ 9 câu** nhắc trạng thái hay loại của dòng khác. Hai cách làm trước đó cho mô
+hình tự viết cả câu có số: lần một giữ những câu gắn số của phòng này cho phòng kia mà chỉ kiểm "số có
+trong kết quả" không bắt được; lần hai, kiểm số theo từng dòng, mô hình chỉ chép lại dòng dữ kiện. Mô hình
+1,5B viết việc nên làm còn chung chung, đôi khi lẫn tên trạng thái với tên phòng — đây là gợi ý để đọc, quyết
+định cải tiến là của người quản lý.

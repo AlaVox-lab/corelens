@@ -55,6 +55,39 @@ function soNgayGiua(tu: string, den: string): number {
 test.describe("điều phối viên", () => {
   theoVai("dieu-phoi");
 
+  test("mô hình tắt: không có khuyến nghị, câu kết luận vẫn đủ (#320)", async ({ page }) => {
+    const khuyenNghi = page.waitForResponse("**/api/bao-cao/quy-trinh/khuyen-nghi*");
+    await moMan(page);
+    const ph = await khuyenNghi;
+    expect(["disabled", "no-data"]).toContain(((await ph.json()) as { status: string }).status);
+    await expect(page.locator(".qt-ket-luan .qt-cau li").first()).toBeVisible();
+    await expect(page.getByTestId("qt-khuyen-nghi")).toHaveCount(0);
+  });
+
+  test("khuyến nghị đến sau thì hiện dưới kết luận, ghi rõ gợi ý của hệ thống (#320)", async ({ page }) => {
+    // Dịch vụ báo đang sinh một lần rồi trả câu — màn hiện trước, hỏi lại, rồi mới thêm khối
+    let lan = 0;
+    await page.route("**/api/bao-cao/quy-trinh/khuyen-nghi*", (r) => {
+      lan += 1;
+      return r.fulfill({
+        json:
+          lan === 1
+            ? { status: "pending", sentences: [] }
+            : { status: "ready", sentences: ["Nên rà lại bước chờ lâu nhất, trung vị 9 giờ 5 phút."] },
+      });
+    });
+    await moMan(page);
+    if ((await page.locator(".qt-ket-luan").innerText()).includes("không có hồ sơ nào được gửi")) {
+      test.skip(true, "Khoảng đang xem không có hồ sơ — khối khuyến nghị chỉ hiện khi có hồ sơ");
+    }
+    await expect(page.locator(".qt-ket-luan .qt-cau li").first()).toBeVisible();
+    const khoi = page.getByTestId("qt-khuyen-nghi");
+    await expect(khoi).toBeVisible({ timeout: 15_000 });
+    await expect(khoi).toContainText("trung vị 9 giờ 5 phút");
+    await expect(khoi).toContainText("Gợi ý của hệ thống");
+    expect(lan).toBeGreaterThanOrEqual(2);
+  });
+
   test("thấy phạm vi toàn công ty, thanh chuyển và mục Báo cáo đều sáng đúng", async ({ page }) => {
     await moMan(page);
     await expect(page.locator(".bao-cao-pham-vi")).toHaveText("Phạm vi số liệu: toàn công ty");

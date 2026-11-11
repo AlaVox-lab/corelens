@@ -21,7 +21,7 @@
 // Chân màn có dòng dẫn tới mã nguồn của dịch vụ khai phá (AGPL-3.0-or-later, điều 13 — #340). Địa
 // chỉ do máy chủ đọc từ biến môi trường rồi truyền xuống, không mã cứng ở đây.
 
-import { FileSearch, ServerCrash } from "lucide-react";
+import { FileSearch, Lightbulb, ServerCrash } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
@@ -52,7 +52,7 @@ import {
   tenLoaiCanh,
   tenNhanhLech,
 } from "@/lib/ket-luan-quy-trinh";
-import type { NhomChoKhaiPha, NhomDemKhaiPha, QuyTrinhThucTe } from "@/lib/kieu";
+import type { KhuyenNghiQuyTrinh, NhomChoKhaiPha, NhomDemKhaiPha, QuyTrinhThucTe } from "@/lib/kieu";
 
 type TinhTrang = "dang-tai" | "san-sang" | "khong-phan-hoi" | "het-phien" | "khong-duoc-xem";
 
@@ -261,6 +261,67 @@ function tieuDeNgan(d: QuyTrinhThucTe, chon: ChonMuc): string {
 // Các khối của màn
 // ---------------------------------------------------------------------------
 
+/** Hỏi lại khuyến nghị đang sinh sau chừng này mili giây, tối đa chừng này lần (#320). */
+const HOI_LAI_KHUYEN_NGHI_MS = 3000;
+const SO_LAN_HOI_KHUYEN_NGHI = 60;
+
+/**
+ * Khuyến nghị cải tiến của mô hình ngôn ngữ (#320), dưới câu kết luận. Màn KHÔNG chờ nó: kết quả khai
+ * phá và câu kết luận tất định hiện trước; khuyến nghị đến sau thì hiện thêm, mô hình tắt hay hỏng thì
+ * khối này không hiện gì. Dịch vụ đã bỏ mọi câu có con số không tra được trong kết quả khai phá.
+ */
+function KhuyenNghi({ tu, den }: { tu: string; den: string }) {
+  const [cau, datCau] = useState<string[]>([]);
+
+  useEffect(() => {
+    datCau([]);
+    const huy = new AbortController();
+    let hen: ReturnType<typeof setTimeout> | undefined;
+    let lan = 0;
+    async function hoi() {
+      lan += 1;
+      try {
+        const ph = await fetch(`/api/bao-cao/quy-trinh/khuyen-nghi?tu=${tu}&den=${den}`, {
+          cache: "no-store",
+          signal: huy.signal,
+        });
+        const kq = (await ph.json()) as KhuyenNghiQuyTrinh;
+        if (kq.status === "pending" && lan < SO_LAN_HOI_KHUYEN_NGHI) {
+          hen = setTimeout(hoi, HOI_LAI_KHUYEN_NGHI_MS);
+        } else if (kq.status === "ready") {
+          datCau(kq.sentences);
+        }
+      } catch {
+        // Hủy vì đổi khoảng ngày, mất mạng: không hiện gì, câu kết luận vẫn đủ
+      }
+    }
+    void hoi();
+    return () => {
+      clearTimeout(hen);
+      huy.abort();
+    };
+  }, [tu, den]);
+
+  if (cau.length === 0) return null;
+  return (
+    <div className="qt-khuyen-nghi" data-testid="qt-khuyen-nghi">
+      <p className="the-goi-y-dau">
+        <Lightbulb aria-hidden />
+        <strong>Khuyến nghị cải tiến</strong>
+      </p>
+      <ul className="qt-cau">
+        {cau.map((c, i) => (
+          <li key={i}>{c}</li>
+        ))}
+      </ul>
+      <p className="the-goi-y-nguon">
+        Gợi ý của hệ thống, do mô hình ngôn ngữ viết từ các con số ở trên — mọi con số đã được đối chiếu
+        với kết quả khai phá. Chỉ để tham khảo, hệ thống không tự đổi cấu hình nào.
+      </p>
+    </div>
+  );
+}
+
 function KhoiKetLuan({ d }: { d: QuyTrinhThucTe }) {
   const cau = ketLuanQuyTrinh(d);
   return (
@@ -273,6 +334,7 @@ function KhoiKetLuan({ d }: { d: QuyTrinhThucTe }) {
           <li key={c.id}>{c.chu}</li>
         ))}
       </ul>
+      {d.cases_count > 0 ? <KhuyenNghi tu={d.range.from} den={d.range.to} /> : null}
     </section>
   );
 }

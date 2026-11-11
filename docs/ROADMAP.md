@@ -190,7 +190,7 @@ chờ ADR-0008.
 - [x] Khai phá quy trình thực tế từ nhật ký sự kiện (#314)
 - [x] Đối chiếu quy trình thực tế với luồng chính của quy trình thiết kế (#314)
 - [x] Chỉ ra điểm nghẽn và nhánh lệch chuẩn trên màn quy trình thực tế trong cổng (#315)
-- [ ] Sinh khuyến nghị cải tiến bằng ngôn ngữ tự nhiên (#320)
+- [x] Sinh khuyến nghị cải tiến bằng ngôn ngữ tự nhiên (#320)
 
 ### 4.2. Phân loại và định tuyến tự động
 
@@ -198,13 +198,13 @@ chờ ADR-0008.
       xác thực tế (#239, `v0.10.0`)
 - [x] Dịch vụ mô hình ngôn ngữ cục bộ, bật theo lựa chọn (#316)
 - [x] Tự gợi ý loại yêu cầu, mức ưu tiên và phòng ban (#317)
-- [ ] Gợi ý người xử lý phù hợp (#318)
+- [x] Gợi ý người xử lý phù hợp (#318)
 
 ### 4.3. Truy xuất tri thức
 
-- [ ] Lập chỉ mục các hồ sơ đã giải quyết, gợi ý hồ sơ tương tự ngay khi người dùng đang soạn yêu cầu
+- [x] Lập chỉ mục các hồ sơ đã giải quyết, gợi ý hồ sơ tương tự ngay khi người dùng đang soạn yêu cầu
       (#319)
-- [ ] Đo tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý (#319)
+- [x] Đo tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý (#319)
 - [ ] Kho tri thức — nhóm đề xuất để ngoài phạm vi thi, làm khi còn thời gian (#321)
 
 **Tiêu chí hoàn thành giai đoạn**: gỡ tầng `I` ra thì hệ thống suy giảm rõ rệt về

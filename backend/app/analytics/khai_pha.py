@@ -29,6 +29,7 @@ from app.analytics.bang_dieu_khien import pham_vi_cua
 from app.auth.dependencies import current_actor
 from app.config import get_settings
 from app.db import get_session
+from app.intelligence import khuyen_nghi
 from app.models.case import Request
 from app.models.workflow_config import Department, RequestType
 from app.workflow.context import Actor
@@ -89,6 +90,38 @@ def quy_trinh_thuc_te(
     403 khi vai trò của người gọi không được xem báo cáo; 422 khi khoảng ngày sai; 503 khi dịch vụ khai
     phá không phản hồi. Trả kèm phạm vi đã áp, để giao diện ghi rõ người xem đang thấy tới đâu.
     """
+    return _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)[0]
+
+
+@router.get("/process-mining/recommendation")
+def khuyen_nghi_cai_tien(
+    session: Annotated[Session, Depends(get_session)],
+    actor: Annotated[Actor, Depends(current_actor)],
+    may_khach: Annotated[KhaiPhaClient, Depends(khai_pha_client)],
+    tu: Annotated[dt.date, Query(alias="from", description="Ngày bắt đầu, hồ sơ gửi từ ngày này")],
+    den: Annotated[dt.date, Query(alias="to", description="Ngày kết thúc, tính cả ngày này")],
+) -> dict:
+    """Khuyến nghị cải tiến bằng câu chữ cho cùng khoảng ngày và phạm vi (#320) — gợi ý của hệ thống,
+    chỉ để đọc. Cùng cửa quyền và cùng mã lỗi với `/process-mining`. `status`: `ready` (kèm câu đã qua
+    phép kiểm số), `pending` (đang sinh ở nền — hỏi lại sau), `disabled` (mô hình tắt), `unavailable`
+    (mô hình không trả lời), `no-data`. Không bao giờ chờ mô hình."""
+    ket_qua, phong = _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)
+    kn, tu_dem = khuyen_nghi.lay(tu, den, phong, ket_qua)
+    return {
+        "status": kn.status,
+        "sentences": list(kn.sentences),
+        "dropped_wrong_number": kn.dropped_wrong_number,
+        "dropped_no_number": kn.dropped_no_number,
+        "model": kn.model,
+        "generated_at": kn.generated_at.isoformat() if kn.generated_at else None,
+        "cached": tu_dem,
+    }
+
+
+def _khai_pha_trong_pham_vi(
+    session: Session, actor: Actor, may_khach: KhaiPhaClient, tu: dt.date, den: dt.date
+) -> tuple[dict, list[str] | None]:
+    """Kết quả khai phá đã gắn phạm vi, nhãn và mã hiển thị, kèm danh sách phòng đã áp."""
     pham_vi = pham_vi_cua(session, actor)
     if pham_vi is None:
         raise HTTPException(
@@ -120,7 +153,7 @@ def quy_trinh_thuc_te(
         },
         "labels": nhan_nhom(session),
         "case_codes": ma_hien_thi(session, ket_qua),
-    }
+    }, phong
 
 
 def ma_hien_thi(session: Session, ket_qua: dict) -> dict[str, str]:

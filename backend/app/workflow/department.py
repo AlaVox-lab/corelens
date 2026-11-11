@@ -26,13 +26,15 @@ import math
 from dataclasses import dataclass
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
+from app.intelligence.goi_y import goi_y_nguoi_xu_ly
+from app.intelligence.nguoi_xu_ly import dang_cho_giao_viec, hen_goi_y_neu_ve_phong
 from app.models.case import EventLog, Request
 from app.rate_limit import gioi_han_toc_do
 from app.models.workflow_config import Department, Priority, State, Transition
@@ -59,6 +61,7 @@ from app.workflow.routes import (
     _ma_ho_so,
     _o_trang_thai,
     _tom_tat,
+    goi_y_ra,
 )
 from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
 from app.rules.sla import da_chay_giay, gioi_han_giay, sap_het_han
@@ -169,6 +172,11 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoPhongB
         state_entered_at=luc_vao or ho_so.created_at,
         assignee_label=ho_so.assignee_label,
         assigned_to_me=ho_so.assignee_id == actor.id,
+        suggested_assignee=(
+            goi_y_ra(goi_y_nguoi_xu_ly(session, ho_so))
+            if dang_cho_giao_viec(session, ho_so)
+            else None
+        ),
     )
 
 
@@ -436,6 +444,7 @@ def chuyen_trang_thai(
     session: _Phien,
     actor: _Cua,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    tac_vu_nen: BackgroundTasks,
 ) -> HoSoPhongBanRa:
     """Thực hiện một thao tác, có kèm trường quyết định.
 
@@ -474,6 +483,7 @@ def chuyen_trang_thai(
 
     session.commit()
     session.refresh(ho_so)
+    hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
     return _dung_chi_tiet(session, ho_so, actor)
 
 

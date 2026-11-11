@@ -20,7 +20,11 @@ services:
   # PostgreSQL — một thực thể, ba database: dxlab, keycloak, superset
   # ---------------------------------------------------------------------------
   postgres:
-    image: postgres:16-alpine
+    # PostgreSQL 16 kèm phần mở rộng pgvector (#319, ADR-0008) — ảnh chính thức của pgvector, ghim cả
+    # thẻ lẫn mã băm (pgvector 0.8.6, Debian bookworm, ảnh dựng 13/08/2026). Cùng PostgreSQL 16.15 với
+    # ảnh `postgres:16-alpine` trước đó nên thư mục dữ liệu cũ dùng tiếp; đổi musl sang glibc thì
+    # migration 0022 tự REINDEX một lần (xem tệp đó).
+    image: pgvector/pgvector:0.8.6-pg16@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
     container_name: dxlab-postgres
     restart: unless-stopped
     environment:
@@ -194,6 +198,37 @@ services:
       retries: 6
 
   # ---------------------------------------------------------------------------
+  # Mô hình nhúng véc-tơ — hồ sơ đã giải quyết tương tự (#319, ADR-0008). Cùng hồ sơ `tri-tue`, cùng
+  # ảnh llama.cpp đã ghim, cùng volume `mo-hinh` (tệp Qwen3-Embedding-0.6B Q8_0, ~0,64 GB, tải bằng
+  # scripts/tai_mo_hinh.py). Dịch vụ riêng vì một tiến trình llama.cpp server phục vụ đúng một mô hình,
+  # và chế độ nhúng (`--embeddings`, gộp bằng token cuối như Qwen3-Embedding yêu cầu) khác chế độ sinh
+  # văn bản. Không mở cổng ra máy, không dịch vụ nào depends_on nó.
+  # ---------------------------------------------------------------------------
+  mo-hinh-nhung:
+    image: ghcr.io/ggml-org/llama.cpp:server-b11889
+    container_name: dxlab-mo-hinh-nhung
+    profiles: ["tri-tue"]
+    restart: unless-stopped
+    environment:
+      LLAMA_ARG_MODEL: /models/Qwen3-Embedding-0.6B-Q8_0.gguf
+      LLAMA_ARG_ALIAS: qwen3-embedding-0.6b-q8_0
+      LLAMA_ARG_EMBEDDINGS: "1"
+      LLAMA_ARG_POOLING: last
+      LLAMA_ARG_CTX_SIZE: ${EMBEDDING_CONTEXT_SIZE:-8192}
+      # Lô vật lý phải chứa trọn một đoạn khi nhúng: bằng ngữ cảnh
+      LLAMA_ARG_UBATCH: ${EMBEDDING_CONTEXT_SIZE:-8192}
+      LLAMA_ARG_BATCH: ${EMBEDDING_CONTEXT_SIZE:-8192}
+      LLAMA_ARG_THREADS: ${LLM_THREADS:-4}
+    volumes:
+      - mo-hinh:/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 6
+
+  # ---------------------------------------------------------------------------
   # Dịch vụ ứng dụng — FastAPI
   # Toàn bộ nghiệp vụ nằm trong bảng dữ liệu, xem ARCHITECTURE.md mục 5.2
   # ---------------------------------------------------------------------------
@@ -270,6 +305,23 @@ services:
       DXLAB_SUGGEST_MAX_ATTEMPTS: ${SUGGEST_MAX_ATTEMPTS:-3}
       DXLAB_SUGGEST_RETRY_AFTER_SECONDS: ${SUGGEST_RETRY_AFTER_SECONDS:-600}
       DXLAB_SUGGEST_DEPARTMENT_FROM_MODEL: ${SUGGEST_DEPARTMENT_FROM_MODEL:-false}
+      # Gợi ý người xử lý cho trưởng phòng (#318) — không cần mô hình, bật ở cụm mặc định
+      DXLAB_ASSIGNEE_SUGGEST_ENABLED: ${ASSIGNEE_SUGGEST_ENABLED:-true}
+      DXLAB_ASSIGNEE_SUGGEST_LOAD_WEIGHT: ${ASSIGNEE_SUGGEST_LOAD_WEIGHT:-1.0}
+      DXLAB_ASSIGNEE_SUGGEST_EXPERIENCE_WEIGHT: ${ASSIGNEE_SUGGEST_EXPERIENCE_WEIGHT:-1.0}
+      DXLAB_ASSIGNEE_SUGGEST_HISTORY_DAYS: ${ASSIGNEE_SUGGEST_HISTORY_DAYS:-365}
+      # Hồ sơ đã giải quyết tương tự (#319). Rỗng là TẮT — biểu mẫu Gửi yêu cầu như cũ. Bật hồ sơ
+      # `tri-tue` thì đặt EMBEDDING_URL=http://mo-hinh-nhung:8080 trong .env. Cố ý KHÔNG depends_on.
+      DXLAB_EMBEDDING_URL: ${EMBEDDING_URL:-}
+      DXLAB_SIMILAR_TIMEOUT_SECONDS: ${SIMILAR_TIMEOUT_SECONDS:-2}
+      DXLAB_SIMILAR_MAX_RESULTS: ${SIMILAR_MAX_RESULTS:-3}
+      DXLAB_SIMILAR_MIN_SCORE: ${SIMILAR_MIN_SCORE:-0.55}
+      DXLAB_SIMILAR_ABANDON_AFTER_MINUTES: ${SIMILAR_ABANDON_AFTER_MINUTES:-30}
+      # Khuyến nghị cải tiến trên màn Quy trình thực tế (#320): dùng mô hình sinh văn bản (LLM_URL),
+      # sinh ở nền. LLM_URL rỗng hay cờ tắt — màn chỉ có câu kết luận dựng từ con số
+      DXLAB_RECOMMENDATION_ENABLED: ${RECOMMENDATION_ENABLED:-true}
+      DXLAB_RECOMMENDATION_TIMEOUT_SECONDS: ${RECOMMENDATION_TIMEOUT_SECONDS:-90}
+      DXLAB_RECOMMENDATION_MAX_SENTENCES: ${RECOMMENDATION_MAX_SENTENCES:-4}
     volumes:
       # Dữ liệu khởi tạo (#254): bộ nạp chạy sau Alembic, nạp lần đầu khi chưa có bộ quy tắc nào
       # rồi lần nào khởi động cũng kiểm nhất quán đồ thị — app/cau_hinh/khoi_tao.py

@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useRef, useState } from "react";
 
 import { OTruongRieng } from "@/components/o-truong-rieng";
+import { GoiYTuongTu } from "@/components/goi-y-tuong-tu";
 import { OChonTep } from "@/components/o-chon-tep";
 import { dungLuong } from "@/lib/dinh-dang";
 import type { ChinhSachTep, LoaiYeuCau } from "@/lib/kieu";
@@ -40,6 +41,18 @@ const BUOC = [
 
 /** Giá trị đại diện cho “chưa chọn loại nào”. Gửi lên thành `null`. */
 const CHUA_RO = "";
+
+/**
+ * UUID phiên bản 4 cho phiên soạn (#319). Không dùng `crypto.randomUUID`: hàm đó chỉ có ở ngữ cảnh
+ * bảo mật, mà cổng có thể được mở qua http bằng địa chỉ IP trong mạng nội bộ.
+ */
+function maPhienNgauNhien(): string {
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 
 /** Hồ sơ cũ mà biểu mẫu này tạo lại (#102): nội dung chép sẵn để người gửi sửa. */
 export type HoSoGoc = {
@@ -102,6 +115,8 @@ export function BieuMauGuiYeuCau({
   );
   const [tieuDe, datTieuDe] = useState(goc?.title ?? "");
   const [moTa, datMoTa] = useState(goc?.description ?? "");
+  // Mã phiên soạn (#319): nối "đã xem gợi ý tương tự" với lần gửi này — không phải dữ liệu hồ sơ
+  const [phienSoan] = useState(maPhienNgauNhien);
 
   const daChonLoai = loai !== null;
   const loaiDaChon = cacLoai.find((l) => l.code === loai);
@@ -336,6 +351,10 @@ export function BieuMauGuiYeuCau({
               </span>
             </label>
 
+            {/* Hồ sơ đã giải quyết tương tự (#319): hiện khi có, không hiện gì khi mô hình tắt hay
+                chậm — không bao giờ giữ chân người gửi */}
+            <GoiYTuongTu tieuDe={tieuDe} moTa={moTa} phien={phienSoan} />
+
             {/* Trường riêng của loại đã chọn ở bước 1 (#250), dựng từ khai báo của dịch vụ.
                 `key` theo loại: đổi loại thì bộ ô dựng lại từ đầu, không mang giá trị loại cũ. */}
             <OTruongRieng key={loai ?? ""} ten="details" cacTruong={loaiDaChon?.fields ?? []} />
@@ -468,6 +487,7 @@ export function BieuMauGuiYeuCau({
           bước 1 quyết định chứ không phải một ô nhập. */}
       <input type="hidden" name="request_type_code" value={loai ?? CHUA_RO} />
       {goc && <input type="hidden" name="parent_request_id" value={goc.id} />}
+      <input type="hidden" name="similar_session_id" value={phienSoan} />
 
       {ketQua.loi && (
         <p

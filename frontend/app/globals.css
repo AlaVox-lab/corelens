@@ -498,6 +498,45 @@ select.o-nhap {
   color: var(--f-a-ink);
 }
 
+/* --- Hồ sơ đã giải quyết tương tự trên biểu mẫu Gửi yêu cầu (#319) ------------
+ * Cùng tông dịu của thẻ gợi ý: đây là lời gợi ý, không phải cảnh báo hay bước bắt buộc. */
+.goi-y-tuong-tu {
+  display: grid;
+  gap: 8px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.goi-y-tuong-tu p {
+  margin: 0;
+}
+
+.goi-y-tuong-tu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.goi-y-tuong-tu li {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.goi-y-tuong-tu-tieu-de {
+  font-weight: 600;
+  color: var(--ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .the-goi-y {
     transition: none;
@@ -4074,6 +4113,21 @@ html[data-qt-ngan] .ngan {
 
 .qt-cau li::marker {
   color: var(--ink-3);
+}
+
+/* Khuyến nghị cải tiến (#320): cùng tông dịu của thẻ gợi ý — lời gợi ý của hệ thống, không phải kết luận */
+.qt-khuyen-nghi {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+}
+
+.qt-khuyen-nghi .qt-cau {
+  margin: 0;
 }
 
 .qt-bao-loi {

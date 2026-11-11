@@ -38,6 +38,8 @@ from app.workflow.escalation import (
 )
 from app.intelligence import mo_hinh
 from app.intelligence.phan_loai import NHAN_BO_QUET_GOI_Y, TEN_BO_QUET_GOI_Y, quet_goi_y
+from app.intelligence.tuong_tu import NHAN_BO_QUET_TUONG_TU, TEN_BO_QUET_TUONG_TU, quet_chi_muc
+from app.intelligence.tuong_tu import router as router_tuong_tu
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau
@@ -144,6 +146,24 @@ async def _vong_quet_goi_y() -> None:
             logger.exception("Lượt quét gợi ý thất bại, sẽ thử lại ở lượt sau")
 
 
+def _quet_tuong_tu_mot_lan() -> int:
+    """Một lượt bộ lập chỉ mục hồ sơ tương tự (#319), có khóa tư vấn và dòng nhịp (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_TUONG_TU, quet_chi_muc)
+    return (luot.ket_qua or 0) if luot.da_chay else 0
+
+
+async def _vong_quet_tuong_tu() -> None:
+    """Vòng riêng như bộ quét gợi ý: một lượt có thể chờ mô hình nhúng. Chạy cả khi mô hình nhúng tắt —
+    phiên đã xem gợi ý mà quá hạn không gửi vẫn phải được tính là bỏ không gửi."""
+    while True:
+        await asyncio.sleep(settings.similar_index_interval_seconds)
+        try:
+            await asyncio.to_thread(_quet_tuong_tu_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt lập chỉ mục hồ sơ tương tự thất bại, sẽ thử lại ở lượt sau")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Bật bộ quét SLA và bộ quét gợi ý lúc khởi động, tắt gọn lúc dừng."""
@@ -159,6 +179,9 @@ async def lifespan(app: FastAPI):
             "Mô hình ngôn ngữ bật; bộ quét gợi ý chạy mỗi %d giây",
             settings.suggest_scan_interval_seconds,
         )
+
+    if settings.similar_index_enabled:
+        cac_tac_vu.append(asyncio.create_task(_vong_quet_tuong_tu()))
 
     yield
 
@@ -189,6 +212,7 @@ app.include_router(router_tep)
 app.include_router(router_du_lieu_mo)
 app.include_router(router_bang_dieu_khien)
 app.include_router(router_khai_pha)
+app.include_router(router_tuong_tu)
 
 
 def _do_suc_khoe(session: Session) -> dict:
@@ -255,6 +279,15 @@ def _do_suc_khoe(session: Session) -> dict:
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
+        # Bộ lập chỉ mục hồ sơ tương tự (#319): cùng cách, chỉ hiện khi mô hình nhúng bật
+        if settings.similar_index_enabled and settings.embedding_enabled:
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_TUONG_TU: NHAN_BO_QUET_TUONG_TU},
+                nguong_qua_lau_giay=settings.similar_index_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
     except Exception as loi:  # noqa: BLE001 — không đọc được nhịp thì không dám nói là khỏe
         logger.warning("Kiểm tra sức khỏe: không đọc được nhịp bộ quét: %s", loi)
         ket_qua.update(status="degraded", scanners=None, detail="Không đọc được nhịp bộ quét")
@@ -303,6 +336,8 @@ def system_health(
         # Mô hình ngôn ngữ (#316): tùy chọn, nên không bao giờ làm `status` xấu đi — chỉ báo riêng.
         # Hỏi ở đây chứ không ở `_do_suc_khoe`: `/health` công khai không được gọi ra dịch vụ khác.
         "language_model": mo_hinh.tinh_trang(),
+        # Mô hình nhúng cho hồ sơ tương tự (#319), cùng nguyên tắc
+        "embedding_model": mo_hinh.tinh_trang_nhung(),
         "scan_settings": {
             "enabled": settings.sla_scan_enabled,
             "interval_seconds": settings.sla_scan_interval_seconds,
