@@ -40,7 +40,7 @@ export type TruongRieng = {
 export type GoiY = NhanCoMa & {
   /** Lý do ngắn, dịch vụ viết sẵn. */
   reason: string;
-  /** Mã nguồn gợi ý — `routing` (bảng ánh xạ), `model` (mô hình ngôn ngữ, #317). */
+  /** Mã nguồn gợi ý — `routing` (bảng ánh xạ), `model` (mô hình ngôn ngữ, #317), `workload` (tải việc, #318). */
   source: string;
   /** Tên nguồn để hiện cho người đọc. */
   source_label: string;
@@ -392,6 +392,8 @@ export type HoSoPhongBan = HoSoChiTiet & {
   state_entered_at: string;
   assignee_label: string | null;
   assigned_to_me: boolean;
+  /** Gợi ý người xử lý đã lưu (#318), chỉ khi hồ sơ đang chờ giao việc. */
+  suggested_assignee?: GoiY | null;
 };
 
 /** Một người nhận được việc trong phòng, tra từ danh bạ Keycloak (#84). */
@@ -405,6 +407,8 @@ export type NguoiNhanViec = {
 export type NguoiNhanViecTrongPhong = {
   department: PhongBan;
   people: NguoiNhanViec[];
+  /** Gợi ý người xử lý tính lại lúc tra, khi gửi kèm `case_id` (#318). Luôn là một người trong `people`. */
+  suggestion?: GoiY | null;
 };
 
 /**
@@ -533,6 +537,35 @@ export type BienTheKhaiPha = {
   cases_count: number;
   ratio: number;
   cases: number[];
+};
+
+/** Một hồ sơ đã giải quyết tương tự nội dung đang soạn (#319) — đã ẩn tên người và liên hệ. */
+export type HoSoTuongTu = {
+  title: string;
+  request_type: string | null;
+  resolution: string;
+  closed_at: string;
+  score: number;
+};
+
+export type KetQuaTuongTu = {
+  items: HoSoTuongTu[];
+  /** Mô hình nhúng tắt — biểu mẫu thôi hỏi trong phiên này. */
+  enabled: boolean;
+};
+
+/**
+ * Khuyến nghị cải tiến bằng câu chữ (#320) — `GET /analytics/process-mining/recommendation`. `pending`:
+ * đang sinh ở nền, hỏi lại sau; chỉ `ready` mang câu, đã qua phép kiểm số của dịch vụ.
+ */
+export type KhuyenNghiQuyTrinh = {
+  status: "ready" | "pending" | "disabled" | "unavailable" | "no-data";
+  sentences: string[];
+  dropped_wrong_number?: number;
+  dropped_no_number?: number;
+  model?: string | null;
+  generated_at?: string | null;
+  cached?: boolean;
 };
 
 /** Kết quả `GET /analytics/process-mining` — dịch vụ ứng dụng đã gắn `scope`, `labels` và `case_codes`. */

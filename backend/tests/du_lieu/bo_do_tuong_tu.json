@@ -1,0 +1,48 @@
+{
+  "_ghi_chu": "Bộ đo hồ sơ đã giải quyết tương tự (#319). SPDX-License-Identifier: MIT. Copyright (c) 2026 AlaVox-lab. 40 câu người gửi có thể gõ, viết KHÁC CHỮ với hồ sơ gốc (đổi từ, đổi cách kể, không chép cụm từ đặc trưng), mỗi câu kèm 'dung' là mã hồ sơ đúng trong scripts/du_lieu/ho_so_da_giai_quyet.json. Do nhóm soạn bằng công cụ; navigator không duyệt. Đo bằng scripts/do_ho_so_tuong_tu.py trên cụm đã nạp dữ liệu trình diễn và bật mô hình nhúng.",
+  "cau": [
+    {"so": 1, "dung": "tt01", "tieu_de": "Máy in chung cứ bị mắc giấy", "mo_ta": "In vài tờ là giấy bị nghẽn bên trong, lấy ra rồi in lại vẫn vậy."},
+    {"so": 2, "dung": "tt02", "tieu_de": "Bật máy bàn lên nhưng màn hình tối thui", "mo_ta": "Nghe tiếng quạt quay, đèn nguồn có sáng mà không hiện gì trên màn hình cả."},
+    {"so": 3, "dung": "tt03", "tieu_de": "Phòng họp không vào được internet bằng cáp", "mo_ta": "Cắm cáp mạng ở phòng họp thì máy báo không có internet, chỗ ngồi của tôi thì vẫn dùng bình thường."},
+    {"so": 4, "dung": "tt04", "tieu_de": "Màn hình ngoài bị giật và hiện vạch", "mo_ta": "Màn hình gắn thêm cứ chốc chốc lại chớp tắt, có những đường kẻ ngang chạy qua."},
+    {"so": 5, "dung": "tt05", "tieu_de": "Điện thoại cố định câm, không gọi được", "mo_ta": "Nhấc máy lên im re, không nghe tín hiệu gì, ai gọi tới cũng không reo."},
+    {"so": 6, "dung": "tt06", "tieu_de": "Pin máy xách tay không nhận sạc", "mo_ta": "Đang cắm điện thì dùng được, rút ra là sập nguồn liền, pin không lên chút nào."},
+    {"so": 7, "dung": "tt07", "tieu_de": "Vài nút trên bàn phím gõ không ra chữ", "mo_ta": "Mấy phím chữ và một phím số phải nhấn thật mạnh mới ăn, có lúc không nhận luôn."},
+    {"so": 8, "dung": "tt08", "tieu_de": "Mạng không dây ở chỗ phòng tài chính hay rớt", "mo_ta": "Đang gọi video thì bị văng ra, sóng wifi lên xuống thất thường ở khu này."},
+    {"so": 9, "dung": "tt09", "tieu_de": "Nối máy tính với máy chiếu không lên hình", "mo_ta": "Ở phòng tập huấn, cắm dây vào thì máy chiếu cứ báo no signal."},
+    {"so": 10, "dung": "tt10", "tieu_de": "Máy ì ạch, nóng ran và ồn", "mo_ta": "Mở chương trình nào cũng lâu, tiếng quạt rú lên suốt và sờ vào vỏ máy thấy nóng."},
+    {"so": 11, "dung": "tt11", "tieu_de": "Quét tài liệu xong không lưu vào thư mục dùng chung được", "mo_ta": "Máy quét báo không tìm thấy đường dẫn mạng khi gửi bản scan, tuần trước vẫn bình thường."},
+    {"so": 12, "dung": "tt12", "tieu_de": "Máy tính mất âm thanh", "mo_ta": "Bật nhạc hay xem clip đều không có tiếng dù âm lượng để to."},
+    {"so": 13, "dung": "tt13", "tieu_de": "Ổ hệ thống hết chỗ trống", "mo_ta": "Máy cứ hiện thông báo dung lượng đĩa thấp, không cài được chương trình mới."},
+    {"so": 14, "dung": "tt14", "tieu_de": "Con trỏ chuột bị khựng", "mo_ta": "Dùng chuột không dây thì con trỏ thỉnh thoảng đứng im mấy giây, thay pin rồi vẫn vậy."},
+    {"so": 15, "dung": "tt15", "tieu_de": "Bản in màu bị vệt trắng, màu lợt", "mo_ta": "In màu ra thấy các đường kẻ trắng dọc trang và màu xanh dương bị phai."},
+    {"so": 16, "dung": "tt16", "tieu_de": "Webcam laptop chỉ hiện màu đen", "mo_ta": "Họp online không ai thấy mặt tôi, ứng dụng nói không có camera."},
+    {"so": 17, "dung": "tt17", "tieu_de": "UPS cứ kêu tít tít", "mo_ta": "Cái bộ lưu điện dưới bàn phát ra tiếng bíp suốt, điện vẫn có bình thường."},
+    {"so": 18, "dung": "tt19", "tieu_de": "Máy bàn tự sập rồi bật lại", "mo_ta": "Đang làm thì máy tắt phụt rồi tự khởi động, ngày bị mấy lần, mất cả file đang soạn."},
+    {"so": 19, "dung": "tt20", "tieu_de": "Máy photo báo mã lỗi không copy được", "mo_ta": "Máy sao chụp ngoài sảnh hiện lỗi E-200, khởi động lại cũng không hết."},
+    {"so": 20, "dung": "tt18", "tieu_de": "Bị từ chối khi mở thư mục mạng của phòng", "mo_ta": "Vào ổ chia sẻ của phòng thì báo access denied, người khác vẫn vào được."},
+
+    {"so": 21, "dung": "tt21", "tieu_de": "Cần tài khoản phần mềm hạch toán", "mo_ta": "Mới điều chuyển về phòng tài chính kế toán, nhờ cấp tài khoản để nhập liệu chứng từ."},
+    {"so": 22, "dung": "tt22", "tieu_de": "Không nhớ mật khẩu hộp thư, bị khóa", "mo_ta": "Gõ sai mật khẩu email mấy lần giờ không vào được nữa."},
+    {"so": 23, "dung": "tt23", "tieu_de": "Không lưu được file trong thư mục dự án", "mo_ta": "Mở xem được tài liệu dự án nhưng bấm lưu thì báo không đủ quyền."},
+    {"so": 24, "dung": "tt25", "tieu_de": "Kết nối mạng riêng ảo từ xa bị lỗi đăng nhập", "mo_ta": "Làm việc tại nhà, mở VPN thì báo sai tài khoản dù mật khẩu đúng."},
+    {"so": 25, "dung": "tt26", "tieu_de": "Muốn xem dashboard doanh số hàng tháng", "mo_ta": "Nhờ cấp quyền đọc báo cáo doanh thu để làm số liệu cho buổi họp quý."},
+    {"so": 26, "dung": "tt27", "tieu_de": "Phần mềm chấm công báo tài khoản bị vô hiệu", "mo_ta": "Lâu không vào, giờ đăng nhập hệ thống nhân sự thì báo tài khoản không còn hoạt động."},
+    {"so": 27, "dung": "tt29", "tieu_de": "Word báo hết hạn bản quyền, chỉ cho xem", "mo_ta": "Sau khi cài lại máy, phần mềm soạn văn bản không cho chỉnh sửa nữa."},
+    {"so": 28, "dung": "tt31", "tieu_de": "Lịch họp trên di động không cập nhật", "mo_ta": "Cuộc họp mới tạo không hiện trên điện thoại, chỉ thấy trên máy tính."},
+    {"so": 29, "dung": "tt33", "tieu_de": "Phần mềm ký điện tử không nhận USB token", "mo_ta": "Cắm token vào máy nhưng không thấy chứng thư số để ký văn bản."},
+    {"so": 30, "dung": "tt35", "tieu_de": "Đăng nhập app họp online báo chưa có license", "mo_ta": "Dùng tài khoản công ty vào phần mềm họp thì bị báo không có giấy phép sử dụng."},
+    {"so": 31, "dung": "tt36", "tieu_de": "Đổi sim nên không nhận được mã OTP", "mo_ta": "Tôi thay số điện thoại mới, giờ đăng nhập không nhận được mã xác minh."},
+    {"so": 32, "dung": "tt28", "tieu_de": "Không nhận được thư gửi vào địa chỉ chung của phòng", "mo_ta": "Vào phòng kinh doanh hai tuần rồi mà email gửi tới hộp thư nhóm không thấy về."},
+
+    {"so": 33, "dung": "tt37", "tieu_de": "Cần giấy xác nhận đang làm việc để xin thị thực", "mo_ta": "Tôi chuẩn bị hồ sơ đi du lịch nước ngoài, cần bản xác nhận công tác bằng tiếng Anh."},
+    {"so": 34, "dung": "tt38", "tieu_de": "Giấy chứng minh thu nhập cho hồ sơ vay", "mo_ta": "Ngân hàng cần xác nhận lương mấy tháng gần đây để duyệt khoản vay mua nhà."},
+    {"so": 35, "dung": "tt41", "tieu_de": "Thông tin ngày sinh trên hồ sơ bị nhầm", "mo_ta": "Phiếu lương ghi ngày sinh khác với giấy tờ tùy thân của tôi."},
+    {"so": 36, "dung": "tt44", "tieu_de": "Làm rơi thẻ ra vào văn phòng", "mo_ta": "Thẻ từ nhân viên bị thất lạc nên không mở cửa vào công ty được."},
+    {"so": 37, "dung": "tt46", "tieu_de": "Cập nhật số tài khoản nhận lương mới", "mo_ta": "Từ kỳ lương tới tôi muốn nhận lương qua tài khoản ở ngân hàng khác."},
+
+    {"so": 38, "dung": "tt49", "tieu_de": "Phòng sắp hết giấy in", "mo_ta": "Giấy A4 trong tủ còn ít, xin bổ sung thêm cho tháng sau."},
+    {"so": 39, "dung": "tt51", "tieu_de": "Ghế ngồi làm việc bị hỏng", "mo_ta": "Tay ghế bị gãy và nệm lún xuống, ngồi cả ngày mỏi lưng."},
+    {"so": 40, "dung": "tt59", "tieu_de": "Laptop mới thiếu cổng để cắm màn hình và mạng", "mo_ta": "Máy chỉ có cổng type-C nên không nối được với màn hình và cáp mạng trên bàn."}
+  ]
+}

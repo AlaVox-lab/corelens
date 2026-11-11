@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -238,6 +238,9 @@ def danh_sach_nguoi_nhan_viec(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    case_id: Annotated[
+        int | None, Query(description="Hồ sơ cần gợi ý người xử lý (#318), thuộc phòng này")
+    ] = None,
 ) -> NguoiNhanViecTrongPhongRa:
     """Người trong phòng nhận được việc, kèm tên thật, cho ô chọn người xử lý.
 
@@ -273,6 +276,16 @@ def danh_sach_nguoi_nhan_viec(
             detail=f"Không có phòng ban '{department_code}' đang hoạt động.",
         )
 
+    # Hồ sơ xin gợi ý phải thuộc chính phòng này — không thì 404, không lộ hồ sơ của phòng khác
+    ho_so = None
+    if case_id is not None:
+        ho_so = session.get(Request, case_id)
+        if ho_so is None or ho_so.department_code != department_code:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ trong phòng này."},
+            )
+
     try:
         ung_vien = nguoi_nhan_viec(session, danh_ba, bo.id, department_code)
     except DirectoryUnavailable as loi:
@@ -289,4 +302,27 @@ def danh_sach_nguoi_nhan_viec(
         people=[
             NguoiNhanViecRa(id=p.id, name=p.name, username=p.username) for p in ung_vien
         ],
+        suggestion=_goi_y_moi(session, ho_so, ung_vien) if ho_so is not None else None,
     )
+
+
+def _goi_y_moi(session: Session, ho_so: Request, ung_vien: list[Person]):
+    """Tính lại gợi ý người xử lý lúc trưởng phòng mở ô chọn (#318), trên đúng danh sách vừa tra.
+
+    Gợi ý là phần phụ: hỏng vì bất cứ lý do gì thì ô chọn vẫn trả đủ người, chỉ không có thẻ.
+    """
+    # Nhập muộn: hai mô-đun này nhập ngược tệp này
+    from app.intelligence.goi_y import goi_y_nguoi_xu_ly
+    from app.intelligence.nguoi_xu_ly import cap_nhat_goi_y, dang_cho_giao_viec
+    from app.workflow.routes import goi_y_ra
+
+    try:
+        if not dang_cho_giao_viec(session, ho_so):
+            return None
+        cap_nhat_goi_y(session, ho_so, ung_vien)
+        session.commit()
+        return goi_y_ra(goi_y_nguoi_xu_ly(session, ho_so))
+    except Exception:  # noqa: BLE001 — không để gợi ý làm hỏng ô chọn người
+        session.rollback()
+        logger.exception("Không tính được gợi ý người xử lý cho hồ sơ %s", ho_so.id)
+        return None

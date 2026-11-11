@@ -48,6 +48,21 @@ cùng câu, không do mô hình ngôn ngữ viết. Các câu nói lần lượt
    (và phòng nào, khi so sánh được giữa các phòng)
 4. Những bước của luồng thiết kế mà **chưa hồ sơ nào đi qua**, nếu có
 
+### Khuyến nghị cải tiến
+
+Khi cụm bật mô hình ngôn ngữ (hồ sơ `tri-tue`), dưới các câu kết luận có thêm khối **Khuyến nghị cải
+tiến**: vài câu ngắn mô hình viết từ chính các con số trên, ví dụ nên bổ sung người cho phòng chậm nhất
+hay rà lại biểu mẫu của loại hay bị trả về. Màn **không chờ** khối này — kết quả và câu kết luận hiện
+trước, khuyến nghị tới sau vài giây tới vài chục giây.
+
+- **Con số luôn của hệ thống**: mỗi câu gồm việc nên làm do mô hình viết, rồi *căn cứ* chép nguyên dòng
+  số liệu tương ứng từ kết quả khai phá. Phần mô hình viết mà có con số hay tên trạng thái, loại, phòng
+  không thuộc đúng dòng căn cứ đó thì cả câu bị bỏ
+- **Chỉ để đọc**: đây là gợi ý của hệ thống, không tự đổi cấu hình hay hồ sơ nào. Quyết định cải tiến là
+  của bạn
+- Mở lại màn với cùng số liệu thì khuyến nghị có ngay; có hồ sơ mới làm số đổi thì hệ thống viết lại
+- Mô hình tắt hay không câu nào qua phép đối chiếu thì khối không hiện — màn vẫn đủ câu kết luận
+
 Thời gian chờ luôn tính bằng **giờ làm việc** theo lịch trong dữ liệu — cùng phép đo với đồng hồ hạn xử
 lý — nên "9 giờ 5 phút làm việc" là chín tiếng năm phút trong giờ làm, không phải thời gian đồng hồ.
 

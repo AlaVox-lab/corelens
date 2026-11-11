@@ -112,6 +112,7 @@ position:
     id: ROW-3
     children:
     - CHART-13
+    - CHART-14
     parents:
     - ROOT_ID
     - GRID_ID
@@ -127,9 +128,22 @@ position:
     - ROW-3
     meta:
       chartId: 13
-      width: 12
+      width: 8
       height: 55
       uuid: ae4666ca-b34f-4297-9d62-a93161744f2f
+  CHART-14:
+    type: CHART
+    id: CHART-14
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-3
+    meta:
+      chartId: 14
+      width: 4
+      height: 55
+      uuid: cfcadd06-655a-4792-a2e0-1668ddb017f9
 metadata:
   color_scheme: supersetColors
   refresh_frequency: 0

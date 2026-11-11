@@ -22,6 +22,7 @@ import { BangThaoTac, type NguonLuaChon } from "@/components/bang-thao-tac";
 import type { MucMeta } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, type KetQua } from "@/lib/api";
 import type {
+  GoiY,
   HoSoPhongBan,
   LienHeNguoiGui,
   NhanCoMa,
@@ -33,34 +34,51 @@ import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 export type DuLieuPhongBan = {
   ho_so: HoSoPhongBan;
   danhMuc: Partial<Record<NguonDanhMuc, NguonLuaChon>>;
+  /**
+   * Gợi ý người xử lý (#318), tính lại lúc nạp ô chọn người — cùng lần gọi danh bạ. Danh bạ không
+   * trả lời thì lùi về gợi ý đã lưu trên hồ sơ; không có thì ô chọn tay như trước.
+   */
+  goiYNguoi: GoiY | null;
   /** Liên hệ người gửi đi điểm cuối riêng (#131): danh bạ hỏng thì chỉ thẻ đó báo lỗi. */
   lienHe: KetQua<LienHeNguoiGui>;
   cacTrangThai: TrangThai[] | null;
 };
 
-async function napNguon(nguon: NguonDanhMuc, ho_so: HoSoPhongBan): Promise<NguonLuaChon> {
+type KetQuaNguon = { luaChon: NguonLuaChon; goiY?: GoiY | null };
+
+async function napNguon(nguon: NguonDanhMuc, ho_so: HoSoPhongBan): Promise<KetQuaNguon> {
   if (nguon === "assignees") {
-    if (!ho_so.department) return { loi: "Hồ sơ chưa thuộc phòng nào nên chưa giao được người." };
+    if (!ho_so.department) {
+      return { luaChon: { loi: "Hồ sơ chưa thuộc phòng nào nên chưa giao được người." } };
+    }
+    // Gửi kèm mã hồ sơ: dịch vụ tính lại gợi ý trên đúng danh sách vừa tra (#318)
     const ketQua = await docDichVu<NguoiNhanViecTrongPhong>(
-      `/departments/${encodeURIComponent(ho_so.department.code)}/assignees`,
+      `/departments/${encodeURIComponent(ho_so.department.code)}/assignees?case_id=${ho_so.id}`,
     );
     if (!ketQua.ok) {
       return {
-        loi: `${ketQua.thongDiep} Vẫn nhận được hồ sơ mà chưa giao cho ai — cả phòng cùng thấy hồ sơ này.`,
+        luaChon: {
+          loi: `${ketQua.thongDiep} Vẫn nhận được hồ sơ mà chưa giao cho ai — cả phòng cùng thấy hồ sơ này.`,
+        },
       };
     }
-    return ketQua.duLieu.people.map((p) => ({ code: p.id, label: p.name }));
+    return {
+      luaChon: ketQua.duLieu.people.map((p) => ({ code: p.id, label: p.name })),
+      goiY: ketQua.duLieu.suggestion ?? null,
+    };
   }
 
   // Ba danh mục còn lại mang đúng tên điểm cuối của chúng
   const ds = await goiDichVu<NhanCoMa[]>(`/${nguon}`);
-  return ds ? ds.map(({ code, label }) => ({ code, label })) : { loi: "Không nạp được danh mục." };
+  return {
+    luaChon: ds ? ds.map(({ code, label }) => ({ code, label })) : { loi: "Không nạp được danh mục." },
+  };
 }
 
 /** Nạp đúng những danh mục mà các thao tác đang đi được cần tới — không hơn. */
 async function danhMucCan(
   ho_so: HoSoPhongBan,
-): Promise<Partial<Record<NguonDanhMuc, NguonLuaChon>>> {
+): Promise<{ danhMuc: Partial<Record<NguonDanhMuc, NguonLuaChon>>; goiYNguoi: GoiY | null }> {
   const can = new Set<NguonDanhMuc>();
   for (const canh of ho_so.allowed_transitions) {
     for (const truong of canh.fields) {
@@ -71,7 +89,12 @@ async function danhMucCan(
   const cap = await Promise.all(
     [...can].map(async (nguon) => [nguon, await napNguon(nguon, ho_so)] as const),
   );
-  return Object.fromEntries(cap);
+  const nguoi = cap.find(([nguon]) => nguon === "assignees")?.[1];
+  return {
+    danhMuc: Object.fromEntries(cap.map(([nguon, kq]) => [nguon, kq.luaChon])),
+    // Danh bạ hỏng thì không có danh sách để chọn, nên cũng không có gợi ý để điền
+    goiYNguoi: nguoi && Array.isArray(nguoi.luaChon) ? (nguoi.goiY ?? ho_so.suggested_assignee ?? null) : null,
+  };
 }
 
 /** Hồ sơ trước — danh mục cần nạp phụ thuộc thao tác của nó — rồi phần còn lại song song. */
@@ -79,12 +102,12 @@ export async function napHoSoPhongBan(id: string): Promise<KetQua<DuLieuPhongBan
   const ketQua = await docDichVu<HoSoPhongBan>(`/department/requests/${id}`);
   if (!ketQua.ok) return ketQua;
   const ho_so = ketQua.duLieu;
-  const [danhMuc, lienHe, cacTrangThai] = await Promise.all([
+  const [{ danhMuc, goiYNguoi }, lienHe, cacTrangThai] = await Promise.all([
     danhMucCan(ho_so),
     docDichVu<LienHeNguoiGui>(`/department/requests/${id}/requester-contact`),
     goiDichVu<TrangThai[]>("/states"),
   ]);
-  return { ok: true, duLieu: { ho_so, danhMuc, lienHe, cacTrangThai } };
+  return { ok: true, duLieu: { ho_so, danhMuc, goiYNguoi, lienHe, cacTrangThai } };
 }
 
 export function metaPhongBan(ho_so: HoSoPhongBan): MucMeta[] {
@@ -109,7 +132,7 @@ export function metaPhongBan(ho_so: HoSoPhongBan): MucMeta[] {
  * thành nút chính, thao tác khác vào menu, xong thì sang `sauKhiXong`.
  */
 export function ThaoTacPhongBan({ d, ngan }: { d: DuLieuPhongBan; ngan?: { sauKhiXong: string } }) {
-  const { ho_so, danhMuc } = d;
+  const { ho_so, danhMuc, goiYNguoi } = d;
   return (
     // Khóa có `updated_at`: nhận việc giữ nguyên trạng thái (#127), nên chỉ mã
     // trạng thái thì bảng không dựng lại sau khi nhận.
@@ -123,9 +146,11 @@ export function ThaoTacPhongBan({ d, ngan }: { d: DuLieuPhongBan; ngan?: { sauKh
         request_type_code: ho_so.request_type?.code ?? "",
         priority_code: ho_so.priority?.code ?? "",
         department_code: ho_so.department?.code ?? "",
-        assignee_id: ho_so.assignee_id ?? "",
+        // Chưa giao ai thì điền sẵn người được gợi ý (#318); đã có người thì ô giữ người đó, thẻ
+        // gợi ý nằm trên ô và nói khi hai bên khác nhau
+        assignee_id: ho_so.assignee_id ?? goiYNguoi?.code ?? "",
       }}
-      goiY={{}}
+      goiY={goiYNguoi ? { assignee_id: goiYNguoi } : {}}
       danhMuc={danhMuc}
       hanhDong={chuyenTrangThaiPhongBan}
       khiHet={{

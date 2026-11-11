@@ -92,10 +92,13 @@ cầu, mức ưu tiên và phòng ban, bật mô hình ngôn ngữ cục bộ (l
 Apache-2.0) — cần thêm khoảng 1,5 GB bộ nhớ và 2,4 GB ổ đĩa:
 
 ```bash
-python scripts/tai_mo_hinh.py          # ở gốc kho mã: tải 1,1 GB vào volume Docker, kiểm SHA-256
-# trong infra/.env đặt: LLM_URL=http://mo-hinh:8080
+python scripts/tai_mo_hinh.py          # ở gốc kho mã: tải hai tệp mô hình vào volume Docker, kiểm SHA-256
+# trong infra/.env đặt: LLM_URL=http://mo-hinh:8080 và EMBEDDING_URL=http://mo-hinh-nhung:8080
 docker compose --env-file .env --profile tri-tue up -d   # trong infra/
 ```
+
+`LLM_URL` bật gợi ý phân loại và khuyến nghị cải tiến trên màn Quy trình thực tế; `EMBEDDING_URL` (mô hình
+nhúng Qwen3-Embedding-0.6B, Apache-2.0) bật gợi ý hồ sơ đã giải quyết tương tự trên biểu mẫu Gửi yêu cầu.
 
 Tắt: để `LLM_URL` rỗng rồi `docker compose --env-file .env up -d`. Mô hình chỉ gợi ý — người vẫn
 bấm xác nhận; mô hình tắt hay chậm thì không có gợi ý, không thao tác nào bị chặn. **`down -v` xóa cả tệp

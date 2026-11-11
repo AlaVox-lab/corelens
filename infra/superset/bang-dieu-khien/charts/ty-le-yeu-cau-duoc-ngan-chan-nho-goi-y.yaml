@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+#
+# Tỷ lệ ngăn chặn (#319): trong các phiên soạn đã thấy gợi ý hồ sơ tương tự và đã có kết cục, bao
+# nhiêu phần trăm bỏ không gửi. Phiên đang soạn dở không tính vào mẫu số.
+slice_name: Tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý hồ sơ tương tự (%)
+description: Trong các lượt soạn đã thấy gợi ý và đã kết thúc, phần trăm người gửi bỏ không gửi — bấm "không gửi nữa", hay quá hạn chờ mà không gửi.
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 14__table
+  metric:
+    expressionType: SQL
+    sqlExpression: ROUND(100.0 * SUM(so_ngan_chan) / NULLIF(SUM(so_da_ket_thuc), 0), 1)
+    label: Tỷ lệ ngăn chặn (%)
+    hasCustomLabel: true
+    optionName: metric_ngan_chan_ty_le
+  adhoc_filters: []
+  subheader: '% lượt xem gợi ý mà người gửi bỏ không gửi'
+  y_axis_format: SMART_NUMBER
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+query_context: null
+cache_timeout: null
+uuid: cfcadd06-655a-4792-a2e0-1668ddb017f9
+version: 1.0.0
+dataset_uuid: 32291f8e-3a2a-4ed4-b145-181e5f810dca

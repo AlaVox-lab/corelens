@@ -28,6 +28,20 @@ Mục **Gửi yêu cầu** (`/yeu-cau/moi`) là biểu mẫu ba bước:
 
 Bạn **không đặt mức ưu tiên** — điều phối viên đặt sau khi phân loại, để mức ưu tiên còn ý nghĩa.
 
+### Hồ sơ đã giải quyết tương tự
+
+Khi cụm bật mô hình nhúng (hồ sơ `tri-tue`, xem *Cài đặt và vận hành → Mô hình ngôn ngữ*), ngừng gõ tiêu
+đề và mô tả một chút thì ngay dưới ô mô tả có thể hiện **tối đa ba hồ sơ đã được giải quyết** giống vấn
+đề của bạn, kèm cách đã giải quyết. Đây là gợi ý của hệ thống từ các hồ sơ người gửi đã xác nhận đạt;
+tên người, email và số điện thoại đã được ẩn, và không có đường dẫn tới hồ sơ của người khác.
+
+- Cách cũ giải quyết được vấn đề của bạn thì bấm **Đã giải quyết được, không gửi nữa** — biểu mẫu đóng,
+  không hồ sơ nào được tạo
+- Chưa giải quyết được thì cứ gửi như bình thường; khối gợi ý không bao giờ giữ nút Gửi
+
+Mô hình tắt, chậm hay lỗi thì khối này đơn giản là không hiện — biểu mẫu vẫn như cũ. Hệ thống ghi lại
+bạn đã xem gợi ý rồi gửi hay bỏ không gửi, để đo trên bảng điều khiển bao nhiêu yêu cầu được ngăn chặn.
+
 ## Theo dõi hồ sơ
 
 **Hồ sơ của tôi** (`/yeu-cau`) liệt kê mọi hồ sơ đã gửi. Rê chuột hay chạm vào nhãn trạng thái để

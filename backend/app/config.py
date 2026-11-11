@@ -86,6 +86,67 @@ class Settings(BaseSettings):
     # hình vẫn gợi ý loại và mức ưu tiên; phòng nó đoán chỉ nằm trong ghi chú để đo.
     suggest_department_from_model: bool = False
 
+    # --- Gợi ý người xử lý (#318) ----------------------------------------------
+    #
+    # Không cần mô hình ngôn ngữ: điểm tính từ nhật ký và danh bạ. Mỗi ứng viên — người của đúng phòng
+    # nhận được việc — được điểm `trọng số kinh nghiệm × ln(1 + số hồ sơ cùng loại đã làm xong)` trừ
+    # `trọng số tải × số việc đang giữ`; điểm cao nhất được gợi ý. Tắt thì ô chọn như trước.
+    assignee_suggest_enabled: bool = True
+    assignee_suggest_load_weight: float = 1.0
+    assignee_suggest_experience_weight: float = 1.0
+    # Kinh nghiệm chỉ đếm hồ sơ làm xong trong chừng này ngày gần nhất — người đã lâu không làm loại
+    # này thì kinh nghiệm cũ không còn đáng kể
+    assignee_suggest_history_days: int = 365
+
+    # --- Hồ sơ đã giải quyết tương tự (#319, ADR-0008 đợt 2) -------------------
+    #
+    # Mô hình nhúng chạy ở dịch vụ riêng `mo-hinh-nhung` (llama.cpp, hồ sơ `tri-tue`). Địa chỉ rỗng là
+    # TẮT: không lập chỉ mục, biểu mẫu Gửi yêu cầu không hiện gợi ý nào, mọi thứ khác như cũ.
+    embedding_url: str = ""
+    embedding_model: str = "qwen3-embedding-0.6b-q8_0"
+    # Qwen3-Embedding nhúng câu hỏi kèm một lời dặn tác vụ, tài liệu thì không (thẻ mô hình của Qwen).
+    # Lời dặn viết tiếng Anh như khuyến nghị của nhà phát triển; đổi mô hình thì đổi chuỗi này.
+    embedding_query_instruction: str = (
+        "Given an internal IT or administrative support request, retrieve previously resolved "
+        "requests that describe the same problem"
+    )
+    # Hạn chót một lần nhúng ở bộ lập chỉ mục — chạy nền, không ai chờ
+    embedding_timeout_seconds: float = 20.0
+    # Hạn chót một lần tìm từ biểu mẫu: người gửi đang gõ, quá hạn thì không hiện gì
+    similar_timeout_seconds: float = 2.0
+    similar_max_results: int = 3
+    # Độ tương đồng cosine tối thiểu để một hồ sơ được hiện — dưới ngưỡng là không liên quan
+    similar_min_score: float = 0.55
+    # Bộ lập chỉ mục bù theo khuôn `nhip_quet.py`: nhặt hồ sơ mới đóng đạt chưa có trong chỉ mục
+    similar_index_enabled: bool = True
+    similar_index_interval_seconds: int = 60
+    similar_index_batch_size: int = 16
+    # Người gửi xem gợi ý mà quá chừng này phút không gửi hồ sơ thì tính là bỏ không gửi (ngăn chặn)
+    similar_abandon_after_minutes: int = 30
+
+    # --- Khuyến nghị cải tiến bằng câu chữ (#320) -------------------------------
+    #
+    # Mô hình sinh văn bản (`llm_url`) viết vài câu khuyến nghị từ kết quả khai phá quy trình. Sinh ở
+    # nền, màn quy trình thực tế không chờ; tắt hay mô hình tắt thì màn chỉ có câu kết luận tất định.
+    recommendation_enabled: bool = True
+    # Hạn chót một lần sinh — chạy nền, nên rộng hơn hạn của gợi ý phân loại
+    recommendation_timeout_seconds: float = 90.0
+    recommendation_max_tokens: int = 400
+    # Số câu khuyến nghị tối đa mô hình được viết; câu sai số bị bỏ nên có thể hiện ít hơn
+    recommendation_max_sentences: int = 4
+    # Bộ nhớ đệm theo khoảng ngày, phạm vi và chính kết quả khai phá: cùng dữ liệu thì không hỏi lại
+    recommendation_cache_size: int = 64
+    # Lần sinh hỏng (mô hình không tới được, quá hạn) nhớ chừng này giây rồi mới thử lại
+    recommendation_retry_after_seconds: int = 120
+
+    @property
+    def embedding_enabled(self) -> bool:
+        return bool(self.embedding_url.strip())
+
+    @property
+    def similar_index_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.similar_index_interval_seconds
+
     @property
     def llm_enabled(self) -> bool:
         return bool(self.llm_url.strip())

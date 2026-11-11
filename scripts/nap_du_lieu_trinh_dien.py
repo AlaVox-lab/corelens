@@ -21,6 +21,13 @@
 # giờ hành chính, đồng hồ hạn của hồ sơ đúng bằng cách hệ thống tự đo, và mỗi hồ sơ chỉ được
 # mô phỏng tới lượng giờ làm việc còn lại tới hiện tại — không sự kiện nào nằm ở tương lai.
 #
+# Hồ sơ đã giải quyết có nội dung thật (#319): một phần hồ sơ mẫu mà bộ sinh cho đi tới "người gửi
+# xác nhận đạt" được thay tiêu đề, mô tả bằng các mục trong scripts/du_lieu/ho_so_da_giai_quyet.json,
+# và ghi chú của bước hoàn thành xử lý mang cách giải quyết của mục đó — để bộ lập chỉ mục hồ sơ tương
+# tự có thứ đáng tìm, và bộ đo backend/tests/du_lieu/bo_do_tuong_tu.json có đáp án. Cạnh "hoàn thành
+# xử lý" và "xác nhận đạt" tra từ bộ quy tắc (bước chính của người được giao, #227), không mã trạng
+# thái nào. Mọi thứ vẫn ghi trước khi INSERT — không sửa dòng nhật ký nào sau đó.
+#
 # Giới hạn đã biết: kịch bản chưa mô phỏng hệ số hạn theo mức ưu tiên (#101) — hồ sơ khẩn cấp
 # trong dữ liệu trình diễn leo thang theo hạn chuẩn của loại.
 #
@@ -52,6 +59,9 @@ TIEN_TO = "[Mẫu]"
 KICH_BAN = {**KICH_BAN_MAC_DINH, "he_so_xu_ly_theo_sla": 0.45}
 # Gốc của đồng hồ riêng của bộ sinh — một mốc bất kỳ, chỉ dùng để lấy độ lệch
 GOC_AO = datetime(2000, 1, 3, tzinfo=timezone.utc)
+HO_SO_DA_GIAI_QUYET = Path(__file__).resolve().parent / "du_lieu" / "ho_so_da_giai_quyet.json"
+# Giá trị `transitions.primary_scope` của bước chính do người được giao đi (#227)
+PHAM_VI_NGUOI_DUOC_GIAO = "assignee"
 
 
 def psql(ts: argparse.Namespace, cau: str, vao: str | None = None) -> str:
@@ -73,6 +83,59 @@ def copy_khoi(bang: str, cot: list[str], dong: list[list]) -> str:
     bo_dem = io.StringIO()
     csv.writer(bo_dem, lineterminator="\n").writerows(dong)
     return f"COPY {bang} ({', '.join(cot)}) FROM STDIN WITH (FORMAT csv);\n{bo_dem.getvalue()}\\.\n"
+
+
+def gan_ho_so_da_giai_quyet(ts: argparse.Namespace, ho_so: list, su_kien: list[dict]) -> dict[int, str]:
+    """Gắn nội dung thật vào hồ sơ mẫu đóng đạt (đầu tệp). Sửa `hs.mo_ta` và ghi chú sự kiện tại chỗ,
+    trả tiêu đề mới theo mã hồ sơ mẫu."""
+    muc = json.loads(HO_SO_DA_GIAI_QUYET.read_text(encoding="utf-8"))["ho_so"]
+    canh: dict[str, set[tuple[str, str, str]]] = {"xong": set(), "dat": set()}
+    for dong in psql(ts, f"""
+        WITH dang AS (SELECT id FROM rule_sets WHERE is_active),
+        xong AS (
+            SELECT t.from_state, t.to_state, t.activity_code
+            FROM transitions t JOIN dang ON dang.id = t.rule_set_id
+            WHERE t.primary_scope = '{PHAM_VI_NGUOI_DUOC_GIAO}' AND NOT t.is_system
+        )
+        SELECT 'xong', from_state, to_state, activity_code FROM xong
+        UNION
+        SELECT 'dat', t.from_state, t.to_state, t.activity_code FROM transitions t
+        JOIN dang ON dang.id = t.rule_set_id
+        JOIN states s ON s.rule_set_id = t.rule_set_id AND s.code = t.to_state AND s.is_terminal
+        WHERE NOT t.is_system AND t.from_state IN (SELECT to_state FROM xong)
+    """).splitlines():
+        loai, tu, den, hoat_dong = dong.split("|")
+        canh[loai].add((tu, den, hoat_dong))
+
+    theo_ho_so: dict[int, list[dict]] = {}
+    for e in su_kien:
+        theo_ho_so.setdefault(e["case_id"], []).append(e)
+    con: dict[str, list[dict]] = {}
+    for m in muc:
+        con.setdefault(m["loai"], []).append(m)
+
+    tieu_de: dict[int, str] = {}
+    for hs in ho_so:
+        ds = theo_ho_so.get(hs.ma, [])
+        if not ds or not con.get(hs.loai or ""):
+            continue
+        cuoi = ds[-1]
+        if (cuoi["from_state"], cuoi["to_state"], cuoi["activity"]) not in canh["dat"]:
+            continue
+        # Hồ sơ có lần sửa mô tả thì nhật ký mang mô tả ảo cũ — bỏ qua cho khớp
+        if any('"description"' in e["changes"] for e in ds):
+            continue
+        xong = [e for e in ds if (e["from_state"], e["to_state"], e["activity"]) in canh["xong"]]
+        if not xong:
+            continue
+        m = con[hs.loai].pop(0)
+        hs.mo_ta = m["mo_ta"]
+        xong[-1]["note"] = m["cach_giai_quyet"]
+        tieu_de[hs.ma] = f"{TIEN_TO} {m['tieu_de']}"
+    thieu = sum(len(v) for v in con.values())
+    if thieu:
+        print(f"Lưu ý: còn {thieu} hồ sơ đã giải quyết chưa gắn được — tăng --so-ho-so.")
+    return tieu_de
 
 
 def main() -> int:
@@ -134,6 +197,8 @@ def main() -> int:
             print(f"  {d}")
         return 1
 
+    tieu_de_that = gan_ho_so_da_giai_quyet(ts, ho_so, su_kien)
+
     def giay(luc: datetime | None) -> str:
         return "" if luc is None else str(int((luc - GOC_AO).total_seconds()))
 
@@ -142,7 +207,8 @@ def main() -> int:
         tao, _ = dong.split("\t")
         loai = nhan_loai.get(hs.loai or "", "Yêu cầu")
         dong_ho_so.append([
-            hs.ma, tao + "+00", hs.trang_thai, f"{TIEN_TO} {loai} — hồ sơ trình diễn số {hs.ma}",
+            hs.ma, tao + "+00", hs.trang_thai,
+            tieu_de_that.get(hs.ma, f"{TIEN_TO} {loai} — hồ sơ trình diễn số {hs.ma}"),
             hs.mo_ta, hs.nguoi_gui, f"Người gửi mẫu {hs.nguoi_gui.rsplit('-', 1)[-1]}",
             hs.loai or "", hs.phong or "", hs.uu_tien or "", hs.nguoi_xu_ly or "",
             int(hs.chay_giay), int(hs.dung_giay), giay(hs.doan_mo_tu),
@@ -208,7 +274,8 @@ def main() -> int:
                (SELECT id FROM nap_ma)) || ' sự kiện' FROM nap_ma;
         """
     )
-    print(f"Đã nạp {psql(ts, '', vao=sql)} — gửi rải trong {ts.so_ngay} ngày tới nay.")
+    print(f"Đã nạp {psql(ts, '', vao=sql)} — gửi rải trong {ts.so_ngay} ngày tới nay, "
+          f"{len(tieu_de_that)} hồ sơ đã giải quyết có nội dung thật.")
     print(psql(ts, f"""
         SELECT 'Tỷ lệ vi phạm hạn ' || coalesce(round(100.0 * count(*) FILTER (WHERE vi_pham)
                / nullif(count(*), 0), 1)::text, '—') || ' % trên ' || count(*) || ' hồ sơ đã xong'
