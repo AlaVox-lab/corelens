@@ -111,6 +111,17 @@ class Request(Base):
     suggested_priority_code: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_assignee_id: Mapped[str | None] = mapped_column(Text, default=None)
 
+    # Ghi chú của lần sinh gợi ý gần nhất (#317): thành công thì {"ok": true, "model", "at",
+    # "elapsed_ms", "reasons": {trường: lý do}, "model_department"}, hỏng thì {"ok": false, "error",
+    # "at"}. `model_department` là phòng mô hình đoán, giữ cả khi cờ cho phòng ban của mô hình tắt
+    # để đo về sau. Không phải trường quyết định, không phải dấu giữ hay ghi đè (cái đó ở nhật ký).
+    suggestion_note: Mapped[dict | None] = mapped_column(
+        JSONB(none_as_null=True), default=None
+    )
+    # Mốc lần thử gần nhất và số lần đã thử — bộ quét bù đọc để không hỏi lại mãi một hồ sơ
+    suggestion_attempted_at: Mapped[dt.datetime | None] = mapped_column(default=None)
+    suggestion_attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
+
     # --- Đồng hồ SLA -------------------------------------------------------
     # Ba cột thay cho một cột hạn chót cố định, vì đồng hồ có thể dừng rồi chạy lại
     # nhiều lần. Trạng thái nào làm đồng hồ chạy do cột `states.sla_running` quyết

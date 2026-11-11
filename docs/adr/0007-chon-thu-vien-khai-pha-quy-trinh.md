@@ -2,11 +2,11 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | Đã chấp nhận (2026-11-08) |
+| Trạng thái | Đã chấp nhận (2026-11-08); giảng viên xác nhận 2026-11-10 |
 | Ngày | 2026-09-28 |
 | Không gian kiến trúc | `I` |
-| Issue liên quan | #48 |
-| Người quyết định | Navigator (`AlaVox-lab`) chấp nhận ngày 2026-11-08 (bình luận ở #48); giảng viên hướng dẫn chưa xác nhận — xem mục Quyết định |
+| Issue liên quan | #48 · #314 · #340 |
+| Người quyết định | Navigator (`AlaVox-lab`) chấp nhận ngày 2026-11-08 (bình luận ở #48); giảng viên hướng dẫn xác nhận ngày 2026-11-10, kèm điều kiện mô tả kho theo mô hình nhiều giấy phép (#340) — xem mục Quyết định |
 
 ---
 
@@ -143,12 +143,16 @@ Quá trình khảo sát, số liệu đo và nguồn ghi trong
 Chọn **PM4Py `2.7.23.8`** làm thư viện khai phá quy trình cho không gian `I`, chạy trong **một
 dịch vụ khai phá tách riêng**, giao tiếp với phần còn lại qua HTTP.
 
-Navigator chấp nhận ngày 2026-11-08 và cài đặt ở #314 (`services/khai-pha/`). Giảng viên chưa xác
-nhận ranh giới AGPL, nên phần thuật toán được đặt sau một giao diện hẹp với **hai bộ máy cho cùng kết
-quả**: `pm4py` (mặc định) và `noi_bo` (Python thuần, không thư viện khai phá nào). Bài kiểm thử có đáp
-án biết trước chạy trên cả hai. Giảng viên không nhận ranh giới AGPL thì đặt `MINING_ENGINE=noi_bo` và
-xóa dòng `pm4py` khỏi `services/khai-pha/requirements.txt` — dịch vụ ứng dụng, cổng và hợp đồng JSON
-không đổi. Phương án pm4js ở dưới vẫn là lối đi nếu cần thêm thuật toán mà không dùng AGPL.
+Navigator chấp nhận ngày 2026-11-08 và cài đặt ở #314 (`services/khai-pha/`). Lúc đó giảng viên chưa
+xác nhận ranh giới AGPL, nên phần thuật toán được đặt sau một giao diện hẹp với **hai bộ máy cho cùng
+kết quả**: `pm4py` (mặc định) và `noi_bo` (Python thuần, không thư viện khai phá nào). Bài kiểm thử có
+đáp án biết trước chạy trên cả hai. Muốn bỏ thư viện thì đặt `MINING_ENGINE=noi_bo` và xóa dòng `pm4py`
+khỏi `services/khai-pha/requirements.txt` — dịch vụ ứng dụng, cổng và hợp đồng JSON không đổi.
+
+**Giảng viên xác nhận ngày 2026-11-10**: đồng ý hướng tách dịch vụ — AGPL-3.0 thuộc danh sách OSI nên
+không vi phạm yêu cầu giấy phép của cuộc thi — **với điều kiện** kho mô tả đúng là một kho hai giấy phép,
+thay cho cách ghi cũ "phần còn lại của kho giữ MIT, mã của nhóm trong dịch vụ vẫn MIT". Điều kiện đó cài
+đặt ở #340 (mục *Mô hình giấy phép* dưới đây). Bộ máy dự phòng vẫn giữ.
 
 ---
 
@@ -189,15 +193,32 @@ phải nguồn mở. Ghi lại để người sau không đề xuất.
 ### Ranh giới giấy phép
 
 - **Chiều MIT sang AGPL là tương thích.** Danh sách giấy phép của GNU ghi giấy phép MIT
-  (Expat) *"compatible with the GNU GPL"*. Các tệp nhóm viết trong dịch vụ khai phá vẫn
-  giữ header MIT; khi chạy, cả dịch vụ đó là một chương trình dùng thư viện AGPL
+  (Expat) *"compatible with the GNU GPL"*, nên mã MIT của kho dùng lại được trong dịch vụ
+  khai phá; chiều ngược lại thì không
 - **Điều 13 của AGPL**: dịch vụ khai phá phục vụ người dùng qua mạng thì phải cho họ lấy
-  được mã nguồn tương ứng. Kho mã của dự án công khai nên đáp ứng sẵn. Không sửa mã PM4Py
-  nên không có phần sửa nào phải công bố thêm
+  được mã nguồn tương ứng. Màn Quy trình thực tế dẫn tới mã nguồn của dịch vụ (mục dưới).
+  Không sửa mã PM4Py nên không có phần sửa nào của thư viện phải công bố thêm
 - **Dịch vụ ứng dụng và cổng không bao giờ `import pm4py`** — chỉ trao đổi dữ liệu qua HTTP,
   nên AGPL không lan sang phần còn lại (điều 5, tác phẩm riêng biệt gộp chung — *aggregate*)
 - Cài từ PyPI, ghim phiên bản bằng `==`; không chép mã thư viện vào kho, không sửa mã thư
   viện
+
+### Mô hình giấy phép (#340)
+
+Theo điều kiện của giảng viên, kho mô tả mình là **một kho hai giấy phép**:
+
+| Phần | Giấy phép | Căn cứ trong kho |
+|---|---|---|
+| `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | Toàn văn `services/khai-pha/LICENSE`; header `SPDX-License-Identifier: AGPL-3.0-or-later` |
+| Mọi thư mục khác | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ cho thư mục trên |
+
+- `LICENSES.md` ở gốc: bảng theo thư mục, lý do, nghĩa vụ AGPL và cách đáp ứng. `NOTICE`: thông báo
+  bên thứ ba (PM4Py, CVXOPT và các gói đáng chú ý khác, các nền tảng chạy như dịch vụ riêng)
+- `scripts/kiem_header.py` (CI) kiểm giấy phép **theo thư mục**: tệp trong `services/khai-pha/` mang MIT,
+  hay tệp ngoài đó mang AGPL, đều là lỗi
+- **Điều 13**: màn *Báo cáo → Quy trình thực tế* luôn có dòng *"Phân tích bởi dịch vụ khai phá quy trình,
+  giấy phép AGPL-3.0 — mã nguồn"*. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), mặc định thư mục
+  `services/khai-pha` trên kho GitHub của dự án; bản tự triển khai có sửa dịch vụ thì trỏ về kho bản sửa
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): dịch vụ khai phá chỉ đọc và phân tích, không
 ghi vào bất kỳ trường quyết định nào của hồ sơ.
@@ -222,14 +243,20 @@ ghi vào bất kỳ trường quyết định nào của hồ sơ.
 - Thêm một dịch vụ phải dựng, khởi động, giám sát; ảnh chứa nặng vì bộ thư viện số học —
   kích thước ảnh chưa đo
 - Phải giữ ranh giới AGPL mãi: không ai được `import pm4py` trong dịch vụ ứng dụng
-- Doanh nghiệp dùng DX-OS mà sửa dịch vụ khai phá thì phải công khai phần sửa
+- Doanh nghiệp dùng DX-OS mà sửa dịch vụ khai phá thì phải công khai phần sửa và trỏ
+  `MINING_SOURCE_URL` về đó
+- Kho có hai giấy phép: người đóng góp phải đặt đúng header theo thư mục, và không được chép mã
+  từ `services/khai-pha/` sang thư mục MIT
 - Câu *"không nhúng thư viện vào mã nguồn dự án"* ở `CLAUDE.md` mục 5.2, `ARCHITECTURE.md`
   mục 3.3 và `docs/dependencies.md` không còn đúng nguyên văn — phải sửa thành "chỉ trong
   dịch vụ tách riêng", nếu không tài liệu mâu thuẫn với mã
 
 **Việc phải làm tiếp sau quyết định này**
 
-- [x] Navigator chấp nhận (2026-11-08); giảng viên chưa xác nhận — có bộ máy dự phòng
+- [x] Navigator chấp nhận (2026-11-08); giảng viên xác nhận (2026-11-10) kèm điều kiện mô hình
+      nhiều giấy phép
+- [x] Mô hình nhiều giấy phép: header AGPL cho `services/khai-pha/`, `LICENSES.md`, `NOTICE`, kiểm
+      header theo thư mục, dòng mã nguồn trên màn Quy trình thực tế (#340)
 - [x] Cập nhật `docs/ARCHITECTURE.md` mục 3 và câu quy tắc AGPL ở mục 3.3; khuôn khai phá ở mục 6.4 (#314)
 - [x] Cập nhật `docs/dependencies.md` với PM4Py, AGPL-3.0-or-later và ranh giới dịch vụ; sửa câu
       tương ứng ở `CLAUDE.md` mục 5.2 (#314)
@@ -257,5 +284,6 @@ ghi vào bất kỳ trường quyết định nào của hồ sơ.
 
 - PM4Py đổi sang giấy phép không thuộc danh sách OSI, hoặc tách bản cộng đồng khỏi các
   thuật toán cần dùng
-- Giảng viên không chấp nhận ranh giới AGPL — khi đó chuyển sang pm4js
+- Giảng viên hay ban tổ chức không nhận mô hình hai giấy phép — khi đó chuyển sang bộ máy `noi_bo`
+  (hoặc pm4js nếu cần thêm thuật toán)
 - pm4js ra bản ổn định và bỏ tệp CC BY-SA

@@ -103,6 +103,11 @@ Trong lược đồ dữ liệu, tách rõ hai nhóm trường:
   giá trị hiện tại, còn mỗi lần xác nhận là một sự kiện
 - **Đo trên lớp báo cáo**: view `bao_cao_goi_y` (mục 6.3), biểu đồ tỷ lệ ghi đè theo trường và nguồn
   trên bảng điều khiển. Đây là con số quyết định khi nào gợi ý của mô hình được thay bảng ánh xạ
+- **Ba trường có gợi ý (#317)**: loại yêu cầu và mức ưu tiên chỉ có nguồn `model` (không có bảng ánh
+  xạ nào cho chúng — mức mặc định của bảng `priorities` là giá trị điền sẵn, không phải gợi ý); phòng
+  ban có cả hai nguồn, nhưng mô hình chỉ ghi `suggested_department_code` khi bật cờ
+  `DXLAB_SUGGEST_DEPARTMENT_FROM_MODEL` (mặc định tắt, mục 6.5). Lần sửa của chính người gửi hồ sơ
+  không ghi giữ hay ghi đè: họ không bao giờ thấy thẻ gợi ý
 
 Ba lý do: đúng nguyên lý Human-in-the-loop mà đề bài nêu; nếu AI phân luồng sai thì
 người dùng vẫn điều chỉnh được; và nếu mô hình lỗi vào ngày trình diễn, hệ thống
@@ -129,11 +134,13 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
+| Máy chủ mô hình ngôn ngữ | llama.cpp server `b11889` | MIT | Không gian `I`. Dịch vụ `mo-hinh` **tùy chọn** (hồ sơ Compose `tri-tue`), điểm cuối kiểu OpenAI, chỉ trong mạng Compose. Xem [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) và mục 6.5 |
+| Mô hình sinh văn bản | Qwen2.5-1.5B-Instruct GGUF `q4_k_m` | Apache-2.0 | Tệp dữ liệu, không trong kho hay ảnh: nằm ở volume `mo-hinh`, tải bằng `scripts/tai_mo_hinh.py` (ghim commit kho Hugging Face và SHA-256) |
 | Khai phá quy trình | PM4Py `2.7.23.8` | AGPL-3.0-or-later | Không gian `I`. Chỉ nằm trong **dịch vụ khai phá tách riêng** `services/khai-pha/`, giao tiếp qua HTTP; có bộ máy dự phòng không dùng thư viện này. Xem [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) và mục 6.4 |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Bảy thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
-mang AGPL nên bị giữ sau ranh giới dịch vụ — mục 3.3.
+Chín thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
+mang AGPL nên bị giữ sau ranh giới dịch vụ, và cả thư mục dịch vụ khai phá theo AGPL — mục 3.3.
 
 **Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
 leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết** trong cổng Next.js.
@@ -256,21 +263,25 @@ nơi tạo ra giá trị của đề tài, và không nền tảng nào sinh s�
 ### 3.2. Đã khảo sát, chờ duyệt
 
 Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Hai nhóm thành phần sau đã khảo sát xong, mỗi nhóm có một bản ghi ở trạng
-thái *Đề xuất* (nhóm thứ ba — thư viện khai phá quy trình, ADR-0007 — đã chấp nhận và nằm ở mục 3.1). **Chưa phải quyết định**: chưa có thành phần nào trong số này được tích hợp,
-và mục 3.1 chỉ nhận chúng khi bản ghi chuyển sang *Đã chấp nhận*.
+yêu cầu Open-Core. Nhóm thành phần sau đã khảo sát xong, có bản ghi ở trạng thái *Đề xuất* (hai
+nhóm khác — thư viện khai phá quy trình ADR-0007, mô hình ngôn ngữ ADR-0008 — đã chấp nhận và nằm ở
+mục 3.1). **Chưa phải quyết định**: chưa được tích hợp, và mục 3.1 chỉ nhận nó khi bản ghi chuyển
+sang *Đã chấp nhận*.
 
 | Không gian | Thành phần | Bản ghi | Đề xuất |
 |---|---|---|---|
 | `H` | Hệ thống quản trị tri thức | [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) | Wiki.js — vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
-| `I` | Cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ | [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) | pgvector ngay trên PostgreSQL, llama.cpp server với hai mô hình Apache-2.0, không dùng khung LLM |
+
+ADR-0008 chấp nhận cả pgvector và mô hình nhúng, nhưng phần đó chưa cài (để #319): ảnh PostgreSQL của
+cụm chưa đổi.
 
 ### 3.3. Quy tắc kiểm tra giấy phép
 
 Trước khi thêm bất kỳ phụ thuộc nào:
 
 1. Đối chiếu tên giấy phép với danh sách chính thức tại `opensource.org/licenses`
-2. Kiểm tra tương thích với MIT
+2. Kiểm tra tương thích với giấy phép của thư mục dùng nó — MIT, hoặc AGPL-3.0-or-later trong
+   `services/khai-pha/`
 3. Ghi kết quả vào `docs/dependencies.md`
 
 Cảnh giác với các giấy phép **không** thuộc danh sách OSI: BSL, SSPL, Elastic
@@ -280,9 +291,26 @@ Với giấy phép copyleft mạnh (AGPL): hợp lệ vì được OSI công nh�
 dịch vụ tách riêng** — thư mục riêng, ảnh chứa riêng, giao tiếp với phần còn lại qua HTTP. Hoặc cả
 nền tảng chạy nguyên khối như dịch vụ độc lập, hoặc thư viện được `import` chỉ bên trong dịch vụ đó
 (ADR-0007: PM4Py chỉ trong `services/khai-pha/`, đúng một tệp `app/bo_may/pm4py_bo_may.py`). Dịch vụ
-ứng dụng và cổng không bao giờ `import` thư viện AGPL — CI có bước `grep` chặn. Mã của nhóm trong dịch
-vụ đó vẫn mang header MIT (MIT tương thích một chiều sang AGPL); kho công khai đáp ứng điều 13. Ghi rõ
-ranh giới này trong bản ghi quyết định và `docs/dependencies.md`.
+ứng dụng và cổng không bao giờ `import` thư viện AGPL — CI có bước `grep` chặn. Ghi rõ ranh giới này
+trong bản ghi quyết định và `docs/dependencies.md`.
+
+**Mô hình nhiều giấy phép (#340).** Kho không còn một giấy phép duy nhất:
+
+| Thư mục | Giấy phép | Tệp toàn văn |
+|---|---|---|
+| `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | `services/khai-pha/LICENSE` |
+| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ trên |
+
+- Bảng đầy đủ và lý do ở `LICENSES.md`; thông báo bên thứ ba (PM4Py và các gói copyleft nó kéo theo, các
+  nền tảng chạy như dịch vụ riêng) ở `NOTICE`
+- Header SPDX theo thư mục; `scripts/kiem_header.py` (CI) báo lỗi tệp mang giấy phép của thư mục khác.
+  Thêm một thư mục mang giấy phép riêng thì sửa cùng lúc bảng `GIAY_PHEP_THEO_THU_MUC` trong kịch bản đó
+  và `LICENSES.md`
+- **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên màn Quy trình thực
+  tế có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
+  cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa
+- Chiều MIT sang AGPL tương thích, nên mã MIT của kho dùng lại được trong dịch vụ khai phá; chiều ngược
+  lại thì không — **không chép mã từ `services/khai-pha/` sang thư mục MIT**
 
 ---
 
@@ -319,6 +347,7 @@ dx-os-lab/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── services/
 │   └── khai-pha/                # [I] dịch vụ khai phá quy trình (#314) — nơi DUY NHẤT dùng PM4Py (AGPL)
+│       ├── LICENSE              # AGPL-3.0 toàn văn: cả thư mục theo AGPL-3.0-or-later (#340)
 │       ├── app/du_lieu.py       # mọi câu SQL, chỉ đọc lớp báo cáo + cờ của bộ quy tắc
 │       ├── app/phan_tich.py     # nhánh lệch, thời gian chờ, điểm nghẽn — chung cho hai bộ máy
 │       └── app/bo_may/          # pm4py (mặc định) và noi_bo (dự phòng, Python thuần)
@@ -382,7 +411,9 @@ dx-os-lab/
 ├── CHANGELOG.md                 # sinh tự động bằng git-cliff
 ├── CLAUDE.md                    # quy tắc cho mọi trợ lý AI làm việc trên kho
 ├── CONTRIBUTING.md              # quy trình làm việc và quy ước mã nguồn
-├── LICENSE                      # MIT toàn văn
+├── LICENSE                      # MIT toàn văn, kèm ngoại lệ cho services/khai-pha/
+├── LICENSES.md                  # bảng giấy phép theo thư mục, nghĩa vụ AGPL (#340)
+├── NOTICE                       # thông báo bên thứ ba
 ├── README.md
 └── cliff.toml                   # cấu hình sinh nhật ký thay đổi
 ```
@@ -943,7 +974,7 @@ chính** bao nhiêu, ở đâu, tốn bao lâu.
 **Ba lớp, ranh giới giấy phép ở lớp giữa:**
 
 ```
-Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch vụ khai phá (MIT + thư viện AGPL)  ──SQL chỉ đọc──► PostgreSQL
+Cổng ──► dịch vụ ứng dụng (MIT)  ──HTTP──►  dịch vụ khai phá (AGPL, cả mã nhóm lẫn thư viện)  ──SQL chỉ đọc──► PostgreSQL
          GET /analytics/process-mining       POST /khai-pha
          kiểm vai, gắn phạm vi phòng          không mở cổng ra máy, không tự kiểm danh tính
 ```
@@ -1006,9 +1037,65 @@ trạng thái, loại yêu cầu, phòng đều đọc từ JSON (`states[].labe
 hợp đồng có bảng nhãn trong mã vì đó là loại phân tích do dịch vụ khai phá định nghĩa. Bấm một trạng
 thái, nhánh lệch hay đường đi mở ngăn danh sách hồ sơ (`longest_waits`, `deviations[].cases`,
 `variants[].cases`); mã hồ sơ dẫn tới buồng lái điều phối hoặc phòng ban tùy `workspaces` của `/me`
-(`duongDanHoSo` ở `lib/khong-gian.ts`). Hướng dẫn người dùng: `docs-site` — *Quy trình thực tế*.
+(`duongDanHoSo` ở `lib/khong-gian.ts`). Chân màn luôn có dòng *"Phân tích bởi dịch vụ khai phá quy
+trình, giấy phép AGPL-3.0 — mã nguồn"* (#340, điều 13 — mục 3.3): trang máy chủ đọc `MINING_SOURCE_URL`,
+chỉ nhận `http(s)`, truyền xuống thành phần; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site`
+— *Quy trình thực tế*.
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
+
+### 6.5. Gợi ý phân loại bằng mô hình ngôn ngữ (không gian `I`)
+
+Đã cài ở #316 (dịch vụ mô hình) và #317 (gợi ý loại, mức ưu tiên, phòng ban), theo
+[ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md).
+
+**Dịch vụ tùy chọn.** `mo-hinh` (llama.cpp server) nằm dưới hồ sơ Compose `tri-tue`: cụm mặc định
+không có nó, không tải gì thêm, chạy đủ ở chế độ thủ công. Không dịch vụ nào `depends_on` nó, không
+mở cổng ra máy. Tệp GGUF ở volume `mo-hinh` (`scripts/tai_mo_hinh.py`). Dịch vụ ứng dụng bật gợi ý
+khi `DXLAB_LLM_URL` khác rỗng.
+
+**Khuôn mẫu: một lớp duy nhất gọi mô hình** — `backend/app/intelligence/mo_hinh.py`.
+
+- Điểm cuối kiểu OpenAI (`/v1/chat/completions`), gọi bằng `urllib` của thư viện chuẩn, không khung
+  LLM nào. Đổi máy chủ mô hình (Ollama, dịch vụ khác cùng chuẩn) là đổi địa chỉ, không đổi mã
+- **Danh mục đọc từ bảng lúc gọi**: loại và phòng đang bật, mọi mức ưu tiên, kèm nhãn và mô tả. Lời
+  dặn không nêu mã hay nhãn nghiệp vụ nào; doanh nghiệp đổi danh mục thì lời dặn đổi theo
+- **Ràng buộc đầu ra bằng JSON schema**: `enum` của từng trường là mã danh mục đó; llama.cpp ràng
+  buộc ngữ pháp nên không sinh được mã lạ. Phía gọi vẫn kiểm lại — máy chủ bỏ qua lược đồ cũng không
+  làm lọt mã ngoài danh mục
+- **Hạn chót cứng** (`DXLAB_LLM_TIMEOUT_SECONDS`): lời gọi chạy ở luồng riêng và chờ bằng
+  `result(timeout=...)`, cùng lý do với danh bạ (mục 3.1) — `timeout` của urllib không phủ bước tra DNS
+- **Mọi lỗi thành một loại** `LoiMoHinh(ma)`: tắt, không tới được, quá hạn, lỗi máy chủ, sai định
+  dạng, ngoài danh mục. Không lỗi nào nổi lên người dùng; hàm tiện dụng trả `None` = "không có gợi ý"
+- Lớp này **không ghi gì** vào cơ sở dữ liệu. `tinh_trang()` cho `/system/health` (`language_model`:
+  `disabled` / `ready` / `unreachable`) — mô hình là tùy chọn nên không bao giờ làm `status` xấu đi
+
+**Đường ghi gợi ý — `backend/app/intelligence/phan_loai.py`, không qua cửa chuyển trạng thái.**
+
+- Hai đường vào: tác vụ nền (`BackgroundTasks`) ngay sau khi `POST /requests` trả về — người gửi
+  không chờ mô hình; và **bộ quét bù** `suggestion-backfill` theo khuôn `nhip_quet.py` (khóa tư vấn,
+  dòng nhịp, có trong `scanners`), vòng nền riêng để một lượt chờ mô hình không làm leo thang hạn
+  muộn. Bộ quét nhặt hồ sơ ở các trạng thái của hàng đợi điều phối (suy từ `transitions`) mà chưa có
+  gợi ý, xử lý lần lượt từng cái
+- Mỗi lần thử ba giao dịch ngắn: **giành** hồ sơ bằng một `UPDATE` có điều kiện (đặt
+  `suggestion_attempted_at`, cộng `suggestion_attempts` — hai đường không hỏi cùng hồ sơ hai lần);
+  **hỏi mô hình** không giữ giao dịch hay khóa dòng nào; **ghi** trường `suggested_*` và
+  `suggestion_note` (JSONB: lý do từng trường, mô hình, thời gian, phòng mô hình đoán) — kiểm lại mã
+  với danh mục đang bật, chỉ ghi khi hồ sơ còn ở trạng thái lúc giành, giữ nguyên `updated_at`
+- Không bao giờ chạm trường quyết định, không ghi nhật ký sự kiện: gợi ý không phải một lần chuyển
+  trạng thái (ADR-0005). Giữ hay ghi đè được ghi khi người xác nhận, ở cửa chuyển trạng thái (mục 2.2)
+- Thử lại có giới hạn: mô hình trả lời mà hỏng thì tính một lượt, tối đa `DXLAB_SUGGEST_MAX_ATTEMPTS`,
+  cách nhau ít nhất `DXLAB_SUGGEST_RETRY_AFTER_SECONDS`; không tới được mô hình thì trả lại lượt và lượt
+  quét dừng sớm
+- **Ngưỡng 80 % cho phòng ban**: phòng của mô hình chỉ thay bảng ánh xạ khi bật
+  `DXLAB_SUGGEST_DEPARTMENT_FROM_MODEL`; chỉ khuyên bật khi `scripts/do_chinh_xac_goi_y.py` đo trên bộ
+  mẫu có nhãn (`backend/tests/du_lieu/bo_mau_phan_loai.json`) đạt từ 80 % và hơn bảng ánh xạ. Cờ tắt
+  thì phòng mô hình đoán vẫn nằm trong ghi chú để đo
+
+**Màn điều phối**: `GET /coordination/requests/{id}` mang `suggested_request_type`,
+`suggested_priority`, `suggested_department` cùng khuôn `GoiY`; thẻ gợi ý (#239) hiện trên từng ô. Ô
+loại giữ lựa chọn của người gửi, thẻ báo khi khác gợi ý; ô mức ưu tiên điền sẵn gợi ý (trước mức mặc
+định). Không có gợi ý thì màn như trước.
 
 ---
 

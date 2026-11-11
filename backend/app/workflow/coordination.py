@@ -60,7 +60,7 @@ from app.workflow.routes import (
     _tom_tat,
     goi_y_ra,
 )
-from app.intelligence.goi_y import goi_y_phong
+from app.intelligence.goi_y import goi_y_loai, goi_y_phong, goi_y_uu_tien
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
@@ -151,6 +151,8 @@ def _dung_chi_tiet_dieu_phoi(
         state_entered_at=luc_vao or ho_so.created_at,
         # Cùng hàm cửa chuyển trạng thái dùng để ghi giữ hay ghi đè (#239)
         suggested_department=goi_y_ra(goi_y_phong(session, ho_so, ho_so.request_type_code)),
+        suggested_request_type=goi_y_ra(goi_y_loai(session, ho_so)),
+        suggested_priority=goi_y_ra(goi_y_uu_tien(session, ho_so)),
         requested_by_me=ho_so.requester_id == actor.id,
     )
 

@@ -4094,6 +4094,18 @@ html[data-qt-ngan] .ngan {
   color: var(--ink-3);
 }
 
+/* Dòng mã nguồn của dịch vụ khai phá (AGPL điều 13, #340): nhỏ, cuối màn, hiện cả khi màn rỗng */
+.qt-nguon-ma {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.qt-nguon-ma a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Ba khối xếp hạng: 3 cột khi vùng đủ rộng, 2 cột ở vùng vừa (khối thứ ba trải hai cột), 1 cột ở vùng hẹp */
 .qt-luoi {
   display: grid;

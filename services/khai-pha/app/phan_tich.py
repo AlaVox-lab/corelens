@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Dựng kết quả khai phá từ dữ liệu đã đọc (app/du_lieu.py) và một bộ máy (app/bo_may/).

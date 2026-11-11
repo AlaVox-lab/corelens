@@ -51,6 +51,50 @@ class Settings(BaseSettings):
     mining_db_user: str = "khai_pha_readonly"
     mining_db_password: str = ""
 
+    # --- Mô hình ngôn ngữ cục bộ (#316, ADR-0008) ------------------------------
+    #
+    # Dịch vụ mô hình là TÙY CHỌN: cụm mặc định không có nó (hồ sơ Compose `tri-tue`), và địa chỉ
+    # rỗng nghĩa là tắt — không gợi ý nào được sinh, mọi thao tác chạy thủ công như cũ. Mọi lời gọi
+    # đi qua đúng một lớp, `app/intelligence/mo_hinh.py`; lỗi nào cũng thành "không có gợi ý".
+    llm_url: str = ""
+    # Tên mô hình gửi kèm lời gọi kiểu OpenAI và ghi vào ghi chú gợi ý. llama.cpp server chạy đúng
+    # một mô hình nên không chọn theo tên; đổi tệp GGUF thì đổi cả tên này cho ghi chú khỏi nói sai.
+    llm_model: str = "qwen2.5-1.5b-instruct-q4_k_m"
+    # Hạn chót của MỘT lần hỏi mô hình, tính cả lúc chờ hàng. Gợi ý sinh ở nền, không ai đứng chờ,
+    # nên hạn này rộng; quá hạn thì bỏ, không thử kéo dài.
+    llm_timeout_seconds: float = 30.0
+    # Hạn chót của lần hỏi tình trạng cho màn Hệ thống — người quản trị đang chờ trang tải
+    llm_health_timeout_seconds: float = 2.0
+    # Trần số token sinh ra mỗi lần — đủ cho ba mã và ba câu lý do ngắn
+    llm_max_tokens: int = 512
+
+    # --- Gợi ý loại, mức ưu tiên, phòng ban (#317) ----------------------------
+    #
+    # Hai đường sinh gợi ý: tác vụ nền ngay sau khi hồ sơ được gửi, và bộ quét bù này cho hồ sơ còn ở
+    # chỗ điều phối mà chưa có gợi ý (tác vụ nền rơi khi dịch vụ khởi động lại, mô hình bật muộn). Bộ
+    # quét chỉ chạy khi mô hình bật (`llm_url` khác rỗng).
+    suggest_scan_enabled: bool = True
+    suggest_scan_interval_seconds: int = 30
+    # Số hồ sơ tối đa mỗi lượt quét, xử lý lần lượt từng cái
+    suggest_scan_batch_size: int = 5
+    # Một hồ sơ được thử tối đa chừng này lần (thành công thì thôi), cách nhau ít nhất chừng ấy giây.
+    # Mô hình không tới được thì lần đó không tính — chỉ lần mô hình trả lời mà hỏng mới tính.
+    suggest_max_attempts: int = 3
+    suggest_retry_after_seconds: int = 600
+    # Gợi ý PHÒNG BAN của mô hình chỉ thay gợi ý theo bảng ánh xạ khi bật cờ này. Mặc định TẮT; chỉ
+    # bật khi đo trên bộ mẫu có nhãn đạt từ 80 % đúng (scripts/do_chinh_xac_goi_y.py). Tắt thì mô
+    # hình vẫn gợi ý loại và mức ưu tiên; phòng nó đoán chỉ nằm trong ghi chú để đo.
+    suggest_department_from_model: bool = False
+
+    @property
+    def llm_enabled(self) -> bool:
+        return bool(self.llm_url.strip())
+
+    @property
+    def suggest_scan_stale_threshold_seconds(self) -> int:
+        """Ngưỡng "quá lâu" của bộ quét gợi ý, cùng cách tính với bộ quét hạn."""
+        return BOI_SO_CHU_KY_QUA_LAU * self.suggest_scan_interval_seconds
+
     # --- Định danh tập trung, xem ADR-0001 và #43 --------------------------
     #
     # Vì sao hai địa chỉ khác nhau cho cùng một Keycloak: trình duyệt đi qua

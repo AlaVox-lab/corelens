@@ -8,19 +8,27 @@
 #
 #     python scripts/kiem_header.py
 #
-# Tệp đạt khi trong 10 dòng đầu có cả dòng SPDX lẫn dòng bản quyền. Tệp JSON không có
-# cú pháp chú thích nên không xét; giấy phép của gói giao diện khai ở trường license
-# trong frontend/package.json.
+# Kho theo mô hình nhiều giấy phép (#340, LICENSES.md): mã trong services/khai-pha/ theo
+# AGPL-3.0-or-later, mọi nơi khác theo MIT. Tệp đạt khi trong 10 dòng đầu có dòng SPDX ĐÚNG
+# giấy phép của thư mục chứa nó và dòng bản quyền; mang giấy phép của thư mục khác cũng là lỗi.
+# Tệp JSON không có cú pháp chú thích nên không xét; giấy phép của gói giao diện khai ở trường
+# license trong frontend/package.json.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 DUOI_TEP_MA = {".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".sh", ".css", ".sql"}
 TEN_TEP_MA = {"Dockerfile"}
-DONG_SPDX = "SPDX-License-Identifier: MIT"
+GIAY_PHEP_MAC_DINH = "MIT"
+# Thư mục mang giấy phép riêng, khớp với bảng trong LICENSES.md
+GIAY_PHEP_THEO_THU_MUC = {
+    "services/khai-pha/": "AGPL-3.0-or-later",
+}
+MAU_SPDX = re.compile(r"SPDX-License-Identifier:\s*(\S+)")
 DONG_BAN_QUYEN = "Copyright (c)"
 SO_DONG_DAU = 10
 
@@ -44,19 +52,41 @@ def tep_can_kiem() -> list[Path]:
     ]
 
 
-def thieu_header(tep: Path) -> bool:
+def giay_phep_can_co(duong_dan: str) -> str:
+    """Giấy phép một tệp phải mang, theo thư mục chứa nó (đường dẫn tương đối từ gốc kho)."""
+    ten = PurePosixPath(duong_dan.replace("\\", "/")).as_posix()
+    for thu_muc, giay_phep in GIAY_PHEP_THEO_THU_MUC.items():
+        if ten.startswith(thu_muc):
+            return giay_phep
+    return GIAY_PHEP_MAC_DINH
+
+
+def loi_header(duong_dan: str, dau_tep: str) -> str | None:
+    """Mô tả lỗi header của một tệp, hoặc None nếu đạt. Tách khỏi việc đọc tệp để thử trên chuỗi mẫu."""
+    can_co = giay_phep_can_co(duong_dan)
+    tim_thay = MAU_SPDX.search(dau_tep)
+    if not tim_thay or DONG_BAN_QUYEN not in dau_tep:
+        return f"Thiếu header giấy phép (cần {can_co})"
+    if tim_thay.group(1) != can_co:
+        return f"Sai giấy phép theo thư mục: mang {tim_thay.group(1)}, cần {can_co}"
+    return None
+
+
+def doc_dau_tep(tep: Path) -> str:
     with tep.open(encoding="utf-8", errors="replace") as noi_dung:
-        dau_tep = "".join(next(noi_dung, "") for _ in range(SO_DONG_DAU))
-    return DONG_SPDX not in dau_tep or DONG_BAN_QUYEN not in dau_tep
+        return "".join(next(noi_dung, "") for _ in range(SO_DONG_DAU))
 
 
 def main() -> int:
     danh_sach = tep_can_kiem()
-    thieu = [tep for tep in danh_sach if thieu_header(tep)]
-    for tep in thieu:
-        print(f"Thiếu header giấy phép: {tep.as_posix()}")
-    print(f"Đã kiểm {len(danh_sach)} tệp, {len(thieu)} tệp thiếu header.")
-    return 1 if thieu else 0
+    so_loi = 0
+    for tep in danh_sach:
+        loi = loi_header(tep.as_posix(), doc_dau_tep(tep))
+        if loi:
+            so_loi += 1
+            print(f"{loi}: {tep.as_posix()}")
+    print(f"Đã kiểm {len(danh_sach)} tệp, {so_loi} tệp lỗi header.")
+    return 1 if so_loi else 0
 
 
 if __name__ == "__main__":

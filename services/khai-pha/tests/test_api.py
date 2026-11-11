@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Điểm vào HTTP của dịch vụ khai phá (app/main.py): hợp đồng khóa JSON mà dịch vụ ứng dụng dựa vào

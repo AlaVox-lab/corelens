@@ -1,0 +1,68 @@
+DX-OS Lab
+Copyright (c) 2026 AlaVox-lab
+
+Kho theo mô hình nhiều giấy phép: MIT (LICENSE ở gốc) cho mọi thư mục, trừ
+services/khai-pha/ theo AGPL-3.0-or-later (services/khai-pha/LICENSE).
+Bảng theo thư mục: LICENSES.md.
+
+Thông báo này nêu các thành phần bên thứ ba đáng chú ý về giấy phép. Danh sách
+đầy đủ mọi phụ thuộc kèm giấy phép từng gói: docs/dependencies.md. Không thành
+phần nào dưới đây bị chép mã hay sửa mã vào kho; tất cả cài qua trình quản lý
+gói hoặc chạy từ ảnh chứa chính thức.
+
+-------------------------------------------------------------------------------
+Dịch vụ khai phá quy trình (services/khai-pha/, chỉ trong ảnh chứa riêng)
+-------------------------------------------------------------------------------
+
+PM4Py 2.7.23.8 — A Process Mining Library for Python
+  Copyright (C) 2026 Process Intelligence Solutions GmbH
+  Giấy phép: AGPL-3.0-or-later
+  https://github.com/process-intelligence-solutions/pm4py
+
+Các gói PM4Py kéo theo mang giấy phép copyleft hoặc đáng chú ý:
+
+CVXOPT 1.3.3
+  Copyright (c) 2012-2026 M. Andersen and L. Vandenberghe
+  Giấy phép: GPL-3.0-or-later
+
+psycopg 3.3.5 — LGPL-3.0-only (cũng dùng trong dịch vụ ứng dụng)
+tqdm 4.70.0 — MPL-2.0 AND MIT
+certifi — MPL-2.0
+matplotlib 3.11.1 — Matplotlib License (dựa trên PSF License)
+
+Các gói còn lại của dịch vụ (numpy, scipy, pandas, networkx, lxml, fastapi,
+uvicorn, ...) mang giấy phép dễ dãi MIT, BSD hoặc Apache-2.0.
+
+-------------------------------------------------------------------------------
+Nền tảng chạy như dịch vụ riêng (ảnh chứa chính thức, không sửa mã)
+-------------------------------------------------------------------------------
+
+Keycloak 26.7.3       — Apache-2.0 — định danh tập trung (OIDC)
+SeaweedFS 4.45        — Apache-2.0 — lưu trữ tệp đính kèm (S3 API)
+Apache Superset 6.1.0 — Apache-2.0 — bảng điều khiển phân tích
+PostgreSQL            — PostgreSQL License — cơ sở dữ liệu
+
+-------------------------------------------------------------------------------
+Mô hình ngôn ngữ cục bộ (tùy chọn, hồ sơ Compose `tri-tue`, ADR-0008)
+-------------------------------------------------------------------------------
+
+llama.cpp server b11889 (ảnh ghcr.io/ggml-org/llama.cpp:server-b11889)
+  Copyright (c) 2023-2026 The ggml authors
+  Giấy phép: MIT
+  https://github.com/ggml-org/llama.cpp
+
+Qwen2.5-1.5B-Instruct GGUF (tệp qwen2.5-1.5b-instruct-q4_k_m.gguf)
+  Copyright 2024 Alibaba Cloud
+  Giấy phép: Apache-2.0
+  https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
+  Tệp mô hình không nằm trong kho mã hay ảnh chứa; scripts/tai_mo_hinh.py tải
+  nguyên bản từ kho trên vào volume Docker, không sửa đổi.
+
+-------------------------------------------------------------------------------
+Dịch vụ ứng dụng, cổng, trang tài liệu
+-------------------------------------------------------------------------------
+
+Phụ thuộc Python và npm ghim trong backend/requirements.txt,
+frontend/package-lock.json, docs-site/package-lock.json. Giấy phép từng gói,
+kể cả các gói LGPL/MPL nạp động (psycopg, sharp/libvips, lightningcss), ghi ở
+docs/dependencies.md.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Cấu hình của dịch vụ khai phá, đọc từ biến môi trường mang tiền tố KHAI_PHA_.

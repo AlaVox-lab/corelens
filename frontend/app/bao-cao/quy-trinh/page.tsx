@@ -17,6 +17,19 @@ import { khoangTuDiaChi } from "@/lib/khoang-ngay";
 
 export const dynamic = "force-dynamic";
 
+/** Mã nguồn của dịch vụ khai phá cho dòng AGPL điều 13 ở chân màn (#340). Compose đặt
+ * `MINING_SOURCE_URL`; giá trị dự phòng chỉ để chạy `npm run dev` ngoài cụm. Chỉ nhận http(s) để
+ * không giá trị lạ nào thành liên kết chạy mã. */
+function nguonMaKhaiPha(): string {
+  const duPhong = "https://github.com/AlaVox-lab/dx-os-lab/tree/main/services/khai-pha";
+  try {
+    const diaChi = new URL(process.env.MINING_SOURCE_URL ?? "");
+    return diaChi.protocol === "https:" || diaChi.protocol === "http:" ? diaChi.href : duPhong;
+  } catch {
+    return duPhong;
+  }
+}
+
 export default async function ManQuyTrinhThucTe({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ tu?: string; den?: string }> }>) {
@@ -33,7 +46,11 @@ export default async function ManQuyTrinhThucTe({
         lâu nhất và rẽ ra khỏi luồng chính ở chỗ nào.
       </p>
       <ThanhBaoCao dang="quy-trinh" />
-      <QuyTrinhThucTe khoangBanDau={khoangTuDiaChi(tu, den, new Date())} khongGian={danhTinh?.workspaces ?? []} />
+      <QuyTrinhThucTe
+        khoangBanDau={khoangTuDiaChi(tu, den, new Date())}
+        khongGian={danhTinh?.workspaces ?? []}
+        nguonMaKhaiPha={nguonMaKhaiPha()}
+      />
     </KhungLamViec>
   );
 }

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Hai bộ máy phải cho kết quả GIỐNG HỆT nhau (ADR-0007): bộ dự phòng `noi_bo` chỉ có ý nghĩa khi thay
@@ -76,6 +76,19 @@ def test_do_thi_dung_dap_an_tinh_tay(bo_may):
 
 def test_bien_the_dung_dap_an_tinh_tay(bo_may):
     assert bo_may.bien_the(DAU_VAO) == BIEN_THE
+
+
+@pytest.mark.parametrize("ma", [1049, 2026, 20261110, 999999])
+def test_ma_ho_so_trong_nhu_nam_khong_bi_doc_thanh_ngay(bo_may, ma):
+    # Mã hồ sơ "1049" từng bị thư viện đọc thành năm 1049 rồi hỏng khi đổi lại số (dữ liệu trình diễn
+    # trên 1000 hồ sơ). Lỗi chỉ lộ khi MỌI mã trong khoảng đều trông như năm, nên bài chỉ dùng mã như vậy.
+    # Mã nào cũng phải đi ra đúng như đi vào
+    luc = dt.datetime(2026, 3, 9, 9, tzinfo=dt.timezone.utc)
+    dau_vao = [LuotVao(ho_so=ma, trang_thai="a", luc=luc, thu_tu=1),
+               LuotVao(ho_so=ma, trang_thai="b", luc=luc + dt.timedelta(hours=1), thu_tu=2),
+               LuotVao(ho_so=ma + 1, trang_thai="a", luc=luc, thu_tu=3)]
+    assert bo_may.bien_the(dau_vao) == {("a", "b"): [ma], ("a",): [ma + 1]}
+    assert bo_may.do_thi(dau_vao) == {("a", "b"): 1}
 
 
 def test_dau_vao_rong_cho_ket_qua_rong(bo_may):

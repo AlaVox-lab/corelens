@@ -15,10 +15,18 @@ Quy ước đầy đủ ở
 - Commit theo **Conventional Commits**, tiếng Việt có dấu: `<loại>(<phạm vi>): <mô tả>`, kèm
   `Closes #N`. Nhật ký thay đổi sinh tự động từ commit, nên commit sai chuẩn sẽ biến mất khỏi nhật ký
 - Pull request vào `dev` (squash), rồi `dev` lên `main` (merge commit)
-- Mọi tệp mã mới có header giấy phép:
+- Mọi tệp mã mới có header giấy phép theo thư mục chứa nó — MIT ở mọi nơi:
 
 ```python
 # SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+```
+
+- Riêng thư mục dịch vụ khai phá `services/khai-pha/` theo AGPL-3.0-or-later
+  ([bảng giấy phép theo thư mục](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSES.md)):
+
+```python
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 ```
 

@@ -25,6 +25,13 @@ export type NhipBoQuet = {
   runner_pid: number | null;
 };
 
+/** Tình trạng mô hình ngôn ngữ cục bộ (#316): `disabled`, `ready` hoặc `unreachable`. */
+export type MoHinhNgonNgu = {
+  status: string;
+  model?: string;
+  detail?: string;
+};
+
 export type SucKhoe = {
   status?: string;
   database?: string;
@@ -32,6 +39,7 @@ export type SucKhoe = {
   active_rule_set_states?: number;
   detail?: string;
   scanners?: NhipBoQuet[] | null;
+  language_model?: MoHinhNgonNgu;
   scan_settings?: {
     enabled: boolean;
     interval_seconds: number;
@@ -77,6 +85,18 @@ function chuBoQuet(b: NhipBoQuet): string {
   }
 }
 
+/** Mô hình là tùy chọn: "tắt" không phải lỗi, chỉ "không phản hồi" mới tô đỏ (mục 8.3). */
+function chuMoHinh(m: MoHinhNgonNgu): string {
+  switch (m.status) {
+    case "disabled":
+      return "tắt — điều phối thủ công, không có gợi ý";
+    case "ready":
+      return `sẵn sàng${m.model ? ` · ${m.model}` : ""}`;
+    default:
+      return `không phản hồi${m.detail ? ` — ${m.detail}` : ""}`;
+  }
+}
+
 export function TheHeThong({ sucKhoe, tieuDe = "Tình trạng hệ thống" }: { sucKhoe: SucKhoe | null; tieuDe?: string }) {
   const dungHet = sucKhoe?.status === "ok";
   const boQuetXau = (sucKhoe?.scanners ?? []).filter((b) => b.status === "stale" || b.status === "failing");
@@ -109,6 +129,13 @@ export function TheHeThong({ sucKhoe, tieuDe = "Tình trạng hệ thống" }: {
           giaTri={chuBoQuet(b)}
         />
       ))}
+      {sucKhoe?.language_model && (
+        <DongTrangThai
+          nhan="Mô hình ngôn ngữ"
+          tot={sucKhoe.language_model.status !== "unreachable"}
+          giaTri={chuMoHinh(sucKhoe.language_model)}
+        />
+      )}
       {!dungHet && (
         <p className="ghi-chu-tinh-trang">
           {sucKhoe?.detail ?? "Kiểm tra dịch vụ ứng dụng bằng docker compose logs backend."}

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 AlaVox-lab
 #
 # Tài khoản cơ sở dữ liệu của dịch vụ khai phá phải CHỈ ĐỌC và chỉ đọc ĐÚNG những gì phép khai phá cần

@@ -331,6 +331,11 @@ người dùng qua mạng thì chịu điều 13 của AGPL: phải cho người
 mục 5.2, `ARCHITECTURE.md` mục 3.3 và `dependencies.md` phải sửa cho khớp khi ADR được chấp
 nhận.
 
+> **Cập nhật 2026-11-10 (#340).** Đoạn trên ghi đề xuất lúc khảo sát. Khi xác nhận ADR-0007, giảng
+> viên đặt điều kiện mô tả kho theo mô hình hai giấy phép: cả thư mục `services/khai-pha/`, kể cả mã
+> của nhóm, nay theo AGPL-3.0-or-later; màn Quy trình thực tế dẫn tới mã nguồn của dịch vụ cho điều 13.
+> Xem `LICENSES.md` ở gốc kho.
+
 **Phương án lùi: pm4js** — nếu giảng viên muốn tránh hẳn copyleft. Đổi lại ít thuật toán
 hơn, bản `0.0.x`, thêm Node vào tầng `I`, và phải xử lý tệp CC BY-SA 2.5 đi kèm.
 

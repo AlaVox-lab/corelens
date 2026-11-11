@@ -3,7 +3,7 @@
 > Cổng vận hành yêu cầu nội bộ cho doanh nghiệp, theo kiến trúc Open-Core H-P-D-I — Dự án dự thi
 > Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
 
-[![Giấy phép: MIT](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT-blue.svg)](LICENSE)
+[![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
 **Tài liệu đầy đủ:** trang tài liệu trong [`docs-site/`](docs-site/) — bắt đầu nhanh, cài đặt, hướng
 dẫn theo từng vai, quản trị và tùy biến, phát triển. Cách xem ở mục [Tài liệu](#tài-liệu).
@@ -85,6 +85,23 @@ python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
 Đủ mười ba tài khoản, kiểm cụm, cấu hình, sự cố thường gặp và nâng cấp: xem trang tài liệu, phần
 *Cài đặt và vận hành*.
 
+### Mô hình ngôn ngữ (tùy chọn)
+
+Cụm mặc định chạy **thủ công hoàn toàn**, không tải mô hình nào. Muốn điều phối viên nhận gợi ý loại yêu
+cầu, mức ưu tiên và phòng ban, bật mô hình ngôn ngữ cục bộ (llama.cpp server, MIT · Qwen2.5-1.5B-Instruct,
+Apache-2.0) — cần thêm khoảng 1,5 GB bộ nhớ và 2,4 GB ổ đĩa:
+
+```bash
+python scripts/tai_mo_hinh.py          # ở gốc kho mã: tải 1,1 GB vào volume Docker, kiểm SHA-256
+# trong infra/.env đặt: LLM_URL=http://mo-hinh:8080
+docker compose --env-file .env --profile tri-tue up -d   # trong infra/
+```
+
+Tắt: để `LLM_URL` rỗng rồi `docker compose --env-file .env up -d`. Mô hình chỉ gợi ý — người vẫn
+bấm xác nhận; mô hình tắt hay chậm thì không có gợi ý, không thao tác nào bị chặn. **`down -v` xóa cả tệp
+mô hình**, phải chạy lại `scripts/tai_mo_hinh.py`. Biến môi trường, kết quả đo độ chính xác: trang tài
+liệu, *Cài đặt và vận hành → Mô hình ngôn ngữ*.
+
 ### Nâng cấp
 
 Cụm dựng từ `v0.9.1` trở đi lên bản mới **mà không mất hồ sơ, nhật ký hay tệp đính kèm**: lược đồ do
@@ -165,5 +182,13 @@ trách không gian nào.
 
 ## Giấy phép
 
-Dự án phát hành theo giấy phép [MIT](LICENSE). Mọi tệp mã nguồn mang định danh giấy phép SPDX ở đầu
-tệp. Danh mục phụ thuộc kèm giấy phép ở [`docs/dependencies.md`](docs/dependencies.md).
+Kho theo mô hình **nhiều giấy phép** — bảng đầy đủ ở [`LICENSES.md`](LICENSES.md):
+
+| Phần | Giấy phép |
+|---|---|
+| Dịch vụ ứng dụng, cổng, kiểm thử giao diện, kịch bản, hạ tầng, tài liệu | [MIT](LICENSE) |
+| Dịch vụ khai phá quy trình [`services/khai-pha/`](services/khai-pha/) | [AGPL-3.0-or-later](services/khai-pha/LICENSE) |
+
+Dịch vụ khai phá dùng thư viện PM4Py (AGPL) nên cả thư mục theo AGPL; phần còn lại chỉ trao đổi JSON với
+nó qua HTTP. Mọi tệp mã nguồn mang định danh SPDX đúng giấy phép của thư mục ở đầu tệp. Thông báo bên
+thứ ba ở [`NOTICE`](NOTICE); danh mục phụ thuộc kèm giấy phép ở [`docs/dependencies.md`](docs/dependencies.md).

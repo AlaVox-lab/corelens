@@ -36,6 +36,8 @@ from app.workflow.escalation import (
     TEN_BO_QUET_HAN_CHO,
     TEN_BO_QUET_SLA,
 )
+from app.intelligence import mo_hinh
+from app.intelligence.phan_loai import NHAN_BO_QUET_GOI_Y, TEN_BO_QUET_GOI_Y, quet_goi_y
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau
@@ -118,19 +120,49 @@ async def _vong_quet_sla() -> None:
             logger.exception("Dọn dòng đếm giới hạn tốc độ thất bại")
 
 
+def bo_quet_goi_y_bat() -> bool:
+    """Bộ quét gợi ý (#317) chỉ có việc khi mô hình bật; tắt thì màn Hệ thống ghi "đã tắt"."""
+    return settings.suggest_scan_enabled and settings.llm_enabled
+
+
+def _quet_goi_y_mot_lan() -> list[int]:
+    """Một lượt bộ quét bù gợi ý, có khóa tư vấn và dòng nhịp như bộ quét hạn (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_GOI_Y, quet_goi_y)
+    return (luot.ket_qua or []) if luot.da_chay else []
+
+
+async def _vong_quet_goi_y() -> None:
+    """Vòng riêng, không chung với bộ quét hạn: một lượt có thể chờ mô hình vài chục giây, và hồ
+    sơ quá hạn không được leo thang muộn vì thế. Mô hình hỏng thì lượt vẫn thành công — từng hồ sơ
+    được đánh dấu đã thử — nên nhịp chỉ báo hỏng khi chính bộ quét hỏng (cơ sở dữ liệu chẳng hạn)."""
+    while True:
+        await asyncio.sleep(settings.suggest_scan_interval_seconds)
+        try:
+            await asyncio.to_thread(_quet_goi_y_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt quét gợi ý thất bại, sẽ thử lại ở lượt sau")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Bật bộ quét SLA lúc khởi động, tắt gọn lúc dừng."""
-    tac_vu = None
+    """Bật bộ quét SLA và bộ quét gợi ý lúc khởi động, tắt gọn lúc dừng."""
+    cac_tac_vu = []
     if settings.sla_scan_enabled:
-        tac_vu = asyncio.create_task(_vong_quet_sla())
+        cac_tac_vu.append(asyncio.create_task(_vong_quet_sla()))
         logger.info(
             "Bộ quét SLA chạy mỗi %d giây", settings.sla_scan_interval_seconds
+        )
+    if bo_quet_goi_y_bat():
+        cac_tac_vu.append(asyncio.create_task(_vong_quet_goi_y()))
+        logger.info(
+            "Mô hình ngôn ngữ bật; bộ quét gợi ý chạy mỗi %d giây",
+            settings.suggest_scan_interval_seconds,
         )
 
     yield
 
-    if tac_vu is not None:
+    for tac_vu in cac_tac_vu:
         tac_vu.cancel()
 
 
@@ -213,6 +245,16 @@ def _do_suc_khoe(session: Session) -> dict:
             da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             dang_bat=settings.sla_scan_enabled,
         )
+        # Bộ quét gợi ý (#317) chỉ có mặt khi chạy: mô hình tắt thì dòng "Mô hình ngôn ngữ: tắt"
+        # đã nói đủ, thêm một dòng "bộ quét đã tắt" chỉ là nhiễu
+        if bo_quet_goi_y_bat():
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_GOI_Y: NHAN_BO_QUET_GOI_Y},
+                nguong_qua_lau_giay=settings.suggest_scan_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
     except Exception as loi:  # noqa: BLE001 — không đọc được nhịp thì không dám nói là khỏe
         logger.warning("Kiểm tra sức khỏe: không đọc được nhịp bộ quét: %s", loi)
         ket_qua.update(status="degraded", scanners=None, detail="Không đọc được nhịp bộ quét")
@@ -258,6 +300,9 @@ def system_health(
         "service": "dx-os-lab-backend",
         "version": settings.app_version,
         **suc_khoe,
+        # Mô hình ngôn ngữ (#316): tùy chọn, nên không bao giờ làm `status` xấu đi — chỉ báo riêng.
+        # Hỏi ở đây chứ không ở `_do_suc_khoe`: `/health` công khai không được gọi ra dịch vụ khác.
+        "language_model": mo_hinh.tinh_trang(),
         "scan_settings": {
             "enabled": settings.sla_scan_enabled,
             "interval_seconds": settings.sla_scan_interval_seconds,
