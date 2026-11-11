@@ -78,6 +78,8 @@ from app.workflow.messages import (
 from app.workflow.messages import gui_loi_nhan as ghi_loi_nhan
 from app.intelligence.goi_y import GoiY, goi_y_phong_theo_loai
 from app.intelligence.phan_loai import goi_y_sau_khi_gui
+from app.intelligence.nguoi_xu_ly import hen_goi_y_neu_ve_phong
+from app.intelligence.tuong_tu import ghi_da_gui
 from app.config import get_settings
 from app.workflow.schemas import (
     GoiYRa,
@@ -617,6 +619,8 @@ def tao_ho_so(
             detail={"code": "unknown-request-type", "message": str(loi)},
         ) from loi
 
+    # Phiên soạn đã thấy gợi ý hồ sơ tương tự mà vẫn gửi (#319) — cùng giao dịch với hồ sơ
+    ghi_da_gui(session, du_lieu.similar_session_id, actor.id, ho_so.id)
     session.commit()
     session.refresh(ho_so)
     if get_settings().llm_enabled:
@@ -730,6 +734,7 @@ def chuyen_trang_thai(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    tac_vu_nen: BackgroundTasks,
 ) -> HoSoChiTietRa:
     """Thực hiện một thao tác trên hồ sơ.
 
@@ -768,6 +773,8 @@ def chuyen_trang_thai(
 
     session.commit()
     session.refresh(ho_so)
+    # Bổ sung thông tin có thể đưa hồ sơ về lại phòng: gợi ý người xử lý tính ở nền (#318)
+    hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
     return _dung_chi_tiet(session, ho_so, actor)
 
 

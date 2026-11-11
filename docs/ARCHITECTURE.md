@@ -108,6 +108,19 @@ Trong lược đồ dữ liệu, tách rõ hai nhóm trường:
   ban có cả hai nguồn, nhưng mô hình chỉ ghi `suggested_department_code` khi bật cờ
   `DXLAB_SUGGEST_DEPARTMENT_FROM_MODEL` (mặc định tắt, mục 6.5). Lần sửa của chính người gửi hồ sơ
   không ghi giữ hay ghi đè: họ không bao giờ thấy thẻ gợi ý
+- **Người xử lý (#318), nguồn `workload`, không cần mô hình** — `backend/app/intelligence/nguoi_xu_ly.py`.
+  Ứng viên là đúng danh sách ô chọn (`nguoi_nhan_viec`: người của phòng đang giữ hồ sơ, nhận được việc),
+  nên người phòng khác hay không nhận được việc không bao giờ được gợi ý. Điểm = `w_kn × ln(1 + kinh
+  nghiệm) − w_tải × đang giữ`; *đang giữ* là hồ sơ giao cho người đó ở trạng thái hàng đợi phòng ban,
+  *kinh nghiệm* là số hồ sơ cùng loại người đó đã đi cạnh `primary_scope = 'assignee'` (bước chính của
+  người được giao, mục 7.3) — không mã trạng thái nào. Trọng số và cửa sổ ngày ở `DXLAB_ASSIGNEE_SUGGEST_*`.
+  Tính hai lúc: hồ sơ **về phòng** — vào trạng thái có cạnh cho đặt `assignee_id` — bằng tác vụ nền sau
+  phản hồi chuyển trạng thái; và lúc trưởng phòng **mở ô chọn** (`/departments/{code}/assignees?case_id=`,
+  vốn đã gọi danh bạ) — tải việc đổi thì gợi ý đổi theo. Ghi `suggested_assignee_id` và cột ghi chú riêng
+  `assignee_suggestion` (tên, lý do, số liệu; migration `0021`) bằng UPDATE riêng giữ `updated_at`;
+  `goi_y_nguoi_xu_ly` đọc lại hai cột đó cho cả thẻ lẫn cửa chuyển trạng thái, không gọi danh bạ. Danh bạ
+  không trả lời thì không có gợi ý, ô chọn báo lỗi như cũ. Ô để trống (nhận mà chưa giao ai) không tính
+  là ghi đè
 
 Ba lý do: đúng nguyên lý Human-in-the-loop mà đề bài nêu; nếu AI phân luồng sai thì
 người dùng vẫn điều chỉnh được; và nếu mô hình lỗi vào ngày trình diễn, hệ thống
@@ -129,17 +142,18 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 |---|---|---|---|
 | Giao diện | Next.js (React) | MIT | Cổng người dùng và bảng điều khiển |
 | Dịch vụ ứng dụng | FastAPI (Python) | MIT | Cùng ngôn ngữ với toàn bộ tầng `I`, không phải bắc cầu sang dịch vụ khác |
-| Cơ sở dữ liệu | PostgreSQL | PostgreSQL License | Được OSI công nhận. Hỗ trợ phần mở rộng tìm kiếm véc-tơ phục vụ `I` |
+| Cơ sở dữ liệu | PostgreSQL 16 kèm pgvector `0.8.6` — ảnh `pgvector/pgvector:0.8.6-pg16` | PostgreSQL License | Được OSI công nhận. Phần mở rộng `vector` cho hồ sơ tương tự ở `I` (#319, mục 6.6); thay `postgres:16-alpine`, dữ liệu cũ dùng tiếp |
 | Đóng gói | Docker + Docker Compose | Apache-2.0 | Dựng toàn hệ thống bằng một lệnh |
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
 | Máy chủ mô hình ngôn ngữ | llama.cpp server `b11889` | MIT | Không gian `I`. Dịch vụ `mo-hinh` **tùy chọn** (hồ sơ Compose `tri-tue`), điểm cuối kiểu OpenAI, chỉ trong mạng Compose. Xem [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) và mục 6.5 |
 | Mô hình sinh văn bản | Qwen2.5-1.5B-Instruct GGUF `q4_k_m` | Apache-2.0 | Tệp dữ liệu, không trong kho hay ảnh: nằm ở volume `mo-hinh`, tải bằng `scripts/tai_mo_hinh.py` (ghim commit kho Hugging Face và SHA-256) |
+| Mô hình nhúng | Qwen3-Embedding-0.6B GGUF `Q8_0` | Apache-2.0 | Dịch vụ `mo-hinh-nhung` — cùng ảnh llama.cpp, chế độ `--embeddings`, hồ sơ `tri-tue` (#319). Tệp cùng volume `mo-hinh`, cùng lệnh tải |
 | Khai phá quy trình | PM4Py `2.7.23.8` | AGPL-3.0-or-later | Không gian `I`. Chỉ nằm trong **dịch vụ khai phá tách riêng** `services/khai-pha/`, giao tiếp qua HTTP; có bộ máy dự phòng không dùng thư viện này. Xem [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) và mục 6.4 |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Chín thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
+Mười thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
 mang AGPL nên bị giữ sau ranh giới dịch vụ, và cả thư mục dịch vụ khai phá theo AGPL — mục 3.3.
 
 **Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
@@ -272,8 +286,7 @@ sang *Đã chấp nhận*.
 |---|---|---|---|
 | `H` | Hệ thống quản trị tri thức | [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) | Wiki.js — vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
 
-ADR-0008 chấp nhận cả pgvector và mô hình nhúng, nhưng phần đó chưa cài (để #319): ảnh PostgreSQL của
-cụm chưa đổi.
+ADR-0008 đã cài đủ hai đợt: sinh văn bản (#316, #317) và nhúng véc-tơ cùng pgvector (#319) — mục 3.1.
 
 ### 3.3. Quy tắc kiểm tra giấy phép
 
@@ -340,7 +353,8 @@ dx-os-lab/
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
 │   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254)
-│   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239)
+│   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239); lớp gọi mô hình,
+│   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320)
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
 │   │   └── sql/                 # SQL thô của bản gốc 0000 và hàm kiểm 0018, không sửa nữa
 │   ├── tests/
@@ -399,6 +413,8 @@ dx-os-lab/
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
+│   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
+│   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
 │   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
 │       ├── cum_thu.py           # dựng, hỏi trạng thái, gỡ cụm thử cách ly (tên, nhãn ảnh, cổng riêng)
 │       ├── do_dang_nhap.py      # đăng nhập thật qua OIDC, mở trang, kiểm chuỗi mong đợi
@@ -1096,6 +1112,83 @@ khi `DXLAB_LLM_URL` khác rỗng.
 `suggested_priority`, `suggested_department` cùng khuôn `GoiY`; thẻ gợi ý (#239) hiện trên từng ô. Ô
 loại giữ lựa chọn của người gửi, thẻ báo khi khác gợi ý; ô mức ưu tiên điền sẵn gợi ý (trước mức mặc
 định). Không có gợi ý thì màn như trước.
+
+### 6.6. Hồ sơ đã giải quyết tương tự (không gian `I`)
+
+Đã cài ở #319, theo ADR-0008 đợt 2 — `backend/app/intelligence/tuong_tu.py`. Người gửi đang gõ tiêu
+đề và mô tả thì thấy tối đa ba hồ sơ **đã giải quyết** giống vấn đề của mình, kèm cách đã giải quyết.
+Đủ dùng thì họ bấm *"Đã giải quyết được, không gửi nữa"* — một yêu cầu được ngăn chặn.
+
+**Không gói mới.** Véc-tơ nằm ngay trong PostgreSQL (ảnh `pgvector/pgvector:0.8.6-pg16`, migration `0022`
+bật `vector`); mô hình nhúng chạy ở `mo-hinh-nhung` (llama.cpp, `--embeddings`, hồ sơ `tri-tue`), gọi qua
+`mo_hinh.hoi_nhung` — cùng lớp, cùng hạn chót cứng, cùng `LoiMoHinh` với mục 6.5. `DXLAB_EMBEDDING_URL`
+rỗng là tắt: không lập chỉ mục, biểu mẫu không hiện gì. Đổi ảnh PostgreSQL từ Alpine (musl) sang Debian
+(glibc) đổi thứ tự sắp chữ của `en_US.utf8`: migration `0022` nhận ra cơ sở dữ liệu dựng dưới musl
+(`datcollversion` rỗng mà thư viện đang chạy có phiên bản) và `REINDEX DATABASE` từng cơ sở dữ liệu của
+cụm một lần — đã nâng thật một cụm có dữ liệu, `scripts/kiem_nang_cap.py so` đạt, mọi chỉ mục B-tree qua
+`amcheck`.
+
+**Chỉ mục — chỉ hồ sơ đóng ĐẠT, nhận ra bằng dữ liệu.** Sự kiện cuối của hồ sơ là một cạnh người vào
+trạng thái kết thúc, xuất phát từ trạng thái mà bước chính của người được giao (`primary_scope =
+'assignee'`, mục 7.3) dẫn tới — tức người gửi xác nhận đạt. Tự đóng vì hết hạn chờ (cạnh hệ thống) và hủy
+không tính; không mã trạng thái nào. Bảng `similar_case_index` (tầng `I`, tách khỏi bảng quyết định): tiêu
+đề, mô tả, loại, **cách giải quyết** = ghi chú của bước hoàn thành cộng lời nhắn cuối người gửi thấy được
+của phía xử lý (không bao giờ lời nhắn nội bộ), lúc đóng, tên mô hình, véc-tơ. Véc-tơ nhúng phần mô tả vấn
+đề; câu tìm kèm lời dặn tác vụ của Qwen3-Embedding (`embedding_query_instruction` trong `app/config.py`).
+Cột véc-tơ không khai số chiều — số chiều thuộc mô hình; câu tìm chỉ so véc-tơ cùng mô hình. Không chỉ mục
+HNSW: quét chính xác đủ nhanh ở quy mô này và luôn đúng (ADR-0008, phép B).
+
+**Ẩn danh lúc ghi.** Email, số điện thoại (mẫu Việt Nam) và tên người hệ thống biết — người gửi, người xử
+lý, người thao tác, người nhắn, tên từ hai chữ — bị thay trước khi vào bảng, cả tên gọi sau từ xưng hô
+("anh Cường"). Bảng chỉ mục không giữ chúng; kết quả trả về không có mã hồ sơ hay đường dẫn.
+
+**Bộ lập chỉ mục bù `similar-index`** theo khuôn `nhip_quet.py` (khóa tư vấn, dòng nhịp, màn Hệ thống):
+nhặt hồ sơ mới đóng đạt, hồ sơ đóng lại sau khi mở lại, hồ sơ nhúng bằng mô hình cũ; ba bước như
+`phan_loai.py` — đọc, hỏi mô hình không giữ giao dịch, ghi. Mô hình hỏng thì lượt sau thử lại cả lô.
+
+**Biểu mẫu không bao giờ chờ.** `components/goi-y-tuong-tu.tsx` hỏi sau 700 ms ngừng gõ, hủy lời hỏi cũ,
+hạn chót trình duyệt 4 giây; Route Handler `app/api/yeu-cau/tuong-tu` chuyển sang `POST /similar-cases/search`
+(hạn chót `DXLAB_SIMILAR_TIMEOUT_SECONDS`, ngưỡng `DXLAB_SIMILAR_MIN_SCORE`, tối đa
+`DXLAB_SIMILAR_MAX_RESULTS`). Mô hình tắt, chậm, hỏng — danh sách rỗng, không lỗi; dịch vụ báo tắt thì biểu
+mẫu thôi hỏi trong phiên. Nút Gửi không phụ thuộc khối này.
+
+**Đo ngăn chặn.** Mỗi biểu mẫu sinh một mã phiên soạn. Có gợi ý thì `similar_case_views` ghi một dòng (hồ
+sơ gợi ý, số lần xem); gửi hồ sơ kèm mã phiên thì nối `submitted_case_id`; bấm "không gửi nữa"
+(`POST /similar-cases/abandon`) hay quá `DXLAB_SIMILAR_ABANDON_AFTER_MINUTES` mà không gửi (bộ quét đánh
+dấu) thì là bỏ không gửi. View `bao_cao_ngan_chan` (mang `ma_phong` của hồ sơ gợi ý đầu như mọi view bảng
+điều khiển, mục 6.3) cho biểu đồ *Tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý hồ sơ tương tự*.
+
+**Bộ đo.** `scripts/du_lieu/ho_so_da_giai_quyet.json` — 60 hồ sơ đã giải quyết, `nap_du_lieu_trinh_dien.py`
+gắn vào hồ sơ mẫu đóng đạt; `backend/tests/du_lieu/bo_do_tuong_tu.json` — 40 câu viết khác chữ kèm đáp án;
+`scripts/do_ho_so_tuong_tu.py` đo recall@3 và MRR qua đúng `tuong_tu.tim` trong container. Bộ đo do nhóm
+soạn bằng công cụ. Số đo ở trang *Mô hình ngôn ngữ* của `docs-site`.
+
+### 6.7. Khuyến nghị cải tiến bằng câu chữ (không gian `I`)
+
+Đã cài ở #320 — `backend/app/intelligence/khuyen_nghi.py`, điểm cuối
+`GET /analytics/process-mining/recommendation` (cùng cửa quyền, cùng phạm vi với `/process-mining`, mục
+6.4). Gọi ở **dịch vụ ứng dụng**, không trong dịch vụ khai phá AGPL; mô hình qua `mo_hinh.hoi_json`.
+
+- **Bảng dữ kiện tất định**: từ JSON khai phá dựng vài dòng tiếng Việt — tổng hồ sơ, trung vị chờ chung,
+  năm trạng thái chờ lâu nhất (gấp bao nhiêu lần, nhóm chậm nhất), từng nhánh lệch có hồ sơ, đường đi phổ
+  biến nhất — số viết sẵn kiểu Việt Nam như màn hình. Tên trạng thái, loại, phòng đọc từ JSON; chỉ năm
+  nhãn nhánh lệch có bảng trong mã, cùng lý do với `ket-luan-quy-trinh.ts`. Mô hình chỉ thấy bảng này
+- **Mô hình viết việc, hệ thống gắn căn cứ**: dòng *vấn đề* (trạng thái chờ, nhánh lệch) được đánh số;
+  lược đồ JSON buộc mô hình trả `{dong, viec}` — số thứ tự vấn đề (`enum`) và một câu "Nên …". Câu hiện ra
+  là `viec — căn cứ: <dòng dữ kiện>`: con số người đọc thấy luôn là số của hệ thống. Lý do: đo trên dữ liệu
+  trình diễn, để Qwen2.5-1.5B tự viết cả câu có số thì nó gắn số thật cho sai đối tượng (trung vị của phòng
+  này nói thành của phòng kia), ghép số hai dòng thành "từ … lên …", hay chỉ chép lại dòng dữ kiện
+- **Kiểm số và kiểm đối tượng** cho phần mô hình viết: tách số (dấu chấm nghìn, dấu phẩy thập phân) kèm đơn
+  vị đứng sau (`%`, giờ, phút, hồ sơ, lần) và các tên (trạng thái, loại, phòng, nhánh lệch — đọc từ kết
+  quả); mọi số phải có trong **chính dòng** nó trỏ tới, cùng đơn vị, mọi tên cũng thuộc dòng đó — sai là
+  **bỏ cả câu**. Số thứ tự đầu mục ("1.") bị gỡ trước. `kiem_cau` (cả câu tự do) dùng cùng phép. Số viết
+  bằng chữ không bắt được — giới hạn đã biết
+- **Không chờ, không hỏi lại**: lần hỏi đầu xếp việc sinh vào một luồng nền và trả `pending`; màn hỏi lại 3
+  giây một lần. Bộ nhớ đệm trong tiến trình theo khoảng ngày, phạm vi và **mã băm của chính kết quả khai
+  phá** — cùng dữ liệu thì có ngay, số đổi thì sinh lại; lần hỏng nhớ `DXLAB_RECOMMENDATION_RETRY_AFTER_SECONDS`
+- **Chỉ để đọc**: không ghi gì, không đổi cấu hình nào. Khối *Khuyến nghị cải tiến* nằm dưới câu kết luận,
+  ghi "Gợi ý của hệ thống"; mô hình tắt hay không câu nào qua phép kiểm thì khối không hiện, màn vẫn đủ
+  câu kết luận tất định
 
 ---
 

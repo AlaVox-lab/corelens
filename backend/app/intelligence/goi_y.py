@@ -30,10 +30,13 @@ from app.models.workflow_config import Department, Priority, RequestType, Reques
 # cấu hình nghiệp vụ, nên nằm trong mã như tên cột.
 NGUON_BANG_ANH_XA = "routing"
 NGUON_MO_HINH = "model"
+# Gợi ý người xử lý (#318): điểm từ số việc đang giữ và kinh nghiệm với loại yêu cầu
+NGUON_TAI_VIEC = "workload"
 
 NHAN_NGUON = {
     NGUON_BANG_ANH_XA: "Bảng ánh xạ loại yêu cầu",
     NGUON_MO_HINH: "Mô hình phân loại",
+    NGUON_TAI_VIEC: "Tải việc và kinh nghiệm",
 }
 
 
@@ -154,12 +157,34 @@ def goi_y_uu_tien(session: Session, ho_so: Request, ma_loai: str | None = None) 
     )
 
 
-# Trường quyết định nào có gợi ý, và hàm sinh gợi ý cho nó. Thêm gợi ý cho trường mới — người
-# xử lý (#318) — là thêm một dòng ở đây.
+def goi_y_nguoi_xu_ly(session: Session, ho_so: Request, ma_loai: str | None = None) -> GoiY | None:
+    """Gợi ý người xử lý (#318), đọc từ cột `suggested_assignee_id` và ghi chú đi kèm.
+
+    Không gọi danh bạ ở đây: cửa chuyển trạng thái gọi hàm này lúc ghi nhật ký, và engine không gọi
+    ra ngoài. Tên và lý do đã được `nguoi_xu_ly.py` ghi cùng lúc tính — lúc hồ sơ về phòng, và lại
+    lúc trưởng phòng mở ô chọn — nên thẻ trên màn và dấu giữ hay ghi đè đọc cùng một giá trị. Ghi chú
+    phải nói về đúng người trong cột; lệch thì coi như không có gợi ý.
+    """
+    ma = ho_so.suggested_assignee_id
+    ghi_chu = ho_so.assignee_suggestion if isinstance(ho_so.assignee_suggestion, dict) else {}
+    if not ma or ghi_chu.get("id") != ma:
+        return None
+    return GoiY(
+        field="assignee_id",
+        code=ma,
+        label=str(ghi_chu.get("label") or ma),
+        reason=str(ghi_chu.get("reason") or ""),
+        source=NGUON_TAI_VIEC,
+    )
+
+
+# Trường quyết định nào có gợi ý, và hàm sinh gợi ý cho nó. Thêm gợi ý cho một trường mới là thêm
+# một dòng ở đây.
 _NGUON_GOI_Y: dict[str, Callable[[Session, Request, str | None], GoiY | None]] = {
     "request_type_code": goi_y_loai,
     "priority_code": goi_y_uu_tien,
     "department_code": goi_y_phong,
+    "assignee_id": goi_y_nguoi_xu_ly,
 }
 
 
@@ -182,7 +207,8 @@ def ghi_nhan_goi_y(
     ma_loai = thay_doi.get("request_type_code", ho_so.request_type_code)
     dau: dict = {}
     for truong, sinh in _NGUON_GOI_Y.items():
-        if truong not in thay_doi:
+        # Ô để trống — nhận hồ sơ mà chưa giao ai — không phải một lựa chọn khác gợi ý
+        if thay_doi.get(truong) in (None, ""):
             continue
         goi_y = sinh(session, ho_so, ma_loai)
         if goi_y is None:

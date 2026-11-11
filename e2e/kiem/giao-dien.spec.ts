@@ -120,6 +120,69 @@ test.describe("người gửi", () => {
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
+  test("mô hình nhúng tắt: gõ nội dung không hiện hồ sơ tương tự, vẫn gửi bình thường (#319)", async ({ page }) => {
+    // Cụm mặc định không bật hồ sơ `tri-tue`: dịch vụ báo tắt, biểu mẫu không hiện gì, không báo lỗi
+    const tra = await page.request.post("/api/yeu-cau/tuong-tu", {
+      data: { title: "Máy in tầng 3 kẹt giấy liên tục", description: "In vài trang là kẹt" },
+    });
+    expect(tra.status()).toBe(200);
+    expect(await tra.json()).toEqual({ items: [], enabled: false });
+
+    // Biểu mẫu có hỏi sau khi ngừng gõ, không hiện gì, và vẫn gửi xong như cũ
+    await page.goto("/yeu-cau/moi");
+    await page.getByText("Sự cố thiết bị").first().click();
+    const hoi = page.waitForResponse("**/api/yeu-cau/tuong-tu");
+    await page.locator('input[name="title"]').fill(`Gửi khi mô hình tắt ${Date.now()}`);
+    await page.locator('textarea[name="description"]').fill("Máy in tầng 3 kẹt giấy liên tục.");
+    expect((await hoi).status()).toBe(200);
+    await expect(page.getByTestId("goi-y-tuong-tu")).toHaveCount(0);
+    await page.locator("#truong-rieng-ma-tai-san").fill("KT-0001");
+    await page.locator("#truong-rieng-vi-tri").fill("Phòng thử nghiệm");
+    await page.getByRole("button", { name: "Tiếp tục" }).click();
+    await page.getByRole("button", { name: "Gửi yêu cầu" }).click();
+    await page.waitForURL(/\/yeu-cau\/\d+/);
+  });
+
+  test("hồ sơ tương tự hiện dưới ô mô tả, bấm không gửi nữa thì rời biểu mẫu (#319)", async ({ page }) => {
+    // Dữ liệu gợi ý dựng ở Route Handler, không cần mô hình nhúng thật
+    await page.route("**/api/yeu-cau/tuong-tu", (r) =>
+      r.fulfill({
+        json: {
+          enabled: true,
+          items: [
+            {
+              title: "[Mẫu] Máy in tầng 3 kẹt giấy liên tục",
+              request_type: "Sự cố thiết bị",
+              resolution: "Đã vệ sinh và thay con lăn kéo giấy.",
+              closed_at: "2026-10-20T03:00:00Z",
+              score: 0.81,
+            },
+          ],
+        },
+      }),
+    );
+    let phienBo: string | null = null;
+    page.on("request", (r) => {
+      if (r.url().endsWith("/api/yeu-cau/tuong-tu/bo")) phienBo = (r.postDataJSON() as { session_id: string }).session_id;
+    });
+
+    await page.goto("/yeu-cau/moi");
+    await page.getByText("Sự cố thiết bị").first().click();
+    await page.locator('input[name="title"]').fill("Máy in chung cứ bị mắc giấy");
+    await page.locator('textarea[name="description"]').fill("In vài tờ là giấy bị nghẽn bên trong.");
+    const khoi = page.getByTestId("goi-y-tuong-tu");
+    await expect(khoi).toBeVisible();
+    await expect(khoi).toContainText("Máy in tầng 3 kẹt giấy liên tục");
+    await expect(khoi).toContainText("Đã vệ sinh và thay con lăn kéo giấy.");
+    await expect(khoi).toContainText("Gợi ý của hệ thống");
+    // Không lộ mã hồ sơ của người khác, không dẫn tới hồ sơ nào
+    await expect(khoi.locator("a")).toHaveCount(0);
+
+    await khoi.getByRole("button", { name: "Đã giải quyết được, không gửi nữa" }).click();
+    await page.waitForURL(/\/yeu-cau$/);
+    expect(phienBo).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
   test("không thấy mục Hệ thống, mở thẳng thì bị từ chối", async ({ page }) => {
     await page.goto("/");
     await expect((await thanhBen(page)).getByRole("link", { name: "Hệ thống" })).toHaveCount(0);

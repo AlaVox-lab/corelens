@@ -28,6 +28,14 @@ một dòng mở ngăn xem nhanh bên phải, dùng phím như ở hàng đợi 
 Ô chọn người đọc từ danh bạ Keycloak: chỉ người của đúng phòng và nhận được việc, không có tài
 khoản đã khóa. Danh bạ không trả lời thì vẫn nhận được hồ sơ, chỉ chưa giao được người.
 
+**Gợi ý người xử lý.** Trên ô chọn có thẻ *Gợi ý* nêu một người trong số đó kèm lý do, ví dụ *"Đang
+giữ 2 việc, đã xử lý 14 hồ sơ cùng loại."* — người ít việc đang giữ và đã làm nhiều hồ sơ cùng loại
+được ưu tiên; quản trị viên chỉnh mức coi trọng hai điều đó (`DXLAB_ASSIGNEE_SUGGEST_*`, trang
+[Cấu hình](../../cai-dat/cau-hinh/)). Hồ sơ chưa giao ai thì ô điền sẵn người được gợi ý. Gợi ý tính
+khi hồ sơ về phòng và tính lại mỗi lần bạn mở hồ sơ, nên theo kịp việc vừa giao cho người khác. Giữ hay
+chọn người khác đều được — lựa chọn của bạn được ghi vào nhật ký, và tỷ lệ chọn khác gợi ý hiện trên
+bảng điều khiển. Gợi ý không cần mô hình ngôn ngữ; danh bạ không trả lời thì không có gợi ý.
+
 **Đã nhận là không trả về**: sau khi xác duyệt, hồ sơ không quay lại điều phối được nữa — vấn đề
 phát sinh do chính phòng xử lý.
 

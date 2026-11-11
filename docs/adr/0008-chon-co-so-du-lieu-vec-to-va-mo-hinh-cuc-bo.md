@@ -2,7 +2,7 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | Đã chấp nhận (2026-11-08) — đợt #316/#317 cài phần sinh văn bản; nhúng véc-tơ và pgvector để #319 |
+| Trạng thái | Đã chấp nhận (2026-11-08) — đợt #316/#317 cài phần sinh văn bản; #319 cài nhúng véc-tơ và pgvector |
 | Ngày | 2026-10-10 |
 | Không gian kiến trúc | `I` |
 | Issue liên quan | #47 · #316 · #317 · #319 |
@@ -160,8 +160,13 @@ Navigator chấp nhận ngày 2026-11-08. Cài đặt chia hai đợt:
   phát hành 2026-10-25) dưới hồ sơ Compose `tri-tue`, mô hình sinh văn bản trong volume `mo-hinh`
   (tải bằng `scripts/tai_mo_hinh.py`, ghim commit kho và SHA-256). Dịch vụ ứng dụng gọi qua đúng một
   lớp, `backend/app/intelligence/mo_hinh.py`, để gợi ý loại yêu cầu, mức ưu tiên, phòng ban
-- **Đợt 2 — #319 (chưa cài):** mô hình nhúng và pgvector cho truy xuất tri thức. Cho tới đợt đó ảnh
-  PostgreSQL của cụm không đổi
+- **Đợt 2 — #319 (đã cài):** ảnh PostgreSQL đổi sang `pgvector/pgvector:0.8.6-pg16` (ghim cả mã băm;
+  PostgreSQL 16.15, Debian bookworm). Phép khảo sát chạy trên 0.8.7, nhưng ảnh 0.8.7 mới dựng lại chưa
+  đủ hai tuần trước ngày cài nên navigator chốt 0.8.6 (ảnh dựng 2026-08-13) ngày 2026-11-11 — cùng
+  PostgreSQL 16.15, phép quét chính xác không đổi giữa hai bản. Dịch vụ nhúng `mo-hinh-nhung` chạy
+  chính ảnh llama.cpp đã ghim, chế độ `--embeddings`, cùng hồ sơ `tri-tue`; tệp
+  `Qwen3-Embedding-0.6B-Q8_0.gguf` cùng volume `mo-hinh`. Dùng cho gợi ý hồ sơ đã giải quyết tương tự
+  trên biểu mẫu Gửi yêu cầu (ARCHITECTURE.md mục 6.6)
 
 ---
 
@@ -218,8 +223,10 @@ Navigator chấp nhận ngày 2026-11-08. Cài đặt chia hai đợt:
 - [x] Cập nhật `docs/dependencies.md` — llama.cpp server và mô hình sinh văn bản (#316); pgvector và
   mô hình nhúng thêm ở #319
 - [x] Bổ sung vào `docker-compose.yml` dưới hồ sơ riêng cho tầng `I` — hồ sơ `tri-tue` (#316)
-- [ ] Mô hình nhúng và pgvector (#319)
-- [ ] Đánh giá đổi ảnh PostgreSQL trên cụm có dữ liệu thật
+- [x] Mô hình nhúng và pgvector (#319)
+- [x] Đánh giá đổi ảnh PostgreSQL trên cụm có dữ liệu thật — #319: cụm `postgres:16-alpine` có dữ liệu
+  nâng lên ảnh pgvector bằng `up -d --build`, `scripts/kiem_nang_cap.py so` báo giữ nguyên dữ liệu, mọi chỉ
+  mục B-tree qua `amcheck` sau REINDEX của migration `0022`
 - [ ] Đo lại với bài thật của kho tri thức khi ADR-0006 được chấp nhận; so thêm một mô hình nhúng thứ hai
 
 ---

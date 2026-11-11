@@ -45,6 +45,7 @@ export async function guiYeuCau(
   // Tạo lại từ hồ sơ cũ (#102). Chuỗi không phải số nguyên dương thì coi như không có;
   // dịch vụ kiểm hồ sơ gốc có phải của người gửi và đã kết thúc hay không.
   const goc = chuoiHoacRong(duLieu.get("parent_request_id"));
+  const phien = chuoiHoacRong(duLieu.get("similar_session_id"));
 
   if (tieuDe.length < 3) {
     return { loi: "Tiêu đề phải dài ít nhất 3 ký tự." };
@@ -56,6 +57,8 @@ export async function guiYeuCau(
     request_type_code: loai || null,
     details: docJson(chuoiHoacRong(duLieu.get("details"))),
     parent_request_id: /^\d+$/.test(goc) ? Number(goc) : null,
+    // Phiên soạn của gợi ý hồ sơ tương tự (#319); chuỗi lạ thì không gửi
+    similar_session_id: /^[0-9a-f-]{36}$/i.test(phien) ? phien : null,
   });
 
   if (!ketQua.ok) return { loi: ketQua.thongDiep };

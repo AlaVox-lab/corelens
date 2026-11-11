@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -61,6 +61,7 @@ from app.workflow.routes import (
     goi_y_ra,
 )
 from app.intelligence.goi_y import goi_y_loai, goi_y_phong, goi_y_uu_tien
+from app.intelligence.nguoi_xu_ly import hen_goi_y_neu_ve_phong
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
     ChuyenTrangThaiCoTruongVao,
@@ -340,6 +341,7 @@ def chuyen_trang_thai(
     session: _Phien,
     actor: _Cua,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    tac_vu_nen: BackgroundTasks,
 ) -> HoSoDieuPhoiRa:
     """Thực hiện một thao tác, CÓ kèm trường quyết định.
 
@@ -378,6 +380,8 @@ def chuyen_trang_thai(
 
     session.commit()
     session.refresh(ho_so)
+    # Hồ sơ vừa về phòng: gợi ý người xử lý tính ở nền, sau khi phản hồi đã về (#318)
+    hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
     return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
 
 

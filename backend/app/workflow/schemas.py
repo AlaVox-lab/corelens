@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import uuid
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -317,6 +318,9 @@ class TaoHoSoVao(BaseModel):
     parent_request_id: int | None = Field(default=None, ge=1)
     # Trường riêng theo loại yêu cầu (#250): {mã trường: giá trị}, kiểm theo khai báo của loại
     details: dict[str, Any] = Field(default_factory=dict)
+    # Phiên soạn của gợi ý hồ sơ tương tự (#319): nối lượt "đã xem gợi ý" với lần gửi này, để lượt đó
+    # không bị tính là bỏ không gửi. Không bắt buộc, không ảnh hưởng gì tới hồ sơ
+    similar_session_id: uuid.UUID | None = None
 
 
 class ChuyenTrangThaiVao(BaseModel):
@@ -474,6 +478,9 @@ class NguoiNhanViecRa(BaseModel):
 class NguoiNhanViecTrongPhongRa(BaseModel):
     department: PhongBanRa
     people: list[NguoiNhanViecRa]
+    # Gợi ý người xử lý cho hồ sơ `case_id` gửi kèm (#318), tính lại ngay lúc tra — luôn là một người
+    # trong `people`. Trống khi không gửi `case_id`, hồ sơ không chờ giao việc, hay phòng không có ai.
+    suggestion: GoiYRa | None = None
 
 
 class LienHeNguoiGuiRa(BaseModel):
@@ -521,6 +528,10 @@ class HoSoPhongBanRa(HoSoChiTietRa):
     state_entered_at: dt.datetime
     assignee_label: str | None = None
     assigned_to_me: bool
+    # Gợi ý người xử lý đã lưu (#318), chỉ khi hồ sơ đang chờ giao việc. Ô chọn người nạp danh sách
+    # kèm gợi ý tính lại (`/departments/{code}/assignees?case_id=`); trường này để màn không trống
+    # khi danh bạ chưa trả lời kịp — và chính là thứ cửa chuyển trạng thái đem so.
+    suggested_assignee: GoiYRa | None = None
 
 
 # ---------------------------------------------------------------------------

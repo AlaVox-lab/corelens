@@ -369,6 +369,71 @@ def hoi_phan_loai(
     )
 
 
+def hoi_json(
+    tin_nhan: list[dict[str, str]],
+    luoc_do: dict[str, Any],
+    *,
+    ten: str,
+    han_giay: float | None = None,
+    so_token: int | None = None,
+) -> tuple[dict[str, Any], int]:
+    """Một lời gọi sinh văn bản ràng buộc bằng lược đồ JSON (#320 — khuyến nghị cải tiến). Trả (đối
+    tượng JSON, số mili giây). Cùng hạn chót cứng và cùng `LoiMoHinh` như `hoi_phan_loai`; kiểm nội dung
+    là việc của phía gọi — lớp này chỉ bảo đảm ra một đối tượng JSON."""
+    cau_hinh = get_settings()
+    goc = cau_hinh.llm_url.strip().rstrip("/")
+    if not goc:
+        raise LoiMoHinh(LOI_TAT, "chưa cấu hình địa chỉ mô hình")
+    han = han_giay if han_giay is not None else cau_hinh.llm_timeout_seconds
+    than = {
+        "model": cau_hinh.llm_model,
+        "messages": tin_nhan,
+        "temperature": 0,
+        "max_tokens": so_token if so_token is not None else cau_hinh.llm_max_tokens,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {"name": ten, "strict": True, "schema": luoc_do},
+        },
+    }
+    bat_dau = time.monotonic()
+    phan_hoi = _goi_trong_han(lambda: _post_json(goc + "/v1/chat/completions", than, han), han)
+    try:
+        dap_an = json.loads(phan_hoi["choices"][0]["message"]["content"])
+    except (KeyError, IndexError, TypeError, ValueError) as loi:
+        raise LoiMoHinh(LOI_SAI_DINH_DANG, "không đọc được JSON trong câu trả lời") from loi
+    if not isinstance(dap_an, dict):
+        raise LoiMoHinh(LOI_SAI_DINH_DANG, "câu trả lời không phải đối tượng JSON")
+    return dap_an, round((time.monotonic() - bat_dau) * 1000)
+
+
+def hoi_nhung(
+    cac_doan: list[str], *, url: str | None = None, han_giay: float | None = None
+) -> list[list[float]]:
+    """Véc-tơ nhúng của từng đoạn, cùng thứ tự (#319). Ném `LoiMoHinh` nếu không dùng được.
+
+    Gọi điểm cuối `/v1/embeddings` kiểu OpenAI của dịch vụ nhúng (`DXLAB_EMBEDDING_URL`), cùng hạn chót
+    cứng và cùng một loại lỗi với lời gọi sinh văn bản. Kiểm số véc-tơ, cùng số chiều, toàn số thực —
+    máy chủ trả thiếu hay trả rác thì không véc-tơ nào lọt ra.
+    """
+    cau_hinh = get_settings()
+    goc = (url if url is not None else cau_hinh.embedding_url).strip().rstrip("/")
+    if not goc:
+        raise LoiMoHinh(LOI_TAT, "chưa cấu hình địa chỉ mô hình nhúng")
+    if not cac_doan:
+        return []
+    han = han_giay if han_giay is not None else cau_hinh.embedding_timeout_seconds
+    than = {"model": cau_hinh.embedding_model, "input": cac_doan}
+    phan_hoi = _goi_trong_han(lambda: _post_json(goc + "/v1/embeddings", than, han), han)
+    try:
+        du_lieu = sorted(phan_hoi["data"], key=lambda d: d["index"])
+        vec = [[float(x) for x in d["embedding"]] for d in du_lieu]
+    except (KeyError, TypeError, ValueError) as loi:
+        raise LoiMoHinh(LOI_SAI_DINH_DANG, "không đọc được véc-tơ trong câu trả lời") from loi
+    if len(vec) != len(cac_doan) or not vec[0] or any(len(v) != len(vec[0]) for v in vec):
+        raise LoiMoHinh(LOI_SAI_DINH_DANG, "số véc-tơ hay số chiều không khớp")
+    return vec
+
+
 def goi_y_phan_loai(session: Session, ho_so: Request) -> PhanLoai | None:
     """Ba gợi ý cho một hồ sơ, hoặc `None` — "không có gợi ý" — với mọi lỗi."""
     try:
@@ -384,15 +449,22 @@ def goi_y_phan_loai(session: Session, ho_so: Request) -> PhanLoai | None:
 # ---------------------------------------------------------------------------
 
 
-def tinh_trang() -> dict[str, Any]:
+def tinh_trang_nhung() -> dict[str, Any]:
+    """Tình trạng dịch vụ mô hình nhúng (#319), cùng ba mức với `tinh_trang`."""
+    cau_hinh = get_settings()
+    return tinh_trang(url=cau_hinh.embedding_url, ten=cau_hinh.embedding_model)
+
+
+def tinh_trang(url: str | None = None, ten: str | None = None) -> dict[str, Any]:
     """Tình trạng dịch vụ mô hình: `disabled` (địa chỉ rỗng), `ready`, hay `unreachable`.
 
     Hỏi điểm `/health` của llama.cpp server, hạn chót ngắn: người quản trị đang chờ màn Hệ thống.
-    Mô hình đang nạp (llama.cpp trả 503) cũng là chưa phản hồi được, kèm chi tiết.
+    Mô hình đang nạp (llama.cpp trả 503) cũng là chưa phản hồi được, kèm chi tiết. Mặc định là dịch vụ
+    sinh văn bản; `url`, `ten` cho dịch vụ khác cùng loại máy chủ (dịch vụ nhúng).
     """
     cau_hinh = get_settings()
-    ket_qua: dict[str, Any] = {"status": TAT, "model": cau_hinh.llm_model}
-    goc = cau_hinh.llm_url.strip().rstrip("/")
+    ket_qua: dict[str, Any] = {"status": TAT, "model": ten if ten is not None else cau_hinh.llm_model}
+    goc = (url if url is not None else cau_hinh.llm_url).strip().rstrip("/")
     if not goc:
         return ket_qua
     han = cau_hinh.llm_health_timeout_seconds

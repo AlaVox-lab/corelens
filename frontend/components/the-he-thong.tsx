@@ -40,6 +40,8 @@ export type SucKhoe = {
   detail?: string;
   scanners?: NhipBoQuet[] | null;
   language_model?: MoHinhNgonNgu;
+  /** Mô hình nhúng cho hồ sơ tương tự (#319) — cùng ba mức. */
+  embedding_model?: MoHinhNgonNgu;
   scan_settings?: {
     enabled: boolean;
     interval_seconds: number;
@@ -86,10 +88,10 @@ function chuBoQuet(b: NhipBoQuet): string {
 }
 
 /** Mô hình là tùy chọn: "tắt" không phải lỗi, chỉ "không phản hồi" mới tô đỏ (mục 8.3). */
-function chuMoHinh(m: MoHinhNgonNgu): string {
+function chuMoHinh(m: MoHinhNgonNgu, khiTat = "tắt — điều phối thủ công, không có gợi ý"): string {
   switch (m.status) {
     case "disabled":
-      return "tắt — điều phối thủ công, không có gợi ý";
+      return khiTat;
     case "ready":
       return `sẵn sàng${m.model ? ` · ${m.model}` : ""}`;
     default:
@@ -134,6 +136,13 @@ export function TheHeThong({ sucKhoe, tieuDe = "Tình trạng hệ thống" }: {
           nhan="Mô hình ngôn ngữ"
           tot={sucKhoe.language_model.status !== "unreachable"}
           giaTri={chuMoHinh(sucKhoe.language_model)}
+        />
+      )}
+      {sucKhoe?.embedding_model && (
+        <DongTrangThai
+          nhan="Mô hình nhúng"
+          tot={sucKhoe.embedding_model.status !== "unreachable"}
+          giaTri={chuMoHinh(sucKhoe.embedding_model, "tắt — không gợi ý hồ sơ tương tự")}
         />
       )}
       {!dungHet && (

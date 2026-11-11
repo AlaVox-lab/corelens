@@ -118,6 +118,12 @@ class Request(Base):
     suggestion_note: Mapped[dict | None] = mapped_column(
         JSONB(none_as_null=True), default=None
     )
+    # Gợi ý người xử lý (#318): tên người, lý do, số liệu làm căn cứ, lúc tính — đi cùng
+    # `suggested_assignee_id`. Tách khỏi `suggestion_note` của mô hình phân loại: hai đường ghi
+    # khác nhau, không đường nào ghi đè ghi chú của đường kia.
+    assignee_suggestion: Mapped[dict | None] = mapped_column(
+        JSONB(none_as_null=True), default=None
+    )
     # Mốc lần thử gần nhất và số lần đã thử — bộ quét bù đọc để không hỏi lại mãi một hồ sơ
     suggestion_attempted_at: Mapped[dt.datetime | None] = mapped_column(default=None)
     suggestion_attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
