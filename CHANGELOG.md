@@ -5,6 +5,16 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.12.0] - 2026-11-11
+
+### Tài liệu
+
+- Mô hình nhiều giấy phép cho dịch vụ khai phá quy trình ([#341](https://github.com/AlaVox-lab/dx-os-lab/issues/341)) ([43fffb8](https://github.com/AlaVox-lab/dx-os-lab/commit/43fffb851ddc555bdf083f92efa437f4e57a9790))
+
+### Tính năng mới
+
+- **i-classify:** Mô hình ngôn ngữ cục bộ và gợi ý phân loại ([#342](https://github.com/AlaVox-lab/dx-os-lab/issues/342)) ([c2178e1](https://github.com/AlaVox-lab/dx-os-lab/commit/c2178e1322fbc40e031687704246db77e4479cd4))
+
 ## [0.11.0] - 2026-11-10
 
 ### Tính năng mới
