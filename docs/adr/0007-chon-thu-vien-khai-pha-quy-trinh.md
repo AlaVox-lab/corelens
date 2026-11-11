@@ -210,7 +210,7 @@ Theo điều kiện của giảng viên, kho mô tả mình là **một kho hai 
 | Phần | Giấy phép | Căn cứ trong kho |
 |---|---|---|
 | `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | Toàn văn `services/khai-pha/LICENSE`; header `SPDX-License-Identifier: AGPL-3.0-or-later` |
-| Mọi thư mục khác | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ cho thư mục trên |
+| Mọi thư mục khác | MIT | `LICENSE` ở gốc (văn bản MIT nguyên văn); ngoại lệ cho thư mục trên ghi ở `LICENSES.md`, `README.md`, `NOTICE` |
 
 - `LICENSES.md` ở gốc: bảng theo thư mục, lý do, nghĩa vụ AGPL và cách đáp ứng. `NOTICE`: thông báo
   bên thứ ba (PM4Py, CVXOPT và các gói đáng chú ý khác, các nền tảng chạy như dịch vụ riêng)

@@ -312,7 +312,7 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 | Thư mục | Giấy phép | Tệp toàn văn |
 |---|---|---|
 | `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | `services/khai-pha/LICENSE` |
-| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ trên |
+| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc (văn bản MIT nguyên văn; ngoại lệ ghi ở `LICENSES.md`) |
 
 - Bảng đầy đủ và lý do ở `LICENSES.md`; thông báo bên thứ ba (PM4Py và các gói copyleft nó kéo theo, các
   nền tảng chạy như dịch vụ riêng) ở `NOTICE`
@@ -427,7 +427,7 @@ dx-os-lab/
 ├── CHANGELOG.md                 # sinh tự động bằng git-cliff
 ├── CLAUDE.md                    # quy tắc cho mọi trợ lý AI làm việc trên kho
 ├── CONTRIBUTING.md              # quy trình làm việc và quy ước mã nguồn
-├── LICENSE                      # MIT toàn văn, kèm ngoại lệ cho services/khai-pha/
+├── LICENSE                      # MIT toàn văn (ngoại lệ services/khai-pha/ ở LICENSES.md)
 ├── LICENSES.md                  # bảng giấy phép theo thư mục, nghĩa vụ AGPL (#340)
 ├── NOTICE                       # thông báo bên thứ ba
 ├── README.md
