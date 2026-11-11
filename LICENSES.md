@@ -4,6 +4,10 @@ DX-OS Lab dùng **mô hình nhiều giấy phép**: phần lớn kho theo MIT, r
 GNU AGPL phiên bản 3 hoặc mới hơn. Cả hai đều thuộc danh sách giấy phép được
 [OSI công nhận](https://opensource.org/licenses).
 
+**Ngoại lệ của tệp `LICENSE` ở gốc kho:** tệp đó giữ nguyên văn bản MIT (để công cụ và GitHub nhận đúng
+giấy phép), nhưng **không** áp cho thư mục `services/khai-pha/` — thư mục này theo AGPL-3.0-or-later, toàn
+văn ở `services/khai-pha/LICENSE`.
+
 | Thư mục | Nội dung | Giấy phép | Toàn văn |
 |---|---|---|---|
 | `backend/` | Dịch vụ ứng dụng (FastAPI) | MIT | [`LICENSE`](LICENSE) |
