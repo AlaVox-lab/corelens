@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.events.log import record_event
 from app.intelligence.goi_y import ghi_nhan_goi_y
 from app.models.case import EventLog, Request
+from app.thong_bao.hang_doi import TRIGGER_VAO_TRANG_THAI, xep_hang
 from app.models.workflow_config import (
     Department,
     Priority,
@@ -551,6 +552,23 @@ def perform_transition(
     cap_nhat_dong_ho(session, ho_so, canh)
 
     ho_so.current_state = canh.to_state
+
+    # Thông báo thư (#251): xếp một sự kiện vào hàng đợi CÙNG giao dịch — hủy giao dịch thì sự kiện
+    # mất theo, thành công thì bộ quét gửi xử lý sau. Không gọi mạng, không tra danh bạ ở đây. Chỉ
+    # khi chỗ hồ sơ chờ đổi thật: đổi trạng thái hay đổi người được giao; sửa nội dung thì không.
+    # Máy chủ thư không cấu hình thì hàm không làm gì.
+    if canh.from_state != canh.to_state or "assignee_id" in thay_doi:
+        xep_hang(
+            session,
+            TRIGGER_VAO_TRANG_THAI,
+            ho_so,
+            context={
+                "from_state": canh.from_state,
+                "to_state": canh.to_state,
+                **({"assignee_id": thay_doi["assignee_id"]} if "assignee_id" in thay_doi else {}),
+            },
+            actor_id=None if actor.is_system else actor.id,
+        )
 
     session.flush()
     return ho_so

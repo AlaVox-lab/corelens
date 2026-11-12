@@ -6,7 +6,7 @@
 # Ghim phiên bản ảnh nền bằng thẻ cụ thể, không dùng `latest`. Ban giám khảo dựng lại
 # sau nhiều tháng phải nhận đúng bộ phiên bản mà nhóm đã kiểm chứng.
 
-FROM python:3.13-slim
+FROM python:3.13.17-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
 
 # Không sinh tệp .pyc, không đệm đầu ra — nhật ký hiện ngay trong docker logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -35,10 +35,11 @@ USER dxlab
 
 EXPOSE 8000
 
-# Dùng chính Python để kiểm tra sức khỏe, khỏi cài thêm curl vào ảnh. Điểm cuối trả
-# 503 khi cơ sở dữ liệu hỏng, nên container sẽ báo unhealthy đúng lúc — khác với bẫy
-# đã gặp ở Superset.
+# Dùng chính Python để kiểm tra sức khỏe, khỏi cài thêm curl vào ảnh. Điểm cuối "sẵn sàng" (#247)
+# trả 503 khi cơ sở dữ liệu hỏng hay bộ quy tắc chưa nạp, nên container báo unhealthy đúng lúc — khác
+# với bẫy đã gặp ở Superset — và cổng, Superset chờ `service_healthy` là chờ dịch vụ làm được việc.
+# `/health/live` (không chạm cơ sở dữ liệu) dành cho bộ điều phối có tách hai khái niệm, như Kubernetes.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=4).status == 200 else 1)"
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/ready', timeout=4).status == 200 else 1)"
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

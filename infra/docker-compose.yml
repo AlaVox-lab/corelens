@@ -54,7 +54,7 @@ services:
   # Realm nạp từ tệp JSON lúc khởi động: đổi vai trò là đổi dữ liệu, không đổi mã
   # ---------------------------------------------------------------------------
   keycloak:
-    image: quay.io/keycloak/keycloak:26.7.3
+    image: quay.io/keycloak/keycloak:26.7.3@sha256:ff4257d0d64efbe99ed1ddfaf07765cc3c36dc7518bf8324d41961327f441c54
     container_name: dxlab-keycloak
     restart: unless-stopped
     command: ["start-dev", "--import-realm"]
@@ -90,7 +90,7 @@ services:
   # Tắt telemetry: mặc định nó gửi thống kê cụm ra ngoài mỗi 24 giờ
   # ---------------------------------------------------------------------------
   seaweedfs:
-    image: chrislusf/seaweedfs:4.45
+    image: chrislusf/seaweedfs:4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
     container_name: dxlab-seaweedfs
     restart: unless-stopped
     command: >
@@ -175,7 +175,7 @@ services:
   # Thẻ ảnh ghim cụ thể — scripts/tai_mo_hinh.py đọc thẻ ở dòng `image` dưới đây.
   # ---------------------------------------------------------------------------
   mo-hinh:
-    image: ghcr.io/ggml-org/llama.cpp:server-b11889
+    image: ghcr.io/ggml-org/llama.cpp:server-b11889@sha256:5741ab30aae42af23ca57d9b98a6d4544cb09c21f372f92c5ee55312fa8b8b0c
     container_name: dxlab-mo-hinh
     profiles: ["tri-tue"]
     restart: unless-stopped
@@ -205,7 +205,7 @@ services:
   # văn bản. Không mở cổng ra máy, không dịch vụ nào depends_on nó.
   # ---------------------------------------------------------------------------
   mo-hinh-nhung:
-    image: ghcr.io/ggml-org/llama.cpp:server-b11889
+    image: ghcr.io/ggml-org/llama.cpp:server-b11889@sha256:5741ab30aae42af23ca57d9b98a6d4544cb09c21f372f92c5ee55312fa8b8b0c
     container_name: dxlab-mo-hinh-nhung
     profiles: ["tri-tue"]
     restart: unless-stopped
@@ -226,6 +226,55 @@ services:
       interval: 10s
       timeout: 5s
       start_period: 60s
+      retries: 6
+
+  # ---------------------------------------------------------------------------
+  # Quét mã độc tệp đính kèm — ClamAV (#248). TÙY CHỌN: chỉ có khi bật hồ sơ
+  #     docker compose --env-file .env --profile quet-tep up -d
+  # rồi đặt CLAMAV_HOST=quet-tep trong .env. ClamAV (GPL-2.0) chạy như dịch vụ ĐỘC LẬP; dịch vụ ứng
+  # dụng nói chuyện với clamd qua giao thức mạng (lệnh INSTREAM, cổng 3310) bằng thư viện chuẩn
+  # Python — không nhúng, không liên kết mã ClamAV (LICENSES.md). Ảnh đã kèm sẵn cơ sở mẫu nhận diện
+  # nên quét được ngay cả khi không có mạng; freshclam cập nhật mẫu khi có mạng (tắt bằng
+  # CLAMAV_NO_FRESHCLAMD=true). Nạp mẫu tốn khoảng 1 GB bộ nhớ và vài chục giây lúc khởi động.
+  # KHÔNG mở cổng ra máy, không dịch vụ nào depends_on nó.
+  # ---------------------------------------------------------------------------
+  quet-tep:
+    image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+    container_name: dxlab-quet-tep
+    profiles: ["quet-tep"]
+    restart: unless-stopped
+    environment:
+      CLAMAV_NO_FRESHCLAMD: ${CLAMAV_NO_FRESHCLAMD:-false}
+    # Ảnh có sẵn healthcheck (clamdcheck.sh gửi PING); chỉ nới thời gian chờ nạp mẫu
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 15s
+      timeout: 5s
+      start_period: 360s
+      retries: 6
+
+  # ---------------------------------------------------------------------------
+  # Hộp thư thử — Mailpit (#251). TÙY CHỌN, để trình diễn thông báo thư: chỉ có khi bật hồ sơ
+  #     docker compose --env-file .env --profile thu-thu up -d
+  # rồi đặt SMTP_HOST=thu-thu, SMTP_PORT=1025 trong .env. Mailpit nhận mọi thư qua SMTP, không chuyển
+  # đi đâu; xem thư ở http://localhost:${MAILPIT_UI_PORT} (mặc định 8025). Triển khai thật thì bỏ hồ sơ
+  # này, trỏ SMTP_HOST tới máy chủ thư của doanh nghiệp. Không dịch vụ nào depends_on nó.
+  # ---------------------------------------------------------------------------
+  thu-thu:
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    container_name: dxlab-thu-thu
+    profiles: ["thu-thu"]
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: ${MAILPIT_MAX_MESSAGES:-500}
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    # Ảnh có sẵn lệnh `readyz` cho healthcheck
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
       retries: 6
 
   # ---------------------------------------------------------------------------
@@ -258,6 +307,9 @@ services:
       DXLAB_DIRECTORY_CLIENT_SECRET: ${KEYCLOAK_DIRECTORY_SECRET}
       # Bộ quét hồ sơ quá hạn. Hạ chu kỳ xuống vài giây khi cần trình diễn việc
       # tự leo thang mà không phải ngồi chờ.
+      # Nhật ký (#247): json — mỗi dòng một đối tượng JSON mang mã yêu cầu; text — dạng chữ để đọc tay
+      DXLAB_LOG_FORMAT: ${LOG_FORMAT:-json}
+      DXLAB_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DXLAB_SLA_SCAN_ENABLED: ${SLA_SCAN_ENABLED}
       DXLAB_SLA_SCAN_INTERVAL_SECONDS: ${SLA_SCAN_INTERVAL_SECONDS}
       # Ngưỡng cảnh báo của bộ quét (#253). Có giá trị mặc định để tệp .env cũ vẫn chạy được.
@@ -282,6 +334,26 @@ services:
       DXLAB_ATTACHMENT_MAX_MB: ${ATTACHMENT_MAX_MB:-10}
       DXLAB_ATTACHMENT_MAX_FILES: ${ATTACHMENT_MAX_FILES:-5}
       DXLAB_ATTACHMENT_MAX_FILES_PER_CASE: ${ATTACHMENT_MAX_FILES_PER_CASE:-20}
+      # Quét mã độc (#248). Rỗng là TẮT — mặc định của cụm: tệp chỉ được kiểm đuôi, chữ ký, macro.
+      # Bật hồ sơ `quet-tep` thì đặt CLAMAV_HOST=quet-tep. Cố ý KHÔNG depends_on: dịch vụ quét tắt hay
+      # đang nạp mẫu thì tải tệp theo CLAMAV_ON_UNAVAILABLE (mặc định nhận, gắn cờ "chưa quét").
+      DXLAB_CLAMAV_HOST: ${CLAMAV_HOST:-}
+      DXLAB_CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      DXLAB_CLAMAV_TIMEOUT_SECONDS: ${CLAMAV_TIMEOUT_SECONDS:-15}
+      DXLAB_CLAMAV_ON_UNAVAILABLE: ${CLAMAV_ON_UNAVAILABLE:-accept}
+      # Thông báo thư (#251). SMTP_HOST rỗng là TẮT — mặc định của cụm: không xếp hàng, không gửi gì.
+      # Bật hồ sơ `thu-thu` thì đặt SMTP_HOST=thu-thu, SMTP_PORT=1025. Cố ý KHÔNG depends_on: máy chủ
+      # thư sập thì thư nằm chờ trong hàng đợi, chuyển trạng thái vẫn chạy.
+      DXLAB_SMTP_HOST: ${SMTP_HOST:-}
+      DXLAB_SMTP_PORT: ${SMTP_PORT:-25}
+      DXLAB_SMTP_USERNAME: ${SMTP_USERNAME:-}
+      DXLAB_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      DXLAB_SMTP_SECURITY: ${SMTP_SECURITY:-none}
+      DXLAB_SMTP_FROM: ${SMTP_FROM:-DX-OS Lab <khong-tra-loi@dx-os-lab.test>}
+      DXLAB_NOTIFY_SCAN_INTERVAL_SECONDS: ${NOTIFY_SCAN_INTERVAL_SECONDS:-30}
+      DXLAB_NOTIFY_MAX_ATTEMPTS: ${NOTIFY_MAX_ATTEMPTS:-5}
+      DXLAB_NOTIFY_RETRY_AFTER_SECONDS: ${NOTIFY_RETRY_AFTER_SECONDS:-60}
+      DXLAB_NOTIFY_DIRECTORY_CACHE_SECONDS: ${NOTIFY_DIRECTORY_CACHE_SECONDS:-120}
       # Bảng điều khiển nhúng trong cổng (#305): dịch vụ xin token khách qua địa chỉ nội bộ,
       # trình duyệt tải bảng điều khiển qua địa chỉ công khai. Cố ý KHÔNG depends_on superset
       # (chính Superset chờ dịch vụ này): Superset tắt thì chỉ mục Báo cáo báo không phản hồi.

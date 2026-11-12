@@ -8,6 +8,7 @@
 # thuộc môi trường triển khai: chuỗi kết nối, cổng, mức ghi nhật ký.
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -40,6 +41,11 @@ class Settings(BaseSettings):
 
     # Thư mục dữ liệu khởi tạo (infra/seed/ gắn vào container), bộ nạp đọc lần đầu dựng cụm (#254)
     seed_dir: str = "/seed"
+
+    # Nhật ký (#247): `json` — mỗi dòng một đối tượng JSON mang mã yêu cầu, cho công cụ gom nhật ký;
+    # `text` — dạng chữ, khi đọc tay. Xem app/quan_sat.py
+    log_format: Literal["json", "text"] = "json"
+    log_level: str = "INFO"
 
     # --- Dịch vụ khai phá quy trình (#314, ADR-0007) ------------------------
     #
@@ -276,6 +282,50 @@ class Settings(BaseSettings):
     attachment_max_mb: int = 10
     attachment_max_files: int = 5
     attachment_max_files_per_case: int = 20
+
+    # --- Quét mã độc tệp đính kèm, xem #248 -------------------------------------
+    #
+    # ClamAV là dịch vụ TÙY CHỌN (hồ sơ Compose `quet-tep`), gọi qua giao thức mạng của clamd —
+    # app/storage/quet_ma_doc.py. Địa chỉ rỗng là TẮT, mặc định của cụm: không quét, tệp đi như cũ.
+    clamav_host: str = ""
+    clamav_port: int = 3310
+    # Hạn chót cho cả một lần quét. Tệp tối đa vài chục MB, clamd quét trong vài giây
+    clamav_timeout_seconds: float = 15.0
+    # Quét bật mà clamd không phản hồi thì làm gì: `accept` — nhận tệp, gắn cờ "chưa quét", ghi
+    # nhật ký (mặc định: dịch vụ tùy chọn hỏng không được chặn người gửi bổ sung hồ sơ); `reject` —
+    # từ chối lần tải, cho nơi coi quét là bắt buộc. Lý do ở ARCHITECTURE.md mục tệp đính kèm.
+    clamav_on_unavailable: Literal["accept", "reject"] = "accept"
+
+    # --- Thông báo thư điện tử, xem #251 ---------------------------------------
+    #
+    # Máy chủ thư rỗng là TẮT — mặc định của cụm: không xếp hàng, không gửi gì, bộ quét gửi không
+    # chạy. Hồ sơ Compose `thu-thu` có Mailpit làm hộp thư thử (SMTP_HOST=thu-thu, cổng 1025).
+    # Loại thông báo, tiêu đề, nội dung nằm trong DỮ LIỆU (bảng `notification_types`, infra/seed/05).
+    smtp_host: str = ""
+    smtp_port: int = 25
+    smtp_username: str = ""
+    smtp_password: str = ""
+    # `none` (Mailpit, máy chủ nội bộ), `starttls` (cổng 587), `ssl` (cổng 465)
+    smtp_security: Literal["none", "starttls", "ssl"] = "none"
+    smtp_from: str = "DX-OS Lab <khong-tra-loi@dx-os-lab.test>"
+    smtp_timeout_seconds: float = 10.0
+    # Nhịp bộ quét gửi: phát hiện mốc báo trước, tìm người nhận, gửi thư đến hạn
+    notify_scan_interval_seconds: int = 30
+    # Số lần thử gửi tối đa một thư, và giây chờ trước lần thử kế (nhân đôi mỗi lần)
+    notify_max_attempts: int = 5
+    notify_retry_after_seconds: int = 60
+    # Số thư tối đa mỗi lượt, để một hàng đợi dồn không giữ khóa quét quá lâu
+    notify_batch_size: int = 50
+    # Danh sách người của danh bạ được nhớ chừng này giây giữa các lượt gửi
+    notify_directory_cache_seconds: int = 120
+
+    @property
+    def notify_enabled(self) -> bool:
+        return bool(self.smtp_host.strip())
+
+    @property
+    def notify_scan_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.notify_scan_interval_seconds
 
     # --- Bảng điều khiển phân tích nhúng trong cổng, xem #305 và ADR-0003 ---------
     #

@@ -5,11 +5,14 @@
 #
 # Dựng nhiều tầng: tầng cài thư viện, tầng biên dịch, tầng chạy. Ảnh cuối chỉ mang
 # kết quả biên dịch, không mang mã nguồn lẫn toàn bộ node_modules.
+#
+# Ảnh Node ghim thẻ cụ thể kèm mã băm, cùng một ảnh cho cả ba tầng. Thẻ trôi `node:24-alpine` từng làm
+# `next build` hỏng chập chờn (không nạp được `@next/swc-linux-x64-*`) khi thẻ bị đẩy bản mới.
 
 # ---------------------------------------------------------------------------
 # Tầng 1 — cài thư viện
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS deps
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS deps
 
 WORKDIR /app
 
@@ -22,7 +25,7 @@ RUN npm ci --no-audit --no-fund
 # ---------------------------------------------------------------------------
 # Tầng 2 — biên dịch
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS builder
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS builder
 
 WORKDIR /app
 
@@ -36,7 +39,7 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 # Tầng 3 — chạy
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS runner
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 
 WORKDIR /app
 

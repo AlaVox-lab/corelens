@@ -10,7 +10,7 @@
 // trạng thái chung nên không còn là nguồn của màn này.
 
 import { goiDichVu } from "@/lib/api";
-import { thoiLuong } from "@/lib/dinh-dang";
+import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
 import { bienHoMau } from "@/lib/trang-thai";
 
 export type NhipBoQuet = {
@@ -21,6 +21,8 @@ export type NhipBoQuet = {
   last_error: string | null;
   consecutive_errors: number;
   seconds_since_success: number | null;
+  /** Lúc bắt đầu lượt quét gần nhất (thành công hay hỏng), ISO 8601 theo UTC — #247 */
+  last_started_at?: string | null;
   runner_host: string | null;
   runner_pid: number | null;
 };
@@ -42,6 +44,14 @@ export type SucKhoe = {
   language_model?: MoHinhNgonNgu;
   /** Mô hình nhúng cho hồ sơ tương tự (#319) — cùng ba mức. */
   embedding_model?: MoHinhNgonNgu;
+  /** Dịch vụ quét mã độc tệp đính kèm (#248) — cùng ba mức. */
+  malware_scan?: { status: string; detail?: string; on_unavailable?: string };
+  /** Máy chủ thư thông báo (#251) — cùng ba mức, kèm độ dài hàng đợi. */
+  email?: {
+    status: string;
+    detail?: string;
+    queue?: { events_pending: number; deliveries_pending: number; deliveries_failed: number };
+  };
   scan_settings?: {
     enabled: boolean;
     interval_seconds: number;
@@ -66,9 +76,11 @@ function DongTrangThai({ nhan, tot, giaTri }: { nhan: string; tot: boolean; giaT
   );
 }
 
-/** Một dòng chữ nói tình trạng của bộ quét, kèm bản dịch vụ đã chạy lượt gần nhất. */
+/** Một dòng chữ nói tình trạng của bộ quét, kèm lượt cuối (#247) và bản dịch vụ đã chạy lượt đó. */
 function chuBoQuet(b: NhipBoQuet): string {
-  const ban = b.runner_host ? ` · bản ${b.runner_host.slice(0, 12)}` : "";
+  const ban =
+    (b.last_started_at ? ` · lượt cuối ${ngayGio(b.last_started_at)}` : "") +
+    (b.runner_host ? ` · bản ${b.runner_host.slice(0, 12)}` : "");
   switch (b.status) {
     case "disabled":
       return "đã tắt theo cấu hình";
@@ -143,6 +155,36 @@ export function TheHeThong({ sucKhoe, tieuDe = "Tình trạng hệ thống" }: {
           nhan="Mô hình nhúng"
           tot={sucKhoe.embedding_model.status !== "unreachable"}
           giaTri={chuMoHinh(sucKhoe.embedding_model, "tắt — không gợi ý hồ sơ tương tự")}
+        />
+      )}
+      {sucKhoe?.email && (
+        <DongTrangThai
+          nhan="Thông báo thư"
+          tot={sucKhoe.email.status !== "unreachable"}
+          giaTri={
+            sucKhoe.email.status === "disabled"
+              ? "tắt — chưa cấu hình máy chủ thư"
+              : `${sucKhoe.email.status === "ready" ? "sẵn sàng" : `máy chủ thư không phản hồi${sucKhoe.email.detail ? ` — ${sucKhoe.email.detail}` : ""}`}${
+                  sucKhoe.email.queue
+                    ? ` · ${sucKhoe.email.queue.deliveries_pending} thư chờ gửi, ${sucKhoe.email.queue.deliveries_failed} thư hỏng`
+                    : ""
+                }`
+          }
+        />
+      )}
+      {sucKhoe?.malware_scan && (
+        <DongTrangThai
+          nhan="Quét mã độc tệp đính kèm"
+          tot={sucKhoe.malware_scan.status !== "unreachable"}
+          giaTri={
+            sucKhoe.malware_scan.status === "disabled"
+              ? "tắt — tệp chỉ được kiểm đuôi và chữ ký"
+              : sucKhoe.malware_scan.status === "ready"
+                ? "sẵn sàng"
+                : `không phản hồi${sucKhoe.malware_scan.detail ? ` — ${sucKhoe.malware_scan.detail}` : ""} · tệp mới ${
+                    sucKhoe.malware_scan.on_unavailable === "reject" ? "bị từ chối" : "được nhận, gắn cờ chưa quét"
+                  }`
+          }
         />
       )}
       {!dungHet && (

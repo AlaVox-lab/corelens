@@ -12,6 +12,12 @@
 
 from __future__ import annotations
 
+import io
+import socket
+import struct
+import threading
+import time
+import zipfile
 from contextlib import contextmanager
 
 import pytest
@@ -25,7 +31,7 @@ from app.db import get_session
 from app.main import app
 from app.models.case import CaseAttachment
 from app.models.workflow_config import Priority, RequestType, Transition
-from app.storage import objects
+from app.storage import objects, quet_ma_doc
 from app.workflow import attachments
 from app.workflow.context import Actor
 from app.workflow.engine import create_case, perform_transition
@@ -69,40 +75,272 @@ def test_chinh_sach_doc_tu_cau_hinh(monkeypatch):
     assert cs.toi_da_byte == 3 * 1024 * 1024
 
 
-def test_tep_hop_le_tra_ten_sach_va_loai_noi_dung():
-    ten, loai = attachments.kiem_tep("Ảnh màn hình.PNG", PNG)
+@pytest.fixture
+def cs(session) -> attachments.ChinhSach:
+    """Chính sách kèm bảng chữ ký `attachment_file_types` nạp từ infra/seed/04 (#248)."""
+    chinh = attachments.chinh_sach(session)
+    assert chinh.loai_tep, "attachment_file_types rỗng — dữ liệu khởi tạo 04 chưa nạp"
+    return chinh
+
+
+def test_tep_hop_le_tra_ten_sach_va_loai_noi_dung(cs):
+    ten, loai, co_macro = attachments.kiem_tep("Ảnh màn hình.PNG", PNG, cs)
     assert ten == "Ảnh màn hình.PNG"
     assert loai == "image/png"
-    assert attachments.kiem_tep("bao-gia.pdf", PDF)[1] == "application/pdf"
-    assert attachments.kiem_tep("a.jpeg", JPG)[1] == "image/jpeg"
-    assert attachments.kiem_tep("ghi-chu.txt", "xin chào".encode())[1] == "text/plain"
+    assert co_macro is False
+    assert attachments.kiem_tep("bao-gia.pdf", PDF, cs).loai == "application/pdf"
+    assert attachments.kiem_tep("a.jpeg", JPG, cs).loai == "image/jpeg"
+    assert attachments.kiem_tep("ghi-chu.txt", "xin chào".encode(), cs).loai == "text/plain"
 
 
 @pytest.mark.parametrize("ten", ["chay.exe", "lenh.bat", "ma.js", "nen.zip", "khong-duoi", "an.PHP"])
-def test_duoi_ngoai_danh_sach_bi_chan(ten):
+def test_duoi_ngoai_danh_sach_bi_chan(ten, cs):
     with pytest.raises(attachments.TepBiTuChoi) as loi:
-        attachments.kiem_tep(ten, PNG)
+        attachments.kiem_tep(ten, PNG, cs)
     assert loi.value.code == "attachment-type-not-allowed"
     # Thông điệp nói rõ cái gì được nhận
     assert "png" in loi.value.message and "pdf" in loi.value.message
 
 
-def test_doi_duoi_tep_chay_duoc_thanh_png_khong_qua():
+def test_doi_duoi_tep_chay_duoc_thanh_png_khong_qua(cs):
     """Đổi tên một tệp bất kỳ thành .png không đủ: nội dung phải đúng chữ ký ảnh."""
     with pytest.raises(attachments.TepBiTuChoi) as loi:
-        attachments.kiem_tep("ngu-trang.png", b"MZ\x90\x00 chuong trinh chay duoc")
+        attachments.kiem_tep("ngu-trang.png", b"MZ\x90\x00 chuong trinh chay duoc", cs)
     assert loi.value.code == "attachment-content-mismatch"
+    with pytest.raises(attachments.TepBiTuChoi) as pdf:
+        attachments.kiem_tep("gia.pdf", b"khong phai pdf", cs)
+    # Thông báo rõ: nói thẳng đây không phải tệp .pdf thật (#248)
+    assert "không phải tệp .pdf thật" in pdf.value.message
     with pytest.raises(attachments.TepBiTuChoi):
-        attachments.kiem_tep("gia.pdf", b"khong phai pdf")
+        attachments.kiem_tep("gia.docx", b"khong phai zip", cs)
     with pytest.raises(attachments.TepBiTuChoi):
-        attachments.kiem_tep("gia.docx", b"khong phai zip")
-    with pytest.raises(attachments.TepBiTuChoi):
-        attachments.kiem_tep("nhi-phan.txt", b"abc\x00def")
+        attachments.kiem_tep("nhi-phan.txt", b"abc\x00def", cs)
 
 
-def test_tep_rong_va_qua_lon_bi_chan_kem_gioi_han(monkeypatch):
+# ---------------------------------------------------------------------------
+# Chữ ký từng đuôi, macro, quét mã độc — #248
+# ---------------------------------------------------------------------------
+
+
+def _goi_office(*ten_trong_goi: str) -> bytes:
+    """Một gói ZIP kiểu Office Open XML, tạo trong bài — không lưu tệp mẫu nào vào kho."""
+    bo_dem = io.BytesIO()
+    with zipfile.ZipFile(bo_dem, "w") as goi:
+        goi.writestr("[Content_Types].xml", "<Types/>")
+        for ten in ten_trong_goi:
+            goi.writestr(ten, b"\x00")
+    return bo_dem.getvalue()
+
+
+OLE = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 64
+# Một mẫu hợp lệ cho mỗi dòng của infra/seed/04 — thêm dòng mới vào dữ liệu thì thêm mẫu ở đây
+MAU_DUNG = {
+    "png": PNG,
+    "jpg": JPG,
+    "jpeg": JPG,
+    "gif": b"GIF89a" + b"\x00" * 16,
+    "webp": b"RIFF\x10\x00\x00\x00WEBPVP8 " + b"\x00" * 16,
+    "pdf": PDF,
+    "txt": b"van ban",
+    "csv": b"a,b\n1,2\n",
+    "doc": OLE,
+    "xls": OLE,
+    "ppt": OLE,
+    "docx": _goi_office("word/document.xml"),
+    "xlsx": _goi_office("xl/workbook.xml"),
+    "pptx": _goi_office("ppt/presentation.xml"),
+    "docm": _goi_office("word/document.xml", "word/vbaProject.bin"),
+    "xlsm": _goi_office("xl/workbook.xml", "xl/vbaProject.bin"),
+    "pptm": _goi_office("ppt/presentation.xml", "ppt/vbaProject.bin"),
+}
+
+
+def _cs_mo_het(cs: attachments.ChinhSach) -> attachments.ChinhSach:
+    """Cùng bảng chữ ký, nhưng cho phép mọi đuôi bảng biết — để kiểm từng dòng dữ liệu."""
+    return attachments.ChinhSach(
+        tuple(cs.loai_tep), cs.toi_da_mb, cs.toi_da_tep, cs.toi_da_tep_moi_ho_so, cs.loai_tep
+    )
+
+
+def test_moi_dong_du_lieu_co_mau_kiem(cs):
+    assert set(cs.loai_tep) == set(MAU_DUNG)
+
+
+@pytest.mark.parametrize("duoi", sorted(MAU_DUNG))
+def test_tung_duoi_nhan_dung_chu_ky_va_tu_choi_noi_dung_khac(cs, duoi):
+    mo = _cs_mo_het(cs)
+    kq = attachments.kiem_tep(f"tep.{duoi}", MAU_DUNG[duoi], mo)
+    assert kq.loai == cs.loai_tep[duoi].loai_noi_dung
+    # Nội dung chương trình chạy được mang đuôi này thì bị từ chối (văn bản thuần chỉ cấm byte 0)
+    with pytest.raises(attachments.TepBiTuChoi) as loi:
+        attachments.kiem_tep(f"tep.{duoi}", b"MZ\x90\x00\x03\x00", mo)
+    assert loi.value.code == "attachment-content-mismatch"
+
+
+def test_macro_duoc_nhan_nhung_gan_co(cs):
+    mo = _cs_mo_het(cs)
+    assert attachments.kiem_tep("a.docx", MAU_DUNG["docx"], mo).co_macro is False
+    # .docx mà gói có vbaProject.bin — đổi đuôi .docm thành .docx không giấu được macro
+    assert attachments.kiem_tep("a.docx", MAU_DUNG["docm"], mo).co_macro is True
+    for duoi in ("docm", "xlsm", "pptm"):
+        assert attachments.kiem_tep(f"a.{duoi}", MAU_DUNG[duoi], mo).co_macro is True
+    assert attachments.kiem_tep("a.doc", OLE, mo).co_macro is False
+    co_vba = OLE + "_VBA_PROJECT".encode("utf-16-le")
+    assert attachments.kiem_tep("a.xls", co_vba, mo).co_macro is True
+
+
+def test_goi_office_hong_bi_tu_choi(cs):
+    with pytest.raises(attachments.TepBiTuChoi) as loi:
+        attachments.kiem_tep("a.docx", b"PK\x03\x04 khong phai zip", _cs_mo_het(cs))
+    assert loi.value.code == "attachment-content-mismatch"
+
+
+def test_duoi_co_macro_chi_nhan_khi_nam_trong_danh_sach(cs):
+    """Mặc định cụm không có .docm trong danh sách — bảng biết chữ ký không có nghĩa là được nhận."""
+    assert "docm" not in cs.duoi_cho_phep
+    with pytest.raises(attachments.TepBiTuChoi) as loi:
+        attachments.kiem_tep("a.docm", MAU_DUNG["docm"], cs)
+    assert loi.value.code == "attachment-type-not-allowed"
+
+
+def test_duoi_chua_khai_chu_ky_chi_kiem_duoi(cs):
+    rieng = attachments.ChinhSach(("dwg",), 10, 5, 20, cs.loai_tep)
+    kq = attachments.kiem_tep("ban-ve.dwg", b"bat ky", rieng)
+    assert kq.co_macro is False
+
+
+# Chuỗi thử EICAR chuẩn (eicar.org) — ghép lúc chạy, không nằm nguyên vẹn trong kho để công cụ quét
+# trên máy người đóng góp không báo nhầm tệp mã nguồn
+EICAR = (
+    "X5O!P%@AP[4\\PZX54(P^)7CC)7}$" + "EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+).encode()
+
+
+class _ClamdGia:
+    """Máy chủ clamd giả: nghe một cổng cục bộ, trả lời INSTREAM và PING như clamd thật."""
+
+    def __init__(self, tra_loi_im_lang: bool = False):
+        self.im_lang = tra_loi_im_lang
+        self.so_lan_quet = 0
+        self.may_chu = socket.create_server(("127.0.0.1", 0))
+        self.cong = self.may_chu.getsockname()[1]
+        self.luong = threading.Thread(target=self._chay, daemon=True)
+        self.luong.start()
+
+    def _doc_du(self, ket_noi, n: int) -> bytes:
+        du_lieu = b""
+        while len(du_lieu) < n:
+            phan = ket_noi.recv(n - len(du_lieu))
+            if not phan:
+                break
+            du_lieu += phan
+        return du_lieu
+
+    def _chay(self):
+        while True:
+            try:
+                ket_noi, _ = self.may_chu.accept()
+            except OSError:
+                return
+            with ket_noi:
+                lenh = b""
+                while not lenh.endswith(b"\0"):
+                    phan = ket_noi.recv(1)
+                    if not phan:
+                        break
+                    lenh += phan
+                if self.im_lang:
+                    time.sleep(2)
+                    continue
+                if lenh == b"zPING\0":
+                    ket_noi.sendall(b"PONG\0")
+                    continue
+                self.so_lan_quet += 1
+                tep = b""
+                while True:
+                    (dai,) = struct.unpack(">I", self._doc_du(ket_noi, 4))
+                    if dai == 0:
+                        break
+                    tep += self._doc_du(ket_noi, dai)
+                if EICAR in tep:
+                    ket_noi.sendall(b"stream: Eicar-Test-Signature FOUND\0")
+                else:
+                    ket_noi.sendall(b"stream: OK\0")
+
+    def dong(self):
+        self.may_chu.close()
+
+
+@pytest.fixture
+def clamd_gia(monkeypatch):
+    gia = _ClamdGia()
+    _bat_quet(monkeypatch, gia.cong)
+    yield gia
+    gia.dong()
+
+
+def _bat_quet(monkeypatch, cong: int, **them):
+    cau_hinh = _cau_hinh(clamav_host="127.0.0.1", clamav_port=cong, clamav_timeout_seconds=0.5, **them)
+    monkeypatch.setattr(quet_ma_doc, "get_settings", lambda: cau_hinh)
+    monkeypatch.setattr(attachments, "get_settings", lambda: cau_hinh)
+
+
+def test_quet_tat_mac_dinh_khong_goi_gi():
+    assert quet_ma_doc.quet(EICAR).trang_thai == quet_ma_doc.DA_TAT
+    assert quet_ma_doc.tinh_trang() == {"status": "disabled"}
+
+
+def test_clamd_gia_sach_nhiem_va_ping(clamd_gia):
+    assert quet_ma_doc.quet(b"xin chao").trang_thai == quet_ma_doc.SACH
+    kq = quet_ma_doc.quet(b"dau " + EICAR + b" cuoi")
+    assert kq.trang_thai == quet_ma_doc.NHIEM and kq.chi_tiet == "Eicar-Test-Signature"
+    # Tệp lớn hơn một khúc gửi vẫn tới nguyên vẹn
+    assert quet_ma_doc.quet(b"x" * (quet_ma_doc.KHUC * 2 + 7) + EICAR).trang_thai == quet_ma_doc.NHIEM
+    assert quet_ma_doc.tinh_trang()["status"] == "ready"
+
+
+def test_clamd_khong_phan_hoi_thanh_khong_phan_hoi(monkeypatch):
+    # Cổng không ai nghe
+    tam = socket.create_server(("127.0.0.1", 0))
+    cong = tam.getsockname()[1]
+    tam.close()
+    _bat_quet(monkeypatch, cong)
+    assert quet_ma_doc.quet(b"x").trang_thai == quet_ma_doc.KHONG_PHAN_HOI
+    assert quet_ma_doc.tinh_trang()["status"] == "unreachable"
+    # Nghe mà không trả lời: hết hạn chót, không treo
+    im = _ClamdGia(tra_loi_im_lang=True)
+    try:
+        _bat_quet(monkeypatch, im.cong)
+        bat_dau = time.monotonic()
+        assert quet_ma_doc.quet(b"x").trang_thai == quet_ma_doc.KHONG_PHAN_HOI
+        assert time.monotonic() - bat_dau < 1.5
+    finally:
+        im.dong()
+
+
+def test_eicar_bi_tu_choi_tep_sach_gan_clean(clamd_gia):
+    assert attachments._quet("sach.txt", b"xin chao") == "clean"
+    with pytest.raises(attachments.TepBiTuChoi) as loi:
+        attachments._quet("eicar.txt", EICAR)
+    assert loi.value.code == "attachment-infected"
+    assert "Eicar-Test-Signature" in loi.value.message
+
+
+def test_chinh_sach_khi_clamd_khong_phan_hoi(monkeypatch):
+    tam = socket.create_server(("127.0.0.1", 0))
+    cong = tam.getsockname()[1]
+    tam.close()
+    _bat_quet(monkeypatch, cong)
+    assert attachments._quet("a.txt", b"x") == "unscanned"
+    _bat_quet(monkeypatch, cong, clamav_on_unavailable="reject")
+    with pytest.raises(attachments.TepBiTuChoi) as loi:
+        attachments._quet("a.txt", b"x")
+    assert loi.value.code == "attachment-scan-unavailable" and loi.value.http_status == 503
+
+
+def test_tep_rong_va_qua_lon_bi_chan_kem_gioi_han(cs):
     with pytest.raises(attachments.TepBiTuChoi) as rong:
-        attachments.kiem_tep("a.png", b"")
+        attachments.kiem_tep("a.png", b"", cs)
     assert rong.value.code == "attachment-empty"
 
     cs = attachments.ChinhSach(("png",), toi_da_mb=1, toi_da_tep=5, toi_da_tep_moi_ho_so=20)
@@ -125,7 +363,7 @@ def test_ten_tep_duoc_lam_sach():
     assert len(ten) == attachments.TEN_TOI_DA and ten.endswith(".png")
     assert attachments.lam_sach_ten("   ") == ""
     with pytest.raises(attachments.TepBiTuChoi):
-        attachments.kiem_tep("../", PNG)
+        attachments.kiem_tep("../", PNG, attachments.chinh_sach())
 
 
 # ---------------------------------------------------------------------------
@@ -325,6 +563,30 @@ def test_mot_tep_hong_thi_ca_lo_bi_tu_choi(session, kho_that):
         assert r.status_code == 422
         assert r.json()["detail"]["code"] == "attachment-type-not-allowed"
         assert c.get(f"/requests/{ho_so.id}").json()["attachments"] == []
+
+
+def test_tai_len_docx_co_macro_duoc_nhan_kem_co(session, kho_that):
+    ho_so = _ho_so_moi(session)
+    with _may_khach(session, _nguoi_gui()) as c:
+        r = _tai(c, ho_so.id, ("bang-tinh.docx", MAU_DUNG["docm"]), ("anh.png", PNG))
+        assert r.status_code == 201, r.text
+        tep = {t["filename"]: t for t in c.get(f"/requests/{ho_so.id}").json()["attachments"]}
+        assert tep["bang-tinh.docx"]["has_macro"] is True
+        assert tep["anh.png"]["has_macro"] is False
+        # Quét tắt (mặc định): cột ghi đúng là chưa từng bật, không phải "sạch"
+        assert {t["scan_status"] for t in tep.values()} == {"disabled"}
+
+
+def test_tai_len_eicar_khi_quet_bat_bi_tu_choi_ca_lo(session, kho_that, clamd_gia):
+    ho_so = _ho_so_moi(session)
+    with _may_khach(session, _nguoi_gui()) as c:
+        r = _tai(c, ho_so.id, ("tot.txt", b"xin chao"), ("eicar.txt", EICAR))
+        assert r.status_code == 422
+        assert r.json()["detail"]["code"] == "attachment-infected"
+        assert c.get(f"/requests/{ho_so.id}").json()["attachments"] == []
+        r = _tai(c, ho_so.id, ("tot.txt", b"xin chao"))
+        assert r.status_code == 201
+        assert c.get(f"/requests/{ho_so.id}").json()["attachments"][0]["scan_status"] == "clean"
 
 
 def test_vuot_gioi_han_kem_thong_diep_noi_ro(session, kho_that, monkeypatch):

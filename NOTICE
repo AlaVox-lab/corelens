@@ -69,6 +69,26 @@ Qwen3-Embedding-0.6B GGUF (tệp Qwen3-Embedding-0.6B-Q8_0.gguf)
   sửa đổi.
 
 -------------------------------------------------------------------------------
+Dịch vụ tùy chọn khác (hồ sơ Compose `quet-tep`, `thu-thu`)
+-------------------------------------------------------------------------------
+
+ClamAV 1.5.3 (ảnh clamav/clamav:1.5.3)
+  Copyright (C) Cisco Systems, Inc. and/or its affiliates
+  Giấy phép: GPL-2.0 (COPYING.txt của kho Cisco-Talos/clamav)
+  https://github.com/Cisco-Talos/clamav
+  Quét mã độc tệp đính kèm (#248). Chạy như dịch vụ độc lập; dịch vụ ứng dụng
+  chỉ gửi tệp qua giao thức mạng clamd (INSTREAM) bằng thư viện chuẩn Python,
+  không nhúng, không liên kết mã ClamAV — xem LICENSES.md. Bộ mẫu nhận diện
+  kèm trong ảnh và tải bằng freshclam do Cisco Talos phát hành theo điều khoản
+  riêng của họ; dự án không phát hành lại bộ mẫu.
+
+Mailpit v1.32.0 (ảnh axllent/mailpit:v1.32.0)
+  Copyright (c) 2022-Now() Ralph Slooten
+  Giấy phép: MIT
+  https://github.com/axllent/mailpit
+  Hộp thư thử để trình diễn thông báo thư điện tử (#251), nhận thư qua SMTP.
+
+-------------------------------------------------------------------------------
 Dịch vụ ứng dụng, cổng, trang tài liệu
 -------------------------------------------------------------------------------
 

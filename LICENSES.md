@@ -54,6 +54,16 @@ mã đã sửa và đặt `MINING_SOURCE_URL` trỏ về nơi chứa bản đó,
 chạy. Bộ máy dự phòng không cần PM4Py ([`services/khai-pha/README.md`](services/khai-pha/README.md)) bỏ
 được thư viện, nhưng mã của thư mục vẫn phát hành theo AGPL-3.0-or-later.
 
+## Dịch vụ quét mã độc theo GPL-2.0 (ClamAV, tùy chọn)
+
+Hồ sơ Compose `quet-tep` (#248) chạy ảnh chính thức `clamav/clamav` — GPL-2.0 — như **dịch vụ độc lập**,
+không sửa, không dựng lại. Dịch vụ ứng dụng (MIT) gửi tệp sang clamd qua giao thức mạng của nó (lệnh
+`INSTREAM`, TCP 3310) bằng `socket` của thư viện chuẩn Python, ở `backend/app/storage/quet_ma_doc.py`:
+không nhập, không liên kết, không chép mã hay thư viện `libclamav` nào vào kho hay vào ảnh của dự án.
+Hai chương trình giao tiếp qua mạng là tác phẩm riêng biệt đi cùng nhau, nên GPL không lan sang mã MIT —
+cùng ranh giới với Keycloak hay SeaweedFS, chỉ khác giấy phép của dịch vụ bên kia. Dự án không phát hành
+lại ảnh ClamAV; Compose kéo nguyên bản từ Docker Hub.
+
 ## Phụ thuộc bên thứ ba
 
 Thông báo ngắn ở [`NOTICE`](NOTICE); danh sách đầy đủ kèm giấy phép từng gói ở

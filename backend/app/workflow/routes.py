@@ -896,6 +896,8 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
             content_type=t.content_type,
             size_bytes=t.size_bytes,
             uploaded_by_label=t.uploaded_by_label,
+            has_macro=t.has_macro,
+            scan_status=t.scan_status,
             created_at=t.created_at,
         )
         for t in danh_sach_tep(session, ho_so.id)
