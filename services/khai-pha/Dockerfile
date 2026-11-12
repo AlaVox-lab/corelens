@@ -4,7 +4,7 @@
 # Ảnh chứa của dịch vụ khai phá quy trình (#314, ADR-0007). Dịch vụ riêng, thư mục riêng, ảnh riêng:
 # ranh giới để thư viện AGPL pm4py không bao giờ nằm trong ảnh của dịch vụ ứng dụng hay cổng.
 
-FROM python:3.13-slim
+FROM python:3.13.17-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app

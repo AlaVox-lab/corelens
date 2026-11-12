@@ -10,7 +10,7 @@
 // chủ rồi truyền xuống. Tệp này chỉ giữ thứ thuộc về trình duyệt: đường dẫn đang mở,
 // ngăn kéo đang mở hay đóng, và lựa chọn sáng/tối lưu trên máy người dùng.
 
-import { ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
+import { Bell, ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
@@ -179,6 +179,10 @@ export function KhungUngDung({
               <b>{nguoi.ten}</b>
               {nguoi.phu ? <span>{nguoi.phu}</span> : null}
             </span>
+            {/* #251: tùy chọn thư thông báo của chính người dùng */}
+            <Link className="nut-icon" href="/thong-bao" aria-label="Thông báo thư" title="Thông báo thư">
+              <Bell aria-hidden />
+            </Link>
             <a className="nut-icon" href="/api/auth/logout" aria-label="Đăng xuất" title="Đăng xuất">
               <LogOut aria-hidden />
             </a>

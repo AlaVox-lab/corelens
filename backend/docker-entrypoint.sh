@@ -23,7 +23,10 @@ python -m app.cau_hinh.khoi_tao
 
 echo "==> Khởi động máy chủ ứng dụng"
 
+# Không dùng dòng truy cập của uvicorn: lớp giữa app/quan_sat.py ghi dòng truy cập dạng JSON, mang
+# mã yêu cầu và thời gian xử lý (#247)
 exec uvicorn app.main:app \
     --host 0.0.0.0 \
     --port 8000 \
-    --proxy-headers
+    --proxy-headers \
+    --no-access-log

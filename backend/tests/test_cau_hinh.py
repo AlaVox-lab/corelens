@@ -54,6 +54,11 @@ def cum_moi(session):
     goc.execute(f"SET LOCAL search_path TO {LUOC_DO_TAM}")
     goc.execute((THU_MUC_SQL / "0000_luoc_do_cau_hinh.sql").read_text(encoding="utf-8"))
     goc.execute((THU_MUC_SQL / "0018_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
+    # Bảng dữ liệu tạo ở bản sửa sau 0000 mà infra/seed/ cũng nạp — chữ ký tệp đính kèm (0023, #248),
+    # loại thông báo (0024, #251). Cụm thật chạy trọn Alembic trước bộ nạp; ở đây chép cấu trúc từ
+    # lược đồ chính để bộ nạp chạy được mọi tệp như ở cụm thật
+    for bang in ("attachment_file_types", "notification_types"):
+        goc.execute(f"CREATE TABLE {bang} (LIKE public.{bang} INCLUDING ALL)")
     return goc
 
 

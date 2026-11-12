@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Response, status
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.analytics.bang_dieu_khien import pham_vi_cua
@@ -23,7 +23,13 @@ from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import current_actor, current_claims, require_roles
 from app.config import get_settings
 from app.db import SessionLocal, get_session
+from app.models.van_hanh import ScannerHeartbeat
+from app.quan_sat import LopQuanSat, bo_dem, cau_hinh_nhat_ky
 from app.rate_limit import don_dong_cu
+from app.storage import quet_ma_doc
+from app.thong_bao import thu as may_thu
+from app.thong_bao.bo_gui import NHAN_BO_QUET_THU, TEN_BO_QUET_THU, do_dai_hang_doi, quet_gui
+from app.thong_bao.routes import router as router_thong_bao
 from app.workflow.assignment import router as router_giao_viec
 from app.workflow.attachment_routes import router as router_tep
 from app.workflow.context import Actor
@@ -51,12 +57,9 @@ logger = logging.getLogger(__name__)
 # Uvicorn chỉ cấu hình bộ ghi của riêng nó, nên nếu không có dòng này thì mọi thông
 # điệp của dịch vụ đều biến mất — kể cả `logger.exception` trong vòng quét SLA. Một
 # tác vụ nền chạy âm thầm và không báo được lỗi là thứ chỉ phát hiện ra khi đã muộn.
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)-8s [%(name)s] %(message)s",
-)
-
+# Từ #247 mỗi dòng là JSON mang mã yêu cầu (DXLAB_LOG_FORMAT=text để đọc tay) — app/quan_sat.py.
 settings = get_settings()
+cau_hinh_nhat_ky(settings.log_format, settings.log_level)
 
 # Mốc khởi động của tiến trình, để `/health` biết bộ quét chưa có lượt thành công là vì chưa
 # kịp chạy hay vì đã chết (#253)
@@ -164,6 +167,23 @@ async def _vong_quet_tuong_tu() -> None:
             logger.exception("Lượt lập chỉ mục hồ sơ tương tự thất bại, sẽ thử lại ở lượt sau")
 
 
+def _gui_thu_mot_lan() -> int:
+    """Một lượt bộ gửi thư thông báo (#251), có khóa tư vấn và dòng nhịp (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_THU, quet_gui)
+    return (luot.ket_qua or 0) if luot.da_chay else 0
+
+
+async def _vong_gui_thu() -> None:
+    """Vòng riêng: một lượt có thể chờ máy chủ thư tới hạn chót, không được làm trễ bộ quét hạn."""
+    while True:
+        await asyncio.sleep(settings.notify_scan_interval_seconds)
+        try:
+            await asyncio.to_thread(_gui_thu_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt gửi thư thông báo thất bại, sẽ thử lại ở lượt sau")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Bật bộ quét SLA và bộ quét gợi ý lúc khởi động, tắt gọn lúc dừng."""
@@ -183,6 +203,16 @@ async def lifespan(app: FastAPI):
     if settings.similar_index_enabled:
         cac_tac_vu.append(asyncio.create_task(_vong_quet_tuong_tu()))
 
+    # Thông báo thư (#251): máy chủ thư không cấu hình thì không có bộ gửi
+    if settings.notify_enabled:
+        cac_tac_vu.append(asyncio.create_task(_vong_gui_thu()))
+        logger.info(
+            "Thông báo thư bật (%s:%d); bộ gửi chạy mỗi %d giây",
+            settings.smtp_host,
+            settings.smtp_port,
+            settings.notify_scan_interval_seconds,
+        )
+
     yield
 
     for tac_vu in cac_tac_vu:
@@ -199,6 +229,9 @@ app = FastAPI(
     ),
 )
 
+# Mã yêu cầu, dòng truy cập JSON, bộ đếm số đo (#247)
+app.add_middleware(LopQuanSat)
+
 
 # Vai trò vận hành cụm: gác màn Hệ thống và lệnh quét SLA bằng tay
 VAI_TRO_QUAN_TRI = "administrator"
@@ -213,6 +246,7 @@ app.include_router(router_du_lieu_mo)
 app.include_router(router_bang_dieu_khien)
 app.include_router(router_khai_pha)
 app.include_router(router_tuong_tu)
+app.include_router(router_thong_bao)
 
 
 def _do_suc_khoe(session: Session) -> dict:
@@ -288,6 +322,15 @@ def _do_suc_khoe(session: Session) -> dict:
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
+        # Bộ gửi thư (#251): chỉ hiện khi máy chủ thư được cấu hình
+        if settings.notify_enabled:
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_THU: NHAN_BO_QUET_THU},
+                nguong_qua_lau_giay=settings.notify_scan_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
     except Exception as loi:  # noqa: BLE001 — không đọc được nhịp thì không dám nói là khỏe
         logger.warning("Kiểm tra sức khỏe: không đọc được nhịp bộ quét: %s", loi)
         ket_qua.update(status="degraded", scanners=None, detail="Không đọc được nhịp bộ quét")
@@ -315,6 +358,72 @@ def health(response: Response, session: Session = Depends(get_session)) -> dict:
     return {"service": "dx-os-lab-backend", "status": suc_khoe["status"]}
 
 
+@app.get("/health/live", tags=["Vận hành"])
+def health_live() -> dict:
+    """Tiến trình còn sống và vòng sự kiện còn trả lời (#247). Không chạm cơ sở dữ liệu hay dịch vụ
+    nào khác: cơ sở dữ liệu chậm không được khiến bộ điều phối giết một tiến trình vẫn khỏe."""
+    return {"service": "dx-os-lab-backend", "status": "ok"}
+
+
+@app.get("/health/ready", tags=["Vận hành"])
+def health_ready(response: Response, session: Session = Depends(get_session)) -> dict:
+    """Sẵn sàng nhận việc (#247): cơ sở dữ liệu dùng được và bộ quy tắc đã nạp — phụ thuộc BẮT BUỘC.
+    503 khi chưa. Dịch vụ tùy chọn (mô hình, quét mã độc, máy chủ thư, Superset) không tính: thiếu
+    chúng thì dịch vụ vẫn phục vụ. Healthcheck của ảnh (backend/Dockerfile) gọi điểm cuối này, nên
+    cổng và Superset chờ `service_healthy` là chờ đúng lúc dịch vụ làm được việc. Cùng nội dung với
+    `/health` — giữ `/health` cho bộ giám sát và tài liệu cũ."""
+    return health(response, session)
+
+
+@app.get("/metrics", tags=["Vận hành"])
+def metrics(
+    actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
+    session: Annotated[Session, Depends(get_session)],
+) -> Response:
+    """Số đo cơ bản, dạng văn bản Prometheus (#247). CHỈ QUẢN TRỊ VIÊN.
+
+    Không mở công khai và không dựa vào "chỉ trong mạng Compose": cổng dịch vụ được công bố ra máy
+    (`BACKEND_PORT`), nên ranh giới mạng không giữ được gì; mẫu đường dẫn và độ dài hàng đợi là thông
+    tin vận hành không cho người ngoài. Bộ thu số đo dùng token của một tài khoản quản trị.
+
+    Phần trong bộ nhớ là của RIÊNG bản dịch vụ trả lời; phần đọc từ cơ sở dữ liệu — hàng đợi thư, lượt
+    quét cuối — là chung cả cụm.
+    """
+    dong = bo_dem.xuat()
+    try:
+        hang_doi = do_dai_hang_doi(session)
+        dong += [
+            "# HELP dxlab_email_queue Thư thông báo theo trạng thái hàng đợi (#251).",
+            "# TYPE dxlab_email_queue gauge",
+            f'dxlab_email_queue{{state="events_pending"}} {hang_doi["events_pending"]}',
+            f'dxlab_email_queue{{state="deliveries_pending"}} {hang_doi["deliveries_pending"]}',
+            f'dxlab_email_queue{{state="deliveries_failed"}} {hang_doi["deliveries_failed"]}',
+        ]
+        nhip = session.scalars(select(ScannerHeartbeat).order_by(ScannerHeartbeat.name)).all()
+        dong += [
+            "# HELP dxlab_scanner_last_success_timestamp_seconds Lượt quét thành công cuối của từng bộ quét (Unix).",
+            "# TYPE dxlab_scanner_last_success_timestamp_seconds gauge",
+        ]
+        dong += [
+            f'dxlab_scanner_last_success_timestamp_seconds{{scanner="{h.name}"}} {h.last_success_at.timestamp():.0f}'
+            for h in nhip
+            if h.last_success_at is not None
+        ]
+        dong += [
+            "# HELP dxlab_scanner_consecutive_errors Số lượt hỏng liên tiếp của từng bộ quét.",
+            "# TYPE dxlab_scanner_consecutive_errors gauge",
+        ]
+        dong += [
+            f'dxlab_scanner_consecutive_errors{{scanner="{h.name}"}} {h.consecutive_errors}' for h in nhip
+        ]
+        dong += ["# TYPE dxlab_database_up gauge", "dxlab_database_up 1"]
+    except Exception as loi:  # noqa: BLE001 — phần trong bộ nhớ vẫn phải xuất được khi CSDL hỏng
+        logger.warning("Số đo: không đọc được cơ sở dữ liệu: %s", loi)
+        _hoan_tac_im_lang(session)
+        dong += ["# TYPE dxlab_database_up gauge", "dxlab_database_up 0"]
+    return Response("\n".join(dong) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
+
+
 @app.get("/system/health", tags=["Vận hành"])
 def system_health(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
@@ -338,6 +447,13 @@ def system_health(
         "language_model": mo_hinh.tinh_trang(),
         # Mô hình nhúng cho hồ sơ tương tự (#319), cùng nguyên tắc
         "embedding_model": mo_hinh.tinh_trang_nhung(),
+        # Dịch vụ quét mã độc tệp đính kèm (#248), tùy chọn, cùng ba mức
+        "malware_scan": quet_ma_doc.tinh_trang(),
+        # Máy chủ thư thông báo (#251), tùy chọn, cùng ba mức; kèm độ dài hàng đợi để đối soát
+        "email": {
+            **may_thu.tinh_trang(),
+            **(_hang_doi_thu(session) if suc_khoe.get("database") == "ok" else {}),
+        },
         "scan_settings": {
             "enabled": settings.sla_scan_enabled,
             "interval_seconds": settings.sla_scan_interval_seconds,
@@ -345,6 +461,23 @@ def system_health(
             "max_consecutive_errors": settings.sla_scan_max_consecutive_errors,
         },
     }
+
+
+def _hang_doi_thu(session: Session) -> dict:
+    """Độ dài hàng đợi thư, hoặc rỗng khi chưa có bảng (cơ sở dữ liệu hỏng đã được báo ở trên)."""
+    try:
+        return {"queue": do_dai_hang_doi(session)}
+    except Exception:  # noqa: BLE001 — màn Hệ thống vẫn phải hiện các phần còn lại
+        _hoan_tac_im_lang(session)
+        return {}
+
+
+def _hoan_tac_im_lang(session: Session) -> None:
+    """Hoàn tác sau một truy vấn hỏng, không để lỗi của chính lần hoàn tác làm hỏng điểm cuối."""
+    try:
+        session.rollback()
+    except Exception:  # noqa: BLE001
+        logger.debug("Không hoàn tác được phiên sau truy vấn hỏng", exc_info=True)
 
 
 @app.get("/", tags=["Vận hành"])

@@ -10,12 +10,13 @@
 // có thêm ô chọn tệp và nút tải lên. Tải về và tải lên đi qua máy chủ Next.js — trình duyệt
 // không bao giờ nói chuyện với kho tệp.
 
-import { Download, FileText, Paperclip } from "lucide-react";
+import { Download, FileText, Paperclip, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { OChonTep } from "@/components/o-chon-tep";
 import { dungLuong, ngayGio } from "@/lib/dinh-dang";
+import { bienHoMau } from "@/lib/trang-thai";
 import type { ChinhSachTep, TepDinhKem } from "@/lib/kieu";
 
 export function KhoiTepDinhKem({
@@ -95,6 +96,17 @@ export function KhoiTepDinhKem({
               <span className="mono nhat" style={{ fontSize: "12px" }}>
                 {dungLuong(t.size_bytes)} · {t.uploaded_by_label} · {ngayGio(t.created_at)}
               </span>
+              {/* #248: tệp có macro vẫn nhận, nhưng người mở phải biết trước */}
+              {t.has_macro && (
+                <span className="nhan-tt" style={{ ...bienHoMau("a"), fontSize: "12px" }} data-nhan="co-macro">
+                  <ShieldAlert aria-hidden size={13} /> có macro — cẩn thận khi mở
+                </span>
+              )}
+              {t.scan_status === "unscanned" && (
+                <span className="nhan-tt" style={{ ...bienHoMau("n"), fontSize: "12px" }} data-nhan="chua-quet">
+                  chưa quét mã độc
+                </span>
+              )}
             </li>
           ))}
         </ul>

@@ -15,7 +15,11 @@
 # cài bằng uv.
 
 ARG SUPERSET_VERSION=6.1.0
-FROM apache/superset:${SUPERSET_VERSION}
+# Mã băm của chỉ mục ảnh `apache/superset:6.1.0` (bản dựng 31/08/2026) — thẻ trên Docker Hub có thể bị
+# đẩy lại, mã băm thì không. Đổi SUPERSET_VERSION thì phải đổi cả mã băm này
+# (`docker buildx imagetools inspect apache/superset:<thẻ>`).
+ARG SUPERSET_DIGEST=sha256:59cd4af66006fe4cc98906eda42a771dbefdacb432f9ab083e02cdc6ff01f29d
+FROM apache/superset:${SUPERSET_VERSION}@${SUPERSET_DIGEST}
 
 # Ghim phiên bản bằng == để mọi lần dựng đều cho ra cùng một bộ thư viện.
 # Không ghim thì mỗi người và ban giám khảo nhận một phiên bản khác nhau,
