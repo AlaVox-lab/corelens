@@ -5,6 +5,16 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.14.0] - 2026-11-12
+
+### Tài liệu
+
+- **state:** Cập nhật trạng thái tới v0.13.0 và khép Giai đoạn 4 ([#350](https://github.com/AlaVox-lab/dx-os-lab/issues/350)) ([97659ec](https://github.com/AlaVox-lab/dx-os-lab/commit/97659ecd22df7c794b04201bdf3c043039777544))
+
+### Tính năng mới
+
+- **infra:** Thông báo thư, kiểm tệp đính kèm, quan sát vận hành ([#351](https://github.com/AlaVox-lab/dx-os-lab/issues/351)) ([abf2ce8](https://github.com/AlaVox-lab/dx-os-lab/commit/abf2ce8d98a7e7bc8fd0f044b2c9490eb6d5ee42))
+
 ## [0.13.0] - 2026-11-11
 
 ### Tính năng mới
