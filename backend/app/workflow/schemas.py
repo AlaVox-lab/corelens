@@ -252,6 +252,10 @@ class TepDinhKemRa(BaseModel):
     size_bytes: int
     uploaded_by_label: str
     created_at: dt.datetime
+    # Tệp mang macro (#248) — giao diện cảnh báo "có macro — cẩn thận khi mở"
+    has_macro: bool = False
+    # `disabled` (quét tắt), `clean`, hay `unscanned` (quét bật mà chưa quét được) — #248
+    scan_status: str = "disabled"
 
 
 class ChinhSachTepRa(BaseModel):

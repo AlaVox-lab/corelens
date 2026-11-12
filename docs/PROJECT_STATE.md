@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-08 |
-| Phiên bản hiện tại | **`v0.10.0`** (09/11) — nâng cấp giữ dữ liệu (#254), bảo mật lớp biên và nhịp bộ quét (#243, #253), công cụ kiểm chứng (#249), thẻ gợi ý có xác nhận (#239). `v0.9.1` (08/11) bản vá khung giao diện. `main` không có gì chưa phát hành |
-| Giai đoạn | **Giai đoạn 3 đã khép** (`v0.9.0`): lớp báo cáo trên nhật ký sự kiện, bảng điều khiển dựng từ tệp cấu hình, nhúng trong cổng lọc theo phòng, xuất dữ liệu mở. **Giai đoạn 4 — không gian `I`** đã có issue (#322 và các issue con), chưa viết mã: khai phá quy trình làm trước, chờ giảng viên chấp nhận ADR-0007 |
-| Mốc công việc | **Tuần 15 — Không gian D** (đóng): 4 issue đóng (#304–#307). **Giai đoạn 4 — Không gian I** (hạn 29/11): 11 issue mở. **Tuần 14 — Nền tảng vận hành** hết hạn 15/11 với 10 đóng, 14 còn mở — dời sang **Tuần 16 — Nền tảng vận hành** (hạn 29/11) và đóng mốc cũ ngày 08/11 |
+| Cập nhật lần cuối | 2026-11-11 |
+| Phiên bản hiện tại | **`v0.13.0`** (11/11) — gợi ý người xử lý, hồ sơ tương tự, khuyến nghị cải tiến (#318, #319, #320). Trước đó: `v0.12.0` (11/11) mô hình ngôn ngữ cục bộ và gợi ý phân loại (#316, #317), mô hình nhiều giấy phép (#340); `v0.11.0` (10/11) khai phá quy trình thực tế (#314, #315); `v0.10.0` (09/11) nâng cấp giữ dữ liệu và thẻ gợi ý có xác nhận. `main` không có gì chưa phát hành |
+| Giai đoạn | **Giai đoạn 4 — không gian `I` đã khép về chức năng** (`v0.10.0`–`v0.13.0`): khai phá quy trình thực tế, gợi ý loại, mức ưu tiên, phòng, người xử lý, hồ sơ tương tự và khuyến nghị bằng câu chữ — mọi thứ chỉ là gợi ý, tắt mô hình thì luồng thủ công vẫn chạy. Kho tri thức (#321) để ngoài phạm vi thi. Giai đoạn 5 chờ đề thi |
+| Mốc công việc | **Giai đoạn 4 — Không gian I** (hạn 29/11): 21 đóng, 2 mở — issue gốc #322 và #321. **Tuần 16 — Nền tảng vận hành** (hạn 29/11): 8 đóng, 10 mở |
 | Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, mục Báo cáo nhúng bảng điều khiển và màn Hệ thống cho quản trị viên. Cụm gồm **sáu dịch vụ**. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
-| Issue đang mở | **25** — 11 ở Giai đoạn 4, 14 ở Tuần 16 (danh sách ở *Việc tiếp theo*) |
-| Quyết định kiến trúc đã chốt | **5** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) |
-| Bản ghi chờ duyệt | **3** — ADR-0006 Wiki.js cho kho tri thức `H`, ADR-0007 PM4Py cho khai phá quy trình `I`, ADR-0008 pgvector và mô hình cục bộ qua llama.cpp cho `I`. Cả ba ở trạng thái *Đề xuất*, chờ giảng viên — đã hỏi trên #46, #47, #48 ngày 03/11, nhắc lại ở #322 ngày 08/11 |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế) và màn Hệ thống cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **bảy dịch vụ**, thêm hai dịch vụ mô hình dưới hồ sơ `tri-tue` khi bật. Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
+| Issue đang mở | **12** — 2 ở Giai đoạn 4, 10 ở Tuần 16 (danh sách ở *Việc tiếp theo*) |
+| Quyết định kiến trúc đã chốt | **7** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) |
+| Bản ghi chờ duyệt | **1** — ADR-0006 Wiki.js cho kho tri thức `H`, *Đề xuất*; nhóm đề xuất để ngoài phạm vi thi (#46, #321) |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **507 bài** pytest, chạy trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241); tích hợp liên tục có **năm kiểm tra**, kiểm tra thứ năm dựng Superset và kiểm bảng điều khiển tự nạp cùng quyền của vai khách (#304, #305). Giao diện có **kịch bản Playwright `e2e/`** (#238): bốn vai đăng nhập thật, bốn cấu hình hiển thị, **74 bài** — chạy trên cụm thử trước khi mở pull request sửa giao diện, chưa nằm trong tích hợp liên tục (#249). Mọi issue từ #78 đều qua phép thử đột biến, kể cả phần giao diện từ #238 |
-| Tổng bộ nhớ toàn cụm | **1,4 GB lúc rảnh**, đo lại ngày 15/10 khi viết hướng dẫn cài đặt (#206); Keycloak chiếm gần một nửa. Ảnh chứa khoảng 3,9 GB. Tầng `I` theo ADR-0008 sẽ thêm khoảng 2,8 GiB cho hai mô hình |
-| Số ngày còn lại tới chấm kho mã | **29 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 08/11 |
+| Bộ kiểm thử tự động | **650 bài** pytest ở dịch vụ ứng dụng và **176 bài** ở dịch vụ khai phá (chạy trên cả hai bộ máy), trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241). Giao diện có **kịch bản Playwright `e2e/`** (#238): bốn vai đăng nhập thật, bốn cấu hình hiển thị, **159 bài** — chạy trên cụm thử trước khi mở pull request sửa giao diện. Số đo ở #346 trên cụm thử dựng sạch. Công cụ kiểm chứng — cụm thử cách ly, dò đăng nhập, tạo hồ sơ thử, phép thử đột biến — nằm trong `scripts/kiem_chung/` (#249). Mọi issue từ #78 đều qua phép thử đột biến |
+| Tổng bộ nhớ toàn cụm | **Cụm mặc định bảy dịch vụ: 1,66 GiB**, đo lại ngày 12/11 (#247) bằng `docker stats --no-stream` sau một lượt dùng thật (không phải lúc vừa khởi động): Keycloak 700 MiB, Superset 354 MiB, khai phá 183 MiB, SeaweedFS 158 MiB, dịch vụ ứng dụng 121 MiB, cổng 95 MiB, PostgreSQL 85 MiB. Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**. `tri-tue` chưa đo lại lần này — vẫn theo ước tính cũ: khoảng 1,5 GB cho mô hình sinh văn bản theo trang tài liệu, ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB** (ADR-0007). Lần đo trước: 1,4 GB lúc rảnh ngày 15/10 (#206) |
+| Số ngày còn lại tới chấm kho mã | **26 ngày** (07/12/2026) |
+| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 11/11 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
@@ -61,7 +61,14 @@ Trưởng phòng, điều phối viên và quản trị viên mở mục **Báo 
 ngay trong cổng, không đăng nhập lần hai: trưởng phòng chỉ thấy số của phòng mình. Quản trị viên tải
 **nhật ký sự kiện** dạng CSV hay JSON ở màn Hệ thống.
 
-Luồng thủ công đã đủ theo các quyết định của giảng viên, tầng `D` đã chạy. Tầng `I` chưa cài đặt.
+Mục Báo cáo có thêm màn **Quy trình thực tế**: sơ đồ quy trình đang thật sự chạy khai phá từ nhật ký,
+nhánh lệch khỏi luồng chính, điểm nghẽn theo thời gian chờ, bấm vào là mở đúng hồ sơ; khi bật mô hình,
+kèm khuyến nghị cải tiến bằng câu chữ mà mọi con số do hệ thống gắn. Bật mô hình ngôn ngữ cục bộ thì
+điều phối viên thấy **thẻ gợi ý** loại, mức ưu tiên, phòng; trưởng phòng thấy gợi ý người xử lý; người
+gửi đang soạn thấy tối đa ba hồ sơ đã giải quyết tương tự. Mọi gợi ý chỉ ghi trường `suggested_*`, người
+giữ hay đổi bằng thao tác sẵn có, hệ thống ghi lại giữ hay ghi đè.
+
+Luồng thủ công đã đủ theo các quyết định của giảng viên, tầng `D` đã chạy, tầng `I` đã khép về chức năng.
 
 ---
 
@@ -802,15 +809,80 @@ cần thảo luận của Tuần 14 — và nhắc lại ở #322 ngày 08/11.
 
 **Issue đã đóng**: #278, #299, #304, #305, #306, #307 (issue gốc)
 
+### Tuần 16 (09–11/11) — `v0.10.0` tới `v0.13.0`, khép Giai đoạn 4 về chức năng
+
+Bốn bản phát hành trong ba ngày, mỗi bản một pull request `dev → main` theo nhịp chốt 02/11.
+
+**`v0.10.0`** (09/11, #332) — nền tảng vận hành và thẻ gợi ý, trước khai phá:
+
+- **Nâng cấp giữ dữ liệu** (#254). Lược đồ cấu hình của engine chuyển vào chuỗi migration (bản gốc
+  `0000` là ảnh chụp lược đồ `v0.9.1`), dữ liệu khởi tạo do dịch vụ ứng dụng nạp lần đầu, chín phép kiểm
+  đồ thị thành hàm `kiem_tra_cau_hinh()` (migration `0018`). Từ `v0.9.1` trở đi, nâng cấp chỉ cần
+  `up -d --build`; đổi quy trình trên cụm đang chạy là một bản sửa dữ liệu tạo bộ quy tắc phiên bản mới.
+  Kiểm thật: nâng cụm `v0.9.1` có 600 hồ sơ, `scripts/kiem_nang_cap.py` báo số dòng và mã băm khớp
+- **Công cụ kiểm chứng vào kho** (#249). Cụm thử cách ly, dò đăng nhập thật, tạo hồ sơ thử theo từng
+  trạng thái, phép thử đột biến ở `scripts/kiem_chung/`, kèm trang hướng dẫn — người khác, kể cả ban
+  giám khảo, tái hiện được bằng chứng chất lượng. Chưa thử trên PowerShell và Linux
+- **Lớp biên và bộ quét** (#243, #253). CSP nonce ở cổng, giới hạn tốc độ đếm trong PostgreSQL trả 429
+  kèm `Retry-After`, `/health` công khai không lộ chi tiết; bộ quét nền có khóa khi chạy nhiều bản và
+  nhịp sức khỏe trên màn Hệ thống
+- **Thẻ gợi ý có xác nhận** (#239). Gợi ý phòng hiện thành thẻ có lý do và nguồn; cửa chuyển trạng thái
+  ghi giữ hay ghi đè vào cột `event_log.suggestion`; bảng điều khiển thêm tỷ lệ ghi đè
+
+**`v0.11.0`** (10/11, #337) — khai phá quy trình thực tế, điểm sáng tạo của đề tài:
+
+- **Dịch vụ khai phá** (#314). `services/khai-pha/` là dịch vụ FastAPI riêng, không mở cổng ra máy, đọc
+  lớp báo cáo bằng tài khoản chỉ đọc riêng tạo ở migration `0019` — không cần `down -v`. Hai bộ máy sau
+  một giao diện hẹp: `pm4py` mặc định và `noi_bo` Python thuần dự phòng, bài kiểm thử đòi JSON giống
+  hệt. Tích hợp liên tục chặn `import pm4py` ngoài thư mục này. 617 hồ sơ trình diễn khai phá trong
+  0,39 giây
+- **Màn Quy trình thực tế** (#315) trong mục Báo cáo: sơ đồ tương tác, câu kết luận dựng tất định từ số
+  liệu, bấm điểm nghẽn hay nhánh lệch là mở đúng hồ sơ, phạm vi phòng như bảng điều khiển
+
+**`v0.12.0`** (11/11, #343) — mô hình ngôn ngữ cục bộ:
+
+- **Mô hình nhiều giấy phép** (#340) — điều kiện giảng viên đặt khi xác nhận ADR-0007 ngày 10/11.
+  `services/khai-pha/` mang AGPL-3.0-or-later với toàn văn riêng, còn lại MIT; `LICENSES.md`, `NOTICE`;
+  `scripts/kiem_header.py` bắt cả tệp mang sai giấy phép theo thư mục; màn Quy trình thực tế dẫn tới mã
+  nguồn dịch vụ khai phá (điều 13 AGPL)
+- **Dịch vụ mô hình** (#316): llama.cpp server cùng Qwen2.5-1.5B-Instruct `q4_k_m` dưới hồ sơ Compose
+  `tri-tue`, tải bằng `scripts/tai_mo_hinh.py` có kiểm SHA-256; mọi lời gọi đi qua
+  `backend/app/intelligence/mo_hinh.py`, lỗi gì cũng ra "không có gợi ý". Cụm mặc định không đổi
+- **Gợi ý loại, mức ưu tiên, phòng** (#317) bằng tác vụ nền sau khi gửi, có bộ quét bù. Đo trên 80 hồ sơ
+  mẫu có nhãn: loại 92,5 %, mức ưu tiên 38,8 %, phòng 62,5 % so với bảng ánh xạ 86,2 % — nên gợi ý phòng
+  của mô hình tắt mặc định (`SUGGEST_DEPARTMENT_FROM_MODEL`), giữ bảng ánh xạ. Gửi hồ sơ vẫn phản hồi
+  0,1 giây; gợi ý tới sau 4–7 giây trên CPU
+
+**`v0.13.0`** (11/11, #347) — ba gợi ý còn lại:
+
+- **Gợi ý người xử lý** (#318) theo số việc đang giữ và kinh nghiệm với loại yêu cầu, trọng số trong
+  biến môi trường, chỉ người đúng phòng; không cần mô hình
+- **Hồ sơ đã giải quyết tương tự** (#319). Ảnh PostgreSQL đổi sang `pgvector/pgvector:0.8.6-pg16`,
+  mô hình nhúng Qwen3-Embedding-0.6B dưới `tri-tue`; biểu mẫu gửi hiện tối đa ba hồ sơ, ẩn tên và liên
+  hệ; ghi nhận yêu cầu được ngăn chặn lên bảng điều khiển. Bộ đo 40 câu: recall@3 40/40, trung vị 0,18
+  giây mỗi lần tìm. Nâng cụm cũ 200 hồ sơ sang ảnh mới giữ nguyên dữ liệu
+- **Khuyến nghị cải tiến bằng câu chữ** (#320) trên màn Quy trình thực tế: mô hình viết việc nên làm,
+  con số do hệ thống gắn từ kết quả khai phá, câu không có căn cứ bị bỏ; tắt mô hình thì về câu kết luận
+  tất định
+
+Tắt mô hình giữa chừng: tìm tương tự trả rỗng trong hạn chót 2 giây, gửi hồ sơ và phân loại tay vẫn
+chạy. **Giai đoạn 4 không có lần `down -v` nào**: mọi thay đổi lược đồ đi bằng migration `0016`–`0022`.
+
+**Bộ kiểm thử** qua bốn bản: pytest dịch vụ ứng dụng 566 → 580 → 608 → **650**; dịch vụ khai phá 148 →
+168 → **176**; kịch bản giao diện 95 → 139 → 143 → **159**.
+
+**ADR**: ADR-0007 navigator chấp nhận 08/11, **giảng viên xác nhận 10/11** kèm điều kiện mô hình nhiều
+giấy phép (#340). ADR-0008 chấp nhận 08/11, phần sinh văn bản cài ở #316/#317, nhúng véc-tơ và pgvector
+ở #319.
+
+**Issue đã đóng**: #239, #243, #249, #253, #254, #314, #315, #316, #317, #318, #319, #320, #340
+
 ---
 
 ## Đang làm
 
-Không có issue nào đang làm dở. Giai đoạn 3 đã khép; Giai đoạn 4 mới có issue.
-
-Ba bản ghi ADR-0006, ADR-0007 và ADR-0008 ở trạng thái *Đề xuất*, chờ giảng viên. Khi chấp
-nhận thì mới cập nhật `ARCHITECTURE.md` mục 3, `dependencies.md`, và viết mã các issue tầng `I`
-phụ thuộc vào chúng.
+Không có issue nào đang làm dở. Giai đoạn 4 đã khép về chức năng; issue gốc #322 còn mở chờ
+navigator đóng, #321 để ngoài phạm vi thi.
 
 ---
 
@@ -818,34 +890,19 @@ phụ thuộc vào chúng.
 
 ### Theo thứ tự
 
-1. ~~#313 nâng khung giao diện và các gói có cảnh báo bảo mật~~ — xong 08/11, bản vá **`v0.9.1`**
-2. ~~#239 thẻ gợi ý có xác nhận hoặc ghi đè~~ — xong, lên `main` ở **`v0.10.0`** (09/11), trước khai phá
-3. **#314 khai phá quy trình + #315 màn quy trình thực tế** — phát hành **`v0.11.0`** (dời từ `v0.10.0`,
-   navigator chốt 09/11). Navigator chốt dùng thư viện của ADR-0007 trước, kèm mô-đun dự phòng không
-   dùng thư viện đó, đổi bằng một biến môi trường nếu giảng viên không chấp nhận ranh giới giấy phép.
-   Tài khoản chỉ đọc riêng của dịch vụ khai phá tạo bằng migration (#254), không cần `down -v`. Cùng
-   pull request sửa `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3, `dependencies.md`
-4. **Khi ADR-0008 được chấp nhận**: #316 dịch vụ mô hình (tùy chọn) → #317 gợi ý loại, ưu tiên, phòng
-   → #318 gợi ý người xử lý → #319 hồ sơ tương tự → #320 khuyến nghị bằng câu chữ. #321 khi còn thời gian
-5. Tuần 16 — nền tảng vận hành: ~~#243 #249 #253 #254~~ xong ở `v0.10.0`; #247 #248 #251 làm sau tầng `I`;
-   sáu issue cần thảo luận chờ giảng viên
-6. Đề thi chính thức công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
-7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
+1. **Tuần 16 — nền tảng vận hành, đợt `v0.14.0`**: #247 quan sát vận hành, #248 kiểm chữ ký tệp và
+   quyết định về quét mã độc, #251 kênh thông báo thư điện tử
+2. **Giai đoạn 5 khi có đề thi** — phân tích đề, thay dữ liệu khởi tạo, bổ sung phần thiếu, phát hành
+   **`v1.0.0`**. Đề thi công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
+3. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
    viên giao từ 15/10; gửi bản phát hành mới nhất
 
 ### Chờ giảng viên
 
 Đã hỏi bằng bình luận trên từng issue ngày 03/11, nhắc lại ở #322 ngày 08/11:
 
-- **Chấp nhận ADR-0007** (#48) — chặn #314, #315. Chấp nhận thì câu *"không nhúng thư viện vào mã
-  nguồn dự án"* ở `CLAUDE.md` mục 5.2, `ARCHITECTURE.md` mục 3.3 và `dependencies.md` phải sửa thành
-  "chỉ trong dịch vụ tách riêng, giao tiếp qua HTTP" — PM4Py là thư viện, không phải ứng dụng chạy
-  nguyên ảnh như Wiki.js
-- **Chấp nhận ADR-0008** (#47) — chặn #316–#320. Kéo theo khoảng 2,8 GiB bộ nhớ, nên dịch vụ mô hình
-  là tùy chọn, cụm mặc định vẫn chạy đủ ở chế độ thủ công; gợi ý phòng của mô hình chỉ thay bảng ánh
-  xạ khi đúng từ 80 % trên bộ hồ sơ mẫu có nhãn
 - **ADR-0006** (#46) — nhóm đề xuất để kho tri thức ngoài phạm vi thi (#321); truy xuất tri thức ở
-  Giai đoạn 4 chỉ làm trên hồ sơ đã giải quyết
+  Giai đoạn 4 chỉ làm trên hồ sơ đã giải quyết (#319)
 - **Sáu issue Tuần 16 cần thảo luận**: #242, #244, #245 (chạm "triển khai lên máy chủ thật" ngoài phạm
   vi), #246 (lưu giữ và xóa dữ liệu cá nhân), #252 (ủy quyền khi vắng mặt), #255 (màn quản trị cấu hình
   quy trình)
@@ -853,8 +910,8 @@ phụ thuộc vào chúng.
   ghi ở `process-flow.md` mục 9 (#276). Những số còn ghi "giá trị mẫu, chưa có nguồn": gia hạn
   50 % mỗi lần, ân hạn một phần tư hạn, cửa sổ mở lại 7 ngày, hạn chuẩn theo loại; giới hạn tệp
   đính kèm 10 MB, 5 tệp mỗi lần, 20 tệp mỗi hồ sơ (#80)
-- **Nghẽn ở điều phối viên khi hồ sơ nhiều** (góp ý 29/10) — tầng `I` gợi ý phân loại có xác
-  nhận (#239), hay trước đó đo nghẽn bằng tầng `D` và cho loại rõ ràng đi thẳng phòng
+- **Nghẽn ở điều phối viên khi hồ sơ nhiều** (góp ý 29/10) — nhóm đã làm hướng gợi ý phân loại có xác
+  nhận (#239, #317); còn chờ ý giảng viên có cần thêm lối cho loại rõ ràng đi thẳng phòng không
 - **Có cần quét vi-rút tệp đính kèm không** (#80) — hiện chỉ chặn bằng danh sách đuôi chặt và
   kiểm chữ ký đầu tệp
 - **Công khai kho mã khi nào** — phải trước 07/12; công khai thì bật lại quy tắc bảo vệ nhánh
@@ -881,9 +938,14 @@ phụ thuộc vào chúng.
 |---|---|---|
 | Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Đo lại sau mỗi quyết định mới |
-| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. Tuần 11–12 có ba, cùng ngày 26/10: #102 và #80 đổi lược đồ và dữ liệu khởi tạo, #157 đổi một nhãn; kéo `dev` từ trước 26/10 về thì `down -v` một lần. #80 còn thêm biến vào `infra/.env.example` — có giá trị mặc định trong Compose nên `.env` cũ vẫn chạy. Tuần 13 có ba: #227 (cột `primary_scope`), #250 (bảng `request_type_fields`), #236 (realm, chủ đề đăng nhập); kéo `dev` qua 28/10 thì `down -v` một lần. Tuần 14–15 **không có lần nào**: #304 chỉ thêm migration; #305 đổi lược đồ và dữ liệu khởi tạo nhưng kèm migration `0015` thêm cột cho cụm cũ — lệnh kiểm vẫn báo `down -v`, chỉ cần `up -d --build`. Lần tới là lúc phát hành đợt khai phá quy trình (tài khoản chỉ đọc mới) |
+| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Đo thật cả cụm sáu dịch vụ: 1,55 GiB.** Hai dịch vụ ứng dụng chỉ thêm khoảng 110 MB; phần tăng còn lại là Keycloak phình theo JVM. Dịch vụ khai phá thêm khoảng 174 MiB cho 1.000 hồ sơ (ADR-0007); mô hình là tùy chọn. **Chưa đo lại cả cụm bảy dịch vụ** — làm ở giai đoạn đóng gói cùng cấu hình máy tối thiểu |
+| **Ảnh dịch vụ khai phá nặng khoảng 1 GB** (982 MB, vì bộ thư viện số học kéo theo PM4Py) | Lần dựng đầu trên máy sạch lâu hơn, tốn ổ đĩa; README và trang tài liệu còn ghi 6 GB ổ đĩa đo trước khi có dịch vụ này | Đo lại ổ đĩa cả cụm ở giai đoạn đóng gói. Nếu cần nhẹ hơn, bộ máy dự phòng `noi_bo` không dùng PM4Py đã có sẵn |
+| **Mô hình 1,5B gợi ý mức ưu tiên yếu** (38,8 % trên 80 hồ sơ mẫu) và **gợi ý phòng dưới ngưỡng** (62,5 % so với bảng ánh xạ 86,2 %, ngưỡng 80 %) | Gợi ý sai làm điều phối viên mất tin vào thẻ gợi ý | Gợi ý phòng của mô hình tắt mặc định, giữ bảng ánh xạ. Mức ưu tiên vẫn hiện thẻ nhưng người quyết định; tỷ lệ ghi đè trên bảng điều khiển đo độ chính xác thật. Đổi mô hình lớn hơn là đổi tệp trong volume, không đổi mã |
+| **Bộ đo hồ sơ tương tự do nhóm soạn bằng công cụ** (#319) | Recall@3 40/40 đo trên câu hỏi do chính nhóm soạn, không phải dữ liệu người dùng thật — dễ bị ban giám khảo hỏi | Nói rõ nguồn bộ đo khi trình diễn; số thật là tỷ lệ ngăn chặn ghi nhận trên bảng điều khiển |
+| **Nhận diện giấy phép trên GitHub** | Khi `LICENSE` gốc có thêm đoạn ngoại lệ (#340), API kho trả `NOASSERTION` / "Other" (kiểm 11/11) | Navigator chốt 11/11: `LICENSE` gốc giữ nguyên văn MIT, ngoại lệ cho `services/khai-pha/` chuyển sang `LICENSES.md` (cùng `README.md`, `NOTICE`); kiểm lại nhãn MIT sau khi lên `main` |
+| **Lược đồ khởi tạo chỉ nạp một lần** | Ai đã có volume cũ mà kéo mã mới về sẽ gặp lỗi thiếu cột, và thông báo lỗi không chỉ ra nguyên nhân | Mỗi lần `infra/postgres/init/`, `infra/seed/` hoặc realm Keycloak đổi, cả nhóm phải `down -v` rồi dựng lại; migration Alembic thì tự chạy. Thành viên tự kiểm sau mỗi lần `pull` bằng lệnh ở bộ luật trợ lý thành viên mục 9. Tuần 7 có năm lần như vậy: #84 đổi realm; #94, #79, #127 và #128 đổi lược đồ và dữ liệu khởi tạo. Tuần 8 có hai: #131 và #145 đổi realm. Tuần 9 có hai: #153 và #154 ngày 05/10, #156 ngày 06/10. Tuần 10 có năm: #199 và #142 ngày 12/10 đổi lược đồ, #144 đổi dữ liệu cùng ngày; #143, #175, #101 ngày 15/10. Gom lên `main` sát nhau nên cả nhóm chỉ `down -v` hai lần, mỗi ngày một lần. Tuần 11–12 có ba, cùng ngày 26/10: #102 và #80 đổi lược đồ và dữ liệu khởi tạo, #157 đổi một nhãn; kéo `dev` từ trước 26/10 về thì `down -v` một lần. #80 còn thêm biến vào `infra/.env.example` — có giá trị mặc định trong Compose nên `.env` cũ vẫn chạy. Tuần 13 có ba: #227 (cột `primary_scope`), #250 (bảng `request_type_fields`), #236 (realm, chủ đề đăng nhập); kéo `dev` qua 28/10 thì `down -v` một lần. Tuần 14–15 **không có lần nào**: #304 chỉ thêm migration; #305 đổi lược đồ và dữ liệu khởi tạo nhưng kèm migration `0015` thêm cột cho cụm cũ — lệnh kiểm vẫn báo `down -v`, chỉ cần `up -d --build`. **Từ #254 (`v0.10.0`) lược đồ cấu hình nằm trong migration**: cụm dựng từ `v0.9.1` trở đi nâng bằng `up -d --build`, Giai đoạn 4 không có lần `down -v` nào — kể cả tài khoản chỉ đọc của dịch vụ khai phá (`0019`) và ảnh pgvector (#319). Cụm cũ hơn `v0.9.1` vẫn phải dựng lại |
 | **Máy thành viên không đủ tài nguyên dựng cụm** | #48 phải chuyển người làm: bản dựng ảnh chứa hỏng giữa chừng với lỗi `EOF` trên một máy còn khoảng 7,5 GB trống. **Nguyên nhân chưa xác nhận** — nghi ổ gần đầy, hoặc Docker mất kết nối khi dựng nhiều ảnh cùng lúc. Con số 15 GB mà một trợ lý AI đòi cũng chưa đo. Ở #47, đĩa ảo Docker nằm trên ổ C gần đầy làm ảnh vừa kéo báo lỗi đọc ghi và ghi đồng bộ chỉ vài kB/s — số đo trên máy đó bỏ đi | Giao cho máy đó việc không cần dựng cụm — tài liệu, review pull request — cho tới khi giải phóng được ổ đĩa. Trước khi dựng hay đo, chuyển *Disk image location* của Docker Desktop sang ổ còn trống. Con số này cũng là dữ liệu cho mục **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
+| **Sáu issue Tuần 16 chờ giảng viên**: #242, #244, #245, #246, #252, #255 | Chưa làm được trong mốc hạn 29/11; vài issue chạm "triển khai lên máy chủ thật" ngoài phạm vi thi | Đã hỏi 03/11, nhắc lại 08/11 ở #322. Trong lúc chờ làm #247 #248 #251 |
 | Đường truyền tới `github.com` chập chờn | Có lúc `git push` và `git pull` treo rồi thất bại | Đã đặt `http.version HTTP/1.1` và hai tham số tốc độ tối thiểu, khắc phục được. Nếu tái diễn thì chuyển remote sang SSH — cả cổng 22 lẫn 443 của SSH đều thông |
 
 ---
@@ -897,7 +959,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Bài toán nghiệp vụ: Cổng vận hành yêu cầu nội bộ | Đã trình giảng viên, được duyệt |
 | Điểm sáng tạo: vòng phản hồi tự soi quy trình (khai phá quy trình) | Đã trình giảng viên, được duyệt |
 | Bộ công nghệ nền: Next.js + FastAPI + PostgreSQL + Docker | Thống nhất với giảng viên |
-| Giấy phép sản phẩm: MIT | |
+| Giấy phép sản phẩm: MIT, riêng `services/khai-pha/` AGPL-3.0-or-later | Mô hình nhiều giấy phép, bảng ở `LICENSES.md` — điều kiện giảng viên đặt khi xác nhận ADR-0007 ngày 10/11, #340 |
 | Mô hình nhánh ba tầng: nhánh công việc → `dev` → `main` | |
 | Cách hợp nhất: squash cho chặng vào `dev`, merge commit cho chặng lên `main` | Squash sai chặng sẽ hỏng nhật ký thay đổi |
 | Nguyên tắc AI chỉ gợi ý, con người quyết định | Theo góp ý của giảng viên |
@@ -977,7 +1039,11 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Bảng điều khiển **nhúng bằng thư viện chính thức**, cổng tự ghi tiêu đề và phạm vi | Không tự viết khung nhúng; ẩn tiêu đề và thanh lọc tiếng Anh của Superset. Navigator chốt 03/11 — #305 |
 | Tầng `I`: **khai phá quy trình làm trước** phân loại | Đổi thứ tự ROADMAP (trước đó phân loại → truy xuất → khai phá): khai phá là điểm sáng tạo của đề tài và chỉ chờ một bản ghi. Navigator chốt 04/11 — #322 |
 | Lệch chuẩn trong khai phá đo **so với luồng chính**, không so với cạnh thiết kế | Engine chỉ cho đi cạnh có trong bộ quy tắc, nên so với thiết kế luôn ra không lệch; đo làm lại, leo thang, mở lại, chuyển phòng nhiều lần và điểm nghẽn theo thời gian chờ — #314 |
-| Dịch vụ khai phá có **tài khoản cơ sở dữ liệu chỉ đọc riêng** | Không dùng chung tài khoản chỉ đọc của Superset; tạo ở lược đồ khởi tạo, cả nhóm `down -v` một lần lúc phát hành. Navigator chốt 04/11 — #314 |
+| Dịch vụ khai phá có **tài khoản cơ sở dữ liệu chỉ đọc riêng** | Không dùng chung tài khoản chỉ đọc của Superset. Navigator chốt 04/11; khi cài đặt tạo bằng migration `0019` thay vì lược đồ khởi tạo, nên không cần `down -v` — #314 |
+| `I` — **PM4Py chỉ trong dịch vụ khai phá tách riêng**, kèm bộ máy dự phòng không dùng thư viện đó | Giao tiếp qua HTTP, tích hợp liên tục chặn `import pm4py` ở nơi khác; đổi bộ máy bằng một biến môi trường. Giảng viên xác nhận 10/11 — ADR-0007, #314 |
+| `I` — **mô hình ngôn ngữ cục bộ là tùy chọn** (hồ sơ `tri-tue`), gọi qua một lớp duy nhất | llama.cpp server, Qwen2.5-1.5B-Instruct và Qwen3-Embedding-0.6B, pgvector trong ảnh PostgreSQL; cụm mặc định chạy đủ ở chế độ thủ công — ADR-0008, #316, #319 |
+| Gợi ý phòng của mô hình **chỉ thay bảng ánh xạ khi đo đạt từ 80 %** | Đo 62,5 % nên tắt mặc định (`SUGGEST_DEPARTMENT_FROM_MODEL`) — #317 |
+| Khuyến nghị bằng câu chữ: **mô hình viết câu, hệ thống gắn số** | Câu nhắc tới con số không tra được trong kết quả khai phá thì bỏ — #320 |
 
 ---
 

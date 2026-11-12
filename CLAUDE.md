@@ -305,8 +305,8 @@ thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không s�
 khai phá chỉ được `import` trong dịch vụ khai phá, dịch vụ ứng dụng gọi nó qua HTTP (mục 5.2).
 
 Kho theo **mô hình nhiều giấy phép** (#340): thư mục `services/khai-pha/` theo AGPL-3.0-or-later, có
-toàn văn riêng ở `services/khai-pha/LICENSE`; mọi thư mục khác theo MIT (`LICENSE` ở gốc, ghi rõ ngoại
-lệ). Bảng theo thư mục ở `LICENSES.md`, thông báo bên thứ ba ở `NOTICE`.
+toàn văn riêng ở `services/khai-pha/LICENSE`; mọi thư mục khác theo MIT (`LICENSE` ở gốc, giữ đúng văn bản MIT để GitHub
+nhận diện). Ngoại lệ và bảng theo thư mục ở `LICENSES.md`, thông báo bên thứ ba ở `NOTICE`.
 
 **Không gian `P` không dùng nền tảng ngoài** — engine máy trạng thái do nhóm tự viết,
 với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem ADR-0004.

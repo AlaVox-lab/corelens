@@ -18,7 +18,13 @@ Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên
 một dòng import.
 """
 
-from app.models.case import CaseAttachment, CaseMessage, EventLog, Request
+from app.models.case import AttachmentFileType, CaseAttachment, CaseMessage, EventLog, Request
+from app.models.thong_bao import (
+    NotificationDelivery,
+    NotificationOutbox,
+    NotificationPreference,
+    NotificationType,
+)
 from app.models.van_hanh import RateLimitHit, ScannerHeartbeat
 from app.models.workflow_config import (
     Department,
@@ -37,6 +43,7 @@ from app.models.workflow_config import (
 )
 
 __all__ = [
+    "AttachmentFileType",
     "CaseAttachment",
     "CaseMessage",
     "Department",
@@ -44,6 +51,10 @@ __all__ = [
     "Guard",
     "MessageKind",
     "MessageKindRole",
+    "NotificationDelivery",
+    "NotificationOutbox",
+    "NotificationPreference",
+    "NotificationType",
     "Priority",
     "RateLimitHit",
     "Request",

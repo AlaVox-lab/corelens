@@ -243,6 +243,17 @@ export type TepDinhKem = {
   uploaded_by_label: string;
   /** Chuỗi ISO 8601 theo UTC. */
   created_at: string;
+  /** Tệp mang macro (#248): nhận nhưng phải cảnh báo ở mọi nơi liệt kê tệp. */
+  has_macro: boolean;
+  /** `disabled` (quét tắt), `clean`, hay `unscanned` (quét bật mà chưa quét được) — #248. */
+  scan_status: string;
+};
+
+/** Tùy chọn thông báo thư của người đang đăng nhập (#251). */
+export type TuyChonThongBao = {
+  /** Máy chủ thư có được cấu hình không — tắt thì chưa thư nào được gửi. */
+  email_enabled: boolean;
+  types: { code: string; label: string; description: string | null; enabled: boolean }[];
 };
 
 /** Giới hạn tệp đính kèm. Giao diện hỏi dịch vụ thay vì tự giữ bản sao (#80). */

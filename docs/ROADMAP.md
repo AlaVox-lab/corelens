@@ -40,8 +40,9 @@ Mục tiêu: kho mã có bộ quy chuẩn đầy đủ, cả nhóm nắm đượ
 
 ## Giai đoạn 1 — Khảo sát và thiết kế
 
-**Trạng thái**: Hoàn thành — cả ba khảo sát cuối đã có bản ghi *Đề xuất*, chờ giảng viên duyệt;
-còn hai việc lẻ ghi dưới · **Phiên bản**: `v0.2.0`
+**Trạng thái**: Hoàn thành — ADR-0007 và ADR-0008 đã chấp nhận (08/11, giảng viên xác nhận ADR-0007
+ngày 10/11); ADR-0006 còn *Đề xuất*, nhóm đề xuất để ngoài phạm vi thi; còn `CODE_OF_CONDUCT.md` ·
+**Phiên bản**: `v0.2.0`
 
 Mục tiêu: chốt toàn bộ nền tảng Open-Core và thiết kế nghiệp vụ, đủ để bắt đầu viết
 mã mà không phải quay lại bàn lại.
@@ -60,15 +61,14 @@ kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 - [x] `[H]` Nền tảng định danh tập trung (SSO) — Keycloak, ADR-0001
 - [ ] `[H]` Hệ thống quản trị tri thức nội bộ — khảo sát xong (#46), ADR-0006 đề xuất
-      Wiki.js, chờ giảng viên duyệt
+      Wiki.js, chờ giảng viên duyệt; nhóm đề xuất để ngoài phạm vi thi (#321)
 - [x] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
       máy trạng thái — chọn tự viết, ADR-0004
 - [x] `[D]` Nền tảng kinh doanh thông minh nguồn mở — Apache Superset, ADR-0003
-- [ ] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — khảo sát xong
-      (#47), ADR-0008 đề xuất pgvector và llama.cpp, không dùng khung LLM, chờ giảng viên
-      duyệt
-- [ ] `[I]` Thư viện khai phá quy trình — khảo sát xong (#48), ADR-0007 đề xuất PM4Py
-      trong dịch vụ tách riêng, chờ giảng viên duyệt
+- [x] `[I]` Cơ sở dữ liệu véc-tơ và khung phát triển mô hình ngôn ngữ lớn — pgvector và llama.cpp,
+      không dùng khung LLM, ADR-0008 (chấp nhận 08/11, cài ở #316, #317, #319)
+- [x] `[I]` Thư viện khai phá quy trình — PM4Py trong dịch vụ tách riêng, ADR-0007 (chấp nhận
+      08/11, giảng viên xác nhận 10/11 kèm mô hình nhiều giấy phép #340)
 
 ### 1.3. Thiết kế nghiệp vụ
 
@@ -117,7 +117,7 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Giao diện mới: khung thanh bên, trang hồ sơ hai cột, hai hàng đợi — #158, #169, #170
 - [x] Trang hồ sơ đặt việc và hạn trước nhật ký, theo nhận xét của giảng viên — #189
 - [x] *Hồ sơ của tôi* bỏ bảng chú giải trạng thái — #192
-- [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006, rồi tích hợp
+- [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006; nhóm đề xuất để ngoài phạm vi thi (#321)
 
 ### 2.2. Không gian P — Quy trình
 
@@ -174,13 +174,15 @@ quyết định.
 
 ## Giai đoạn 4 — Không gian I
 
-**Phiên bản dự kiến**: `v0.11.0` (10/11, đã phát hành) cho khai phá quy trình — dịch vụ khai phá và màn
-quy trình thực tế trong cổng; các bản sau cho gợi ý. `v0.10.0` (09/11) đưa trước thẻ gợi ý có xác nhận (#239) cùng đợt nền tảng vận hành ·
-**Mốc**: *Giai đoạn 4 — Không gian I*, hạn 29/11 · **Issue gốc**: #322
+**Trạng thái**: Hoàn thành về chức năng — còn kho tri thức (#321) để ngoài phạm vi thi · **Phiên bản**:
+`v0.10.0` (09/11) đưa trước thẻ gợi ý có xác nhận (#239) cùng đợt nền tảng vận hành (#243, #249, #253,
+#254); `v0.11.0` (10/11) khai phá quy trình thực tế và màn Quy trình thực tế trong cổng (#314, #315);
+`v0.12.0` (11/11) mô hình ngôn ngữ cục bộ tùy chọn và gợi ý loại, mức ưu tiên, phòng (#316, #317), mô
+hình nhiều giấy phép (#340); `v0.13.0` (11/11) gợi ý người xử lý, hồ sơ tương tự, khuyến nghị cải tiến
+(#318, #319, #320) · **Mốc**: *Giai đoạn 4 — Không gian I*, hạn 29/11 · **Issue gốc**: #322
 
 Mục tiêu: gắn tầng trí tuệ nhân tạo lên trên nền đã ổn định. **Khai phá quy trình làm trước**
-(navigator chốt 04/11): đó là điểm sáng tạo của đề tài, và chỉ chờ ADR-0007. Phân loại và truy xuất
-chờ ADR-0008.
+(navigator chốt 04/11): đó là điểm sáng tạo của đề tài. Phân loại và truy xuất làm sau, trên ADR-0008.
 
 **Nguyên tắc xuyên suốt**: AI chỉ ghi vào trường gợi ý, người quyết định. Mọi tác vụ
 đều phải có đường điều chỉnh thủ công.
@@ -209,6 +211,10 @@ chờ ADR-0008.
 
 **Tiêu chí hoàn thành giai đoạn**: gỡ tầng `I` ra thì hệ thống suy giảm rõ rệt về
 giá trị, chứ không phải không đổi gì.
+
+Đạt ngày 11/11 về chức năng: gỡ tầng `I` thì mất màn Quy trình thực tế, thẻ gợi ý và hồ sơ tương tự;
+tắt riêng mô hình thì luồng thủ công vẫn chạy đủ. Giới hạn đã biết: mô hình 1,5B gợi ý mức ưu tiên còn
+yếu và gợi ý phòng dưới ngưỡng 80 % nên giữ bảng ánh xạ — số đo ở `PROJECT_STATE.md`.
 
 ---
 

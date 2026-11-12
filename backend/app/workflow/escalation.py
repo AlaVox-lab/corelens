@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from app.models.workflow_config import Transition
 from app.rules.han_cho import ho_so_het_han_cho
 from app.rules.sla import ho_so_qua_han
+from app.thong_bao.hang_doi import TRIGGER_DA_TU_DI, xep_hang
 from app.workflow.context import Actor
 from app.workflow.engine import perform_transition
 from app.workflow.errors import TransitionError
@@ -116,6 +117,13 @@ def quet_het_han_cho(session: Session, luc: dt.datetime | None = None) -> list[i
         except TransitionError as loi:
             logger.warning("Không tự đi được hồ sơ %s: %s", ho_so.id, loi.message)
             continue
+        # Thông báo "hồ sơ đã tự chuyển" (#251): cùng giao dịch của lượt quét, không gọi mạng
+        xep_hang(
+            session,
+            TRIGGER_DA_TU_DI,
+            ho_so,
+            context={"from_state": canh.from_state, "transition_id": canh.id},
+        )
         da_di.append(ho_so.id)
 
     if da_di:

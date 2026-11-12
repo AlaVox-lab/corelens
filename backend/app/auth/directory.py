@@ -84,6 +84,9 @@ class Person:
     username: str
     name: str
     roles: frozenset[str]
+    # Chỉ `everyone()` (#251) điền hai trường dưới; `department_members` để trống
+    departments: frozenset[str] = frozenset()
+    email: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,17 +157,64 @@ class KeycloakDirectory:
         """
         return self._trong_tran(self._tra_lien_he, user_id)
 
-    def _trong_tran(self, ham: Callable[..., Any], *tham_so: Any) -> Any:
+    def everyone(self, timeout_seconds: float) -> list[Person]:
+        """Mọi tài khoản đang bật, kèm vai trò hiệu lực, phòng ban và email — cho bộ gửi thư (#251).
+
+        Bộ gửi thư cần biết ai đang có bước chính trên một hồ sơ, mà bước chính có thể thuộc một vai
+        không gắn phòng ban nào (điều phối viên). Quyền `view-users` không đọc được `/roles/<vai>/users`
+        (Keycloak đòi thêm quyền xem realm), nên đọc cả danh bạ theo trang rồi tra vai trò và nhóm từng
+        người — hai lần gọi mỗi người. Chạy ở bộ quét nền với trần riêng, không bao giờ trên đường
+        của một yêu cầu; phía gọi nhớ kết quả vài phút. Danh bạ vài nghìn người thì nên đổi sang nhóm
+        theo vai — ghi ở ARCHITECTURE.md.
+        """
+        return self._trong_tran(self._tra_tat_ca, timeout_seconds, tran=timeout_seconds)
+
+    def _trong_tran(self, ham: Callable[..., Any], *tham_so: Any, tran: float | None = None) -> Any:
         """Chạy một lần tra trong luồng riêng, giữ đúng trần thời gian — lý do ở chú thích
         của `_LUONG_TRA`."""
+        tran = tran or self._tran_giay
         tuong_lai = _LUONG_TRA.submit(ham, *tham_so)
         try:
-            return tuong_lai.result(timeout=self._tran_giay)
+            return tuong_lai.result(timeout=tran)
         except HetGio:
             tuong_lai.cancel()
             raise DirectoryUnavailable(
-                f"Keycloak không trả lời xong trong {self._tran_giay:g} giây."
+                f"Keycloak không trả lời xong trong {tran:g} giây."
             ) from None
+
+    def _tra_tat_ca(self, tran: float) -> list[Person]:
+        thoi_han = time.monotonic() + tran
+        tai_khoan: list[dict] = []
+        while True:
+            trang = self._goi(
+                f"/users?first={len(tai_khoan)}&max={_CO_TRANG}&briefRepresentation=true",
+                thoi_han,
+            )
+            tai_khoan.extend(trang)
+            if len(trang) < _CO_TRANG:
+                break
+        tien_to = "/" + self._tien_to.strip("/") + "/"
+        ket_qua = []
+        for nguoi in tai_khoan:
+            if not nguoi.get("enabled", True):
+                continue
+            vai_tro = self._goi(f"/users/{nguoi['id']}/role-mappings/realm/composite", thoi_han)
+            nhom = self._goi(f"/users/{nguoi['id']}/groups?briefRepresentation=true", thoi_han)
+            ket_qua.append(
+                Person(
+                    id=nguoi["id"],
+                    username=nguoi["username"],
+                    name=_ten_hien_thi(nguoi),
+                    roles=frozenset(v["name"] for v in vai_tro),
+                    departments=frozenset(
+                        n["path"][len(tien_to) :]
+                        for n in nhom
+                        if n.get("path", "").startswith(tien_to) and len(n["path"]) > len(tien_to)
+                    ),
+                    email=nguoi.get("email") or None,
+                )
+            )
+        return ket_qua
 
     def _tra_lien_he(self, user_id: str) -> Contact | None:
         thoi_han = time.monotonic() + self._tran_giay

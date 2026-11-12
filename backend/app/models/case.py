@@ -22,7 +22,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -312,10 +312,38 @@ class CaseAttachment(Base):
     uploaded_by_label: Mapped[str] = mapped_column(Text)
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
 
+    # Tệp mang macro (#248): nhận nhưng giao diện cảnh báo ở mọi nơi liệt kê tệp
+    has_macro: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Kết quả quét mã độc lúc đính kèm (#248): `disabled` (quét tắt), `clean`, `unscanned`
+    # (quét bật mà dịch vụ quét không phản hồi, chính sách cho nhận)
+    scan_status: Mapped[str] = mapped_column(Text, default="disabled", server_default="disabled")
+
     __table_args__ = (Index("case_attachments_tra_theo_ho_so", "case_id", "created_at"),)
 
     def __repr__(self) -> str:
         return f"<CaseAttachment {self.case_id} {self.filename} ({self.size_bytes} B)>"
+
+
+class AttachmentFileType(Base):
+    """Cách kiểm nội dung một đuôi tệp đính kèm (#248) — dữ liệu, nạp từ infra/seed/04.
+
+    Đuôi nào được NHẬN do biến môi trường quyết; bảng này chỉ nói tệp mang đuôi đó thì nội dung
+    phải trông thế nào. Chi tiết từng cột ở migration 0023 và tệp dữ liệu khởi tạo.
+    """
+
+    __tablename__ = "attachment_file_types"
+
+    extension: Mapped[str] = mapped_column(Text, primary_key=True)
+    content_type: Mapped[str] = mapped_column(Text)
+    # Mẫu hex, `??` là byte bất kỳ; khớp một mẫu là đạt
+    signatures: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    # 0: mẫu nằm ngay đầu tệp; lớn hơn 0: nằm đâu đó trong chừng ấy byte đầu
+    search_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    text_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    # `ooxml`, `ole` hoặc rỗng
+    macro_check: Mapped[str | None] = mapped_column(Text, default=None)
+    always_macro: Mapped[bool] = mapped_column(Boolean, default=False)
+    note: Mapped[str | None] = mapped_column(Text, default=None)
 
 
 class CaseMessageRead(Base):

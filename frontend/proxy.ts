@@ -58,6 +58,9 @@ export function proxy(request: NextRequest) {
   });
 
   const tieuDeYeuCau = new Headers(request.headers);
+  // Mã yêu cầu của lượt tải trang (#247): lib/api.ts gửi kèm mọi lời gọi dịch vụ. Luôn sinh mới —
+  // không nhận mã trình duyệt gửi lên, để không ai gắn được mã tùy ý vào nhật ký của người khác
+  tieuDeYeuCau.set("x-request-id", crypto.randomUUID());
   tieuDeYeuCau.set("x-nonce", nonce);
   // Next đọc số dùng một lần từ CSP của YÊU CẦU để gắn vào script nó sinh ra
   tieuDeYeuCau.set("Content-Security-Policy", csp);

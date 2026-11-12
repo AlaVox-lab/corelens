@@ -312,7 +312,7 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 | Thư mục | Giấy phép | Tệp toàn văn |
 |---|---|---|
 | `services/khai-pha/` — cả mã của nhóm (`app/`, `tests/`, `Dockerfile`) | AGPL-3.0-or-later | `services/khai-pha/LICENSE` |
-| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc, ghi rõ ngoại lệ trên |
+| Mọi thư mục khác (`backend/`, `frontend/`, `e2e/`, `scripts/`, `infra/`, `docs/`, `docs-site/`) | MIT | `LICENSE` ở gốc (văn bản MIT nguyên văn; ngoại lệ ghi ở `LICENSES.md`) |
 
 - Bảng đầy đủ và lý do ở `LICENSES.md`; thông báo bên thứ ba (PM4Py và các gói copyleft nó kéo theo, các
   nền tảng chạy như dịch vụ riêng) ở `NOTICE`
@@ -427,7 +427,7 @@ dx-os-lab/
 ├── CHANGELOG.md                 # sinh tự động bằng git-cliff
 ├── CLAUDE.md                    # quy tắc cho mọi trợ lý AI làm việc trên kho
 ├── CONTRIBUTING.md              # quy trình làm việc và quy ước mã nguồn
-├── LICENSE                      # MIT toàn văn, kèm ngoại lệ cho services/khai-pha/
+├── LICENSE                      # MIT toàn văn (ngoại lệ services/khai-pha/ ở LICENSES.md)
 ├── LICENSES.md                  # bảng giấy phép theo thư mục, nghĩa vụ AGPL (#340)
 ├── NOTICE                       # thông báo bên thứ ba
 ├── README.md
@@ -884,14 +884,40 @@ Bốn quyết định đáng nhớ:
 - **Giới hạn là cấu hình triển khai**: đuôi cho phép, MB mỗi tệp, số tệp mỗi lần và mỗi hồ sơ nằm
   trong `.env`. Giao diện hỏi `GET /attachments/policy` thay vì giữ bản sao, nên hai lớp chặn không
   lệch nhau. Dịch vụ kiểm ba thứ: đuôi trong danh sách, dung lượng, và nội dung khớp đuôi theo chữ
-  ký đầu tệp — đổi đuôi một tệp chạy được thành `.png` không qua được. Loại nội dung suy từ đuôi,
-  không tin tiêu đề trình duyệt; tải về luôn là `attachment` kèm `nosniff`
+  ký đầu tệp — đổi đuôi một tệp chạy được thành `.png` không qua được. Loại nội dung lấy từ dữ
+  liệu theo đuôi, không tin tiêu đề trình duyệt; tải về luôn là `attachment` kèm `nosniff`
 
 Một lần tải lên hoặc nhận cả lô hoặc từ chối cả lô: kiểm hết trước khi ghi gì xuống kho. Hồ sơ
 chưa tồn tại lúc người gửi chọn tệp ở bước 2 của biểu mẫu, nên biểu mẫu tạo hồ sơ trước rồi tải
 tệp lên chính hồ sơ đó; tải hỏng thì hồ sơ vẫn đã gửi và trang hồ sơ nhắc thêm tệp lại, để người
-gửi không bấm gửi lần nữa. Không quét vi-rút — nằm ngoài phạm vi, bù bằng danh sách đuôi chặt và
-kiểm chữ ký.
+gửi không bấm gửi lần nữa.
+
+**Chữ ký, macro, quét mã độc** (#248) xếp thành bốn lớp, lớp rẻ trước, cả lô qua hết mới ghi kho:
+
+1. **Đuôi** trong `ATTACHMENT_ALLOWED_EXTENSIONS` — cấu hình triển khai quyết đuôi nào được NHẬN
+2. **Chữ ký** theo bảng `attachment_file_types` (dữ liệu `infra/seed/04-loai-tep-dinh-kem.sql`, cụm
+   cũ nhận qua migration 0023 chạy chính tệp đó): mỗi đuôi một dòng — mẫu hex (`??` là byte bất kỳ),
+   vùng tìm (PDF cho phép rác trước `%PDF-`), cờ văn bản thuần, loại nội dung. Mã chỉ biết ba cách đọc
+   dữ liệu đó, không có `if` theo đuôi. Tệp `.pdf` mà nội dung khác bị từ chối với thông báo "không
+   phải tệp .pdf thật … có thể đã bị đổi đuôi". Đuôi được phép mà bảng chưa có dòng thì chỉ kiểm đuôi
+   và ghi cảnh báo — thà kiểm ít còn hơn chặn nhầm kiểu tệp doanh nghiệp chủ động mở
+3. **Macro**: cột `macro_check` (`ooxml` — gói ZIP có `vbaProject.bin`; `ole` — tệp Office đời cũ có
+   kho `_VBA_PROJECT`) và `always_macro` (.docm/.xlsm/.pptm). Tệp có macro được **nhận** nhưng ghi cờ
+   `case_attachments.has_macro`, giao diện hiện nhãn "có macro — cẩn thận khi mở" ở khối tệp (mọi trang
+   hồ sơ dùng chung một khối). Lý do nhận thay vì chặn: bảng tính có macro là việc thường ngày của bộ
+   phận tài chính, chặn thì họ đổi đuôi hoặc gửi qua kênh khác không kiểm gì. Đổi đuôi `.docm` thành
+   `.docx` không giấu được — dò theo nội dung gói, không theo đuôi. Đuôi có macro chỉ nhận khi nằm
+   trong danh sách cho phép (mặc định không có)
+4. **Quét mã độc** — ClamAV, hồ sơ Compose `quet-tep`, **tắt** mặc định (`CLAMAV_HOST` rỗng: không
+   gọi gì, cột `scan_status = 'disabled'`). Bật thì `app/storage/quet_ma_doc.py` gửi tệp sang clamd
+   qua lệnh `INSTREAM` bằng `socket` của thư viện chuẩn, có hạn chót. Bị báo nhiễm → từ chối cả lô
+   (422 `attachment-infected`). clamd không phản hồi → theo `CLAMAV_ON_UNAVAILABLE`: mặc định
+   `accept` — nhận, gắn `scan_status = 'unscanned'` (nhãn "chưa quét mã độc"), ghi nhật ký cảnh báo;
+   `reject` — 503, người gửi thử lại. Mặc định là nhận vì một dịch vụ **tùy chọn** hỏng không được
+   chặn người gửi bổ sung hồ sơ đang chờ (luật chung của cụm: thành phần tùy chọn hỏng chỉ làm mất
+   phần của nó), và ba lớp trên vẫn chạy; nơi coi quét là bắt buộc thì đặt `reject`. Màn Hệ thống
+   báo dịch vụ quét ở ba mức tắt / sẵn sàng / không phản hồi (lệnh `PING`, hạn chót 3 giây) kèm
+   chính sách đang áp. Ranh giới giấy phép GPL-2.0 là ranh giới mạng — `LICENSES.md`
 
 ### 6.3. Lớp báo cáo và dữ liệu mở (không gian `D`)
 
@@ -1189,6 +1215,61 @@ soạn bằng công cụ. Số đo ở trang *Mô hình ngôn ngữ* của `docs
 - **Chỉ để đọc**: không ghi gì, không đổi cấu hình nào. Khối *Khuyến nghị cải tiến* nằm dưới câu kết luận,
   ghi "Gợi ý của hệ thống"; mô hình tắt hay không câu nào qua phép kiểm thì khối không hiện, màn vẫn đủ
   câu kết luận tất định
+
+### 6.8. Thông báo thư điện tử (không gian `P`)
+
+**Đã cài đặt** — #251. Mã ở `backend/app/thong_bao/`, bảng ở migration 0024, dữ liệu ở
+`infra/seed/05-loai-thong-bao.sql`.
+
+**Tắt mặc định.** `SMTP_HOST` rỗng thì không sự kiện nào được xếp hàng, bộ gửi không chạy, màn Hệ thống
+ghi "tắt". Hồ sơ Compose `thu-thu` có Mailpit (MIT) làm hộp thư thử để trình diễn.
+
+**Loại thông báo là dữ liệu.** Bảng `notification_types`: mã, nhãn, mẫu tiêu đề và nội dung
+(`string.Template`, biến viết sai để nguyên chứ không làm hỏng việc gửi), mặc định bật/tắt, cột
+`trigger` và `recipients`. Mã chỉ biết ba **cơ chế kích hoạt** — `state-entered` (mọi lần chuyển đổi
+trạng thái hay đổi người được giao), `auto-warning` (vào khoảng báo trước của cạnh tự đi, tính từ
+`auto_after_hours`/`warn_before_hours` đã có, #142), `auto-done` (hệ thống vừa tự đi cạnh đó) — và hai
+**cách chọn người nhận** — `primary-step` (người đang có bước chính, cùng phép tính `my_primary_steps`
+với cờ "cần tôi xử lý", mục 7.3) và `requester`. Thêm loại, đổi lời, tắt một loại là sửa dữ liệu.
+
+**Hai tầng hàng đợi, tách khỏi giao dịch nghiệp vụ:**
+
+1. `notification_outbox` — một dòng mỗi **sự kiện**, ghi bằng `xep_hang()` **trong cùng giao dịch** với
+   chuyển trạng thái (`perform_transition`, bước 5) hay với lượt quét hạn chờ. Chỉ một câu INSERT, không
+   gọi mạng: giao dịch hủy thì sự kiện mất theo, giao dịch thành công thì sự kiện chắc chắn còn — không
+   có thư "ma" cho thao tác bị hoàn tác, không mất thư cho thao tác đã xong. Sửa nội dung (cạnh tự trỏ,
+   không đổi người được giao) không xếp gì
+2. `notification_deliveries` — một dòng mỗi **thư cho một người**: tiêu đề, nội dung đã dựng, trạng thái
+   (`pending`, `sent`, `failed`, `skipped`), số lần thử, lỗi cuối, lúc gửi. Đây là **vết để đối soát**;
+   ràng buộc duy nhất (sự kiện, loại, người) chặn gửi trùng
+
+**Bộ gửi** (`bo_gui.quet_gui`) là một bộ quét nền theo khuôn `nhip_quet.py` (#253): khóa tư vấn
+`email-notify` — nhiều bản dịch vụ không gửi trùng — và dòng nhịp hiện trên màn Hệ thống. Một lượt:
+(1) phát hiện hồ sơ vào khoảng báo trước, xếp `auto-warning` với khóa chống trùng (hồ sơ, lúc vào
+trạng thái) — mỗi lần vào trạng thái báo đúng một lần; (2) mở rộng sự kiện thành thư — sự kiện **lỗi
+thời** (hồ sơ đã đi tiếp trước khi bộ gửi kịp xử lý) bị bỏ, để người có việc ở trạng thái mới không nhận
+hai thư; người vừa làm thao tác không nhận thư về chính thao tác đó; (3) gửi thư đến hạn qua `smtplib`
+của thư viện chuẩn, một kết nối cho cả lượt. Tùy chọn của người nhận và địa chỉ thư kiểm **lúc gửi**:
+tắt loại thì thư chờ thành `skipped`; danh bạ không có email cũng `skipped`.
+
+**Lỗi không lan ngược.** Máy chủ thư sập: thư `pending`, thử lại sau `NOTIFY_RETRY_AFTER_SECONDS` nhân
+đôi mỗi lần, tối đa `NOTIFY_MAX_ATTEMPTS` rồi `failed`; không mở được kết nối thì các thư còn lại đợi lượt
+sau thay vì chờ hạn chót từng thư. Danh bạ sập: sự kiện nằm chờ, nhịp bộ gửi vẫn tốt (danh bạ là phụ
+thuộc của việc gửi, không phải của bộ quét). Không trường hợp nào chạm tới chuyển trạng thái — nó đã
+commit từ trước.
+
+**Danh bạ.** Địa chỉ thư không lưu trong cơ sở dữ liệu của dịch vụ: tra Keycloak lúc gửi. Người có bước
+chính có thể thuộc một vai không gắn phòng ban (điều phối viên), mà quyền `view-users` của tài khoản danh
+bạ không đọc được `/roles/<vai>/users` (Keycloak trả 403 — đã thử trên cụm), nên `KeycloakDirectory.everyone()`
+đọc cả danh bạ theo trang rồi tra vai trò và nhóm từng người, và bộ gửi nhớ kết quả
+`NOTIFY_DIRECTORY_CACHE_SECONDS` giây. Hợp với quy mô vài chục tới vài trăm tài khoản; danh bạ hàng nghìn
+người thì nên gom vai vào nhóm Keycloak và đọc thành viên nhóm, hoặc cấp thêm quyền xem vai trò cho tài
+khoản danh bạ — quyết định để ngỏ.
+
+**Tùy chọn người dùng.** `notification_preferences` (người, loại, bật); không có dòng là theo
+`default_enabled` của loại. `GET /me/notifications`, `POST /me/notifications/{loại}` — định danh lấy từ
+token, không ai đổi được tùy chọn của người khác. Cổng có trang `/thong-bao`, mở từ biểu tượng chuông
+cạnh tên ở thanh bên.
 
 ---
 
@@ -1811,6 +1892,43 @@ ký** (`logging`) và hiện ở `GET /system/health`, điểm cuối chỉ qu�
 Hệ thống (#229) đọc đúng điểm cuối này, không có đường thứ hai: phiên bản, bộ quy tắc đã nạp, nhịp
 từng bộ quét (mục 7.1), và `detail` khi hỏng. Bộ quét hỏng làm `status` thành `degraded` nhưng mã
 vẫn `200` — lý do ở mục 7.1.
+
+### 7.5. Quan sát vận hành: sống, sẵn sàng, số đo, nhật ký
+
+**Đã cài đặt** — #247. Mã ở `backend/app/quan_sat.py`, không thêm thư viện nào.
+
+**Sống và sẵn sàng là hai câu hỏi.** `GET /health/live` chỉ trả lời "tiến trình còn chạy, vòng sự
+kiện còn phục vụ" — không chạm cơ sở dữ liệu, để cơ sở dữ liệu chậm không khiến bộ điều phối giết một
+tiến trình vẫn khỏe. `GET /health/ready` trả `503` khi phụ thuộc **bắt buộc** chưa dùng được — cơ sở
+dữ liệu và bộ quy tắc đã nạp — cùng hàm đo với `/health` (giữ lại cho bộ giám sát và tài liệu cũ).
+Dịch vụ tùy chọn (mô hình, quét mã độc, máy chủ thư, Superset) không tính: thiếu chúng thì dịch vụ vẫn
+phục vụ, màn Hệ thống báo riêng. Healthcheck của ảnh dịch vụ (`backend/Dockerfile`) gọi `/health/ready`,
+nên cổng và Superset chờ `service_healthy` là chờ đúng lúc dịch vụ làm được việc. Docker Compose
+không tự khởi động lại container `unhealthy`, nên một healthcheck là đủ; bộ điều phối tách hai khái
+niệm (Kubernetes) thì dùng `live` cho liveness, `ready` cho readiness.
+
+**Mã yêu cầu xuyên cổng → dịch vụ.** `proxy.ts` của cổng gắn một mã mới (`x-request-id`) vào mỗi lượt
+tải trang — luôn sinh mới, không nhận mã trình duyệt gửi; `lib/api.ts` gửi mã đó theo mọi lời gọi dịch
+vụ trong lượt (tuyến API không đi qua proxy thì mỗi lời gọi tự sinh). Lớp giữa ASGI của dịch vụ nhận mã
+nếu hợp lệ (chữ, số, `-`, `_`, `.`, tối đa 64 ký tự — chặn chèn dòng giả vào nhật ký), không thì tự
+sinh, đặt vào biến ngữ cảnh và trả lại ở tiêu đề phản hồi. Lớp giữa viết thẳng bằng ASGI chứ không qua
+`BaseHTTPMiddleware`, để biến ngữ cảnh tới được điểm cuối và cả luồng `to_thread`.
+
+**Nhật ký JSON.** Mỗi dòng một đối tượng: `ts` (UTC), `level`, `logger`, `msg`, `request_id`, `exc` khi
+có ngoại lệ. Bộ ghi của uvicorn gom về cùng định dạng; dòng truy cập do lớp giữa ghi (uvicorn chạy
+`--no-access-log`) với `method`, `path`, `route`, `status`, `duration_ms` — trừ `/health*` bị gọi mỗi
+vài giây. `LOG_FORMAT=text` trả về dạng chữ khi đọc tay.
+
+**Số đo** ở `GET /metrics`, văn bản kiểu Prometheus viết tay: số yêu cầu theo phương thức, **mẫu đường
+dẫn** (`/requests/{case_id}`, không phải `/requests/123` — số chuỗi không phình theo số hồ sơ) và mã
+trạng thái; phân bố độ trễ; số lỗi 5xx; độ dài hàng đợi thư (#251); lượt quét thành công cuối và số
+lượt hỏng liên tiếp của từng bộ quét. **Chỉ quản trị viên**: cổng dịch vụ được công bố ra máy
+(`BACKEND_PORT`), nên "chỉ trong mạng Compose" không phải ranh giới thật, và mẫu đường dẫn, độ dài hàng
+đợi là thông tin vận hành không cho người ngoài. Bộ thu số đo dùng token của một tài khoản quản trị.
+Phần đếm yêu cầu nằm trong bộ nhớ của **từng bản** dịch vụ; phần đọc từ cơ sở dữ liệu là chung cả cụm.
+
+Màn Hệ thống hiện thêm **lượt cuối** của từng bộ quét (`last_started_at` của nhịp, mục 7.1) bên cạnh lần
+thành công cuối.
 
 ---
 

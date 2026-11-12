@@ -105,6 +105,24 @@ bấm xác nhận; mô hình tắt hay chậm thì không có gợi ý, không t
 mô hình**, phải chạy lại `scripts/tai_mo_hinh.py`. Biến môi trường, kết quả đo độ chính xác: trang tài
 liệu, *Cài đặt và vận hành → Mô hình ngôn ngữ*.
 
+### Thông báo thư và quét mã độc (tùy chọn)
+
+Hai dịch vụ tùy chọn khác, cũng tắt mặc định — mỗi cái một hồ sơ Compose và một biến trong `infra/.env`:
+
+```bash
+# Thông báo thư, kèm hộp thư thử Mailpit (MIT) — xem thư ở http://localhost:8025
+# trong infra/.env đặt: SMTP_HOST=thu-thu và SMTP_PORT=1025
+docker compose --env-file .env --profile thu-thu up -d    # trong infra/
+
+# Quét mã độc tệp đính kèm bằng ClamAV (GPL-2.0, dịch vụ riêng, thêm ~1 GB bộ nhớ)
+# trong infra/.env đặt: CLAMAV_HOST=quet-tep
+docker compose --env-file .env --profile quet-tep up -d   # trong infra/
+```
+
+Máy chủ thư hay ClamAV hỏng thì thao tác trên hồ sơ vẫn chạy: thư nằm chờ và được thử lại; tệp được nhận
+kèm nhãn "chưa quét" (đổi bằng `CLAMAV_ON_UNAVAILABLE=reject`). Chi tiết: trang tài liệu, *Cài đặt và vận
+hành → Thông báo thư và quét mã độc*.
+
 ### Nâng cấp
 
 Cụm dựng từ `v0.9.1` trở đi lên bản mới **mà không mất hồ sơ, nhật ký hay tệp đính kèm**: lược đồ do

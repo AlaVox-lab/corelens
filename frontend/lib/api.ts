@@ -7,6 +7,7 @@
 // không bao giờ rời khỏi phía máy chủ, và địa chỉ nội bộ của dịch vụ không lộ ra
 // ngoài — xem lib/session.ts.
 
+import { headers } from "next/headers";
 import * as client from "openid-client";
 
 import { layCauHinh } from "@/lib/oidc";
@@ -14,6 +15,27 @@ import { layPhien, luuPhien, type Phien } from "@/lib/session";
 
 const diaChiDichVu =
   process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000";
+
+const MA_YEU_CAU_HOP_LE = /^[A-Za-z0-9._-]{1,64}$/;
+
+/**
+ * Mã yêu cầu xuyên cổng → dịch vụ (#247). `proxy.ts` gắn một mã mới vào mỗi lượt tải trang; mọi lời
+ * gọi dịch vụ trong lượt đó mang cùng mã, nên nhật ký JSON của dịch vụ gom được cả lượt. Tuyến API
+ * (tải tệp…) không đi qua proxy thì mỗi lời gọi tự sinh mã.
+ */
+async function maYeuCau(): Promise<string> {
+  try {
+    const ma = (await headers()).get("x-request-id");
+    if (ma && MA_YEU_CAU_HOP_LE.test(ma)) return ma;
+  } catch {
+    // Ngoài phạm vi một yêu cầu — không có tiêu đề để đọc
+  }
+  return crypto.randomUUID();
+}
+
+async function tieuDeGoi(token: string): Promise<Record<string, string>> {
+  return { Authorization: `Bearer ${token}`, "X-Request-ID": await maYeuCau() };
+}
 
 /**
  * Thời hạn chờ mỗi lời gọi sang dịch vụ ứng dụng (#235), đặt ở đúng một chỗ. Quá hạn thì lời
@@ -84,7 +106,7 @@ export async function goiDichVu<T>(duongDan: string): Promise<T | null> {
   try {
     const phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
-      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      headers: await tieuDeGoi(dungPhien.accessToken),
       cache: "no-store",
     });
 
@@ -196,7 +218,7 @@ export async function docDichVu<T>(duongDan: string): Promise<KetQua<T>> {
   try {
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
-      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      headers: await tieuDeGoi(dungPhien.accessToken),
       cache: "no-store",
     });
   } catch {
@@ -226,7 +248,7 @@ export async function layPhanHoiDichVu(duongDan: string): Promise<Response | nul
   try {
     return await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
-      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      headers: await tieuDeGoi(dungPhien.accessToken),
       cache: "no-store",
     });
   } catch {
@@ -252,7 +274,7 @@ export async function guiBieuMauDichVu<T>(
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       method: "POST",
-      headers: { Authorization: `Bearer ${dungPhien.accessToken}` },
+      headers: await tieuDeGoi(dungPhien.accessToken),
       body: bieuMau,
       cache: "no-store",
     });
@@ -290,10 +312,7 @@ export async function guiDichVu<T>(
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${dungPhien.accessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers: { ...(await tieuDeGoi(dungPhien.accessToken)), "Content-Type": "application/json" },
       body: JSON.stringify(than),
       cache: "no-store",
     });
