@@ -266,7 +266,9 @@ def hang_doi(
         Request.department_code.in_(actor.departments),
     ]
     if mine:
-        dieu_kien.append(Request.assignee_id == actor.id)
+        # Việc của tôi gồm cả việc của người vắng đang ủy quyền cho tôi (#252) — tác nhân chỉ nhận
+        # ủy quyền của phòng mình, nên điều kiện phòng ngay trên vẫn giữ đúng phạm vi
+        dieu_kien.append(Request.assignee_id.in_([actor.id, *(u.nguoi_vang_id for u in actor.lam_thay)]))
 
     luc_vao = _luc_vao_trang_thai().label("luc_vao")
     ca_hang = session.execute(select(Request, luc_vao, giay_da_o_trang_thai()).where(*dieu_kien)).all()

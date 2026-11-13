@@ -14,6 +14,8 @@ export const VAI = {
   "dieu-phoi": "binh.tran",
   "truong-phong": "dung.pham",
   "quan-tri": "khanh.vo",
+  // Người xử lý phòng Công nghệ thông tin — người làm thay trưởng phòng ở bài ủy quyền (#252)
+  "xu-ly": "cuong.le",
 } as const;
 
 export type Vai = keyof typeof VAI;

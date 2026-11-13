@@ -19,7 +19,9 @@ export type TenIcon =
   | "phong-ban"
   | "bao-cao"
   | "hop-thu"
-  | "he-thong";
+  | "he-thong"
+  | "cau-hinh"
+  | "uy-quyen";
 
 export type LoiVao = {
   duongDan: string;
@@ -68,6 +70,13 @@ const LOI_VAO: Record<string, LoiVao[]> = {
       icon: "phong-ban",
       nhom: "lam-viec",
     },
+    {
+      duongDan: "/uy-quyen",
+      nhan: "Ủy quyền",
+      moTa: "Nhờ người cùng phòng làm thay trong những ngày vắng mặt; trưởng phòng khai thay cho người xử lý.",
+      icon: "uy-quyen",
+      nhom: "lam-viec",
+    },
   ],
   reports: [
     {
@@ -84,6 +93,13 @@ const LOI_VAO: Record<string, LoiVao[]> = {
       nhan: "Hệ thống",
       moTa: "Tình trạng các dịch vụ của cụm: định danh, cơ sở dữ liệu, bộ quy tắc quy trình.",
       icon: "he-thong",
+      nhom: "lam-viec",
+    },
+    {
+      duongDan: "/quan-tri/cau-hinh",
+      nhan: "Cấu hình quy trình",
+      moTa: "Xem luồng xử lý đang chạy; sửa hạn, mức ưu tiên, loại yêu cầu và phòng ban mà không dựng lại cụm.",
+      icon: "cau-hinh",
       nhom: "lam-viec",
     },
   ],

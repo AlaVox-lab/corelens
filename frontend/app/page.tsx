@@ -205,6 +205,13 @@ export default async function TrangChu() {
       <div className="trang-chu">
         <h1 className="tieu-de-trang">Chào {ten}</h1>
         <p className="cau-chao">{cauChao}</p>
+        {(danhTinh.acting_for ?? []).map((u) => (
+          <p key={`${u.delegator_label}-${u.ends_on}`} className="the-goi-y" role="status" data-dai-uy-quyen style={{ marginTop: "12px" }}>
+            Bạn đang làm thay <b>{u.delegator_label}</b> ({u.roles.join(", ")} · {u.department_label}) đến hết ngày{" "}
+            {u.ends_on.split("-").reverse().join("/")}. Việc của người đó hiện trong việc chờ bạn; mọi thao tác ghi
+            &ldquo;thay mặt&rdquo;. <a href="/uy-quyen">Xem ủy quyền</a>
+          </p>
+        ))}
 
         <div className="dai-so">
           <OSo icon={Hand} nhan="Chờ bạn" so={soCho} />

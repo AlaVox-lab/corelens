@@ -238,6 +238,11 @@ class EventLog(Base):
     # SQL NULL, và `jsonb_each` của lớp báo cáo nổ "non-object" trên mọi dòng không có gợi ý.
     suggestion: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), default=None)
 
+    # Lần chuyển chỉ đi được nhờ ủy quyền (#252): người vắng mà `actor` làm thay — mã và tên tại
+    # thời điểm thao tác. `actor` vẫn là người thật bấm. NULL khi người bấm dùng vai của chính mình.
+    on_behalf_of: Mapped[str | None] = mapped_column(Text, default=None)
+    on_behalf_of_label: Mapped[str | None] = mapped_column(Text, default=None)
+
     case: Mapped[Request] = relationship(back_populates="events")
 
     __table_args__ = (

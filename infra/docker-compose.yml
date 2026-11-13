@@ -354,6 +354,8 @@ services:
       DXLAB_NOTIFY_MAX_ATTEMPTS: ${NOTIFY_MAX_ATTEMPTS:-5}
       DXLAB_NOTIFY_RETRY_AFTER_SECONDS: ${NOTIFY_RETRY_AFTER_SECONDS:-60}
       DXLAB_NOTIFY_DIRECTORY_CACHE_SECONDS: ${NOTIFY_DIRECTORY_CACHE_SECONDS:-120}
+      # Ủy quyền khi vắng mặt (#252): một lần khai dài tối đa chừng này ngày
+      DXLAB_DELEGATION_MAX_DAYS: ${DELEGATION_MAX_DAYS:-60}
       # Bảng điều khiển nhúng trong cổng (#305): dịch vụ xin token khách qua địa chỉ nội bộ,
       # trình duyệt tải bảng điều khiển qua địa chỉ công khai. Cố ý KHÔNG depends_on superset
       # (chính Superset chờ dịch vụ này): Superset tắt thì chỉ mục Báo cáo báo không phản hồi.

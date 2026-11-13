@@ -71,7 +71,7 @@ Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty
 | `binh.tran` | Điều phối viên |
 | `dung.pham` | Trưởng phòng Công nghệ thông tin |
 | `cuong.le` | Người xử lý Công nghệ thông tin |
-| `khanh.vo` | Quản trị viên — màn Hệ thống |
+| `khanh.vo` | Quản trị viên — màn Hệ thống, Cấu hình quy trình |
 
 Bảng điều khiển phân tích ở mục **Báo cáo** của cổng: trưởng phòng thấy số của phòng mình, điều phối
 viên và quản trị viên thấy toàn công ty. Người dựng báo cáo sửa bảng điều khiển trên Superset ở
@@ -140,12 +140,37 @@ python scripts/kiem_nang_cap.py chup truoc-nang-cap.json
 python scripts/kiem_nang_cap.py so truoc-nang-cap.json
 ```
 
-Cụm dựng từ bản cũ hơn `v0.9.1` thì phải dựng lại (`down -v`). Đổi quy trình trên cụm đang chạy là một
+Cụm dựng từ bản cũ hơn `v0.9.1` thì phải dựng lại (`down -v`). Hạn, mức ưu tiên, loại yêu cầu và phòng ban
+sửa ngay trên màn **Cấu hình quy trình** của quản trị viên. Đổi đồ thị quy trình trên cụm đang chạy là một
 bản sửa dữ liệu tạo bộ quy tắc phiên bản mới — hồ sơ đang chạy giữ luật cũ; khuôn mẫu ở
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) mục 5.4.
 
-> **Bảo mật**: mọi mật khẩu trong `.env.example` là giá trị mẫu công khai, chỉ để dựng thử. Đổi trước
-> khi triển khai thật — xem [`SECURITY.md`](SECURITY.md).
+### Sao lưu và khôi phục
+
+Sao lưu tay ba cơ sở dữ liệu và kho tệp đính kèm trong **cùng một lần** (cụm ngừng nhận thao tác khoảng
+20 giây), khôi phục dưới 15 phút, kèm đối soát số hồ sơ, nhật ký và tệp — ở gốc kho mã:
+
+```bash
+python scripts/sao_luu.py tao sao-luu/2026-12-09
+python scripts/sao_luu.py khoi-phuc sao-luu/2026-12-09
+```
+
+Khôi phục thay **toàn bộ** dữ liệu của cụm, kể cả tài khoản Keycloak; cụm đích dùng cùng phiên bản mã và
+cùng `infra/.env`. Chi tiết: trang tài liệu, *Cài đặt và vận hành → Sao lưu và khôi phục*.
+
+### Trước khi dùng thật
+
+Cụm dựng từ `.env.example` là cụm **trình diễn**: mật khẩu, khóa và mười ba tài khoản mẫu đều công khai.
+Hệ thống không tự chặn chúng — người cài thường tạo thêm tài khoản thử của riêng mình, và không phần
+mềm nào đoán đúng được tài khoản nào là mẫu. Trước khi đưa người dùng thật vào:
+
+1. Trong `infra/.env`, đổi mọi giá trị ghi "BẮT BUỘC đổi": mật khẩu cơ sở dữ liệu, khóa kho tệp, bí mật
+   của các client, khóa phiên, khóa Superset, mật khẩu quản trị Keycloak và Superset (`admin/admin`).
+2. Trong Keycloak (`http://localhost:8080`, realm `dx-os-lab`), xóa các tài khoản mẫu, chỉ giữ một tài
+   khoản quản trị, rồi tạo tài khoản thật theo nhu cầu.
+3. Sao lưu một lần ngay sau khi cấu hình xong — mục [Sao lưu và khôi phục](#sao-lưu-và-khôi-phục).
+
+Báo lỗ hổng bảo mật: [`SECURITY.md`](SECURITY.md).
 
 ## Tài liệu
 

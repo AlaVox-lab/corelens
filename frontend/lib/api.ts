@@ -131,6 +131,14 @@ export type DanhTinh = {
    * Dịch vụ quyết dựa trên vai trò, để mã giao diện không phải chứa tên vai trò nào cả.
    */
   workspaces: string[];
+  /** Ủy quyền đang hiệu lực mà người này nhận (#252): trang chủ hiện dải "Bạn đang làm thay …". */
+  acting_for?: {
+    delegator_label: string;
+    department_label: string;
+    roles: string[];
+    /** Ngày cuối, dạng YYYY-MM-DD — hết ngày này là hết quyền. */
+    ends_on: string;
+  }[];
 };
 
 /** Kết quả một lời gọi ghi: hoặc dữ liệu trả về, hoặc lỗi đã dịch sang tiếng người. */

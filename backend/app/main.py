@@ -20,10 +20,13 @@ from app.analytics.bang_dieu_khien import pham_vi_cua
 from app.analytics.bang_dieu_khien import router as router_bang_dieu_khien
 from app.analytics.khai_pha import router as router_khai_pha
 from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
-from app.auth.dependencies import current_actor, current_claims, require_roles
+from app.auth.dependencies import VAI_TRO_QUAN_TRI, current_actor, current_claims, require_roles
+from app.cau_hinh.quan_tri import router as router_quan_tri
 from app.config import get_settings
 from app.db import SessionLocal, get_session
+from app.models.quan_tri import Delegation
 from app.models.van_hanh import ScannerHeartbeat
+from app.models.workflow_config import Department, Role
 from app.quan_sat import LopQuanSat, bo_dem, cau_hinh_nhat_ky
 from app.rate_limit import don_dong_cu
 from app.storage import quet_ma_doc
@@ -49,6 +52,8 @@ from app.intelligence.tuong_tu import router as router_tuong_tu
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau
+from app.workflow.uy_quyen import ngay_cua_khoang
+from app.workflow.uy_quyen_routes import router as router_uy_quyen
 
 logger = logging.getLogger(__name__)
 
@@ -232,10 +237,6 @@ app = FastAPI(
 # Mã yêu cầu, dòng truy cập JSON, bộ đếm số đo (#247)
 app.add_middleware(LopQuanSat)
 
-
-# Vai trò vận hành cụm: gác màn Hệ thống và lệnh quét SLA bằng tay
-VAI_TRO_QUAN_TRI = "administrator"
-
 app.include_router(router_yeu_cau)
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
@@ -247,6 +248,8 @@ app.include_router(router_bang_dieu_khien)
 app.include_router(router_khai_pha)
 app.include_router(router_tuong_tu)
 app.include_router(router_thong_bao)
+app.include_router(router_quan_tri)
+app.include_router(router_uy_quyen)
 
 
 def _do_suc_khoe(session: Session) -> dict:
@@ -524,6 +527,22 @@ def me(
     if VAI_TRO_QUAN_TRI in actor.roles:
         khong_gian.append("system")
 
+    # Ủy quyền đang hiệu lực mà người này nhận (#252): trang chủ hiện dải "Bạn đang làm thay …"
+    lam_thay = []
+    if actor.lam_thay:
+        nhan_vai = {r.code: r.label for r in session.scalars(select(Role))}
+        nhan_phong = {p.code: p.label for p in session.scalars(select(Department))}
+        for u in actor.lam_thay:
+            ban_ghi = session.get(Delegation, u.ma)
+            lam_thay.append(
+                {
+                    "delegator_label": u.nguoi_vang_label,
+                    "department_label": nhan_phong.get(u.phong, u.phong),
+                    "roles": [nhan_vai.get(v, v) for v in sorted(u.vai)],
+                    "ends_on": ngay_cua_khoang(session, ban_ghi.starts_at, ban_ghi.ends_at)[1],
+                }
+            )
+
     return {
         "id": actor.id,
         "username": claims.get("preferred_username"),
@@ -532,6 +551,7 @@ def me(
         "roles": sorted(actor.roles),
         "departments": sorted(actor.departments),
         "workspaces": khong_gian,
+        "acting_for": lam_thay,
     }
 
 

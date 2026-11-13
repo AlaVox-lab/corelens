@@ -20,7 +20,9 @@ import {
   House,
   Inbox,
   MessagesSquare,
+  Settings2,
   SquarePen,
+  UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -55,6 +57,8 @@ const ICON: Record<TenIcon, LucideIcon> = {
   "bao-cao": ChartColumn,
   "hop-thu": MessagesSquare,
   "he-thong": Activity,
+  "cau-hinh": Settings2,
+  "uy-quyen": UserCheck,
 };
 
 /** Số chưa đọc của Hộp thư, bắt đầu từ con số máy chủ dựng sẵn rồi tự hỏi lại. */
