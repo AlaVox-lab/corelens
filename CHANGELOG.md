@@ -5,6 +5,12 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.15.0] - 2026-11-13
+
+### Tính năng mới
+
+- **p-rules:** Quản trị cấu hình, ủy quyền, sao lưu tay ([#355](https://github.com/AlaVox-lab/dx-os-lab/issues/355)) ([1487310](https://github.com/AlaVox-lab/dx-os-lab/commit/14873104213ee757c84940640c461df6d5066026))
+
 ## [0.14.0] - 2026-11-12
 
 ### Tài liệu

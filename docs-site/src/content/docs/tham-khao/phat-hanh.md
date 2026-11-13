@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v0.15.0` | Màn quản trị cấu hình: xem luồng xử lý, sửa hạn, hệ số ưu tiên, loại yêu cầu, phòng ban ngay trên cổng, có xem trước và nhật ký sửa; ủy quyền khi vắng mặt cho người cùng phòng theo khoảng ngày, ghi "thay mặt"; sao lưu tay và khôi phục có đối soát; chính sách dữ liệu cá nhân (ADR-0009) |
 | `v0.14.0` | Nền tảng vận hành: thông báo thư điện tử qua hàng đợi có thử lại, kiểm chữ ký và quét mã độc tệp đính kèm (tùy chọn), nhật ký có cấu trúc với mã yêu cầu, điểm cuối sống/sẵn sàng và số đo; khép Giai đoạn 4 |
 | `v0.13.0` | Gợi ý người xử lý cho trưởng phòng theo tải việc và kinh nghiệm; hồ sơ đã giải quyết tương tự khi người gửi đang soạn (pgvector); khuyến nghị cải tiến trên màn quy trình thực tế, mọi con số tra được từ kết quả khai phá |
 | `v0.12.0` | Mô hình ngôn ngữ chạy trong cụm, bật theo lựa chọn: gợi ý loại yêu cầu, mức ưu tiên, phòng ban cho điều phối viên, người giữ hay đổi bằng thao tác cũ; kho ghi rõ mô hình nhiều giấy phép (dịch vụ khai phá theo AGPL-3.0) |
