@@ -199,6 +199,11 @@ function MocThoiGian({
               Tự động · không phải người
             </span>
           )}
+          {su_kien.on_behalf_of_label ? (
+            <span style={{ fontSize: "12.5px", color: "var(--ink-3)" }} data-thay-mat>
+              thay mặt {su_kien.on_behalf_of_label}
+            </span>
+          ) : null}
         </div>
 
         <div style={{ marginTop: "5px", fontSize: "15px", fontWeight: 600, lineHeight: 1.45 }}>

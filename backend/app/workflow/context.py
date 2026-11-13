@@ -17,6 +17,21 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, slots=True)
+class LamThay:
+    """Một ủy quyền đang hiệu lực mà tác nhân là người được ủy quyền (#252).
+
+    Người được ủy quyền mang thêm `vai` của người vắng, nhưng chỉ dùng được trong phòng `phong`:
+    engine tự kiểm phòng của hồ sơ khi một bước chỉ đi được nhờ vai làm thay.
+    """
+
+    ma: int
+    nguoi_vang_id: str
+    nguoi_vang_label: str
+    phong: str
+    vai: frozenset[str]
+
+
+@dataclass(frozen=True, slots=True)
 class Actor:
     """Người hoặc hệ thống đang thực hiện lần chuyển.
 
@@ -38,6 +53,17 @@ class Actor:
     # Đánh dấu tác nhân hệ thống, ví dụ bộ đếm SLA tự leo thang ở #42. Chỉ tác nhân
     # này mới đi được cạnh `is_system`, và ngược lại nó không đi được cạnh của người.
     is_system: bool = False
+
+    # Ủy quyền đang hiệu lực mà người này được nhận (#252). `roles` đã gộp vai làm thay; `vai_goc`
+    # giữ vai của chính người này trong token, để engine biết một bước đi được nhờ vai riêng hay chỉ
+    # nhờ ủy quyền — chỉ trường hợp sau mới ghi "thay mặt". `None` nghĩa là không có ủy quyền nào.
+    lam_thay: tuple[LamThay, ...] = ()
+    vai_goc: frozenset[str] | None = None
+
+    @property
+    def vai_rieng(self) -> frozenset[str]:
+        """Vai của chính người này, không tính vai nhận qua ủy quyền."""
+        return self.roles if self.vai_goc is None else self.vai_goc
 
     @property
     def label(self) -> str:

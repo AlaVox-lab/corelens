@@ -210,6 +210,10 @@ class Settings(BaseSettings):
     # lâu bằng mấy lần trần cộng lại.
     directory_timeout_seconds: float = 3.0
 
+    # Ủy quyền khi vắng mặt (#252): khoảng dài nhất một lần khai, tính bằng ngày. Ủy quyền dài hơn thế
+    # là thay người phụ trách, việc của danh bạ chứ không của ủy quyền tạm thời.
+    delegation_max_days: int = 60
+
     # Tên thuộc tính người dùng chứa số điện thoại (#131), khai trong user profile của
     # realm. Doanh nghiệp đặt tên khác — `mobile`, `phone` — thì đổi ở đây.
     directory_phone_attribute: str = "phoneNumber"

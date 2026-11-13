@@ -13,10 +13,17 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 
 from app.auth.identity import actor_from_claims
 from app.auth.tokens import TokenInvalid, verify_token
+from app.db import get_session
 from app.workflow.context import Actor
+from app.workflow.uy_quyen import ap_uy_quyen
+
+# Vai trò vận hành cụm: gác màn Hệ thống, lệnh quét SLA bằng tay, số đo và màn quản trị cấu hình
+# (#255). Mã trùng vai trò realm trong Keycloak và dòng `roles` của dữ liệu khởi tạo.
+VAI_TRO_QUAN_TRI = "administrator"
 
 # `auto_error=False` để tự soạn thông điệp tiếng Việt thay vì để FastAPI trả chuỗi
 # tiếng Anh mặc định.
@@ -44,9 +51,17 @@ def current_claims(
         ) from loi
 
 
-def current_actor(claims: Annotated[dict, Depends(current_claims)]) -> Actor:
-    """Tác nhân nghiệp vụ tương ứng với token, sẵn sàng đưa thẳng vào engine."""
-    return actor_from_claims(claims)
+def current_actor(
+    claims: Annotated[dict, Depends(current_claims)],
+    session: Annotated[Session, Depends(get_session)],
+) -> Actor:
+    """Tác nhân nghiệp vụ tương ứng với token, sẵn sàng đưa thẳng vào engine.
+
+    Gộp sẵn ủy quyền đang hiệu lực mà người này được nhận (#252) — xem app/workflow/uy_quyen.py.
+    FastAPI dùng chung một phiên cơ sở dữ liệu cho mọi phụ thuộc `get_session` của cùng yêu cầu, nên
+    điểm cuối và lần tra ủy quyền đọc cùng một phiên.
+    """
+    return ap_uy_quyen(session, actor_from_claims(claims))
 
 
 def require_roles(*vai_tro_can: str):

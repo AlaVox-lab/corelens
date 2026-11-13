@@ -43,7 +43,7 @@ from app.rules.guards import (
 )
 from app.rules.sla import cap_nhat_dong_ho
 from app.rules.truong_rieng import kiem_chi_tiet
-from app.workflow.context import Actor, TransitionContext
+from app.workflow.context import Actor, LamThay, TransitionContext
 from app.workflow.errors import (
     CaseNotFound,
     FieldNotPermitted,
@@ -374,7 +374,7 @@ def my_primary_steps(
                 canh
                 for canh in canh_theo_nguon[(ho_so.rule_set_id, ho_so.current_state)]
                 if
-                (canh.primary_scope != "assignee" or ho_so.assignee_id in (None, actor.id))
+                (canh.primary_scope != "assignee" or ho_so.assignee_id in _nguoi_toi_lam_cho(actor, ho_so))
                 and input_free_guards_pass(
                     TransitionContext(
                         case=ho_so,
@@ -387,6 +387,37 @@ def my_primary_steps(
             None,
         )
     return ket_qua
+
+
+def _nguoi_toi_lam_cho(actor: Actor, ho_so: Request) -> set[str | None]:
+    """Người được giao mà việc của họ tính là việc của tác nhân: chưa giao ai, chính tác nhân, và
+    người vắng đang ủy quyền cho tác nhân trong phòng của hồ sơ (#252)."""
+    return {None, actor.id} | {
+        u.nguoi_vang_id for u in actor.lam_thay if u.phong == ho_so.department_code
+    }
+
+
+def _lam_thay_cho(actor: Actor, canh: Transition, ho_so: Request) -> LamThay | None:
+    """Ủy quyền mà lần chuyển này phải dựa vào, hay `None` khi người bấm đi được bằng vai riêng.
+
+    Vai làm thay nằm sẵn trong `actor.roles` để hàng đợi và nút bấm hiện như vai thật, nên phép kiểm
+    vai ở trên đã qua. Ở đây kiểm phần mà gộp vai không nói được: vai làm thay chỉ có hiệu lực với
+    hồ sơ của phòng được ủy quyền, và không dùng để xử lý hồ sơ do chính mình gửi — cùng tinh thần
+    ràng buộc `actor-not-requester` (#154).
+    """
+    if canh.is_system or actor.vai_rieng & canh.role_codes:
+        return None
+    for uy_quyen in actor.lam_thay:
+        if uy_quyen.vai & canh.role_codes and uy_quyen.phong == ho_so.department_code:
+            if ho_so.requester_id == actor.id:
+                raise RoleNotPermitted(
+                    f"Không dùng ủy quyền của {uy_quyen.nguoi_vang_label} để xử lý hồ sơ do chính "
+                    f"mình gửi."
+                )
+            return uy_quyen
+    raise RoleNotPermitted(
+        f"Bước “{canh.activity_label}” chỉ làm thay được với hồ sơ của phòng được ủy quyền."
+    )
 
 
 def perform_transition(
@@ -469,6 +500,9 @@ def perform_transition(
             f"Vai trò hiện tại không thực hiện được “{canh.activity_label}”. "
             f"Bước này dành cho: {danh_cho or 'không ai'}."
         )
+    # Ủy quyền (#252): bước chỉ đi được nhờ vai làm thay thì phải đúng phòng được ủy quyền, không
+    # phải hồ sơ do chính người bấm gửi, và nhật ký ghi người vắng mà họ làm thay
+    lam_thay = _lam_thay_cho(actor, canh, ho_so)
 
     if canh.requires_note and not (note and note.strip()):
         # Ô ghi chú không phải lúc nào cũng là "lý do": ở cạnh bổ sung thông tin nó là
@@ -535,6 +569,7 @@ def perform_transition(
         ctx,
         assignee_label=assignee_label,
         suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi, actor.id),
+        on_behalf_of=(lam_thay.nguoi_vang_id, lam_thay.nguoi_vang_label) if lam_thay else None,
     )
 
     # --- Bước 5: rồi mới cập nhật hồ sơ ------------------------------------

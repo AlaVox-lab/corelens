@@ -7,17 +7,23 @@ sidebar:
 
 ## Đổi ở đâu
 
-| Muốn đổi | Sửa ở | Cần `down -v` |
+Cột "Cụm đang chạy" là cách đổi mà không mất dữ liệu; cột "Dữ liệu mẫu" chỉ có tác dụng với cụm dựng
+mới (dữ liệu khởi tạo nạp một lần — [Nâng cấp](../../cai-dat/nang-cap/)).
+
+| Muốn đổi | Cụm đang chạy | Dữ liệu mẫu |
 |---|---|---|
-| Phòng ban | `departments` trong `infra/seed/02-co-cau-to-chuc.sql`, **và** nhóm phòng ban trong realm | Có |
-| Loại yêu cầu, hạn chuẩn, ân hạn, ngưỡng sắp hạn, giới hạn gia hạn và mở lại | `request_types` (cùng tệp) | Có |
-| Loại nào gợi ý về phòng nào | `request_type_routing` | Có |
-| Trường riêng của từng loại | `request_type_fields` | Có |
-| Mức ưu tiên và hệ số hạn | `priorities` trong `infra/seed/01-quy-tac-quy-trinh.sql` | Có |
-| Lịch làm việc, ngày lễ | `work_calendars`, `work_hours`, `holidays` trong `infra/seed/03-lich-lam-viec.sql` | Có |
-| Hạn chờ để hệ thống tự đi | cột `auto_after_hours`, `warn_before_hours` của bước trong `01-quy-tac-quy-trinh.sql` | Có |
-| Người dùng, vai trò, nhóm phòng ban | `infra/keycloak/realm-dx-os-lab.json`, hoặc màn quản trị của Keycloak | Có nếu sửa tệp |
-| Giới hạn tệp đính kèm | `infra/.env` — xem [Cấu hình](../../cai-dat/cau-hinh/) | Không |
+| Tên, mô tả, ngưng hay dùng lại một phòng ban | [Màn Cấu hình quy trình](../man-cau-hinh/) | `departments` trong `infra/seed/02-co-cau-to-chuc.sql` |
+| Thêm phòng ban | Bản sửa dữ liệu, **và** nhóm phòng ban trong Keycloak | Như trên, **và** nhóm trong realm |
+| Loại yêu cầu: tên, mô tả, hạn chuẩn, ân hạn, ngưỡng sắp hạn, ngưng hay dùng | Màn Cấu hình quy trình | `request_types` (cùng tệp) |
+| Phòng mặc định của loại yêu cầu | Màn Cấu hình quy trình | `request_type_routing` |
+| Giới hạn gia hạn và mở lại, trường riêng của từng loại | Bản sửa dữ liệu | `request_types`, `request_type_fields` |
+| Mức ưu tiên: tên, hệ số hạn | Màn Cấu hình quy trình | `priorities` trong `infra/seed/01-quy-tac-quy-trinh.sql` |
+| Lịch làm việc, ngày lễ | Bản sửa dữ liệu | `work_calendars`, `work_hours`, `holidays` trong `infra/seed/03-lich-lam-viec.sql` |
+| Hạn chờ để hệ thống tự đi | Bộ quy tắc phiên bản mới | cột `auto_after_hours`, `warn_before_hours` trong `01-quy-tac-quy-trinh.sql` |
+| Người dùng, vai trò, nhóm phòng ban | Màn quản trị của Keycloak | `infra/keycloak/realm-dx-os-lab.json` |
+| Giới hạn tệp đính kèm | `infra/.env` — xem [Cấu hình](../../cai-dat/cau-hinh/) | — |
+
+Bản sửa dữ liệu và bộ quy tắc phiên bản mới: khuôn mẫu ở `docs/ARCHITECTURE.md` mục 5.4.
 
 ## Trường riêng theo loại yêu cầu
 

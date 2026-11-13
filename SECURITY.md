@@ -33,4 +33,7 @@ phiên bản, các bước tái hiện, mức ảnh hưởng bạn đánh giá.
 Tệp `infra/.env.example` chứa **mật khẩu và khóa mẫu công khai**, chỉ dùng để dựng thử. Trước khi
 triển khai thật bắt buộc đổi mọi mật khẩu, bí mật và khóa ký — danh sách ở trang tài liệu *Cấu hình*
 (`docs-site/src/content/docs/cai-dat/cau-hinh.md`). Realm mẫu có mười ba tài khoản dùng chung một mật
-khẩu, chỉ để trình diễn; môi trường thật phải xóa hay khóa các tài khoản này.
+khẩu, chỉ để trình diễn; môi trường thật xóa các tài khoản này, chỉ giữ một tài khoản quản trị rồi tạo
+tài khoản thật. Hệ thống không tự chặn tài khoản hay mật khẩu mẫu lúc khởi động — giảng viên hướng dẫn
+chốt không làm (#242), vì người cài thường tạo tài khoản thử riêng và phần mềm không phân biệt được.
+Các bước ở mục *Trước khi dùng thật* của `README.md`.
