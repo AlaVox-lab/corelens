@@ -411,6 +411,7 @@ def _su_kien(
         note_label=di_qua.note_label if di_qua else None,
         actor=e.actor,
         actor_label=e.actor_label or e.actor,
+        on_behalf_of_label=e.on_behalf_of_label,
         # Tác nhân hệ thống không có tên người. Nhận ra bằng cột đã ghi lúc hành động,
         # không đoán theo mã định danh.
         is_system=(e.actor_label == "Hệ thống"),

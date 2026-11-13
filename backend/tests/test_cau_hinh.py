@@ -48,12 +48,14 @@ def _goc(session):
 
 @pytest.fixture
 def cum_moi(session):
-    """Một lược đồ trống đi đúng đường của cụm dựng mới: bản sửa 0000 rồi hàm kiểm 0018."""
+    """Một lược đồ trống đi đúng đường của cụm dựng mới: bản sửa 0000 rồi hàm kiểm 0018, thay bằng
+    bản 0025 (#255) như chuỗi Alembic."""
     goc = _goc(session)
     goc.execute(f"CREATE SCHEMA {LUOC_DO_TAM}")
     goc.execute(f"SET LOCAL search_path TO {LUOC_DO_TAM}")
     goc.execute((THU_MUC_SQL / "0000_luoc_do_cau_hinh.sql").read_text(encoding="utf-8"))
     goc.execute((THU_MUC_SQL / "0018_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
+    goc.execute((THU_MUC_SQL / "0025_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
     # Bảng dữ liệu tạo ở bản sửa sau 0000 mà infra/seed/ cũng nạp — chữ ký tệp đính kèm (0023, #248),
     # loại thông báo (0024, #251). Cụm thật chạy trọn Alembic trước bộ nạp; ở đây chép cấu trúc từ
     # lược đồ chính để bộ nạp chạy được mọi tệp như ở cụm thật

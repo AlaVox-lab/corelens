@@ -347,16 +347,16 @@ dx-os-lab/
 │   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
-│   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT
+│   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
-│   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254)
+│   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254), quản trị cấu hình (#255)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239); lớp gọi mô hình,
 │   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320)
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
-│   │   └── sql/                 # SQL thô của bản gốc 0000 và hàm kiểm 0018, không sửa nữa
+│   │   └── sql/                 # SQL thô của bản gốc 0000 và các bản hàm kiểm (0018, 0025), không sửa nữa
 │   ├── tests/
 │   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── services/
@@ -413,6 +413,7 @@ dx-os-lab/
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
+│   ├── sao_luu.py               # sao lưu tay, khôi phục, đối soát cơ sở dữ liệu và kho tệp (#245)
 │   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
 │   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
 │   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
@@ -552,8 +553,10 @@ dung khác hẳn nhau. Dữ liệu khởi tạo nạp **một lần**, lúc dự
    đóng, trạng thái không tới được từ điểm vào, cạnh không vai trò nào đi được, và từ #79
    là trạng thái chờ có đường vào mà thiếu đường quay về tương ứng, từ #127 là cạnh tự trỏ
    ở trạng thái chờ, từ #128 là loại lời nhắn không vai trò nào gửi được, từ #199 là lịch
-   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau. Hàm chạy
-   mỗi lần dịch vụ khởi động và trước mỗi lần kích hoạt bộ quy tắc mới; sai một điều thì
+   làm việc thiếu lịch mặc định, sai tên múi giờ, không có giờ làm hay có khung chồng nhau, từ #255
+   (bản sửa `0025`) là loại yêu cầu đang dùng mà phòng mặc định đã ngưng, hay không còn loại yêu cầu
+   nào đang dùng. Hàm chạy mỗi lần dịch vụ khởi động, trước mỗi lần kích hoạt bộ quy tắc mới và trong
+   mỗi lần sửa trên màn quản trị cấu hình (mục 5.5); sai một điều thì
    **dịch vụ dừng khởi động** hay **bản cập nhật bị từ chối**, thay vì chạy với luồng hỏng rồi
    để một hồ sơ thật mắc kẹt mới lộ ra
 
@@ -620,7 +623,7 @@ hai nguồn sự thật cho lược đồ làm nâng cấp không đồng nhất
 |---|---|---|
 | Lược đồ — bảng, cột, ràng buộc, hàm, view | Bản sửa Alembic mới trong `backend/alembic/versions/` | Tự chạy lúc dịch vụ khởi động |
 | Dữ liệu quy trình — trạng thái, cạnh, vai trò đi cạnh, ràng buộc trên cạnh | Bản sửa dữ liệu tạo **bộ quy tắc phiên bản mới** (dưới) | Hồ sơ đang chạy giữ bộ cũ, hồ sơ mới nhận bộ mới |
-| Dữ liệu dùng chung — phòng ban, loại yêu cầu, lịch, loại lời nhắn | Bản sửa dữ liệu sửa thẳng dòng, rồi gọi `kiem_tra_cau_hinh()` | Áp ngay cho mọi hồ sơ |
+| Dữ liệu dùng chung — phòng ban, loại yêu cầu, lịch, loại lời nhắn | Màn quản trị cấu hình (mục 5.5) cho các trường mở trên màn; còn lại là bản sửa dữ liệu sửa thẳng dòng, rồi gọi `kiem_tra_cau_hinh()` | Áp ngay cho mọi hồ sơ |
 | Dữ liệu mẫu cho cụm dựng mới | Sửa `infra/seed/` | Không đụng — bộ nạp không nạp lại |
 
 **Khởi động dịch vụ, ba bước** (`backend/docker-entrypoint.sh`):
@@ -670,6 +673,43 @@ bộ đang bật, thêm một cạnh, kích hoạt — hồ sơ mới đi đư�
 bị từ chối và không để lại gì. Lần nâng thật kiểm bằng `scripts/kiem_nang_cap.py`: chụp số dòng và mã
 băm cột cố định của hồ sơ, nhật ký, lời nhắn, tệp đính kèm cùng sự có mặt của từng tệp trong kho trước
 khi nâng, rồi so sau khi nâng. Cách nâng cho người dùng: README mục nâng cấp và trang tài liệu.
+
+### 5.5. Màn quản trị cấu hình
+
+**Đã cài đặt** — #255 (`backend/app/cau_hinh/quan_tri.py`, `frontend/app/quan-tri/cau-hinh/`). Phạm vi
+giảng viên chốt ngày 13/11/2026: xem bộ quy tắc đang chạy, sửa phần ít rủi ro; đồ thị quy trình vẫn chỉ đổi
+bằng bộ quy tắc phiên bản mới (mục 5.4).
+
+| | |
+|---|---|
+| Ai | Chỉ vai `administrator`, gác ở dịch vụ (`require_roles`) — giao diện chỉ ẩn mục thanh bên |
+| Xem | Trạng thái và cạnh của bộ đang bật kèm vai trò, ràng buộc, hạn chờ tự đi; loại yêu cầu, mức ưu tiên, phòng ban kèm số hồ sơ đang mở; lịch mặc định; 50 dòng nhật ký sửa mới nhất |
+| Sửa | Loại yêu cầu: tên, mô tả, `sla_hours`, `sla_grace_hours`, `sla_warn_percent`, `is_active`, phòng mặc định. Mức ưu tiên: tên, `sla_factor_percent`. Phòng ban: tên, mô tả, `is_active` |
+| Không | Thêm hay xóa dòng (phòng ban mới cần người trong Keycloak), lịch làm việc, đồ thị quy trình |
+
+**Áp ngay, có xem trước.** Đây là "dữ liệu dùng chung" của mục 5.4: sửa thẳng dòng, có hiệu lực cho mọi
+hồ sơ kể cả hồ sơ đang mở — hạn tính lúc đọc từ `sla_hours` × `sla_factor_percent` (mục 7.1), không có bản
+sao nào phải cập nhật. Phương án loại: chụp hạn vào hồ sơ lúc tạo để chỉ hồ sơ mới theo hạn mới — phải
+thêm cột, sửa engine lẫn truy vấn của bộ quét, trong khi người quản trị đổi hạn thường muốn áp ngay. Bù lại,
+mỗi lần sửa có lượt **chạy thử** (`dry_run`) đi trọn đường thật rồi hoàn tác, để màn báo "N hồ sơ đang mở
+sẽ đổi hạn" trước khi người sửa bấm Lưu.
+
+**Một lần sửa, một giao dịch** (điểm lưu lồng trong phiên): ghi dòng cấu hình → `kiem_tra_cau_hinh()` →
+một dòng `config_changes` cho mỗi trường đổi giá trị. Hàm kiểm ném lỗi thì cả lần sửa hoàn tác, câu lỗi
+của hàm (đã là tiếng Việt) về tới màn. Danh sách trường sửa được, nhãn và khoảng giá trị khai một chỗ
+(`DANH_MUC` trong `quan_tri.py`); đó là ranh giới kiến trúc — cột nào an toàn để sửa lúc chạy — còn giá trị
+vẫn nằm trong bảng. Giao diện đọc nhãn trường từ dịch vụ, không giữ bản sao.
+
+**Nhật ký thay đổi cấu hình** — bảng `config_changes` (bản sửa `0025`): ai (mã và tên tại thời điểm sửa),
+lúc nào (UTC), bảng, mã dòng, trường, giá trị cũ và mới dạng JSON. Chỉ ghi thêm, chặn bằng trigger như
+`event_log` và `case_messages`. Bảng tách khỏi `event_log` có chủ ý: nhật ký sự kiện là lịch sử của từng
+hồ sơ cho khai phá quy trình, mỗi dòng mang `case_id`; sửa cấu hình không thuộc hồ sơ nào.
+
+**Kiểm chứng.** `tests/test_quan_tri_cau_hinh.py`: vai khác bị 403; đổi hạn thì hồ sơ đang mở và hồ sơ mới
+cùng theo hạn mới; chạy thử không để lại dòng nào; ngưng phòng đang là mặc định và tắt loại yêu cầu cuối
+cùng bị từ chối; nhật ký không sửa được. Ba phép đột biến (bỏ lệnh gọi hàm kiểm, bỏ hoàn tác chạy thử, bỏ
+ghi nhật ký) đều làm bài đỏ. `e2e/` có ba bài đăng nhập thật: sửa hạn có xem trước và nhật ký, đổi tên
+phòng, lần sửa hỏng bị chặn kèm lý do.
 
 ---
 
@@ -733,6 +773,11 @@ giá trị cũ bị ghi đè và mất dấu — mất đúng dữ liệu "ngư�
   `actor_label`: định danh Keycloak không tự nói lên người nào
 - Ghi ở bước 4 của `perform_transition`, lúc hồ sơ chưa bị ghi đè — sau bước 5 thì giá
   trị cũ mất. Cùng một giao dịch với lần chuyển, nên không có khe nào để lịch sử lệch
+
+**Dữ liệu cá nhân trong nhật ký** (#246, ADR-0009). Nhãn tên (`actor_label` và các cột `*_label` khác) là
+dữ liệu cá nhân. Yêu cầu xóa được xử lý bằng ẩn danh hóa nhãn tên qua một lối sửa có kiểm soát, không xóa
+dòng — tính chất chỉ ghi thêm và kết quả khai phá giữ nguyên. Thời hạn lưu giữ là cấu hình, mặc định giữ
+mãi. Bảng kiểm kê dữ liệu cá nhân và thiết kế cài đặt ở ADR-0009.
 
 ### 6.1. Cơ chế bảo đảm: một cửa duy nhất
 
@@ -1822,6 +1867,40 @@ Thanh bên đếm cùng cờ đó: số đặc là việc chờ mình, số mờ
 mình đã quá hạn hoặc sắp tự đi. Từ #232 cả hai đọc số từ `waiting_me`, `urgent`, `total`,
 `open_count` mà dịch vụ đếm trên cả danh sách (mục 7.2).
 
+### 7.3a. Ủy quyền khi vắng mặt
+
+**Đã cài đặt** — #252 (`backend/app/workflow/uy_quyen.py`, `uy_quyen_routes.py`, migration `0026`, màn
+`/uy-quyen`). Navigator chốt 13/11/2026 theo đề xuất của nhóm, giảng viên đồng ý làm trước thi.
+
+| Câu | Chốt |
+|---|---|
+| Ai được ủy quyền | Người cùng phòng; mang vai của người vắng, chỉ trong phòng đó |
+| Ai khai | Người vắng tự khai; người giao việc của phòng (trưởng phòng) khai thay cho người không mang vai giao việc |
+| Xác nhận | Không; trang chủ người làm thay hiện dải báo (`/me` trả `acting_for`) |
+| Chuyển tiếp | Không: chỉ vai RIÊNG của người vắng — vai trong token, hay vai trong danh bạ khi khai thay |
+| Hiệu lực | Theo ngày: [00:00 ngày đầu, 00:00 ngày sau ngày cuối) theo múi giờ lịch mặc định, lưu UTC; tối đa `delegation_max_days` |
+
+**Gắn ở định danh, kiểm ở cửa chuyển trạng thái.** `current_actor` gọi `ap_uy_quyen` ở mọi yêu cầu: ủy quyền
+đang hiệu lực (đồng hồ của cơ sở dữ liệu) được gộp vào `Actor.roles`, còn vai trong token giữ ở
+`Actor.vai_goc`. Nhờ gộp vai, hàng đợi, nút bấm, danh sách người nhận việc, báo cáo thấy người làm thay
+"như vai tương ứng" mà không chỗ nào phải biết ủy quyền. Ba điều gộp vai không nói được thì
+`perform_transition` tự kiểm ngay sau bước kiểm vai (`_lam_thay_cho`): bước chỉ đi được nhờ vai làm thay phải
+đúng phòng được ủy quyền, không phải hồ sơ do chính người bấm gửi (cùng tinh thần `actor-not-requester`,
+#154), và nhật ký ghi người vắng ở `event_log.on_behalf_of` / `on_behalf_of_label` — `actor` vẫn là người
+thật bấm. Bước đi được bằng vai riêng thì không ghi "thay mặt". Bước chính kiểu `assignee` (#227) tính cả
+hồ sơ giao cho người vắng là việc của người làm thay.
+
+Tính lại ở mỗi yêu cầu nên hết hạn hay thu hồi là mất quyền ngay ở lần bấm kế tiếp — không phiên nào giữ
+quyền cũ. Thu hồi điền `revoked_*`, không xóa dòng. Phương án loại: thêm vai vào Keycloak trong khoảng ngày
+(phải có tác vụ hẹn giờ gỡ vai, và token cũ còn giữ vai tới khi hết hạn); kiểm ủy quyền riêng ở từng điểm
+cuối (hai nguồn sự thật về quyền, dễ lệch).
+
+**Kiểm chứng.** `tests/test_uy_quyen.py` (21 bài): ngoài khoảng, thu hồi, khác phòng thì không có gì; làm thay
+trưởng phòng ghi "thay mặt", dùng vai riêng thì không; hết hạn mất quyền ngay; không duyệt hồ sơ mình gửi;
+việc của người xử lý vắng vào việc chờ của người làm thay; không chuyển tiếp; các lần khai sai. Bốn phép đột
+biến (bỏ chặn hồ sơ tự gửi, bỏ ghi "thay mặt", bỏ việc chờ của người vắng, bỏ điều kiện hết hạn) đều làm bài
+đỏ. `e2e/` có bài trưởng phòng khai, người xử lý thấy dải báo, thu hồi là mất.
+
 ### 7.4. Lớp biên: tiêu đề bảo mật, giới hạn tốc độ và `/health`
 
 **Đã cài đặt** — #243. Ba việc ở rìa hệ thống, cùng một nguyên tắc: chặt vừa đủ để giao diện vẫn
@@ -2033,7 +2112,10 @@ xếp không có tác vụ nào trên 50 ms (đo 02/11/2026, Chrome, ba lượt 
 
 Không xây dựng những thứ sau vào mã nguồn ở giai đoạn hiện tại:
 
-- Triển khai lên máy chủ thật hoặc dịch vụ đám mây
+- Triển khai lên máy chủ thật hoặc dịch vụ đám mây — kể cả cấu hình mẫu có TLS (#244) và chặn khởi động
+  khi còn mật khẩu hay tài khoản mẫu (#242): giảng viên chốt không làm ngày 13/11/2026; README có mục
+  *Trước khi dùng thật*. Sao lưu chỉ có bản tay cho quy mô trình diễn (#245, `scripts/sao_luu.py`) —
+  sao lưu tự động theo lịch nằm ngoài phạm vi
 - Xác thực hai lớp, khôi phục mật khẩu qua thư điện tử
 - Ứng dụng di động
 - Đa ngôn ngữ giao diện

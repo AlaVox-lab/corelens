@@ -190,6 +190,14 @@ test.describe("người gửi", () => {
     await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
   });
 
+  test("không thấy mục Cấu hình quy trình, mở thẳng thì bị từ chối (#255)", async ({ page }) => {
+    await page.goto("/");
+    await expect((await thanhBen(page)).getByRole("link", { name: "Cấu hình quy trình" })).toHaveCount(0);
+    await page.goto("/quan-tri/cau-hinh");
+    await expect(page.getByText("Tài khoản này không mở được khu vực này")).toBeVisible();
+    await expect(page.locator("tr[data-dong-cau-hinh]")).toHaveCount(0);
+  });
+
   test("không thấy mục Báo cáo, mở thẳng thì bị từ chối (#305)", async ({ page }) => {
     await page.goto("/");
     await expect((await thanhBen(page)).getByRole("link", { name: "Báo cáo" })).toHaveCount(0);
@@ -497,6 +505,69 @@ test.describe("quản trị viên", () => {
       "case_id,activity,timestamp,actor,from_state,to_state,request_type_code,department_code,priority_code,rule_set_id",
     );
   });
+
+  // Màn quản trị cấu hình (#255). Mỗi bài sửa rồi trả lại giá trị cũ, nên chạy lại ở cả bốn cấu hình
+  // hiển thị vẫn ra cùng kết quả; nhật ký sửa thì dài thêm — đúng là chỉ ghi thêm.
+  async function suaMotO(page: Page, dong: ReturnType<Page["locator"]>, o: string, giaTri: string) {
+    await dong.getByRole("button", { name: /^Sửa / }).click();
+    const bieuMau = page.locator("tr:has(form)");
+    await bieuMau.locator(`[name="${o}"]`).fill(giaTri);
+    await bieuMau.getByRole("button", { name: "Xem trước" }).click();
+    await expect(bieuMau.getByRole("status")).toContainText("đã qua kiểm tra");
+    await bieuMau.getByRole("button", { name: "Lưu" }).click();
+    await expect(bieuMau).toHaveCount(0);
+  }
+
+  test("sửa hạn chuẩn của loại yêu cầu ngay trên màn, có xem trước và nhật ký (#255)", async ({ page }) => {
+    // Kiểm thanh bên trước khi mở màn: ở màn hẹp thanh bên là ngăn kéo, mở ra thì che nội dung
+    await page.goto("/");
+    await expect((await thanhBen(page)).getByRole("link", { name: "Cấu hình quy trình" })).toBeVisible();
+    await moMan(page, "/quan-tri/cau-hinh", "quan-tri-cau-hinh");
+    const dong = page.locator('tr[data-dong-cau-hinh^="request-types/"]').first();
+    const cu = (await dong.locator("td").nth(1).innerText()).trim();
+    const moi = String(Number(cu) + 1);
+
+    await dong.getByRole("button", { name: /^Sửa / }).click();
+    const bieuMau = page.locator("tr:has(form)");
+    await bieuMau.locator('[name="sla_hours"]').fill(moi);
+    await bieuMau.getByRole("button", { name: "Xem trước" }).click();
+    // Đổi hạn: màn báo trước số hồ sơ đang mở bị ảnh hưởng, chưa lưu gì
+    await expect(bieuMau.getByRole("status")).toContainText(`→ ${moi}`);
+    await expect(bieuMau.getByRole("status")).toContainText(/hồ sơ đang mở/);
+    await expect(dong.locator("td").nth(1)).toHaveText(cu);
+    await bieuMau.getByRole("button", { name: "Lưu" }).click();
+    await expect(dong.locator("td").nth(1)).toHaveText(moi);
+
+    const nhatKy = page.locator("[data-nhat-ky-cau-hinh] tbody tr").first();
+    await expect(nhatKy).toContainText("Hạn chuẩn");
+    await expect(nhatKy).toContainText(cu);
+    await expect(nhatKy).toContainText(moi);
+
+    await suaMotO(page, dong, "sla_hours", cu);
+    await expect(dong.locator("td").nth(1)).toHaveText(cu);
+  });
+
+  test("đổi tên phòng ban ngay trên màn rồi trả lại (#255)", async ({ page }) => {
+    await page.goto("/quan-tri/cau-hinh", { waitUntil: "networkidle" });
+    const dong = page.locator('tr[data-dong-cau-hinh^="departments/"]').first();
+    const cu = (await dong.locator("td").first().innerText()).trim();
+    await suaMotO(page, dong, "label", `${cu} (thử)`);
+    await expect(dong.locator("td").first()).toHaveText(`${cu} (thử)`);
+    await suaMotO(page, dong, "label", cu);
+    await expect(dong.locator("td").first()).toHaveText(cu);
+  });
+
+  test("ngưng phòng đang là phòng mặc định thì bị chặn kèm lý do, không lưu gì (#255)", async ({ page }) => {
+    await page.goto("/quan-tri/cau-hinh", { waitUntil: "networkidle" });
+    const dong = page.locator('tr[data-dong-cau-hinh^="departments/"]').first();
+    await dong.getByRole("button", { name: /^Sửa / }).click();
+    const bieuMau = page.locator("tr:has(form)");
+    await bieuMau.locator('[name="is_active"]').uncheck();
+    await bieuMau.getByRole("button", { name: "Xem trước" }).click();
+    await expect(bieuMau.getByRole("alert")).toContainText("phòng ban mặc định đã ngưng");
+    await expect(bieuMau.getByRole("button", { name: "Lưu" })).toHaveCount(0);
+    await expect(dong.locator("td").nth(2)).toHaveText("Có");
+  });
 });
 
 test("trưởng phòng không tải được nhật ký sự kiện (#306)", async ({ browser }) => {
@@ -504,4 +575,36 @@ test("trưởng phòng không tải được nhật ký sự kiện (#306)", asy
   const tra = await nc.request.get("/api/xuat/nhat-ky?dinh-dang=csv");
   expect(tra.status()).toBe(403);
   await nc.close();
+});
+
+test("trưởng phòng ủy quyền cho người xử lý: dải báo hiện ngay, thu hồi là mất (#252)", async ({ browser }) => {
+  const tp = await browser.newContext({ storageState: tepPhien("truong-phong") });
+  const xl = await browser.newContext({ storageState: tepPhien("xu-ly") });
+  const trangTp = await tp.newPage();
+  const trangXl = await xl.newPage();
+
+  await moMan(trangTp, "/uy-quyen", "truong-phong-uy-quyen");
+  const chon = trangTp.locator('select[name="delegate"]');
+  const ma = await chon.locator("option", { hasText: "Cường" }).getAttribute("value");
+  await chon.selectOption(ma!);
+  await trangTp.getByRole("button", { name: "Khai ủy quyền" }).click();
+  await expect(trangTp.getByRole("status")).toContainText("Đã khai ủy quyền");
+  const dong = trangTp.locator('[data-ds-uy-quyen] tr[data-uy-quyen="active"]', { hasText: "Cường" }).first();
+  await expect(dong).toBeVisible();
+
+  // Người làm thay thấy ngay, không phải xác nhận
+  await trangXl.goto("/", { waitUntil: "networkidle" });
+  await expect(trangXl.locator("[data-dai-uy-quyen]").first()).toContainText("Bạn đang làm thay");
+
+  await dong.getByRole("button", { name: /^Thu hồi/ }).click();
+  // Chờ đúng dòng vừa khai rời trạng thái hiệu lực — dòng "Đã thu hồi" của lượt chạy trước có sẵn rồi
+  await expect(
+    trangTp.locator('[data-ds-uy-quyen] tr[data-uy-quyen="active"]', { hasText: "Cường" }),
+  ).toHaveCount(0);
+
+  // Thu hồi là mất ngay ở lần tải kế tiếp
+  await trangXl.goto("/", { waitUntil: "networkidle" });
+  await expect(trangXl.locator("[data-dai-uy-quyen]")).toHaveCount(0);
+  await tp.close();
+  await xl.close();
 });

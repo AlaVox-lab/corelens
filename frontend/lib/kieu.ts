@@ -121,6 +121,8 @@ export type SuKien = {
   activity_label: string | null;
   actor: string;
   actor_label: string;
+  /** Người vắng mà người bấm làm thay (#252); `null` khi người bấm dùng vai của chính mình. */
+  on_behalf_of_label?: string | null;
   is_system: boolean;
   from_state: string;
   from_state_label: string;
@@ -605,4 +607,70 @@ export type QuyTrinhThucTe = {
   labels: { request_types: Record<string, string>; departments: Record<string, string> };
   /** Mã hồ sơ (chuỗi số) → mã hiển thị `YC-2026-0184`, cho mọi hồ sơ kết quả nêu tên. */
   case_codes: Record<string, string>;
+};
+
+/** Màn quản trị cấu hình (#255) — `GET /admin/config`, chỉ quản trị viên. */
+export type CauHinhQuanTri = {
+  rule_set: { version: string; label: string; effective_from: string };
+  states: {
+    code: string;
+    label: string;
+    description: string | null;
+    is_initial: boolean;
+    is_terminal: boolean;
+    sla_running: boolean;
+  }[];
+  transitions: {
+    from_state: string;
+    from_label: string;
+    to_state: string;
+    to_label: string;
+    activity_label: string;
+    is_system: boolean;
+    is_rework: boolean;
+    roles: string[];
+    guards: string[];
+    auto_after_hours: number | null;
+    reopen_window_hours: number | null;
+  }[];
+  request_types: (DongCauHinh & {
+    description: string | null;
+    sla_hours: number;
+    sla_grace_hours: number;
+    sla_warn_percent: number;
+    is_active: boolean;
+    default_department: string | null;
+  })[];
+  priorities: (DongCauHinh & { is_default: boolean; sla_factor_percent: number })[];
+  departments: (DongCauHinh & { description: string | null; is_active: boolean })[];
+  calendar: {
+    label: string;
+    time_zone: string;
+    hours: { weekday: number; start: string; end: string }[];
+    holidays: { day: string; label: string }[];
+  } | null;
+  /** Danh mục → trường sửa được → nhãn, và đổi trường đó có đổi hạn hồ sơ đang mở không. */
+  fields: Record<string, Record<string, { label: string; affects_deadlines: boolean }>>;
+  changes: {
+    changed_at: string;
+    actor_label: string;
+    entity: string;
+    entity_label: string;
+    entity_code: string;
+    field: string;
+    field_label: string;
+    old_value: unknown;
+    new_value: unknown;
+  }[];
+};
+
+/** Một dòng danh mục trên màn quản trị: mã, tên, số hồ sơ đang mở trỏ tới nó. */
+export type DongCauHinh = { code: string; label: string; open_cases: number };
+
+/** Kết quả một lần sửa cấu hình, chạy thử hay lưu thật. */
+export type KetQuaSuaCauHinh = {
+  applied: boolean;
+  changes: { field: string; field_label: string; old_value: unknown; new_value: unknown }[];
+  open_cases: number;
+  affects_deadlines: boolean;
 };

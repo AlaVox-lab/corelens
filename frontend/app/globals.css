@@ -4849,3 +4849,32 @@ span.qt-ma {
     display: inline-flex;
   }
 }
+
+/* --- Màn quản trị cấu hình (#255) -------------------------------------------
+ * Bảng danh mục giữ dạng bảng ở mọi bề rộng — mỗi cột là một con số có tên, xếp chồng như hàng đợi
+ * thì mất tên cột. Màn hẹp cuộn ngang trong khung của mục. */
+@media (max-width: 767px) {
+  .bang.bang-cau-hinh {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .bang.bang-cau-hinh thead {
+    display: table-header-group;
+  }
+
+  .bang.bang-cau-hinh tbody {
+    display: table-row-group;
+  }
+
+  .bang.bang-cau-hinh tr {
+    display: table-row;
+  }
+
+  .bang.bang-cau-hinh td,
+  .bang.bang-cau-hinh th {
+    display: table-cell;
+    width: auto;
+  }
+}

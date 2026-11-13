@@ -49,6 +49,7 @@ def record_event(
     *,
     assignee_label: str | None = None,
     suggestion: dict | None = None,
+    on_behalf_of: tuple[str, str] | None = None,
 ) -> EventLog:
     """Ghi một bản ghi nhật ký cho lần chuyển trạng thái đang diễn ra.
 
@@ -64,6 +65,7 @@ def record_event(
     hồ sơ. `assignee_label` là tên người được giao mới, do phía gọi tra từ danh bạ.
     `suggestion` là dấu giữ hay ghi đè gợi ý (#239), do cửa chuyển trạng thái tính bằng
     `app.intelligence.goi_y.ghi_nhan_goi_y` — đi vào cột riêng, không trộn vào `changes`.
+    `on_behalf_of` là (mã, tên) người vắng khi lần chuyển chỉ đi được nhờ ủy quyền (#252).
     """
     su_kien = EventLog(
         case_id=ctx.case.id,
@@ -75,6 +77,8 @@ def record_event(
         note=ctx.note,
         changes=_thay_doi_truong(ctx, assignee_label),
         suggestion=suggestion,
+        on_behalf_of=on_behalf_of[0] if on_behalf_of else None,
+        on_behalf_of_label=on_behalf_of[1] if on_behalf_of else None,
     )
     session.add(su_kien)
 

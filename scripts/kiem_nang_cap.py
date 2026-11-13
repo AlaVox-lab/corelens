@@ -108,7 +108,7 @@ def chup(ts: argparse.Namespace) -> dict:
     return anh
 
 
-def so(ts: argparse.Namespace, truoc: dict) -> int:
+def so(ts: argparse.Namespace, truoc: dict, viec: str = "nâng cấp") -> int:
     lech = 0
     print(f"Bản sửa cơ sở dữ liệu: {truoc['ban_sua']} → {psql(ts, 'SELECT version_num FROM alembic_version')}")
     for bang, cot in BANG.items():
@@ -119,7 +119,7 @@ def so(ts: argparse.Namespace, truoc: dict) -> int:
         lech += not dat
         them = tong_nay - nay["so_dong"]
         print(f"  {'ĐẠT ' if dat else 'LỆCH'} {bang}: {cu['so_dong']} dòng trước, {nay['so_dong']} dòng "
-              f"đó sau nâng cấp{f'; {them} dòng mới sinh trong lúc nâng' if them else ''}")
+              f"đó sau {viec}{f'; {them} dòng mới sinh từ lúc chụp' if them else ''}")
     kho = kiem_kho_tep(ts, truoc["bang"]["case_attachments"]["toi_da"])
     cu_kho = truoc["kho_tep"]
     dat = (kho["con_trong_kho"], kho["byte"]) == (cu_kho["con_trong_kho"], cu_kho["byte"]) and not kho["thieu"]
@@ -127,7 +127,7 @@ def so(ts: argparse.Namespace, truoc: dict) -> int:
     print(f"  {'ĐẠT ' if dat else 'LỆCH'} kho tệp: {cu_kho['con_trong_kho']} tệp ({cu_kho['byte']} byte) trước, "
           f"{kho['con_trong_kho']} tệp ({kho['byte']} byte) sau"
           f"{'; thiếu: ' + ', '.join(kho['thieu']) if kho['thieu'] else ''}")
-    print("Nâng cấp giữ nguyên dữ liệu." if not lech else f"Có {lech} mục lệch.")
+    print(f"{viec.capitalize()} giữ nguyên dữ liệu." if not lech else f"Có {lech} mục lệch.")
     return 1 if lech else 0
 
 

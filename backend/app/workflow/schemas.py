@@ -128,6 +128,8 @@ class SuKienRa(BaseModel):
     activity_label: str | None = None
     actor: str
     actor_label: str
+    # Người vắng mà người bấm làm thay (#252); trống khi người bấm dùng vai của chính mình
+    on_behalf_of_label: str | None = None
     is_system: bool
     from_state: str
     from_state_label: str
