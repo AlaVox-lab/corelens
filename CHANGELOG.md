@@ -5,6 +5,12 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [0.16.0] - 2026-11-14
+
+### Tính năng mới
+
+- **h-portal:** Kho tri thức đăng nhập một lần, gợi ý bài viết ([#359](https://github.com/AlaVox-lab/dx-os-lab/issues/359)) ([bf1675f](https://github.com/AlaVox-lab/dx-os-lab/commit/bf1675f53ab2bda145edce3dbd52cfb19dcdbddf))
+
 ## [0.15.0] - 2026-11-13
 
 ### Tính năng mới
