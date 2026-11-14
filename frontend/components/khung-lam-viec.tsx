@@ -176,6 +176,19 @@ export async function KhungLamViec({
       cho: soDem.get(l.duongDan)?.cho,
       gap: soDem.get(l.duongDan)?.gap,
     })),
+    // Kho tri thức (#321): chỉ khi dịch vụ bật nó; mở thẳng qua Keycloak ở thẻ mới
+    ...(danhTinh.knowledge_base
+      ? [
+          {
+            duongDan: "/kho-tri-thuc",
+            nhan: "Kho tri thức",
+            icon: "tri-thuc" as const,
+            nhom: "chung" as const,
+            ngoai: danhTinh.knowledge_base.url,
+            nguon: { ten: "Wiki.js", giayPhep: "AGPL-3.0", url: danhTinh.knowledge_base.source_url },
+          },
+        ]
+      : []),
     {
       duongDan: "/hop-thu",
       nhan: "Hộp thư",

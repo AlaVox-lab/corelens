@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Hồ sơ đã giải quyết tương tự, ngay dưới ô mô tả của biểu mẫu Gửi yêu cầu (#319).
+// Hồ sơ đã giải quyết tương tự, ngay dưới ô mô tả của biểu mẫu Gửi yêu cầu (#319), và — khi kho tri
+// thức bật — bài hướng dẫn gần nhất của kho (#321), mở trên wiki ở thẻ mới.
 //
 // BA LỜI HỨA VỚI NGƯỜI GỬI
 //
@@ -17,11 +18,11 @@
 // Người gửi vẫn gửi bình thường. Nếu cách giải quyết cũ đủ dùng, họ bấm "không gửi nữa" — một yêu cầu
 // được ngăn chặn, ghi lại để đo trên bảng điều khiển.
 
-import { Lightbulb } from "lucide-react";
+import { BookOpen, Lightbulb } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import type { HoSoTuongTu, KetQuaTuongTu } from "@/lib/kieu";
+import type { BaiTriThuc, HoSoTuongTu, KetQuaTuongTu } from "@/lib/kieu";
 
 /** Chờ người gửi ngừng gõ chừng này mili giây rồi mới hỏi. */
 const CHO_NGUNG_GO_MS = 700;
@@ -33,6 +34,8 @@ const TOI_THIEU_KY_TU = 12;
 export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: string; phien: string }) {
   const chuyenTrang = useRouter();
   const [cacHoSo, datCacHoSo] = useState<HoSoTuongTu[]>([]);
+  const [cacBai, datCacBai] = useState<BaiTriThuc[]>([]);
+  const [nguonBai, datNguonBai] = useState<string | null>(null);
   const [dangBo, datDangBo] = useState(false);
   const tat = useRef(false);
 
@@ -40,6 +43,7 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
     const noiDung = `${tieuDe} ${moTa}`.trim();
     if (tat.current || noiDung.length < TOI_THIEU_KY_TU) {
       datCacHoSo([]);
+      datCacBai([]);
       return;
     }
     const huy = new AbortController();
@@ -55,6 +59,8 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
         const kq = (await ph.json()) as KetQuaTuongTu;
         if (!kq.enabled) tat.current = true;
         datCacHoSo(kq.items ?? []);
+        datCacBai(kq.articles ?? []);
+        datNguonBai(kq.articles_source_url ?? null);
       } catch {
         // Hủy vì gõ tiếp, quá hạn, mất mạng: giữ nguyên, không báo gì
       }
@@ -65,7 +71,7 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
     };
   }, [tieuDe, moTa, phien]);
 
-  if (cacHoSo.length === 0) return null;
+  if (cacHoSo.length === 0 && cacBai.length === 0) return null;
 
   async function boKhongGui() {
     datDangBo(true);
@@ -87,31 +93,68 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
       <p id="goi-y-tuong-tu-dau" className="the-goi-y-dau">
         <Lightbulb aria-hidden />
         <span>
-          <strong>Có thể đã có cách giải quyết</strong> — {cacHoSo.length} hồ sơ tương tự đã được giải
-          quyết
+          <strong>Có thể đã có cách giải quyết</strong> —{" "}
+          {[
+            cacHoSo.length ? `${cacHoSo.length} hồ sơ tương tự đã được giải quyết` : null,
+            cacBai.length ? `${cacBai.length} bài hướng dẫn trong kho tri thức` : null,
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </span>
       </p>
-      <ul>
-        {cacHoSo.map((h, i) => (
-          <li key={i}>
-            <p className="goi-y-tuong-tu-tieu-de">
-              {h.title}
-              {h.request_type && <span className="nhat"> · {h.request_type}</span>}
-            </p>
-            {h.resolution ? (
-              <p>
-                <span className="nhat">Cách đã giải quyết: </span>
-                {h.resolution}
+      {cacBai.length > 0 && (
+        <ul data-testid="goi-y-bai-tri-thuc">
+          {cacBai.map((b) => (
+            <li key={b.url}>
+              <p className="goi-y-tuong-tu-tieu-de">
+                <BookOpen aria-hidden style={{ width: "14px", height: "14px", verticalAlign: "-2px" }} />{" "}
+                <a href={b.url} target="_blank" rel="noopener noreferrer">
+                  {b.title}
+                </a>
+                <span className="nhat"> · bài hướng dẫn</span>
               </p>
-            ) : (
-              <p className="nhat">Hồ sơ không ghi lại cách giải quyết.</p>
-            )}
-          </li>
-        ))}
-      </ul>
+              {b.description || b.excerpt ? <p>{b.description || b.excerpt}</p> : null}
+            </li>
+          ))}
+        </ul>
+      )}
+      {cacHoSo.length > 0 && (
+        <ul>
+          {cacHoSo.map((h, i) => (
+            <li key={i}>
+              <p className="goi-y-tuong-tu-tieu-de">
+                {h.title}
+                {h.request_type && <span className="nhat"> · {h.request_type}</span>}
+              </p>
+              {h.resolution ? (
+                <p>
+                  <span className="nhat">Cách đã giải quyết: </span>
+                  {h.resolution}
+                </p>
+              ) : (
+                <p className="nhat">Hồ sơ không ghi lại cách giải quyết.</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="the-goi-y-nguon">
-        Gợi ý của hệ thống từ hồ sơ đã đóng, đã ẩn tên người và thông tin liên hệ. Bạn vẫn gửi yêu cầu
-        bình thường nếu chưa giải quyết được.
+        Gợi ý của hệ thống từ hồ sơ đã đóng, đã ẩn tên người và thông tin liên hệ
+        {cacBai.length > 0 && (
+          <>
+            , và từ kho tri thức (Wiki.js, giấy phép AGPL-3.0
+            {nguonBai ? (
+              <>
+                {" — "}
+                <a href={nguonBai} target="_blank" rel="noopener noreferrer">
+                  mã nguồn
+                </a>
+              </>
+            ) : null}
+            )
+          </>
+        )}
+        . Bạn vẫn gửi yêu cầu bình thường nếu chưa giải quyết được.
       </p>
       <div>
         <button type="button" className="nut nut-nho" onClick={boKhongGui} disabled={dangBo}>

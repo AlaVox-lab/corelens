@@ -14,6 +14,7 @@
 
 import {
   Activity,
+  BookOpen,
   ChartColumn,
   FolderOpen,
   GitFork,
@@ -43,6 +44,13 @@ export type MucDieuHuong = {
   cho?: number;
   /** Có việc chờ người xem đã quá hạn hoặc sắp tự đi: chấm đỏ trên icon (#230). */
   gap?: boolean;
+  /**
+   * Lối ra một dịch vụ khác của cụm, mở ở thẻ mới — kho tri thức (#321). Có trường này thì `duongDan`
+   * chỉ làm khóa, liên kết đi tới `ngoai`.
+   */
+  ngoai?: string;
+  /** Mã nguồn của dịch vụ ngoài đó, ghi dưới tên mục cùng giấy phép (AGPL-3.0, điều 13). */
+  nguon?: { ten: string; giayPhep: string; url: string };
 };
 
 /** Mỗi bao lâu thanh bên hỏi lại số chưa đọc, khi trang đang hiện. */
@@ -59,6 +67,7 @@ const ICON: Record<TenIcon, LucideIcon> = {
   "he-thong": Activity,
   "cau-hinh": Settings2,
   "uy-quyen": UserCheck,
+  "tri-thuc": BookOpen,
 };
 
 /** Số chưa đọc của Hộp thư, bắt đầu từ con số máy chủ dựng sẵn rồi tự hỏi lại. */
@@ -111,7 +120,38 @@ export function mucDangDung(duongDan: string, cacMuc: MucDieuHuong[]): MucDieuHu
  * thư, hồ sơ có `needs_my_action` ở các mục khác; số mờ là hồ sơ còn mở. Nhãn đọc màn hình
  * nói đủ cả hai số, vì khi thu gọn thanh bên chỉ còn số đặc.
  */
+function MucNgoai({ muc }: { muc: MucDieuHuong & { ngoai: string } }) {
+  const Icon = ICON[muc.icon];
+  return (
+    <>
+      <a
+        className="sb-muc"
+        href={muc.ngoai}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${muc.nhan} (mở thẻ mới)`}
+        title={muc.nhan}
+        data-loi-ngoai={muc.icon}
+      >
+        <span className="sb-icon">
+          <Icon aria-hidden />
+        </span>
+        <span className="sb-nhan">{muc.nhan}</span>
+      </a>
+      {muc.nguon ? (
+        <p className="sb-nguon">
+          {muc.nguon.ten} · {muc.nguon.giayPhep} ·{" "}
+          <a href={muc.nguon.url} target="_blank" rel="noopener noreferrer">
+            mã nguồn
+          </a>
+        </p>
+      ) : null}
+    </>
+  );
+}
+
 function Muc({ muc, chon, dem }: { muc: MucDieuHuong; chon: boolean; dem?: number }) {
+  if (muc.ngoai) return <MucNgoai muc={{ ...muc, ngoai: muc.ngoai }} />;
   const Icon = ICON[muc.icon];
   const laHopThu = muc.icon === "hop-thu";
   const cho = laHopThu ? (dem ?? muc.dem) : muc.cho;

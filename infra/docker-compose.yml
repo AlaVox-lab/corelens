@@ -229,6 +229,108 @@ services:
       retries: 6
 
   # ---------------------------------------------------------------------------
+  # Kho tri thức — Wiki.js, không gian H (#321, ADR-0006). TÙY CHỌN: chỉ có khi bật hồ sơ
+  #     docker compose --env-file .env --profile tri-thuc up -d
+  # Wiki.js (AGPL-3.0) chạy NGUYÊN ẢNH CHÍNH THỨC như dịch vụ độc lập: không dựng ảnh riêng, không vá
+  # mã, dịch vụ ứng dụng chỉ nói chuyện qua GraphQL và người dùng qua OIDC (LICENSES.md). Dữ liệu nằm
+  # trong database riêng `WIKI_DB_NAME` trên PostgreSQL của cụm — không thêm ảnh CSDL nào.
+  #
+  # Ba bước, theo thứ tự depends_on:
+  #   tri-thuc-chuan-bi  tạo database, tạo/cập nhật client OIDC trong Keycloak (chạy được cả trên realm
+  #                      đã nạp từ trước, vì Keycloak không nạp lại tệp realm)
+  #   kho-tri-thuc       Wiki.js
+  #   tri-thuc-khoi-tao  hoàn tất cài đặt lần đầu, đăng nhập một lần, nhóm theo vai trò, khóa API chỉ
+  #                      đọc (ghi vào volume tri-thuc-khoa), bài hướng dẫn mẫu
+  # Hai bước khởi tạo chạy trong ảnh của dịch vụ ứng dụng (đã có Python), kịch bản ở infra/tri-thuc/;
+  # chạy lại bao nhiêu lần cũng được.
+  # ---------------------------------------------------------------------------
+  tri-thuc-chuan-bi:
+    build:
+      context: ../backend
+    image: dxlab-backend:${DXLAB_VERSION}
+    container_name: dxlab-tri-thuc-chuan-bi
+    profiles: ["tri-thuc"]
+    entrypoint: ["python", "/tri-thuc/khoi_tao.py", "chuan-bi"]
+    environment: &moi-truong-tri-thuc
+      PGHOST: postgres
+      PGUSER: ${DXLAB_DB_USER}
+      PGPASSWORD: ${DXLAB_DB_PASSWORD}
+      PGDATABASE: ${DXLAB_DB_NAME}
+      WIKI_DB_NAME: ${WIKI_DB_NAME:-wiki}
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: http://localhost:${KEYCLOAK_PORT}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      WIKI_INTERNAL_URL: http://kho-tri-thuc:3000
+      WIKI_PUBLIC_URL: http://localhost:${WIKI_PORT:-3100}
+      WIKI_OIDC_CLIENT_ID: ${WIKI_OIDC_CLIENT_ID:-dx-wiki}
+      WIKI_OIDC_SECRET: ${WIKI_OIDC_SECRET:-doi_bi_mat_nay_truoc_khi_trien_khai}
+      # Khóa của chiến lược đăng nhập trong Wiki.js: đường dẫn /login/<khóa> mà cổng mở để vào thẳng
+      WIKI_STRATEGY_KEY: ${WIKI_STRATEGY_KEY:-keycloak}
+      WIKI_GROUPS_CLAIM: ${WIKI_GROUPS_CLAIM:-wiki_groups}
+      # Vai trò realm được đọc / được viết bài. Mỗi vai một nhóm Wiki.js cùng tên
+      WIKI_READ_ROLES: ${WIKI_READ_ROLES:-requester,classifier,approver,handler,administrator}
+      WIKI_WRITE_ROLES: ${WIKI_WRITE_ROLES:-classifier,approver,administrator}
+      WIKI_API_GROUP: ${WIKI_API_GROUP:-dx-os-lab-doc}
+      WIKI_ADMIN_EMAIL: ${WIKI_ADMIN_EMAIL:-quan-tri-wiki@dx-os-lab.test}
+      WIKI_ADMIN_PASSWORD: ${WIKI_ADMIN_PASSWORD:-doi_mat_khau_nay_truoc_khi_trien_khai}
+      WIKI_SITE_TITLE: ${WIKI_SITE_TITLE:-Kho tri thức DX-OS Lab}
+      WIKI_LOCALE: ${WIKI_LOCALE:-vi}
+      WIKI_SEED_DIR: /tri-thuc/bai-mau
+      WIKI_API_KEY_FILE: /khoa/wiki-api-key
+    volumes:
+      - ./tri-thuc:/tri-thuc:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  kho-tri-thuc:
+    # Wiki.js 2.5.315, dựng 21/09/2026; /wiki/LICENSE trong ảnh mở đầu "GNU AFFERO GENERAL PUBLIC LICENSE"
+    image: requarks/wiki:2.5.315@sha256:af71a17dc27ccc4c768591b1c504631ed820d9d13d4e8c325be4232c0035638c
+    container_name: dxlab-kho-tri-thuc
+    profiles: ["tri-thuc"]
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DXLAB_DB_USER}
+      DB_PASS: ${DXLAB_DB_PASSWORD}
+      DB_NAME: ${WIKI_DB_NAME:-wiki}
+    ports:
+      - "${WIKI_PORT:-3100}:3000"
+    # Chỉ kiểm cổng mở: lúc cài đặt lần đầu Wiki.js chưa có /healthz
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3000,'localhost').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 12
+    depends_on:
+      tri-thuc-chuan-bi:
+        condition: service_completed_successfully
+
+  tri-thuc-khoi-tao:
+    build:
+      context: ../backend
+    image: dxlab-backend:${DXLAB_VERSION}
+    container_name: dxlab-tri-thuc-khoi-tao
+    profiles: ["tri-thuc"]
+    entrypoint: ["python", "/tri-thuc/khoi_tao.py", "khoi-tao"]
+    # Ghi khóa API vào volume mới tạo (chủ sở hữu root); tệp khóa để quyền đọc cho dịch vụ ứng dụng
+    user: root
+    environment: *moi-truong-tri-thuc
+    volumes:
+      - ./tri-thuc:/tri-thuc:ro
+      - tri-thuc-khoa:/khoa
+    depends_on:
+      kho-tri-thuc:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
   # Quét mã độc tệp đính kèm — ClamAV (#248). TÙY CHỌN: chỉ có khi bật hồ sơ
   #     docker compose --env-file .env --profile quet-tep up -d
   # rồi đặt CLAMAV_HOST=quet-tep trong .env. ClamAV (GPL-2.0) chạy như dịch vụ ĐỘC LẬP; dịch vụ ứng
@@ -356,6 +458,12 @@ services:
       DXLAB_NOTIFY_DIRECTORY_CACHE_SECONDS: ${NOTIFY_DIRECTORY_CACHE_SECONDS:-120}
       # Ủy quyền khi vắng mặt (#252): một lần khai dài tối đa chừng này ngày
       DXLAB_DELEGATION_MAX_DAYS: ${DELEGATION_MAX_DAYS:-60}
+      # Kho tri thức (#321). WIKI_URL rỗng là TẮT — mặc định của cụm: thanh bên không có lối vào, gợi ý khi
+      # soạn chỉ có hồ sơ đã giải quyết. Bật hồ sơ `tri-thuc` thì đặt WIKI_URL=http://localhost:3100. Lập
+      # chỉ mục bài cần thêm mô hình nhúng (EMBEDDING_URL). Cố ý KHÔNG depends_on kho-tri-thuc: wiki tắt
+      # thì chỉ lối vào và gợi ý bài vắng mặt. Khóa API chỉ đọc đọc từ volume tri-thuc-khoa.
+      DXLAB_WIKI_PUBLIC_URL: ${WIKI_URL:-}
+      DXLAB_WIKI_INDEX_INTERVAL_SECONDS: ${WIKI_INDEX_INTERVAL_SECONDS:-120}
       # Bảng điều khiển nhúng trong cổng (#305): dịch vụ xin token khách qua địa chỉ nội bộ,
       # trình duyệt tải bảng điều khiển qua địa chỉ công khai. Cố ý KHÔNG depends_on superset
       # (chính Superset chờ dịch vụ này): Superset tắt thì chỉ mục Báo cáo báo không phản hồi.
@@ -400,6 +508,8 @@ services:
       # Dữ liệu khởi tạo (#254): bộ nạp chạy sau Alembic, nạp lần đầu khi chưa có bộ quy tắc nào
       # rồi lần nào khởi động cũng kiểm nhất quán đồ thị — app/cau_hinh/khoi_tao.py
       - ./seed:/seed:ro
+      # Khóa API chỉ đọc của kho tri thức (#321), do tri-thuc-khoi-tao ghi; rỗng khi chưa bật hồ sơ đó
+      - tri-thuc-khoa:/run/tri-thuc:ro
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:
@@ -456,3 +566,5 @@ volumes:
   superset-home:
   # Tệp mô hình của hồ sơ `tri-tue` (#316). `down -v` xóa cả volume này — phải tải lại mô hình
   mo-hinh:
+  # Khóa API chỉ đọc của kho tri thức (#321), do tri-thuc-khoi-tao ghi, dịch vụ ứng dụng đọc
+  tri-thuc-khoa:

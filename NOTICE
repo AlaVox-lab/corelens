@@ -69,7 +69,7 @@ Qwen3-Embedding-0.6B GGUF (tệp Qwen3-Embedding-0.6B-Q8_0.gguf)
   sửa đổi.
 
 -------------------------------------------------------------------------------
-Dịch vụ tùy chọn khác (hồ sơ Compose `quet-tep`, `thu-thu`)
+Dịch vụ tùy chọn khác (hồ sơ Compose `quet-tep`, `thu-thu`, `tri-thuc`)
 -------------------------------------------------------------------------------
 
 ClamAV 1.5.3 (ảnh clamav/clamav:1.5.3)
@@ -87,6 +87,15 @@ Mailpit v1.32.0 (ảnh axllent/mailpit:v1.32.0)
   Giấy phép: MIT
   https://github.com/axllent/mailpit
   Hộp thư thử để trình diễn thông báo thư điện tử (#251), nhận thư qua SMTP.
+
+Wiki.js 2.5.315 (ảnh requarks/wiki:2.5.315)
+  Copyright (c) Nicolas Giard (requarks.io)
+  Giấy phép: AGPL-3.0 (/wiki/LICENSE trong ảnh; kho requarks/wiki)
+  https://github.com/requarks/wiki
+  Kho tri thức (#321, ADR-0006). Chạy nguyên bản như dịch vụ độc lập; người
+  dùng đăng nhập qua OIDC, dịch vụ ứng dụng đọc bài qua GraphQL — không nhúng,
+  không sửa, không dẫn xuất mã Wiki.js. Mã nguồn tương ứng là bản thượng nguồn
+  ở địa chỉ trên — xem LICENSES.md.
 
 -------------------------------------------------------------------------------
 Dịch vụ ứng dụng, cổng, trang tài liệu

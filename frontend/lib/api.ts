@@ -132,6 +132,8 @@ export type DanhTinh = {
    */
   workspaces: string[];
   /** Ủy quyền đang hiệu lực mà người này nhận (#252): trang chủ hiện dải "Bạn đang làm thay …". */
+  /** Lối vào kho tri thức (#321): địa chỉ mở thẳng qua Keycloak và mã nguồn của nền tảng. `null` khi tắt. */
+  knowledge_base?: { url: string; source_url: string } | null;
   acting_for?: {
     delegator_label: string;
     department_label: string;
