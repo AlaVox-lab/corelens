@@ -46,7 +46,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import current_actor
 from app.config import get_settings
 from app.db import get_session
-from app.intelligence import mo_hinh
+from app.intelligence import mo_hinh, tri_thuc
 from app.workflow.context import Actor
 
 log = logging.getLogger(__name__)
@@ -370,9 +370,19 @@ def tim(
 ) -> list[KetQuaTuongTu]:
     """Hồ sơ đã giải quyết gần nhất với nội dung đang soạn. Ném `LoiMoHinh` khi không nhúng được —
     phía gọi của biểu mẫu đổi nó thành danh sách rỗng."""
+    return tim_theo_vec(session, nhung_cau_hoi(tieu_de, mo_ta, han_giay), so_ket_qua=so_ket_qua, nguong=nguong)
+
+
+def nhung_cau_hoi(tieu_de: str, mo_ta: str | None, han_giay: float | None = None) -> list[float]:
+    """Véc-tơ của nội dung đang soạn — một lần nhúng dùng cho cả hồ sơ tương tự lẫn bài kho tri thức (#321)."""
+    han = han_giay if han_giay is not None else get_settings().similar_timeout_seconds
+    return mo_hinh.hoi_nhung([cau_hoi(tieu_de, mo_ta)], han_giay=han)[0]
+
+
+def tim_theo_vec(
+    session: Session, vec: list[float], *, so_ket_qua: int | None = None, nguong: float | None = None
+) -> list[KetQuaTuongTu]:
     cau_hinh = get_settings()
-    han = han_giay if han_giay is not None else cau_hinh.similar_timeout_seconds
-    vec = mo_hinh.hoi_nhung([cau_hoi(tieu_de, mo_ta)], han_giay=han)[0]
     dong = session.execute(
         text(
             """
@@ -488,8 +498,22 @@ class HoSoTuongTuRa(BaseModel):
     score: float
 
 
+class BaiTriThucRa(BaseModel):
+    """Một bài của kho tri thức (#321), mở trên wiki bằng `url`."""
+
+    title: str
+    description: str | None
+    excerpt: str | None
+    url: str
+    score: float
+
+
 class TimTuongTuRa(BaseModel):
     items: list[HoSoTuongTuRa]
+    # Bài kho tri thức gần với nội dung đang soạn (#321); rỗng khi kho tri thức tắt
+    articles: list[BaiTriThucRa] = Field(default_factory=list)
+    # Tên, giấy phép và mã nguồn của nền tảng kho tri thức (AGPL-3.0), để biểu mẫu ghi cạnh bài gợi ý
+    articles_source_url: str | None = None
     # Mô hình nhúng tắt — biểu mẫu khỏi gọi nữa trong phiên này
     enabled: bool
 
@@ -508,10 +532,13 @@ def tim_cho_bieu_mau(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
 ) -> TimTuongTuRa:
-    """Tối đa ba hồ sơ đã giải quyết tương tự nội dung đang soạn (#319), đã ẩn tên người và liên hệ.
+    """Tối đa ba hồ sơ đã giải quyết tương tự nội dung đang soạn (#319), đã ẩn tên người và liên hệ, và
+    — khi kho tri thức bật (#321) — vài bài hướng dẫn gần nhất, cùng một lần nhúng.
 
     KHÔNG BAO GIỜ báo lỗi cho biểu mẫu: mô hình tắt, chậm hơn hạn, trả rác — đều là danh sách rỗng, để
-    người gửi không chờ và không thấy gì lạ. Có kết quả và có mã phiên thì ghi một lượt xem.
+    người gửi không chờ và không thấy gì lạ. Bài kho tri thức đọc từ chỉ mục trong cơ sở dữ liệu, không gọi
+    sang wiki, nên wiki tắt hay chậm không làm chậm biểu mẫu. Có hồ sơ gợi ý và có mã phiên thì ghi một lượt
+    xem (đo ngăn chặn theo hồ sơ như #319).
     """
     cau_hinh = get_settings()
     if not cau_hinh.embedding_enabled:
@@ -520,10 +547,12 @@ def tim_cho_bieu_mau(
     if len(noi_dung) < SO_KY_TU_TOI_THIEU:
         return TimTuongTuRa(items=[], enabled=True)
     try:
-        ket_qua = tim(session, du_lieu.title, du_lieu.description)
+        vec = nhung_cau_hoi(du_lieu.title, du_lieu.description)
     except mo_hinh.LoiMoHinh as loi:
         log.info("Không tìm được hồ sơ tương tự: %s", loi)
         return TimTuongTuRa(items=[], enabled=True)
+    ket_qua = tim_theo_vec(session, vec)
+    bai = tri_thuc.tim_bai(session, vec)
     if ket_qua and du_lieu.session_id is not None:
         try:
             ghi_da_xem(session, du_lieu.session_id, actor.id, ket_qua)
@@ -542,6 +571,12 @@ def tim_cho_bieu_mau(
             )
             for k in ket_qua
         ],
+        articles=[
+            BaiTriThucRa(title=b.title, description=b.description, excerpt=b.excerpt, url=b.url,
+                         score=round(b.score, 3))
+            for b in bai
+        ],
+        articles_source_url=cau_hinh.wiki_source_url if bai else None,
         enabled=True,
     )
 

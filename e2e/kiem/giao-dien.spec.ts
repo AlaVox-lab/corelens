@@ -126,7 +126,8 @@ test.describe("người gửi", () => {
       data: { title: "Máy in tầng 3 kẹt giấy liên tục", description: "In vài trang là kẹt" },
     });
     expect(tra.status()).toBe(200);
-    expect(await tra.json()).toEqual({ items: [], enabled: false });
+    // Từ #321 phản hồi có thêm phần bài kho tri thức, rỗng khi tắt
+    expect(await tra.json()).toEqual({ items: [], articles: [], articles_source_url: null, enabled: false });
 
     // Biểu mẫu có hỏi sau khi ngừng gõ, không hiện gì, và vẫn gửi xong như cũ
     await page.goto("/yeu-cau/moi");

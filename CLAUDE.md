@@ -131,12 +131,13 @@ số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/
 thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
 đó, kiểm tra sự tồn tại trước thay vì giả định.
 
-**Sáu quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
+**Bảy quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
 thứ gì thuộc bốn mảng này:
 
 | Không gian | Quyết định | Bản ghi |
 |---|---|---|
 | `H` | Keycloak `26.7.3` làm nền tảng định danh | ADR-0001 |
+| `H` | Wiki.js `2.5.315` (AGPL-3.0) làm kho tri thức **tùy chọn** (hồ sơ Compose `tri-thuc`), ảnh nguyên bản chạy như dịch vụ độc lập, nối qua OIDC và GraphQL; giảng viên chưa xác nhận | ADR-0006 |
 | `core` | SeaweedFS `4.45` làm kho lưu trữ tệp đính kèm | ADR-0002 |
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
@@ -299,6 +300,7 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
 | Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later (cả thư viện lẫn mã của nhóm trong thư mục đó) |
 | Mô hình ngôn ngữ (tùy chọn) | llama.cpp server `b11889` + tệp Qwen2.5-1.5B-Instruct GGUF `q4_k_m` trong volume | MIT (máy chủ) · Apache-2.0 (mô hình) |
+| Kho tri thức (tùy chọn) | Wiki.js `2.5.315`, ảnh `requarks/wiki` nguyên bản, hồ sơ Compose `tri-thuc` | AGPL-3.0 (dịch vụ độc lập; không mã nào của nhóm mang AGPL) |
 
 Ba nền tảng Keycloak, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
 thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
@@ -313,13 +315,14 @@ với trạng thái và quy tắc chuyển lưu trong bảng dữ liệu. Xem AD
 
 ADR-0007 (thư viện khai phá quy trình cho `I`, #48) đã được navigator chấp nhận ngày 08/11/2026,
 cài đặt ở #314, và giảng viên xác nhận ngày 10/11/2026 với điều kiện kho mô tả đúng mô hình nhiều giấy
-phép (#340). Bộ máy dự phòng không dùng thư viện AGPL vẫn giữ (`services/khai-pha/README.md`). Các mảng khảo sát còn lại đã có bản ghi ở trạng thái *Đề xuất*, chờ
-giảng viên: hệ thống quản trị tri thức cho `H` (#46, ADR-0006 — navigator để ngoài phạm vi thi).
+phép (#340). Bộ máy dự phòng không dùng thư viện AGPL vẫn giữ (`services/khai-pha/README.md`).
+ADR-0006 (kho tri thức cho `H`, #46) được navigator chấp nhận ngày 14/11/2026 theo cùng nguyên tắc đó, cài ở
+#321: Wiki.js chạy nguyên bản như dịch vụ độc lập nên không thêm thư mục AGPL nào; chờ giảng viên xác nhận.
 ADR-0008 (cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ cho `I`, #47) đã chấp nhận ngày 08/11/2026; phần sinh
 văn bản cài ở #316/#317, phần nhúng véc-tơ và pgvector để #319.
 
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
-nghệ mới** — sáu quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
+nghệ mới** — bảy quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
 
 ### 5.1. Header giấy phép — bắt buộc trên mọi tệp mã mới
 

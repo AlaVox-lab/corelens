@@ -41,7 +41,7 @@ Mục tiêu: kho mã có bộ quy chuẩn đầy đủ, cả nhóm nắm đượ
 ## Giai đoạn 1 — Khảo sát và thiết kế
 
 **Trạng thái**: Hoàn thành — ADR-0007 và ADR-0008 đã chấp nhận (08/11, giảng viên xác nhận ADR-0007
-ngày 10/11); ADR-0006 còn *Đề xuất*, nhóm đề xuất để ngoài phạm vi thi; còn `CODE_OF_CONDUCT.md` ·
+ngày 10/11); ADR-0006 navigator chấp nhận 14/11 (chờ giảng viên xác nhận), cài ở #321; còn `CODE_OF_CONDUCT.md` ·
 **Phiên bản**: `v0.2.0`
 
 Mục tiêu: chốt toàn bộ nền tảng Open-Core và thiết kế nghiệp vụ, đủ để bắt đầu viết
@@ -60,8 +60,9 @@ Mỗi khảo sát kết thúc bằng một bản ghi quyết định trong `docs
 kèm **kiểm tra giấy phép** theo danh sách OSI.
 
 - [x] `[H]` Nền tảng định danh tập trung (SSO) — Keycloak, ADR-0001
-- [ ] `[H]` Hệ thống quản trị tri thức nội bộ — khảo sát xong (#46), ADR-0006 đề xuất
-      Wiki.js, chờ giảng viên duyệt; nhóm đề xuất để ngoài phạm vi thi (#321)
+- [x] `[H]` Hệ thống quản trị tri thức nội bộ — khảo sát xong (#46), ADR-0006 chọn Wiki.js, navigator
+      chấp nhận 14/11 (chờ giảng viên xác nhận); cài ở #321 dưới hồ sơ Compose tùy chọn `tri-thuc`, đăng nhập
+      một lần, bài viết làm nguồn gợi ý thứ hai
 - [x] `[P]` Nền tảng tự động hóa luồng công việc — so sánh với phương án tự xây
       máy trạng thái — chọn tự viết, ADR-0004
 - [x] `[D]` Nền tảng kinh doanh thông minh nguồn mở — Apache Superset, ADR-0003
@@ -117,7 +118,7 @@ tảng bắt buộc trước khi làm bất cứ thứ gì ở `D` và `I`.
 - [x] Giao diện mới: khung thanh bên, trang hồ sơ hai cột, hai hàng đợi — #158, #169, #170
 - [x] Trang hồ sơ đặt việc và hạn trước nhật ký, theo nhận xét của giảng viên — #189
 - [x] *Hồ sơ của tôi* bỏ bảng chú giải trạng thái — #192
-- [ ] Kho tri thức nội bộ — chờ duyệt ADR-0006; nhóm đề xuất để ngoài phạm vi thi (#321)
+- [x] Kho tri thức nội bộ — ADR-0006 chấp nhận 14/11, cài ở #321 (hồ sơ tùy chọn `tri-thuc`)
 
 ### 2.2. Không gian P — Quy trình
 

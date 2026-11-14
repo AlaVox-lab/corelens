@@ -561,8 +561,21 @@ export type HoSoTuongTu = {
   score: number;
 };
 
+/** Một bài của kho tri thức gần với nội dung đang soạn (#321), mở trên wiki bằng `url`. */
+export type BaiTriThuc = {
+  title: string;
+  description: string | null;
+  excerpt: string | null;
+  url: string;
+  score: number;
+};
+
 export type KetQuaTuongTu = {
   items: HoSoTuongTu[];
+  /** Bài kho tri thức (#321); rỗng hay vắng khi kho tri thức tắt. */
+  articles?: BaiTriThuc[];
+  /** Mã nguồn của nền tảng kho tri thức (AGPL-3.0) — ghi cạnh bài gợi ý. */
+  articles_source_url?: string | null;
   /** Mô hình nhúng tắt — biểu mẫu thôi hỏi trong phiên này. */
   enabled: boolean;
 };

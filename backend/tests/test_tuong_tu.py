@@ -322,7 +322,8 @@ def test_mo_hinh_tat_thi_bieu_mau_khong_hien_gi(client, monkeypatch):
     dat_cau_hinh(monkeypatch, embedding_url="")
     tra = _tim(client)
     assert tra.status_code == 200
-    assert tra.json() == {"items": [], "enabled": False}
+    # Từ #321 phản hồi có thêm phần bài kho tri thức, rỗng khi tắt
+    assert tra.json() == {"items": [], "articles": [], "articles_source_url": None, "enabled": False}
 
 
 def test_cong_dong_thi_rong_khong_loi(client, monkeypatch):

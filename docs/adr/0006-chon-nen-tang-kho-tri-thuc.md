@@ -2,11 +2,11 @@
 
 | Mục | Giá trị |
 |---|---|
-| Trạng thái | Đề xuất |
+| Trạng thái | Đã chấp nhận (2026-11-14); chờ giảng viên xác nhận |
 | Ngày | 2026-09-25 |
 | Không gian kiến trúc | `H` |
-| Issue liên quan | #46 |
-| Người quyết định | Navigator (`AlaVox-lab`) và giảng viên hướng dẫn chưa chốt |
+| Issue liên quan | #46 · #321 |
+| Người quyết định | Navigator (`AlaVox-lab`) chấp nhận ngày 2026-11-14 để cài ở #321, theo đúng nguyên tắc giảng viên đã xác nhận cho ADR-0007 ngày 2026-11-10; đã hỏi giảng viên xác nhận riêng — xem mục Quyết định |
 
 ## Bối cảnh
 
@@ -122,9 +122,19 @@ Không gian `H` cần một wiki nội bộ để nhân viên tra hướng dẫn
 
 ## Quyết định
 
-Đề xuất chọn **Wiki.js `2.5.315`** làm nền tảng kho tri thức cho không gian `H`, chạy như một dịch vụ độc lập và giao tiếp với DX-OS Lab qua OIDC/HTTP.
+Chọn **Wiki.js `2.5.315`** làm nền tảng kho tri thức cho không gian `H`, chạy như một dịch vụ độc lập và giao tiếp với DX-OS Lab qua OIDC/HTTP.
 
-Đây chưa phải quyết định đã chấp nhận. Navigator và giảng viên cần xem xét trước khi đổi trạng thái ADR.
+Navigator chấp nhận ngày 2026-11-14 để cài đặt ở #321. Cơ sở: ngày 2026-11-10 giảng viên đã xác nhận cho ADR-0007 rằng một thành phần AGPL-3.0 vẫn thuộc danh sách OSI nên không vi phạm yêu cầu giấy phép của cuộc thi, miễn là chạy như dịch vụ tách riêng, kho mô tả đúng mô hình nhiều giấy phép (`LICENSES.md`, `NOTICE`), và người dùng lấy được mã nguồn của dịch vụ qua mạng. Wiki.js thỏa cả ba theo cách đơn giản hơn PM4Py:
+
+| | PM4Py (ADR-0007) | Wiki.js (bản ghi này) |
+|---|---|---|
+| Cách dùng | Thư viện, được `import` trong mã của nhóm | Ảnh chính thức `requarks/wiki`, chạy nguyên bản như một dịch vụ |
+| Mã của nhóm phải mang AGPL | Có — cả thư mục `services/khai-pha/` | **Không** — nhóm chỉ viết cấu hình và một bước khởi tạo nói chuyện với Wiki.js qua GraphQL và OIDC, không chứa hay dẫn xuất mã Wiki.js (điều 5, *aggregate*) |
+| Thư mục AGPL mới trong kho | `services/khai-pha/` kèm `LICENSE` riêng | Không có |
+| Nghĩa vụ mã nguồn qua mạng (điều 13) | Mã của nhóm đã sửa đổi và kết hợp → dẫn tới mã nguồn ngay trên màn | Không sửa Wiki.js nên mã nguồn tương ứng là bản thượng nguồn công khai; cổng vẫn ghi tên, giấy phép và đường dẫn mã nguồn cạnh lối vào kho tri thức, như dòng mã nguồn của màn Quy trình thực tế |
+| Ghi vào `LICENSES.md`, `NOTICE` | Có | Có, theo khuôn ClamAV (GPL-2.0, dịch vụ độc lập, #248) |
+
+Ranh giới này hỏng nếu nhóm dựng ảnh riêng từ mã Wiki.js hay vá mã của nó — cả hai đều bị cấm. Mọi thay đổi hành vi làm bằng cấu hình và GraphQL. Giảng viên đã được hỏi xác nhận riêng; nếu giảng viên yêu cầu khác, bản ghi này được thay bằng bản mới và #321 đổi theo.
 
 ## Lý do
 
@@ -165,10 +175,10 @@ Căn cứ theo điều 5 (về tác phẩm riêng biệt *aggregate*) và điề
 
 **Việc phải làm tiếp sau quyết định này**
 
-- [ ] Navigator và giảng viên chấp nhận hoặc yêu cầu sửa ADR.
-- [ ] Nếu chấp nhận, cập nhật `docs/ARCHITECTURE.md` mục 3.
+- [x] Navigator chấp nhận ngày 2026-11-14; chờ giảng viên xác nhận.
+- [x] Cập nhật `docs/ARCHITECTURE.md` mục 3.
 - [ ] Nếu chấp nhận, cập nhật `docs/dependencies.md` với Wiki.js, AGPL-3.0 và ranh giới dịch vụ.
-- [ ] Tạo issue riêng cho tích hợp Wiki.js vào Compose chính; không tích hợp trong #46.
+- [x] Tạo issue riêng cho tích hợp Wiki.js vào Compose chính: #321, dưới hồ sơ Compose tùy chọn `tri-thuc` — cụm mặc định không đổi.
 - [ ] Chốt chính sách cấp nhóm và quyền đọc/ghi từ dữ liệu cấu hình.
 - [ ] Đo lại tổng bộ nhớ khi nền tảng được đưa vào cụm thật.
 

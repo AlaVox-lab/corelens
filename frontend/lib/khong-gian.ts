@@ -21,7 +21,8 @@ export type TenIcon =
   | "hop-thu"
   | "he-thong"
   | "cau-hinh"
-  | "uy-quyen";
+  | "uy-quyen"
+  | "tri-thuc";
 
 export type LoiVao = {
   duongDan: string;

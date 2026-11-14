@@ -147,6 +147,7 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
+| Kho tri thức | Wiki.js `2.5.315` — ảnh `requarks/wiki` nguyên bản | AGPL-3.0 | Không gian `H`. Dịch vụ **tùy chọn** (hồ sơ Compose `tri-thuc`, #321), chạy như dịch vụ độc lập, đăng nhập một lần qua OIDC, nội dung đọc qua GraphQL; không mã nào của nhóm mang AGPL. Navigator chấp nhận 14/11/2026, chờ giảng viên xác nhận. Xem [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) |
 | Máy chủ mô hình ngôn ngữ | llama.cpp server `b11889` | MIT | Không gian `I`. Dịch vụ `mo-hinh` **tùy chọn** (hồ sơ Compose `tri-tue`), điểm cuối kiểu OpenAI, chỉ trong mạng Compose. Xem [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) và mục 6.5 |
 | Mô hình sinh văn bản | Qwen2.5-1.5B-Instruct GGUF `q4_k_m` | Apache-2.0 | Tệp dữ liệu, không trong kho hay ảnh: nằm ở volume `mo-hinh`, tải bằng `scripts/tai_mo_hinh.py` (ghim commit kho Hugging Face và SHA-256) |
 | Mô hình nhúng | Qwen3-Embedding-0.6B GGUF `Q8_0` | Apache-2.0 | Dịch vụ `mo-hinh-nhung` — cùng ảnh llama.cpp, chế độ `--embeddings`, hồ sơ `tri-tue` (#319). Tệp cùng volume `mo-hinh`, cùng lệnh tải |
@@ -276,15 +277,11 @@ nơi tạo ra giá trị của đề tài, và không nền tảng nào sinh s�
 
 ### 3.2. Đã khảo sát, chờ duyệt
 
-Bộ công nghệ nền mới là hạ tầng ứng dụng, chưa cấu thành hệ sinh thái DX-Lab theo
-yêu cầu Open-Core. Nhóm thành phần sau đã khảo sát xong, có bản ghi ở trạng thái *Đề xuất* (hai
-nhóm khác — thư viện khai phá quy trình ADR-0007, mô hình ngôn ngữ ADR-0008 — đã chấp nhận và nằm ở
-mục 3.1). **Chưa phải quyết định**: chưa được tích hợp, và mục 3.1 chỉ nhận nó khi bản ghi chuyển
+Hiện không còn bản ghi nào ở trạng thái *Đề xuất*. Ba nhóm thành phần khảo sát cho hệ sinh thái Open-Core
+đều đã chấp nhận và nằm ở mục 3.1: kho tri thức (ADR-0006, navigator chấp nhận 14/11/2026, chờ giảng
+viên xác nhận), thư viện khai phá quy trình (ADR-0007), mô hình ngôn ngữ (ADR-0008). Thành phần mới
+khảo sát về sau vào đây trước, với bản ghi *Đề xuất*; **chưa phải quyết định** cho tới khi bản ghi chuyển
 sang *Đã chấp nhận*.
-
-| Không gian | Thành phần | Bản ghi | Đề xuất |
-|---|---|---|---|
-| `H` | Hệ thống quản trị tri thức | [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) | Wiki.js — vừa phục vụ người dùng, vừa là nguồn dữ liệu cho truy xuất tri thức ở `I` |
 
 ADR-0008 đã cài đủ hai đợt: sinh văn bản (#316, #317) và nhúng véc-tơ cùng pgvector (#319) — mục 3.1.
 
@@ -354,7 +351,8 @@ dx-os-lab/
 │   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
 │   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254), quản trị cấu hình (#255)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239); lớp gọi mô hình,
-│   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320)
+│   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320),
+│   │                            #     bài kho tri thức làm nguồn gợi ý thứ hai (#321)
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
 │   │   └── sql/                 # SQL thô của bản gốc 0000 và các bản hàm kiểm (0018, 0025), không sửa nữa
 │   ├── tests/
@@ -404,6 +402,7 @@ dx-os-lab/
 │   │   └── bang-dieu-khien/     # [D] dashboard dạng YAML, tự nạp lúc khởi động (#304)
 │   ├── postgres/init/           # chỉ tạo hai database còn lại và tài khoản chỉ đọc
 │   │   └── 01-tao-cac-database.sh
+│   ├── tri-thuc/                # [H] khởi tạo kho tri thức Wiki.js (hồ sơ `tri-thuc`, #321) và bài mẫu
 │   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa, nạp lần đầu dựng cụm
 │       ├── 01-quy-tac-quy-trinh.sql
 │       ├── 02-co-cau-to-chuc.sql
@@ -1315,6 +1314,71 @@ khoản danh bạ — quyết định để ngỏ.
 `default_enabled` của loại. `GET /me/notifications`, `POST /me/notifications/{loại}` — định danh lấy từ
 token, không ai đổi được tùy chọn của người khác. Cổng có trang `/thong-bao`, mở từ biểu tượng chuông
 cạnh tên ở thanh bên.
+
+### 6.9. Kho tri thức (không gian `H`)
+
+**Đã cài đặt** — #321, [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md). Wiki.js `2.5.315` dưới hồ sơ Compose
+**tùy chọn** `tri-thuc`; cụm mặc định không đổi, không tải thêm gì.
+
+**Ranh giới AGPL.** Ảnh chính thức chạy nguyên bản. Mã của nhóm chỉ nói chuyện với nó qua mạng: bước khởi tạo
+qua `/finalize` và GraphQL, người dùng qua OIDC, dịch vụ ứng dụng qua GraphQL bằng khóa API chỉ đọc. Không thư
+mục nào mang AGPL vì Wiki.js — khác PM4Py (mục 6.4), vốn là thư viện được nhập vào mã của nhóm (`LICENSES.md`).
+
+**Khởi tạo bằng dữ liệu, lặp lại an toàn** (`infra/tri-thuc/khoi_tao.py`, chạy trong ảnh dịch vụ ứng dụng — không
+thêm ảnh):
+
+| Bước | Trước / sau Wiki.js | Việc | Lặp lại |
+|---|---|---|---|
+| `chuan-bi` | Trước | Database `wiki` trên PostgreSQL của cụm; client OIDC `dx-wiki` trong Keycloak và bộ ánh xạ vai trò realm → claim `wiki_groups` | Có rồi thì cập nhật địa chỉ, bí mật |
+| `khoi-tao` | Sau | `/finalize` lần đầu (tắt thống kê sử dụng); tiêu đề, ngôn ngữ; nhóm theo vai trò; chiến lược đăng nhập; khóa API; bài mẫu từ `infra/tri-thuc/bai-mau/` | Đã cài thì bỏ qua cài đặt; khóa cũ còn dùng được thì giữ; bài đã có không ghi đè |
+
+Client OIDC tạo qua API quản trị chứ không khai trong `realm-dx-os-lab.json`, vì Keycloak chỉ nạp tệp realm lúc tạo
+realm: một đường duy nhất chạy được cho cả cụm dựng mới lẫn cụm cũ nâng lên, không `down -v`.
+
+**Đăng nhập một lần, quyền theo vai trò.** Chiến lược OIDC khóa `keycloak`: trình duyệt mở Keycloak bằng địa chỉ công
+khai, Wiki.js đổi token và gọi userinfo trong mạng Compose; `KC_HOSTNAME` cố định `iss` công khai nên hai đường khớp
+nhau (mục 3, ghi chú "một Keycloak, hai địa chỉ"). Cổng dẫn thẳng `/login/keycloak`, nên người đã đăng nhập cổng vào
+kho tri thức không phải nhập mật khẩu lần hai. Wiki.js `mapGroups` gán người dùng vào nhóm có **tên trùng** giá trị
+trong claim nhóm và đồng bộ ở mỗi lần đăng nhập, nên mỗi vai trò realm là một nhóm cùng tên; vai nào đọc, vai nào viết
+nằm ở `WIKI_READ_ROLES`, `WIKI_WRITE_ROLES`. `updateStrategies` của Wiki.js xóa mọi chiến lược không có trong danh
+sách gửi lên, nên bước khởi tạo luôn gửi kèm `local` (tài khoản quản trị wiki), tắt tự đăng ký cục bộ.
+
+**Khóa API chỉ đọc** cấp cho nhóm `dx-os-lab-doc` (chỉ `read:pages`, `read:source`), ghi vào volume `tri-thuc-khoa` để
+dịch vụ ứng dụng đọc. Kiểm trên cụm thử: khóa đọc và tìm được bài tiếng Việt có dấu, gọi `pages.delete` thì bị
+`Forbidden`.
+
+**Kiểm chứng (cụm thử).** Đăng nhập cổng bằng `an.nguyen`, `binh.tran`, `dung.pham` qua trang Keycloak thật rồi mở
+`/login/keycloak`: vào thẳng, không ô mật khẩu nào; người gửi chỉ đọc, điều phối viên có nút sửa. Chạy lại hai bước
+khởi tạo: không lỗi, không tạo trùng. Nâng cụm dựng từ v0.15.0 có dữ liệu: client mới vào realm cũ, đăng nhập một lần
+chạy, `scripts/kiem_nang_cap.py` đối soát đạt. Bộ nhớ Wiki.js khoảng 276 MiB ngay sau một lượt dùng.
+
+**Nối vào cổng — một công tắc `WIKI_URL`.** Rỗng (mặc định) là tắt: `/me` trả `knowledge_base: null`, thanh bên
+không có lối vào, gợi ý khi soạn chỉ có hồ sơ (#319). Đặt thì `/me` trả địa chỉ `/login/keycloak` và mã nguồn của
+Wiki.js; thanh bên có mục **Kho tri thức** mở thẻ mới, dưới tên ghi *Wiki.js · AGPL-3.0 · mã nguồn* (`LICENSES.md`).
+Bước khởi tạo bật `authAutoLogin` của Wiki.js: `/login` chuyển thẳng sang Keycloak, nên liên kết tới một bài
+mở được ngay; quản trị wiki vào `/login?all=1`.
+
+**Nguồn thứ hai cho truy xuất tri thức (`I`, #319).** Bảng `knowledge_articles` (bản sửa `0027`, pgvector): một
+dòng cho mỗi bài đã xuất bản, không riêng tư — bản sao dẫn xuất, dựng lại được, không ghi vết. Bộ lập chỉ mục
+`wiki-index` (`app/intelligence/tri_thuc.py`, khuôn `nhip_quet.py`, hiện trên màn Hệ thống) chỉ chạy khi cả
+`WIKI_URL` lẫn mô hình nhúng bật: đọc danh sách bài qua GraphQL, so mốc `updatedAt` và mô hình, nhúng tối đa
+`wiki_index_batch_size` bài mới hay vừa sửa, xóa dòng của bài đã xóa hay thôi xuất bản. Nội dung bài đọc qua trang
+mã nguồn `/s/<ngôn ngữ>/<đường dẫn>` chứ không qua GraphQL: ở Wiki.js 2.5, `pages.single` đòi `manage:pages`
+hoặc `delete:pages` — quyền sửa, xóa — chỉ để đọc, còn trang mã nguồn chỉ cần `read:source`, đúng quyền của khóa.
+Định dạng trang ổn định vì ảnh ghim phiên bản; bài kiểm thử giữ một mẫu trang.
+
+Điểm cuối gợi ý khi soạn (`/similar-cases/search`) nhúng câu đang gõ **một lần** rồi tìm cả hồ sơ đã giải quyết
+lẫn bài (`wiki_max_results`, ngưỡng `wiki_min_score`), trả thêm `articles` và `articles_source_url`. Bài đọc từ chỉ
+mục trong cơ sở dữ liệu, không gọi sang wiki: wiki tắt hay chậm không làm chậm biểu mẫu. Vẫn chỉ là gợi ý — người
+gửi bấm mở bài, hoặc gửi yêu cầu như thường (CLAUDE.md mục 4.3).
+
+**Kiểm chứng phần nối.** `tests/test_tri_thuc.py` (13 bài, GraphQL giả, mô hình nhúng giả): bỏ bài nháp và riêng tư;
+bài sửa nhúng lại, bài xóa bỏ khỏi chỉ mục; giới hạn lô; một trong hai công tắc tắt thì không làm gì; wiki hay mô
+hình hỏng thì bỏ lượt, chỉ mục còn nguyên; bài vào gợi ý cùng một lần nhúng; `/me` có/không có lối vào. Bốn phép đột
+biến (bỏ lọc riêng tư, bỏ xóa bài, bỏ so mốc sửa, bỏ công tắc ở bước tìm) đều làm bài đỏ. Trên cụm thử có hồ sơ
+`tri-thuc` và mô hình nhúng thật: viết một bài mới ("Laptop không kết nối được Wi-Fi văn phòng"), sau một lượt quét
+người gửi gõ "Laptop không vào được Wi-Fi" trên biểu mẫu thật thì khung gợi ý hiện đúng bài đó, bấm mở vào thẳng
+wiki; tắt wiki giữa chừng thì gợi ý vẫn hiện từ chỉ mục và gửi yêu cầu vẫn chạy.
 
 ---
 
