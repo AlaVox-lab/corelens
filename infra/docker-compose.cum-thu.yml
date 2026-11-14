@@ -37,3 +37,12 @@ services:
   frontend:
     container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}frontend
     image: dxlab-frontend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}
+  # Kho tri thức (#321): hai bước khởi tạo chạy trong ảnh dịch vụ ứng dụng nên cũng mang nhãn riêng
+  tri-thuc-chuan-bi:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}tri-thuc-chuan-bi
+    image: dxlab-backend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}
+  kho-tri-thuc:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}kho-tri-thuc
+  tri-thuc-khoi-tao:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}tri-thuc-khoi-tao
+    image: dxlab-backend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}

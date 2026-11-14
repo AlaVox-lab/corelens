@@ -49,6 +49,7 @@ from app.intelligence import mo_hinh
 from app.intelligence.phan_loai import NHAN_BO_QUET_GOI_Y, TEN_BO_QUET_GOI_Y, quet_goi_y
 from app.intelligence.tuong_tu import NHAN_BO_QUET_TUONG_TU, TEN_BO_QUET_TUONG_TU, quet_chi_muc
 from app.intelligence.tuong_tu import router as router_tuong_tu
+from app.intelligence.tri_thuc import NHAN_BO_QUET_TRI_THUC, TEN_BO_QUET_TRI_THUC, quet_kho_tri_thuc
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau
@@ -172,6 +173,28 @@ async def _vong_quet_tuong_tu() -> None:
             logger.exception("Lượt lập chỉ mục hồ sơ tương tự thất bại, sẽ thử lại ở lượt sau")
 
 
+def bo_quet_tri_thuc_bat() -> bool:
+    """Bộ lập chỉ mục kho tri thức (#321) chỉ có việc khi cả kho tri thức lẫn mô hình nhúng bật."""
+    return settings.wiki_enabled and settings.embedding_enabled
+
+
+def _quet_tri_thuc_mot_lan() -> int:
+    """Một lượt bộ lập chỉ mục kho tri thức (#321), có khóa tư vấn và dòng nhịp (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_TRI_THUC, quet_kho_tri_thuc)
+    return (luot.ket_qua or 0) if luot.da_chay else 0
+
+
+async def _vong_quet_tri_thuc() -> None:
+    """Vòng riêng: một lượt có thể chờ wiki và mô hình nhúng, không được làm trễ bộ quét hạn."""
+    while True:
+        await asyncio.sleep(settings.wiki_index_interval_seconds)
+        try:
+            await asyncio.to_thread(_quet_tri_thuc_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt lập chỉ mục kho tri thức thất bại, sẽ thử lại ở lượt sau")
+
+
 def _gui_thu_mot_lan() -> int:
     """Một lượt bộ gửi thư thông báo (#251), có khóa tư vấn và dòng nhịp (#253)."""
     with SessionLocal() as phien:
@@ -207,6 +230,11 @@ async def lifespan(app: FastAPI):
 
     if settings.similar_index_enabled:
         cac_tac_vu.append(asyncio.create_task(_vong_quet_tuong_tu()))
+
+    # Kho tri thức (#321): cần cả địa chỉ wiki lẫn mô hình nhúng
+    if bo_quet_tri_thuc_bat():
+        cac_tac_vu.append(asyncio.create_task(_vong_quet_tri_thuc()))
+        logger.info("Kho tri thức bật; bộ lập chỉ mục bài chạy mỗi %d giây", settings.wiki_index_interval_seconds)
 
     # Thông báo thư (#251): máy chủ thư không cấu hình thì không có bộ gửi
     if settings.notify_enabled:
@@ -322,6 +350,15 @@ def _do_suc_khoe(session: Session) -> dict:
                 session,
                 {TEN_BO_QUET_TUONG_TU: NHAN_BO_QUET_TUONG_TU},
                 nguong_qua_lau_giay=settings.similar_index_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
+        # Bộ lập chỉ mục kho tri thức (#321): chỉ hiện khi chạy
+        if bo_quet_tri_thuc_bat():
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_TRI_THUC: NHAN_BO_QUET_TRI_THUC},
+                nguong_qua_lau_giay=settings.wiki_index_stale_threshold_seconds,
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
@@ -552,6 +589,16 @@ def me(
         "departments": sorted(actor.departments),
         "workspaces": khong_gian,
         "acting_for": lam_thay,
+        # Lối vào kho tri thức (#321): mở thẳng chiến lược đăng nhập qua Keycloak, nên người đã đăng nhập
+        # cổng không phải nhập mật khẩu lần hai. Kho tri thức tắt thì không có, thanh bên không hiện lối vào
+        "knowledge_base": (
+            {
+                "url": f"{settings.wiki_public_url.rstrip('/')}/login/{settings.wiki_strategy_key}",
+                "source_url": settings.wiki_source_url,
+            }
+            if settings.wiki_enabled
+            else None
+        ),
     }
 
 

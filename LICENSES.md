@@ -14,7 +14,7 @@ văn ở `services/khai-pha/LICENSE`.
 | `frontend/` | Cổng người dùng (Next.js) | MIT | [`LICENSE`](LICENSE) |
 | `e2e/` | Kiểm thử giao diện | MIT | [`LICENSE`](LICENSE) |
 | `scripts/` | Kịch bản tiện ích, kiểm header | MIT | [`LICENSE`](LICENSE) |
-| `infra/` | Docker Compose, cấu hình nền tảng | MIT | [`LICENSE`](LICENSE) |
+| `infra/` | Docker Compose, cấu hình nền tảng, bước khởi tạo kho tri thức (`infra/tri-thuc/`) | MIT | [`LICENSE`](LICENSE) |
 | `docs/`, `docs-site/` | Tài liệu, trang tài liệu | MIT | [`LICENSE`](LICENSE) |
 | Tệp ở gốc kho và `.github/` | Quy tắc, cấu hình CI | MIT | [`LICENSE`](LICENSE) |
 | **`services/khai-pha/`** | **Dịch vụ khai phá quy trình** — cả `app/`, `tests/`, `Dockerfile` | **AGPL-3.0-or-later** | [`services/khai-pha/LICENSE`](services/khai-pha/LICENSE) |
@@ -63,6 +63,24 @@ không nhập, không liên kết, không chép mã hay thư viện `libclamav` 
 Hai chương trình giao tiếp qua mạng là tác phẩm riêng biệt đi cùng nhau, nên GPL không lan sang mã MIT —
 cùng ranh giới với Keycloak hay SeaweedFS, chỉ khác giấy phép của dịch vụ bên kia. Dự án không phát hành
 lại ảnh ClamAV; Compose kéo nguyên bản từ Docker Hub.
+
+## Kho tri thức theo AGPL-3.0 (Wiki.js, tùy chọn)
+
+Hồ sơ Compose `tri-thuc` (#321, [ADR-0006](docs/adr/0006-chon-nen-tang-kho-tri-thuc.md)) chạy ảnh chính thức
+`requarks/wiki:2.5.315` — AGPL-3.0 — như **dịch vụ độc lập**, không sửa, không dựng lại. Khác PM4Py, Wiki.js
+không phải thư viện được nhập vào mã của nhóm, nên **không thư mục nào của kho mang AGPL vì nó**:
+
+- Bước khởi tạo [`infra/tri-thuc/khoi_tao.py`](infra/tri-thuc/khoi_tao.py) (MIT) nói chuyện với Wiki.js qua
+  HTTP — trang cài đặt `/finalize` và GraphQL `/graphql` — và với Keycloak qua API quản trị. Nó không chứa,
+  không nạp, không dẫn xuất mã Wiki.js; bài hướng dẫn mẫu trong `infra/tri-thuc/bai-mau/` là dữ liệu của dự án
+- Người dùng đăng nhập Wiki.js qua OIDC; dịch vụ ứng dụng đọc bài qua GraphQL bằng khóa API chỉ đọc. Hai chương
+  trình giao tiếp qua mạng là tác phẩm riêng biệt đi cùng nhau (*aggregate*, điều 5), AGPL không lan sang mã MIT
+- **Điều 13** áp cho bản *đã sửa*. Dự án chạy nguyên bản, nên mã nguồn tương ứng chính là bản thượng nguồn công
+  khai ở `https://github.com/requarks/wiki` (thẻ `v2.5.315`). Cổng vẫn ghi tên, giấy phép và đường dẫn mã nguồn
+  ngay cạnh lối vào kho tri thức, cùng tinh thần dòng mã nguồn của màn Quy trình thực tế
+- Ranh giới hỏng nếu dựng ảnh riêng từ mã Wiki.js hay vá mã của nó — cả hai đều không làm. Mọi thay đổi hành vi
+  đi qua cấu hình và GraphQL. **Bạn tự sửa Wiki.js?** Phần sửa theo AGPL-3.0: công khai mã đã sửa và trỏ đường
+  dẫn mã nguồn trên cổng về bản đó
 
 ## Phụ thuộc bên thứ ba
 

@@ -4878,3 +4878,23 @@ span.qt-ma {
     width: auto;
   }
 }
+
+/* --- Lối vào kho tri thức trên thanh bên (#321) ------------------------------
+ * Dòng nhỏ dưới tên mục: nền tảng, giấy phép, mã nguồn (AGPL-3.0, điều 13). Thu gọn thanh bên thì ẩn
+ * như nhãn của mục. */
+.sb-nguon {
+  margin: -2px 0 4px 44px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.sb-nguon a {
+  color: inherit;
+}
+
+@media (min-width: 768px) {
+  .app[data-thu-gon] .sb-nguon {
+    display: none;
+  }
+}

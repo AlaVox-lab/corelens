@@ -130,6 +130,29 @@ class Settings(BaseSettings):
     # Người gửi xem gợi ý mà quá chừng này phút không gửi hồ sơ thì tính là bỏ không gửi (ngăn chặn)
     similar_abandon_after_minutes: int = 30
 
+    # --- Kho tri thức (#321, ADR-0006) -----------------------------------------
+    #
+    # Wiki.js chạy dưới hồ sơ Compose `tri-thuc`. Địa chỉ công khai rỗng là TẮT: thanh bên không có lối
+    # vào, không lập chỉ mục bài, gợi ý khi soạn chỉ có hồ sơ đã giải quyết như trước. Bộ lập chỉ mục bài
+    # cần thêm mô hình nhúng (`embedding_url`); thiếu nó thì có lối vào nhưng không gợi ý bài.
+    wiki_public_url: str = ""
+    # Địa chỉ trong mạng Compose để đọc bài qua GraphQL
+    wiki_internal_url: str = "http://kho-tri-thuc:3000"
+    # Khóa API chỉ đọc do bước khởi tạo (infra/tri-thuc/khoi_tao.py) ghi vào volume chung
+    wiki_api_key_file: str = "/run/tri-thuc/wiki-api-key"
+    # Chiến lược đăng nhập của Wiki.js: lối vào trên thanh bên mở /login/<khóa> để vào thẳng qua Keycloak
+    wiki_strategy_key: str = "keycloak"
+    # Mã nguồn của Wiki.js đang chạy (AGPL-3.0) — cổng hiện đường dẫn này cạnh lối vào và gợi ý bài
+    wiki_source_url: str = "https://github.com/requarks/wiki/tree/v2.5.315"
+    wiki_timeout_seconds: float = 10.0
+    wiki_index_interval_seconds: int = 120
+    wiki_index_batch_size: int = 8
+    # Số ký tự đầu của bài đem nhúng — đủ phần mô tả vấn đề, không cần cả bài
+    wiki_embed_chars: int = 1500
+    wiki_max_results: int = 2
+    # Độ tương đồng cosine tối thiểu để một bài được gợi ý
+    wiki_min_score: float = 0.55
+
     # --- Khuyến nghị cải tiến bằng câu chữ (#320) -------------------------------
     #
     # Mô hình sinh văn bản (`llm_url`) viết vài câu khuyến nghị từ kết quả khai phá quy trình. Sinh ở
@@ -148,6 +171,14 @@ class Settings(BaseSettings):
     @property
     def embedding_enabled(self) -> bool:
         return bool(self.embedding_url.strip())
+
+    @property
+    def wiki_enabled(self) -> bool:
+        return bool(self.wiki_public_url.strip())
+
+    @property
+    def wiki_index_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.wiki_index_interval_seconds
 
     @property
     def similar_index_stale_threshold_seconds(self) -> int:

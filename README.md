@@ -123,6 +123,21 @@ Máy chủ thư hay ClamAV hỏng thì thao tác trên hồ sơ vẫn chạy: th
 kèm nhãn "chưa quét" (đổi bằng `CLAMAV_ON_UNAVAILABLE=reject`). Chi tiết: trang tài liệu, *Cài đặt và vận
 hành → Thông báo thư và quét mã độc*.
 
+### Kho tri thức (tùy chọn)
+
+Wiki nội bộ để phòng ban viết hướng dẫn tự xử lý — Wiki.js (AGPL-3.0, chạy nguyên bản như dịch vụ độc lập),
+đăng nhập một lần bằng tài khoản công ty, thêm khoảng 300 MiB bộ nhớ. Trong `infra/`:
+
+```bash
+docker compose --env-file .env --profile tri-thuc up -d
+```
+
+Lần đầu, bước khởi tạo tự cài Wiki.js, nối đăng nhập qua Keycloak, tạo nhóm theo vai trò (mọi nhân viên đọc;
+điều phối viên, trưởng phòng, quản trị viên viết) và ba bài hướng dẫn mẫu. Đặt `WIKI_URL=http://localhost:3100`
+trong `infra/.env` thì thanh bên của cổng có lối **Kho tri thức** (vào thẳng, không hỏi mật khẩu lần nữa), và —
+khi mô hình nhúng cũng bật — bài hướng dẫn hiện trong gợi ý lúc người gửi đang soạn yêu cầu. Chi tiết: trang
+tài liệu, *Cài đặt và vận hành → Kho tri thức*.
+
 ### Nâng cấp
 
 Cụm dựng từ `v0.9.1` trở đi lên bản mới **mà không mất hồ sơ, nhật ký hay tệp đính kèm**: lược đồ do
