@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Tệp ghi đè CHO NGƯỜI PHÁT TRIỂN (#364): mở lại cổng của dịch vụ ứng dụng và PostgreSQL ra máy. Cấu
+# hình mặc định đóng hai cổng này — mọi lời gọi API đi qua cổng API (GATEWAY_PORT), cơ sở dữ liệu chỉ
+# nghe trong mạng Compose. Không dùng một mình, luôn đi sau docker-compose.yml:
+#
+#     docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d
+#
+# Dùng khi cần gọi thẳng dịch vụ ứng dụng bỏ qua cổng API (dò lỗi một điểm cuối, chạy `pytest` từ máy
+# với DXLAB_DATABASE_URI trỏ về localhost), hoặc mở cơ sở dữ liệu bằng công cụ quản trị trên máy. Gọi
+# thẳng thì không qua lớp kiểm token và giới hạn tốc độ của cổng API — dịch vụ ứng dụng vẫn tự kiểm
+# token đầy đủ. Đừng dùng tệp này khi triển khai thật.
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"

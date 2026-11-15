@@ -6,15 +6,19 @@
 // Mọi lời gọi đi qua máy chủ Next.js chứ không đi thẳng từ trình duyệt. Nhờ vậy token
 // không bao giờ rời khỏi phía máy chủ, và địa chỉ nội bộ của dịch vụ không lộ ra
 // ngoài — xem lib/session.ts.
+//
+// Từ #364 lời gọi tới dịch vụ đi qua cổng API (Apache APISIX): BACKEND_INTERNAL_URL trỏ vào cổng
+// nội bộ của nó trong mạng Compose, cổng API kiểm token rồi mới chuyển tới dịch vụ.
 
 import { headers } from "next/headers";
 import * as client from "openid-client";
 
+import { diaChiIp } from "@/lib/bao-mat";
 import { layCauHinh } from "@/lib/oidc";
 import { layPhien, luuPhien, type Phien } from "@/lib/session";
 
 const diaChiDichVu =
-  process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000";
+  process.env.BACKEND_INTERNAL_URL ?? "http://cong-api:9081";
 
 const MA_YEU_CAU_HOP_LE = /^[A-Za-z0-9._-]{1,64}$/;
 
@@ -33,8 +37,30 @@ async function maYeuCau(): Promise<string> {
   return crypto.randomUUID();
 }
 
+/**
+ * Địa chỉ của người dùng đang được phục vụ (#364), để giới hạn tốc độ của cổng API tính theo từng
+ * người chứ không gộp mọi người về địa chỉ của máy chủ Next.js. Cổng API chỉ tin tiêu đề này ở cổng
+ * nội bộ mà riêng cổng người dùng gọi. Cùng cách đọc với giới hạn đăng nhập ở `proxy.ts` (mục 7.4 của
+ * ARCHITECTURE.md): đúng khi cổng đứng sau reverse proxy đặt `X-Forwarded-For`.
+ */
+async function diaChiNguoiDung(): Promise<string | null> {
+  try {
+    const ip = diaChiIp(await headers());
+    return ip === "khong-ro" ? null : ip;
+  } catch {
+    // Ngoài phạm vi một yêu cầu — không có tiêu đề để đọc
+    return null;
+  }
+}
+
 async function tieuDeGoi(token: string): Promise<Record<string, string>> {
-  return { Authorization: `Bearer ${token}`, "X-Request-ID": await maYeuCau() };
+  const tieuDe: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "X-Request-ID": await maYeuCau(),
+  };
+  const ip = await diaChiNguoiDung();
+  if (ip) tieuDe["X-Real-IP"] = ip;
+  return tieuDe;
 }
 
 /**
@@ -203,6 +229,16 @@ async function docLoi(phanHoi: Response): Promise<{ ma: string; thongDiep: strin
     }
   } catch {
     // Phản hồi không phải JSON — rơi xuống thông điệp chung bên dưới
+  }
+
+  // Giới hạn tốc độ chung của cổng API (#364): thân không theo dạng `detail` của dịch vụ, nhưng người
+  // dùng vẫn cần biết là gửi quá nhanh và chờ bao lâu — như khi dịch vụ tự từ chối
+  if (phanHoi.status === 429) {
+    const giay = Number(phanHoi.headers.get("retry-after") ?? phanHoi.headers.get("x-ratelimit-reset"));
+    return {
+      ma: "rate-limited",
+      thongDiep: `Bạn gửi yêu cầu quá nhanh. Thử lại sau ${Number.isFinite(giay) && giay > 0 ? giay : "ít"} giây.`,
+    };
   }
 
   return {

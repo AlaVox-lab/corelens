@@ -422,9 +422,10 @@ def metrics(
 ) -> Response:
     """Số đo cơ bản, dạng văn bản Prometheus (#247). CHỈ QUẢN TRỊ VIÊN.
 
-    Không mở công khai và không dựa vào "chỉ trong mạng Compose": cổng dịch vụ được công bố ra máy
-    (`BACKEND_PORT`), nên ranh giới mạng không giữ được gì; mẫu đường dẫn và độ dài hàng đợi là thông
-    tin vận hành không cho người ngoài. Bộ thu số đo dùng token của một tài khoản quản trị.
+    Không mở công khai và không dựa vào "chỉ trong mạng Compose": từ #364 cổng dịch vụ không mở ra máy ở
+    cấu hình mặc định, nhưng tệp phát triển mở lại được, và ranh giới mạng không thay được kiểm quyền; mẫu
+    đường dẫn và độ dài hàng đợi là thông tin vận hành không cho người ngoài. Bộ thu số đo đi qua cổng API
+    bằng token của một tài khoản quản trị.
 
     Phần trong bộ nhớ là của RIÊNG bản dịch vụ trả lời; phần đọc từ cơ sở dữ liệu — hàng đợi thư, lượt
     quét cuối — là chung cả cụm.

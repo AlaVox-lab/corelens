@@ -57,7 +57,7 @@ chỗ nó không đụng được tới cụm kia:
 | Tên dự án Compose | `dx-os-lab` | `dxlab-thu` |
 | Tên container | `dxlab-backend`… | `thu-backend`… |
 | Ảnh tự dựng | `dxlab-backend:<phiên bản>`, `dxlab-frontend:…`, `dxlab-superset:…` | cùng ba ảnh, nhãn `cum-thu` |
-| Cổng | trong `infra/.env.example` | cổng đó **cộng 20000**: 23000 (cổng người dùng), 28080 (Keycloak), 28000, 28088, 28333, 25432 |
+| Cổng | trong `infra/.env.example` | cổng đó **cộng 20000**: 23000 (cổng người dùng), 28080 (Keycloak), 29080 (cổng API), 28088, 28333 |
 | Dữ liệu | volume `dx-os-lab_*` | volume `dxlab-thu_*` |
 
 Nhãn ảnh riêng là chỗ quan trọng nhất: tên ảnh mặc định dùng chung giữa hai cụm, nên dựng cụm thử

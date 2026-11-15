@@ -38,28 +38,31 @@ So sánh với các sản phẩm cùng loại: [`docs/so-sanh-san-pham.md`](docs
 | **P** | Quy trình — máy trạng thái, Poka-yoke, hạn xử lý | **Engine tự viết** (MIT) | Đã chạy |
 | **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện | Apache Superset `6.1.0` (Apache-2.0) | Đã chạy |
 | **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp server + Qwen2.5-1.5B (tùy chọn) | Thẻ gợi ý có xác nhận (`v0.10.0`); khai phá quy trình và màn quy trình thực tế (`v0.11.0`); gợi ý phân loại bằng mô hình cục bộ (`v0.12.0`); người xử lý, hồ sơ tương tự, khuyến nghị (`v0.13.0`) |
+| **core** | Cổng API — cửa vào duy nhất của API: kiểm token tại biên, giới hạn tốc độ | Apache APISIX `3.20.0` (Apache-2.0) | Đã chạy (#364) |
 
 Nền chung: Next.js, FastAPI, PostgreSQL, SeaweedFS (tệp đính kèm), Docker Compose. Nền tảng phổ thông
 được lắp ghép và chạy như dịch vụ độc lập; engine quy trình — phần lõi tạo khác biệt — nhóm tự viết.
+Mọi lời gọi API từ ngoài cụm, kể cả từ cổng người dùng, đi qua cổng API; dịch vụ ứng dụng và PostgreSQL
+không mở cổng ra máy.
 Tầng `I` chỉ ghi vào trường gợi ý, con người xác nhận mới thành quyết định. Lý do từng lựa chọn ở
 [`docs/adr/`](docs/adr/).
 
 ## Cài nhanh
 
-Cần Docker (Docker Desktop, hoặc Docker Engine 24 trở lên kèm Compose v2), khoảng 2 GB bộ nhớ, 6 GB ổ
-đĩa, và các cổng 3000 · 5432 · 8000 · 8080 · 8088 · 8333 đang trống.
+Cần Docker Engine 24 trở lên kèm Compose v2 (hoặc Docker Desktop), khoảng 2 GB bộ nhớ, 6 GB ổ
+đĩa, và các cổng 3000 · 8080 · 8088 · 8333 · 9080 đang trống.
 
 Tải **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `0.7.0` bằng phiên bản đã tải):
+[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `0.16.0` bằng phiên bản đã tải):
 
 ```bash
-tar -xzf dx-os-lab-0.7.0.tar.gz
-cd dx-os-lab-0.7.0/infra
+tar -xzf dx-os-lab-0.16.0.tar.gz
+cd dx-os-lab-0.16.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-0.7.0\infra`. Từ kho mã thì
+Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-0.16.0\infra`. Từ kho mã thì
 `git clone` rồi chạy ba lệnh cuối trong `dx-os-lab/infra`. Lần đầu mất khoảng 10–20 phút.
 
 Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty**. Tài khoản mẫu, mật khẩu chung
@@ -80,6 +83,15 @@ vào cụm thử — chạy ở gốc kho mã:
 
 ```bash
 python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
+```
+
+Cổng mở ra máy: `3000` cổng người dùng · `9080` **cổng API** — cửa vào duy nhất của API, tài liệu API ở
+`http://localhost:9080/docs`, mọi đường trừ kiểm tra sức khỏe và tài liệu cần access token của Keycloak ·
+`8080` Keycloak · `8088` Superset · `8333` S3 của SeaweedFS. Dịch vụ ứng dụng (`8000`) và PostgreSQL
+(`5432`) chỉ nghe trong mạng Compose; người phát triển cần gọi thẳng thì thêm tệp thứ hai:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d   # trong infra/
 ```
 
 Đủ mười ba tài khoản, kiểm cụm, cấu hình, sự cố thường gặp và nâng cấp: xem trang tài liệu, phần
@@ -137,6 +149,18 @@ Lần đầu, bước khởi tạo tự cài Wiki.js, nối đăng nhập qua Ke
 trong `infra/.env` thì thanh bên của cổng có lối **Kho tri thức** (vào thẳng, không hỏi mật khẩu lần nữa), và —
 khi mô hình nhúng cũng bật — bài hướng dẫn hiện trong gợi ý lúc người gửi đang soạn yêu cầu. Chi tiết: trang
 tài liệu, *Cài đặt và vận hành → Kho tri thức*.
+
+### Xác thực hai lớp (tùy chọn)
+
+Bật mã dùng một lần (TOTP) khi đăng nhập cho mọi tài khoản công ty chỉ bằng cấu hình Keycloak, không sửa
+mã nền tảng — ở gốc kho mã:
+
+```bash
+python scripts/xac_thuc_hai_lop.py bat          # tắt lại: tat · xem: trang-thai
+```
+
+Lần đăng nhập kế, người dùng quét mã QR bằng ứng dụng xác thực. Mặc định tắt nên cụm trình diễn không
+đổi. Chi tiết: trang tài liệu, *Cài đặt và vận hành → Xác thực hai lớp*.
 
 ### Nâng cấp
 
@@ -216,6 +240,7 @@ Tài liệu kỹ thuật trong kho:
 |---|---|
 | [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) | Dự án đang ở đâu, vừa làm gì, đang vướng gì |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Hệ thống tổ chức thế nào và vì sao |
+| [`docs/doi-chieu-de-thi.md`](docs/doi-chieu-de-thi.md) | Dự án đáp ứng từng yêu cầu của đề thi OLP 2026 bằng gì, còn thiếu gì |
 | [`docs/process-flow.md`](docs/process-flow.md) | Luồng nghiệp vụ: 11 trạng thái, 32 bước, cơ sở các con số |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Việc tiếp theo |
 | [`docs/adr/`](docs/adr/) | Vì sao chọn công nghệ đó |

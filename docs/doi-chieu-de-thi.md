@@ -1,0 +1,86 @@
+# Đối chiếu với đề thi Phần mềm nguồn mở OLP 2026
+
+> **Mục đích**: đặt từng yêu cầu của đề thi cạnh hiện trạng dự án — đáp ứng bằng gì, nằm ở đâu, còn
+> thiếu gì, phần nào để ngoài phạm vi và vì sao.
+>
+> **Issue liên quan**: #363 (issue gốc #369) · **Đối chiếu trên bản**: `v0.16.0` · **Ngày**: 2026-11-15
+>
+> Tệp này cập nhật khi từng issue của Giai đoạn 5 hoàn thành. Cột *Hiện trạng* chỉ ghi điều đã có trong
+> mã; việc dự định làm nằm ở cột *Việc còn lại*.
+
+---
+
+## 1. Đề thi yêu cầu gì
+
+Đề yêu cầu dựng mô hình **DX-OS Open-Core** theo tháp ba tầng:
+
+| Tầng | Vai trò | Bắt buộc trong bài thi |
+|---|---|---|
+| 1 — Nền tảng dịch vụ lõi số | Dịch vụ dùng chung chạy ngầm, **không giao diện**, phục vụ ứng dụng tầng trên | **Có** — định danh/SSO, cổng API, quản trị dữ liệu cấu trúc và phi cấu trúc, động cơ luồng công việc |
+| 2 — Không gian năng lực số H-P-D-I | Ứng dụng có giao diện cho người dùng cuối | **Có** — ít nhất một ứng dụng minh họa |
+| 3 — Nền tảng kinh doanh số | Ứng dụng chuyên ngành | Không |
+
+Hạn gửi bài: 17:00 ngày 06/12/2026. Chấm kho mã 07–09/12, trình diễn 10/12 (15 phút mỗi đội).
+
+---
+
+## 2. Tầng 1 — bốn dịch vụ lõi bắt buộc
+
+| Dịch vụ | Hiện trạng | Nằm ở đâu | Việc còn lại |
+|---|---|---|---|
+| Định danh, đăng nhập một lần | **Có.** Keycloak `26.7.3`; dịch vụ ứng dụng kiểm chữ ký, nơi phát, người nhận, hạn dùng của token; bảng điều khiển và kho tri thức dùng chung đăng nhập | `infra/keycloak/`, `backend/app/auth/`, ADR-0001 | Xác thực hai lớp tùy chọn — #366 |
+| **Cổng API** | **Có** (#364). Apache APISIX `3.20.0` ở cụm mặc định là cửa vào duy nhất của API: kiểm chữ ký, nơi phát, người nhận, hạn dùng của token Keycloak ngay tại biên (thiếu, hết hạn, khóa lạ: 401; phát cho client khác: 403 — không tới dịch vụ), giới hạn tốc độ chung theo địa chỉ người gọi, định tuyến tới dịch vụ ứng dụng. Cổng người dùng cũng gọi qua nó; dịch vụ ứng dụng và PostgreSQL không còn mở cổng ra máy; dịch vụ vẫn kiểm token lại | `infra/cong-api/`, `backend/tests/test_cong_api.py`, ADR-0010, `ARCHITECTURE.md` mục 7.4 | Gom không gian địa chỉ của lõi sau cổng — #365 |
+| Dữ liệu có cấu trúc | **Có.** PostgreSQL 16 + pgvector, lược đồ do migration quản lý, nâng cấp giữ dữ liệu, tài khoản chỉ đọc riêng cho báo cáo và khai phá | `backend/alembic/`, `ARCHITECTURE.md` mục 5.4 | Phơi qua API của lõi — #365 |
+| Dữ liệu phi cấu trúc | **Có.** SeaweedFS `4.45` qua S3 API; kiểm chữ ký tệp, quét mã độc tùy chọn | `backend/app/storage/`, ADR-0002 | Phơi qua API của lõi — #365 |
+| Động cơ luồng công việc | **Có, chưa tách.** Engine máy trạng thái tự viết: trạng thái, bước chuyển, vai trò, ràng buộc chống sai, hạn xử lý đều là dữ liệu; bộ quy tắc có phiên bản; mọi bước chuyển ghi nhật ký chỉ ghi thêm. Hiện nằm chung dịch vụ với các màn của ứng dụng và chạy một quy trình | `backend/app/workflow/`, ADR-0004, ADR-0005 | Tách ranh giới lõi — #365 (giảng viên chốt 15/11: Mức 1 trước) |
+| Nguyên tắc lõi không giao diện | **Một phần.** Dịch vụ ứng dụng chỉ có API (REST, có mô tả OpenAPI), nhưng tài liệu chưa trình bày nó như nền tảng lõi | `backend/app/main.py` | #365, #367 |
+
+### Các nhóm dịch vụ lõi khác đề có nêu
+
+Đề liệt kê bảy nhóm dịch vụ; bốn dịch vụ ở trên là phần bắt buộc. Hiện trạng các phần còn lại:
+
+| Nhóm | Đã có | Chưa có / ngoài phạm vi |
+|---|---|---|
+| Vận hành, giám sát, kiểm toán | Nhật ký sự kiện bất biến; nhật ký có cấu trúc kèm mã yêu cầu; điểm cuối sống, sẵn sàng, số đo; sao lưu tay và khôi phục có đối soát | Truyền phát sự kiện thời gian thực; sao lưu tự động theo lịch |
+| Truyền thông, giao vận | Hàng đợi thông báo thư có thử lại (hộp thư đi trong cơ sở dữ liệu) | Kết nối thời gian thực — cổng hỏi lại định kỳ |
+| Đa thuê ước, cá thể hóa | Ẩn danh hóa nhãn tên theo thời hạn lưu giữ (ADR-0009); lọc dữ liệu báo cáo theo phòng | Đa thuê ước; đa ngôn ngữ giao diện — ngoài phạm vi |
+| Két bí mật, chữ ký số | — | Ngoài phạm vi; bí mật nằm trong `infra/.env` |
+
+---
+
+## 3. Tầng 2 — ứng dụng minh họa
+
+Ứng dụng minh họa là **cổng vận hành yêu cầu nội bộ**, phủ cả bốn không gian:
+
+| Không gian | Có gì | Nằm ở đâu |
+|---|---|---|
+| `H` | Cổng theo vai, hộp thư trao đổi trên hồ sơ, ủy quyền khi vắng mặt, kho tri thức đăng nhập một lần (tùy chọn) | `frontend/`, `infra/tri-thuc/` |
+| `P` | Luồng 11 trạng thái, 32 bước; phân loại, định tuyến, leo thang, mở lại có giới hạn; màn cấu hình quy trình | `backend/app/workflow/`, `docs/process-flow.md` |
+| `D` | Lớp báo cáo trên nhật ký sự kiện, bảng điều khiển nhúng trong cổng lọc theo phòng, xuất CSV và JSON | `backend/app/analytics/`, `infra/superset/` |
+| `I` | Khai phá quy trình thực tế; gợi ý phân loại và người xử lý; hồ sơ tương tự; gợi ý bài tri thức. Mọi gợi ý cần người xác nhận, có đo tỷ lệ ghi đè | `services/khai-pha/`, `backend/app/intelligence/` |
+
+Yêu cầu "ít nhất một ứng dụng minh họa" đã đạt.
+
+---
+
+## 4. Bốn nguyên lý thiết kế của đề
+
+| Nguyên lý | Hiện trạng | Việc còn lại |
+|---|---|---|
+| (i) Tách dữ liệu theo vòng đời và tốc độ | **Một phần.** Bảng tác nghiệp tách khỏi view báo cáo; nhật ký sự kiện chỉ ghi thêm; báo cáo và khai phá đọc bằng tài khoản chỉ đọc riêng nên không khóa bảng tác nghiệp | Chưa có tầng lưu trữ lạnh cho dữ liệu lịch sử — ngoài phạm vi đợt này |
+| (ii) Hội tụ dữ liệu hành chính và vận hành | **Chưa có** | Ngoài phạm vi: bài toán minh họa không có thiết bị hiện trường |
+| (iii) Quản trị dữ liệu: phả hệ, nguồn gốc, chất lượng | **Một phần.** Mọi con số trên màn Quy trình thực tế tra ngược được về kết quả khai phá; hàm kiểm cấu hình chặn dữ liệu cấu hình sai; nhật ký sửa cấu hình | Mô tả phả hệ từ biểu đồ về bảng nguồn trong tài liệu — #367 |
+| (iv) Bảo mật không tín nhiệm gắn với hạ tầng bằng mã | **Có.** Kiểm token hai lớp: tại biên ở cổng API (#364) và lại ở dịch vụ; giới hạn tốc độ tại biên và theo người dùng trong dịch vụ; chỉ cổng API, cổng người dùng và giao diện các nền tảng mở cổng ra máy; chính sách nội dung có nonce, quét mã độc tệp tùy chọn, kiểm sức khỏe từng dịch vụ; tuyến và chính sách biên là tệp trong kho (`infra/cong-api/`), cả cụm khai bằng Docker Compose | — |
+
+---
+
+## 5. Điều kiện của thể lệ
+
+| Điều kiện | Hiện trạng |
+|---|---|
+| Giấy phép OSI, ghi trong từng tệp mã, có toàn văn | Đạt — `LICENSES.md`, `scripts/kiem_header.py` chạy trong CI |
+| Mã nguồn truy cập tự do trên Internet | **Chưa** — kho chuyển công khai trước hạn nộp |
+| Có bản phát hành theo phiên bản, định dạng mở | Đạt — 17 bản; bản dự thi `v1.0.0` ở #368 |
+| Dựng được từ mã nguồn, có hướng dẫn | Đạt — README mục Cài nhanh; kiểm lại từ tệp phát hành ở #368 |
+| Làm rõ thư viện, không sửa mã bên thứ ba | Đạt — `docs/dependencies.md`, `NOTICE` |
+| Có bug tracker, nhật ký thay đổi, README | Đạt |
