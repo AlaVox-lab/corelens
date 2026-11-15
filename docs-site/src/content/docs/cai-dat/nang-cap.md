@@ -66,3 +66,18 @@ Superset. Realm và dữ liệu khởi tạo tự nạp lại.
 Keycloak chỉ nạp `infra/keycloak/realm-dx-os-lab.json` khi realm chưa có. Bản mới đổi realm (vai trò,
 client, chủ đề đăng nhập) thì ghi chú phát hành ([Releases](https://github.com/AlaVox-lab/dx-os-lab/releases))
 nêu rõ; khi đó sửa tay trong trang quản trị Keycloak, hoặc dựng lại cụm.
+
+### Tài khoản dịch vụ gọi API của lõi
+
+Bản có API của nền tảng lõi (`/core/v1`) thêm client `dx-integration` vào realm — tài khoản dịch vụ để ứng
+dụng khác gọi lõi, xem [API](../../tham-khao/api/). Cụm dựng từ bản cũ hơn không có client này. Tạo nó mà
+không cần `down -v`, đứng ở gốc kho mã, sau bước 2 ở trên (đã chép ba dòng `KEYCLOAK_INTEGRATION_*` sang
+`.env`) và khi cụm đang chạy:
+
+```bash
+python scripts/tai_khoan_dich_vu.py
+```
+
+Kịch bản kiểm client, thiếu thì tạo, có rồi thì đặt lại cấu hình và bí mật theo `.env`, gán vai còn thiếu,
+rồi xin thử một token để chắc mọi thứ khớp. Chạy lại bao nhiêu lần cũng được. Cụm khác địa chỉ hay tệp env
+thì thêm `--env-file` và `--keycloak`. Đổi `KEYCLOAK_INTEGRATION_SECRET` về sau cũng chạy lại lệnh này.

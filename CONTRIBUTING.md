@@ -313,6 +313,13 @@ tệp khóa (`npm ci`) thay vì lệnh cài đặt thông thường.
 Khi xảy ra xung đột ở tệp khóa, **không sửa tay**. Lấy một phía bất kỳ rồi chạy lại
 lệnh cài đặt để trình quản lý gói tự dựng lại tệp khóa từ tệp khai báo phụ thuộc.
 
+Phía Python (`backend/`, `services/khai-pha/`) có **hai** tệp: `requirements.txt` ghim gói
+dùng trực tiếp bằng `==`, `constraints.txt` khóa nốt mọi gói kéo theo (#368). Dockerfile
+cài bằng `pip install -r requirements.txt -c constraints.txt`. Đổi một dòng trong
+`requirements.txt` thì sinh lại `constraints.txt` của cùng thư mục bằng `pip freeze` trong
+ảnh nền của Dockerfile — lệnh chính xác ghi ở đầu tệp `constraints.txt` — rồi dựng lại ảnh
+và chạy kiểm thử. Không sửa tay từng dòng của `constraints.txt`.
+
 ### 5.4. Tệp không được đưa vào kho mã
 
 Không commit: biến môi trường thật, khóa API, mật khẩu, tệp cơ sở dữ liệu,

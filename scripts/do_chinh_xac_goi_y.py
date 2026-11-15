@@ -93,6 +93,10 @@ def phan_tram(a: int, b: int) -> str:
 
 
 def main() -> None:
+    # Bảng điều khiển Windows mặc định không phải UTF-8
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description="Đo độ chính xác gợi ý của mô hình trên bộ mẫu có nhãn.")
     p.add_argument("--container", default="dxlab-backend", help="container dịch vụ ứng dụng")
     p.add_argument("--bo-mau", type=Path, default=BO_MAU)

@@ -229,14 +229,14 @@ yếu và gợi ý phòng dưới ngưỡng 80 % nên giữ bảng ánh xạ —
 
 Đề yêu cầu một nền tảng lõi không giao diện cung cấp định danh, cổng API, quản trị dữ liệu và động cơ
 luồng công việc, cùng ít nhất một ứng dụng minh họa trong H-P-D-I. Bộ khung đã có ứng dụng minh họa và
-ba trong bốn dịch vụ lõi; còn thiếu cổng API và ranh giới rõ giữa lõi với ứng dụng.
+ba trong bốn dịch vụ lõi; đợt này bổ sung cổng API và vẽ ranh giới giữa lõi với ứng dụng.
 
 - [x] Phân tích đề thi, đối chiếu với bộ khung hiện có — [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md) (#363)
 - [x] Khảo sát nền tảng cổng API — ADR-0010, đã chấp nhận 15/11 (#363)
-- [ ] Cổng API làm cửa vào duy nhất của cụm (#364)
-- [ ] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa (#365) — giảng viên chốt 15/11: làm Mức 1 (vẽ lại ranh giới API) trước, xong mới xét Mức 2 (nhiều quy trình)
-- [ ] Xác thực hai lớp tùy chọn (#366)
-- [ ] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
+- [x] Cổng API làm cửa vào duy nhất của cụm (#364)
+- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`. Mức 2 — engine chạy nhiều quy trình — chưa làm, xét sau khi phát hành
+- [x] Xác thực hai lớp tùy chọn (#366)
+- [x] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
 - [ ] Phát hành `v1.0.0`, kiểm dựng từ tệp phát hành (#368)
 
 **Chuẩn bị trước để giảm rủi ro**: tuân thủ nghiêm nguyên tắc cấu hình thay vì mã

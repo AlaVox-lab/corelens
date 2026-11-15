@@ -9,6 +9,9 @@
 #
 # Giấy phép của từng gói ghi trong docs/dependencies.md. Thêm gói mới thì cập nhật
 # tệp đó trong cùng công việc.
+#
+# Gói kéo theo khóa ở constraints.txt cạnh tệp này (#368). Đổi một dòng ở đây thì sinh
+# lại tệp đó theo hướng dẫn ở đầu tệp.
 
 fastapi==0.141.1
 uvicorn[standard]==0.53.0

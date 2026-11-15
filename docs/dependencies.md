@@ -190,7 +190,12 @@ của cụm hay trang tài liệu.
 ## Phụ thuộc dịch vụ ứng dụng
 
 Khai báo và ghim trong `backend/requirements.txt` bằng `==`. **Tệp này là tệp khóa
-phiên bản, bắt buộc commit.**
+phiên bản, bắt buộc commit.** Gói kéo theo khóa ở `backend/constraints.txt` (#368): sinh
+bằng `pip freeze` trong ảnh dựng từ `requirements.txt`, Dockerfile cài bằng
+`pip install -r requirements.txt -c constraints.txt`, nên dựng lại về sau nhận đúng từng
+phiên bản dưới đây — cả gói gián tiếp. Đổi `requirements.txt` thì sinh lại tệp đó theo lệnh
+ghi ở đầu tệp; cách làm ở `CONTRIBUTING.md` mục 5.3. Lúc thêm tệp (15/11/2026), `pip freeze`
+trong ảnh dựng lại có ràng buộc giống hệt ảnh trước đó, 47 gói.
 
 | Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|
@@ -201,7 +206,7 @@ phiên bản, bắt buộc commit.**
 | psycopg[binary] | `3.3.5` | **LGPL-3.0-only** | Có | Có, **có điều kiện** | Trình điều khiển PostgreSQL. Phụ thuộc copyleft duy nhất trong mã nguồn của nhóm — ranh giới ghi ở mục Lưu ý về giấy phép copyleft |
 | pydantic-settings | `2.15.0` | MIT | Có | Có | Đọc cấu hình từ biến môi trường |
 | pyjwt[crypto] | `2.14.0` | MIT | Có | Có | Kiểm chữ ký token OIDC **cục bộ**. Keycloak không nằm trên đường đi nóng — xem ADR-0001 |
-| cryptography | `50.0.1` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
+| cryptography | `50.0.2` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
 | boto3 | `1.43.118` | Apache-2.0 | Có | Có | Gọi S3 API chuẩn của SeaweedFS để lưu tệp đính kèm (#80) — đúng cách ADR-0002 chốt: dịch vụ độc lập qua giao thức chuẩn, không nhúng thư viện của SeaweedFS. Kiểm giấy phép trên gói đã cài: `Apache-2.0` |
 | python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
 
@@ -225,7 +230,9 @@ sản phẩm.
 ## Phụ thuộc dịch vụ khai phá quy trình
 
 Khai báo và ghim trong `services/khai-pha/requirements.txt` bằng `==` (#314, ADR-0007). Phần mở rộng
-`[stable]` của chính PM4Py ghim sẵn bộ thư viện số học kéo theo, nên ai dựng lại cũng nhận đúng bộ phiên
+`[stable]` của chính PM4Py ghim sẵn bộ thư viện số học kéo theo; phần còn lại (starlette, pydantic, anyio…)
+khóa ở `services/khai-pha/constraints.txt` (#368), cùng cách với dịch vụ ứng dụng ở trên — 50 gói, `pip freeze`
+trước và sau khi thêm tệp giống hệt. Nên ai dựng lại cũng nhận đúng bộ phiên
 bản dưới đây. Mọi gói trong bảng **chỉ nằm trong ảnh của dịch vụ khai phá**, không nằm trong dịch vụ ứng
 dụng hay cổng. Giấy phép đọc từ siêu dữ liệu gói đã cài trong ảnh; gói nào siêu dữ liệu không ghi thì
 đã mở tệp `LICENSE` trong gói.

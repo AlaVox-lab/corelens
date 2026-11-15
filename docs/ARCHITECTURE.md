@@ -132,6 +132,112 @@ vẫn vận hành ở chế độ thủ công.
 **Thứ tự xây dựng bắt buộc**: hoàn thiện luồng thủ công chạy đúng trước, sau đó mới
 gắn AI vào như một lớp hỗ trợ.
 
+### 2.3. Ranh giới lõi và ứng dụng minh họa
+
+**Đã cài đặt ở Mức 1** (#365, giảng viên chốt ngày 15/11/2026). Đề thi tách nền tảng dịch vụ lõi không
+giao diện (Tầng 1) khỏi ứng dụng minh họa có giao diện (Tầng 2). Mức 1 giữ **một** dịch vụ ứng dụng và vẽ
+ranh giới bằng không gian địa chỉ: API của lõi có phiên bản, nằm dưới `/core/v1`, đi qua cổng API; ứng dụng
+minh họa — cổng vận hành yêu cầu nội bộ — dùng các đường còn lại. Lược đồ không đổi. **Chưa làm**: engine
+chạy nhiều quy trình cùng lúc kèm một quy trình mẫu thứ hai (Mức 2), tách engine thành dịch vụ riêng (Mức 3).
+
+**Khuôn mẫu: gắn router thêm một lần, không chép mã.** `backend/app/main.py` gắn mỗi router của lõi thêm
+một lần với tiền tố `/core/v1/<nhóm>` (hàm `_gan_loi`). Đường cũ và đường của lõi là **cùng một hàm xử lý,
+cùng phụ thuộc** — kiểm token, phân quyền, giới hạn tốc độ theo người dùng, cửa chuyển trạng thái duy nhất
+(mục 6.1) — nên hai đường không thể kể hai chuyện. Đường cũ giữ nguyên cho cổng người dùng. Router nào trộn
+điểm cuối lõi với điểm cuối của ứng dụng thì tách đôi ngay trong tệp của nó, chỉ dời khai báo:
+`workflow/routes.py` có `router_loi` (lõi) và `router` (lời nhắn trên hồ sơ, của ứng dụng);
+`workflow/attachment_routes.py` có `router` (chính sách, tải về) và `router_tai_len` vì hai đường cũ khác
+tiền tố. Router mang tiền tố riêng (`/analytics`, `/me/notifications`) chuyển tiền tố ra lúc gắn.
+
+Nhãn OpenAPI gắn lúc gắn router, không khai ở router: nhãn của router cộng dồn vào **mọi** lần gắn, nên
+thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; năm
+nhóm này khai trong `openapi_tags` (`NHOM_LOI` ở `main.py`) nên đứng đầu `/docs`, kèm mô tả. Mã thao tác
+FastAPI tự sinh từ tên hàm cộng đường dẫn, nên bản của lõi không trùng bản ở đường cũ. Bề mặt đường cũ đối
+chiếu từng dòng trước và sau thay đổi — đường, phương thức, nhãn, mã thao tác, tham số, mã phản hồi — giống
+hệt.
+
+| Nhóm lõi (nhãn OpenAPI) | Đường cũ (giữ nguyên) | Đường của lõi |
+|---|---|---|
+| Lõi — Luồng công việc | `GET /request-types` | `GET /core/v1/workflow/request-types` |
+| | `GET /states` | `GET /core/v1/workflow/states` |
+| | `GET /priorities` | `GET /core/v1/workflow/priorities` |
+| | `GET /departments` | `GET /core/v1/workflow/departments` |
+| | `POST /requests` | `POST /core/v1/workflow/requests` |
+| | `GET /requests` | `GET /core/v1/workflow/requests` |
+| | `GET /requests/{case_id}` | `GET /core/v1/workflow/requests/{case_id}` |
+| | `POST /requests/{case_id}/transitions` | `POST /core/v1/workflow/requests/{case_id}/transitions` |
+| Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
+| | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
+| | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
+| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`) |
+| Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
+| | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
+| Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
+
+Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
+`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
+trong router đã gắn ở cả hai nơi, thêm một dòng vào bảng trên và vào `ANH_XA` của
+`backend/tests/test_loi_api.py` — bài kiểm so khít tập đường `/core/v1` trong OpenAPI với bảng đó, nên điểm
+cuối của ứng dụng không lọt vào lõi mà không ai hay.
+
+**Điểm cuối của ứng dụng minh họa** — chỉ ở đường cũ, dưới `/core/v1` trả `404`:
+
+| Phần của ứng dụng | Đường |
+|---|---|
+| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, lời nhắn, liên hệ người gửi |
+| Buồng lái phòng ban | `/department/*` — cùng các phần như trên |
+| Lời nhắn và hộp thư | `POST /requests/{case_id}/messages`, `/inbox`, `/inbox/unread`, `/inbox/{case_id}/read` |
+| Ủy quyền khi vắng mặt | `/delegations`, `/delegations/members`, `/delegations/{ma}/revoke` |
+| Giao việc, danh bạ | `GET /departments/{department_code}/assignees` |
+| Báo cáo nhúng | `POST /analytics/dashboard/guest-token` |
+| Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
+| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
+| Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
+| Vận hành | `/system/health`, `/sla/scan`, `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
+
+**Giới hạn của Mức 1.** Bước chuyển của lõi là cửa của người gửi: chỉ trên hồ sơ do chính người gọi tạo
+(`requester_id`), và chỉ những cạnh mà vai của người gọi đi được theo bảng `transitions`. Cạnh của điều phối
+viên và phòng ban đi qua hai buồng lái — phần của ứng dụng — nên một ứng dụng khác chưa phân loại hay nhận
+việc được qua lõi. Cửa bước chuyển trung lập với vai thuộc Mức 2.
+
+**Tài khoản dịch vụ.** Client `dx-integration` (biến `KEYCLOAK_INTEGRATION_*`): bí mật, chỉ bật client
+credentials, không đăng nhập người dùng; bộ ánh xạ đưa `dx-api` vào `aud` như client của cổng người dùng,
+nên token qua cổng API và dịch vụ mà không nới phép kiểm nào; tài khoản mang vai `requester` — đủ để tạo hồ
+sơ và đi các cạnh của người gửi trên hồ sơ của chính nó. Không dùng lại `dx-directory`: client đó chỉ để
+tra danh bạ, token không mang `aud` của dịch vụ. Hai đường tạo, cùng một cấu hình:
+
+- Cụm dựng mới: khai trong `infra/keycloak/realm-dx-os-lab.json`, bí mật khớp `infra/.env.example`. Mô tả
+  client giữ dưới 255 ký tự — cột của Keycloak chỉ chừng đó; vượt là Keycloak không nạp được realm và khởi
+  động lại liên tục (đã gặp lúc làm #365)
+- Cụm đang chạy (Keycloak chỉ nạp tệp realm lúc tạo realm): `python scripts/tai_khoan_dich_vu.py` — kiểm,
+  thiếu thì tạo, có rồi thì đặt lại cấu hình và bí mật theo `.env`, gán vai còn thiếu, rồi xin thử một
+  token và kiểm `aud`, vai. Chạy lại bao nhiêu lần cũng được; không gỡ vai nào
+
+Token của tài khoản dịch vụ không có `name` và `groups`. `actor_from_claims` (`backend/app/auth/identity.py`)
+lấy mã client trong `azp` làm tên hiển thị khi tên người dùng đúng là `service-account-<azp>` — người dùng
+thường không mượn được nhãn này. Hồ sơ do ứng dụng khác tạo mang nhãn người gửi `dx-integration`, dòng nhật
+ký mang `actor` là `sub` của tài khoản dịch vụ. Muốn nhãn khác: gắn claim `name` cho client trong Keycloak,
+claim đó luôn được ưu tiên.
+
+**Ví dụ chạy được.** `examples/goi-loi/goi_loi.py`, chỉ thư viện chuẩn: xin token client credentials từ
+Keycloak, rồi **chỉ** gọi cổng API dưới `/core/v1` — danh tính, danh mục loại yêu cầu, tạo hồ sơ, đọc bước
+được phép, đi một bước, đọc lịch sử. Không mã cứng mã trạng thái hay mã loại: chọn bước chính của người gọi,
+không có thì bước đầu tiên làm đổi trạng thái. Với dữ liệu mẫu, vai `requester` ở "Đã gửi" chỉ có "Sửa nội
+dung" (giữ trạng thái) và "Hủy yêu cầu", nên kịch bản đi "Hủy yêu cầu" — hồ sơ thử không nằm lại trong hàng
+đợi của điều phối viên. Hướng dẫn: `examples/goi-loi/README.md`.
+
+**Tại cổng API** không thêm tuyến nào: `/core/v1/*` rơi vào tuyến `can-token` (mục 7.4) — thiếu token là
+`401` ngay tại cổng, kể cả đường lõi chưa tồn tại.
+
+**Kiểm chứng.** `backend/tests/test_loi_api.py` (59 bài, chạy trong container dịch vụ như mọi bài khác):
+OpenAPI khớp bảng ánh xạ, đúng nhãn, không trùng mã thao tác; mỗi đường của lõi trả cùng kết quả với đường cũ, cả đọc lẫn ghi (tạo hồ sơ, đi bước, bước bị từ chối,
+tải tệp, đổi tùy chọn thông báo, xuất nhật ký); điểm cuối của ứng dụng `404` dưới `/core/v1`; không token
+`401`; token client credentials **thật** của Keycloak tạo hồ sơ và đi một bước chỉ bằng `/core/v1`; qua cổng
+API thật, không token bị chặn tại cổng còn tài khoản dịch vụ vào được. Ba phép đột biến đều làm bài đỏ: bỏ
+nhãn tên client của tài khoản dịch vụ, gắn router hộp thư vào lõi, để lại nhãn ở router của lõi.
+`examples/goi-loi/` chạy tay được trên cả cụm nâng cấp (client tạo bằng kịch bản) lẫn cụm dựng mới (client
+từ realm); nó ngoài ảnh của dịch vụ nên không nằm trong bộ kiểm thử tự động.
+
 ---
 
 ## 3. Bộ công nghệ
@@ -363,10 +469,12 @@ dx-os-lab/
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
 │   │   └── sql/                 # SQL thô của bản gốc 0000 và các bản hàm kiểm (0018, 0025), không sửa nữa
 │   ├── tests/
-│   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
+│   ├── requirements.txt         # TỆP KHÓA PHIÊN BẢN gói dùng trực tiếp, bắt buộc commit
+│   └── constraints.txt          # khóa nốt gói kéo theo, sinh bằng pip freeze (#368)
 ├── services/
 │   └── khai-pha/                # [I] dịch vụ khai phá quy trình (#314) — nơi DUY NHẤT dùng PM4Py (AGPL)
 │       ├── LICENSE              # AGPL-3.0 toàn văn: cả thư mục theo AGPL-3.0-or-later (#340)
+│       ├── requirements.txt, constraints.txt # như backend/ (#368)
 │       ├── app/du_lieu.py       # mọi câu SQL, chỉ đọc lớp báo cáo + cờ của bộ quy tắc
 │       ├── app/phan_tich.py     # nhánh lệch, thời gian chờ, điểm nghẽn — chung cho hai bộ máy
 │       └── app/bo_may/          # pm4py (mặc định) và noi_bo (dự phòng, Python thuần)
@@ -396,6 +504,8 @@ dx-os-lab/
 │   ├── so-sanh-san-pham.md      # so sánh với sản phẩm cùng loại (#277)
 │   └── *-survey.md              # bảy tài liệu khảo sát Open-Core
 ├── e2e/                         # kiểm tra giao diện qua đăng nhập thật, Playwright (#238)
+├── examples/
+│   └── goi-loi/                 # [core] ứng dụng khác gọi API của lõi /core/v1 bằng tài khoản dịch vụ (#365)
 ├── docs-site/                   # trang tài liệu theo người đọc, dựng bằng Starlight (#279)
 │   ├── src/content/docs/        # mỗi trang một tệp Markdown; dẫn sang docs/, không chép lại
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
@@ -422,6 +532,7 @@ dx-os-lab/
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
 │   ├── sao_luu.py               # sao lưu tay, khôi phục, đối soát cơ sở dữ liệu và kho tệp (#245)
+│   ├── tai_khoan_dich_vu.py     # tạo, cập nhật tài khoản dịch vụ gọi lõi trên cụm đang chạy (#365)
 │   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
 │   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
 │   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
@@ -2007,7 +2118,8 @@ Apache APISIX `3.20.0`, ảnh chính thức nguyên bản, chế độ **standal
 gắn chỉ đọc — `config.yaml` (tiến trình: một tiến trình làm việc, tắt API quản trị, chỉ nạp ba plugin) và
 `apisix.yaml` (tuyến, plugin). Không etcd; sửa `apisix.yaml` là APISIX tự nạp lại. Mọi con số chính sách
 là biến môi trường (`GATEWAY_*`, mặc định ở `docker-compose.yml` và `infra/.env.example`). Mọi đường được
-chuyển tới `backend:8000` **giữ nguyên đường dẫn**; gom không gian địa chỉ của lõi là việc của #365.
+chuyển tới `backend:8000` **giữ nguyên đường dẫn**; API của nền tảng lõi nằm dưới `/core/v1` (#365, mục 2.3)
+và đi qua đúng tuyến cần token như mọi đường không công khai — không tuyến riêng.
 
 **Đường nào cần token.** Tuyến `cong-khai` khớp *đúng* từng đường (không dấu sao), chỉ `GET`/`HEAD`; mọi
 đường và phương thức khác rơi xuống tuyến `can-token`. Danh sách công khai lấy từ OpenAPI của dịch vụ: các
@@ -2019,6 +2131,7 @@ thêm vào cả `apisix.yaml` lẫn bảng này.
 | `/`, `/health`, `/health/live`, `/health/ready` (GET, HEAD) | Công khai | Công khai; `/health*` chỉ trả trạng thái chung (dưới) |
 | `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json` (GET, HEAD) | Công khai | Công khai (tài liệu tự sinh) |
 | `/metrics`, `/system/health`, `/sla/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
+| `/core/v1/*` — API của nền tảng lõi (mục 2.3) | Cần token, kể cả đường lõi chưa có | Như đường cũ tương ứng: cùng hàm, cùng phụ thuộc |
 | Mọi đường khác, và đường công khai với phương thức khác (`POST /health`) | Cần token | Cần token; phân quyền theo vai trò và phạm vi như cũ |
 
 **Cổng trả gì.** Đo thật với Keycloak của cụm (`backend/tests/test_cong_api.py`):

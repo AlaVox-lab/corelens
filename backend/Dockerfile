@@ -18,8 +18,11 @@ WORKDIR /app
 # Chép riêng tệp phụ thuộc trước mã nguồn để Docker tái dùng được lớp cài đặt khi
 # chỉ mã nguồn thay đổi. Sửa một dòng mã mà phải cài lại toàn bộ thư viện thì mỗi
 # lần dựng mất vài phút.
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --requirement requirements.txt
+#
+# Tệp ràng buộc khóa cả gói kéo theo (#368): requirements.txt chỉ ghim gói dùng trực tiếp, nên không có nó
+# thì dựng lại vài tháng sau sẽ nhận starlette, pydantic, botocore… bản mới hơn bản đã kiểm thử.
+COPY requirements.txt constraints.txt ./
+RUN pip install --no-cache-dir --requirement requirements.txt --constraint constraints.txt
 
 COPY . ./
 
