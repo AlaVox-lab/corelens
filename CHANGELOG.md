@@ -5,6 +5,13 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.0.0] - 2026-11-15
+
+### Tính năng mới
+
+- **infra:** Thêm cổng API và xác thực hai lớp theo đề thi ([#370](https://github.com/AlaVox-lab/dx-os-lab/issues/370)) ([d5fe524](https://github.com/AlaVox-lab/dx-os-lab/commit/d5fe524aba3a4b2a72c5a8739ec9d0b8f68500c7))
+- **p-workflow:** Tách nền tảng lõi khỏi ứng dụng minh họa ([#371](https://github.com/AlaVox-lab/dx-os-lab/issues/371)) ([dc7e683](https://github.com/AlaVox-lab/dx-os-lab/commit/dc7e6836959325ba95a14d5269e2c03ccc9913e6))
+
 ## [0.16.0] - 2026-11-14
 
 ### Tính năng mới
