@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-14 |
-| Phiên bản hiện tại | **`v0.15.0`** (13/11) — màn quản trị cấu hình quy trình, ủy quyền khi vắng mặt, sao lưu tay và khôi phục, chính sách dữ liệu cá nhân ADR-0009 (#255, #252, #245, #246, PR #355). Trước đó: `v0.14.0` (12/11) thông báo thư điện tử, kiểm và quét tệp đính kèm, quan sát vận hành, ghim ảnh Node (#251, #248, #247, PR #351); `v0.13.0` (11/11) gợi ý người xử lý, hồ sơ tương tự, khuyến nghị cải tiến. **#321 kho tri thức** làm trong cùng pull request với bản cập nhật này, phát hành ở đợt sau |
-| Giai đoạn | **Giai đoạn 4 đã khép** (`v0.10.0`–`v0.13.0`). **Nhóm nền tảng vận hành #240 khép** cùng pull request này: mọi issue con đã đóng — #242 (giảng viên chốt 13/11 không chặn khởi động khi còn tài khoản, mật khẩu mẫu; thay bằng mục *Trước khi dùng thật* trong README) và #244 (giảng viên đồng ý 13/11 để ngoài phạm vi: trình diễn chạy một máy qua `localhost`) đóng `wontfix`. **Giai đoạn 5 chờ đề thi** |
-| Mốc công việc | **Giai đoạn 4 — Không gian I** (hạn 29/11): 23 đóng, 1 mở — #321, đóng cùng pull request này. **Tuần 16 — Nền tảng vận hành** (hạn 29/11): 20 đóng, 1 mở — issue gốc #240, đóng cùng pull request này |
-| Trạng thái kho mã | Riêng tư, sẽ chuyển công khai trước khi nộp bài |
+| Cập nhật lần cuối | 2026-11-15 |
+| Phiên bản hiện tại | **`v0.16.0`** (14/11) — kho tri thức Wiki.js tùy chọn (#321). Trên `dev`, chờ phát hành `v1.0.0`: cổng API Apache APISIX, xác thực hai lớp tùy chọn, bảng đối chiếu đề thi (#363, #364, #366, PR #370); tách nền tảng lõi Mức 1 và tài liệu theo mô hình của đề (#365, #367), các việc dọn trước phát hành (#368) |
+| Giai đoạn | **Giai đoạn 5 — thích ứng đề thi** (từ 15/11, issue gốc #369). Đề công bố tháng 11 yêu cầu nền tảng lõi không giao diện (định danh, cổng API, dữ liệu, luồng công việc) và ít nhất một ứng dụng minh họa H-P-D-I; đối chiếu ở `doi-chieu-de-thi.md`. Giai đoạn 2 tới 4 đã khép |
+| Mốc công việc | **Giai đoạn 5 - Thích ứng đề thi** (số 17, hạn 05/12): #363, #364, #366 đã vào `dev`; #365, #367 làm xong cùng bản cập nhật này; #368 còn bước phát hành và dựng từ tệp phát hành; issue gốc #369 đóng sau cùng |
+| Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **bảy dịch vụ**; bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
-| Issue đang mở | **2** — #321 và #240, cùng đóng khi pull request này lên `main`. Sau đó kho **không còn issue mở**: bước kế là rà bảng điểm PoF trước khi có đề |
-| Quyết định kiến trúc đã chốt | **9** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, navigator chấp nhận 14/11) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân bằng ẩn danh hóa nhãn tên (ADR-0009, giảng viên duyệt 13/11) |
+| Issue đang mở | **7** — #363 tới #369 của Giai đoạn 5; sáu issue đầu đóng khi đợt này lên `main`, #369 đóng tay sau khi `v1.0.0` phát hành |
+| Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **752 bài** pytest ở dịch vụ ứng dụng và **176 bài** ở dịch vụ khai phá (chạy trên cả hai bộ máy), trên PostgreSQL và Keycloak thật, **tự chạy trên mỗi pull request** từ 28/10 (#241). Giao diện có **kịch bản Playwright `e2e/`** (#238): năm tài khoản đăng nhập thật, bốn cấu hình hiển thị, **180 bài đạt, 23 bỏ qua có chủ đích** ở lượt trọn bộ của `v0.15.0` — chạy một lượt trên cụm thử dựng sạch trước khi mở pull request. Công cụ kiểm chứng — cụm thử cách ly, dò đăng nhập, tạo hồ sơ thử, phép thử đột biến — nằm trong `scripts/kiem_chung/` (#249). Mọi issue từ #78 đều qua phép thử đột biến |
-| Tổng bộ nhớ toàn cụm | **Cụm mặc định bảy dịch vụ: 1,66 GiB**, đo ngày 12/11 (#247) bằng `docker stats --no-stream` sau một lượt dùng thật: Keycloak 700 MiB, Superset 354 MiB, khai phá 183 MiB, SeaweedFS 158 MiB, dịch vụ ứng dụng 121 MiB, cổng 95 MiB, PostgreSQL 85 MiB. Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB** ngay sau một lượt dùng (đo 14/11, #321; dữ liệu wiki nằm trong database riêng của PostgreSQL sẵn có). `tri-tue` chưa đo lại — ước tính cũ: khoảng 1,5 GB cho mô hình sinh văn bản, ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB** (ADR-0007) |
-| Số ngày còn lại tới chấm kho mã | **23 ngày** (07/12/2026) |
-| Số ngày còn lại tới khi công bố đề thi | **trong tháng 11/2026**, chưa công bố tới ngày 14/11 |
+| Bộ kiểm thử tự động | **842 bài** pytest ở dịch vụ ứng dụng (thêm 31 bài cổng API, 59 bài ranh giới lõi) và **176 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request. Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 15/11, mọi lời gọi đi qua cổng API, không lần nào 502. Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` chưa đo lại — ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
+| Số ngày còn lại tới chấm kho mã | **22 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
+| Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
 mức ưu tiên, chuyển về phòng ban → trưởng phòng nhận hoặc trả lại, giao người xử lý tra
@@ -954,8 +954,10 @@ gốc #240 đóng khi pull request này lên `main`
 
 ## Đang làm
 
-#321 kho tri thức đi cùng pull request cập nhật tệp này — làm xong, kiểm trên cụm thử, chờ hợp nhất và
-phát hành. Không còn issue nào khác đang làm.
+Giai đoạn 5. Đã vào `dev`: cổng API và xác thực hai lớp (PR #370). Làm xong, chờ hợp nhất: tách nền tảng lõi
+Mức 1 — API của lõi dưới `/core/v1`, tài khoản dịch vụ `dx-integration`, ví dụ `examples/goi-loi/` (#365); tài
+liệu viết lại theo mô hình lõi và ứng dụng minh họa (#367); khóa phiên bản gói Python kéo theo, sửa kịch bản kiểm
+header trên console Windows, thống nhất tên chủ bản quyền (#368).
 
 ---
 
@@ -963,14 +965,16 @@ phát hành. Không còn issue nào khác đang làm.
 
 ### Theo thứ tự
 
-1. **Phát hành đợt #321** (kho tri thức) cùng bản cập nhật này
-2. **Rà bảng điểm PoF 50 điểm trước khi có đề** — chỉ đọc, lập bảng đối chiếu từng hạng mục với hiện trạng:
-   header giấy phép trên từng tệp; dựng từ mã nguồn trên một máy sạch và chạy được ngoài thư mục mã nguồn;
-   bản phát hành, nhật ký thay đổi, README; chuyển kho sang công khai (5 điểm, trừ 3 nếu không có truy cập mở)
-3. **Giai đoạn 5 khi có đề thi** — phân tích đề, thay dữ liệu khởi tạo, bổ sung phần thiếu, phát hành
-   **`v1.0.0`**. Đề thi công bố trong tháng 11 — có thể đổi thứ tự toàn bộ danh sách này
-4. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng
-   viên giao từ 15/10; gửi bản phát hành mới nhất
+1. **Hợp nhất đợt Giai đoạn 5 lên `main` và phát hành `v1.0.0`**; dựng lại từ đúng tệp `.tar.gz` của bản đó theo
+   README trên một cụm sạch, ghi kết quả vào #368
+2. **Chuyển kho sang công khai** trước hạn gửi bài 17:00 ngày 06/12 — điều kiện để được chấm; sau đó bật bảo vệ
+   nhánh, bắt buộc dấu xanh, đăng trang tài liệu
+3. **Xét Mức 2 của #365** — engine chạy nhiều quy trình và một quy trình mẫu thứ hai — nếu còn thời gian sau khi
+   phát hành; giảng viên chốt 15/11 là làm Mức 1 trước
+4. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
+   bài toán minh họa; kết quả và demo; định hướng
+5. **Đăng ký dự thi qua trường và gửi bài** theo mẫu thư ở mục 5 của đề
+6. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng viên giao từ 15/10
 
 ### Chờ giảng viên
 

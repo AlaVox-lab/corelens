@@ -80,7 +80,8 @@ routes:
       - /openapi.json
     upstream_id: dich-vu-ung-dung
 
-  # Mọi đường còn lại cần access token của Keycloak
+  # Mọi đường còn lại cần access token của Keycloak — kể cả API của nền tảng lõi /core/v1/* (#365): thiếu
+  # token là 401 tại đây, cả với đường lõi chưa tồn tại, nên người ngoài không dò được bề mặt của lõi
   - id: can-token
     priority: 0
     uri: /*

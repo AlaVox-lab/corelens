@@ -9,6 +9,10 @@
 #
 # Cổng này phục vụ **người tạo yêu cầu**: chỉ thấy hồ sơ của chính mình. Buồng lái cho
 # điều phối viên và người xử lý là #45, với bộ điểm cuối riêng.
+#
+# Từ #365 phần lớn tệp này là API của nền tảng lõi (Tầng 1): danh mục cấu hình, tạo và đọc hồ sơ,
+# bước chuyển. Chúng nằm ở `router_loi`, được gắn hai lần — đường cũ và `/core/v1/workflow` (app/main.py,
+# ARCHITECTURE.md mục 2.3). Lời nhắn trên hồ sơ thuộc ứng dụng minh họa nên ở `router`, chỉ đường cũ.
 
 from __future__ import annotations
 
@@ -108,7 +112,10 @@ from app.workflow.schemas import (
 from app.db import get_session
 from app.rate_limit import gioi_han_toc_do
 
-router = APIRouter(tags=["Yêu cầu"])
+# Nhãn OpenAPI gắn lúc include ở app/main.py, không gắn ở đây: nhãn của router luôn cộng dồn vào mọi lần
+# include, nên thao tác dưới /core/v1 sẽ mang thêm "Yêu cầu" bên cạnh nhãn "Lõi — …" của nó.
+router_loi = APIRouter()
+router = APIRouter()
 
 # Mã lỗi của engine ánh xạ sang mã HTTP. Giữ ở một chỗ để mọi điểm cuối trả lời giống
 # nhau, và để #45 dùng lại được.
@@ -464,7 +471,7 @@ def _kiem_chu_so_huu(session: Session, case_id: int, actor: Actor) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.get("/request-types", response_model=list[LoaiYeuCauRa])
+@router_loi.get("/request-types", response_model=list[LoaiYeuCauRa])
 def danh_muc_loai_yeu_cau(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -506,7 +513,7 @@ def goi_y_ra(goi_y: GoiY | None) -> GoiYRa | None:
     )
 
 
-@router.get("/states", response_model=list[TrangThaiRa])
+@router_loi.get("/states", response_model=list[TrangThaiRa])
 def danh_muc_trang_thai(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -530,7 +537,7 @@ def danh_muc_trang_thai(
     ]
 
 
-@router.get("/priorities", response_model=list[MucUuTienRa])
+@router_loi.get("/priorities", response_model=list[MucUuTienRa])
 def danh_muc_muc_uu_tien(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -542,7 +549,7 @@ def danh_muc_muc_uu_tien(
     ]
 
 
-@router.get("/departments", response_model=list[PhongBanRa])
+@router_loi.get("/departments", response_model=list[PhongBanRa])
 def danh_muc_phong_ban(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -563,7 +570,7 @@ def danh_muc_phong_ban(
 # ---------------------------------------------------------------------------
 
 
-@router.post(
+@router_loi.post(
     "/requests",
     response_model=HoSoChiTietRa,
     status_code=201,
@@ -629,7 +636,7 @@ def tao_ho_so(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router.get("/requests", response_model=DanhSachHoSoRa)
+@router_loi.get("/requests", response_model=DanhSachHoSoRa)
 def ho_so_cua_toi(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -717,7 +724,7 @@ def ho_so_cua_toi(
     )
 
 
-@router.get("/requests/{case_id}", response_model=HoSoChiTietRa)
+@router_loi.get("/requests/{case_id}", response_model=HoSoChiTietRa)
 def chi_tiet_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -728,7 +735,7 @@ def chi_tiet_ho_so(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
+@router_loi.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiVao,

@@ -78,6 +78,11 @@ def doc_dau_tep(tep: Path) -> str:
 
 
 def main() -> int:
+    # Bảng điều khiển Windows mặc định không phải UTF-8: không có dòng này, lệnh in câu tiếng Việt đầu tiên
+    # ném UnicodeEncodeError trừ khi người chạy tự đặt PYTHONIOENCODING (#368)
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     danh_sach = tep_can_kiem()
     so_loi = 0
     for tep in danh_sach:

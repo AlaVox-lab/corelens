@@ -20,6 +20,7 @@ cần xóa dữ liệu.
 | `KEYCLOAK_ADMIN_PASSWORD`, `SUPERSET_ADMIN_PASSWORD` | Tài khoản quản trị Keycloak, Superset (mẫu là `admin`) |
 | `SEAWEEDFS_SECRET_KEY` | Khóa S3 của kho tệp — phải khớp `infra/seaweedfs/s3-config.json` |
 | `KEYCLOAK_PORTAL_SECRET`, `KEYCLOAK_DIRECTORY_SECRET` | Bí mật hai client — phải khớp `infra/keycloak/realm-dx-os-lab.json` |
+| `KEYCLOAK_INTEGRATION_SECRET` | Bí mật của tài khoản dịch vụ gọi API của lõi — đổi xong chạy `python scripts/tai_khoan_dich_vu.py` để Keycloak nhận bí mật mới |
 | `PORTAL_SESSION_SECRET` | Khóa mã hóa cookie phiên của cổng — sinh bằng `openssl rand -base64 32` |
 | `SUPERSET_SECRET_KEY` | Khóa ký phiên của Superset — sinh bằng `openssl rand -base64 42` |
 
@@ -68,6 +69,19 @@ Giao diện hỏi dịch vụ các giới hạn này, nên đổi một chỗ l�
 | `KEYCLOAK_REALM` | `dx-os-lab` | Realm nạp từ `infra/keycloak/realm-dx-os-lab.json` |
 | `KEYCLOAK_DEPARTMENT_GROUP_PREFIX` | `/phong-ban/` | Phòng ban là nhóm Keycloak dưới đường dẫn này. Tổ chức cây nhóm khác thì đổi ở đây |
 | `KEYCLOAK_MAX_HEAP` | `768m` | Keycloak là dịch vụ nặng nhất cụm; dưới `512m` khởi động chậm hẳn |
+
+### Tài khoản dịch vụ gọi API của lõi
+
+Ứng dụng khác gọi API của nền tảng lõi (`/core/v1`) bằng token của một tài khoản dịch vụ — xem
+[API](../../tham-khao/api/). Dịch vụ ứng dụng **không** đọc ba biến này; chỉ `examples/goi-loi/` và
+`scripts/tai_khoan_dich_vu.py` dùng. Realm mẫu đã khai client `dx-integration` với đúng các giá trị mặc
+định; đổi biến nào thì chạy `python scripts/tai_khoan_dich_vu.py` để Keycloak theo.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `KEYCLOAK_INTEGRATION_CLIENT_ID` | `dx-integration` | Client bí mật, chỉ bật client credentials; token mang `aud` của dịch vụ ứng dụng |
+| `KEYCLOAK_INTEGRATION_SECRET` | giá trị mẫu | Đổi trước khi triển khai thật |
+| `KEYCLOAK_INTEGRATION_ROLES` | `requester` | Vai realm của tài khoản dịch vụ, cách nhau dấu phẩy. Kịch bản chỉ gán thêm, không gỡ vai nào |
 
 ## Bộ quét hạn
 

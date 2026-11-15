@@ -11,8 +11,9 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --requirement requirements.txt
+# Tệp ràng buộc khóa cả gói kéo theo mà phần [stable] của pm4py không ghim (#368)
+COPY requirements.txt constraints.txt ./
+RUN pip install --no-cache-dir --requirement requirements.txt --constraint constraints.txt
 
 # Lần nạp pm4py đầu tiên biên dịch mã mất cả phút (đo ở #48: 95 giây). Biên dịch sẵn lúc dựng ảnh để
 # dịch vụ khởi động trong vài giây.

@@ -9,6 +9,9 @@
 # mã định danh — dữ liệu xuất ra là để phân tích quy trình, không phải để đọc lại ai nói gì.
 #
 # Chỉ quản trị viên — cùng vai trò gác màn Hệ thống và lệnh quét hạn ở `app/main.py`.
+#
+# Đây là API của nền tảng lõi (#365, dữ liệu có cấu trúc): app/main.py gắn router hai lần — đường cũ
+# `/analytics/event-log` và `/core/v1/events`. Tiền tố và nhãn OpenAPI gắn lúc include.
 
 from __future__ import annotations
 
@@ -42,7 +45,7 @@ COT = (
     "rule_set_id",
 )
 
-router = APIRouter(prefix="/analytics", tags=["Dữ liệu mở"])
+router = APIRouter()
 
 
 def _gia_tri(v):
@@ -52,7 +55,7 @@ def _gia_tri(v):
     return v
 
 
-@router.get("/event-log")
+@router.get("")
 def xuat_nhat_ky(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(require_roles(VAI_TRO_XUAT))],
