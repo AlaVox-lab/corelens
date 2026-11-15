@@ -32,18 +32,22 @@ export default defineConfig({
   },
   projects: [
     { name: "chuan-bi", testMatch: /chuan-bi\.setup\.ts/, use: rong },
-    { name: "rong-sang", dependencies: ["chuan-bi"], testIgnore: /giam-chuyen-dong/, use: { ...rong, colorScheme: "light" } },
-    { name: "rong-toi", dependencies: ["chuan-bi"], testIgnore: /giam-chuyen-dong/, use: { ...rong, colorScheme: "dark" } },
+    { name: "rong-sang", dependencies: ["chuan-bi"], testIgnore: [/giam-chuyen-dong/, /xac-thuc-hai-lop/], use: { ...rong, colorScheme: "light" } },
+    { name: "rong-toi", dependencies: ["chuan-bi"], testIgnore: [/giam-chuyen-dong/, /xac-thuc-hai-lop/], use: { ...rong, colorScheme: "dark" } },
     {
       name: "hep-sang",
       dependencies: ["chuan-bi"],
-      testIgnore: /giam-chuyen-dong/,
+      testIgnore: [/giam-chuyen-dong/, /xac-thuc-hai-lop/],
       use: { ...rong, viewport: { width: 375, height: 812 }, colorScheme: "light" },
     },
     {
       name: "giam-chuyen-dong",
       dependencies: ["chuan-bi"],
+      testIgnore: /xac-thuc-hai-lop/,
       use: { ...rong, colorScheme: "light", reducedMotion: "reduce" },
     },
+    // Xác thực hai lớp (#366): chỉ chạy khi HAI_LOP=1, KHÔNG phụ thuộc bước chuẩn bị — khi bật, tài khoản
+    // mẫu bị buộc thiết lập mã nên bước chuẩn bị không đăng nhập được. Xem kiem/xac-thuc-hai-lop.spec.ts
+    { name: "hai-lop", testMatch: /xac-thuc-hai-lop\.spec\.ts/, use: { ...rong, colorScheme: "light" } },
   ],
 });

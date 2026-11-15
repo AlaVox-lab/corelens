@@ -102,8 +102,9 @@ do Hội Tin học Việt Nam tổ chức, CLB VFOSSA thường trực.
 
 - Chủ đề: **Xây dựng Hệ điều hành Doanh nghiệp số (DX-OS)** theo kiến trúc Open-Core
 - Đội tối đa 3 sinh viên, có giảng viên hướng dẫn
-- Đề thi chính thức công bố **tháng 11/2026**, chấm kho mã **7–9/12**,
-  chung kết **10/12**
+- Đề thi chính thức **đã công bố tháng 11/2026**: nền tảng lõi không giao diện (định danh, cổng API,
+  dữ liệu, luồng công việc) cộng ít nhất một ứng dụng minh họa H-P-D-I — đối chiếu với hiện trạng ở
+  `docs/doi-chieu-de-thi.md`. Hạn gửi bài **17:00 ngày 06/12**, chấm kho mã **7–9/12**, chung kết **10/12**
 
 ### 1.2. Hệ quả quan trọng của lịch trình
 
@@ -124,21 +125,23 @@ của mã nguồn, đó là vi phạm. Trạng thái phải tra từ bảng.
 Kho mã **đã có ứng dụng chạy được**: dịch vụ FastAPI trong `backend/` (máy trạng thái,
 ràng buộc Poka-yoke, đồng hồ SLA, nhật ký sự kiện), cổng Next.js trong `frontend/` (cổng
 người gửi, buồng lái điều phối, buồng lái phòng ban), cả cụm dựng bằng Docker Compose
-trong `infra/`. Tầng `D` và `I` chưa cài đặt.
+trong `infra/`. Bốn không gian `H`, `P`, `D`, `I` đều đã cài đặt: bảng điều khiển Superset nhúng trong
+cổng, dịch vụ khai phá quy trình `services/khai-pha/`, gợi ý bằng mô hình cục bộ (tùy chọn).
 
 Phiên bản phát hành mới nhất xem bằng `git tag` hoặc trang Releases — tệp này không ghi
 số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/PROJECT_STATE.md`; việc mới hơn
 thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
 đó, kiểm tra sự tồn tại trước thay vì giả định.
 
-**Bảy quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
-thứ gì thuộc bốn mảng này:
+**Tám quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
+thứ gì thuộc các mảng này:
 
 | Không gian | Quyết định | Bản ghi |
 |---|---|---|
 | `H` | Keycloak `26.7.3` làm nền tảng định danh | ADR-0001 |
 | `H` | Wiki.js `2.5.315` (AGPL-3.0) làm kho tri thức **tùy chọn** (hồ sơ Compose `tri-thuc`), ảnh nguyên bản chạy như dịch vụ độc lập, nối qua OIDC và GraphQL; giảng viên chưa xác nhận | ADR-0006 |
 | `core` | SeaweedFS `4.45` làm kho lưu trữ tệp đính kèm | ADR-0002 |
+| `core` | Apache APISIX `3.20.0` (chế độ standalone, một tiến trình) làm **cổng API — cửa vào duy nhất của API** ở cụm mặc định: kiểm token Keycloak tại biên, giới hạn tốc độ chung; dịch vụ ứng dụng và PostgreSQL không mở cổng ra máy (mở lại bằng `infra/docker-compose.phat-trien.yml`) | ADR-0010 |
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 | `I` | PM4Py `2.7.23.8` trong **dịch vụ khai phá tách riêng** (`services/khai-pha/`), kèm bộ máy dự phòng không dùng thư viện đó | ADR-0007 |
@@ -297,13 +300,14 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 | Đóng gói | Docker + Docker Compose | Apache-2.0 |
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
+| Cổng API | Apache APISIX `3.20.0`, ảnh `apache/apisix` nguyên bản, cấu hình `infra/cong-api/` | Apache-2.0 |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 |
 | Khai phá quy trình | PM4Py `2.7.23.8` trong dịch vụ riêng `services/khai-pha/` | AGPL-3.0-or-later (cả thư viện lẫn mã của nhóm trong thư mục đó) |
 | Mô hình ngôn ngữ (tùy chọn) | llama.cpp server `b11889` + tệp Qwen2.5-1.5B-Instruct GGUF `q4_k_m` trong volume | MIT (máy chủ) · Apache-2.0 (mô hình) |
 | Kho tri thức (tùy chọn) | Wiki.js `2.5.315`, ảnh `requarks/wiki` nguyên bản, hồ sơ Compose `tri-thuc` | AGPL-3.0 (dịch vụ độc lập; không mã nào của nhóm mang AGPL) |
 
-Ba nền tảng Keycloak, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
-thức chuẩn (OIDC, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
+Bốn nền tảng Keycloak, APISIX, SeaweedFS, Superset **chạy như dịch vụ độc lập**, giao tiếp qua giao
+thức chuẩn (OIDC, HTTP, S3 API, guest token). Không nhúng thư viện, không sửa mã nền tảng. Thư viện
 khai phá chỉ được `import` trong dịch vụ khai phá, dịch vụ ứng dụng gọi nó qua HTTP (mục 5.2).
 
 Kho theo **mô hình nhiều giấy phép** (#340): thư mục `services/khai-pha/` theo AGPL-3.0-or-later, có
@@ -321,8 +325,11 @@ ADR-0006 (kho tri thức cho `H`, #46) được navigator chấp nhận ngày 14
 ADR-0008 (cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ cho `I`, #47) đã chấp nhận ngày 08/11/2026; phần sinh
 văn bản cài ở #316/#317, phần nhúng véc-tơ và pgvector để #319.
 
+ADR-0010 (cổng API cho `core`, #363) được navigator chấp nhận ngày 15/11/2026 và cài ở #364: mọi lời gọi
+API từ ngoài cụm, kể cả từ cổng người dùng, đi qua APISIX; dịch vụ ứng dụng vẫn kiểm token lại.
+
 Kết quả mọi khảo sát ghi trong `docs/adr/`. **Đọc thư mục này trước khi đề xuất công
-nghệ mới** — bảy quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
+nghệ mới** — tám quyết định đã chốt, đề xuất lại là lãng phí thời gian của cả nhóm.
 
 ### 5.1. Header giấy phép — bắt buộc trên mọi tệp mã mới
 

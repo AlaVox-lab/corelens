@@ -11,7 +11,7 @@ Khoảng 20 phút, phần lớn là chờ tải ảnh chứa ở lần đầu.
 
 - **Docker Desktop** (Windows, macOS) hoặc Docker Engine 24 trở lên kèm Docker Compose v2 (Linux)
 - Khoảng **2 GB** bộ nhớ và **6 GB** ổ đĩa trống cho Docker
-- Các cổng 3000, 5432, 8000, 8080, 8088, 8333 đang trống
+- Các cổng 3000, 8080, 8088, 8333, 9080 đang trống
 
 Chi tiết ở [Cài đặt](../../cai-dat/cai-dat/).
 
@@ -31,8 +31,9 @@ docker compose --env-file .env up -d --build
 Trên PowerShell thay `cp` bằng `Copy-Item` và dùng dấu `\` trong đường dẫn. Mọi giá trị trong
 `.env.example` chạy được ngay.
 
-Kiểm cụm đã lên: `docker compose --env-file .env ps` — `postgres`, `backend`, `frontend`,
-`superset` báo `healthy`; `keycloak`, `seaweedfs` báo `Up`. Chờ thêm khoảng một phút cho Keycloak.
+Kiểm cụm đã lên: `docker compose --env-file .env ps` — `postgres`, `backend`, `cong-api`, `frontend`,
+`superset`, `khai-pha` báo `healthy`; `keycloak`, `seaweedfs` báo `Up`. Chờ thêm khoảng một phút cho
+Keycloak.
 
 ## 3. Đi trọn một hồ sơ
 

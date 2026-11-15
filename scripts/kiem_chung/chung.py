@@ -40,8 +40,13 @@ MAT_KHAU_MAU = "matkhau123"
 DU_AN_CUM_CHINH = "dx-os-lab"
 TIEN_TO_CUM_CHINH = "dxlab-"
 
-DICH_VU = ("postgres", "keycloak", "seaweedfs", "superset", "backend", "frontend", "khai-pha")
-KHOA_CONG = ("POSTGRES_PORT", "KEYCLOAK_PORT", "SEAWEEDFS_S3_PORT", "SUPERSET_PORT", "BACKEND_PORT", "FRONTEND_PORT")
+DICH_VU = ("postgres", "keycloak", "seaweedfs", "superset", "backend", "cong-api", "frontend", "khai-pha")
+# Mọi biến cổng của .env.example, đều được dời khi sinh tệp cho cụm thử. BACKEND_PORT và POSTGRES_PORT chỉ
+# có tác dụng khi thêm docker-compose.phat-trien.yml (#364) nhưng vẫn dời để cụm thử dùng được tệp đó
+KHOA_CONG = ("POSTGRES_PORT", "KEYCLOAK_PORT", "SEAWEEDFS_S3_PORT", "SUPERSET_PORT", "BACKEND_PORT", "FRONTEND_PORT",
+             "GATEWAY_PORT")
+# Cổng thật sự mở ra máy ở cấu hình mặc định — phải trống trước khi dựng cụm thử
+KHOA_CONG_MO = ("KEYCLOAK_PORT", "SEAWEEDFS_S3_PORT", "SUPERSET_PORT", "FRONTEND_PORT", "GATEWAY_PORT")
 
 
 def dung_utf8() -> None:
@@ -257,10 +262,10 @@ class CumThu:
         bang = [
             ("Cổng người dùng", f"http://localhost:{e['FRONTEND_PORT']}"),
             ("Keycloak (quản trị: admin)", f"http://localhost:{e['KEYCLOAK_PORT']}"),
-            ("Dịch vụ ứng dụng (tài liệu API)", f"http://localhost:{e['BACKEND_PORT']}/docs"),
+            # Cửa vào duy nhất của API (#364); dịch vụ ứng dụng và PostgreSQL không mở cổng ra máy
+            ("Cổng API (tài liệu API)", f"http://localhost:{e['GATEWAY_PORT']}/docs"),
             ("Superset", f"http://localhost:{e['SUPERSET_PORT']}"),
             ("S3 của SeaweedFS", f"http://localhost:{e['SEAWEEDFS_S3_PORT']}"),
-            ("PostgreSQL", f"localhost:{e['POSTGRES_PORT']}"),
         ]
         return bang if co_superset else [b for b in bang if b[0] != "Superset"]
 

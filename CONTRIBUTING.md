@@ -107,7 +107,7 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 | Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục | `python scripts/kiem_header.py` |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
-| Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS, chạy toàn bộ `pytest` trong container | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
+| Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS và cổng API, kiểm từ máy chủ rằng cổng `8000`, `5432` đã đóng và cổng API chặn lời gọi thiếu token, chạy toàn bộ `pytest` trong container (kể cả `tests/test_cong_api.py` đi qua cổng API) | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
 | Bảng điều khiển — dựng và tự nạp | Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset; dashboard *Vận hành yêu cầu* đủ năm biểu đồ đã tự nạp từ `infra/superset/bang-dieu-khien/`, tài khoản chỉ đọc đọc được mọi view mà dataset trỏ tới (#304) | `docker compose ... up -d --build --wait postgres backend superset` rồi mở `http://localhost:8088` |
 
 **Kiểm thử giao diện qua đăng nhập thật** (#238) chạy tay trước khi mở pull request có sửa giao diện,

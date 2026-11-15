@@ -4,8 +4,13 @@
 # Dựng toàn bộ hệ thống DX-OS Lab bằng một lệnh:
 #     docker compose --env-file .env up
 #
-# Sáu dịch vụ, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
+# Tám dịch vụ ở cụm mặc định, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
 # dxlab (nghiệp vụ), keycloak, superset.
+#
+# Cổng mở ra máy (#364): cổng người dùng (FRONTEND_PORT), cổng API — cửa vào DUY NHẤT của API
+# (GATEWAY_PORT) — và giao diện của các nền tảng: Keycloak, Superset, S3 của SeaweedFS, kho tri thức,
+# hộp thư thử. Dịch vụ ứng dụng và PostgreSQL chỉ nghe trong mạng Compose; người phát triển mở lại hai
+# cổng đó bằng tệp thứ hai docker-compose.phat-trien.yml.
 #
 # Vì sao một thực thể thay vì mỗi dịch vụ một cơ sở dữ liệu riêng: hệ này chỉ
 # cần chạy tốt ở quy mô trình diễn — ARCHITECTURE.md mục 9 ghi rõ không tối ưu
@@ -41,8 +46,9 @@ services:
       # Chỉ tạo hai database còn lại và tài khoản chỉ đọc. Lược đồ cấu hình do Alembic tạo,
       # dữ liệu khởi tạo do dịch vụ ứng dụng nạp sau đó (#254) — xem dịch vụ backend dưới.
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "${POSTGRES_PORT}:5432"
+    # KHÔNG mở cổng ra máy (#364): chỉ các dịch vụ trong mạng Compose nói chuyện với cơ sở dữ liệu. Kịch
+    # bản trong scripts/ đi qua `docker exec`. Người phát triển cần cổng 5432 thì thêm tệp thứ hai:
+    #     docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DXLAB_DB_USER} -d ${DXLAB_DB_NAME}"]
       interval: 10s
@@ -510,10 +516,60 @@ services:
       - ./seed:/seed:ro
       # Khóa API chỉ đọc của kho tri thức (#321), do tri-thuc-khoi-tao ghi; rỗng khi chưa bật hồ sơ đó
       - tri-thuc-khoa:/run/tri-thuc:ro
-    ports:
-      - "${BACKEND_PORT}:8000"
+    # KHÔNG mở cổng ra máy (#364): mọi lời gọi API từ ngoài cụm đi qua cổng API (dịch vụ cong-api ngay
+    # dưới). Mở lại cổng 8000 cho người phát triển: tệp docker-compose.phat-trien.yml
     depends_on:
       postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Cổng API — Apache APISIX, cửa vào duy nhất của API (ADR-0010, #364)
+  # Ảnh chính thức ghim mã băm, không dựng lại; chế độ standalone đọc hai tệp trong cong-api/ (gắn chỉ
+  # đọc), không etcd, không API quản trị. Kiểm token của Keycloak tại biên, giới hạn tốc độ chung, chuyển
+  # mọi đường tới dịch vụ ứng dụng giữ nguyên đường dẫn. Hai cổng nghe:
+  #   9080  ánh xạ ra máy (GATEWAY_PORT) — cho mọi bên gọi API từ ngoài cụm
+  #   9081  chỉ trong mạng Compose — cổng người dùng gọi qua đây, cổng API tin X-Real-IP của nó
+  # Cố ý KHÔNG depends_on keycloak: Keycloak chưa lên thì lời gọi cần token nhận 401, đường công khai vẫn
+  # chạy, và cổng tự hồi phục khi Keycloak lên — không làm cụm kẹt.
+  # ---------------------------------------------------------------------------
+  cong-api:
+    image: apache/apisix:3.20.0-debian@sha256:013de62a9dfba7d8e6006b3e85b524c28c9f1c3549fca3b91d5b258b0b9e759a
+    container_name: dxlab-cong-api
+    restart: unless-stopped
+    environment:
+      # Điểm vào của ảnh chỉ chạy `apisix init`, bỏ bước khởi tạo etcd
+      APISIX_STAND_ALONE: "true"
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      # Token phải mang client này trong aud — cùng giá trị DXLAB_OIDC_AUDIENCE của dịch vụ ứng dụng
+      GATEWAY_OIDC_CLIENT_ID: ${KEYCLOAK_API_CLIENT_ID}
+      # Độ lệch đồng hồ cho phép khi xét hạn token, giây — cùng mặc định với dịch vụ ứng dụng
+      GATEWAY_TOKEN_LEEWAY_SECONDS: ${GATEWAY_TOKEN_LEEWAY_SECONDS:-10}
+      # Giới hạn tốc độ chung theo địa chỉ người gọi: số lời gọi tối đa mỗi cửa sổ giây. Đủ rộng cho một
+      # văn phòng dùng chung địa chỉ và cho bộ kiểm thử giao diện (e2e/) chạy liền một mạch
+      GATEWAY_RATE_LIMIT_COUNT: ${GATEWAY_RATE_LIMIT_COUNT:-3000}
+      GATEWAY_RATE_LIMIT_WINDOW_SECONDS: ${GATEWAY_RATE_LIMIT_WINDOW_SECONDS:-60}
+      # Trần thân yêu cầu, MB: không thấp hơn ATTACHMENT_MAX_FILES x ATTACHMENT_MAX_MB (mặc định 5 x 10)
+      # cộng phần đầu của biểu mẫu nhiều phần. Tăng hai biến kia thì tăng biến này theo
+      GATEWAY_MAX_BODY_MB: ${GATEWAY_MAX_BODY_MB:-64}
+      # Thời gian chờ gửi và đọc từ dịch vụ ứng dụng, giây: không thấp hơn lời gọi đồng bộ lâu nhất của
+      # dịch vụ (tải nhiều tệp kèm quét mã độc, khai phá quy trình)
+      GATEWAY_TIMEOUT_SECONDS: ${GATEWAY_TIMEOUT_SECONDS:-120}
+    volumes:
+      # Gắn từng tệp, không gắn cả thư mục conf/: `apisix init` còn ghi nginx.conf vào đó
+      - ./cong-api/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./cong-api/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+    ports:
+      - "${GATEWAY_PORT:-9080}:9080"
+    # Ảnh không có curl hay wget: hỏi điểm trạng thái nội bộ bằng bash. /status/ready trả 200 khi mọi
+    # tiến trình làm việc đã nạp xong tuyến — không phụ thuộc Keycloak hay dịch vụ ứng dụng
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/7085 && printf 'GET /status/ready HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+    depends_on:
+      backend:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------
@@ -526,9 +582,9 @@ services:
     container_name: dxlab-frontend
     restart: unless-stopped
     environment:
-      # Gọi nội bộ trong mạng của Compose, không đi vòng ra cổng công bố. Trình
-      # duyệt của người dùng không bao giờ thấy địa chỉ này.
-      BACKEND_INTERNAL_URL: http://backend:8000
+      # Gọi dịch vụ ứng dụng QUA CỔNG API (#364), ở cổng nội bộ 9081 trong mạng của Compose — token
+      # được kiểm tại biên như mọi bên gọi khác. Trình duyệt của người dùng không bao giờ thấy địa chỉ này.
+      BACKEND_INTERNAL_URL: http://cong-api:9081
       # Thời hạn chờ mỗi lời gọi sang dịch vụ ứng dụng, mili giây (#235)
       BACKEND_TIMEOUT_MS: ${BACKEND_TIMEOUT_MS:-10000}
       # Trình duyệt đi qua địa chỉ công khai, máy chủ Next.js đi qua địa chỉ nội bộ
@@ -556,7 +612,8 @@ services:
     ports:
       - "${FRONTEND_PORT}:3000"
     depends_on:
-      backend:
+      # Cổng API chờ dịch vụ ứng dụng khỏe rồi mới lên, nên chờ nó là chờ cả hai
+      cong-api:
         condition: service_healthy
 
 
