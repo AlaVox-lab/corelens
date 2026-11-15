@@ -92,16 +92,16 @@ Cần Docker Engine 24 trở lên kèm Compose v2 (hoặc Docker Desktop), kho�
 đĩa, và các cổng 3000 · 8080 · 8088 · 8333 · 9080 đang trống.
 
 Tải **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `0.16.0` bằng phiên bản đã tải):
+[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `1.0.0` bằng phiên bản đã tải):
 
 ```bash
-tar -xzf dx-os-lab-0.16.0.tar.gz
-cd dx-os-lab-0.16.0/infra
+tar -xzf dx-os-lab-1.0.0.tar.gz
+cd dx-os-lab-1.0.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-0.16.0\infra`. Từ kho mã thì
+Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-1.0.0\infra`. Từ kho mã thì
 `git clone` rồi chạy ba lệnh cuối trong `dx-os-lab/infra`. Lần đầu mất khoảng 10–20 phút.
 
 Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty**. Tài khoản mẫu, mật khẩu chung

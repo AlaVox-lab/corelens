@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.0.0` | Bản dự thi OLP 2026 theo mô hình của đề: cổng API Apache APISIX làm cửa vào duy nhất, kiểm token tại biên; nền tảng lõi không giao diện phơi qua API `/core/v1` kèm tài khoản dịch vụ và ví dụ gọi lõi; xác thực hai lớp tùy chọn; khóa phiên bản cả gói Python kéo theo |
 | `v0.16.0` | Kho tri thức Wiki.js (tùy chọn, hồ sơ `tri-thuc`): đăng nhập một lần qua Keycloak, quyền theo vai trò, bài hướng dẫn hiện trong gợi ý khi đang soạn yêu cầu; khép nhóm nền tảng vận hành |
 | `v0.15.0` | Màn quản trị cấu hình: xem luồng xử lý, sửa hạn, hệ số ưu tiên, loại yêu cầu, phòng ban ngay trên cổng, có xem trước và nhật ký sửa; ủy quyền khi vắng mặt cho người cùng phòng theo khoảng ngày, ghi "thay mặt"; sao lưu tay và khôi phục có đối soát; chính sách dữ liệu cá nhân (ADR-0009) |
 | `v0.14.0` | Nền tảng vận hành: thông báo thư điện tử qua hàng đợi có thử lại, kiểm chữ ký và quét mã độc tệp đính kèm (tùy chọn), nhật ký có cấu trúc với mã yêu cầu, điểm cuối sống/sẵn sàng và số đo; khép Giai đoạn 4 |
