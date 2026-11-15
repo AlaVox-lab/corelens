@@ -38,6 +38,10 @@ Nền tảng chạy như dịch vụ riêng (ảnh chứa chính thức, không 
 -------------------------------------------------------------------------------
 
 Keycloak 26.7.3       — Apache-2.0 — định danh tập trung (OIDC)
+Apache APISIX 3.20.0  — Apache-2.0 — cổng API, cửa vào duy nhất của API (#364,
+                        ADR-0010); ảnh apache/apisix:3.20.0-debian, cấu hình
+                        trong infra/cong-api/ (MIT), chỉ dùng plugin có sẵn
+                        https://github.com/apache/apisix
 SeaweedFS 4.45        — Apache-2.0 — lưu trữ tệp đính kèm (S3 API)
 Apache Superset 6.1.0 — Apache-2.0 — bảng điều khiển phân tích
 PostgreSQL            — PostgreSQL License — cơ sở dữ liệu

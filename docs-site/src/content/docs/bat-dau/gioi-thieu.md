@@ -51,7 +51,8 @@ Theo đề bài, hệ thống chia bốn không gian, xây theo đúng thứ t�
 | **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện (Apache Superset) | Đã chạy |
 | **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại có người xác nhận | Phiên bản `v0.10.0` |
 
-Nền tảng phổ thông được **lắp ghép** từ phần mềm nguồn mở có sẵn (Keycloak, SeaweedFS, Superset);
+Nền tảng phổ thông được **lắp ghép** từ phần mềm nguồn mở có sẵn (Keycloak, Apache APISIX làm cổng
+API, SeaweedFS, Superset);
 phần lõi tạo khác biệt — engine quy trình — nhóm **tự viết**. AI ở tầng `I` chỉ ghi vào trường gợi
 ý, con người xác nhận mới thành quyết định.
 

@@ -100,6 +100,31 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "dx-integration",
+      "name": "Ứng dụng tích hợp mẫu",
+      "description": "Tài khoản dịch vụ để ứng dụng khác gọi API của nền tảng lõi /core/v1 qua cổng API (#365). Chỉ bật client credentials; token mang aud dx-api, vai requester. Cụm cũ tạo bằng scripts/tai_khoan_dich_vu.py.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-dx-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dx-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -457,6 +482,15 @@
           "view-users"
         ]
       }
+    },
+    {
+      "username": "service-account-dx-integration",
+      "enabled": true,
+      "serviceAccountClientId": "dx-integration",
+      "realmRoles": [
+        "requester",
+        "default-roles-dx-os-lab"
+      ]
     }
   ],
   "groups": [

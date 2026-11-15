@@ -14,7 +14,7 @@ văn ở `services/khai-pha/LICENSE`.
 | `frontend/` | Cổng người dùng (Next.js) | MIT | [`LICENSE`](LICENSE) |
 | `e2e/` | Kiểm thử giao diện | MIT | [`LICENSE`](LICENSE) |
 | `scripts/` | Kịch bản tiện ích, kiểm header | MIT | [`LICENSE`](LICENSE) |
-| `infra/` | Docker Compose, cấu hình nền tảng, bước khởi tạo kho tri thức (`infra/tri-thuc/`) | MIT | [`LICENSE`](LICENSE) |
+| `infra/` | Docker Compose, cấu hình nền tảng (kể cả tuyến của cổng API `infra/cong-api/`), bước khởi tạo kho tri thức (`infra/tri-thuc/`) | MIT | [`LICENSE`](LICENSE) |
 | `docs/`, `docs-site/` | Tài liệu, trang tài liệu | MIT | [`LICENSE`](LICENSE) |
 | Tệp ở gốc kho và `.github/` | Quy tắc, cấu hình CI | MIT | [`LICENSE`](LICENSE) |
 | **`services/khai-pha/`** | **Dịch vụ khai phá quy trình** — cả `app/`, `tests/`, `Dockerfile` | **AGPL-3.0-or-later** | [`services/khai-pha/LICENSE`](services/khai-pha/LICENSE) |

@@ -8,9 +8,13 @@
 # PL/pgSQL — SQLite không có thứ nào trong số đó. Mà chính những thứ đó mới là cái
 # cần kiểm chứng.
 #
-# Cách chạy:
+# Cách chạy — trong container dịch vụ ứng dụng, như CI (cổng 5432 không mở ra máy từ #364):
 #
-#     cd infra && docker compose --env-file .env up -d postgres
+#     docker exec dxlab-backend python -m pytest -p no:cacheprovider -q
+#
+# Chạy từ máy thì mở lại cổng PostgreSQL bằng tệp phát triển trước:
+#
+#     cd infra && docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d postgres
 #     cd ../backend && pytest
 #
 # Mỗi bài kiểm thử chạy trong một giao dịch được hoàn tác ở cuối, nên cơ sở dữ liệu

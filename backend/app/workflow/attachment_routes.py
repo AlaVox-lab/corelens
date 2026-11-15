@@ -7,6 +7,10 @@
 # Trình duyệt không bao giờ nói chuyện với kho (navigator chốt 26/10): tệp đi qua đây nên quyền
 # kiểm ở MỖI lần, và người không có quyền nhận 404 — không 403, vì 403 xác nhận tệp có tồn tại,
 # cùng lý do với hồ sơ ở #44.
+#
+# Cả ba là API của nền tảng lõi (#365): app/main.py gắn mỗi router hai lần — đường cũ và `/core/v1/files`.
+# Hai router chỉ vì hai đường cũ khác tiền tố: chính sách và tải về nằm dưới `/attachments`, tải lên dưới
+# `/requests/{case_id}`. Tiền tố và nhãn OpenAPI gắn lúc include.
 
 from __future__ import annotations
 
@@ -28,7 +32,10 @@ from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.routes import _lay_ho_so_cua_toi
 from app.workflow.schemas import ChinhSachTepRa, TepDinhKemRa
 
-router = APIRouter(tags=["Tệp đính kèm"])
+# Chính sách và tải về: gắn ở `/attachments` (đường cũ) và `/core/v1/files`
+router = APIRouter()
+# Tải lên vào một hồ sơ: gắn ở gốc (đường cũ `/requests/{case_id}/attachments`) và `/core/v1/files`
+router_tai_len = APIRouter()
 
 _Phien = Annotated[Session, Depends(get_session)]
 _Cua = Annotated[Actor, Depends(current_actor)]
@@ -61,7 +68,7 @@ def mo_duoc_ho_so(session: Session, ho_so: Request, actor: Actor) -> bool:
     return vao_duoc_phong_ban(session, actor) and ho_so.department_code in actor.departments
 
 
-@router.get("/attachments/policy", response_model=ChinhSachTepRa)
+@router.get("/policy", response_model=ChinhSachTepRa)
 def chinh_sach_tep(_actor: _Cua) -> ChinhSachTepRa:
     """Giới hạn đang áp dụng. Giao diện chặn theo con số này ở lớp của nó, còn lớp ở đây vẫn
     kiểm lại — chặn ở giao diện thôi thì không đủ, ai cũng gọi thẳng API được."""
@@ -74,7 +81,7 @@ def chinh_sach_tep(_actor: _Cua) -> ChinhSachTepRa:
     )
 
 
-@router.post(
+@router_tai_len.post(
     "/requests/{case_id}/attachments",
     response_model=list[TepDinhKemRa],
     status_code=201,
@@ -121,7 +128,7 @@ def tai_len(
     ]
 
 
-@router.get("/attachments/{attachment_id}")
+@router.get("/{attachment_id}")
 def tai_ve(attachment_id: int, session: _Phien, actor: _Cua) -> Response:
     """Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404."""
     tep = session.get(CaseAttachment, attachment_id)

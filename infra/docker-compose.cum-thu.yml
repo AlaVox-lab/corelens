@@ -37,6 +37,9 @@ services:
   frontend:
     container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}frontend
     image: dxlab-frontend:${CUM_THU_NHAN:?chạy qua scripts/kiem_chung/cum_thu.py}
+  # Cổng API (#364): ảnh kéo về, không tự dựng, nên chỉ cần tên container riêng
+  cong-api:
+    container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}cong-api
   # Kho tri thức (#321): hai bước khởi tạo chạy trong ảnh dịch vụ ứng dụng nên cũng mang nhãn riêng
   tri-thuc-chuan-bi:
     container_name: ${CUM_THU_TIEN_TO:?chạy qua scripts/kiem_chung/cum_thu.py}tri-thuc-chuan-bi

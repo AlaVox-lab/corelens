@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Cấu hình tiến trình của cổng API — Apache APISIX 3.20, chế độ standalone (ADR-0010, #364).
+# Tuyến và plugin nằm ở apisix.yaml cạnh tệp này; cả hai gắn CHỈ ĐỌC vào ảnh chính thức, không dựng
+# lại ảnh. Mọi con số chính sách đọc từ biến môi trường do docker-compose.yml truyền vào (mặc định
+# đặt ở đó và ở infra/.env.example), không ghi thẳng trong tệp.
+
+deployment:
+  role: data_plane
+  role_data_plane:
+    # Đọc tuyến từ tệp apisix.yaml, không cần etcd. Tệp đổi thì APISIX tự nạp lại
+    config_provider: yaml
+
+apisix:
+  node_listen:
+    # Cửa vào duy nhất mở ra máy chủ: GATEWAY_PORT ánh xạ vào cổng này
+    - 9080
+    # Chỉ nghe trong mạng Compose, KHÔNG ánh xạ ra máy: cổng người dùng (Next.js) gọi qua đây. Trên
+    # cổng này cổng API tin tiêu đề X-Real-IP mà cổng người dùng gắn, để giới hạn tốc độ tính theo
+    # người dùng thật chứ không gộp mọi người về địa chỉ container của cổng người dùng (apisix.yaml)
+    - 9081
+  # Không có API quản trị: cấu hình chỉ đổi bằng cách sửa tệp trong kho
+  enable_admin: false
+  # Không lộ số phiên bản trong tiêu đề Server
+  enable_server_tokens: false
+  # Điểm kiểm sức khỏe nội bộ (/status/ready: mọi tiến trình đã nạp cấu hình). Chỉ nghe 127.0.0.1
+  # trong container — healthcheck của Compose gọi nó
+  status:
+    ip: 127.0.0.1
+    port: 7085
+
+nginx_config:
+  # Một tiến trình làm việc là đủ cho quy mô trình diễn. Để mặc định (auto) thì APISIX sinh một tiến
+  # trình mỗi nhân: đo ở bản khảo sát là 525 MiB trên máy 24 nhân, so với 57 MiB khi đặt 1
+  worker_processes: 1
+  # Biến môi trường mà apisix.yaml đọc lúc chạy. Nginx xóa sạch môi trường của tiến trình làm việc
+  # trừ các biến khai ở đây
+  envs:
+    - KEYCLOAK_REALM
+    - GATEWAY_OIDC_CLIENT_ID
+    - GATEWAY_TOKEN_LEEWAY_SECONDS
+    - GATEWAY_RATE_LIMIT_COUNT
+    - GATEWAY_RATE_LIMIT_WINDOW_SECONDS
+    - GATEWAY_TIMEOUT_SECONDS
+  http:
+    # Trần kích thước thân yêu cầu. Không được thấp hơn một lượt tải tệp lớn nhất dịch vụ ứng dụng
+    # nhận: ATTACHMENT_MAX_FILES tệp x ATTACHMENT_MAX_MB, cộng phần đầu của biểu mẫu nhiều phần
+    client_max_body_size: ${{GATEWAY_MAX_BODY_MB}}m
+
+# Chỉ nạp ba plugin đang dùng: ít bề mặt hơn, ít bộ nhớ hơn danh sách mặc định (hơn 80 plugin)
+plugins:
+  - real-ip
+  - openid-connect
+  - limit-count
+# Không chuyển tiếp TCP/UDP nên không nạp plugin luồng nào
+stream_plugins: []

@@ -26,8 +26,10 @@ nào.
 
 ## Kiểm sức khỏe không cần đăng nhập
 
-`http://localhost:8000/health` trả tình trạng chung của dịch vụ ứng dụng — dùng được cho công cụ giám
-sát. Chỉ có `{"service": …, "status": "ok"}` hoặc `"degraded"`, không phiên bản, không chi tiết lỗi.
+`http://localhost:9080/health` (qua cổng API, không cần token) trả tình trạng chung của dịch vụ ứng dụng —
+dùng được cho công cụ giám sát. Chỉ có `{"service": …, "status": "ok"}` hoặc `"degraded"`, không phiên
+bản, không chi tiết lỗi. Bản thân cổng API báo khỏe qua healthcheck của Docker
+(`docker compose --env-file .env ps`, dòng `cong-api`).
 
 - `200` + `ok` — khỏe.
 - `200` + `degraded` — dịch vụ vẫn phục vụ nhưng bộ quét nền im quá lâu hoặc hỏng liên tiếp: hồ sơ quá

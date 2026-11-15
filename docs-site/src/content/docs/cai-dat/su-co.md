@@ -8,7 +8,10 @@ sidebar:
 | Dấu hiệu | Cách xử lý |
 |---|---|
 | `failed to connect to the docker API`, `Cannot connect to the Docker daemon` | Docker chưa chạy. Bật Docker Desktop, chờ nó báo đang chạy rồi chạy lại lệnh |
-| `port is already allocated`, `address already in use` | Chương trình khác giữ cổng — thường là PostgreSQL cài sẵn giữ 5432. Tắt chương trình đó, hoặc đổi `POSTGRES_PORT` trong `.env`. Đổi được tương tự `BACKEND_PORT`, `SUPERSET_PORT`, `SEAWEEDFS_S3_PORT`; giữ nguyên 3000 và 8080 |
+| `port is already allocated`, `address already in use` | Chương trình khác giữ cổng. Tắt chương trình đó, hoặc đổi biến cổng trong `.env`: `GATEWAY_PORT`, `SUPERSET_PORT`, `SEAWEEDFS_S3_PORT` đổi được; giữ nguyên 3000 và 8080. Cụm mặc định không giữ 5432 hay 8000 — chỉ tệp `docker-compose.phat-trien.yml` mở hai cổng đó (đổi bằng `POSTGRES_PORT`, `BACKEND_PORT`) |
+| Gọi `http://localhost:8000` không kết nối được | Đúng thiết kế: dịch vụ ứng dụng không mở cổng ra máy. Gọi API qua cổng API ở `http://localhost:9080` kèm access token; cần gọi thẳng khi phát triển thì thêm tệp `docker-compose.phat-trien.yml` — xem [Cài đặt](../cai-dat/) |
+| Gọi API qua cổng `9080` nhận `401` dù có token | Token hết hạn (Keycloak cấp access token sống 5 phút), ký sai, hoặc Keycloak chưa sẵn sàng — `WWW-Authenticate` ghi lý do (`issuer validation unavailable` là cổng chưa đọc được Keycloak; tự hết khi Keycloak lên). `403` `mismatched audience` là token phát cho client khác, không mang `dx-api` |
+| Gọi API qua cổng `9080` nhận `429` | Vượt giới hạn tốc độ chung của cổng API theo địa chỉ — chờ số giây ở `X-RateLimit-Reset`, hoặc nới `GATEWAY_RATE_LIMIT_COUNT` |
 | Dựng hỏng giữa chừng với `no space left on device` hoặc `EOF` | Kiểm ổ chứa dữ liệu của Docker còn đủ chỗ (khoảng 6 GB), rồi chạy lại lệnh `up` — phần đã tải không phải tải lại |
 | Bấm đăng nhập báo lỗi khi mở cổng từ máy khác qua địa chỉ IP | Realm mẫu chỉ nhận `localhost`. Mở `http://localhost:3000` trên chính máy đã cài |
 | Sửa `infra/seed/` hay realm rồi dựng lại mà không thấy thay đổi | Dữ liệu khởi tạo chỉ nạp lần đầu. Xem [Nâng cấp](../nang-cap/) |

@@ -12,9 +12,10 @@
 | Mốc | Thời gian | Ghi chú |
 |---|---|---|
 | Công bố chủ đề | Tháng 7/2026 | Đã qua |
-| **Công bố đề thi chính thức** | **Tháng 11/2026** | Chỉ trước chung kết một tháng |
+| **Công bố đề thi chính thức** | **Tháng 11/2026** | Đã công bố — đối chiếu ở [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md) |
+| **Hạn gửi bài** | **17:00 ngày 06/12/2026** | Gửi đường dẫn kho mã qua thư điện tử; kho phải công khai |
 | Chấm kho mã nguồn | 07–09/12/2026 | 50 điểm PoF, chấm trên `main` |
-| Trình diễn và chung kết | 10/12/2026 | 50 điểm sản phẩm |
+| Trình diễn và chung kết | 10/12/2026 | 50 điểm sản phẩm, mỗi đội trình bày 15 phút |
 | Trao giải | 11/12/2026 | |
 
 **Hệ quả chiến lược**: đề thi ra rất muộn. Mọi thứ xây dựng từ nay tới tháng 10 phải
@@ -221,16 +222,22 @@ yếu và gợi ý phòng dưới ngưỡng 80 % nên giữ bảng ánh xạ —
 
 ## Giai đoạn 5 — Thích ứng đề thi
 
-**Bắt đầu**: khi Ban tổ chức công bố đề thi, tháng 11/2026
+**Bắt đầu**: 15/11/2026, sau khi Ban tổ chức công bố đề thi · issue gốc #369
 **Phiên bản dự kiến**: `v1.0.0`
 
 Đây là giai đoạn có rủi ro cao nhất và thời gian ngắn nhất.
 
-- [ ] Phân tích đề thi, đối chiếu với bộ khung hiện có
-- [ ] Xác định phần nào giữ nguyên, phần nào thay dữ liệu, phần nào phải viết mới
-- [ ] Thay dữ liệu khởi tạo: trạng thái, vai trò, ngưỡng SLA, chỉ số
-- [ ] Bổ sung tính năng đề thi yêu cầu mà bộ khung chưa có
-- [ ] Cập nhật toàn bộ tài liệu cho khớp
+Đề yêu cầu một nền tảng lõi không giao diện cung cấp định danh, cổng API, quản trị dữ liệu và động cơ
+luồng công việc, cùng ít nhất một ứng dụng minh họa trong H-P-D-I. Bộ khung đã có ứng dụng minh họa và
+ba trong bốn dịch vụ lõi; đợt này bổ sung cổng API và vẽ ranh giới giữa lõi với ứng dụng.
+
+- [x] Phân tích đề thi, đối chiếu với bộ khung hiện có — [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md) (#363)
+- [x] Khảo sát nền tảng cổng API — ADR-0010, đã chấp nhận 15/11 (#363)
+- [x] Cổng API làm cửa vào duy nhất của cụm (#364)
+- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`. Mức 2 — engine chạy nhiều quy trình — chưa làm, xét sau khi phát hành
+- [x] Xác thực hai lớp tùy chọn (#366)
+- [x] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
+- [ ] Phát hành `v1.0.0`, kiểm dựng từ tệp phát hành (#368)
 
 **Chuẩn bị trước để giảm rủi ro**: tuân thủ nghiêm nguyên tắc cấu hình thay vì mã
 cứng ở mục 5 của `ARCHITECTURE.md`. Nếu làm đúng, phần lớn công việc giai đoạn này

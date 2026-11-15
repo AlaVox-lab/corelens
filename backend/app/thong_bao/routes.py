@@ -6,6 +6,9 @@
 # Mỗi người chỉ đọc và sửa tùy chọn của chính mình — định danh lấy từ token, không nhận từ đường dẫn.
 # Danh sách loại đọc từ bảng `notification_types`, nên thêm một loại trong dữ liệu là giao diện có
 # thêm một ô, không sửa mã cổng.
+#
+# Đây là API của nền tảng lõi (#365): app/main.py gắn router hai lần — đường cũ `/me/notifications` và
+# `/core/v1/notifications/preferences`. Tiền tố và nhãn OpenAPI gắn lúc include.
 
 from __future__ import annotations
 
@@ -23,7 +26,7 @@ from app.db import get_session
 from app.models.thong_bao import NotificationPreference, NotificationType
 from app.workflow.context import Actor
 
-router = APIRouter(prefix="/me/notifications", tags=["Thông báo"])
+router = APIRouter()
 
 
 class LoaiThongBaoRa(BaseModel):

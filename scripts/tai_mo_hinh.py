@@ -159,6 +159,10 @@ def dat_vao_volume(tep: TepMoHinh, volume: str, anh: str, thu_muc_tam: Path, xoa
 
 
 def main() -> None:
+    # Bảng điều khiển Windows mặc định không phải UTF-8
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__ or "", formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--du-an", default="dx-os-lab", help="tên dự án Compose (mặc định: dx-os-lab)")
     p.add_argument(

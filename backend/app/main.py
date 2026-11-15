@@ -5,6 +5,9 @@
 #
 # Điểm cuối nghiệp vụ thuộc #44. Tệp này hiện có kiểm tra sức khỏe và điểm cuối
 # danh tính — cổng người dùng gọi nó để biết mình đang đăng nhập bằng ai.
+#
+# Ranh giới nền tảng lõi và ứng dụng minh họa (#365): API của lõi được gắn thêm dưới `/core/v1` ở cuối
+# tệp — xem mục "Nền tảng lõi" và ARCHITECTURE.md mục 2.3.
 
 import asyncio
 import logging
@@ -12,7 +15,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import APIRouter, Depends, FastAPI, Response, status
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -35,6 +38,7 @@ from app.thong_bao.bo_gui import NHAN_BO_QUET_THU, TEN_BO_QUET_THU, do_dai_hang_
 from app.thong_bao.routes import router as router_thong_bao
 from app.workflow.assignment import router as router_giao_viec
 from app.workflow.attachment_routes import router as router_tep
+from app.workflow.attachment_routes import router_tai_len as router_tai_tep
 from app.workflow.context import Actor
 from app.workflow.coordination import router as router_dieu_phoi
 from app.workflow.coordination import vao_duoc_buong_lai
@@ -52,7 +56,8 @@ from app.intelligence.tuong_tu import router as router_tuong_tu
 from app.intelligence.tri_thuc import NHAN_BO_QUET_TRI_THUC, TEN_BO_QUET_TRI_THUC, quet_kho_tri_thuc
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
-from app.workflow.routes import router as router_yeu_cau
+from app.workflow.routes import router as router_yeu_cau_ung_dung
+from app.workflow.routes import router_loi as router_yeu_cau
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
 
@@ -252,30 +257,69 @@ async def lifespan(app: FastAPI):
         tac_vu.cancel()
 
 
+# Năm nhóm API của nền tảng lõi (#365), mỗi nhóm một nhãn OpenAPI kèm mô tả hiện ở /docs. Khai trong
+# `openapi_tags` nên năm nhóm này đứng đầu trang tài liệu, trước các nhóm của ứng dụng minh họa. Khóa là
+# đoạn đường ngay sau `/core/v1`.
+NHOM_LOI: dict[str, dict[str, str]] = {
+    "workflow": {
+        "name": "Lõi — Luồng công việc",
+        "description": "Động cơ luồng công việc: danh mục cấu hình, tạo và đọc hồ sơ, bước chuyển được "
+        "phép và thực hiện bước chuyển, lịch sử. Mọi bước chuyển qua cùng một cửa của engine và ghi nhật "
+        "ký sự kiện.",
+    },
+    "files": {
+        "name": "Lõi — Tệp",
+        "description": "Dữ liệu phi cấu trúc: chính sách tệp, tải tệp lên một hồ sơ, tải tệp về. Tệp nằm "
+        "trong kho đối tượng SeaweedFS, quyền kiểm ở mỗi lần.",
+    },
+    "events": {
+        "name": "Lõi — Nhật ký sự kiện",
+        "description": "Dữ liệu có cấu trúc: xuất nhật ký sự kiện chuẩn hóa dạng CSV hoặc JSON. Chỉ quản "
+        "trị viên.",
+    },
+    "notifications": {
+        "name": "Lõi — Thông báo",
+        "description": "Tùy chọn nhận thông báo thư của chính người gọi.",
+    },
+    "identity": {
+        "name": "Lõi — Định danh",
+        "description": "Người gọi là ai theo token Keycloak: vai trò, phòng ban.",
+    },
+}
+
 app = FastAPI(
     lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
     description=(
         "Dịch vụ ứng dụng của DX-OS Lab. Toàn bộ quy trình nghiệp vụ nằm trong bảng "
-        "dữ liệu, không mã cứng trong mã nguồn."
+        "dữ liệu, không mã cứng trong mã nguồn.\n\n"
+        "**Nền tảng lõi (Tầng 1)**: mọi điểm cuối dưới `/core/v1`, nhóm theo dịch vụ lõi (nhãn "
+        "\"Lõi — …\"), dành cho mọi ứng dụng tầng trên. Ứng dụng khác gọi bằng token của tài khoản "
+        "dịch vụ (client credentials). Các đường còn lại thuộc ứng dụng minh họa — cổng vận hành "
+        "yêu cầu nội bộ."
     ),
+    openapi_tags=list(NHOM_LOI.values()),
 )
 
 # Mã yêu cầu, dòng truy cập JSON, bộ đếm số đo (#247)
 app.add_middleware(LopQuanSat)
 
-app.include_router(router_yeu_cau)
+# Đường cũ. Nhãn OpenAPI gắn ở đây chứ không ở router, vì router của lõi còn được gắn lần nữa dưới
+# /core/v1 với nhãn riêng (cuối tệp) — nhãn của router thì cộng dồn vào mọi lần gắn.
+app.include_router(router_yeu_cau, tags=["Yêu cầu"])
+app.include_router(router_yeu_cau_ung_dung, tags=["Yêu cầu"])
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
 app.include_router(router_phong_ban)
 app.include_router(router_hop_thu)
-app.include_router(router_tep)
-app.include_router(router_du_lieu_mo)
+app.include_router(router_tep, prefix="/attachments", tags=["Tệp đính kèm"])
+app.include_router(router_tai_tep, tags=["Tệp đính kèm"])
+app.include_router(router_du_lieu_mo, prefix="/analytics/event-log", tags=["Dữ liệu mở"])
 app.include_router(router_bang_dieu_khien)
 app.include_router(router_khai_pha)
 app.include_router(router_tuong_tu)
-app.include_router(router_thong_bao)
+app.include_router(router_thong_bao, prefix="/me/notifications", tags=["Thông báo"])
 app.include_router(router_quan_tri)
 app.include_router(router_uy_quyen)
 
@@ -422,9 +466,10 @@ def metrics(
 ) -> Response:
     """Số đo cơ bản, dạng văn bản Prometheus (#247). CHỈ QUẢN TRỊ VIÊN.
 
-    Không mở công khai và không dựa vào "chỉ trong mạng Compose": cổng dịch vụ được công bố ra máy
-    (`BACKEND_PORT`), nên ranh giới mạng không giữ được gì; mẫu đường dẫn và độ dài hàng đợi là thông
-    tin vận hành không cho người ngoài. Bộ thu số đo dùng token của một tài khoản quản trị.
+    Không mở công khai và không dựa vào "chỉ trong mạng Compose": từ #364 cổng dịch vụ không mở ra máy ở
+    cấu hình mặc định, nhưng tệp phát triển mở lại được, và ranh giới mạng không thay được kiểm quyền; mẫu
+    đường dẫn và độ dài hàng đợi là thông tin vận hành không cho người ngoài. Bộ thu số đo đi qua cổng API
+    bằng token của một tài khoản quản trị.
 
     Phần trong bộ nhớ là của RIÊNG bản dịch vụ trả lời; phần đọc từ cơ sở dữ liệu — hàng đợi thư, lượt
     quét cuối — là chung cả cụm.
@@ -531,7 +576,11 @@ def root() -> dict:
     }
 
 
-@app.get("/me", tags=["Định danh"])
+# Router riêng cho `/me` để gắn được cả ở đường cũ lẫn dưới /core/v1/identity (#365) mà không chép hàm
+router_dinh_danh = APIRouter()
+
+
+@router_dinh_danh.get("/me")
 def me(
     actor: Annotated[Actor, Depends(current_actor)],
     claims: Annotated[dict, Depends(current_claims)],
@@ -602,6 +651,9 @@ def me(
     }
 
 
+app.include_router(router_dinh_danh, tags=["Định danh"])
+
+
 @app.post("/sla/scan", tags=["Vận hành"])
 def sla_scan(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
@@ -625,3 +677,31 @@ def sla_scan(
         "skipped_scanners": bo_qua,
         "triggered_by": actor.id,
     }
+
+
+# ---------------------------------------------------------------------------
+# Nền tảng lõi — Tầng 1 của đề thi (#365, ARCHITECTURE.md mục 2.3)
+# ---------------------------------------------------------------------------
+# Mức 1 giảng viên chốt: một dịch vụ, ranh giới vẽ bằng không gian địa chỉ. API của lõi được gắn THÊM một
+# lần dưới `/core/v1/<nhóm>` — cùng router, cùng hàm xử lý, cùng phụ thuộc với đường cũ (kiểm token, phân
+# quyền, giới hạn tốc độ theo người dùng), không chép mã nào. Đường cũ giữ nguyên cho cổng người dùng.
+#
+# Điểm cuối của ứng dụng minh họa KHÔNG gắn ở đây: buồng lái điều phối và phòng ban, hộp thư và lời nhắn,
+# ủy quyền, giao việc và danh bạ, báo cáo nhúng, khai phá quy trình, hồ sơ tương tự, quản trị cấu hình, vận
+# hành (`/system/health`, `/sla/scan`, `/metrics`). Mã thao tác OpenAPI FastAPI tự sinh từ tên hàm và
+# đường dẫn, nên bản dưới /core/v1 không trùng bản ở đường cũ. Tại cổng API, `/core/v1/*` rơi vào tuyến cần
+# token như mọi đường không công khai (infra/cong-api/apisix.yaml).
+TIEN_TO_LOI = "/core/v1"
+
+
+def _gan_loi(router: APIRouter, nhom: str, duong: str = "") -> None:
+    """Gắn một router thêm một lần dưới `/core/v1/<nhóm><đường>`, mang đúng một nhãn "Lõi — …"."""
+    app.include_router(router, prefix=f"{TIEN_TO_LOI}/{nhom}{duong}", tags=[NHOM_LOI[nhom]["name"]])
+
+
+_gan_loi(router_yeu_cau, "workflow")
+_gan_loi(router_tep, "files")
+_gan_loi(router_tai_tep, "files")
+_gan_loi(router_du_lieu_mo, "events")
+_gan_loi(router_thong_bao, "notifications", "/preferences")
+_gan_loi(router_dinh_danh, "identity")

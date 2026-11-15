@@ -26,19 +26,22 @@ xác nhận nhân sự, đề xuất mua vật tư).
 nhật ký sự kiện có cấu trúc; từ đó hệ thống tự khai phá lại quy trình thực tế đang
 chạy và đối chiếu với quy trình đã thiết kế, chỉ ra điểm nghẽn và nhánh lệch chuẩn.
 
-**Giai đoạn hiện tại**: Giai đoạn 2, không gian `H` và `P` — luồng thủ công chạy đầu-cuối.
-Số phiên bản xem `git tag` hoặc trang Releases.
+**Giai đoạn hiện tại**: Giai đoạn 5 — thích ứng đề thi. Bốn không gian `H`, `P`, `D`, `I` đã chạy
+đầu-cuối (Giai đoạn 2 tới 4 đã khép). Số phiên bản xem `git tag` hoặc trang Releases.
 
-Đã cài đặt: hạ tầng sáu dịch vụ dựng bằng một lệnh, lược đồ cấu hình đầy đủ của
-engine máy trạng thái, **điểm chuyển trạng thái duy nhất**, **nhật ký sự kiện**, lời nhắn
-ngoài máy trạng thái, và cổng Next.js gồm cổng người gửi, buồng lái điều phối, buồng lái
-phòng ban, hộp thư chung; ở không gian `D` có lớp báo cáo trên nhật ký sự kiện, bảng điều
-khiển phân tích dựng từ tệp cấu hình và xuất dữ liệu mở (mục 6.3). Chưa cài đặt: nhúng bảng
-điều khiển vào cổng (#305) và không gian `I`. Những mục còn ở dạng thiết kế đều ghi rõ *"chưa cài đặt"* ngay đầu mục.
+Đã cài đặt: cụm mặc định tám dịch vụ dựng bằng một lệnh, mọi lời gọi API vào qua một cổng API (mục 7.4),
+và bốn hồ sơ Compose tùy chọn; lược đồ cấu
+hình đầy đủ của engine máy trạng thái, **điểm chuyển trạng thái duy nhất**, **nhật ký sự kiện**, lời
+nhắn ngoài máy trạng thái; cổng Next.js gồm cổng người gửi, buồng lái điều phối, buồng lái phòng ban,
+hộp thư chung, màn quản trị cấu hình; ở không gian `D` có lớp báo cáo trên nhật ký sự kiện, bảng điều
+khiển nhúng trong cổng và xuất dữ liệu mở (mục 6.3); ở không gian `I` có khai phá quy trình, gợi ý phân
+loại, hồ sơ tương tự và khuyến nghị cải tiến (mục 6.4 tới 6.7). Những mục còn ở dạng thiết kế đều ghi rõ
+*"chưa cài đặt"* ngay đầu mục.
 
-**Ràng buộc quan trọng**: đề thi chính thức chỉ được công bố tháng 11/2026. Mọi thứ
-xây dựng trước thời điểm đó là **bộ khung tái sử dụng**, không phải sản phẩm cuối.
-Xem mục 10 về nguyên tắc thiết kế xuất phát từ ràng buộc này.
+**Đề thi** công bố tháng 11/2026 yêu cầu một nền tảng lõi không giao diện (định danh, cổng API, dữ liệu,
+luồng công việc) và ít nhất một ứng dụng minh họa trong H-P-D-I. Bảng đối chiếu từng yêu cầu với hiện
+trạng, kể cả phần còn thiếu, ở [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md); mục 10 ghi nguyên tắc thiết
+kế đã chuẩn bị cho việc này.
 
 ---
 
@@ -129,6 +132,112 @@ vẫn vận hành ở chế độ thủ công.
 **Thứ tự xây dựng bắt buộc**: hoàn thiện luồng thủ công chạy đúng trước, sau đó mới
 gắn AI vào như một lớp hỗ trợ.
 
+### 2.3. Ranh giới lõi và ứng dụng minh họa
+
+**Đã cài đặt ở Mức 1** (#365, giảng viên chốt ngày 15/11/2026). Đề thi tách nền tảng dịch vụ lõi không
+giao diện (Tầng 1) khỏi ứng dụng minh họa có giao diện (Tầng 2). Mức 1 giữ **một** dịch vụ ứng dụng và vẽ
+ranh giới bằng không gian địa chỉ: API của lõi có phiên bản, nằm dưới `/core/v1`, đi qua cổng API; ứng dụng
+minh họa — cổng vận hành yêu cầu nội bộ — dùng các đường còn lại. Lược đồ không đổi. **Chưa làm**: engine
+chạy nhiều quy trình cùng lúc kèm một quy trình mẫu thứ hai (Mức 2), tách engine thành dịch vụ riêng (Mức 3).
+
+**Khuôn mẫu: gắn router thêm một lần, không chép mã.** `backend/app/main.py` gắn mỗi router của lõi thêm
+một lần với tiền tố `/core/v1/<nhóm>` (hàm `_gan_loi`). Đường cũ và đường của lõi là **cùng một hàm xử lý,
+cùng phụ thuộc** — kiểm token, phân quyền, giới hạn tốc độ theo người dùng, cửa chuyển trạng thái duy nhất
+(mục 6.1) — nên hai đường không thể kể hai chuyện. Đường cũ giữ nguyên cho cổng người dùng. Router nào trộn
+điểm cuối lõi với điểm cuối của ứng dụng thì tách đôi ngay trong tệp của nó, chỉ dời khai báo:
+`workflow/routes.py` có `router_loi` (lõi) và `router` (lời nhắn trên hồ sơ, của ứng dụng);
+`workflow/attachment_routes.py` có `router` (chính sách, tải về) và `router_tai_len` vì hai đường cũ khác
+tiền tố. Router mang tiền tố riêng (`/analytics`, `/me/notifications`) chuyển tiền tố ra lúc gắn.
+
+Nhãn OpenAPI gắn lúc gắn router, không khai ở router: nhãn của router cộng dồn vào **mọi** lần gắn, nên
+thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; năm
+nhóm này khai trong `openapi_tags` (`NHOM_LOI` ở `main.py`) nên đứng đầu `/docs`, kèm mô tả. Mã thao tác
+FastAPI tự sinh từ tên hàm cộng đường dẫn, nên bản của lõi không trùng bản ở đường cũ. Bề mặt đường cũ đối
+chiếu từng dòng trước và sau thay đổi — đường, phương thức, nhãn, mã thao tác, tham số, mã phản hồi — giống
+hệt.
+
+| Nhóm lõi (nhãn OpenAPI) | Đường cũ (giữ nguyên) | Đường của lõi |
+|---|---|---|
+| Lõi — Luồng công việc | `GET /request-types` | `GET /core/v1/workflow/request-types` |
+| | `GET /states` | `GET /core/v1/workflow/states` |
+| | `GET /priorities` | `GET /core/v1/workflow/priorities` |
+| | `GET /departments` | `GET /core/v1/workflow/departments` |
+| | `POST /requests` | `POST /core/v1/workflow/requests` |
+| | `GET /requests` | `GET /core/v1/workflow/requests` |
+| | `GET /requests/{case_id}` | `GET /core/v1/workflow/requests/{case_id}` |
+| | `POST /requests/{case_id}/transitions` | `POST /core/v1/workflow/requests/{case_id}/transitions` |
+| Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
+| | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
+| | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
+| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`) |
+| Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
+| | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
+| Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
+
+Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
+`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
+trong router đã gắn ở cả hai nơi, thêm một dòng vào bảng trên và vào `ANH_XA` của
+`backend/tests/test_loi_api.py` — bài kiểm so khít tập đường `/core/v1` trong OpenAPI với bảng đó, nên điểm
+cuối của ứng dụng không lọt vào lõi mà không ai hay.
+
+**Điểm cuối của ứng dụng minh họa** — chỉ ở đường cũ, dưới `/core/v1` trả `404`:
+
+| Phần của ứng dụng | Đường |
+|---|---|
+| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, lời nhắn, liên hệ người gửi |
+| Buồng lái phòng ban | `/department/*` — cùng các phần như trên |
+| Lời nhắn và hộp thư | `POST /requests/{case_id}/messages`, `/inbox`, `/inbox/unread`, `/inbox/{case_id}/read` |
+| Ủy quyền khi vắng mặt | `/delegations`, `/delegations/members`, `/delegations/{ma}/revoke` |
+| Giao việc, danh bạ | `GET /departments/{department_code}/assignees` |
+| Báo cáo nhúng | `POST /analytics/dashboard/guest-token` |
+| Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
+| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
+| Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
+| Vận hành | `/system/health`, `/sla/scan`, `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
+
+**Giới hạn của Mức 1.** Bước chuyển của lõi là cửa của người gửi: chỉ trên hồ sơ do chính người gọi tạo
+(`requester_id`), và chỉ những cạnh mà vai của người gọi đi được theo bảng `transitions`. Cạnh của điều phối
+viên và phòng ban đi qua hai buồng lái — phần của ứng dụng — nên một ứng dụng khác chưa phân loại hay nhận
+việc được qua lõi. Cửa bước chuyển trung lập với vai thuộc Mức 2.
+
+**Tài khoản dịch vụ.** Client `dx-integration` (biến `KEYCLOAK_INTEGRATION_*`): bí mật, chỉ bật client
+credentials, không đăng nhập người dùng; bộ ánh xạ đưa `dx-api` vào `aud` như client của cổng người dùng,
+nên token qua cổng API và dịch vụ mà không nới phép kiểm nào; tài khoản mang vai `requester` — đủ để tạo hồ
+sơ và đi các cạnh của người gửi trên hồ sơ của chính nó. Không dùng lại `dx-directory`: client đó chỉ để
+tra danh bạ, token không mang `aud` của dịch vụ. Hai đường tạo, cùng một cấu hình:
+
+- Cụm dựng mới: khai trong `infra/keycloak/realm-dx-os-lab.json`, bí mật khớp `infra/.env.example`. Mô tả
+  client giữ dưới 255 ký tự — cột của Keycloak chỉ chừng đó; vượt là Keycloak không nạp được realm và khởi
+  động lại liên tục (đã gặp lúc làm #365)
+- Cụm đang chạy (Keycloak chỉ nạp tệp realm lúc tạo realm): `python scripts/tai_khoan_dich_vu.py` — kiểm,
+  thiếu thì tạo, có rồi thì đặt lại cấu hình và bí mật theo `.env`, gán vai còn thiếu, rồi xin thử một
+  token và kiểm `aud`, vai. Chạy lại bao nhiêu lần cũng được; không gỡ vai nào
+
+Token của tài khoản dịch vụ không có `name` và `groups`. `actor_from_claims` (`backend/app/auth/identity.py`)
+lấy mã client trong `azp` làm tên hiển thị khi tên người dùng đúng là `service-account-<azp>` — người dùng
+thường không mượn được nhãn này. Hồ sơ do ứng dụng khác tạo mang nhãn người gửi `dx-integration`, dòng nhật
+ký mang `actor` là `sub` của tài khoản dịch vụ. Muốn nhãn khác: gắn claim `name` cho client trong Keycloak,
+claim đó luôn được ưu tiên.
+
+**Ví dụ chạy được.** `examples/goi-loi/goi_loi.py`, chỉ thư viện chuẩn: xin token client credentials từ
+Keycloak, rồi **chỉ** gọi cổng API dưới `/core/v1` — danh tính, danh mục loại yêu cầu, tạo hồ sơ, đọc bước
+được phép, đi một bước, đọc lịch sử. Không mã cứng mã trạng thái hay mã loại: chọn bước chính của người gọi,
+không có thì bước đầu tiên làm đổi trạng thái. Với dữ liệu mẫu, vai `requester` ở "Đã gửi" chỉ có "Sửa nội
+dung" (giữ trạng thái) và "Hủy yêu cầu", nên kịch bản đi "Hủy yêu cầu" — hồ sơ thử không nằm lại trong hàng
+đợi của điều phối viên. Hướng dẫn: `examples/goi-loi/README.md`.
+
+**Tại cổng API** không thêm tuyến nào: `/core/v1/*` rơi vào tuyến `can-token` (mục 7.4) — thiếu token là
+`401` ngay tại cổng, kể cả đường lõi chưa tồn tại.
+
+**Kiểm chứng.** `backend/tests/test_loi_api.py` (59 bài, chạy trong container dịch vụ như mọi bài khác):
+OpenAPI khớp bảng ánh xạ, đúng nhãn, không trùng mã thao tác; mỗi đường của lõi trả cùng kết quả với đường cũ, cả đọc lẫn ghi (tạo hồ sơ, đi bước, bước bị từ chối,
+tải tệp, đổi tùy chọn thông báo, xuất nhật ký); điểm cuối của ứng dụng `404` dưới `/core/v1`; không token
+`401`; token client credentials **thật** của Keycloak tạo hồ sơ và đi một bước chỉ bằng `/core/v1`; qua cổng
+API thật, không token bị chặn tại cổng còn tài khoản dịch vụ vào được. Ba phép đột biến đều làm bài đỏ: bỏ
+nhãn tên client của tài khoản dịch vụ, gắn router hộp thư vào lõi, để lại nhãn ở router của lõi.
+`examples/goi-loi/` chạy tay được trên cả cụm nâng cấp (client tạo bằng kịch bản) lẫn cụm dựng mới (client
+từ realm); nó ngoài ảnh của dịch vụ nên không nằm trong bộ kiểm thử tự động.
+
 ---
 
 ## 3. Bộ công nghệ
@@ -146,6 +255,7 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Đóng gói | Docker + Docker Compose | Apache-2.0 | Dựng toàn hệ thống bằng một lệnh |
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 | Không gian `H`. Chạy như dịch vụ độc lập, giao tiếp qua OIDC. Xem [ADR-0001](adr/0001-chon-nen-tang-sso.md) |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 | `core`. Lưu tệp đính kèm, giao tiếp qua S3 API chuẩn. Xem [ADR-0002](adr/0002-chon-nen-tang-luu-tru-doi-tuong.md) |
+| Cổng API | Apache APISIX `3.20.0` — ảnh `apache/apisix:3.20.0-debian` nguyên bản | Apache-2.0 | `core`. Cửa vào duy nhất của API ở cụm mặc định (#364): kiểm token Keycloak tại biên, giới hạn tốc độ chung, định tuyến tới dịch vụ ứng dụng. Chế độ standalone, một tiến trình, cấu hình là tệp trong `infra/cong-api/`. Xem [ADR-0010](adr/0010-chon-nen-tang-cong-api.md) và mục 7.4 |
 | Kinh doanh thông minh | Apache Superset `6.1.0` | Apache-2.0 | Không gian `D`. Bảng điều khiển phân tích, chỉ đọc, nhúng vào cổng qua guest token. Xem [ADR-0003](adr/0003-chon-nen-tang-bi.md) |
 | Kho tri thức | Wiki.js `2.5.315` — ảnh `requarks/wiki` nguyên bản | AGPL-3.0 | Không gian `H`. Dịch vụ **tùy chọn** (hồ sơ Compose `tri-thuc`, #321), chạy như dịch vụ độc lập, đăng nhập một lần qua OIDC, nội dung đọc qua GraphQL; không mã nào của nhóm mang AGPL. Navigator chấp nhận 14/11/2026, chờ giảng viên xác nhận. Xem [ADR-0006](adr/0006-chon-nen-tang-kho-tri-thuc.md) |
 | Máy chủ mô hình ngôn ngữ | llama.cpp server `b11889` | MIT | Không gian `I`. Dịch vụ `mo-hinh` **tùy chọn** (hồ sơ Compose `tri-tue`), điểm cuối kiểu OpenAI, chỉ trong mạng Compose. Xem [ADR-0008](adr/0008-chon-co-so-du-lieu-vec-to-va-mo-hinh-cuc-bo.md) và mục 6.5 |
@@ -154,8 +264,9 @@ Không đưa vào công nghệ thay thế mà không cập nhật mục này và
 | Khai phá quy trình | PM4Py `2.7.23.8` | AGPL-3.0-or-later | Không gian `I`. Chỉ nằm trong **dịch vụ khai phá tách riêng** `services/khai-pha/`, giao tiếp qua HTTP; có bộ máy dự phòng không dùng thư viện này. Xem [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md) và mục 6.4 |
 | Quản trị CSDL | Chờ quyết định | | Hai phương án: pgAdmin 4 (chạy trong Compose) hoặc DBeaver Community |
 
-Mười thành phần đầu dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm. PM4Py
-mang AGPL nên bị giữ sau ranh giới dịch vụ, và cả thư mục dịch vụ khai phá theo AGPL — mục 3.3.
+Các thành phần trên dùng giấy phép nhóm dễ dãi, tương thích hoàn toàn với MIT của sản phẩm, trừ hai
+thành phần AGPL: Wiki.js chạy nguyên khối như dịch vụ độc lập, còn PM4Py bị giữ sau ranh giới dịch vụ
+và cả thư mục dịch vụ khai phá theo AGPL — mục 3.3.
 
 **Hai loại bảng điều khiển, đừng lẫn lộn.** *Buồng lái vận hành* — duyệt, phân công,
 leo thang — có tương tác và ghi dữ liệu, thuộc nhóm **tự viết** trong cổng Next.js.
@@ -190,7 +301,9 @@ số token. Cấu hình đang dùng: `KC_HOSTNAME` cố định địa chỉ cô
 `KC_HOSTNAME_BACKCHANNEL_DYNAMIC` cho phép tài liệu discovery trả địa chỉ nội bộ cho
 các điểm cuối máy chủ gọi. Keycloak tự tách đúng hai chiều — `authorization_endpoint`
 và `end_session_endpoint` ra địa chỉ công khai cho trình duyệt, `token_endpoint` và
-`jwks_uri` ra địa chỉ nội bộ cho máy chủ.
+`jwks_uri` ra địa chỉ nội bộ cho máy chủ. Cổng API (#364) dựa đúng vào điều này: nó đọc
+tài liệu discovery qua `keycloak:8080`, tài liệu vẫn ghi `issuer` theo địa chỉ công khai —
+khớp `iss` của token — còn `jwks_uri` theo địa chỉ nội bộ (đo thật trên cụm, mục 7.4).
 
 Cùng một gốc vấn đề ở phía cổng: trong container, máy chủ Next.js nghe ở `0.0.0.0`, nên
 mọi chuyển hướng dựng từ địa chỉ yêu cầu sẽ trỏ về `http://0.0.0.0:3000` và trình duyệt
@@ -356,10 +469,12 @@ dx-os-lab/
 │   ├── alembic/                 # MỌI LƯỢC ĐỒ — bản gốc 0000 là lược đồ cấu hình (#254)
 │   │   └── sql/                 # SQL thô của bản gốc 0000 và các bản hàm kiểm (0018, 0025), không sửa nữa
 │   ├── tests/
-│   └── requirements.txt         # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
+│   ├── requirements.txt         # TỆP KHÓA PHIÊN BẢN gói dùng trực tiếp, bắt buộc commit
+│   └── constraints.txt          # khóa nốt gói kéo theo, sinh bằng pip freeze (#368)
 ├── services/
 │   └── khai-pha/                # [I] dịch vụ khai phá quy trình (#314) — nơi DUY NHẤT dùng PM4Py (AGPL)
 │       ├── LICENSE              # AGPL-3.0 toàn văn: cả thư mục theo AGPL-3.0-or-later (#340)
+│       ├── requirements.txt, constraints.txt # như backend/ (#368)
 │       ├── app/du_lieu.py       # mọi câu SQL, chỉ đọc lớp báo cáo + cờ của bộ quy tắc
 │       ├── app/phan_tich.py     # nhánh lệch, thời gian chờ, điểm nghẽn — chung cho hai bộ máy
 │       └── app/bo_may/          # pm4py (mặc định) và noi_bo (dự phòng, Python thuần)
@@ -389,13 +504,17 @@ dx-os-lab/
 │   ├── so-sanh-san-pham.md      # so sánh với sản phẩm cùng loại (#277)
 │   └── *-survey.md              # bảy tài liệu khảo sát Open-Core
 ├── e2e/                         # kiểm tra giao diện qua đăng nhập thật, Playwright (#238)
+├── examples/
+│   └── goi-loi/                 # [core] ứng dụng khác gọi API của lõi /core/v1 bằng tài khoản dịch vụ (#365)
 ├── docs-site/                   # trang tài liệu theo người đọc, dựng bằng Starlight (#279)
 │   ├── src/content/docs/        # mỗi trang một tệp Markdown; dẫn sang docs/, không chép lại
 │   └── package-lock.json        # TỆP KHÓA PHIÊN BẢN, bắt buộc commit
 ├── infra/                       # dựng cả cụm bằng một lệnh
 │   ├── docker-compose.yml
 │   ├── docker-compose.cum-thu.yml # tệp ghi đè dựng cụm thử cách ly cạnh cụm chính (#249)
+│   ├── docker-compose.phat-trien.yml # tệp ghi đè mở lại cổng 8000, 5432 cho người phát triển (#364)
 │   ├── .env.example
+│   ├── cong-api/                # [core] cổng API APISIX (#364): config.yaml (tiến trình), apisix.yaml (tuyến, plugin)
 │   ├── keycloak/                # realm nạp lúc khởi động: vai trò là dữ liệu
 │   ├── seaweedfs/
 │   ├── superset/                # ảnh dẫn xuất, ảnh gốc thiếu trình điều khiển
@@ -413,6 +532,7 @@ dx-os-lab/
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
 │   ├── sao_luu.py               # sao lưu tay, khôi phục, đối soát cơ sở dữ liệu và kho tệp (#245)
+│   ├── tai_khoan_dich_vu.py     # tạo, cập nhật tài khoản dịch vụ gọi lõi trên cụm đang chạy (#365)
 │   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
 │   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
 │   └── kiem_chung/              # công cụ kiểm chứng chạy lại được (#249), chạy bằng `python -m`
@@ -434,10 +554,10 @@ dx-os-lab/
 └── cliff.toml                   # cấu hình sinh nhật ký thay đổi
 ```
 
-### 4.2. Cấu trúc dự kiến khi có mã nguồn
+### 4.2. Quy ước đặt thư mục cho phần thêm mới
 
-Cấu trúc đầy đủ khi các không gian còn lại được xây xong. Phần đã tồn tại xem mục 4.1;
-phần dưới đây ghi trước để tránh mỗi người đặt một kiểu.
+Phần đã tồn tại xem mục 4.1 — đó là nguồn đúng về hiện trạng. Sơ đồ dưới đây là quy ước đặt chỗ ghi từ
+đầu dự án để mỗi người không đặt một kiểu; chỗ nào lệch với mục 4.1 thì theo mục 4.1.
 
 ```
 dx-os-lab/
@@ -1965,10 +2085,131 @@ việc của người xử lý vắng vào việc chờ của người làm thay
 biến (bỏ chặn hồ sơ tự gửi, bỏ ghi "thay mặt", bỏ việc chờ của người vắng, bỏ điều kiện hết hạn) đều làm bài
 đỏ. `e2e/` có bài trưởng phòng khai, người xử lý thấy dải báo, thu hồi là mất.
 
-### 7.4. Lớp biên: tiêu đề bảo mật, giới hạn tốc độ và `/health`
+### 7.4. Lớp biên: cổng API, tiêu đề bảo mật, giới hạn tốc độ và `/health`
 
-**Đã cài đặt** — #243. Ba việc ở rìa hệ thống, cùng một nguyên tắc: chặt vừa đủ để giao diện vẫn
-chạy, và thứ gì lộ ra cho người chưa đăng nhập thì chỉ là thứ không có hại khi lộ.
+**Đã cài đặt** — cổng API ở #364 (ADR-0010), lớp trong dịch vụ và cổng người dùng ở #243. Biên có
+**hai lớp**: cổng API đứng trước dịch vụ ứng dụng, chặn lời gọi không hợp lệ trước khi chúng tới dịch
+vụ; dịch vụ và cổng người dùng vẫn tự giữ phần của mình như trước, không lớp nào tin lớp kia thay mình.
+Cùng một nguyên tắc cho cả hai: chặt vừa đủ để giao diện vẫn chạy, và thứ gì lộ ra cho người chưa đăng
+nhập thì chỉ là thứ không có hại khi lộ.
+
+#### Ai mở cổng nào ra máy
+
+```
+Trình duyệt ──► frontend :3000 ──(X-Real-IP)──► cong-api :9081 (chỉ trong mạng Compose) ─┐
+                                                                                         ├─► kiểm token ─► giới hạn ─► backend :8000
+Bên gọi API ngoài cụm ─────────────────────────► cong-api :9080 = GATEWAY_PORT ──────────┘
+                                                      │ tài liệu discovery + bộ khóa công khai
+                                                      └──────────────► keycloak :8080 (địa chỉ nội bộ)
+```
+
+| Dịch vụ | Cổng trên máy (biến) | Vì sao |
+|---|---|---|
+| `cong-api` | `9080` (`GATEWAY_PORT`) | **Cửa vào duy nhất của API**, kể cả tài liệu `/docs` |
+| `frontend` | `3000` (`FRONTEND_PORT`) | Giao diện người dùng |
+| `keycloak`, `superset`, `seaweedfs` | `8080`, `8088`, `8333` | Giao diện của nền tảng (trang đăng nhập, khung bảng điều khiển nhúng, S3) — giữ như trước |
+| `kho-tri-thuc`, `thu-thu` *(tùy chọn)* | `3100`, `8025` | Giao diện của nền tảng, chỉ khi bật hồ sơ |
+| `backend`, `postgres` | **không** | Chỉ nghe trong mạng Compose. Người phát triển mở lại `8000`, `5432` bằng tệp thứ hai `infra/docker-compose.phat-trien.yml`; kịch bản trong `scripts/` đi qua `docker exec` |
+| `khai-pha`, `mo-hinh`, `mo-hinh-nhung`, `quet-tep` | không | Như trước: chỉ dịch vụ ứng dụng gọi trong mạng |
+
+#### Lớp 1 — cổng API
+
+Apache APISIX `3.20.0`, ảnh chính thức nguyên bản, chế độ **standalone**: hai tệp trong `infra/cong-api/`
+gắn chỉ đọc — `config.yaml` (tiến trình: một tiến trình làm việc, tắt API quản trị, chỉ nạp ba plugin) và
+`apisix.yaml` (tuyến, plugin). Không etcd; sửa `apisix.yaml` là APISIX tự nạp lại. Mọi con số chính sách
+là biến môi trường (`GATEWAY_*`, mặc định ở `docker-compose.yml` và `infra/.env.example`). Mọi đường được
+chuyển tới `backend:8000` **giữ nguyên đường dẫn**; API của nền tảng lõi nằm dưới `/core/v1` (#365, mục 2.3)
+và đi qua đúng tuyến cần token như mọi đường không công khai — không tuyến riêng.
+
+**Đường nào cần token.** Tuyến `cong-khai` khớp *đúng* từng đường (không dấu sao), chỉ `GET`/`HEAD`; mọi
+đường và phương thức khác rơi xuống tuyến `can-token`. Danh sách công khai lấy từ OpenAPI của dịch vụ: các
+điểm cuối không khai `security` cộng tài liệu tự sinh của FastAPI. Thêm đường công khai mới ở dịch vụ thì
+thêm vào cả `apisix.yaml` lẫn bảng này.
+
+| Đường | Tại cổng API | Tại dịch vụ ứng dụng |
+|---|---|---|
+| `/`, `/health`, `/health/live`, `/health/ready` (GET, HEAD) | Công khai | Công khai; `/health*` chỉ trả trạng thái chung (dưới) |
+| `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json` (GET, HEAD) | Công khai | Công khai (tài liệu tự sinh) |
+| `/metrics`, `/system/health`, `/sla/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
+| `/core/v1/*` — API của nền tảng lõi (mục 2.3) | Cần token, kể cả đường lõi chưa có | Như đường cũ tương ứng: cùng hàm, cùng phụ thuộc |
+| Mọi đường khác, và đường công khai với phương thức khác (`POST /health`) | Cần token | Cần token; phân quyền theo vai trò và phạm vi như cũ |
+
+**Cổng trả gì.** Đo thật với Keycloak của cụm (`backend/tests/test_cong_api.py`):
+
+| Lời gọi | Cổng API trả | Tới dịch vụ? |
+|---|---|---|
+| Không token | `401`, `WWW-Authenticate: Bearer realm="dx-os-lab"` | Không |
+| Token ký bằng khóa lạ — kể cả mạo đúng `kid` của Keycloak — hay `alg: none` | `401`, `error="invalid_token"` | Không |
+| Token hết hạn (quá `GATEWAY_TOKEN_LEEWAY_SECONDS`, cùng 10 giây như dịch vụ) | `401`, `error="invalid_token"` | Không |
+| Token thật của Keycloak nhưng phát cho client khác (`aud` không có `dx-api`) | `403`, `{"error":"mismatched audience"}` | Không |
+| Token đúng | Chuyển tiếp nguyên tiêu đề `Authorization`, không thêm tiêu đề phụ | Có — dịch vụ kiểm lại đủ chữ ký, hạn, nơi phát, người nhận (`backend/app/auth/tokens.py` không nới) |
+| Vượt ngưỡng tốc độ | `429`, `{"error_msg": …}`, `X-RateLimit-Remaining: 0` | Không |
+
+Cách kiểm: plugin `openid-connect` (`bearer_only`, `use_jwks`, chỉ RS256, `claim_validator.audience` khớp
+client `dx-api`) đọc tài liệu discovery qua địa chỉ **nội bộ** `keycloak:8080`. Lo ngại `iss` theo địa chỉ
+công khai trong khi cổng gọi địa chỉ nội bộ đã đo thật: tài liệu discovery trả `issuer` theo `KC_HOSTNAME`
+— đúng `iss` của token — nên khớp; `jwks_uri` trả địa chỉ nội bộ nhờ `KC_HOSTNAME_BACKCHANNEL_DYNAMIC` (mục
+3.1). Bộ khóa và tài liệu discovery giữ trong bộ nhớ của cổng, nên như dịch vụ ứng dụng, Keycloak nằm ngoài
+đường đi nóng; Keycloak xoay khóa thì token mang `kid` lạ và cổng tự tải lại bộ khóa.
+
+Đường vòng không lách được tuyến công khai: `/health/../me`, `/health/%2e%2e/me`, `/health/..%2fme`,
+`/docs/../metrics`, `//me`, `/health/` đều nhận 401 tại cổng — APISIX chuẩn hóa đường dẫn trước khi chọn
+tuyến và chuyển tiếp đúng đường đã chuẩn hóa.
+
+**Khi Keycloak chưa sẵn sàng.** Cổng API cố ý không `depends_on` Keycloak. Đo thật: dừng Keycloak, khởi
+động lại cổng — cổng vẫn báo khỏe sau khoảng 6 giây, đường công khai trả 200, lời gọi kèm token nhận 401
+`issuer validation unavailable` (plugin từ chối khi không đối chiếu được nơi phát, không cho qua). Bật lại
+Keycloak, cùng token đó qua được sau 15 giây — đúng lúc Keycloak nạp xong — mà không khởi động lại cổng.
+Cụm không kẹt: cổng chờ dịch vụ ứng dụng khỏe (`service_healthy`), cổng người dùng chờ cổng API khỏe.
+Healthcheck hỏi `/status/ready` (mọi tiến trình đã nạp tuyến) ở cổng trạng thái nội bộ `127.0.0.1:7085`
+bằng `bash`, vì ảnh không có `curl`.
+
+**Giới hạn tốc độ chung.** Plugin `limit-count` trong một luật toàn cục: một bộ đếm cho mọi tuyến, theo địa
+chỉ người gọi, cửa sổ cố định `GATEWAY_RATE_LIMIT_WINDOW_SECONDS`, tối đa `GATEWAY_RATE_LIMIT_COUNT` lời gọi.
+Đếm trong bộ nhớ dùng chung của tiến trình — một tiến trình làm việc nên đếm đúng. Chạy **sau** bước kiểm
+token (APISIX chạy plugin xác thực ở pha trước pha giới hạn): lời gọi không token bị từ chối trước, không ăn
+vào hạn mức của ai. Bộ đếm theo người dùng trong PostgreSQL của dịch vụ (dưới) giữ nguyên cho ba thao tác
+ghi. Mặc định 3000 lời gọi mỗi 60 giây cho một địa chỉ: đủ cho một văn phòng dùng chung địa chỉ. Đo thật:
+lượt e2e trọn bộ (bốn cấu hình hiển thị, 204 bài, 7,3 phút) gửi 5.816 lời gọi qua cổng, tất cả từ một địa
+chỉ, đỉnh 969 lời gọi trong một phút — mặc định gấp ba đỉnh đó, và không lời gọi nào của lượt đó bị cổng từ
+chối (mọi 403, 429 trong nhật ký cổng đều do dịch vụ trả).
+
+Mọi người dùng cổng người dùng đều tới cổng API từ **một** container — đếm theo địa chỉ kết nối thì gộp hết
+về một bộ đếm. Nên cổng API nghe hai cổng: `9080` (ánh xạ ra máy) đếm theo địa chỉ kết nối và **không** tin
+tiêu đề nào; `9081` (không ánh xạ ra máy, chỉ container trong cụm tới được) có plugin `real-ip` đọc
+`X-Real-IP` mà `frontend/lib/api.ts` gắn. Cổng người dùng lấy địa chỉ đó bằng đúng hàm `diaChiIp` của giới
+hạn đăng nhập ở dưới (phần tử đầu của `X-Forwarded-For`, Next.js tự đặt từ địa chỉ kết nối khi không có), nên
+chịu cùng điều kiện: chỉ đúng tuyệt đối khi cổng người dùng đứng sau reverse proxy đặt tiêu đề đó. Đo trên
+cụm thử: nhật ký của cổng API ghi địa chỉ của máy gọi (`172.21.0.1`), không phải của container cổng người
+dùng (`172.21.0.9`). Người ngoài gửi `X-Real-IP` giả vào `9080` không né được giới hạn — bài kiểm có bước này.
+Gặp 429 của cổng API, `lib/api.ts` dịch thành câu "Bạn gửi yêu cầu quá nhanh. Thử lại sau N giây." như 429
+của dịch vụ.
+
+**Kích thước và thời gian chờ.** Trần thân yêu cầu `GATEWAY_MAX_BODY_MB` (mặc định 64) không thấp hơn một
+lượt tải tệp lớn nhất dịch vụ nhận: `ATTACHMENT_MAX_FILES` × `ATTACHMENT_MAX_MB` = 5 × 10 MB cộng phần đầu
+biểu mẫu — tăng hai biến kia thì tăng biến này. Chờ gửi/đọc `GATEWAY_TIMEOUT_SECONDS` (mặc định 120) không
+thấp hơn lời gọi đồng bộ lâu nhất của dịch vụ (tải năm tệp kèm quét mã độc 15 giây mỗi tệp, khai phá quy
+trình 30 giây); cổng người dùng vẫn tự cắt ở `BACKEND_TIMEOUT_MS`. Kết nối giữ sẵn từ cổng tới dịch vụ bị
+cổng đóng sau 3 giây rỗi — phải ngắn hơn 5 giây mà uvicorn tự đóng kết nối rỗi. Lượt e2e đầu tiên chạy với
+mặc định 60 giây của APISIX gặp 2 lời gọi `502` (`Connection reset by peer`) trên 5.857: cổng gửi đúng lúc
+uvicorn đang đóng kết nối.
+
+**Tài nguyên.** Một tiến trình làm việc: 51,37 MiB (`docker stats --no-stream` của container cổng API ngay
+sau lượt e2e trọn bộ trên cụm thử, 15/11/2026), sát số 57 MiB đo ở bản khảo sát với bộ khóa giả lập. Ảnh
+chính thức 638 MB, kéo về một lần, không dựng.
+
+**Kiểm chứng.** `backend/tests/test_cong_api.py` (31 bài) chạy trong container dịch vụ, cùng bộ kiểm thử dịch
+vụ ở CI: đường công khai mở; thiếu token, khóa lạ, `alg: none`, hết hạn, sai người nhận bị chặn; token đúng
+tới dịch vụ; `/metrics` vẫn chỉ quản trị; vượt ngưỡng 429 theo từng địa chỉ. Token hết hạn là token **thật**
+của Keycloak: bài tạo một client tạm phát token sống 1 giây (gỡ ngay sau bài), thấy cổng nhận nó khi còn
+trong độ lệch rồi chặn khi quá. Bằng chứng "không tới dịch vụ" là mã yêu cầu: dịch vụ trả lại `X-Request-ID`
+ở mọi phản hồi (mục 7.5), cổng API thì không — vì dịch vụ cũng tự trả 401 khi thiếu token, chỉ nhìn mã 401
+sẽ không phân biệt được. Bốn phép đột biến trên cổng tạm dựng từ chính `apisix.yaml` đều làm bài đỏ: tắt
+`openid-connect` (18 bài đỏ), tắt `limit-count`, cho `real-ip` tin cả cổng `9080`, bỏ kiểm người nhận; bản
+không sửa thì xanh. Job Cụm của CI còn kiểm từ máy chủ rằng `8000` và `5432` không kết nối được, `/health`
+qua cổng API trả 200, `/me` không token nhận 401 không mang mã yêu cầu.
+
+#### Lớp 2 — trong dịch vụ và cổng người dùng
 
 **Tiêu đề bảo mật ở cổng.** Hai nơi, chia theo việc tiêu đề có đổi theo yêu cầu hay không:
 
@@ -2002,7 +2243,8 @@ Bài kiểm tra giao diện (`e2e/`) bắt sự kiện `securitypolicyviolation`
 Superset: vi phạm chính sách chỉ ghi vào bảng điều khiển của trình duyệt, không ném lỗi trang, nên
 chỉ nghe `pageerror` thì bỏ lọt.
 
-**Giới hạn tốc độ.** Hai tầng, hai nơi đếm — vì hai tầng có hai hoàn cảnh khác nhau:
+**Giới hạn tốc độ.** Ngoài giới hạn chung theo địa chỉ ở cổng API (lớp 1), còn hai tầng, hai nơi đếm — vì
+hai tầng có hai hoàn cảnh khác nhau:
 
 - *Dịch vụ ứng dụng* (`backend/app/rate_limit.py`) giới hạn ba thao tác ghi: **tạo hồ sơ**, **tải tệp
   lên**, **gửi lời nhắn** (cả ba cửa của lời nhắn). Bộ đếm nằm trong **PostgreSQL**, bảng
@@ -2065,9 +2307,10 @@ vài giây. `LOG_FORMAT=text` trả về dạng chữ khi đọc tay.
 **Số đo** ở `GET /metrics`, văn bản kiểu Prometheus viết tay: số yêu cầu theo phương thức, **mẫu đường
 dẫn** (`/requests/{case_id}`, không phải `/requests/123` — số chuỗi không phình theo số hồ sơ) và mã
 trạng thái; phân bố độ trễ; số lỗi 5xx; độ dài hàng đợi thư (#251); lượt quét thành công cuối và số
-lượt hỏng liên tiếp của từng bộ quét. **Chỉ quản trị viên**: cổng dịch vụ được công bố ra máy
-(`BACKEND_PORT`), nên "chỉ trong mạng Compose" không phải ranh giới thật, và mẫu đường dẫn, độ dài hàng
-đợi là thông tin vận hành không cho người ngoài. Bộ thu số đo dùng token của một tài khoản quản trị.
+lượt hỏng liên tiếp của từng bộ quét. **Chỉ quản trị viên**: mẫu đường dẫn, độ dài hàng đợi là thông tin
+vận hành không cho người ngoài. Từ #364 cổng dịch vụ không còn mở ra máy ở cấu hình mặc định, nhưng chính
+sách không đổi — tệp phát triển mở lại cổng `8000`, và ranh giới mạng không thay được kiểm quyền. Bộ thu số
+đo đi qua cổng API bằng token của một tài khoản quản trị.
 Phần đếm yêu cầu nằm trong bộ nhớ của **từng bản** dịch vụ; phần đọc từ cơ sở dữ liệu là chung cả cụm.
 
 Màn Hệ thống hiện thêm **lượt cuối** của từng bộ quét (`last_started_at` của nhịp, mục 7.1) bên cạnh lần
@@ -2180,7 +2423,9 @@ Không xây dựng những thứ sau vào mã nguồn ở giai đoạn hiện t�
   khi còn mật khẩu hay tài khoản mẫu (#242): giảng viên chốt không làm ngày 13/11/2026; README có mục
   *Trước khi dùng thật*. Sao lưu chỉ có bản tay cho quy mô trình diễn (#245, `scripts/sao_luu.py`) —
   sao lưu tự động theo lịch nằm ngoài phạm vi
-- Xác thực hai lớp, khôi phục mật khẩu qua thư điện tử
+- Khôi phục mật khẩu qua thư điện tử. Xác thực hai lớp bằng mã dùng một lần đã có dưới dạng tùy chọn, mặc
+  định tắt (#366, `scripts/xac_thuc_hai_lop.py`): chỉ đổi cấu hình qua API quản trị Keycloak, không sửa
+  realm JSON hay mã nền tảng
 - Ứng dụng di động
 - Đa ngôn ngữ giao diện
 - Thanh toán, tích hợp hệ thống tài chính

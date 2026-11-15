@@ -5,6 +5,9 @@
 # dựng lại cũng nhận đúng một bộ phiên bản. Giấy phép từng gói: docs/dependencies.md.
 #
 # Gỡ pm4py (đặt KHAI_PHA_BO_MAY=noi_bo) thì xóa dòng pm4py; pandas vẫn không cần cho bộ máy dự phòng.
+#
+# Gói kéo theo mà [stable] không ghim khóa ở constraints.txt cạnh tệp này (#368). Đổi một dòng ở đây thì
+# sinh lại tệp đó theo hướng dẫn ở đầu tệp.
 
 fastapi==0.141.1
 uvicorn[standard]==0.53.0

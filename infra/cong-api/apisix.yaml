@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Tuyến và plugin của cổng API (ADR-0010, #364) — chế độ standalone của Apache APISIX đọc tệp này,
+# không cần API quản trị hay etcd; sửa tệp là APISIX tự nạp lại.
+#
+# Mọi lời gọi API từ ngoài cụm vào đây rồi mới tới dịch vụ ứng dụng, GIỮ NGUYÊN đường dẫn. Ba việc:
+#
+#   1. Kiểm token của Keycloak ngay tại biên (plugin openid-connect): chữ ký theo bộ khóa công khai đọc
+#      từ điểm cuối khám phá, nơi phát, hạn dùng, người nhận. Lời gọi thiếu token, token hết hạn, token
+#      ký bằng khóa lạ nhận 401 tại đây và KHÔNG tới dịch vụ. Dịch vụ ứng dụng vẫn kiểm lại đủ như cũ
+#      (backend/app/auth/tokens.py) và vẫn tự phân quyền theo vai trò — phòng thủ hai lớp.
+#   2. Giới hạn tốc độ chung theo địa chỉ người gọi (plugin limit-count), cho mọi tuyến.
+#   3. Định tuyến tới dịch vụ ứng dụng.
+#
+# Bảng đường nào cần token: docs/ARCHITECTURE.md mục 7.4.
+#
+# LƯU Ý khi sửa: APISIX thay biến môi trường trên TOÀN VĂN tệp trước khi đọc YAML, kể cả trong dòng chú
+# thích — đừng viết cú pháp biến (dấu đô la kèm hai cặp ngoặc nhọn) trong chú thích. Biến dùng ở đây
+# phải khai thêm ở nginx_config.envs của config.yaml.
+
+upstreams:
+  - id: dich-vu-ung-dung
+    type: roundrobin
+    # Tên dịch vụ trong mạng Compose, như các địa chỉ nội bộ khác của docker-compose.yml
+    nodes:
+      "backend:8000": 1
+    # Kết nối giữ sẵn tới dịch vụ phải bị cổng đóng TRƯỚC khi uvicorn tự đóng (uvicorn đóng kết nối rỗi
+    # sau 5 giây, mặc định). Để mặc định 60 giây của APISIX thì thỉnh thoảng cổng gửi yêu cầu đúng lúc
+    # uvicorn đang đóng và trả 502 — đo được 2 lần trong một lượt e2e trước khi đặt dòng này.
+    keepalive_pool:
+      idle_timeout: 3
+    timeout:
+      connect: 5
+      # Không thấp hơn lời gọi đồng bộ lâu nhất của dịch vụ ứng dụng (tải nhiều tệp kèm quét mã độc,
+      # khai phá quy trình…) — mặc định đặt ở docker-compose.yml
+      send: ${{GATEWAY_TIMEOUT_SECONDS}}
+      read: ${{GATEWAY_TIMEOUT_SECONDS}}
+
+global_rules:
+  - id: bien-chung
+    plugins:
+      # Chỉ trên cổng nội bộ 9081 (cổng người dùng gọi): lấy địa chỉ người dùng thật từ X-Real-IP mà
+      # frontend/lib/api.ts gắn. Cổng 9080 mở ra máy không tin tiêu đề này — người ngoài không giả được
+      # địa chỉ để né giới hạn tốc độ. Cổng 9081 không ánh xạ ra máy nên chỉ container trong cụm tới được.
+      real-ip:
+        source: http_x_real_ip
+        _meta:
+          filter:
+            - ["server_port", "==", "9081"]
+      # Một bộ đếm chung cho mọi tuyến, theo địa chỉ người gọi, cửa sổ cố định, đếm trong bộ nhớ dùng
+      # chung của tiến trình. Chạy SAU bước kiểm token: lời gọi không token bị từ chối trước, không ăn
+      # vào hạn mức của ai. Bộ đếm theo người dùng trong PostgreSQL của dịch vụ ứng dụng (tạo hồ sơ, tải
+      # tệp, gửi lời nhắn) vẫn giữ nguyên.
+      limit-count:
+        count: ${{GATEWAY_RATE_LIMIT_COUNT}}
+        time_window: ${{GATEWAY_RATE_LIMIT_WINDOW_SECONDS}}
+        key_type: var
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+        rejected_msg: "Quá nhiều yêu cầu từ địa chỉ của bạn. Thử lại sau ít giây."
+
+routes:
+  # Đường công khai sẵn có của dịch vụ: kiểm tra sức khỏe, trang chỉ đường, tài liệu OpenAPI. Không cần
+  # token, đúng như khi gọi thẳng dịch vụ. Khớp ĐÚNG từng đường (không có dấu sao), chỉ GET và HEAD;
+  # mọi đường và phương thức khác rơi xuống tuyến cần token bên dưới. Thêm đường công khai mới ở dịch vụ
+  # thì thêm vào đây và vào bảng ở ARCHITECTURE.md mục 7.4.
+  - id: cong-khai
+    priority: 10
+    methods: ["GET", "HEAD"]
+    uris:
+      - /
+      - /health
+      - /health/live
+      - /health/ready
+      - /docs
+      - /docs/oauth2-redirect
+      - /redoc
+      - /openapi.json
+    upstream_id: dich-vu-ung-dung
+
+  # Mọi đường còn lại cần access token của Keycloak — kể cả API của nền tảng lõi /core/v1/* (#365): thiếu
+  # token là 401 tại đây, cả với đường lõi chưa tồn tại, nên người ngoài không dò được bề mặt của lõi
+  - id: can-token
+    priority: 0
+    uri: /*
+    plugins:
+      openid-connect:
+        # Điểm cuối khám phá đọc qua địa chỉ NỘI BỘ của Keycloak. Tài liệu trả về vẫn ghi nơi phát (issuer)
+        # theo địa chỉ công khai KC_HOSTNAME — đúng giá trị iss của token — còn jwks_uri theo địa chỉ nội
+        # bộ nhờ KC_HOSTNAME_BACKCHANNEL_DYNAMIC (ARCHITECTURE.md mục 3.1). Bộ khóa giữ trong bộ nhớ;
+        # Keycloak xoay khóa thì token mang kid lạ và APISIX tự tải lại.
+        discovery: http://keycloak:8080/realms/${{KEYCLOAK_REALM}}/.well-known/openid-configuration
+        # Client của dịch vụ ứng dụng: token phải mang tên này trong aud (match_with_client_id)
+        client_id: ${{GATEWAY_OIDC_CLIENT_ID}}
+        bearer_only: true
+        use_jwks: true
+        token_signing_alg_values_expected: RS256
+        # Độ lệch đồng hồ cho phép khi xét hạn dùng, cùng giá trị với dịch vụ ứng dụng
+        iat_slack: ${{GATEWAY_TOKEN_LEEWAY_SECONDS}}
+        # Nhãn realm trong tiêu đề WWW-Authenticate của phản hồi 401
+        realm: ${{KEYCLOAK_REALM}}
+        claim_validator:
+          audience:
+            required: true
+            match_with_client_id: true
+        # Không thêm tiêu đề phụ (X-Access-Token, X-Userinfo, X-ID-Token) vào lời gọi tới dịch vụ: dịch vụ
+        # chỉ đọc Authorization, giữ nguyên như khi gọi thẳng
+        set_access_token_header: false
+        set_userinfo_header: false
+        set_id_token_header: false
+    upstream_id: dich-vu-ung-dung
+#END

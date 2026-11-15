@@ -1,7 +1,8 @@
 # dx-os-lab
 
-> Cổng vận hành yêu cầu nội bộ cho doanh nghiệp, theo kiến trúc Open-Core H-P-D-I — Dự án dự thi
-> Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
+> Mô hình DX-OS Open-Core: một **nền tảng lõi không giao diện** (định danh, cổng API, dữ liệu, luồng
+> công việc) và một **ứng dụng minh họa** phủ đủ H-P-D-I — cổng vận hành yêu cầu nội bộ cho doanh nghiệp.
+> Dự án dự thi Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
 
 [![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
@@ -16,8 +17,11 @@ dẫn theo từng vai, quản trị và tùy biến, phát triển. Cách xem �
 vật tư — được gửi qua Zalo, email hay giấy tờ. Người gửi không biết yêu cầu đã tới đâu, quá hạn không
 ai nhắc, và lãnh đạo không có số liệu để biết khâu nào đang chậm.
 
-**dx-os-lab là một cổng chung cho mọi yêu cầu đó.** Một hồ sơ đi qua bốn vai — người gửi, điều phối
-viên, trưởng phòng, người xử lý — và mỗi người mở cổng lên là thấy ngay việc đang chờ mình.
+**Ứng dụng minh họa của dx-os-lab là một cổng chung cho mọi yêu cầu đó.** Một hồ sơ đi qua bốn vai —
+người gửi, điều phối viên, trưởng phòng, người xử lý — và mỗi người mở cổng lên là thấy ngay việc đang
+chờ mình. Phía dưới cổng là nền tảng lõi chỉ có API, dùng lại được cho ứng dụng khác.
+
+![Trang chủ của điều phối viên: việc cần làm ngay xếp theo độ gấp](docs-site/src/assets/anh/trang-chu-dieu-phoi.png)
 
 - **Điều phối theo từng hồ sơ** — điều phối viên phân loại, đặt mức ưu tiên và chọn phòng phù hợp;
   phòng sai chuyên môn thì trả lại kèm lý do. Không phải chuỗi người duyệt cố định
@@ -30,36 +34,74 @@ viên, trưởng phòng, người xử lý — và mỗi người mở cổng l�
 
 So sánh với các sản phẩm cùng loại: [`docs/so-sanh-san-pham.md`](docs/so-sanh-san-pham.md).
 
-## Kiến trúc H-P-D-I
+## Kiến trúc: lõi không giao diện và ứng dụng minh họa
 
-| | Không gian | Nền tảng | Trạng thái |
+Đề thi yêu cầu mô hình DX-OS Open-Core hai tầng bắt buộc. Dự án đáp ứng như sau:
+
+```mermaid
+flowchart TB
+  subgraph T2["Tầng 2 — Ứng dụng minh họa: cổng vận hành yêu cầu nội bộ"]
+    H["H · Cổng theo vai, hộp thư,<br/>kho tri thức"]
+    P["P · Luồng 11 trạng thái,<br/>điều phối, hạn xử lý"]
+    D["D · Bảng điều khiển,<br/>xuất dữ liệu"]
+    I["I · Khai phá quy trình,<br/>gợi ý có người xác nhận"]
+  end
+  subgraph T1["Tầng 1 — Nền tảng lõi không giao diện"]
+    GW["Cổng API<br/>Apache APISIX"]
+    ID["Định danh, SSO<br/>Keycloak"]
+    WF["Động cơ luồng công việc<br/>engine tự viết, API /core/v1"]
+    DB["Dữ liệu có cấu trúc<br/>PostgreSQL"]
+    FS["Dữ liệu phi cấu trúc<br/>SeaweedFS"]
+  end
+  T2 -->|mọi lời gọi API| GW
+  GW -->|kiểm token| ID
+  GW --> WF
+  WF --> DB
+  WF --> FS
+```
+
+**Tầng 1 — nền tảng lõi**, chỉ có API, không có màn hình nào:
+
+| Dịch vụ lõi đề bắt buộc | Đáp ứng bằng | Giấy phép |
+|---|---|---|
+| Định danh, đăng nhập một lần | Keycloak `26.7.3`; xác thực hai lớp tùy chọn | Apache-2.0 |
+| Cổng API | Apache APISIX `3.20.0` — cửa vào duy nhất, kiểm token tại biên, giới hạn tốc độ | Apache-2.0 |
+| Dữ liệu có cấu trúc và phi cấu trúc | PostgreSQL + pgvector; SeaweedFS `4.45` qua S3 API | PostgreSQL License · Apache-2.0 |
+| Động cơ luồng công việc | **Engine máy trạng thái tự viết**, phơi qua API của lõi `/core/v1`; mọi bước chuyển ghi nhật ký sự kiện chỉ ghi thêm | MIT |
+
+**Tầng 2 — ứng dụng minh họa**, phủ bốn không gian:
+
+| | Không gian | Có gì | Nền tảng lắp ghép |
 |---|---|---|---|
-| **H** | Nhân sự — định danh, phân quyền theo vai | Keycloak `26.7.3` (Apache-2.0) | Đã chạy |
-| **P** | Quy trình — máy trạng thái, Poka-yoke, hạn xử lý | **Engine tự viết** (MIT) | Đã chạy |
-| **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện | Apache Superset `6.1.0` (Apache-2.0) | Đã chạy |
-| **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp server + Qwen2.5-1.5B (tùy chọn) | Thẻ gợi ý có xác nhận (`v0.10.0`); khai phá quy trình và màn quy trình thực tế (`v0.11.0`); gợi ý phân loại bằng mô hình cục bộ (`v0.12.0`); người xử lý, hồ sơ tương tự, khuyến nghị (`v0.13.0`) |
+| **H** | Nhân sự | Cổng theo vai, hộp thư trao đổi, ủy quyền khi vắng, kho tri thức (tùy chọn) | Next.js; Wiki.js `2.5.315` (AGPL-3.0, dịch vụ riêng) |
+| **P** | Quy trình | Phân loại, định tuyến, leo thang, mở lại có giới hạn, màn cấu hình quy trình | — |
+| **D** | Dữ liệu | Bảng điều khiển nhúng trong cổng, xuất nhật ký CSV và JSON | Apache Superset `6.1.0` (Apache-2.0) |
+| **I** | Trí tuệ | Khai phá quy trình thực tế, gợi ý phân loại và người xử lý, hồ sơ tương tự | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp + Qwen2.5-1.5B (tùy chọn) |
 
-Nền chung: Next.js, FastAPI, PostgreSQL, SeaweedFS (tệp đính kèm), Docker Compose. Nền tảng phổ thông
-được lắp ghép và chạy như dịch vụ độc lập; engine quy trình — phần lõi tạo khác biệt — nhóm tự viết.
-Tầng `I` chỉ ghi vào trường gợi ý, con người xác nhận mới thành quyết định. Lý do từng lựa chọn ở
-[`docs/adr/`](docs/adr/).
+Một ứng dụng khác dùng lõi mà không cần cổng người dùng: lấy token bằng tài khoản dịch vụ rồi gọi
+`/core/v1` qua cổng API — ví dụ chạy được ở [`examples/goi-loi/`](examples/goi-loi/). Nền tảng phổ thông
+được lắp ghép và chạy như dịch vụ độc lập; engine quy trình — phần tạo khác biệt — nhóm tự viết. Tầng `I`
+chỉ ghi vào trường gợi ý, con người xác nhận mới thành quyết định.
+
+Bảng đối chiếu từng yêu cầu của đề, kể cả phần để ngoài phạm vi:
+[`docs/doi-chieu-de-thi.md`](docs/doi-chieu-de-thi.md). Lý do từng lựa chọn: [`docs/adr/`](docs/adr/).
 
 ## Cài nhanh
 
-Cần Docker (Docker Desktop, hoặc Docker Engine 24 trở lên kèm Compose v2), khoảng 2 GB bộ nhớ, 6 GB ổ
-đĩa, và các cổng 3000 · 5432 · 8000 · 8080 · 8088 · 8333 đang trống.
+Cần Docker Engine 24 trở lên kèm Compose v2 (hoặc Docker Desktop), khoảng 2 GB bộ nhớ, 6 GB ổ
+đĩa, và các cổng 3000 · 8080 · 8088 · 8333 · 9080 đang trống.
 
 Tải **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `0.7.0` bằng phiên bản đã tải):
+[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `0.16.0` bằng phiên bản đã tải):
 
 ```bash
-tar -xzf dx-os-lab-0.7.0.tar.gz
-cd dx-os-lab-0.7.0/infra
+tar -xzf dx-os-lab-0.16.0.tar.gz
+cd dx-os-lab-0.16.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-0.7.0\infra`. Từ kho mã thì
+Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-0.16.0\infra`. Từ kho mã thì
 `git clone` rồi chạy ba lệnh cuối trong `dx-os-lab/infra`. Lần đầu mất khoảng 10–20 phút.
 
 Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty**. Tài khoản mẫu, mật khẩu chung
@@ -80,6 +122,15 @@ vào cụm thử — chạy ở gốc kho mã:
 
 ```bash
 python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
+```
+
+Cổng mở ra máy: `3000` cổng người dùng · `9080` **cổng API** — cửa vào duy nhất của API, tài liệu API ở
+`http://localhost:9080/docs`, mọi đường trừ kiểm tra sức khỏe và tài liệu cần access token của Keycloak ·
+`8080` Keycloak · `8088` Superset · `8333` S3 của SeaweedFS. Dịch vụ ứng dụng (`8000`) và PostgreSQL
+(`5432`) chỉ nghe trong mạng Compose; người phát triển cần gọi thẳng thì thêm tệp thứ hai:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d   # trong infra/
 ```
 
 Đủ mười ba tài khoản, kiểm cụm, cấu hình, sự cố thường gặp và nâng cấp: xem trang tài liệu, phần
@@ -137,6 +188,18 @@ Lần đầu, bước khởi tạo tự cài Wiki.js, nối đăng nhập qua Ke
 trong `infra/.env` thì thanh bên của cổng có lối **Kho tri thức** (vào thẳng, không hỏi mật khẩu lần nữa), và —
 khi mô hình nhúng cũng bật — bài hướng dẫn hiện trong gợi ý lúc người gửi đang soạn yêu cầu. Chi tiết: trang
 tài liệu, *Cài đặt và vận hành → Kho tri thức*.
+
+### Xác thực hai lớp (tùy chọn)
+
+Bật mã dùng một lần (TOTP) khi đăng nhập cho mọi tài khoản công ty chỉ bằng cấu hình Keycloak, không sửa
+mã nền tảng — ở gốc kho mã:
+
+```bash
+python scripts/xac_thuc_hai_lop.py bat          # tắt lại: tat · xem: trang-thai
+```
+
+Lần đăng nhập kế, người dùng quét mã QR bằng ứng dụng xác thực. Mặc định tắt nên cụm trình diễn không
+đổi. Chi tiết: trang tài liệu, *Cài đặt và vận hành → Xác thực hai lớp*.
 
 ### Nâng cấp
 
@@ -216,6 +279,7 @@ Tài liệu kỹ thuật trong kho:
 |---|---|
 | [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) | Dự án đang ở đâu, vừa làm gì, đang vướng gì |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Hệ thống tổ chức thế nào và vì sao |
+| [`docs/doi-chieu-de-thi.md`](docs/doi-chieu-de-thi.md) | Dự án đáp ứng từng yêu cầu của đề thi OLP 2026 bằng gì, còn thiếu gì |
 | [`docs/process-flow.md`](docs/process-flow.md) | Luồng nghiệp vụ: 11 trạng thái, 32 bước, cơ sở các con số |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Việc tiếp theo |
 | [`docs/adr/`](docs/adr/) | Vì sao chọn công nghệ đó |

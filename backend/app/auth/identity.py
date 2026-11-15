@@ -15,6 +15,28 @@ from __future__ import annotations
 from app.config import get_settings
 from app.workflow.context import Actor
 
+# Keycloak đặt tên người dùng của tài khoản dịch vụ là tiền tố này cộng mã client (viết thường) — từ vựng
+# của Keycloak, không phải giá trị nghiệp vụ.
+TIEN_TO_TAI_KHOAN_DICH_VU = "service-account-"
+
+
+def _ten_hien_thi(claims: dict) -> str | None:
+    """Tên ghi vào nhật ký và nhãn người gửi: claim `name`, rồi tới tên người dùng.
+
+    Token của tài khoản dịch vụ (client credentials, #365) không có `name`, còn tên người dùng là
+    `service-account-<mã client>`. Khi đó lấy mã client trong `azp` — hồ sơ do một ứng dụng khác tạo mang
+    nhãn người gửi là tên ứng dụng đó. Chỉ nhận khi tên người dùng đúng là tài khoản dịch vụ của chính
+    client phát token, để một người dùng thường không mượn được nhãn của ứng dụng. Muốn nhãn khác thì gắn
+    claim `name` cho client trong Keycloak: claim đó luôn được ưu tiên.
+    """
+    if claims.get("name"):
+        return claims["name"]
+    ten = claims.get("preferred_username")
+    client = claims.get("azp")
+    if ten and client and ten.lower() == f"{TIEN_TO_TAI_KHOAN_DICH_VU}{client}".lower():
+        return client
+    return ten
+
 
 def actor_from_claims(claims: dict, *, department_prefix: str | None = None) -> Actor:
     """Dịch claim của token thành một `Actor` mà engine hiểu được.
@@ -25,6 +47,9 @@ def actor_from_claims(claims: dict, *, department_prefix: str | None = None) -> 
       sự kiện và cột `requester_id` của hồ sơ
     - `realm_access.roles` → tập vai trò
     - `groups` → tập mã phòng ban, sau khi cắt tiền tố đường dẫn
+
+    Kèm tên hiển thị (`_ten_hien_thi`): token của tài khoản dịch vụ thiếu `name` và `groups`, vẫn dựng
+    được tác nhân bình thường.
 
     Vai trò lấy nguyên xi, kể cả những vai trò mặc định của Keycloak như
     `offline_access` hay `uma_authorization`. Không lọc, vì engine chỉ giao nhau tập
@@ -51,7 +76,7 @@ def actor_from_claims(claims: dict, *, department_prefix: str | None = None) -> 
 
     return Actor(
         id=claims["sub"],
-        name=claims.get("name") or claims.get("preferred_username"),
+        name=_ten_hien_thi(claims),
         roles=frozenset(vai_tro),
         departments=frozenset(phong_ban),
     )

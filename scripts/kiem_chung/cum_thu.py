@@ -22,6 +22,7 @@ import time
 import urllib.parse
 
 from .chung import (
+    KHOA_CONG_MO,
     CumThu,
     chay,
     chay_truc_tiep,
@@ -37,7 +38,7 @@ from .chung import (
     GOC_KHO,
 )
 
-DICH_VU_KHONG_SUPERSET = ("postgres", "keycloak", "seaweedfs", "backend", "frontend", "khai-pha")
+DICH_VU_KHONG_SUPERSET = ("postgres", "keycloak", "seaweedfs", "backend", "cong-api", "frontend", "khai-pha")
 
 
 def cong_dang_dung(cong: int) -> bool:
@@ -102,9 +103,7 @@ def lenh_dung(ts: argparse.Namespace) -> int:
         print(f"Cụm thử {cum.du_an!r} đã có container đang chạy — dựng bồi thêm (không xóa gì).")
     else:
         e = cum.sinh_env()
-        bi_chiem = [(k, int(e[k])) for k in ("POSTGRES_PORT", "KEYCLOAK_PORT", "SEAWEEDFS_S3_PORT",
-                                              "SUPERSET_PORT", "BACKEND_PORT", "FRONTEND_PORT")
-                    if cong_dang_dung(int(e[k]))]
+        bi_chiem = [(k, int(e[k])) for k in KHOA_CONG_MO if cong_dang_dung(int(e[k]))]
         if bi_chiem:
             thoat("Cổng đã có tiến trình khác dùng: "
                   + ", ".join(f"{k}={v}" for k, v in bi_chiem)
