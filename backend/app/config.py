@@ -391,6 +391,27 @@ class Settings(BaseSettings):
     # về hỏi định kỳ — không để luồng ăn hết kết nối mà các lời gọi khác cần.
     realtime_max_streams: int = 40
 
+    # --- Webhook — truyền phát sự kiện ra ngoài, xem #390 và app/webhook.py ---------------
+    #
+    # Bộ gửi luôn chạy (không đăng ký nào thì một lượt chỉ là hai câu truy vấn rỗng). Đặt chu kỳ 0 để tắt.
+    webhook_scan_interval_seconds: int = 5
+    # Mỗi lượt xét tối đa chừng này sự kiện cho mỗi đăng ký, và gửi tối đa chừng này lần
+    webhook_batch_size: int = 100
+    # Hạn chờ một bên nhận trả lời. Ngắn: một bên nhận chậm không được giữ cả lượt
+    webhook_timeout_seconds: float = 5.0
+    # Thử lại khi hỏng: chờ `webhook_retry_after_seconds`, nhân đôi mỗi lần, tối đa `webhook_max_attempts`
+    # lần rồi đánh dấu hỏng hẳn
+    webhook_max_attempts: int = 6
+    webhook_retry_after_seconds: int = 10
+
+    @property
+    def webhook_enabled(self) -> bool:
+        return self.webhook_scan_interval_seconds > 0
+
+    @property
+    def webhook_scan_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.webhook_scan_interval_seconds
+
 
 @lru_cache
 def get_settings() -> Settings:

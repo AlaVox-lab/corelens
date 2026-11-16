@@ -46,6 +46,15 @@ QUAN_TRI = Actor(id="loi-qt-365", name="Quản trị 365", roles=frozenset({"adm
 
 # Bảng ánh xạ đường cũ → đường của lõi. Nguồn sự thật cho bài, khớp bảng ở ARCHITECTURE.md mục 2.3: thêm một
 # điểm cuối vào lõi mà không thêm vào đây (hay ngược lại) thì bài đỏ.
+# Điểm cuối chỉ có ở lõi, không có đường cũ của ứng dụng minh họa — webhook (#390)
+CHI_O_LOI: set[tuple[str, str]] = {
+    ("POST", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks/{webhook_id}"),
+    ("DELETE", "/core/v1/webhooks/{webhook_id}"),
+    ("GET", "/core/v1/webhooks/{webhook_id}/deliveries"),
+}
+
 ANH_XA: dict[tuple[str, str], str] = {
     ("GET", "/processes"): "/core/v1/workflow/processes",
     ("GET", "/request-types"): "/core/v1/workflow/request-types",
@@ -113,7 +122,7 @@ def test_openapi_loi_dung_bang_anh_xa():
     dụng minh họa lọt vào lõi, không điểm cuối lõi nào thiếu."""
     co = {(p, d) for p, d, _ in _cac_thao_tac()}
     duoi_loi = {(p, d) for p, d in co if d.startswith(TIEN_TO_LOI + "/")}
-    assert duoi_loi == {(p, moi) for (p, _), moi in ANH_XA.items()}
+    assert duoi_loi == {(p, moi) for (p, _), moi in ANH_XA.items()} | CHI_O_LOI
     # Đường cũ còn nguyên cho cổng người dùng
     assert set(ANH_XA) <= co
 

@@ -63,6 +63,8 @@ from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
 from app.thoi_gian_thuc import router as router_thoi_gian_thuc
+from app.webhook import NHAN_BO_QUET_WEBHOOK, TEN_BO_QUET_WEBHOOK, co_dang_ky_dang_bat, quet_webhook
+from app.webhook import router as router_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -220,6 +222,23 @@ async def _vong_gui_thu() -> None:
             logger.exception("Lượt gửi thư thông báo thất bại, sẽ thử lại ở lượt sau")
 
 
+def _gui_webhook_mot_lan() -> int:
+    """Một lượt bộ gửi webhook (#390), có khóa tư vấn và dòng nhịp (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_WEBHOOK, quet_webhook)
+    return (luot.ket_qua or 0) if luot.da_chay else 0
+
+
+async def _vong_gui_webhook() -> None:
+    """Vòng riêng như bộ gửi thư: một bên nhận chậm không được làm trễ bộ quét hạn."""
+    while True:
+        await asyncio.sleep(settings.webhook_scan_interval_seconds)
+        try:
+            await asyncio.to_thread(_gui_webhook_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt gửi webhook thất bại, sẽ thử lại ở lượt sau")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Bật bộ quét SLA và bộ quét gợi ý lúc khởi động, tắt gọn lúc dừng."""
@@ -254,6 +273,11 @@ async def lifespan(app: FastAPI):
             settings.notify_scan_interval_seconds,
         )
 
+    # Webhook (#390): luôn chạy trừ khi đặt chu kỳ 0 — không đăng ký nào thì lượt gần như không tốn gì
+    if settings.webhook_enabled:
+        cac_tac_vu.append(asyncio.create_task(_vong_gui_webhook()))
+        logger.info("Bộ gửi webhook chạy mỗi %d giây", settings.webhook_scan_interval_seconds)
+
     yield
 
     for tac_vu in cac_tac_vu:
@@ -283,6 +307,11 @@ NHOM_LOI: dict[str, dict[str, str]] = {
     "notifications": {
         "name": "Lõi — Thông báo",
         "description": "Tùy chọn nhận thông báo thư của chính người gọi.",
+    },
+    "webhooks": {
+        "name": "Lõi — Webhook",
+        "description": "Truyền phát sự kiện ra ngoài: đăng ký một địa chỉ nhận, mỗi bản ghi mới của nhật ký sự "
+        "kiện khớp bộ lọc được POST tới đó, ký HMAC-SHA256, thử lại khi hỏng. Chỉ quản trị viên.",
     },
     "identity": {
         "name": "Lõi — Định danh",
@@ -417,6 +446,15 @@ def _do_suc_khoe(session: Session) -> dict:
                 session,
                 {TEN_BO_QUET_THU: NHAN_BO_QUET_THU},
                 nguong_qua_lau_giay=settings.notify_scan_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
+        # Bộ gửi webhook (#390): chỉ hiện khi có đăng ký đang bật — không ai nghe thì nhịp không nói lên gì
+        if settings.webhook_enabled and co_dang_ky_dang_bat(session):
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_WEBHOOK: NHAN_BO_QUET_WEBHOOK},
+                nguong_qua_lau_giay=settings.webhook_scan_stale_threshold_seconds,
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
@@ -712,3 +750,4 @@ _gan_loi(router_tai_tep, "files")
 _gan_loi(router_du_lieu_mo, "events")
 _gan_loi(router_thong_bao, "notifications", "/preferences")
 _gan_loi(router_dinh_danh, "identity")
+_gan_loi(router_webhook, "webhooks")

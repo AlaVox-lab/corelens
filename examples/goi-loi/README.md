@@ -109,6 +109,27 @@ scripts/tai_khoan_dich_vu.py` một lần. Quy trình thứ hai do bản sửa l
 Hồ sơ này không hiện trên cổng người dùng, buồng lái hay bảng điều khiển: các màn của ứng dụng minh họa chỉ
 dùng quy trình mặc định. Nó có trong nhật ký sự kiện xuất ra (`GET /core/v1/events?process=purchase-approval`).
 
+## Nhận sự kiện bằng webhook
+
+Ví dụ cho #390: thay vì tự hỏi lại API, ứng dụng để nền tảng lõi **chủ động báo** mỗi khi hồ sơ chuyển bước.
+`nhan_webhook.py` mở một máy chủ HTTP nhỏ trên máy, đăng ký chính địa chỉ đó qua `POST /core/v1/webhooks`,
+rồi kiểm chữ ký HMAC, mốc thời gian, bỏ sự kiện trùng và in từng sự kiện tới. Ctrl+C thì hủy đăng ký.
+
+Đăng ký webhook cần vai `administrator`. Trên cụm thử, thêm vai cho tài khoản dịch vụ một lần:
+`KEYCLOAK_INTEGRATION_ROLES=requester,administrator` trong `infra/.env`, rồi:
+
+```bash
+python scripts/tai_khoan_dich_vu.py
+python examples/goi-loi/nhan_webhook.py
+```
+
+Lõi gọi tới `http://host.docker.internal:8765/su-kien` (Docker Desktop); máy Linux không có tên đó thì chỉ
+địa chỉ khác bằng `--dia-chi-nhan`. `--hoat-dong <mã> …` chỉ nhận vài mã hoạt động.
+
+Chạy thử phần nhận của ví dụ trên cụm phát triển ngày 16/11/2026 (đăng ký ghi thẳng vào bảng, chưa qua bước
+xin token): hủy một hồ sơ trên cổng, sự kiện tới bên nhận sau vài giây, chữ ký khớp. Lần gửi đầu bên nhận hỏng giữa chừng không trả lời; lõi tự gửi lại ở lượt sau, bên nhận nhận ra
+sự kiện trùng theo `X-DXOS-Event-Id` và trả 204.
+
 ## Viết ứng dụng của riêng mình
 
 - Token: `POST {keycloak}/realms/{realm}/protocol/openid-connect/token` với `grant_type=client_credentials`,
