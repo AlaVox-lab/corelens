@@ -3,8 +3,8 @@
 #
 # Truyền phát sự kiện ra ngoài bằng webhook (#390).
 #
-# Mã bản sửa    : 0030_webhook
-# Sửa đổi từ    : 0029_bao_thay_doi_ho_so
+# Mã bản sửa    : 0031_webhook
+# Sửa đổi từ    : 0030_bao_thay_doi_ho_so
 #
 #   - `webhook_subscriptions`: một địa chỉ nhận do quản trị viên hay tài khoản dịch vụ đăng ký qua
 #     `/core/v1/webhooks`. Bộ lọc là dữ liệu: `activities` (mã hoạt động của nhật ký) và `process_code`
@@ -21,8 +21,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "0030_webhook"
-down_revision: str | None = "0029_bao_thay_doi_ho_so"
+revision: str = "0031_webhook"
+down_revision: str | None = "0030_bao_thay_doi_ho_so"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

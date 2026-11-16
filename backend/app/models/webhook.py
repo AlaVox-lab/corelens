@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Hai bảng của webhook (#390) — lược đồ ở bản sửa 0030_webhook.
+# Hai bảng của webhook (#390) — lược đồ ở bản sửa 0031_webhook.
 
 from __future__ import annotations
 

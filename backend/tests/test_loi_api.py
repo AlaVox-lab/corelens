@@ -8,7 +8,7 @@
 #
 #   Trong tiến trình — TestClient với tác nhân giả như test_routes.py: mỗi đường /core/v1 trả cùng kết quả
 #     với đường cũ, đọc lẫn ghi; điểm cuối của ứng dụng minh họa không có dưới /core/v1; không token thì 401;
-#     OpenAPI có năm nhóm "Lõi — …", không trùng mã thao tác.
+#     OpenAPI có sáu nhóm "Lõi — …", không trùng mã thao tác.
 #   Tài khoản dịch vụ — token client credentials THẬT của Keycloak (client dx-integration của realm mẫu) tạo
 #     được hồ sơ và đi một bước chuyển chỉ bằng /core/v1; hồ sơ mang nhãn người gửi là tên client.
 #   Qua cổng API thật — /core/v1 không token bị cổng chặn; token của tài khoản dịch vụ qua được.
@@ -46,15 +46,6 @@ QUAN_TRI = Actor(id="loi-qt-365", name="Quản trị 365", roles=frozenset({"adm
 
 # Bảng ánh xạ đường cũ → đường của lõi. Nguồn sự thật cho bài, khớp bảng ở ARCHITECTURE.md mục 2.3: thêm một
 # điểm cuối vào lõi mà không thêm vào đây (hay ngược lại) thì bài đỏ.
-# Điểm cuối chỉ có ở lõi, không có đường cũ của ứng dụng minh họa — webhook (#390)
-CHI_O_LOI: set[tuple[str, str]] = {
-    ("POST", "/core/v1/webhooks"),
-    ("GET", "/core/v1/webhooks"),
-    ("GET", "/core/v1/webhooks/{webhook_id}"),
-    ("DELETE", "/core/v1/webhooks/{webhook_id}"),
-    ("GET", "/core/v1/webhooks/{webhook_id}/deliveries"),
-}
-
 ANH_XA: dict[tuple[str, str], str] = {
     ("GET", "/processes"): "/core/v1/workflow/processes",
     ("GET", "/request-types"): "/core/v1/workflow/request-types",
@@ -72,6 +63,19 @@ ANH_XA: dict[tuple[str, str], str] = {
     ("GET", "/me/notifications"): "/core/v1/notifications/preferences",
     ("POST", "/me/notifications/{code}"): "/core/v1/notifications/preferences/{code}",
     ("GET", "/me"): "/core/v1/identity/me",
+}
+
+# Điểm cuối CHỈ có ở lõi, không đường cũ: cổng người dùng không dùng chúng. Cũng khớp bảng ở mục 2.3.
+CHI_LOI: set[tuple[str, str]] = {
+    ("GET", "/core/v1/archive"),
+    ("GET", "/core/v1/archive/{ky}"),
+    ("GET", "/core/v1/archive/{ky}/files/{ten_tep}"),
+    # Webhook (#390)
+    ("POST", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks/{webhook_id}"),
+    ("DELETE", "/core/v1/webhooks/{webhook_id}"),
+    ("GET", "/core/v1/webhooks/{webhook_id}/deliveries"),
 }
 
 
@@ -122,7 +126,7 @@ def test_openapi_loi_dung_bang_anh_xa():
     dụng minh họa lọt vào lõi, không điểm cuối lõi nào thiếu."""
     co = {(p, d) for p, d, _ in _cac_thao_tac()}
     duoi_loi = {(p, d) for p, d in co if d.startswith(TIEN_TO_LOI + "/")}
-    assert duoi_loi == {(p, moi) for (p, _), moi in ANH_XA.items()} | CHI_O_LOI
+    assert duoi_loi == {(p, moi) for (p, _), moi in ANH_XA.items()} | CHI_LOI
     # Đường cũ còn nguyên cho cổng người dùng
     assert set(ANH_XA) <= co
 
@@ -140,7 +144,7 @@ def test_openapi_nhan_loi_va_ma_thao_tac_khong_trung():
     ma = [t["operationId"] for _, _, t in _cac_thao_tac()]
     assert len(ma) == len(set(ma)), "trùng operationId"
 
-    # Năm nhóm lõi có mô tả và đứng đầu trang tài liệu
+    # Sáu nhóm lõi có mô tả và đứng đầu trang tài liệu
     dau = [n["name"] for n in app.openapi()["tags"]][: len(NHOM_LOI)]
     assert dau == [n["name"] for n in NHOM_LOI.values()]
     assert all(n.get("description") for n in app.openapi()["tags"][: len(NHOM_LOI)])
@@ -287,19 +291,30 @@ def test_tai_tep_qua_loi_doc_duoc_o_ca_hai_duong(client, session, rule_set, kho_
         ("GET", "/core/v1/admin/config"),
         ("GET", "/core/v1/system/health"),
         ("POST", "/core/v1/sla/scan"),
+        ("POST", "/core/v1/archive/scan"),
         ("GET", "/core/v1/metrics"),
         ("GET", "/core/v1/health"),
     ],
 )
 def test_diem_cuoi_ung_dung_khong_co_duoi_loi(phuong_thuc, duong):
     """404 vì không có tuyến — không phải vì thiếu quyền (thiếu quyền là 401/403, xem bài dưới). Không cần
-    vòng đời ứng dụng nên không mở TestClient bằng `with`."""
-    assert TestClient(app).request(phuong_thuc, duong).status_code == 404
+    vòng đời ứng dụng nên không mở TestClient bằng `with`.
+
+    Ngoại lệ duy nhất: `/core/v1/archive/scan` trùng khuôn đường của `GET /core/v1/archive/{ky}` (khuôn kỳ
+    chỉ kiểm sau khi định tuyến), nên POST nhận 405 — vẫn là không có tuyến POST nào ở đó."""
+    tra = TestClient(app).request(phuong_thuc, duong)
+    if duong == "/core/v1/archive/scan":
+        assert tra.status_code == 405
+        assert phuong_thuc not in tra.headers.get("allow", "")
+    else:
+        assert tra.status_code == 404
 
 
-@pytest.mark.parametrize(("phuong_thuc", "duong"), sorted({(p, m) for (p, _), m in ANH_XA.items()}))
+@pytest.mark.parametrize(("phuong_thuc", "duong"), sorted({(p, m) for (p, _), m in ANH_XA.items()} | CHI_LOI))
 def test_loi_khong_token_401(phuong_thuc, duong):
-    tra = TestClient(app).request(phuong_thuc, _dien(duong, case_id=1, attachment_id=1, code="x"))
+    tra = TestClient(app).request(
+        phuong_thuc, _dien(duong, case_id=1, attachment_id=1, code="x", ky="2026-01", ten_tep="manifest.json", webhook_id=1)
+    )
     assert tra.status_code == 401, tra.text
     assert tra.headers.get("www-authenticate") == "Bearer"
 

@@ -100,6 +100,21 @@ Chạy nhiều bản dịch vụ ứng dụng thì mỗi lượt chỉ một b�
 Ngưỡng hạn của từng loại yêu cầu **không** nằm ở đây — xem
 [Danh mục và các con số](../../quan-tri/danh-muc-va-con-so/).
 
+## Lưu trữ lạnh
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `ARCHIVE_ENABLED` | `true` | Bộ quét nền niêm phong mỗi tháng đã khép ra kho đối tượng. Tắt là tắt lịch; `POST /archive/scan` vẫn chạy được |
+| `ARCHIVE_INTERVAL_SECONDS` | `3600` | Chu kỳ quét |
+| `ARCHIVE_MIN_AGE_MONTHS` | `1` | Tháng cũ hơn chừng này tháng so với tháng hiện tại (UTC) mới niêm phong. Tối thiểu `1` |
+| `ARCHIVE_MAX_MONTHS_PER_RUN` | `6` | Số tháng tối đa mỗi lượt, để lần đầu bật trên cụm nhiều năm dữ liệu không giữ khóa lâu |
+| `ARCHIVE_BUCKET` | trống | Trống là dùng chung thùng `SEAWEEDFS_BUCKET`. Thùng riêng thì cấp thêm `Admin:<tên thùng>` trong `infra/seaweedfs/s3-config.json` |
+| `ARCHIVE_PREFIX` | `luu-tru-lanh/` | Tiền tố khóa của các bản lưu trong thùng |
+
+Mọi biến có mặc định trong `docker-compose.yml`, tệp `.env` cũ không cần thêm. Bản đã niêm phong giữ thùng
+và tiền tố lúc xuất, nên đổi hai biến cuối không làm mất dấu bản cũ. Cách dùng ở
+[Màn Hệ thống và vận hành](../../quan-tri/he-thong/#lưu-trữ-lạnh).
+
 ## Gợi ý người xử lý
 
 Thẻ gợi ý trên ô chọn người xử lý của trưởng phòng (#318). Không cần mô hình ngôn ngữ. Mỗi người nhận

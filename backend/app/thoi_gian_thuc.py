@@ -11,7 +11,7 @@
 #
 # Đường đi của một tín hiệu:
 #
-#   1. Hồ sơ đổi hay có lời nhắn mới → trigger của bản sửa 0029 gửi `pg_notify('ho_so_thay_doi', <mã>)`
+#   1. Hồ sơ đổi hay có lời nhắn mới → trigger của bản sửa 0030 gửi `pg_notify('ho_so_thay_doi', <mã>)`
 #      khi giao dịch commit. Mã ghi hồ sơ không biết gì về việc này.
 #   2. Mỗi luồng mở đang `LISTEN` trên một kết nối bất đồng bộ riêng của psycopg — không chiếm luồng
 #      xử lý nào của máy chủ trong lúc chờ.
@@ -50,7 +50,7 @@ log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/me", tags=["Thời gian thực"])
 
-# Trùng tên kênh trong bản sửa 0029_bao_thay_doi_ho_so
+# Trùng tên kênh trong bản sửa 0030_bao_thay_doi_ho_so
 KENH = "ho_so_thay_doi"
 
 # Nguồn tín hiệu: nhận hạn chờ (giây), trả các mã hồ sơ tới trong khoảng đó — rỗng khi hết hạn mà không có

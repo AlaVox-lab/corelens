@@ -10,6 +10,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Bộ quét im quá chừng này chu kỳ mà không có lượt thành công nào thì coi là quá lâu. Năm chu kỳ:
@@ -308,6 +309,31 @@ class Settings(BaseSettings):
     s3_bucket: str = "dxlab-attachments"
     # SeaweedFS không dùng vùng, nhưng chữ ký S3 vẫn đòi một giá trị
     s3_region: str = "us-east-1"
+
+    # --- Lưu trữ lạnh, xem #378 -------------------------------------------------
+    #
+    # Bộ quét theo khuôn `nhip_quet.py` xuất nhật ký sự kiện và hồ sơ đã kết thúc của mỗi tháng đã khép
+    # ra kho đối tượng (CSV gzip + manifest.json có mã băm). Bản lưu đã niêm phong thì không ghi đè.
+    archive_enabled: bool = True
+    # Một giờ là đủ: mỗi tháng chỉ có một bản, lượt không có việc chỉ là vài truy vấn nhỏ
+    archive_interval_seconds: int = 3600
+    # Tháng đã khép: cũ hơn chừng này tháng so với tháng hiện tại (UTC). 1 — tháng trước trở về trước.
+    # Tối thiểu 1: tháng đang chạy còn nhận sự kiện, chưa niêm phong được.
+    archive_min_age_months: int = Field(default=1, ge=1)
+    # Số tháng tối đa mỗi lượt, để lần đầu bật trên cụm có nhiều năm dữ liệu không giữ khóa quá lâu
+    archive_max_months_per_run: int = Field(default=6, ge=1)
+    # Thùng rỗng là dùng chung thùng tệp đính kèm: khóa S3 mẫu chỉ có quyền tạo đúng thùng đó
+    # (infra/seaweedfs/s3-config.json). Thùng riêng thì cấp thêm `Admin:<tên thùng>` ở tệp đó.
+    archive_bucket: str = ""
+    archive_prefix: str = "luu-tru-lanh/"
+
+    @property
+    def archive_bucket_name(self) -> str:
+        return self.archive_bucket.strip() or self.s3_bucket
+
+    @property
+    def archive_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.archive_interval_seconds
 
     # Giới hạn tệp đính kèm là cấu hình triển khai, không phải mã (CLAUDE.md mục 1.2). Giao
     # diện hỏi dịch vụ giới hạn thay vì tự giữ bản sao — xem GET /attachments/policy.

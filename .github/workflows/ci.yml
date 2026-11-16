@@ -28,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/kiem_header.py
+      # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
+      - name: Phả hệ dữ liệu khớp định nghĩa
+        run: python3 scripts/pha_he.py --kiem
 
   giao-dien:
     name: Giao diện — dựng và kiểm kiểu

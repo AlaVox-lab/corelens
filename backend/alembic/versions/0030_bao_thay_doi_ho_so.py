@@ -3,8 +3,8 @@
 #
 # Cập nhật thời gian thực cho cổng người dùng (#387): báo "hồ sơ vừa đổi" qua kênh NOTIFY của PostgreSQL.
 #
-# Mã bản sửa    : 0029_bao_thay_doi_ho_so
-# Sửa đổi từ    : 0028_nhieu_quy_trinh
+# Mã bản sửa    : 0030_bao_thay_doi_ho_so
+# Sửa đổi từ    : 0029_luu_tru_lanh
 #
 # Một hàm trigger gửi `pg_notify('ho_so_thay_doi', <mã hồ sơ>)` sau mỗi lần:
 #
@@ -23,8 +23,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "0029_bao_thay_doi_ho_so"
-down_revision: str | None = "0028_nhieu_quy_trinh"
+revision: str = "0030_bao_thay_doi_ho_so"
+down_revision: str | None = "0029_luu_tru_lanh"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
