@@ -5,7 +5,7 @@
 #
 # Bốn điều phải canh:
 #
-#   Nguồn     — trigger của bản sửa 0029 có mặt trên `requests` và `case_messages`, gửi đúng kênh.
+#   Nguồn     — trigger của bản sửa 0030 có mặt trên `requests` và `case_messages`, gửi đúng kênh.
 #   Quyền     — chỉ đẩy mã hồ sơ người giữ luồng mở được: người gửi khác, phòng khác không nhận.
 #   Khuôn     — khung SSE đúng định dạng; không có tín hiệu thì gửi dòng giữ kết nối; luồng tự dừng.
 #   Biên      — thiếu token là 401, đủ số luồng là 503.

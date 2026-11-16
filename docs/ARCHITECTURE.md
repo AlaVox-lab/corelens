@@ -2134,7 +2134,7 @@ thanh bên hỏi riêng con số qua `app/api/hop-thu/chua-doc` — không thêm
 Compose.
 
 **Từ #387, cổng nhận tín hiệu thời gian thực** (`backend/app/thoi_gian_thuc.py`,
-`frontend/app/api/su-kien/`, `frontend/components/nghe-thay-doi.tsx`). Bản sửa 0029 đặt trigger
+`frontend/app/api/su-kien/`, `frontend/components/nghe-thay-doi.tsx`). Bản sửa 0030 đặt trigger
 `pg_notify('ho_so_thay_doi', <mã hồ sơ>)` sau mỗi lần tạo hay sửa dòng `requests` và mỗi lời nhắn
 mới — mã ghi hồ sơ, cửa chuyển trạng thái và `event_log` không đổi. `GET /me/stream` trả
 Server-Sent Events: mỗi luồng `LISTEN` trên một kết nối bất đồng bộ riêng của psycopg, lọc mã hồ sơ
