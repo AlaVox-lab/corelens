@@ -67,7 +67,7 @@ flowchart TB
 | Định danh, đăng nhập một lần | Keycloak `26.7.3`; xác thực hai lớp tùy chọn | Apache-2.0 |
 | Cổng API | Apache APISIX `3.20.0` — cửa vào duy nhất, kiểm token tại biên, giới hạn tốc độ | Apache-2.0 |
 | Dữ liệu có cấu trúc và phi cấu trúc | PostgreSQL + pgvector; SeaweedFS `4.45` qua S3 API | PostgreSQL License · Apache-2.0 |
-| Động cơ luồng công việc | **Engine máy trạng thái tự viết**, phơi qua API của lõi `/core/v1`; mọi bước chuyển ghi nhật ký sự kiện chỉ ghi thêm | MIT |
+| Động cơ luồng công việc | **Engine máy trạng thái tự viết**, chạy **nhiều quy trình** cùng lúc — mỗi quy trình là dữ liệu, không mã riêng — phơi qua API của lõi `/core/v1`; mọi bước chuyển ghi nhật ký sự kiện chỉ ghi thêm | MIT |
 
 **Tầng 2 — ứng dụng minh họa**, phủ bốn không gian:
 
@@ -79,7 +79,8 @@ flowchart TB
 | **I** | Trí tuệ | Khai phá quy trình thực tế, gợi ý phân loại và người xử lý, hồ sơ tương tự | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp + Qwen2.5-1.5B (tùy chọn) |
 
 Một ứng dụng khác dùng lõi mà không cần cổng người dùng: lấy token bằng tài khoản dịch vụ rồi gọi
-`/core/v1` qua cổng API — ví dụ chạy được ở [`examples/goi-loi/`](examples/goi-loi/). Nền tảng phổ thông
+`/core/v1` qua cổng API — ví dụ chạy được ở [`examples/goi-loi/`](examples/goi-loi/), kể cả một quy trình
+thứ hai (đề xuất mua sắm duyệt hai cấp) chạy trọn chỉ qua lõi, không màn hình nào. Nền tảng phổ thông
 được lắp ghép và chạy như dịch vụ độc lập; engine quy trình — phần tạo khác biệt — nhóm tự viết. Tầng `I`
 chỉ ghi vào trường gợi ý, con người xác nhận mới thành quyết định.
 
@@ -218,6 +219,14 @@ python scripts/kiem_nang_cap.py chup truoc-nang-cap.json
 python scripts/kiem_nang_cap.py so truoc-nang-cap.json
 ```
 
+Keycloak chỉ nạp realm lúc tạo, nên cụm dựng từ `v1.0.0` trở về trước chạy thêm hai lệnh một lần — tạo
+tài khoản dịch vụ của ví dụ quy trình thứ hai và bật chống dò mật khẩu:
+
+```bash
+python scripts/tai_khoan_dich_vu.py
+python scripts/xac_thuc_hai_lop.py chong-do
+```
+
 Cụm dựng từ bản cũ hơn `v0.9.1` thì phải dựng lại (`down -v`). Hạn, mức ưu tiên, loại yêu cầu và phòng ban
 sửa ngay trên màn **Cấu hình quy trình** của quản trị viên. Đổi đồ thị quy trình trên cụm đang chạy là một
 bản sửa dữ liệu tạo bộ quy tắc phiên bản mới — hồ sơ đang chạy giữ luật cũ; khuôn mẫu ở
@@ -245,8 +254,14 @@ mềm nào đoán đúng được tài khoản nào là mẫu. Trước khi đư
 1. Trong `infra/.env`, đổi mọi giá trị ghi "BẮT BUỘC đổi": mật khẩu cơ sở dữ liệu, khóa kho tệp, bí mật
    của các client, khóa phiên, khóa Superset, mật khẩu quản trị Keycloak và Superset (`admin/admin`).
 2. Trong Keycloak (`http://localhost:8080`, realm `dx-os-lab`), xóa các tài khoản mẫu, chỉ giữ một tài
-   khoản quản trị, rồi tạo tài khoản thật theo nhu cầu.
-3. Sao lưu một lần ngay sau khi cấu hình xong — mục [Sao lưu và khôi phục](#sao-lưu-và-khôi-phục).
+   khoản quản trị, rồi tạo tài khoản thật theo nhu cầu. Tắt (hoặc đổi bí mật) ba client tích hợp mẫu
+   `dx-integration`, `dx-integration-truong-phong`, `dx-integration-duyet` nếu không dùng — hai client sau
+   chỉ để chạy ví dụ quy trình thứ hai.
+3. Realm mẫu đã bật chống dò mật khẩu (khóa tạm sau 10 lần sai, tự mở) và chính sách mật khẩu tối thiểu 8
+   ký tự; cụm dựng trước bản đó áp bằng `python scripts/xac_thuc_hai_lop.py chong-do`. Muốn chặt hơn, sửa
+   *Realm settings → Security defenses* và *Authentication → Policies*. `sslRequired` để `none` vì cụm mẫu
+   chạy `http://localhost`; khi đưa lên tên miền có HTTPS, đổi thành `external` (hoặc `all`).
+4. Sao lưu một lần ngay sau khi cấu hình xong — mục [Sao lưu và khôi phục](#sao-lưu-và-khôi-phục).
 
 Báo lỗ hổng bảo mật: [`SECURITY.md`](SECURITY.md).
 

@@ -503,7 +503,8 @@ test.describe("quản trị viên", () => {
     // Có BOM để bảng tính nhận UTF-8, dòng đầu là đúng các cột của định dạng
     expect([...noiDung.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     expect(noiDung.toString("utf-8").slice(1).split("\r\n")[0]).toBe(
-      "case_id,activity,timestamp,actor,from_state,to_state,request_type_code,department_code,priority_code,rule_set_id",
+      // `process_code` ở cuối từ #376 — công cụ đọc theo vị trí cột cũ không vỡ
+      "case_id,activity,timestamp,actor,from_state,to_state,request_type_code,department_code,priority_code,rule_set_id,process_code",
     );
   });
 

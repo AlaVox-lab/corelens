@@ -91,7 +91,7 @@ def gan_ho_so_da_giai_quyet(ts: argparse.Namespace, ho_so: list, su_kien: list[d
     muc = json.loads(HO_SO_DA_GIAI_QUYET.read_text(encoding="utf-8"))["ho_so"]
     canh: dict[str, set[tuple[str, str, str]]] = {"xong": set(), "dat": set()}
     for dong in psql(ts, f"""
-        WITH dang AS (SELECT id FROM rule_sets WHERE is_active),
+        WITH dang AS (SELECT id FROM rule_sets WHERE is_active AND process_code = (SELECT code FROM processes WHERE is_app_default)),
         xong AS (
             SELECT t.from_state, t.to_state, t.activity_code
             FROM transitions t JOIN dang ON dang.id = t.rule_set_id
@@ -237,7 +237,7 @@ def main() -> int:
                 requester_label, request_type_code, department_code, priority_code, assignee_id,
                 assignee_label, sla_running_seconds, sla_paused_seconds, sla_segment_since,
                 created_at, updated_at)
-            SELECT (SELECT id FROM rule_sets WHERE is_active), h.trang_thai, h.tieu_de, h.mo_ta,
+            SELECT (SELECT id FROM rule_sets WHERE is_active AND process_code = (SELECT code FROM processes WHERE is_app_default)), h.trang_thai, h.tieu_de, h.mo_ta,
                    h.nguoi_gui, h.nhan_nguoi_gui, nullif(h.loai, ''), nullif(h.phong, ''),
                    nullif(h.uu_tien, ''), nullif(h.nguoi_xu_ly, ''), nullif(h.nguoi_xu_ly, ''),
                    h.chay, h.dung,
@@ -263,7 +263,7 @@ def main() -> int:
             SELECT l.case_id, max(l.timestamp) AS luc,
                    count(*) FILTER (WHERE EXISTS (
                        SELECT 1 FROM transitions t JOIN transition_guards g ON g.transition_id = t.id
-                       WHERE t.rule_set_id = (SELECT id FROM rule_sets WHERE is_active)
+                       WHERE t.rule_set_id = (SELECT id FROM rule_sets WHERE is_active AND process_code = (SELECT code FROM processes WHERE is_app_default))
                          AND t.from_state = l.from_state AND t.to_state = l.to_state
                          AND g.guard_code = 'reopen-limit')) AS mo_lai
             FROM event_log l GROUP BY l.case_id

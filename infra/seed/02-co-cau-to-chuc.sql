@@ -54,17 +54,21 @@ INSERT INTO departments (code, label, description, display_order) VALUES
 -- giờ, tổng tối đa 2 lần. Mở lại (#102): reopen_max_count là tổng số lần người gửi mở lại một
 -- hồ sơ, giảng viên chốt 08/10 là 2 — hồ sơ quá số đó phải tạo mới.
 
-INSERT INTO request_types (code, label, description, sla_hours, sla_grace_hours, sla_warn_percent, sla_extension_max_percent, sla_extension_max_count, reopen_max_count, display_order) VALUES
-    ('device-incident', 'Sự cố thiết bị',
+--
+-- Loại yêu cầu quyết định quy trình của hồ sơ (`process_code`, #376): bốn loại dưới đây thuộc quy trình
+-- cổng yêu cầu nội bộ. Loại của quy trình mẫu thứ hai nằm cùng quy trình đó ở 06-quy-trinh-mua-sam.sql.
+
+INSERT INTO request_types (code, process_code, label, description, sla_hours, sla_grace_hours, sla_warn_percent, sla_extension_max_percent, sla_extension_max_count, reopen_max_count, display_order) VALUES
+    ('device-incident', 'internal-requests', 'Sự cố thiết bị',
      'Máy tính, máy in, mạng, điện thoại bàn hỏng hoặc không dùng được',   8,  2, 75, 50, 2, 2,  1),
 
-    ('software-access', 'Cấp quyền phần mềm',
+    ('software-access', 'internal-requests', 'Cấp quyền phần mềm',
      'Xin tài khoản hoặc mở thêm quyền trên một hệ thống nội bộ',         24,  6, 75, 50, 2, 2,  2),
 
-    ('hr-certificate',  'Giấy xác nhận nhân sự',
+    ('hr-certificate',  'internal-requests', 'Giấy xác nhận nhân sự',
      'Xác nhận công tác, xác nhận thu nhập, giấy giới thiệu',             48, 12, 75, 50, 2, 2,  3),
 
-    ('supply-purchase', 'Đề xuất mua vật tư',
+    ('supply-purchase', 'internal-requests', 'Đề xuất mua vật tư',
      'Đề nghị mua sắm văn phòng phẩm hoặc vật tư phục vụ công việc',      72, 18, 75, 50, 2, 2,  4);
 
 -- Trường thông tin riêng của từng loại (#250). Thêm, bớt, đổi nhãn hay đổi bắt buộc là sửa ở

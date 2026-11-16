@@ -33,7 +33,7 @@ from app.models.quan_tri import Delegation
 from app.models.workflow_config import Department, Role
 from app.workflow.assignment import vai_tro_giao_viec, vai_tro_phong_ban
 from app.workflow.context import Actor
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import get_active_rule_set, ma_quy_trinh_ung_dung
 from app.workflow.uy_quyen import hom_nay, khoang_cua_ngay, ngay_cua_khoang
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ def _loi(ma_http: int, ma: str, thong_diep: str) -> HTTPException:
 
 def _vai(session: Session) -> tuple[frozenset[str], frozenset[str]]:
     """(vai của buồng lái phòng ban, vai giao việc) — tra từ bộ quy tắc đang bật, không mã cứng."""
-    bo = get_active_rule_set(session)
+    bo = get_active_rule_set(session, ma_quy_trinh_ung_dung(session))
     return vai_tro_phong_ban(session, bo.id), vai_tro_giao_viec(session, bo.id)
 
 

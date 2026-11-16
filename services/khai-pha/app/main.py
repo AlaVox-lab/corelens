@@ -41,6 +41,8 @@ class YeuCau(BaseModel):
     den: dt.date = Field(alias="to")
     # Mã phòng ban dịch vụ ứng dụng đã đối chiếu với bảng; None là toàn công ty
     departments: list[str] | None = None
+    # Mã quy trình (#376); None là quy trình mặc định của ứng dụng. Mỗi lần khai phá đúng một quy trình
+    process: str | None = None
 
     @model_validator(mode="after")
     def _khoang_hop_le(self) -> "YeuCau":
@@ -68,7 +70,7 @@ def suc_khoe(response: Response) -> dict:
 def khai_pha(yeu_cau: YeuCau) -> dict:
     try:
         with mo_ket_noi(cau_hinh().database_uri) as ket_noi:
-            du_lieu = doc_du_lieu(ket_noi, yeu_cau.tu, yeu_cau.den, yeu_cau.departments)
+            du_lieu = doc_du_lieu(ket_noi, yeu_cau.tu, yeu_cau.den, yeu_cau.departments, yeu_cau.process)
     except Exception as loi:  # noqa: BLE001
         log.exception("Không đọc được nhật ký sự kiện")
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Không đọc được nhật ký sự kiện.") from loi
@@ -76,5 +78,6 @@ def khai_pha(yeu_cau: YeuCau) -> dict:
     return {
         "range": {"from": yeu_cau.tu.isoformat(), "to": yeu_cau.den.isoformat()},
         "departments": yeu_cau.departments,
+        "process": yeu_cau.process,
         **ket_qua,
     }

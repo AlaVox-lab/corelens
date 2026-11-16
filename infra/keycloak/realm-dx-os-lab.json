@@ -7,6 +7,15 @@
   "supportedLocales": ["vi", "en"],
   "defaultLocale": "vi",
   "sslRequired": "none",
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 300,
+  "maxDeltaTimeSeconds": 43200,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "passwordPolicy": "length(8) and notUsername",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "roles": {
@@ -105,6 +114,68 @@
       "clientId": "dx-integration",
       "name": "Ứng dụng tích hợp mẫu",
       "description": "Tài khoản dịch vụ để ứng dụng khác gọi API của nền tảng lõi /core/v1 qua cổng API (#365). Chỉ bật client credentials; token mang aud dx-api, vai requester. Cụm cũ tạo bằng scripts/tai_khoan_dich_vu.py.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-dx-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dx-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "dx-integration-truong-phong",
+      "name": "Ứng dụng tích hợp mẫu — trưởng phòng duyệt",
+      "description": "Tài khoản dịch vụ mẫu duyệt cấp một quy trình thứ hai qua /core/v1 (#376): vai approver, phòng Hành chính. Chỉ client credentials. Cụm cũ tạo bằng scripts/tai_khoan_dich_vu.py.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "doi_bi_mat_nay_truoc_khi_trien_khai",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "true",
+            "claim.name": "groups",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "audience-dx-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dx-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "dx-integration-duyet",
+      "name": "Ứng dụng tích hợp mẫu — duyệt cấp hai",
+      "description": "Tài khoản dịch vụ mẫu duyệt cấp hai quy trình thứ hai qua /core/v1 (#376): vai classifier. Chỉ client credentials. Cụm cũ tạo bằng scripts/tai_khoan_dich_vu.py.",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
@@ -489,6 +560,27 @@
       "serviceAccountClientId": "dx-integration",
       "realmRoles": [
         "requester",
+        "default-roles-dx-os-lab"
+      ]
+    },
+    {
+      "username": "service-account-dx-integration-truong-phong",
+      "enabled": true,
+      "serviceAccountClientId": "dx-integration-truong-phong",
+      "realmRoles": [
+        "approver",
+        "default-roles-dx-os-lab"
+      ],
+      "groups": [
+        "/phong-ban/admin-office"
+      ]
+    },
+    {
+      "username": "service-account-dx-integration-duyet",
+      "enabled": true,
+      "serviceAccountClientId": "dx-integration-duyet",
+      "realmRoles": [
+        "classifier",
         "default-roles-dx-os-lab"
       ]
     }

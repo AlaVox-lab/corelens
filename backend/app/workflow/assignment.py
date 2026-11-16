@@ -40,7 +40,7 @@ from app.models.case import Request
 from app.models.workflow_config import Department, State, Transition, TransitionRole
 from app.rules.guards import permitted_fields
 from app.workflow.context import Actor
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import get_active_rule_set, ma_quy_trinh_ung_dung
 from app.workflow.schemas import (
     NguoiNhanViecRa,
     NguoiNhanViecTrongPhongRa,
@@ -252,7 +252,7 @@ def danh_sach_nguoi_nhan_viec(
     rỗng nghĩa là *phòng không có ai*, còn 503 nghĩa là *không biết phòng có ai* — gộp
     hai điều đó làm một là giả vờ ổn.
     """
-    bo = get_active_rule_set(session)
+    bo = get_active_rule_set(session, ma_quy_trinh_ung_dung(session))
 
     if not (actor.roles & vai_tro_giao_viec(session, bo.id)):
         raise HTTPException(

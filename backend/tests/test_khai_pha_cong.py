@@ -23,6 +23,7 @@ from app.config import get_settings
 from app.db import get_session
 from app.main import app
 from app.models.workflow_config import Department, RequestType
+from app.workflow.engine import ma_quy_trinh_ung_dung
 from app.workflow.context import Actor
 from app.workflow.engine import create_case
 
@@ -104,7 +105,8 @@ def test_khoang_ngay_sai_nhan_422_va_khong_hoi_dich_vu(client, tu, den):
 def test_kem_nhan_loai_yeu_cau_va_phong_ban_tu_bang(client, session, phong_ban):
     # #315: dịch vụ khai phá tách nhóm theo mã; nhãn đọc từ hai bảng danh mục, không mã cứng. Loại đã
     # ngừng dùng vẫn có nhãn, vì hồ sơ cũ trong khoảng ngày có thể mang mã đó
-    session.add(RequestType(code="loai-cu-315", label="Loại đã ngừng 315", sla_hours=8, is_active=False))
+    session.add(RequestType(code="loai-cu-315", process_code=ma_quy_trinh_ung_dung(session),
+                            label="Loại đã ngừng 315", sla_hours=8, is_active=False))
     session.flush()
     r = _hoi(client, Actor(id="dp-315", roles=frozenset({"classifier"})))
     assert r.status_code == 200, r.text

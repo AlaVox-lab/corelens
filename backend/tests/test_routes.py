@@ -87,7 +87,8 @@ def test_danh_muc_loai_yeu_cau_lay_tu_du_lieu(client, session, rule_set):
     tu_api = {x["code"] for x in r.json()}
     tu_bang = set(
         session.scalars(
-            select(RequestType.code).where(RequestType.is_active)
+            # Không truyền `process` là quy trình mặc định của ứng dụng — bộ đang bật của fixture (#376)
+            select(RequestType.code).where(RequestType.is_active, RequestType.process_code == rule_set.process_code)
         ).all()
     )
     assert tu_api == tu_bang

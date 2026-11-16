@@ -4,8 +4,8 @@
 # Bộ dữ liệu ĐÁP ÁN BIẾT TRƯỚC cho dịch vụ khai phá (#314).
 #
 # Mọi mã trạng thái, hoạt động, phòng ban ở đây là của BỘ QUY TẮC GIẢ của bài kiểm thử, không phải
-# của sản phẩm: dịch vụ không biết tên nào, nó chỉ đi theo cờ trên cạnh. Bộ dữ liệu được nạp vào bốn
-# BẢNG TẠM trùng tên với bảng thật (`bao_cao_nhat_ky`, `event_log`, `states`, `transitions`). Bảng tạm
+# của sản phẩm: dịch vụ không biết tên nào, nó chỉ đi theo cờ trên cạnh. Bộ dữ liệu được nạp vào năm
+# BẢNG TẠM trùng tên với bảng thật (`bao_cao_nhat_ky`, `event_log`, `states`, `transitions`, `processes`). Bảng tạm
 # nằm ở `pg_temp`, được tra trước `public`, nên `doc_du_lieu` đọc dữ liệu của bài; cuối bài giao dịch bị
 # hoàn tác, không gì còn lại và không gì ghi vào `public`.
 #
@@ -64,6 +64,8 @@ from app.du_lieu import doc_du_lieu
 from app.phan_tich import phan_tich
 
 BO_QUY_TAC = 901
+# Quy trình giả của bộ dữ liệu, mang cờ mặc định của ứng dụng trong bảng tạm `processes` (#376)
+QUY_TRINH = "quy-trinh-thu"
 BAT_DAU = "moi"
 KHOANG = (dt.date(2026, 3, 9), dt.date(2026, 3, 13))
 
@@ -235,17 +237,19 @@ TAO_BANG = (
     """CREATE TEMP TABLE bao_cao_nhat_ky (
         case_id bigint, activity text, "timestamp" timestamptz, actor text, from_state text,
         to_state text, department_code text, rule_set_id smallint, thu_tu bigint,
-        request_type_code text)""",
+        request_type_code text, process_code text)""",
+    "CREATE TEMP TABLE processes (code text, is_app_default boolean)",
 )
 
 CAU_MOC = "%s::timestamp AT TIME ZONE %s"
 
 
 def nap(ket_noi: psycopg.Connection, mui_gio: str) -> None:
-    """Nạp bộ dữ liệu vào bốn bảng tạm của phiên. Phiên phải mở ở chế độ đọc-ghi và KHÔNG được commit."""
+    """Nạp bộ dữ liệu vào năm bảng tạm của phiên. Phiên phải mở ở chế độ đọc-ghi và KHÔNG được commit."""
     with ket_noi.cursor() as c:
         for cau in TAO_BANG:
             c.execute(cau)
+        c.execute("INSERT INTO processes VALUES (%s, TRUE)", (QUY_TRINH,))
         for ma, nhan, bat_dau, ket_thuc, thu_tu in TRANG_THAI:
             c.execute("INSERT INTO states VALUES (%s, %s, %s, %s, %s, %s)",
                       (BO_QUY_TAC, ma, nhan, bat_dau, ket_thuc, thu_tu))
@@ -257,8 +261,8 @@ def nap(ket_noi: psycopg.Connection, mui_gio: str) -> None:
         for ho_so in HO_SO:
             hien_tai = BAT_DAU
             c.execute(
-                f"INSERT INTO bao_cao_nhat_ky VALUES (%s, 'create-case', {CAU_MOC}, 'nguoi-gui', NULL, %s, %s, %s, 0, %s)",
-                (ho_so.ma, ho_so.tao, mui_gio, BAT_DAU, ho_so.phong, BO_QUY_TAC, ho_so.loai),
+                f"INSERT INTO bao_cao_nhat_ky VALUES (%s, 'create-case', {CAU_MOC}, 'nguoi-gui', NULL, %s, %s, %s, 0, %s, %s)",
+                (ho_so.ma, ho_so.tao, mui_gio, BAT_DAU, ho_so.phong, BO_QUY_TAC, ho_so.loai, QUY_TRINH),
             )
             for sk in ho_so.su_kien:
                 ma_su_kien += 1
@@ -268,9 +272,9 @@ def nap(ket_noi: psycopg.Connection, mui_gio: str) -> None:
                      Jsonb(sk.thay_doi) if sk.thay_doi is not None else None),
                 )
                 c.execute(
-                    f"INSERT INTO bao_cao_nhat_ky VALUES (%s, %s, {CAU_MOC}, 'nguoi-xu-ly', %s, %s, %s, %s, %s, %s)",
+                    f"INSERT INTO bao_cao_nhat_ky VALUES (%s, %s, {CAU_MOC}, 'nguoi-xu-ly', %s, %s, %s, %s, %s, %s, %s)",
                     (ho_so.ma, sk.hoat_dong, sk.luc, mui_gio, hien_tai, sk.den, ho_so.phong,
-                     BO_QUY_TAC, ma_su_kien, ho_so.loai),
+                     BO_QUY_TAC, ma_su_kien, ho_so.loai, QUY_TRINH),
                 )
                 hien_tai = sk.den
 

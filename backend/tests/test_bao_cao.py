@@ -36,9 +36,11 @@ XU_LY = Actor(id="xl-304", roles=frozenset({"handler"}), departments=frozenset({
 def danh_muc_rieng(session, rule_set):
     session.execute(
         text(
-            "INSERT INTO request_types (code, label, sla_hours) VALUES (:ma, 'Loại thử báo cáo', :han)"
+            "INSERT INTO request_types (code, process_code, label, sla_hours) "
+            "VALUES (:ma, :quy_trinh, 'Loại thử báo cáo', :han)"
         ),
-        {"ma": LOAI, "han": HAN_GIO},
+        # Loại thuộc quy trình của bộ đang bật — báo cáo chỉ đếm hồ sơ của quy trình mặc định (#376)
+        {"ma": LOAI, "quy_trinh": rule_set.process_code, "han": HAN_GIO},
     )
     session.execute(
         text("INSERT INTO departments (code, label) VALUES (:ma, 'Phòng thử báo cáo')"), {"ma": PHONG}

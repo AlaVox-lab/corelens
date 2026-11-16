@@ -57,10 +57,17 @@ def cum_moi(session):
     goc.execute((THU_MUC_SQL / "0018_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
     goc.execute((THU_MUC_SQL / "0025_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
     # Bảng dữ liệu tạo ở bản sửa sau 0000 mà infra/seed/ cũng nạp — chữ ký tệp đính kèm (0023, #248),
-    # loại thông báo (0024, #251). Cụm thật chạy trọn Alembic trước bộ nạp; ở đây chép cấu trúc từ
-    # lược đồ chính để bộ nạp chạy được mọi tệp như ở cụm thật
-    for bang in ("attachment_file_types", "notification_types"):
+    # loại thông báo (0024, #251), danh mục quy trình (0028, #376). Cụm thật chạy trọn Alembic trước bộ
+    # nạp; ở đây chép cấu trúc từ lược đồ chính để bộ nạp chạy được mọi tệp như ở cụm thật
+    for bang in ("attachment_file_types", "notification_types", "processes"):
         goc.execute(f"CREATE TABLE {bang} (LIKE public.{bang} INCLUDING ALL)")
+    # Phần lược đồ cấu hình của 0028 (#376): bộ quy tắc và loại yêu cầu thuộc một quy trình, mỗi quy trình
+    # một bộ đang bật, hàm kiểm thêm phép kiểm danh mục quy trình
+    for bang in ("rule_sets", "request_types"):
+        goc.execute(f"ALTER TABLE {bang} ADD COLUMN process_code TEXT NOT NULL REFERENCES processes (code)")
+    goc.execute("DROP INDEX rule_sets_chi_mot_bo_kich_hoat")
+    goc.execute("CREATE UNIQUE INDEX rule_sets_mot_bo_bat_moi_quy_trinh ON rule_sets (process_code) WHERE is_active")
+    goc.execute((THU_MUC_SQL / "0028_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
     return goc
 
 
@@ -83,7 +90,9 @@ def test_cum_moi_nap_khoi_tao_ra_dung_cau_hinh_dang_chay(cum_moi):
         ),
         ("roles", "code, label, report_scope"),
         ("departments", "code, label"),
-        ("request_types", "code, label, sla_hours"),
+        ("processes", "code, label, is_app_default"),
+        ("rule_sets", "version, process_code, is_active"),
+        ("request_types", "code, process_code, label, sla_hours"),
         ("work_hours", "calendar_code, iso_weekday, start_time, end_time"),
     ):
         lech = cum_moi.execute(
@@ -92,10 +101,13 @@ def test_cum_moi_nap_khoi_tao_ra_dung_cau_hinh_dang_chay(cum_moi):
         ).fetchall()
         assert lech == [], f"bảng {bang} của cụm mới lệch cụm đang chạy: {lech[:3]}"
 
+    # Mọi bộ mà dữ liệu khởi tạo nạp (một bộ cho mỗi quy trình), so theo version — cụm đang chạy có thể còn
+    # bộ cũ đã thay
     so_vai_tro_canh = cum_moi.execute(
         f"SELECT (SELECT count(*) FROM {LUOC_DO_TAM}.transition_roles), "
         "(SELECT count(*) FROM public.transition_roles tr JOIN public.transitions t "
-        " ON t.id = tr.transition_id WHERE t.rule_set_id = 1)"
+        " ON t.id = tr.transition_id JOIN public.rule_sets r ON r.id = t.rule_set_id "
+        f" WHERE r.version IN (SELECT version FROM {LUOC_DO_TAM}.rule_sets))"
     ).fetchone()
     assert so_vai_tro_canh[0] == so_vai_tro_canh[1] > 0
 
@@ -123,7 +135,7 @@ def test_ham_kiem_cua_cum_moi_bat_ngo_cut(cum_moi):
     nap_khoi_tao(cum_moi, _thu_muc_khoi_tao())
     cum_moi.execute(
         "DELETE FROM transitions WHERE from_state = "
-        "(SELECT code FROM states WHERE is_initial)"
+        "(SELECT code FROM states WHERE is_initial AND rule_set_id = 1)"
     )
     with pytest.raises(Exception, match="không có cạnh nào đi ra"):
         kiem_tra(cum_moi)
@@ -247,7 +259,7 @@ def test_them_canh_bang_bo_quy_tac_moi_khong_can_dung_lai_cum(session, rule_set)
     kich_hoat(session, moi)
     session.expire_all()
 
-    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active)).one() == moi
+    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active, RuleSet.process_code == rule_set.process_code)).one() == moi
     ho_so_moi = _tao_ho_so(session)
     assert ho_so_moi.rule_set_id == moi
     assert ho_so_cu.rule_set_id == cu
@@ -287,7 +299,7 @@ def test_cap_nhat_tao_ngo_cut_bi_tu_choi_va_khong_de_lai_gi(session, rule_set):
             kich_hoat(session, moi)
 
     session.expire_all()
-    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active)).one() == cu
+    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active, RuleSet.process_code == rule_set.process_code)).one() == cu
     assert session.scalars(select(RuleSet).where(RuleSet.version == "thu-254-hong")).first() is None
 
 
@@ -295,4 +307,4 @@ def test_kich_hoat_bo_khong_ton_tai_bao_loi(session, rule_set):
     with pytest.raises(ValueError, match="Không có bộ quy tắc"):
         kich_hoat(session, 32000)
     session.expire_all()
-    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active)).one() == rule_set.id
+    assert session.scalars(select(RuleSet.id).where(RuleSet.is_active, RuleSet.process_code == rule_set.process_code)).one() == rule_set.id

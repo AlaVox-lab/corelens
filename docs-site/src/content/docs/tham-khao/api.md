@@ -43,19 +43,31 @@ hành yêu cầu nội bộ — và có thể đổi theo giao diện của nó.
 
 | Nhóm | Điểm cuối |
 |---|---|
-| Luồng công việc | `GET /core/v1/workflow/request-types`, `/states`, `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ · `GET /core/v1/workflow/requests`, `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
+| Luồng công việc | `GET /core/v1/workflow/processes` — danh mục quy trình · `GET /core/v1/workflow/request-types`, `/states` (`?process=`), `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ, loại yêu cầu quyết định quy trình · `GET /core/v1/workflow/requests` (`?process=`, `needs_action=true`), `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
 | Tệp | `GET /core/v1/files/policy` · `POST /core/v1/files/requests/{case_id}/attachments` · `GET /core/v1/files/{attachment_id}` |
-| Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json&from=…&to=…` — chỉ quản trị viên |
+| Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json&from=…&to=…&process=…` — chỉ quản trị viên; mỗi dòng mang `process_code` |
 | Thông báo | `GET /core/v1/notifications/preferences` · `POST /core/v1/notifications/preferences/{code}` |
 | Định danh | `GET /core/v1/identity/me` |
 
 Mỗi đường của lõi là **cùng một điểm cuối** với một đường cũ mà cổng người dùng đang dùng (ví dụ
-`/core/v1/workflow/requests` và `/requests`): cùng kết quả, cùng phân quyền, cùng giới hạn tốc độ. Bảng ánh
-xạ đầy đủ và danh sách điểm cuối thuộc ứng dụng minh họa ở `docs/ARCHITECTURE.md` mục 2.3.
+`/core/v1/workflow/states` và `/states`): cùng kết quả, cùng phân quyền, cùng giới hạn tốc độ. Riêng danh
+sách, chi tiết và bước chuyển hồ sơ khác ở **phạm vi** (xem dưới). Bảng ánh xạ đầy đủ và danh sách điểm cuối
+thuộc ứng dụng minh họa ở `docs/ARCHITECTURE.md` mục 2.3.
 
-Bước chuyển qua lõi là cửa của người gửi: chỉ trên hồ sơ do chính người gọi tạo, và chỉ những bước mà vai
-của người gọi đi được theo quy trình đang chạy. Phân loại, nhận việc… là việc của hai buồng lái trong ứng
+### Nhiều quy trình
+
+Động cơ luồng công việc chạy **nhiều quy trình** cùng lúc. Mỗi quy trình có bộ trạng thái, bước chuyển, vai
+đi được và hạn xử lý riêng — toàn là dữ liệu; mỗi loại yêu cầu thuộc một quy trình, nên tạo hồ sơ bằng loại
+nào là chạy quy trình đó. Dữ liệu mẫu có hai quy trình: cổng yêu cầu nội bộ (quy trình của ứng dụng minh
+họa) và **đề xuất mua sắm duyệt hai cấp** — người đề xuất gửi, trưởng phòng của phòng đề xuất duyệt, điều
+phối viên duyệt cấp hai. Các điểm cuối đọc theo quy trình nhận `process=<mã>`; bỏ trống là quy trình của ứng
 dụng minh họa.
+
+Danh sách, chi tiết và bước chuyển hồ sơ dưới `/core/v1` **trung lập với vai**: người gọi thấy hồ sơ mình
+tạo, hồ sơ của phòng mình nếu mang vai phòng ban, mọi hồ sơ nếu là điều phối viên — hồ sơ ngoài phạm vi trả
+`404`. Đi bước nào thì engine quyết theo vai và ràng buộc của bước, như trên giao diện: trưởng phòng duyệt
+được đề xuất của phòng mình, người gửi gọi nhầm bước của trưởng phòng nhận `403`. Đường cũ `/requests` của
+cổng người dùng vẫn chỉ là hồ sơ do chính người gọi tạo.
 
 ### Token cho ứng dụng khác: tài khoản dịch vụ
 
@@ -78,8 +90,10 @@ Token mang `dx-api` trong `aud` và vai `requester`, nên qua được cổng AP
 curl -s http://localhost:9080/core/v1/workflow/request-types -H "Authorization: Bearer <token>"
 ```
 
-Ví dụ đầy đủ, chỉ dùng thư viện chuẩn của Python: `examples/goi-loi/` — tạo một hồ sơ, đi một bước, in lịch
-sử, toàn bộ qua `/core/v1`. Cụm dựng trước bản có `/core/v1` thì tạo client trước bằng
+Ví dụ đầy đủ, chỉ dùng thư viện chuẩn của Python: `examples/goi-loi/` — `goi_loi.py` tạo một hồ sơ, đi một
+bước, in lịch sử; `quy_trinh_mua_sam.py` chạy trọn quy trình thứ hai tới khi duyệt xong bằng ba tài khoản
+dịch vụ — người đề xuất, trưởng phòng (`dx-integration-truong-phong`), người duyệt cấp hai
+(`dx-integration-duyet`) — toàn bộ qua `/core/v1`. Cụm dựng trước bản có `/core/v1` thì tạo client trước bằng
 `python scripts/tai_khoan_dich_vu.py` — xem [Nâng cấp](../../cai-dat/nang-cap/).
 
 ## Quy tắc chung

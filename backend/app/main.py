@@ -58,6 +58,8 @@ from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau_ung_dung
 from app.workflow.routes import router_loi as router_yeu_cau
+from app.workflow.routes import router_nguoi_gui as router_yeu_cau_nguoi_gui
+from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
 
@@ -308,6 +310,7 @@ app.add_middleware(LopQuanSat)
 # Đường cũ. Nhãn OpenAPI gắn ở đây chứ không ở router, vì router của lõi còn được gắn lần nữa dưới
 # /core/v1 với nhãn riêng (cuối tệp) — nhãn của router thì cộng dồn vào mọi lần gắn.
 app.include_router(router_yeu_cau, tags=["Yêu cầu"])
+app.include_router(router_yeu_cau_nguoi_gui, tags=["Yêu cầu"])
 app.include_router(router_yeu_cau_ung_dung, tags=["Yêu cầu"])
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
@@ -700,6 +703,8 @@ def _gan_loi(router: APIRouter, nhom: str, duong: str = "") -> None:
 
 
 _gan_loi(router_yeu_cau, "workflow")
+# Danh sách, chi tiết, bước chuyển của lõi: phạm vi theo vai (#376), khác cửa "hồ sơ của mình" ở đường cũ
+_gan_loi(router_yeu_cau_loi, "workflow")
 _gan_loi(router_tep, "files")
 _gan_loi(router_tai_tep, "files")
 _gan_loi(router_du_lieu_mo, "events")

@@ -234,7 +234,9 @@ ba trong bốn dịch vụ lõi; đợt này bổ sung cổng API và vẽ ranh 
 - [x] Phân tích đề thi, đối chiếu với bộ khung hiện có — [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md) (#363)
 - [x] Khảo sát nền tảng cổng API — ADR-0010, đã chấp nhận 15/11 (#363)
 - [x] Cổng API làm cửa vào duy nhất của cụm (#364)
-- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`. Mức 2 — engine chạy nhiều quy trình — chưa làm, xét sau khi phát hành
+- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`
+- [x] Nền tảng lõi Mức 2 (#376): engine chạy nhiều quy trình, quy trình mẫu thứ hai (đề xuất mua sắm duyệt hai cấp) chạy trọn qua `/core/v1`, cửa bước chuyển trung lập với vai. Mức 3 — tách engine thành dịch vụ riêng — ngoài đợt này
+- [x] Siết realm mẫu (#377): chống dò mật khẩu, chính sách mật khẩu tối thiểu
 - [x] Xác thực hai lớp tùy chọn (#366)
 - [x] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
 - [ ] Phát hành `v1.0.0`, kiểm dựng từ tệp phát hành (#368)

@@ -68,12 +68,14 @@ def sao_chep(
 
     moi = ket_noi.execute(text("SELECT COALESCE(max(id), 0) + 1 FROM rule_sets")).scalar_one()
     tham_so["moi"] = moi
+    # Bộ mới thuộc cùng quy trình với bộ được chép (#376)
     ket_noi.execute(
         text(
-            "INSERT INTO rule_sets (id, version, label, effective_from, is_active, note) "
-            "VALUES (:moi, :version, :label, now(), FALSE, :note)"
+            "INSERT INTO rule_sets (id, process_code, version, label, effective_from, is_active, note) "
+            "SELECT :moi, process_code, :version, :label, now(), FALSE, :note "
+            "FROM rule_sets WHERE id = :tu"
         ),
-        {"moi": moi, "version": version, "label": label, "note": note},
+        {"moi": moi, "tu": tu_bo, "version": version, "label": label, "note": note},
     )
 
     cot_trang_thai = _cot_chep(ket_noi, "states")
@@ -115,16 +117,21 @@ def sao_chep(
 
 
 def kich_hoat(ket_noi: ThucThi, ma_bo: int) -> None:
-    """Kiểm nhất quán toàn bộ cấu hình rồi đổi bộ đang bật sang `ma_bo`.
+    """Kiểm nhất quán toàn bộ cấu hình rồi đổi bộ đang bật của quy trình chứa `ma_bo` sang `ma_bo`.
 
     Kiểm hỏng thì PostgreSQL ném lỗi trước khi có gì đổi, và giao dịch của người gọi hoàn tác cả
-    phần đã chép, đã sửa. Hai câu UPDATE riêng: chỉ mục duy nhất từng phần không cho hai bộ cùng
-    bật, kể cả thoáng qua giữa một câu lệnh."""
+    phần đã chép, đã sửa. Hai câu UPDATE riêng: chỉ mục duy nhất từng phần không cho hai bộ của cùng
+    một quy trình cùng bật, kể cả thoáng qua giữa một câu lệnh. Bộ đang bật của quy trình khác không
+    bị đụng tới (#376)."""
     if ket_noi.execute(text("SELECT 1 FROM rule_sets WHERE id = :ma"), {"ma": ma_bo}).first() is None:
         raise ValueError(f"Không có bộ quy tắc mã {ma_bo}")
     ket_noi.execute(text("SELECT kiem_tra_cau_hinh()"))
     ket_noi.execute(
-        text("UPDATE rule_sets SET is_active = FALSE WHERE is_active AND id <> :ma"), {"ma": ma_bo}
+        text(
+            "UPDATE rule_sets SET is_active = FALSE WHERE is_active AND id <> :ma "
+            "AND process_code = (SELECT process_code FROM rule_sets WHERE id = :ma)"
+        ),
+        {"ma": ma_bo},
     )
     ket_noi.execute(
         text("UPDATE rule_sets SET is_active = TRUE, effective_from = now() WHERE id = :ma"),

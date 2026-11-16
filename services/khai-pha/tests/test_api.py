@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from app import main
 
 KHOA_HOP_DONG = {
-    "range", "departments", "engine", "cases_count", "states", "edges", "designed_main_flow",
+    "range", "departments", "process", "engine", "cases_count", "states", "edges", "designed_main_flow",
     "deviations", "bottlenecks", "variants", "other_variants_cases",
 }
 KHOANG_HOP_LE = {"from": "2026-08-01", "to": "2026-11-09", "departments": None}
@@ -90,6 +90,7 @@ def test_khoang_hop_le_tra_du_khoa_hop_dong(khach_theo_bo_may):
     assert than["engine"] == ten
     assert than["range"] == {"from": "2026-08-01", "to": "2026-11-09"}
     assert than["departments"] is None
+    assert than["process"] is None  # bỏ trống: quy trình mặc định của ứng dụng (#376)
     assert isinstance(than["cases_count"], int) and than["cases_count"] >= 0
     assert [d["kind"] for d in than["deviations"]] == [
         "rework", "escalation", "wait_expiry", "reopen", "multiple_routing",

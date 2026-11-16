@@ -73,8 +73,8 @@ Giao diện hỏi dịch vụ các giới hạn này, nên đổi một chỗ l�
 ### Tài khoản dịch vụ gọi API của lõi
 
 Ứng dụng khác gọi API của nền tảng lõi (`/core/v1`) bằng token của một tài khoản dịch vụ — xem
-[API](../../tham-khao/api/). Dịch vụ ứng dụng **không** đọc ba biến này; chỉ `examples/goi-loi/` và
-`scripts/tai_khoan_dich_vu.py` dùng. Realm mẫu đã khai client `dx-integration` với đúng các giá trị mặc
+[API](../../tham-khao/api/). Dịch vụ ứng dụng **không** đọc các biến này; chỉ `examples/goi-loi/` và
+`scripts/tai_khoan_dich_vu.py` dùng. Realm mẫu đã khai ba client `dx-integration`, `dx-integration-truong-phong`, `dx-integration-duyet` với đúng các giá trị mặc
 định; đổi biến nào thì chạy `python scripts/tai_khoan_dich_vu.py` để Keycloak theo.
 
 | Biến | Mặc định | Ghi chú |
@@ -82,6 +82,8 @@ Giao diện hỏi dịch vụ các giới hạn này, nên đổi một chỗ l�
 | `KEYCLOAK_INTEGRATION_CLIENT_ID` | `dx-integration` | Client bí mật, chỉ bật client credentials; token mang `aud` của dịch vụ ứng dụng |
 | `KEYCLOAK_INTEGRATION_SECRET` | giá trị mẫu | Đổi trước khi triển khai thật |
 | `KEYCLOAK_INTEGRATION_ROLES` | `requester` | Vai realm của tài khoản dịch vụ, cách nhau dấu phẩy. Kịch bản chỉ gán thêm, không gỡ vai nào |
+| `KEYCLOAK_INTEGRATION_HEAD_*` | `dx-integration-truong-phong`, vai `approver`, group `/phong-ban/admin-office` | Tài khoản trưởng phòng của ví dụ quy trình thứ hai (`_CLIENT_ID`, `_SECRET`, `_ROLES`, `_GROUP`). Tùy chọn: bỏ trống thì kịch bản bỏ qua |
+| `KEYCLOAK_INTEGRATION_REVIEWER_*` | `dx-integration-duyet`, vai `classifier` | Tài khoản duyệt cấp hai của ví dụ quy trình thứ hai (`_CLIENT_ID`, `_SECRET`, `_ROLES`). Tùy chọn |
 
 ## Bộ quét hạn
 

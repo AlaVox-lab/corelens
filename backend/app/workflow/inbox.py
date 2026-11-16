@@ -44,7 +44,7 @@ from app.models.workflow_config import MessageKind, State
 from app.workflow.context import Actor
 from app.workflow.coordination import trang_thai_hang_doi_dieu_phoi, vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
-from app.workflow.engine import rule_sets_in_use
+from app.workflow.engine import ma_quy_trinh_ung_dung, rule_sets_in_use
 from app.workflow.messages import ma_loai_noi_bo, thay_noi_bo
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.routes import _ma_ho_so, _o_trang_thai
@@ -91,7 +91,7 @@ def _pham_vi(session: Session, cua: _Cua):
         hang_doi = _o_trang_thai(
             {
                 bo: [t.code for t in trang_thai_hang_doi_dieu_phoi(session, bo)]
-                for bo in rule_sets_in_use(session)
+                for bo in rule_sets_in_use(session, ma_quy_trinh_ung_dung(session))
             }
         )
         da_nhan = select(CaseMessage.case_id).where(CaseMessage.author == actor.id)
