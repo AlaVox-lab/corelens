@@ -75,7 +75,7 @@ flowchart TB
 |---|---|---|---|
 | **H** | Nhân sự | Cổng theo vai, hộp thư trao đổi, ủy quyền khi vắng, kho tri thức (tùy chọn) | Next.js; Wiki.js `2.5.315` (AGPL-3.0, dịch vụ riêng) |
 | **P** | Quy trình | Phân loại, định tuyến, leo thang, mở lại có giới hạn, màn cấu hình quy trình | — |
-| **D** | Dữ liệu | Bảng điều khiển nhúng trong cổng, xuất nhật ký CSV và JSON | Apache Superset `6.1.0` (Apache-2.0) |
+| **D** | Dữ liệu | Bảng điều khiển nhúng trong cổng, xuất nhật ký CSV và JSON, lưu trữ lạnh theo tháng ra kho đối tượng, [phả hệ dữ liệu](docs/pha-he-du-lieu.md) | Apache Superset `6.1.0` (Apache-2.0) |
 | **I** | Trí tuệ | Khai phá quy trình thực tế, gợi ý phân loại và người xử lý, hồ sơ tương tự | PM4Py `2.7.23.8` (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp + Qwen2.5-1.5B (tùy chọn) |
 
 Một ứng dụng khác dùng lõi mà không cần cổng người dùng: lấy token bằng tài khoản dịch vụ rồi gọi

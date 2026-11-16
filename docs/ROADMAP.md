@@ -239,6 +239,8 @@ ba trong bốn dịch vụ lõi; đợt này bổ sung cổng API và vẽ ranh 
 - [x] Siết realm mẫu (#377): chống dò mật khẩu, chính sách mật khẩu tối thiểu
 - [x] Xác thực hai lớp tùy chọn (#366)
 - [x] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
+- [x] Lưu trữ lạnh dữ liệu lịch sử ra kho đối tượng (#378) — nguyên lý (i): mỗi tháng đã khép một bản lưu bất biến, CSV gzip kèm bản kê có mã băm, đọc lại qua `GET /core/v1/archive` và `scripts/doc_luu_tru.py`
+- [x] Trang phả hệ dữ liệu sinh từ định nghĩa (#379) — nguyên lý (iii): biểu đồ → bộ dữ liệu → view → bảng nguồn, tích hợp liên tục kiểm bằng `scripts/pha_he.py --kiem`
 - [ ] Phát hành `v1.0.0`, kiểm dựng từ tệp phát hành (#368)
 
 **Chuẩn bị trước để giảm rủi ro**: tuân thủ nghiêm nguyên tắc cấu hình thay vì mã

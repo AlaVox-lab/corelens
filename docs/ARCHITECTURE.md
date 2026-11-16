@@ -151,7 +151,7 @@ cùng phụ thuộc** — kiểm token, phân quyền, giới hạn tốc độ 
 tiền tố. Router mang tiền tố riêng (`/analytics`, `/me/notifications`) chuyển tiền tố ra lúc gắn.
 
 Nhãn OpenAPI gắn lúc gắn router, không khai ở router: nhãn của router cộng dồn vào **mọi** lần gắn, nên
-thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; năm
+thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; sáu
 nhóm này khai trong `openapi_tags` (`NHOM_LOI` ở `main.py`) nên đứng đầu `/docs`, kèm mô tả. Mã thao tác
 FastAPI tự sinh từ tên hàm cộng đường dẫn, nên bản của lõi không trùng bản ở đường cũ. Bề mặt đường cũ đối
 chiếu từng dòng trước và sau thay đổi — đường, phương thức, nhãn, mã thao tác, tham số, mã phản hồi — giống
@@ -172,6 +172,7 @@ hệt.
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
 | Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
+| Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
 | | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
 | Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
@@ -181,6 +182,10 @@ của lõi là cửa trung lập với vai (`app/workflow/loi.py`, xem "Nhiều 
 hai hàm xử lý dùng chung thân (`liet_ke_ho_so`, `_dung_chi_tiet`, `di_buoc` trong `workflow/routes.py`):
 đường cũ ở `router_nguoi_gui`, lõi ở `router_loi_rieng`. Mọi điểm cuối khác vẫn là một hàm gắn hai lần.
 Tham số `process` bỏ trống là quy trình mặc định của ứng dụng — ví dụ và cổng người dùng cũ không vỡ.
+
+² **Chỉ có ở lõi** (#378, mục 6.3a): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
+trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
+quản trị viên.
 
 Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
 `history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
@@ -201,7 +206,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 | Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
 | Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
 | Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
-| Vận hành | `/system/health`, `/sla/scan`, `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
+| Vận hành | `/system/health`, `/sla/scan`, `/archive/scan` (#378), `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
 
 **Nhiều quy trình (Mức 2, #376).** Lõi phục vụ nhiều ứng dụng, mỗi ứng dụng một quy trình riêng, cùng một
 engine — không một dòng mã nào biết quy trình nào tồn tại.
@@ -533,7 +538,7 @@ dx-os-lab/
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
-│   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
+│   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306), lưu trữ lạnh (#378); [I] lối vào khai phá (#314)
 │   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254), quản trị cấu hình (#255)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239); lớp gọi mô hình,
 │   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320),
@@ -604,6 +609,8 @@ dx-os-lab/
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
 │   ├── sao_luu.py               # sao lưu tay, khôi phục, đối soát cơ sở dữ liệu và kho tệp (#245)
+│   ├── doc_luu_tru.py           # đọc lại một bản lưu trữ lạnh, kiểm mã băm và số dòng (#378)
+│   ├── pha_he.py                # sinh, kiểm trang phả hệ dữ liệu từ view và bảng điều khiển (#379)
 │   ├── tai_khoan_dich_vu.py     # tạo, cập nhật tài khoản dịch vụ gọi lõi trên cụm đang chạy (#365)
 │   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
 │   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
@@ -1239,6 +1246,60 @@ coi là giây làm việc và đổi sang giờ thật bằng `moc_sau_giay_lam_
 chính, đồng hồ hạn đúng bằng cách hệ thống tự đo, không sự kiện nào ở tương lai. Lệnh từ chối
 chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang tiền tố `[Mẫu]` (trừ khi thêm
 `--cho-tron`). Hồ sơ mẫu không gỡ ra được — trigger chặn xóa nhật ký — nên muốn sạch thì `down -v`.
+
+### 6.3a. Lưu trữ lạnh và phả hệ dữ liệu (không gian `D`)
+
+**Đã cài đặt** — #378 (lưu trữ lạnh, nguyên lý (i) của đề) và #379 (phả hệ, nguyên lý (iii)).
+
+**Hai tầng theo vòng đời.** Tầng nóng là PostgreSQL: bảng tác nghiệp, nhật ký chỉ ghi thêm, view báo cáo.
+Tầng lạnh là kho đối tượng SeaweedFS: mỗi **tháng UTC đã khép** một bản lưu niêm phong. Tầng lạnh là **bản
+sao** để phân tích dài hạn, không phải nơi dời dữ liệu đi: đợt này **không dọn gì khỏi tầng nóng** — nhật
+ký chỉ ghi thêm là nền của khai phá quy trình và kiểm toán. Xóa khỏi tầng nóng là việc tương lai, theo
+chính sách lưu giữ của ADR-0009, và khi làm thì bản lưu lạnh là thứ cho phép làm.
+
+**Bộ quét `cold-archive`** (`app/analytics/luu_tru_lanh.py`) theo khuôn `nhip_quet.py` (mục 7.1): khóa tư
+vấn, dòng nhịp, hiện trên màn Hệ thống; vòng nền riêng để lần đầu bật trên cụm nhiều năm dữ liệu không làm
+trễ bộ quét hạn. Mỗi lượt lấy các tháng từ mốc sớm nhất có dữ liệu tới tháng đã khép cuối cùng còn thiếu
+bản lưu, cũ trước, tối đa `ARCHIVE_MAX_MONTHS_PER_RUN`. Tháng trống cũng có bản lưu, nên sổ không lỗ hổng.
+Cấu hình (`app/config.py`, `infra/.env.example`): `ARCHIVE_ENABLED`, `ARCHIVE_INTERVAL_SECONDS`,
+`ARCHIVE_MIN_AGE_MONTHS` (tối thiểu 1 — tháng đang chạy còn nhận sự kiện), `ARCHIVE_BUCKET` (rỗng là chung
+thùng tệp đính kèm — khóa S3 mẫu chỉ được tạo đúng thùng đó), `ARCHIVE_PREFIX`. Chạy ngay một lượt:
+`POST /archive/scan` (quản trị viên) — tắt bộ quét là tắt lịch, không tắt khả năng xuất.
+
+Một bản lưu, dưới `<tiền tố><YYYY-MM>/`:
+
+| Tệp | Nội dung |
+|---|---|
+| `nhat-ky-su-kien.csv.gz` | sự kiện của tháng từ view `bao_cao_nhat_ky`, **đúng cột của `GET /core/v1/events`** |
+| `ho-so-ket-thuc.csv.gz` | hồ sơ kết thúc trong tháng (cùng nghĩa "kết thúc" với `bao_cao_ho_so`: trạng thái `is_terminal`, mốc là sự kiện cuối) — trường quyết định, người bằng mã, đồng hồ hạn |
+| `manifest.json` | định dạng, phiên bản lược đồ, kỳ, khoảng UTC, lúc xuất, số sự kiện và hồ sơ theo quy trình, mỗi tệp: cột, số dòng, số byte, SHA-256 |
+
+- **Định dạng mở, không thư viện mới.** CSV RFC 4180, UTF-8 có dòng tiêu đề, nén gzip với `mtime=0` — cùng
+  nội dung ra cùng byte. Đọc được bằng mọi bảng tính hay pandas, không cần hệ thống
+- **Bất biến, chạy lại an toàn.** `manifest.json` ghi **sau cùng**: có nó là bản đã niêm phong, không bao
+  giờ ghi đè. Bảng `cold_archives` (migration `0029`) là sổ, chỉ ghi thêm bằng trigger như `event_log`.
+  Lượt hỏng giữa lúc ghi kho và ghi sổ: lượt sau thấy manifest trong kho, ghi sổ theo nó, không xuất lại.
+  Tệp dữ liệu không có manifest là dở dang, ghi lại được
+- **Dữ liệu cá nhân (ADR-0009).** Không nhãn tên, không nội dung tự do (tiêu đề, mô tả, trường riêng, lời
+  nhắn), không nội dung tệp đính kèm; người chỉ có mã định danh. Lý do: bản lưu bất biến, nên tên lọt vào
+  thì không bao giờ ẩn danh hóa được nữa — giữ tên ngoài bản lưu thì thao tác ẩn danh hóa ở tầng nóng
+  vẫn đủ
+- **Đọc lại.** `GET /core/v1/archive` (mục 2.3) liệt kê, đọc bản kê, tải từng tệp; dịch vụ kiểm mã băm
+  trước khi trả, tệp bị sửa trong kho thì `502 archive-corrupted`. `scripts/doc_luu_tru.py <YYYY-MM>`
+  tải qua container dịch vụ hoặc qua API, kiểm SHA-256, giải nén, đếm dòng so với bản kê; `--doi-chieu`
+  so thêm số dòng nhật ký với tầng nóng — chứng minh báo cáo dựng từ tầng lạnh khớp nguồn
+
+Cụm mới chỉ có bản lưu khi có dữ liệu của tháng trước: dữ liệu trình diễn (`nap_du_lieu_trinh_dien.py`,
+mặc định rải 90 ngày) có sẵn hai, ba tháng đã khép.
+
+**Phả hệ dữ liệu** (`scripts/pha_he.py`, chỉ thư viện chuẩn) đọc **tĩnh** từ kho, không cần cụm: định nghĩa
+view từ các bản sửa Alembic (chạy `upgrade()` với mô-đun giả, ghi lại mọi `CREATE`/`DROP VIEW` theo chuỗi
+`down_revision`), biểu đồ và bộ dữ liệu từ YAML ở `infra/superset/bang-dieu-khien/`, và câu SQL của những
+nơi khác đọc nhật ký (xuất dữ liệu, khai phá, lưu trữ lạnh). Kết quả là [`pha-he-du-lieu.md`](pha-he-du-lieu.md)
+cùng trang tương ứng của trang tài liệu: biểu đồ → bộ dữ liệu → view → bảng nguồn và cột, sơ đồ mermaid,
+và nguồn gốc nhật ký từ cửa chuyển trạng thái tới mọi nơi đọc. Không sửa tay hai tệp đó: đổi view hay
+bảng điều khiển thì chạy lại `python scripts/pha_he.py`. Tích hợp liên tục chạy `--kiem` trong việc
+kiểm header — trang lệch định nghĩa là đỏ.
 
 ### 6.4. Khai phá quy trình (không gian `I`)
 
@@ -2203,7 +2264,7 @@ thêm vào cả `apisix.yaml` lẫn bảng này.
 |---|---|---|
 | `/`, `/health`, `/health/live`, `/health/ready` (GET, HEAD) | Công khai | Công khai; `/health*` chỉ trả trạng thái chung (dưới) |
 | `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json` (GET, HEAD) | Công khai | Công khai (tài liệu tự sinh) |
-| `/metrics`, `/system/health`, `/sla/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
+| `/metrics`, `/system/health`, `/sla/scan`, `/archive/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
 | `/core/v1/*` — API của nền tảng lõi (mục 2.3) | Cần token, kể cả đường lõi chưa có | Như đường cũ tương ứng: cùng hàm, cùng phụ thuộc |
 | Mọi đường khác, và đường công khai với phương thức khác (`POST /health`) | Cần token | Cần token; phân quyền theo vai trò và phạm vi như cũ |
 
