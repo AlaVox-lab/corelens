@@ -379,6 +379,18 @@ class Settings(BaseSettings):
     portal_public_url: str = "http://localhost:3000"
     superset_timeout_seconds: float = 5.0
 
+    # --- Cập nhật thời gian thực, xem #387 và app/thoi_gian_thuc.py -----------------------
+    #
+    # Nhịp gửi dòng giữ kết nối khi không có tín hiệu: phải ngắn hơn hạn chờ đọc của cổng API
+    # (GATEWAY_TIMEOUT_SECONDS) và của mọi proxy đứng trước, không thì luồng bị cắt giữa chừng.
+    realtime_keepalive_seconds: float = 15.0
+    # Luồng tự đóng sau chừng này giây; trình duyệt nối lại ngay, bằng token mới. Nhờ vậy không có
+    # luồng nào sống lâu hơn hạn của access token đã mở nó (Keycloak mặc định 5 phút).
+    realtime_max_stream_seconds: float = 240.0
+    # Mỗi luồng giữ riêng một kết nối PostgreSQL để LISTEN. Quá số này thì từ chối 503 và cổng quay
+    # về hỏi định kỳ — không để luồng ăn hết kết nối mà các lời gọi khác cần.
+    realtime_max_streams: int = 40
+
 
 @lru_cache
 def get_settings() -> Settings:

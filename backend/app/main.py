@@ -62,6 +62,7 @@ from app.workflow.routes import router_nguoi_gui as router_yeu_cau_nguoi_gui
 from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
+from app.thoi_gian_thuc import router as router_thoi_gian_thuc
 
 logger = logging.getLogger(__name__)
 
@@ -325,6 +326,7 @@ app.include_router(router_tuong_tu)
 app.include_router(router_thong_bao, prefix="/me/notifications", tags=["Thông báo"])
 app.include_router(router_quan_tri)
 app.include_router(router_uy_quyen)
+app.include_router(router_thoi_gian_thuc)
 
 
 def _do_suc_khoe(session: Session) -> dict:

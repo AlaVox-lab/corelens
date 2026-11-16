@@ -42,7 +42,7 @@ Hạn gửi bài: 17:00 ngày 06/12/2026. Chấm kho mã 07–09/12, trình di�
 | Nhóm | Đã có | Chưa có / ngoài phạm vi |
 |---|---|---|
 | Vận hành, giám sát, kiểm toán | Nhật ký sự kiện bất biến; nhật ký có cấu trúc kèm mã yêu cầu; điểm cuối sống, sẵn sàng, số đo; sao lưu tay và khôi phục có đối soát | Truyền phát sự kiện thời gian thực; sao lưu tự động theo lịch |
-| Truyền thông, giao vận | Hàng đợi thông báo thư có thử lại (hộp thư đi trong cơ sở dữ liệu) | Kết nối thời gian thực — cổng hỏi lại định kỳ |
+| Truyền thông, giao vận | Hàng đợi thông báo thư có thử lại (hộp thư đi trong cơ sở dữ liệu); **kết nối thời gian thực** bằng Server-Sent Events: PostgreSQL `NOTIFY` → `GET /me/stream` lọc theo quyền xem → cổng tự làm mới, hỏi định kỳ làm dự phòng (#387) | WebSocket hai chiều — chưa cần, cổng chỉ nhận |
 | Đa thuê ước, cá thể hóa | Ẩn danh hóa nhãn tên theo thời hạn lưu giữ (ADR-0009); lọc dữ liệu báo cáo theo phòng | Đa thuê ước; đa ngôn ngữ giao diện — ngoài phạm vi |
 | Két bí mật, chữ ký số | — | Ngoài phạm vi; bí mật nằm trong `infra/.env` |
 
