@@ -173,6 +173,7 @@ hệt.
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
 | Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
 | Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
+| Lõi — Webhook ² | — | `POST`, `GET /core/v1/webhooks` · `GET`, `DELETE /core/v1/webhooks/{id}` · `GET /core/v1/webhooks/{id}/deliveries` (#390, mục 6.8) |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
 | | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
 | Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
@@ -183,7 +184,7 @@ hai hàm xử lý dùng chung thân (`liet_ke_ho_so`, `_dung_chi_tiet`, `di_buoc
 đường cũ ở `router_nguoi_gui`, lõi ở `router_loi_rieng`. Mọi điểm cuối khác vẫn là một hàm gắn hai lần.
 Tham số `process` bỏ trống là quy trình mặc định của ứng dụng — ví dụ và cổng người dùng cũ không vỡ.
 
-² **Chỉ có ở lõi** (#378, mục 6.3a): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
+² **Chỉ có ở lõi** (#378, mục 6.3a; webhook #390, mục 6.8): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
 trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
 quản trị viên.
 
@@ -533,7 +534,10 @@ dx-os-lab/
 │   │   ├── config.py            # cấu hình từ biến môi trường
 │   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
 │   │   ├── thoi_gian_thuc.py    # [H] luồng SSE "hồ sơ vừa đổi" GET /me/stream, nghe NOTIFY (#387)
+<<<<<<< HEAD
 │   │   ├── webhook.py           # [core] truyền phát sự kiện ra ngoài: /core/v1/webhooks, bộ gửi ký HMAC (#390)
+=======
+>>>>>>> origin/dev
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
