@@ -532,6 +532,7 @@ dx-os-lab/
 │   │   ├── main.py              # điểm vào, điểm cuối kiểm tra sức khỏe
 │   │   ├── config.py            # cấu hình từ biến môi trường
 │   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
+│   │   ├── thoi_gian_thuc.py    # [H] luồng SSE "hồ sơ vừa đổi" GET /me/stream, nghe NOTIFY (#387)
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
@@ -2131,6 +2132,21 @@ trình duyệt khi lời nhắn thật sự đang hiện — không ghi lúc d�
 đánh dấu nhầm. Trang hộp thư tự tải lại khoảng 12 giây một lần bằng `router.refresh()`;
 thanh bên hỏi riêng con số qua `app/api/hop-thu/chua-doc` — không thêm dịch vụ nào vào
 Compose.
+
+**Từ #387, cổng nhận tín hiệu thời gian thực** (`backend/app/thoi_gian_thuc.py`,
+`frontend/app/api/su-kien/`, `frontend/components/nghe-thay-doi.tsx`). Bản sửa 0030 đặt trigger
+`pg_notify('ho_so_thay_doi', <mã hồ sơ>)` sau mỗi lần tạo hay sửa dòng `requests` và mỗi lời nhắn
+mới — mã ghi hồ sơ, cửa chuyển trạng thái và `event_log` không đổi. `GET /me/stream` trả
+Server-Sent Events: mỗi luồng `LISTEN` trên một kết nối bất đồng bộ riêng của psycopg, lọc mã hồ sơ
+bằng đúng luật cửa của hộp thư (`_Cua.noi_mo`) rồi mới đẩy `event: ho-so` chỉ mang `case_id` — người
+không mở được hồ sơ không biết nó vừa đổi. Luồng gửi dòng giữ kết nối mỗi
+`DXLAB_REALTIME_KEEPALIVE_SECONDS` (15 giây, dưới hạn chờ đọc của cổng API), tự đóng sau
+`DXLAB_REALTIME_MAX_STREAM_SECONDS` (240 giây) để trình duyệt nối lại bằng token mới, và có trần
+`DXLAB_REALTIME_MAX_STREAMS` (40) vì mỗi luồng giữ một kết nối PostgreSQL — quá trần trả 503. Phản hồi
+mang `X-Accel-Buffering: no` nên APISIX không gom vào bộ đệm; cổng API không thêm tuyến nào. Máy chủ
+Next.js chuyển tiếp luồng ở `/api/su-kien` (token vẫn ở máy chủ, dịch vụ từ chối thì trả 204 để
+trình duyệt thôi nối lại); khung ứng dụng nhận tín hiệu thì gộp trong 300 ms rồi `router.refresh()`
+và báo thanh bên hỏi lại số chưa đọc. Hỏi định kỳ 12 giây giữ nguyên làm đường dự phòng.
 
 **Từ #156, mỗi hồ sơ có hai cuộc trò chuyện.** Hộp thư trả mỗi cặp (hồ sơ, kênh) thành một
 cuộc với cờ `internal`; mốc đã đọc thêm cột `internal` vào khóa chính (migration 0009), nên
