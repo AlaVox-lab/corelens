@@ -102,7 +102,7 @@ def main() -> int:
     bi_mat: dict[str, str] = {}
     may_chu = ThreadingHTTPServer(("0.0.0.0", ts.cong), tao_bo_nhan(bi_mat))  # noqa: S104 — container phải gọi tới được
     threading.Thread(target=may_chu.serve_forever, daemon=True).start()
-    print(f"1. Máy chủ nhận đang nghe cổng {ts.cong}")
+    print(f"Máy chủ nhận đang nghe cổng {ts.cong}")
 
     token = xin_token(ch)
     dia_chi = ts.dia_chi_nhan or f"http://host.docker.internal:{ts.cong}/su-kien"

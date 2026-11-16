@@ -126,8 +126,18 @@ python examples/goi-loi/nhan_webhook.py
 Lõi gọi tới `http://host.docker.internal:8765/su-kien` (Docker Desktop); máy Linux không có tên đó thì chỉ
 địa chỉ khác bằng `--dia-chi-nhan`. `--hoat-dong <mã> …` chỉ nhận vài mã hoạt động.
 
-Chạy thử phần nhận của ví dụ trên cụm phát triển ngày 16/11/2026 (đăng ký ghi thẳng vào bảng, chưa qua bước
-xin token): hủy một hồ sơ trên cổng, sự kiện tới bên nhận sau vài giây, chữ ký khớp. Lần gửi đầu bên nhận hỏng giữa chừng không trả lời; lõi tự gửi lại ở lượt sau, bên nhận nhận ra
+Đầu ra mẫu, cụm phát triển ngày 17/11/2026 — chạy `nhan_webhook.py`, rồi ở cửa sổ khác `goi_loi.py` (tạo một
+hồ sơ rồi đi bước "Hủy yêu cầu"):
+
+```
+Máy chủ nhận đang nghe cổng 8765
+1. Token của tài khoản dịch vụ dx-integration: luồng client credentials, sống 300 giây
+2. Đã đăng ký webhook 13 → http://host.docker.internal:8765/su-kien
+3. Chuyển bước một hồ sơ trên cổng người dùng; sự kiện hiện dưới đây (Ctrl+C để dừng):
+  sự kiện 3715 · hồ sơ 2843 (internal-requests) · cancel: submitted → cancelled · bởi dx-integration · 2026-11-16T17:12:04.208863+00:00
+```
+
+Lần thử trước đó (16/11) bên nhận hỏng giữa chừng không trả lời; lõi tự gửi lại ở lượt sau, bên nhận nhận ra
 sự kiện trùng theo `X-DXOS-Event-Id` và trả 204.
 
 ## Viết ứng dụng của riêng mình
