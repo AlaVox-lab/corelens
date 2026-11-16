@@ -80,6 +80,35 @@ sơ; mỗi hồ sơ mở đầu bằng sự kiện `create-case` lúc tạo. Ng�
 không có tên và ghi chú. Tệp CSV mở thẳng bằng bảng tính, chữ có dấu hiện đúng. Công cụ khác gọi
 `GET /analytics/event-log?format=csv&from=2026-11-01&to=2026-11-30` bằng token của quản trị viên.
 
+## Lưu trữ lạnh
+
+Dữ liệu lịch sử có thêm một bản ở **tầng lạnh** — kho đối tượng SeaweedFS. Bộ quét nền *Bộ lưu trữ lạnh*
+(mặc định bật, mỗi giờ một lượt, nhịp hiện trên màn Hệ thống như các bộ quét khác) niêm phong mỗi **tháng
+UTC đã khép** — tháng trước trở về trước — thành một bản lưu dưới `luu-tru-lanh/<YYYY-MM>/` trong thùng
+tệp đính kèm:
+
+- `nhat-ky-su-kien.csv.gz` — nhật ký sự kiện của tháng, đúng cột của khối xuất ở trên
+- `ho-so-ket-thuc.csv.gz` — hồ sơ kết thúc trong tháng: loại, phòng, ưu tiên, trạng thái cuối, người gửi
+  và người xử lý bằng mã, đồng hồ hạn
+- `manifest.json` — số dòng, cột và mã băm SHA-256 của từng tệp
+
+CSV UTF-8 nén gzip: mở được bằng bảng tính hay bất kỳ công cụ nào, không cần hệ thống. Bản lưu **không bao
+giờ bị ghi đè** — chạy lại bao nhiêu lần cũng an toàn — và không chứa tên người hay nội dung tự do. Cơ sở
+dữ liệu đang chạy giữ nguyên, không dọn gì.
+
+Chạy ngay một lượt thay vì chờ, rồi đọc lại và kiểm (gốc kho mã, cụm đang chạy):
+
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:9080/archive/scan
+python scripts/doc_luu_tru.py 2026-10 --doi-chieu
+```
+
+`doc_luu_tru.py` tải bản kê và từng tệp, kiểm mã băm, đếm dòng so với bản kê, và với `--doi-chieu` so số
+dòng nhật ký với cơ sở dữ liệu. Công cụ khác dùng API của lõi `GET /core/v1/archive` (chỉ quản trị viên) —
+xem [API](../../tham-khao/api/). Cụm mới dựng chưa có tháng nào đã khép; nạp dữ liệu trình diễn (dưới) để
+có hai, ba tháng. Bật tắt, chu kỳ, thùng và tiền tố: [Cấu hình](../../cai-dat/cau-hinh/). Đường đi của dữ
+liệu từ nhật ký tới bản lưu: [Phả hệ dữ liệu](../../tham-khao/pha-he-du-lieu/).
+
 ## Báo cáo
 
 Apache Superset (`http://localhost:8088`) có sẵn dashboard **Vận hành yêu cầu** ngay khi dựng cụm:

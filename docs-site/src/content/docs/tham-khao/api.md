@@ -38,7 +38,7 @@ Lời gọi của cổng người dùng cũng đi qua cổng API.
 
 Đề thi tách **nền tảng lõi không giao diện** (Tầng 1) khỏi **ứng dụng minh họa** (Tầng 2). Phần API dành
 cho mọi ứng dụng tầng trên nằm dưới tiền tố có phiên bản `/core/v1`, nhóm theo dịch vụ lõi; trong `/docs`
-năm nhóm này đứng đầu, nhãn bắt đầu bằng **"Lõi — "**. Các đường còn lại thuộc ứng dụng minh họa — cổng vận
+sáu nhóm này đứng đầu, nhãn bắt đầu bằng **"Lõi — "**. Các đường còn lại thuộc ứng dụng minh họa — cổng vận
 hành yêu cầu nội bộ — và có thể đổi theo giao diện của nó.
 
 | Nhóm | Điểm cuối |
@@ -46,6 +46,7 @@ hành yêu cầu nội bộ — và có thể đổi theo giao diện của nó.
 | Luồng công việc | `GET /core/v1/workflow/processes` — danh mục quy trình · `GET /core/v1/workflow/request-types`, `/states` (`?process=`), `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ, loại yêu cầu quyết định quy trình · `GET /core/v1/workflow/requests` (`?process=`, `needs_action=true`), `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
 | Tệp | `GET /core/v1/files/policy` · `POST /core/v1/files/requests/{case_id}/attachments` · `GET /core/v1/files/{attachment_id}` |
 | Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json&from=…&to=…&process=…` — chỉ quản trị viên; mỗi dòng mang `process_code` |
+| Lưu trữ lạnh | `GET /core/v1/archive` — các bản lưu theo tháng · `GET /core/v1/archive/{YYYY-MM}` — bản kê (`manifest`, số dòng, SHA-256) và liên kết tải · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` — tải một tệp; chỉ quản trị viên, chỉ có ở lõi |
 | Thông báo | `GET /core/v1/notifications/preferences` · `POST /core/v1/notifications/preferences/{code}` |
 | Định danh | `GET /core/v1/identity/me` |
 
