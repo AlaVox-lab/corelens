@@ -47,6 +47,7 @@ QUAN_TRI = Actor(id="loi-qt-365", name="Quản trị 365", roles=frozenset({"adm
 # Bảng ánh xạ đường cũ → đường của lõi. Nguồn sự thật cho bài, khớp bảng ở ARCHITECTURE.md mục 2.3: thêm một
 # điểm cuối vào lõi mà không thêm vào đây (hay ngược lại) thì bài đỏ.
 ANH_XA: dict[tuple[str, str], str] = {
+    ("GET", "/processes"): "/core/v1/workflow/processes",
     ("GET", "/request-types"): "/core/v1/workflow/request-types",
     ("GET", "/states"): "/core/v1/workflow/states",
     ("GET", "/priorities"): "/core/v1/workflow/priorities",

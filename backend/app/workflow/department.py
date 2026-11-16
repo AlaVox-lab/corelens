@@ -46,7 +46,12 @@ from app.workflow.assignment import (
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
-from app.workflow.engine import get_active_rule_set, my_primary_steps, rule_sets_in_use
+from app.workflow.engine import (
+    get_active_rule_set,
+    ma_quy_trinh_ung_dung,
+    my_primary_steps,
+    rule_sets_in_use,
+)
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
@@ -91,7 +96,8 @@ def vao_duoc_phong_ban(session: Session, actor: Actor) -> bool:
     """
     if not actor.departments:
         return False
-    return bool(actor.roles & vai_tro_phong_ban(session, get_active_rule_set(session).id))
+    bo = get_active_rule_set(session, ma_quy_trinh_ung_dung(session))
+    return bool(actor.roles & vai_tro_phong_ban(session, bo.id))
 
 
 def _cua(
@@ -240,7 +246,7 @@ def hang_doi(
     Gồm hồ sơ của mọi bộ quy tắc còn hồ sơ đang mở (#299), mỗi hồ sơ xét theo trạng thái hàng đợi
     và trạng thái theo dõi của chính bộ nó — như hàng đợi điều phối.
     """
-    cac_bo = rule_sets_in_use(session)
+    cac_bo = rule_sets_in_use(session, ma_quy_trinh_ung_dung(session))
     co_viec_bo = {bo: trang_thai_hang_doi_phong_ban(session, bo) for bo in cac_bo}
     theo_doi_bo = {bo: _trang_thai_theo_doi(session, bo, co_viec_bo[bo]) for bo in cac_bo}
     ma_theo_doi = {(bo, t.code) for bo, ds in theo_doi_bo.items() for t in ds}

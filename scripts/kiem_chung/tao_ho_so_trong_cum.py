@@ -35,7 +35,7 @@ from app.models.workflow_config import (
 )
 from app.rules.guards import permitted_fields
 from app.workflow.context import Actor
-from app.workflow.engine import create_case, get_active_rule_set, perform_transition
+from app.workflow.engine import create_case, get_active_rule_set, ma_quy_trinh_ung_dung, perform_transition
 
 GHI_CHU_THU = "Ghi chú do công cụ kiểm chứng tạo khi dựng hồ sơ thử."
 # Giới hạn tìm đường: đồ thị vài chục cạnh nên dư sức, mà không để một bộ quy tắc nhiều vòng treo công cụ
@@ -60,7 +60,7 @@ def main() -> int:
     ts = json.loads(sys.stdin.read())
     tien_to: str = ts["tien_to"]
     with SessionLocal() as s:
-        bo = get_active_rule_set(s)
+        bo = get_active_rule_set(s, ma_quy_trinh_ung_dung(s))
         trang_thai = {
             st.code: st
             for st in s.scalars(

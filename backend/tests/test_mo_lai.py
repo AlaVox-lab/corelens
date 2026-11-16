@@ -164,7 +164,10 @@ def test_canh_mo_lai_sau_dong_khai_trong_du_lieu(session, rule_set):
 
 
 def test_gioi_han_mo_lai_nam_o_loai_yeu_cau(session, rule_set):
-    cac = session.scalars(select(RequestType.reopen_max_count)).all()
+    # Loại của quy trình cổng yêu cầu nội bộ — quy trình khác có thể không cho mở lại (#376)
+    cac = session.scalars(
+        select(RequestType.reopen_max_count).where(RequestType.process_code == rule_set.process_code)
+    ).all()
     assert cac and set(cac) == {2}
 
 

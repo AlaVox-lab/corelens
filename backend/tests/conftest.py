@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.directory import KeycloakDirectory
 from app.config import get_settings
-from app.models.workflow_config import Department, RuleSet
+from app.models.workflow_config import Department, Process, RuleSet
 
 DIA_CHI_MAC_DINH = "postgresql+psycopg://dxlab:doi_mat_khau_nay_truoc_khi_trien_khai@localhost:5432/dxlab"
 
@@ -113,8 +113,14 @@ def lich_ca_ngay(session) -> None:
 
 @pytest.fixture
 def rule_set(session) -> RuleSet:
-    """Bộ quy tắc đang kích hoạt, nạp từ infra/seed/."""
-    bo = session.scalars(select(RuleSet).where(RuleSet.is_active)).one_or_none()
+    """Bộ quy tắc đang kích hoạt của quy trình mặc định của ứng dụng, nạp từ infra/seed/ (#376: mỗi quy
+    trình một bộ đang bật)."""
+    bo = session.scalars(
+        select(RuleSet).where(
+            RuleSet.is_active,
+            RuleSet.process_code.in_(select(Process.code).where(Process.is_app_default)),
+        )
+    ).one_or_none()
     if bo is None:
         pytest.skip(
             "Chưa có bộ quy tắc nào được kích hoạt. Dữ liệu khởi tạo do dịch vụ ứng dụng "

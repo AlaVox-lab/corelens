@@ -30,12 +30,27 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 
+class Process(Base):
+    """Một quy trình của động cơ luồng công việc (#376). Mỗi quy trình có đúng một bộ quy tắc đang bật;
+    loại yêu cầu thuộc một quy trình và quyết định hồ sơ chạy theo quy trình nào."""
+
+    __tablename__ = "processes"
+
+    code: Mapped[str] = mapped_column(Text, primary_key=True)
+    label: Mapped[str] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    # Quy trình mà các màn của ứng dụng minh họa dùng — đúng một dòng (kiem_tra_cau_hinh, phép kiểm 11)
+    is_app_default: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class RuleSet(Base):
-    """Phiên bản bộ quy tắc. Hồ sơ cũ chạy theo quy tắc cũ."""
+    """Phiên bản bộ quy tắc của một quy trình. Hồ sơ cũ chạy theo quy tắc cũ."""
 
     __tablename__ = "rule_sets"
 
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    process_code: Mapped[str] = mapped_column(Text, ForeignKey("processes.code"))
     version: Mapped[str] = mapped_column(Text, unique=True)
     label: Mapped[str] = mapped_column(Text)
     effective_from: Mapped[dt.datetime]
@@ -225,6 +240,8 @@ class RequestType(Base):
     __tablename__ = "request_types"
 
     code: Mapped[str] = mapped_column(Text, primary_key=True)
+    # Quy trình mà hồ sơ của loại này chạy theo (#376)
+    process_code: Mapped[str] = mapped_column(Text, ForeignKey("processes.code"))
     label: Mapped[str] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text, default=None)
     sla_hours: Mapped[int] = mapped_column(Integer)

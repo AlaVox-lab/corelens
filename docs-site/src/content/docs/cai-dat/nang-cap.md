@@ -81,3 +81,21 @@ python scripts/tai_khoan_dich_vu.py
 Kịch bản kiểm client, thiếu thì tạo, có rồi thì đặt lại cấu hình và bí mật theo `.env`, gán vai còn thiếu,
 rồi xin thử một token để chắc mọi thứ khớp. Chạy lại bao nhiêu lần cũng được. Cụm khác địa chỉ hay tệp env
 thì thêm `--env-file` và `--keycloak`. Đổi `KEYCLOAK_INTEGRATION_SECRET` về sau cũng chạy lại lệnh này.
+
+Bản có nhiều quy trình (#376) thêm hai tài khoản duyệt cho ví dụ quy trình thứ hai — chép thêm các dòng
+`KEYCLOAK_INTEGRATION_HEAD_*` và `KEYCLOAK_INTEGRATION_REVIEWER_*` sang `.env` rồi chạy lại đúng lệnh trên.
+Quy trình thứ hai cùng dữ liệu của nó do bản sửa lược đồ `0028` thêm lúc dịch vụ khởi động, hồ sơ cũ giữ
+nguyên và đi tiếp theo quy trình cũ.
+
+### Chống dò mật khẩu
+
+Realm mẫu từ bản có #377 bật chống dò mật khẩu (khóa tạm tài khoản sau 10 lần sai liên tiếp, tự mở sau vài
+phút) và chính sách mật khẩu tối thiểu 8 ký tự, khác tên đăng nhập. Cụm dựng trước đó áp cùng giá trị — đọc
+từ chính `infra/keycloak/realm-dx-os-lab.json` — bằng:
+
+```bash
+python scripts/xac_thuc_hai_lop.py chong-do      # xem: python scripts/xac_thuc_hai_lop.py trang-thai
+```
+
+Chạy lại bao nhiêu lần cũng được. Mật khẩu đặt trước đó vẫn dùng được; chính sách áp ở lần đặt hay đổi mật
+khẩu kế.

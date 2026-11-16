@@ -49,8 +49,18 @@ class GoiYRa(NhanCoMa):
     confidence: float | None = None
 
 
+class QuyTrinhRa(NhanCoMa):
+    """Một quy trình của động cơ luồng công việc (#376)."""
+
+    description: str | None = None
+    # Quy trình mà các màn của ứng dụng minh họa dùng — mặc định của mọi tham số `process`
+    is_app_default: bool
+
+
 class LoaiYeuCauRa(NhanCoMa):
     description: str | None = None
+    # Quy trình mà hồ sơ của loại này chạy theo (#376)
+    process_code: str
     sla_hours: int
     # Trường riêng của loại này, theo thứ tự hiển thị (#250)
     fields: list[TruongRiengRa] = Field(default_factory=list)
@@ -279,6 +289,8 @@ class HoSoLienQuanRa(BaseModel):
 
 
 class HoSoChiTietRa(HoSoTomTatRa):
+    # Quy trình của hồ sơ — suy từ bộ quy tắc hồ sơ ghim lúc tạo (#376)
+    process: NhanCoMa
     description: str | None = None
     # Trường riêng (#250): giá trị đang lưu, và khai báo của loại hiện tại để hiện nhãn — trường
     # khai mà chưa có giá trị (ví dụ sau khi điều phối đổi loại) thì giao diện hiện "chưa có"
@@ -344,6 +356,19 @@ class ChuyenTrangThaiVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+class BuocChuyenLoiVao(BaseModel):
+    """Bước chuyển qua cửa trung lập với vai của nền tảng lõi (#376).
+
+    Như cổng người gửi, nhưng `changes` nhận mọi kiểu giá trị JSON — bộ trường riêng `details` là một đối
+    tượng, gia hạn là một số. Không kiểm trường nào được phép ở đây: engine kiểm theo từng cạnh (#78), tra
+    danh mục, kiểm trường riêng theo khai báo của loại.
+    """
+
+    to_state: str
+    note: str | None = Field(default=None, max_length=2000)
+    changes: dict[str, Any] = Field(default_factory=dict)
 
 
 class GuiLoiNhanVao(BaseModel):

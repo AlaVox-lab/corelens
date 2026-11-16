@@ -215,14 +215,14 @@ def ho_so_can_goi_y(phien: Session, gioi_han: int) -> list[int]:
     """Hồ sơ đang ở trạng thái của điều phối viên, chưa có gợi ý và được phép hỏi lại, cũ trước."""
     # Nhập muộn: `coordination` nhập cả chuỗi điểm cuối, còn tệp này được `routes` nhập lúc gửi hồ sơ
     from app.workflow.coordination import trang_thai_hang_doi_dieu_phoi
-    from app.workflow.engine import rule_sets_in_use
+    from app.workflow.engine import ma_quy_trinh_ung_dung, rule_sets_in_use
 
     dieu_kien_trang_thai = [
         and_(
             Request.rule_set_id == bo,
             Request.current_state.in_([t.code for t in trang_thai_hang_doi_dieu_phoi(phien, bo)]),
         )
-        for bo in rule_sets_in_use(phien)
+        for bo in rule_sets_in_use(phien, ma_quy_trinh_ung_dung(phien))
     ]
     if not dieu_kien_trang_thai:
         return []

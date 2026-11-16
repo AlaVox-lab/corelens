@@ -200,6 +200,34 @@ def test_pham_vi_rong_tra_ket_qua_rong_chu_khong_loi(ket_noi_thu, bo_may):
     assert all(d["cases_count"] == 0 and d["ratio"] == 0.0 for d in kq["deviations"])
 
 
+def _them_ho_so_quy_trinh_khac(ket_noi, mui_gio: str) -> None:
+    """Hồ sơ 99 của một quy trình khác, gửi giữa khoảng thử chính, đi một bước — cùng bộ trạng thái giả, nên
+    chỉ cột `process_code` tách được nó khỏi mười sáu hồ sơ của quy trình mặc định (#376)."""
+    with ket_noi.cursor() as c:
+        c.execute("INSERT INTO processes VALUES ('quy-trinh-khac', FALSE)")
+        for thu_tu, hoat_dong, luc, tu, den in (
+            (0, "create-case", "2026-03-10 09:00:00", None, dap_an.BAT_DAU),
+            (9901, "nhan", "2026-03-10 09:30:00", dap_an.BAT_DAU, "cho-1"),
+        ):
+            c.execute(
+                f"INSERT INTO bao_cao_nhat_ky VALUES (99, %s, {dap_an.CAU_MOC}, 'nguoi-khac', %s, %s, 'A', %s, "
+                "%s, 'may', 'quy-trinh-khac')",
+                (hoat_dong, luc, mui_gio, tu, den, dap_an.BO_QUY_TAC, thu_tu),
+            )
+
+
+def test_khong_tron_nhat_ky_cua_quy_trinh_khac(ket_noi_thu, mui_gio, bo_may):
+    """Bỏ trống quy trình là quy trình mặc định: hồ sơ của quy trình khác không vào mô hình. Chọn quy trình
+    khác thì chỉ hồ sơ của nó."""
+    _them_ho_so_quy_trinh_khac(ket_noi_thu, mui_gio)
+    assert ma_ho_so_doc_duoc(ket_noi_thu, *dap_an.KHOANG, None) == TRONG_KHOANG
+    assert chay_phan_tich(ket_noi_thu, bo_may)["cases_count"] == TONG
+    assert {s.ho_so for s in doc_du_lieu(ket_noi_thu, *dap_an.KHOANG, None, "quy-trinh-khac").su_kien} == {99}
+    assert {s.ho_so for s in doc_du_lieu(ket_noi_thu, *dap_an.KHOANG, None, dap_an.QUY_TRINH).su_kien} == (
+        TRONG_KHOANG
+    )
+
+
 # Hồ sơ 12 gửi 23:59:59 ngày 08/03 và hồ sơ 13 gửi 00:00:00 ngày 14/03 (giờ của lịch) nằm ngay sát biên;
 # tính theo UTC thì cả hai lọt vào khoảng 09-13/03 sai chỗ, và hồ sơ 14 (00:00:00 ngày 09/03) rơi ra ngoài
 @pytest.mark.parametrize(

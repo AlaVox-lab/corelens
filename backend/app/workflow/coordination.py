@@ -42,7 +42,7 @@ from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_d
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
-from app.workflow.engine import my_primary_steps, rule_sets_in_use
+from app.workflow.engine import ma_quy_trinh_ung_dung, my_primary_steps, rule_sets_in_use
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
 from app.workflow.errors import TransitionError
 from app.workflow.messages import MessageRejected, gui_loi_nhan
@@ -193,7 +193,7 @@ def hang_doi(
     cũ vẫn chạy theo bộ cũ tới khi kết thúc, nên vẫn phải nằm trong hàng đợi — mỗi hồ sơ vào hàng
     đợi theo các trạng thái điều phối của chính bộ nó.
     """
-    cac_bo = rule_sets_in_use(session)
+    cac_bo = rule_sets_in_use(session, ma_quy_trinh_ung_dung(session))
     theo_bo = {bo: trang_thai_hang_doi_dieu_phoi(session, bo) for bo in cac_bo}
     cac_trang_thai = _gop_theo_ma(list(theo_bo.values()))
     ma_hang_doi = [t.code for t in cac_trang_thai]

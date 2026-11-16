@@ -16,8 +16,9 @@
 -- Bộ quy tắc
 -- ---------------------------------------------------------------------------
 
-INSERT INTO rule_sets (id, version, label, effective_from, is_active, note) VALUES
-    (1, 'v1', 'Bộ quy tắc ban đầu — mười trạng thái, hai mươi bốn cạnh',
+-- Bộ này thuộc quy trình cổng yêu cầu nội bộ — danh mục quy trình ở 00-quy-trinh.sql (#376).
+INSERT INTO rule_sets (id, process_code, version, label, effective_from, is_active, note) VALUES
+    (1, 'internal-requests', 'v1', 'Bộ quy tắc ban đầu — mười trạng thái, hai mươi bốn cạnh',
      TIMESTAMPTZ '2026-09-10 00:00:00+00', TRUE,
      'Chốt trong buổi trao đổi với giảng viên hướng dẫn ngày 10/09/2026: năm vai trò, thêm chặng định tuyến phòng ban, bỏ cổng phê duyệt chi phí. Bổ sung ngày 24/09/2026 (#79): chờ bổ sung thông tin quay về đúng chỗ đã hỏi, trưởng phòng hỏi thêm được trước khi nhận việc. Bổ sung ngày 24/09/2026 (#127, ADR-0005): người gửi sửa nội dung khi hồ sơ chưa tới phòng ban, người xử lý tự nhận hồ sơ chưa giao ai.');
 

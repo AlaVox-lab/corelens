@@ -50,7 +50,7 @@ from app.models.workflow_config import (
     Transition,
 )
 from app.workflow.context import Actor
-from app.workflow.engine import get_active_rule_set
+from app.workflow.engine import get_active_rule_set, ma_quy_trinh_ung_dung
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ def xem_cau_hinh(actor: QuanTriVien, session: Phien) -> dict:
     Đồ thị quy trình là của bộ quy tắc đang kích hoạt — bộ hồ sơ mới nhận. Danh mục (loại yêu cầu,
     mức ưu tiên, phòng ban) dùng chung mọi bộ, kèm số hồ sơ đang mở của từng dòng.
     """
-    bo = get_active_rule_set(session)
+    bo = get_active_rule_set(session, ma_quy_trinh_ung_dung(session))
     trang_thai = session.scalars(
         select(State).where(State.rule_set_id == bo.id).order_by(State.display_order)
     ).all()

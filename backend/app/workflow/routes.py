@@ -13,6 +13,8 @@
 # Từ #365 phần lớn tệp này là API của nền tảng lõi (Tầng 1): danh mục cấu hình, tạo và đọc hồ sơ,
 # bước chuyển. Chúng nằm ở `router_loi`, được gắn hai lần — đường cũ và `/core/v1/workflow` (app/main.py,
 # ARCHITECTURE.md mục 2.3). Lời nhắn trên hồ sơ thuộc ứng dụng minh họa nên ở `router`, chỉ đường cũ.
+# Từ #376 danh sách, chi tiết và bước chuyển của cổng người gửi ở `router_nguoi_gui` (chỉ đường cũ); lõi có
+# bản phạm vi theo vai ở app/workflow/loi.py, dùng chung thân hàm ở đây.
 
 from __future__ import annotations
 
@@ -31,8 +33,10 @@ from app.models.workflow_config import (
     Department,
     MessageKind,
     Priority,
+    Process,
     RequestType,
     RequestTypeField,
+    RuleSet,
     State,
     Transition,
 )
@@ -55,7 +59,9 @@ from app.workflow.engine import (
     allowed_transitions,
     case_history,
     create_case,
+    bo_cua_quy_trinh,
     kiem_ho_so_goc,
+    ma_quy_trinh_ung_dung,
     my_primary_steps,
     get_active_rule_set,
 )
@@ -102,6 +108,7 @@ from app.workflow.schemas import (
     MucUuTienRa,
     NhanCoMa,
     PhongBanRa,
+    QuyTrinhRa,
     SuKienRa,
     TaoHoSoVao,
     TepDinhKemRa,
@@ -116,6 +123,10 @@ from app.rate_limit import gioi_han_toc_do
 # include, nên thao tác dưới /core/v1 sẽ mang thêm "Yêu cầu" bên cạnh nhãn "Lõi — …" của nó.
 router_loi = APIRouter()
 router = APIRouter()
+# Danh sách, chi tiết, bước chuyển của CỔNG NGƯỜI GỬI — chỉ hồ sơ của chính người gọi, chỉ ở đường cũ. Lõi có
+# cùng ba đường với phạm vi theo vai, ở app/workflow/loi.py (#376): một đường nhưng hai cửa nhìn thấy, nên
+# không gắn chung một hàm cho cả hai nơi được.
+router_nguoi_gui = APIRouter()
 
 # Mã lỗi của engine ánh xạ sang mã HTTP. Giữ ở một chỗ để mọi điểm cuối trả lời giống
 # nhau, và để #45 dùng lại được.
@@ -470,20 +481,59 @@ def _kiem_chu_so_huu(session: Session, case_id: int, actor: Actor) -> None:
 # Danh mục
 # ---------------------------------------------------------------------------
 
+# Tham số chọn quy trình của mọi điểm cuối đọc theo quy trình (#376). Bỏ trống là quy trình mặc định
+# của ứng dụng minh họa — cổng người dùng không truyền nên chạy y như trước, ví dụ cũ không vỡ.
+ThamSoQuyTrinh = Annotated[
+    str | None,
+    Query(description="Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng"),
+]
+
+
+def chon_quy_trinh(session: Session, ma: str | None) -> str:
+    """Mã quy trình người gọi chọn, đã đối chiếu danh mục; bỏ trống thì quy trình mặc định."""
+    if ma is None:
+        return ma_quy_trinh_ung_dung(session)
+    if session.get(Process, ma) is None:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "unknown-process", "message": f"Không có quy trình mang mã {ma!r}."},
+        )
+    return ma
+
+
+@router_loi.get("/processes", response_model=list[QuyTrinhRa])
+def danh_muc_quy_trinh(
+    session: Annotated[Session, Depends(get_session)],
+    _: Annotated[Actor, Depends(current_actor)],
+) -> list[QuyTrinhRa]:
+    """Các quy trình mà động cơ luồng công việc đang chạy (#376).
+
+    Mỗi quy trình có bộ quy tắc đang bật riêng và loại yêu cầu riêng. Ứng dụng tầng trên chọn quy trình
+    của mình bằng mã ở đây, rồi truyền `process` cho các điểm cuối đọc theo quy trình.
+    """
+    return [
+        QuyTrinhRa(code=p.code, label=p.label, description=p.description, is_app_default=p.is_app_default)
+        for p in session.scalars(select(Process).order_by(Process.display_order, Process.code))
+    ]
+
 
 @router_loi.get("/request-types", response_model=list[LoaiYeuCauRa])
 def danh_muc_loai_yeu_cau(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
+    process: ThamSoQuyTrinh = None,
 ) -> list[LoaiYeuCauRa]:
-    """Bốn loại yêu cầu cho biểu mẫu gửi.
+    """Các loại yêu cầu đang dùng của một quy trình, cho biểu mẫu gửi.
 
     Giao diện **phải** dựng danh sách từ đây chứ không viết cứng bốn lựa chọn, vì doanh
     nghiệp triển khai sẽ khai lại danh mục của họ — xem ARCHITECTURE.md mục 5.1.
+
+    Loại yêu cầu quyết định quy trình của hồ sơ (#376): tạo hồ sơ bằng một loại ở đây là tạo hồ sơ của
+    quy trình đó.
     """
     cac_loai = session.scalars(
         select(RequestType)
-        .where(RequestType.is_active)
+        .where(RequestType.is_active, RequestType.process_code == chon_quy_trinh(session, process))
         .order_by(RequestType.display_order)
     ).all()
     return [
@@ -491,6 +541,7 @@ def danh_muc_loai_yeu_cau(
             code=l.code,
             label=l.label,
             description=l.description,
+            process_code=l.process_code,
             sla_hours=l.sla_hours,
             fields=[_truong_ra(t) for t in truong_cua_loai(session, l.code)],
             suggested_department=goi_y_ra(goi_y_phong_theo_loai(session, l.code)),
@@ -517,15 +568,16 @@ def goi_y_ra(goi_y: GoiY | None) -> GoiYRa | None:
 def danh_muc_trang_thai(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
+    process: ThamSoQuyTrinh = None,
 ) -> list[TrangThaiRa]:
-    """Toàn bộ trạng thái của bộ quy tắc đang kích hoạt, theo thứ tự hiển thị.
+    """Toàn bộ trạng thái của bộ quy tắc đang kích hoạt của một quy trình, theo thứ tự hiển thị.
 
     Khác `state` trong từng hồ sơ ở chỗ đây là **danh mục**: giao diện cần nó để vẽ
     bảng chú giải, chứ không phải để biết một hồ sơ cụ thể đang ở đâu. Không lấy được
     danh mục này từ danh sách hồ sơ, vì người dùng mới chỉ đi qua vài trạng thái trong
     số đó — mà bảng chú giải phải giải thích cả những trạng thái họ chưa gặp.
     """
-    bo_quy_tac = get_active_rule_set(session)
+    bo_quy_tac = get_active_rule_set(session, chon_quy_trinh(session, process))
     cac_trang_thai = session.scalars(
         select(State)
         .where(State.rule_set_id == bo_quy_tac.id)
@@ -584,7 +636,8 @@ def tao_ho_so(
 ) -> HoSoChiTietRa:
     """Gửi một yêu cầu mới.
 
-    Trạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn.
+    Trạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết
+    định quy trình (#376): hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.
 
     Mức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì
     người gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.
@@ -631,12 +684,16 @@ def tao_ho_so(
     ghi_da_gui(session, du_lieu.similar_session_id, actor.id, ho_so.id)
     session.commit()
     session.refresh(ho_so)
-    if get_settings().llm_enabled:
+    # Gợi ý loại, mức ưu tiên, phòng là của buồng lái điều phối — một màn của ứng dụng minh họa — nên chỉ
+    # hồ sơ của quy trình mặc định (#376). Quy trình khác không có bước phân loại để gợi ý.
+    if get_settings().llm_enabled and ho_so.rule_set_id in bo_cua_quy_trinh(
+        session, ma_quy_trinh_ung_dung(session)
+    ):
         tac_vu_nen.add_task(goi_y_sau_khi_gui, ho_so.id)
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router_loi.get("/requests", response_model=DanhSachHoSoRa)
+@router_nguoi_gui.get("/requests", response_model=DanhSachHoSoRa)
 def ho_so_cua_toi(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -645,6 +702,7 @@ def ho_so_cua_toi(
     state: Annotated[str | None, Query(description="Chỉ một trạng thái")] = None,
     request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
     needs_action: Annotated[bool, Query(description="Chỉ hồ sơ đang chờ chính người xem")] = False,
+    process: ThamSoQuyTrinh = None,
 ) -> DanhSachHoSoRa:
     """Hồ sơ của người đang đăng nhập, mới nhất trước, có phân trang (#232).
 
@@ -653,10 +711,35 @@ def ho_so_cua_toi(
     chỉ có thể bật ở hồ sơ chưa kết thúc, nên tính trên tập đó.
 
     Hồ sơ của một người có thể thuộc nhiều bộ quy tắc khi doanh nghiệp đã đổi quy trình (#299):
-    kết thúc hay chưa, nhãn trạng thái đều tra theo bộ của từng hồ sơ.
+    kết thúc hay chưa, nhãn trạng thái đều tra theo bộ của từng hồ sơ. Chỉ hồ sơ của một quy trình
+    (#376) — mặc định quy trình của ứng dụng, nên cổng người gửi không lẫn hồ sơ của quy trình khác.
+
+    Dưới `/core/v1` cùng đường này là bản phạm vi theo vai (app/workflow/loi.py); ở đây — cổng người
+    gửi — chỉ hồ sơ do chính người gọi tạo.
     """
-    cua_toi = [Request.requester_id == actor.id]
-    dang_bat = get_active_rule_set(session).id
+    return liet_ke_ho_so(
+        session, actor, trang, Request.requester_id == actor.id,
+        q=q, state=state, request_type=request_type, needs_action=needs_action, process=process,
+    )
+
+
+def liet_ke_ho_so(
+    session: Session,
+    actor: Actor,
+    trang: ThamSoTrang,
+    pham_vi,
+    *,
+    q: str | None,
+    state: str | None,
+    request_type: str | None,
+    needs_action: bool,
+    process: str | None,
+) -> DanhSachHoSoRa:
+    """Thân chung của danh sách hồ sơ: `pham_vi` là điều kiện SQL chọn hồ sơ người gọi được thấy — cổng
+    người gửi truyền "hồ sơ của mình", lõi truyền phạm vi theo vai (#376)."""
+    quy_trinh = chon_quy_trinh(session, process)
+    cua_toi = [pham_vi, Request.rule_set_id.in_(bo_cua_quy_trinh(session, quy_trinh))]
+    dang_bat = get_active_rule_set(session, quy_trinh).id
     cua_nguoi_nay = set(session.scalars(select(Request.rule_set_id).where(*cua_toi).distinct()))
     cac_bo = [dang_bat, *sorted(cua_nguoi_nay - {dang_bat}, reverse=True)]
     bang = _bang_trang_thai_nhieu(session, cac_bo)
@@ -724,7 +807,7 @@ def ho_so_cua_toi(
     )
 
 
-@router_loi.get("/requests/{case_id}", response_model=HoSoChiTietRa)
+@router_nguoi_gui.get("/requests/{case_id}", response_model=HoSoChiTietRa)
 def chi_tiet_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -735,7 +818,50 @@ def chi_tiet_ho_so(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router_loi.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
+def di_buoc(
+    session: Session,
+    danh_ba: KeycloakDirectory,
+    tac_vu_nen: BackgroundTasks,
+    actor: Actor,
+    case_id: int,
+    *,
+    to_state: str,
+    note: str | None,
+    changes: dict,
+) -> Request:
+    """Phần chung của mọi cửa bước chuyển không phải buồng lái, SAU khi cửa nhìn thấy đã qua: kiểm người
+    được giao (#83), gọi engine, dịch lỗi, commit, hẹn gợi ý người xử lý (#318). Cổng người gửi và cửa
+    trung lập với vai của lõi (#376) cùng gọi — một cửa engine, không bộ kiểm quyền thứ hai."""
+    ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
+        session,
+        danh_ba,
+        case_id=case_id,
+        to_state=to_state,
+        actor=actor,
+        changes=changes,
+    )
+    try:
+        ho_so = thuc_hien_chuyen(
+            session,
+            case_id=case_id,
+            to_state=to_state,
+            actor=actor,
+            note=note,
+            changes=changes,
+            assignee_label=ten_nguoi_duoc_giao,
+        )
+    except TransitionError as loi:
+        session.rollback()
+        raise _bao_loi(loi) from loi
+
+    session.commit()
+    session.refresh(ho_so)
+    # Bổ sung thông tin có thể đưa hồ sơ về lại phòng: gợi ý người xử lý tính ở nền (#318)
+    hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
+    return ho_so
+
+
+@router_nguoi_gui.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiVao,
@@ -756,33 +882,10 @@ def chuyen_trang_thai(
     vòng quanh danh bạ cho người mang cùng lúc vai trò người gửi và vai trò giao việc.
     """
     _kiem_chu_so_huu(session, case_id, actor)
-
-    ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
-        session,
-        danh_ba,
-        case_id=case_id,
-        to_state=du_lieu.to_state,
-        actor=actor,
-        changes=du_lieu.changes,
+    ho_so = di_buoc(
+        session, danh_ba, tac_vu_nen, actor, case_id,
+        to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
     )
-    try:
-        ho_so = thuc_hien_chuyen(
-            session,
-            case_id=case_id,
-            to_state=du_lieu.to_state,
-            actor=actor,
-            note=du_lieu.note,
-            changes=du_lieu.changes,
-            assignee_label=ten_nguoi_duoc_giao,
-        )
-    except TransitionError as loi:
-        session.rollback()
-        raise _bao_loi(loi) from loi
-
-    session.commit()
-    session.refresh(ho_so)
-    # Bổ sung thông tin có thể đưa hồ sơ về lại phòng: gợi ý người xử lý tính ở nền (#318)
-    hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
     return _dung_chi_tiet(session, ho_so, actor)
 
 
@@ -941,8 +1044,10 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         for g in loai_gui_duoc(session, ho_so, actor)
     ]
 
+    quy_trinh = session.get(Process, session.get(RuleSet, ho_so.rule_set_id).process_code)
     return {
         **_tom_tat(session, ho_so, states),
+        "process": NhanCoMa(code=quy_trinh.code, label=quy_trinh.label),
         "description": ho_so.description,
         "details": ho_so.details or {},
         "detail_fields": [_truong_ra(t) for t in truong_cua_loai(session, ho_so.request_type_code)],
