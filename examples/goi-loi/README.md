@@ -109,6 +109,37 @@ scripts/tai_khoan_dich_vu.py` một lần. Quy trình thứ hai do bản sửa l
 Hồ sơ này không hiện trên cổng người dùng, buồng lái hay bảng điều khiển: các màn của ứng dụng minh họa chỉ
 dùng quy trình mặc định. Nó có trong nhật ký sự kiện xuất ra (`GET /core/v1/events?process=purchase-approval`).
 
+## Nhận sự kiện bằng webhook
+
+Ví dụ cho #390: thay vì tự hỏi lại API, ứng dụng để nền tảng lõi **chủ động báo** mỗi khi hồ sơ chuyển bước.
+`nhan_webhook.py` mở một máy chủ HTTP nhỏ trên máy, đăng ký chính địa chỉ đó qua `POST /core/v1/webhooks`,
+rồi kiểm chữ ký HMAC, mốc thời gian, bỏ sự kiện trùng và in từng sự kiện tới. Ctrl+C thì hủy đăng ký.
+
+Đăng ký webhook cần vai `administrator`. Trên cụm thử, thêm vai cho tài khoản dịch vụ một lần:
+`KEYCLOAK_INTEGRATION_ROLES=requester,administrator` trong `infra/.env`, rồi:
+
+```bash
+python scripts/tai_khoan_dich_vu.py
+python examples/goi-loi/nhan_webhook.py
+```
+
+Lõi gọi tới `http://host.docker.internal:8765/su-kien` (Docker Desktop); máy Linux không có tên đó thì chỉ
+địa chỉ khác bằng `--dia-chi-nhan`. `--hoat-dong <mã> …` chỉ nhận vài mã hoạt động.
+
+Đầu ra mẫu, cụm phát triển ngày 17/11/2026 — chạy `nhan_webhook.py`, rồi ở cửa sổ khác `goi_loi.py` (tạo một
+hồ sơ rồi đi bước "Hủy yêu cầu"):
+
+```
+Máy chủ nhận đang nghe cổng 8765
+1. Token của tài khoản dịch vụ dx-integration: luồng client credentials, sống 300 giây
+2. Đã đăng ký webhook 13 → http://host.docker.internal:8765/su-kien
+3. Chuyển bước một hồ sơ trên cổng người dùng; sự kiện hiện dưới đây (Ctrl+C để dừng):
+  sự kiện 3715 · hồ sơ 2843 (internal-requests) · cancel: submitted → cancelled · bởi dx-integration · 2026-11-16T17:12:04.208863+00:00
+```
+
+Lần thử trước đó (16/11) bên nhận hỏng giữa chừng không trả lời; lõi tự gửi lại ở lượt sau, bên nhận nhận ra
+sự kiện trùng theo `X-DXOS-Event-Id` và trả 204.
+
 ## Viết ứng dụng của riêng mình
 
 - Token: `POST {keycloak}/realms/{realm}/protocol/openid-connect/token` với `grant_type=client_credentials`,

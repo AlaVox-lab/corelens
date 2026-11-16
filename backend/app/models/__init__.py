@@ -30,6 +30,7 @@ from app.models.thong_bao import (
     NotificationType,
 )
 from app.models.van_hanh import RateLimitHit, ScannerHeartbeat
+from app.models.webhook import WebhookDelivery, WebhookSubscription
 from app.models.workflow_config import (
     Department,
     Guard,
@@ -72,6 +73,8 @@ __all__ = [
     "Role",
     "RuleSet",
     "ScannerHeartbeat",
+    "WebhookDelivery",
+    "WebhookSubscription",
     "State",
     "Transition",
     "TransitionGuard",

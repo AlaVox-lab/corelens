@@ -173,6 +173,7 @@ hệt.
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
 | Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
 | Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
+| Lõi — Webhook ² | — | `POST`, `GET /core/v1/webhooks` · `GET`, `DELETE /core/v1/webhooks/{id}` · `GET /core/v1/webhooks/{id}/deliveries` (#390, mục 6.8) |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
 | | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
 | Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
@@ -183,7 +184,7 @@ hai hàm xử lý dùng chung thân (`liet_ke_ho_so`, `_dung_chi_tiet`, `di_buoc
 đường cũ ở `router_nguoi_gui`, lõi ở `router_loi_rieng`. Mọi điểm cuối khác vẫn là một hàm gắn hai lần.
 Tham số `process` bỏ trống là quy trình mặc định của ứng dụng — ví dụ và cổng người dùng cũ không vỡ.
 
-² **Chỉ có ở lõi** (#378, mục 6.3a): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
+² **Chỉ có ở lõi** (#378, mục 6.3a; webhook #390, mục 6.8): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
 trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
 quản trị viên.
 
@@ -533,6 +534,10 @@ dx-os-lab/
 │   │   ├── config.py            # cấu hình từ biến môi trường
 │   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
 │   │   ├── thoi_gian_thuc.py    # [H] luồng SSE "hồ sơ vừa đổi" GET /me/stream, nghe NOTIFY (#387)
+<<<<<<< HEAD
+│   │   ├── webhook.py           # [core] truyền phát sự kiện ra ngoài: /core/v1/webhooks, bộ gửi ký HMAC (#390)
+=======
+>>>>>>> origin/dev
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
@@ -1569,6 +1574,27 @@ khoản danh bạ — quyết định để ngỏ.
 `default_enabled` của loại. `GET /me/notifications`, `POST /me/notifications/{loại}` — định danh lấy từ
 token, không ai đổi được tùy chọn của người khác. Cổng có trang `/thong-bao`, mở từ biểu tượng chuông
 cạnh tên ở thanh bên.
+
+**Webhook — truyền phát sự kiện ra ngoài (#390).** Cùng khuôn hàng đợi, nhưng cho ứng dụng khác chứ không
+cho người: `backend/app/webhook.py`, bản sửa 0031. Quản trị viên (người hay tài khoản dịch vụ mang vai
+`administrator` — cùng mức với xuất nhật ký, vì đăng ký nhận sự kiện của mọi hồ sơ) đăng ký một địa chỉ ở
+`POST /core/v1/webhooks`, bộ lọc theo mã hoạt động và mã quy trình nằm trong dòng đăng ký. Nguồn là
+`event_log` — không thêm chỗ ghi nào vào cửa chuyển trạng thái. Mỗi đăng ký giữ con trỏ `last_event_id`
+(đăng ký mới bắt đầu từ sự kiện lớn nhất lúc tạo); mỗi lượt bộ gửi biến sự kiện mới khớp bộ lọc thành dòng
+`webhook_deliveries` — khóa duy nhất (đăng ký, sự kiện) nên không gửi trùng — rồi dời con trỏ, cùng giao
+dịch. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
+`X-DXOS-Signature: sha256=HMAC(bí mật, "<X-DXOS-Timestamp>.<thân>")`; bí mật chỉ trả một lần lúc tạo. 2xx là
+xong; khác thì chờ `DXLAB_WEBHOOK_RETRY_AFTER_SECONDS` nhân đôi mỗi lần, quá `DXLAB_WEBHOOK_MAX_ATTEMPTS` lần
+là hỏng hẳn; `GET /core/v1/webhooks/{id}/deliveries` cho thấy mã phản hồi và lỗi cuối. Bộ gửi chạy theo
+khuôn #253 (khóa tư vấn, dòng nhịp "Bộ gửi webhook" ở màn Hệ thống), chu kỳ `DXLAB_WEBHOOK_SCAN_INTERVAL_SECONDS`
+(5 giây; 0 là tắt). Bên nhận có thể nhận lại một sự kiện nếu trả lời không kịp — bỏ trùng theo
+`X-DXOS-Event-Id`; ví dụ bên nhận ở `examples/goi-loi/nhan_webhook.py`. Sự kiện "tạo hồ sơ" không phải
+dòng `event_log` (nó dựng từ `requests` trong view xuất nhật ký) nên không đi qua webhook.
+
+Chọn webhook qua HTTP chứ không một trục truyền phát như Kafka: quy mô trình diễn (mục 9), không thêm dịch
+vụ hay phụ thuộc, bên nhận chỉ cần một địa chỉ HTTP; đọc lại từ đầu đã có `GET /core/v1/events` trên nhật ký
+chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng con trỏ — cần khảo sát và ADR
+trước; Redpanda dùng BSL, không thuộc danh sách OSI.
 
 ### 6.9. Kho tri thức (không gian `H`)
 

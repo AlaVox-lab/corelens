@@ -70,6 +70,12 @@ CHI_LOI: set[tuple[str, str]] = {
     ("GET", "/core/v1/archive"),
     ("GET", "/core/v1/archive/{ky}"),
     ("GET", "/core/v1/archive/{ky}/files/{ten_tep}"),
+    # Webhook (#390)
+    ("POST", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks"),
+    ("GET", "/core/v1/webhooks/{webhook_id}"),
+    ("DELETE", "/core/v1/webhooks/{webhook_id}"),
+    ("GET", "/core/v1/webhooks/{webhook_id}/deliveries"),
 }
 
 
@@ -307,7 +313,7 @@ def test_diem_cuoi_ung_dung_khong_co_duoi_loi(phuong_thuc, duong):
 @pytest.mark.parametrize(("phuong_thuc", "duong"), sorted({(p, m) for (p, _), m in ANH_XA.items()} | CHI_LOI))
 def test_loi_khong_token_401(phuong_thuc, duong):
     tra = TestClient(app).request(
-        phuong_thuc, _dien(duong, case_id=1, attachment_id=1, code="x", ky="2026-01", ten_tep="manifest.json")
+        phuong_thuc, _dien(duong, case_id=1, attachment_id=1, code="x", ky="2026-01", ten_tep="manifest.json", webhook_id=1)
     )
     assert tra.status_code == 401, tra.text
     assert tra.headers.get("www-authenticate") == "Bearer"
