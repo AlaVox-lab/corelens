@@ -56,8 +56,9 @@ chiếu; một cửa sổ dòng lệnh ở gốc kho:
 
 Câu dẫn: *"Đề bắt nền tảng lõi không có giao diện. Đây là lõi đó — một ứng dụng khác vừa dùng nó."*
 
-Nếu #398 (điều kiện trên cạnh) đã vào `dev`: chạy thêm `--so-tien 12000000` để thấy cùng quy trình rẽ sang
-duyệt cấp hai khi số tiền vượt ngưỡng — ngưỡng nằm trong dữ liệu.
+Chạy thêm `--so-tien 12000000` để thấy cùng quy trình rẽ sang duyệt cấp hai khi số tiền vượt ngưỡng — điều
+kiện trên cạnh (#397), ngưỡng nằm trong dữ liệu. Giám khảo hỏi về chuẩn mô tả quy trình: quy trình xuất được
+ra BPMN 2.0 qua `GET /core/v1/workflow/processes/{mã}/bpmn` (#405), mở bằng công cụ BPMN nguồn mở.
 
 ### Demo B — Một hồ sơ đi qua H và P (≈ 2,5 phút, phút 6–8:30)
 
@@ -67,6 +68,7 @@ duyệt cấp hai khi số tiền vượt ngưỡng — ngưỡng nằm trong d�
 | B2 | ② | Trang chủ — hồ sơ vừa gửi **tự hiện** ở *Cần bạn xử lý*, không tải lại trang | Cập nhật thời gian thực (#387) |
 | B3 | ② | **Phân loại yêu cầu**, đặt mức ưu tiên → **Chuyển về phòng ban** *Công nghệ thông tin* | Poka-yoke: chỉ điều phối viên đặt được mức ưu tiên |
 | B4 | ③ | **Xác duyệt và giao xử lý**, chọn `cuong.le` | Đồng hồ hạn bắt đầu chạy, tính theo giờ làm việc |
+| B4a | ③ | (nếu còn thời gian) Hàng đợi phòng ban → **Dạng bảng** | Cùng hồ sơ, xem dạng Kanban theo trạng thái (#403) |
 | B5 | ④ | **Hoàn thành xử lý** | — |
 | B6 | ① | **Xác nhận đạt** → mở **dòng thời gian** | Mỗi bước: ai bấm, lúc nào, giá trị nào đổi — đó là nhật ký sự kiện |
 
