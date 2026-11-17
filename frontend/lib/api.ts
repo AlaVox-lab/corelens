@@ -372,6 +372,7 @@ export async function guiBieuMauDichVu<T>(
 export async function guiDichVu<T>(
   duongDan: string,
   than: unknown,
+  phuongThuc: "POST" | "DELETE" = "POST",
 ): Promise<KetQua<T>> {
   const phien = await layPhien();
   if (!phien) return CHUA_DANG_NHAP;
@@ -382,9 +383,10 @@ export async function guiDichVu<T>(
   try {
     phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
       signal: AbortSignal.timeout(THOI_HAN_GOI_MS),
-      method: "POST",
+      method: phuongThuc,
       headers: { ...(await tieuDeGoi(dungPhien.accessToken)), "Content-Type": "application/json" },
-      body: JSON.stringify(than),
+      // DELETE không mang thân (hủy webhook, #401)
+      body: than === undefined ? undefined : JSON.stringify(than),
       cache: "no-store",
     });
   } catch {

@@ -80,6 +80,24 @@ sơ; mỗi hồ sơ mở đầu bằng sự kiện `create-case` lúc tạo. Ng�
 không có tên và ghi chú. Tệp CSV mở thẳng bằng bảng tính, chữ có dấu hiện đúng. Công cụ khác gọi
 `GET /analytics/event-log?format=csv&from=2026-11-01&to=2026-11-30` bằng token của quản trị viên.
 
+## Webhook
+
+Khối **Webhook** cuối màn Hệ thống quản lý việc nền tảng lõi đẩy sự kiện ra ứng dụng khác: mỗi lần hồ sơ
+chuyển bước, lõi gửi `POST` JSON tới các địa chỉ đã đăng ký, ký HMAC-SHA256, tự thử lại khi bên nhận lỗi.
+Khối gọi đúng API `/core/v1/webhooks` của lõi — làm trên cổng hay qua API là một.
+
+- **Đăng ký**: điền địa chỉ nhận (`http` hay `https`), mô tả nếu muốn, và mã hoạt động nếu chỉ muốn nhận vài
+  loại sự kiện (cách nhau bởi dấu phẩy, ví dụ `cancel, confirm-done`; bỏ trống là mọi hoạt động). Bấm
+  **Đăng ký webhook**. Bí mật ký hiện **một lần duy nhất** ngay dưới biểu mẫu — bấm **Chép** rồi dán sang
+  bên nhận để kiểm tiêu đề `X-DXOS-Signature`. Tải lại trang là không xem lại được nữa
+- **Theo dõi**: mỗi đăng ký liệt kê năm lần gửi gần nhất — mã sự kiện, và *Đã gửi* (kèm giờ, mã phản hồi),
+  *Chờ thử lại* (lần thứ mấy, giờ thử lại, lỗi cuối — ví dụ bên nhận đang tắt) hay *Hỏng hẳn* (đã hết số
+  lần thử). Tải lại trang để xem lần gửi mới
+- **Hủy**: nút **Hủy** cạnh đăng ký, xác nhận một lần. Các lần gửi đang chờ bỏ theo
+
+Đăng ký chỉ nhận sự kiện xảy ra **sau** lúc tạo. Khi có ít nhất một đăng ký đang bật, phần *Các dịch vụ* có
+thêm dòng nhịp **Bộ gửi webhook**. Cách viết bên nhận và kiểm chữ ký: `examples/goi-loi/nhan_webhook.py`.
+
 ## Lưu trữ lạnh
 
 Dữ liệu lịch sử có thêm một bản ở **tầng lạnh** — kho đối tượng SeaweedFS. Bộ quét nền *Bộ lưu trữ lạnh*

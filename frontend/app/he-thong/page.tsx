@@ -7,13 +7,35 @@
 
 import { KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
+import { goiDichVu } from "@/lib/api";
+import type { DangKyWebhook, LanGuiWebhook } from "@/lib/kieu";
 
+import { QuanLyWebhook } from "./quan-ly-webhook";
 import { XuatNhatKy } from "./xuat-nhat-ky";
 
 export const dynamic = "force-dynamic";
 
+/** Số lần gửi gần nhất hiện cho mỗi đăng ký webhook (#401). */
+const SO_LAN_GUI_HIEN = 5;
+
+/** Đăng ký webhook và vài lần gửi gần nhất của từng cái — `null` khi dịch vụ không trả (#401). */
+async function docWebhook(): Promise<{
+  dangKy: DangKyWebhook[] | null;
+  lanGui: Record<number, LanGuiWebhook[] | null>;
+}> {
+  const dangKy = await goiDichVu<DangKyWebhook[]>("/core/v1/webhooks");
+  const lanGui: Record<number, LanGuiWebhook[] | null> = {};
+  await Promise.all(
+    (dangKy ?? []).map(async (dk) => {
+      const ds = await goiDichVu<LanGuiWebhook[]>(`/core/v1/webhooks/${dk.id}/deliveries`);
+      lanGui[dk.id] = ds ? ds.slice(0, SO_LAN_GUI_HIEN) : null;
+    }),
+  );
+  return { dangKy, lanGui };
+}
+
 export default async function ManHeThong() {
-  const sucKhoe = await docSucKhoe();
+  const [sucKhoe, webhook] = await Promise.all([docSucKhoe(), docWebhook()]);
   return (
     <KhungLamViec canKhongGian="system">
       <h1 className="tieu-de-trang">Hệ thống</h1>
@@ -25,6 +47,9 @@ export default async function ManHeThong() {
       </div>
       <div style={{ marginTop: "20px", maxWidth: "720px" }}>
         <XuatNhatKy />
+      </div>
+      <div style={{ marginTop: "20px", maxWidth: "720px" }}>
+        <QuanLyWebhook dangKy={webhook.dangKy} lanGui={webhook.lanGui} />
       </div>
     </KhungLamViec>
   );

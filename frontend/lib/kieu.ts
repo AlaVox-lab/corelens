@@ -687,3 +687,30 @@ export type KetQuaSuaCauHinh = {
   open_cases: number;
   affects_deadlines: boolean;
 };
+
+/** Một đăng ký webhook của nền tảng lõi (#390), như `GET /core/v1/webhooks` trả về (#401). */
+export type DangKyWebhook = {
+  id: number;
+  url: string;
+  description: string | null;
+  activities: string[] | null;
+  process: string | null;
+  is_active: boolean;
+  owner_id: string;
+  last_event_id: number;
+  created_at: string;
+};
+
+/** Đăng ký vừa tạo — kèm bí mật ký HMAC, chỉ trả đúng một lần. */
+export type DangKyWebhookMoi = DangKyWebhook & { secret: string };
+
+/** Một lần gửi sự kiện tới một đăng ký: `pending` đang chờ hay thử lại, `delivered`, `failed` hỏng hẳn. */
+export type LanGuiWebhook = {
+  event_id: number;
+  status: "pending" | "delivered" | "failed";
+  attempts: number;
+  next_attempt_at: string;
+  last_status_code: number | null;
+  last_error: string | null;
+  delivered_at: string | null;
+};
