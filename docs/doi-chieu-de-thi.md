@@ -54,7 +54,7 @@ Hạn gửi bài: 17:00 ngày 06/12/2026. Chấm kho mã 07–09/12, trình di�
 
 | Không gian | Có gì | Nằm ở đâu |
 |---|---|---|
-| `H` | Cổng theo vai, hộp thư trao đổi trên hồ sơ, ủy quyền khi vắng mặt, kho tri thức đăng nhập một lần (tùy chọn) | `frontend/`, `infra/tri-thuc/` |
+| `H` | Cổng theo vai, hộp thư trao đổi trên hồ sơ, ủy quyền khi vắng mặt, kho tri thức đăng nhập một lần (tùy chọn), **bảng Kanban** của buồng lái phòng ban — cột theo trạng thái lấy từ dữ liệu (#403) | `frontend/`, `infra/tri-thuc/` |
 | `P` | Luồng 11 trạng thái, 32 bước; phân loại, định tuyến, leo thang, mở lại có giới hạn; màn cấu hình quy trình | `backend/app/workflow/`, `docs/process-flow.md` |
 | `D` | Lớp báo cáo trên nhật ký sự kiện, bảng điều khiển nhúng trong cổng lọc theo phòng, xuất CSV và JSON | `backend/app/analytics/`, `infra/superset/` |
 | `I` | Khai phá quy trình thực tế; gợi ý phân loại và người xử lý; hồ sơ tương tự; gợi ý bài tri thức. Mọi gợi ý cần người xác nhận, có đo tỷ lệ ghi đè | `services/khai-pha/`, `backend/app/intelligence/` |

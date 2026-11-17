@@ -18,6 +18,18 @@ một dòng mở ngăn xem nhanh bên phải, dùng phím như ở hàng đợi 
 
 ![Hàng đợi phòng ban](../../../assets/anh/hang-doi-phong-ban.png)
 
+### Dạng bảng Kanban
+
+Nút **Dạng bảng** trên hàng đợi mở `/phong-ban/bang`: cùng các hồ sơ đó, chia **cột theo trạng thái** —
+chờ phòng xác duyệt, đang xử lý, chờ bổ sung thông tin… — để nhìn một lần thấy việc của phòng đang dồn ở bước
+nào. Tên và thứ tự cột lấy từ quy trình đang chạy, đầu cột ghi số hồ sơ; chỉ hiện cột có hồ sơ. Mỗi thẻ có
+mã, tiêu đề, loại, người xử lý và câu hạn — viền trái đỏ là quá hạn, vàng là sắp hết hạn. **Giao cho tôi**
+lọc như ở hàng đợi; **Dạng danh sách** quay lại hàng đợi.
+
+Bảng chỉ để nhìn: bấm một thẻ mở trang hồ sơ, mọi bước chuyển vẫn làm bằng các nút trên trang đó — không kéo
+thả thẻ sang cột khác, vì bước chuyển có thể cần ghi chú, chọn người hay qua ràng buộc. Bảng đọc tối đa 200
+hồ sơ; phòng có nhiều hơn thì một dòng nhắc xem đủ ở dạng danh sách.
+
 ## Trưởng phòng
 
 | Khi hồ sơ ở | Bạn làm được |
