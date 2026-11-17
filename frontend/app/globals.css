@@ -3353,6 +3353,113 @@ html.doi-mau * {
   }
 }
 
+/* Khối Webhook trên màn Hệ thống (#401) — cùng lề, cùng chữ phụ với khối xuất nhật ký */
+.wh-ds-dang-ky,
+.wh-ds-lan-gui {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wh-ds-dang-ky {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.wh-dang-ky {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.wh-dau-dong {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wh-dia-chi {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wh-phu {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.wh-ds-lan-gui {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.wh-lan-gui {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.wh-bieu-mau {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.wh-rong {
+  grid-column: 1 / -1;
+}
+
+.wh-loi {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--f-r-ink);
+}
+
+.wh-bi-mat {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--f-a-line);
+  border-radius: 10px;
+  background: var(--f-a-bg);
+  color: var(--f-a-ink);
+  font-size: 13px;
+}
+
+.wh-bi-mat p {
+  margin: 0 0 8px;
+}
+
+.wh-bi-mat-dong {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wh-bi-mat-dong code {
+  overflow-wrap: anywhere;
+  font-size: 12.5px;
+}
+
+@media (max-width: 560px) {
+  .wh-bieu-mau {
+    grid-template-columns: 1fr;
+  }
+
+  .wh-dau-dong {
+    flex-direction: column;
+  }
+}
+
 .o-truong-rieng {
   display: grid;
   gap: 14px;

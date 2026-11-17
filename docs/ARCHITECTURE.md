@@ -1588,7 +1588,9 @@ xong; khác thì chờ `DXLAB_WEBHOOK_RETRY_AFTER_SECONDS` nhân đôi mỗi l�
 là hỏng hẳn; `GET /core/v1/webhooks/{id}/deliveries` cho thấy mã phản hồi và lỗi cuối. Bộ gửi chạy theo
 khuôn #253 (khóa tư vấn, dòng nhịp "Bộ gửi webhook" ở màn Hệ thống), chu kỳ `DXLAB_WEBHOOK_SCAN_INTERVAL_SECONDS`
 (5 giây; 0 là tắt). Bên nhận có thể nhận lại một sự kiện nếu trả lời không kịp — bỏ trùng theo
-`X-DXOS-Event-Id`; ví dụ bên nhận ở `examples/goi-loi/nhan_webhook.py`. Sự kiện "tạo hồ sơ" không phải
+`X-DXOS-Event-Id`; ví dụ bên nhận ở `examples/goi-loi/nhan_webhook.py`. Quản trị viên đăng ký, theo dõi năm lần
+gửi gần nhất và hủy ngay trên màn **Hệ thống** của cổng (#401, `frontend/app/he-thong/quan-ly-webhook.tsx`):
+khối chỉ gọi API lõi qua hành động máy chủ, bí mật ký hiện một lần rồi không lưu phía cổng. Sự kiện "tạo hồ sơ" không phải
 dòng `event_log` (nó dựng từ `requests` trong view xuất nhật ký) nên không đi qua webhook.
 
 Chọn webhook qua HTTP chứ không một trục truyền phát như Kafka: quy mô trình diễn (mục 9), không thêm dịch
