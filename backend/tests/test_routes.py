@@ -20,7 +20,7 @@ from sqlalchemy import select
 from app.auth.dependencies import current_actor
 from app.db import get_session
 from app.main import app
-from app.models.workflow_config import Department, Priority, RequestType, State
+from app.models.workflow_config import Priority, RequestType, State
 from app.workflow.context import Actor
 from app.workflow.engine import perform_transition
 from tests.truong_mau import chi_tiet_mau

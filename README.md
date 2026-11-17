@@ -1,5 +1,7 @@
 # dx-os-lab
 
+**Tiếng Việt** · [English](README.en.md)
+
 > Mô hình DX-OS Open-Core: một **nền tảng lõi không giao diện** (định danh, cổng API, dữ liệu, luồng
 > công việc) và một **ứng dụng minh họa** phủ đủ H-P-D-I — cổng vận hành yêu cầu nội bộ cho doanh nghiệp.
 > Dự án dự thi Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
@@ -286,7 +288,8 @@ npm ci
 npm run dev
 ```
 
-rồi mở `http://localhost:4321/dx-os-lab/`. Trang sẽ đăng lên GitHub Pages khi kho chuyển công khai.
+rồi mở `http://localhost:4321/`. Trang đăng lên GitHub Pages khi kho chuyển công khai — cách đăng ở
+[`CONTRIBUTING.md`](CONTRIBUTING.md) mục *Đăng trang tài liệu*.
 
 Tài liệu kỹ thuật trong kho:
 
@@ -314,7 +317,7 @@ Trợ lý AI lập trình đọc [`CLAUDE.md`](CLAUDE.md) (qua [`AGENTS.md`](AGE
 |---|---|---|
 | Giảng viên hướng dẫn | ThS. Trần Phước Đức | [`@tranphuocduc1998`](https://github.com/tranphuocduc1998) |
 | Điều phối kho mã | Nguyễn Thanh Sơn | [`@AlaVox-lab`](https://github.com/AlaVox-lab) |
-| Thành viên | Ngô Hoàng Đại | [`@Senning-Dd`](https://github.com/Senning-Dd) |
+| Thành viên | Nguyễn Phạm Đại Phúc | [`@phuctiensinh`](https://github.com/phuctiensinh) |
 | Thành viên | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
 
 Công việc chia theo từng [issue](https://github.com/AlaVox-lab/dx-os-lab/issues), không cố định ai phụ

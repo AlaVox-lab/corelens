@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Cấu hình ruff (MIT) cho mọi mã Python của kho (#382): backend/, services/khai-pha/, scripts/,
+# examples/. Chạy ở gốc kho: `ruff check .` — phiên bản ghim ở `required-version` và trong
+# .github/workflows/ci.yml, cài bằng `pip install ruff==0.17.3`.
+#
+# Chọn luật TƯỜNG MINH thay vì nhận bộ mặc định của ruff: bộ mặc định đổi theo phiên bản (bản 0.17
+# đã mở rộng sang hàng chục nhóm luật), nên nâng ruff sẽ làm CI đỏ mà mã không đổi.
+#
+# Chỉ soát lỗi, không ép kiểu trình bày — kho không chạy `ruff format`.
+
+required-version = "==0.17.3"
+target-version = "py313"
+extend-exclude = ["**/node_modules", "docs-site", "frontend", "e2e"]
+
+[lint]
+select = [
+  "E4", "E7", "E9", # pycodestyle: lỗi nhập, câu lệnh, cú pháp — bộ mặc định cổ điển của ruff
+  "F",              # pyflakes: import thừa (F401), biến thừa (F841), tên chưa định nghĩa…
+  "B",              # flake8-bugbear: mẫu dễ sinh lỗi (tham số mặc định khả biến, bắt lỗi rỗng…)
+]
+ignore = [
+  # Tên biến một chữ `l` (19 chỗ, chủ yếu `for l in dong`): chỉ là kiểu đặt tên, đổi tên không máy
+  # móc được và không bắt lỗi nào.
+  "E741",
+  # `zip()` thiếu `strict=` (9 chỗ): thêm `strict=True` ĐỔI hành vi — ném lỗi khi hai dãy lệch độ
+  # dài — nên không sửa hàng loạt; chỗ cần thì viết tay.
+  "B905",
+]
+
+[lint.flake8-bugbear]
+# Khuôn chuẩn của FastAPI: `Depends(...)`, `Query(...)` trong tham số mặc định là khai báo, không phải
+# lời gọi chạy một lần
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query",
+  "fastapi.Path",
+  "fastapi.Body",
+  "fastapi.Header",
+  "fastapi.File",
+  "fastapi.Form",
+  "fastapi.Security",
+]
+
+[lint.per-file-ignores]
+# Fixture của pytest được nhập rồi khai lại làm tham số bài kiểm thử — khuôn chuẩn của pytest
+"backend/tests/**" = ["F811"]
+"services/khai-pha/tests/**" = ["F811"]

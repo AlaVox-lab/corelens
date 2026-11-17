@@ -277,6 +277,11 @@ chỉ là thay dữ liệu.
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` đầy đủ
 - [ ] Nhãn `good first issue` và `help wanted` có issue thật
 - [ ] Trang tài liệu kỹ thuật dựng từ thư mục `docs/`
+- [x] `README.en.md` cho người không đọc tiếng Việt, hai README dẫn qua lại (#380)
+- [ ] Trang tài liệu đăng công khai, ô Website của kho trỏ tới (#381) — cấu hình và hướng dẫn đăng đã có
+  (`CONTRIBUTING.md` mục 7.1), chờ kho công khai
+- [x] Linter Python và TypeScript cho mọi pull request; toàn bộ kịch bản giao diện cho pull request vào
+  `main` (#382)
 
 ---
 

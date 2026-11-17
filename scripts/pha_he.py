@@ -448,10 +448,11 @@ def doc_bang_dieu_khien() -> tuple[list[dict], dict[str, BoDuLieu], dict[str, Bi
         vi_tri = y.get("position") or {}
         thu_tu: list[str] = []
 
+        # Hàm gọi ngay trong cùng vòng lặp nên đọc đúng `vi_tri`, `thu_tu` của vòng đó
         def _duyet(ma: str) -> None:
-            nut = vi_tri.get(ma) or {}
+            nut = vi_tri.get(ma) or {}  # noqa: B023
             if nut.get("type") == "CHART":
-                thu_tu.append(nut["meta"]["uuid"])
+                thu_tu.append(nut["meta"]["uuid"])  # noqa: B023
             for con in nut.get("children") or []:
                 _duyet(con)
 
