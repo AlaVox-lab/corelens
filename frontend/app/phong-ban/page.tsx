@@ -26,7 +26,7 @@
 // Bấm một dòng mở ngăn xem nhanh bên phải (#233, `?xem=<mã>`) mà không rời danh sách; ngăn
 // dựng từ cùng các khối và cùng khối thao tác với trang chi tiết (`app/phong-ban/ho-so.tsx`).
 
-import { User } from "lucide-react";
+import { Columns3, User } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -239,6 +239,11 @@ export default async function HangDoiPhongBan({ searchParams }: { searchParams: 
             >
               <User aria-hidden />
               Giao cho tôi
+            </Link>
+            {/* Bảng Kanban (#403): cùng hồ sơ, chia cột theo trạng thái */}
+            <Link href={cuaToi ? "/phong-ban/bang?mine=1" : "/phong-ban/bang"} className="chip">
+              <Columns3 aria-hidden />
+              Dạng bảng
             </Link>
           </>
         }

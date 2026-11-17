@@ -4898,3 +4898,131 @@ span.qt-ma {
     display: none;
   }
 }
+
+/* Bảng Kanban của buồng lái phòng ban (#403): cột theo trạng thái, cuộn ngang khi nhiều cột */
+.kb-thanh {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.kb-ghi-chu {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.kb-bang {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  align-items: start;
+}
+
+.kb-cot {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.kb-dau-cot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: inherit;
+}
+
+.kb-so {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.kb-ds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.kb-the {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.kb-the:hover {
+  border-color: var(--ink-3);
+}
+
+.kb-the:focus-visible {
+  outline: 2px solid var(--f-b-solid);
+  outline-offset: 2px;
+}
+
+.kb-the[data-muc="qua"] {
+  border-left-color: var(--f-r-solid);
+}
+
+.kb-the[data-muc="sap"] {
+  border-left-color: var(--f-a-solid);
+}
+
+.kb-ma {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.kb-tieu-de {
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.kb-phu {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.kb-chan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.kb-han {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.kb-the[data-muc="qua"] .kb-han {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.kb-the[data-muc="sap"] .kb-han {
+  color: var(--f-a-ink);
+}
+
+@media (max-width: 560px) {
+  .kb-bang {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+}
