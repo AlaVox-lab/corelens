@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Đăng trang tài liệu `docs-site/` lên GitHub Pages (#381). Mỗi lần `main` đổi — tức mỗi lần phát
+# hành — trang được dựng lại với đường gốc `/dx-os-lab` và đăng tại
+# https://alavox-lab.github.io/dx-os-lab/. Bấm chạy tay được khi cần đăng lại.
+#
+# GitHub Pages miễn phí chỉ dành cho kho công khai, nên việc tự bỏ qua khi kho còn riêng tư thay vì
+# báo hỏng. Bật một lần: Settings → Pages → Source: GitHub Actions (CONTRIBUTING.md mục 7.1).
+
+name: Trang tài liệu
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Chỉ một lượt đăng chạy cùng lúc; lượt mới không hủy lượt đang đăng dở
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dung:
+    name: Dựng trang cho GitHub Pages
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+          DOCS_SITE_URL: https://alavox-lab.github.io
+          DOCS_BASE_PATH: /dx-os-lab
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site/dist
+
+  dang:
+    name: Đăng lên GitHub Pages
+    needs: dung
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.dang.outputs.page_url }}
+    steps:
+      - id: dang
+        uses: actions/deploy-pages@v4

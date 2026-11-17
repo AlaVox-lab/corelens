@@ -7,6 +7,10 @@
 # mở đầu dựng từ thời điểm tạo hồ sơ — cộng cấu hình của bộ quy tắc. Không câu nào biết tên trạng
 # thái hay vai trò: mọi phân loại đi theo cờ trên cạnh mà hồ sơ đã thật sự đi qua.
 #
+# Một lần khai phá chỉ đọc hồ sơ của MỘT quy trình (#376): view mang cột `process_code`, bỏ trống thì quy
+# trình mặc định của ứng dụng (`processes.is_app_default`). Trộn nhật ký hai quy trình vào một mô hình sẽ
+# vẽ ra một luồng không có thật.
+#
 #   is_rework                       — cạnh làm lại (#153)
 #   is_system, auto_after_hours     — hệ thống tự đi: KHÔNG có hạn chờ là leo thang do quá hạn,
 #                                     CÓ hạn chờ là tự đi khi hết hạn chờ (cùng tiêu chí với bộ quét)
@@ -36,6 +40,7 @@ WITH ho_so AS (
       AND timestamp >= %(tu)s::timestamp AT TIME ZONE %(mui_gio)s
       AND timestamp < (%(den)s::date + 1)::timestamp AT TIME ZONE %(mui_gio)s
       AND (%(tat_ca)s OR department_code = ANY(%(phong)s::text[]))
+      AND process_code = coalesce(%(quy_trinh)s::text, (SELECT code FROM processes WHERE is_app_default))
 )
 SELECT n.case_id, n.thu_tu, n.activity, n.timestamp, n.from_state, n.to_state, n.rule_set_id,
        n.request_type_code, n.department_code,
@@ -64,6 +69,7 @@ WITH ho_so AS (
       AND timestamp >= %(tu)s::timestamp AT TIME ZONE %(mui_gio)s
       AND timestamp < (%(den)s::date + 1)::timestamp AT TIME ZONE %(mui_gio)s
       AND (%(tat_ca)s OR department_code = ANY(%(phong)s::text[]))
+      AND process_code = coalesce(%(quy_trinh)s::text, (SELECT code FROM processes WHERE is_app_default))
 ),
 vao AS (
     SELECT n.case_id, n.rule_set_id, n.to_state, n.timestamp AS luc_vao, n.thu_tu,
@@ -156,15 +162,20 @@ class DuLieu:
 
 
 def doc_du_lieu(
-    ket_noi: psycopg.Connection, tu: dt.date, den: dt.date, phong: list[str] | None
+    ket_noi: psycopg.Connection,
+    tu: dt.date,
+    den: dt.date,
+    phong: list[str] | None,
+    quy_trinh: str | None = None,
 ) -> DuLieu:
     """Đọc mọi thứ phân tích cần cho hồ sơ gửi từ ngày `tu` tới hết ngày `den`, trong phạm vi phòng
-    (None là toàn công ty). Ngày tính theo múi giờ của lịch làm việc mặc định — cùng múi giờ với giờ
-    làm việc — chứ không theo UTC. Một giao dịch chỉ đọc, nên mọi câu thấy cùng một ảnh dữ liệu."""
+    (None là toàn công ty), của một quy trình (None là quy trình mặc định của ứng dụng). Ngày tính theo
+    múi giờ của lịch làm việc mặc định — cùng múi giờ với giờ làm việc — chứ không theo UTC. Một giao
+    dịch chỉ đọc, nên mọi câu thấy cùng một ảnh dữ liệu."""
     with ket_noi.cursor(row_factory=dict_row) as c:
         mui_gio = c.execute(CAU_MUI_GIO).fetchone()
         tham_so = {"tu": tu, "den": den, "tat_ca": phong is None, "phong": phong or [],
-                   "mui_gio": mui_gio["time_zone"] if mui_gio else "UTC"}
+                   "mui_gio": mui_gio["time_zone"] if mui_gio else "UTC", "quy_trinh": quy_trinh}
         su_kien: list[SuKien] = []
         ho_so: dict[int, HoSo] = {}
         for d in c.execute(CAU_SU_KIEN, tham_so):

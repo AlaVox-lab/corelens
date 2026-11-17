@@ -84,7 +84,7 @@ def ket_noi_ghi(dia_chi, mui_gio):
 
 @pytest.fixture
 def ket_noi_thu(ket_noi_ghi, mui_gio):
-    """Phiên đọc-ghi mang bốn bảng tạm đã nạp bộ dữ liệu đáp án biết trước."""
+    """Phiên đọc-ghi mang năm bảng tạm đã nạp bộ dữ liệu đáp án biết trước."""
     dap_an.nap(ket_noi_ghi, mui_gio)
     return ket_noi_ghi
 

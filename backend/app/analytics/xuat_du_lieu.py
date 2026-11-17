@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
 from app.db import get_session
+from app.models.workflow_config import Process
 from app.workflow.context import Actor
 
 VAI_TRO_XUAT = "administrator"
@@ -43,6 +44,8 @@ COT = (
     "department_code",
     "priority_code",
     "rule_set_id",
+    # Quy trình của hồ sơ (#376) — thêm ở CUỐI để công cụ đọc theo vị trí cột cũ không vỡ
+    "process_code",
 )
 
 router = APIRouter()
@@ -62,11 +65,17 @@ def xuat_nhat_ky(
     format: Annotated[Literal["csv", "json"], Query(description="csv hoặc json")] = "csv",
     tu: Annotated[dt.date | None, Query(alias="from", description="Từ ngày, tính theo UTC")] = None,
     den: Annotated[dt.date | None, Query(alias="to", description="Tới hết ngày này, UTC")] = None,
+    process: Annotated[
+        str | None, Query(description="Chỉ một quy trình (GET /core/v1/workflow/processes); bỏ trống là mọi quy trình")
+    ] = None,
 ) -> Response:
     """Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.
 
     Khoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là
     lấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.
+
+    Mỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình
+    thì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.
     """
     if tu and den and tu > den:
         raise HTTPException(
@@ -74,6 +83,14 @@ def xuat_nhat_ky(
             detail={"code": "invalid-range", "message": "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc."},
         )
     dieu_kien, tham_so = [], {}
+    if process is not None:
+        if session.get(Process, process) is None:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "unknown-process", "message": f"Không có quy trình mang mã {process!r}."},
+            )
+        dieu_kien.append("process_code = :quy_trinh")
+        tham_so["quy_trinh"] = process
     if tu:
         dieu_kien.append("timestamp >= :tu")
         tham_so["tu"] = dt.datetime.combine(tu, dt.time(), dt.UTC)

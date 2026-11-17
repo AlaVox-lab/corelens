@@ -47,7 +47,7 @@ from app.config import get_settings
 from app.models.case import EventLog, Request
 from app.models.workflow_config import Transition
 from app.workflow.assignment import _canh_giao_viec, nguoi_nhan_viec, trang_thai_hang_doi_phong_ban
-from app.workflow.engine import rule_sets_in_use
+from app.workflow.engine import ma_quy_trinh_ung_dung, rule_sets_in_use
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def _dang_giu(session: Session, ma_nguoi: list[str]) -> dict[str, int]:
             Request.rule_set_id == bo,
             Request.current_state.in_([t.code for t in trang_thai_hang_doi_phong_ban(session, bo)]),
         )
-        for bo in rule_sets_in_use(session)
+        for bo in rule_sets_in_use(session, ma_quy_trinh_ung_dung(session))
     ]
     if not ma_nguoi or not dieu_kien:
         return {}

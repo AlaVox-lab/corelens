@@ -137,8 +137,9 @@ gắn AI vào như một lớp hỗ trợ.
 **Đã cài đặt ở Mức 1** (#365, giảng viên chốt ngày 15/11/2026). Đề thi tách nền tảng dịch vụ lõi không
 giao diện (Tầng 1) khỏi ứng dụng minh họa có giao diện (Tầng 2). Mức 1 giữ **một** dịch vụ ứng dụng và vẽ
 ranh giới bằng không gian địa chỉ: API của lõi có phiên bản, nằm dưới `/core/v1`, đi qua cổng API; ứng dụng
-minh họa — cổng vận hành yêu cầu nội bộ — dùng các đường còn lại. Lược đồ không đổi. **Chưa làm**: engine
-chạy nhiều quy trình cùng lúc kèm một quy trình mẫu thứ hai (Mức 2), tách engine thành dịch vụ riêng (Mức 3).
+minh họa — cổng vận hành yêu cầu nội bộ — dùng các đường còn lại. **Mức 2 đã cài** (#376, mục "Nhiều quy
+trình" dưới đây): engine chạy nhiều quy trình cùng lúc, kèm một quy trình mẫu thứ hai mà một ứng dụng khác
+chạy trọn chỉ qua `/core/v1`. **Chưa làm**: tách engine thành dịch vụ riêng (Mức 3).
 
 **Khuôn mẫu: gắn router thêm một lần, không chép mã.** `backend/app/main.py` gắn mỗi router của lõi thêm
 một lần với tiền tố `/core/v1/<nhóm>` (hàm `_gan_loi`). Đường cũ và đường của lõi là **cùng một hàm xử lý,
@@ -150,7 +151,7 @@ cùng phụ thuộc** — kiểm token, phân quyền, giới hạn tốc độ 
 tiền tố. Router mang tiền tố riêng (`/analytics`, `/me/notifications`) chuyển tiền tố ra lúc gắn.
 
 Nhãn OpenAPI gắn lúc gắn router, không khai ở router: nhãn của router cộng dồn vào **mọi** lần gắn, nên
-thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; năm
+thao tác dưới `/core/v1` sẽ mang thêm nhãn cũ. Kết quả: thao tác của lõi chỉ mang một nhãn "Lõi — …"; sáu
 nhóm này khai trong `openapi_tags` (`NHOM_LOI` ở `main.py`) nên đứng đầu `/docs`, kèm mô tả. Mã thao tác
 FastAPI tự sinh từ tên hàm cộng đường dẫn, nên bản của lõi không trùng bản ở đường cũ. Bề mặt đường cũ đối
 chiếu từng dòng trước và sau thay đổi — đường, phương thức, nhãn, mã thao tác, tham số, mã phản hồi — giống
@@ -158,21 +159,34 @@ hệt.
 
 | Nhóm lõi (nhãn OpenAPI) | Đường cũ (giữ nguyên) | Đường của lõi |
 |---|---|---|
-| Lõi — Luồng công việc | `GET /request-types` | `GET /core/v1/workflow/request-types` |
-| | `GET /states` | `GET /core/v1/workflow/states` |
+| Lõi — Luồng công việc | `GET /processes` | `GET /core/v1/workflow/processes` |
+| | `GET /request-types` | `GET /core/v1/workflow/request-types` (`process`) |
+| | `GET /states` | `GET /core/v1/workflow/states` (`process`) |
 | | `GET /priorities` | `GET /core/v1/workflow/priorities` |
 | | `GET /departments` | `GET /core/v1/workflow/departments` |
-| | `POST /requests` | `POST /core/v1/workflow/requests` |
-| | `GET /requests` | `GET /core/v1/workflow/requests` |
-| | `GET /requests/{case_id}` | `GET /core/v1/workflow/requests/{case_id}` |
-| | `POST /requests/{case_id}/transitions` | `POST /core/v1/workflow/requests/{case_id}/transitions` |
+| | `POST /requests` | `POST /core/v1/workflow/requests` — loại yêu cầu quyết định quy trình |
+| | `GET /requests` ¹ | `GET /core/v1/workflow/requests` (`process`) ¹ |
+| | `GET /requests/{case_id}` ¹ | `GET /core/v1/workflow/requests/{case_id}` ¹ |
+| | `POST /requests/{case_id}/transitions` ¹ | `POST /core/v1/workflow/requests/{case_id}/transitions` ¹ |
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
-| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`) |
+| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
+| Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
+| Lõi — Webhook ² | — | `POST`, `GET /core/v1/webhooks` · `GET`, `DELETE /core/v1/webhooks/{id}` · `GET /core/v1/webhooks/{id}/deliveries` (#390, mục 6.8) |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
 | | `POST /me/notifications/{code}` | `POST /core/v1/notifications/preferences/{code}` |
 | Lõi — Định danh | `GET /me` | `GET /core/v1/identity/me` |
+
+¹ Cùng đường, **khác cửa nhìn thấy** (#376): đường cũ là cổng người gửi — chỉ hồ sơ do người gọi tạo; đường
+của lõi là cửa trung lập với vai (`app/workflow/loi.py`, xem "Nhiều quy trình"). Ba điểm cuối này vì thế là
+hai hàm xử lý dùng chung thân (`liet_ke_ho_so`, `_dung_chi_tiet`, `di_buoc` trong `workflow/routes.py`):
+đường cũ ở `router_nguoi_gui`, lõi ở `router_loi_rieng`. Mọi điểm cuối khác vẫn là một hàm gắn hai lần.
+Tham số `process` bỏ trống là quy trình mặc định của ứng dụng — ví dụ và cổng người dùng cũ không vỡ.
+
+² **Chỉ có ở lõi** (#378, mục 6.3a; webhook #390, mục 6.8): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
+trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
+quản trị viên.
 
 Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
 `history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
@@ -193,12 +207,55 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 | Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
 | Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
 | Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
-| Vận hành | `/system/health`, `/sla/scan`, `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
+| Vận hành | `/system/health`, `/sla/scan`, `/archive/scan` (#378), `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
 
-**Giới hạn của Mức 1.** Bước chuyển của lõi là cửa của người gửi: chỉ trên hồ sơ do chính người gọi tạo
-(`requester_id`), và chỉ những cạnh mà vai của người gọi đi được theo bảng `transitions`. Cạnh của điều phối
-viên và phòng ban đi qua hai buồng lái — phần của ứng dụng — nên một ứng dụng khác chưa phân loại hay nhận
-việc được qua lõi. Cửa bước chuyển trung lập với vai thuộc Mức 2.
+**Nhiều quy trình (Mức 2, #376).** Lõi phục vụ nhiều ứng dụng, mỗi ứng dụng một quy trình riêng, cùng một
+engine — không một dòng mã nào biết quy trình nào tồn tại.
+
+- *Dữ liệu* (bản sửa `0028_nhieu_quy_trinh`, seed `00-quy-trinh.sql`): bảng `processes` (`code`, `label`,
+  `description`, `display_order`, `is_app_default`). `rule_sets.process_code` và `request_types.process_code`
+  là khóa ngoại NOT NULL. Chỉ mục duy nhất từng phần "một bộ đang bật cả hệ thống" thay bằng **một bộ đang
+  bật cho mỗi quy trình**; `kiem_tra_cau_hinh()` phép kiểm 11 chặn quy trình không bộ nào bật và đòi đúng một
+  dòng `is_app_default`. `rule_sets.version` vẫn duy nhất toàn bảng — bộ của quy trình khác đặt mã phiên bản
+  khác (`purchase-v1`), mọi chỗ tra bộ theo `version` không đổi. `requests` **không** có cột quy trình: quy
+  trình của hồ sơ suy từ `rule_set_id` hồ sơ ghim lúc tạo — một nguồn sự thật; truy vấn lọc bằng
+  `rule_set_id IN (bộ của quy trình)` (`bo_cua_quy_trinh`). Vai, phòng ban, mức ưu tiên, lịch làm việc dùng
+  chung mọi quy trình
+- *Engine*: `get_active_rule_set(session, process_code)` và `rule_sets_in_use(session, process_code)` bắt
+  buộc truyền quy trình. **Loại yêu cầu quyết định quy trình**: hồ sơ mới nhận bộ đang bật của quy trình mà
+  loại thuộc về; đổi loại sang loại của quy trình khác bị từ chối (`invalid-field-value`). Kích hoạt bộ mới
+  (`cau_hinh/bo_quy_tac.kich_hoat`) chỉ tắt bộ cũ của **cùng** quy trình. Mọi luật — Poka-yoke, hạn theo giờ
+  làm việc, leo thang, mở lại, trường riêng theo loại, đính kèm, nhật ký chỉ ghi thêm — đọc từ bộ của hồ sơ
+  nên chạy cho mọi quy trình
+- *Quy trình của ứng dụng minh họa*: `ma_quy_trinh_ung_dung(session)` tra dòng `is_app_default` (hiện là
+  `internal-requests`). Mọi màn của ứng dụng — cổng người gửi, hai buồng lái, hộp thư, ủy quyền, giao việc,
+  màn cấu hình quy trình (#255), gợi ý AI sau khi gửi, bộ quét gợi ý — chỉ dùng quy trình này. Không có
+  `if` theo mã quy trình nào: quy trình khác vắng mặt ở các màn đó vì truy vấn lọc theo cờ
+- *Cửa trung lập với vai* (`app/workflow/loi.py`): danh sách, chi tiết, bước chuyển dưới `/core/v1/workflow`
+  thấy hợp của **ba cửa nhìn thấy sẵn có**, bằng chính hàm của chúng — hồ sơ người gọi tạo (cổng người gửi);
+  hồ sơ phòng mình nếu người gọi vào được buồng lái phòng ban (`vao_duoc_phong_ban`); mọi hồ sơ nếu vào được
+  buồng lái điều phối (`vao_duoc_buong_lai`). Ngoài phạm vi trả `404`. Đi cạnh nào thì **engine** quyết
+  bằng `transitions`, `transition_roles` và ràng buộc trên cạnh (`requester-owns-case`,
+  `actor-in-case-department`, `actor-not-requester`) — không bộ kiểm quyền thứ hai. `allowed_transitions`
+  của chi tiết tính theo người gọi; `needs_action=true` là hàng việc của một người duyệt
+- *Báo cáo và khai phá*: `bao_cao_ho_so` — nền mọi biểu đồ của bảng điều khiển — chỉ hồ sơ của quy trình
+  mặc định (thêm cột cuối `ma_quy_trinh`), nên số trên biểu đồ cũ không đổi. `bao_cao_nhat_ky` giữ mọi quy
+  trình, thêm cột cuối `process_code`; `GET /core/v1/events?process=` lọc một quy trình. Dịch vụ khai phá
+  nhận `process` (bỏ trống là quy trình mặc định) và không bao giờ trộn nhật ký hai quy trình vào một mô hình
+- *Quy trình mẫu thứ hai* (`infra/seed/06-quy-trinh-mua-sam.sql`, thuần dữ liệu): `purchase-approval`, loại
+  `purchase-request` với trường riêng số tiền và lý do. Người đề xuất (`requester`) gửi và chọn phòng đề xuất
+  (trường quyết định `department_code`, ràng buộc `select-department`) → trưởng phòng đó (`approver`,
+  `actor-in-case-department`) duyệt cấp một → điều phối viên (`classifier`, `actor-not-requester`) duyệt cấp
+  hai → Đã duyệt; mỗi cấp trả lại bổ sung hoặc từ chối được, cả hai bắt buộc ghi lý do; người đề xuất sửa,
+  gửi lại hoặc rút. Hai trạng thái chờ duyệt chạy đồng hồ, cạnh vào mỗi cấp mang `restarts_sla`, nên **mỗi
+  cấp có hạn riêng** bằng `sla_hours` của loại
+
+**Giới hạn của Mức 2.** Engine không có điều kiện trên cạnh, nên quy trình mẫu không rẽ nhánh theo số tiền —
+mọi đề xuất qua đủ hai cấp; thêm điều kiện là thêm một ràng buộc Poka-yoke mới, chưa làm. Màn của ứng dụng
+minh họa chỉ hiện quy trình mặc định: người gửi không thấy đề xuất mua sắm của mình trong cổng (thấy qua
+`/core/v1`), màn cấu hình quy trình chỉ sửa quy trình mặc định — quy trình khác sửa bằng seed và bản sửa.
+Các view báo cáo về gợi ý AI (`bao_cao_goi_y`, `bao_cao_ngan_chan`) không lọc quy trình vì chỉ quy trình mặc
+định có gợi ý. Engine vẫn chạy trong dịch vụ ứng dụng (tách ra là Mức 3).
 
 **Tài khoản dịch vụ.** Client `dx-integration` (biến `KEYCLOAK_INTEGRATION_*`): bí mật, chỉ bật client
 credentials, không đăng nhập người dùng; bộ ánh xạ đưa `dx-api` vào `aud` như client của cổng người dùng,
@@ -213,7 +270,15 @@ tra danh bạ, token không mang `aud` của dịch vụ. Hai đường tạo, c
   thiếu thì tạo, có rồi thì đặt lại cấu hình và bí mật theo `.env`, gán vai còn thiếu, rồi xin thử một
   token và kiểm `aud`, vai. Chạy lại bao nhiêu lần cũng được; không gỡ vai nào
 
-Token của tài khoản dịch vụ không có `name` và `groups`. `actor_from_claims` (`backend/app/auth/identity.py`)
+Hai tài khoản **duyệt** cho ví dụ quy trình thứ hai (#376), cùng hai đường tạo ấy: `dx-integration-truong-phong`
+(`KEYCLOAK_INTEGRATION_HEAD_*`, vai `approver`, thuộc group `/phong-ban/admin-office`, có bộ ánh xạ `groups`
+để dịch vụ đọc phòng của người gọi như với người dùng thật) và `dx-integration-duyet`
+(`KEYCLOAK_INTEGRATION_REVIEWER_*`, vai `classifier`). Tách riêng thay vì nới vai của `dx-integration` hay
+dùng luồng mật khẩu của tài khoản mẫu: tài khoản tạo hồ sơ vẫn chỉ là người gửi, hai cấp duyệt là hai danh
+tính khác nhau (ràng buộc `actor-not-requester` có nghĩa), và không client nào bật luồng mật khẩu. Hai
+tài khoản này chỉ để trình diễn — triển khai thật thì tắt hoặc đổi bí mật (README, *Trước khi dùng thật*).
+
+Token của tài khoản dịch vụ không có `name`; `groups` chỉ có khi client gắn bộ ánh xạ group. `actor_from_claims` (`backend/app/auth/identity.py`)
 lấy mã client trong `azp` làm tên hiển thị khi tên người dùng đúng là `service-account-<azp>` — người dùng
 thường không mượn được nhãn này. Hồ sơ do ứng dụng khác tạo mang nhãn người gửi `dx-integration`, dòng nhật
 ký mang `actor` là `sub` của tài khoản dịch vụ. Muốn nhãn khác: gắn claim `name` cho client trong Keycloak,
@@ -224,12 +289,25 @@ Keycloak, rồi **chỉ** gọi cổng API dưới `/core/v1` — danh tính, da
 được phép, đi một bước, đọc lịch sử. Không mã cứng mã trạng thái hay mã loại: chọn bước chính của người gọi,
 không có thì bước đầu tiên làm đổi trạng thái. Với dữ liệu mẫu, vai `requester` ở "Đã gửi" chỉ có "Sửa nội
 dung" (giữ trạng thái) và "Hủy yêu cầu", nên kịch bản đi "Hủy yêu cầu" — hồ sơ thử không nằm lại trong hàng
-đợi của điều phối viên. Hướng dẫn: `examples/goi-loi/README.md`.
+đợi của điều phối viên. `examples/goi-loi/quy_trinh_mua_sam.py` chạy trọn quy trình thứ hai bằng ba tài
+khoản dịch vụ: danh mục quy trình → loại và trạng thái của quy trình → tạo đề xuất, gửi trưởng phòng →
+trưởng phòng thấy hồ sơ trong việc chờ mình, duyệt → người duyệt cấp hai duyệt → đọc lịch sử. Mỗi người đi
+bước chính lõi trả về cho chính họ, trường bắt buộc điền theo khai báo — không mã cứng mã nào. Hướng dẫn:
+`examples/goi-loi/README.md`.
 
 **Tại cổng API** không thêm tuyến nào: `/core/v1/*` rơi vào tuyến `can-token` (mục 7.4) — thiếu token là
 `401` ngay tại cổng, kể cả đường lõi chưa tồn tại.
 
-**Kiểm chứng.** `backend/tests/test_loi_api.py` (59 bài, chạy trong container dịch vụ như mọi bài khác):
+**Kiểm chứng Mức 2.** `backend/tests/test_nhieu_quy_trinh.py` (14 bài): mỗi quy trình đúng một bộ đang bật
+(chỉ mục chặn hai bộ, `kiem_tra_cau_hinh()` chặn không bộ nào), kích hoạt bộ mới không đụng quy trình khác,
+hồ sơ nhận bộ của quy trình mà loại thuộc về, không đổi loại sang quy trình khác; danh mục và lọc theo quy
+trình; chạy trọn quy trình thứ hai chỉ qua `/core/v1` — đúng vai đúng phòng đi được, sai phòng `404`, sai vai
+bị engine chặn; hồ sơ quy trình thứ hai không lọt vào hàng đợi, buồng lái, cổng người gửi, view báo cáo của
+quy trình mặc định; nhật ký xuất lọc được theo quy trình; realm khóa tạm đúng ở lần sai thứ `failureFactor`,
+từ chối mật khẩu ngắn, tài khoản mẫu vẫn đăng nhập. Dịch vụ khai phá có bài riêng: hồ sơ của quy trình khác
+không vào mô hình.
+
+**Kiểm chứng Mức 1.** `backend/tests/test_loi_api.py` (60 bài, chạy trong container dịch vụ như mọi bài khác):
 OpenAPI khớp bảng ánh xạ, đúng nhãn, không trùng mã thao tác; mỗi đường của lõi trả cùng kết quả với đường cũ, cả đọc lẫn ghi (tạo hồ sơ, đi bước, bước bị từ chối,
 tải tệp, đổi tùy chọn thông báo, xuất nhật ký); điểm cuối của ứng dụng `404` dưới `/core/v1`; không token
 `401`; token client credentials **thật** của Keycloak tạo hồ sơ và đi một bước chỉ bằng `/core/v1`; qua cổng
@@ -455,13 +533,18 @@ dx-os-lab/
 │   │   ├── main.py              # điểm vào, điểm cuối kiểm tra sức khỏe
 │   │   ├── config.py            # cấu hình từ biến môi trường
 │   │   ├── rate_limit.py        # giới hạn tốc độ theo người dùng, đếm trong PostgreSQL (#243)
+│   │   ├── thoi_gian_thuc.py    # [H] luồng SSE "hồ sơ vừa đổi" GET /me/stream, nghe NOTIFY (#387)
+<<<<<<< HEAD
+│   │   ├── webhook.py           # [core] truyền phát sự kiện ra ngoài: /core/v1/webhooks, bộ gửi ký HMAC (#390)
+=======
+>>>>>>> origin/dev
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
 │   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
-│   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306); [I] lối vào khai phá (#314)
+│   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306), lưu trữ lạnh (#378); [I] lối vào khai phá (#314)
 │   │   ├── cau_hinh/            # [P] nạp dữ liệu khởi tạo, phiên bản bộ quy tắc (#254), quản trị cấu hình (#255)
 │   │   └── intelligence/        # [I] gợi ý cho trường quyết định, dấu giữ hay ghi đè (#239); lớp gọi mô hình,
 │   │                            #     người xử lý (#318), hồ sơ tương tự (#319), khuyến nghị cải tiến (#320),
@@ -532,6 +615,8 @@ dx-os-lab/
 │   ├── nap_du_lieu_trinh_dien.py # nạp hồ sơ giả vào cụm thử để bảng điều khiển có số
 │   ├── kiem_nang_cap.py         # chụp số liệu trước khi nâng cấp, so sau khi nâng (#254)
 │   ├── sao_luu.py               # sao lưu tay, khôi phục, đối soát cơ sở dữ liệu và kho tệp (#245)
+│   ├── doc_luu_tru.py           # đọc lại một bản lưu trữ lạnh, kiểm mã băm và số dòng (#378)
+│   ├── pha_he.py                # sinh, kiểm trang phả hệ dữ liệu từ view và bảng điều khiển (#379)
 │   ├── tai_khoan_dich_vu.py     # tạo, cập nhật tài khoản dịch vụ gọi lõi trên cụm đang chạy (#365)
 │   ├── du_lieu/                 # hồ sơ đã giải quyết có nội dung thật cho dữ liệu trình diễn (#319)
 │   ├── do_ho_so_tuong_tu.py     # đo recall@3, MRR của hồ sơ tương tự trên bộ 40 câu (#319)
@@ -644,7 +729,7 @@ Mười bảy bảng, định nghĩa ở bản sửa gốc `0000_luoc_do_cau_hin
 
 | Nhóm | Bảng | Vai trò |
 |---|---|---|
-| Phiên bản | `rule_sets` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng — mục 6.1 |
+| Phiên bản | `rule_sets` · `processes` | Hồ sơ cũ chạy theo quy tắc cũ khi quản trị viên sửa luồng giữa chừng — mục 6.1. Từ #376 mỗi bộ thuộc một quy trình (`processes`, bản sửa `0028`) — mục 2.3 |
 | Máy trạng thái | `states` · `transitions` · `roles` · `transition_roles` · `guards` · `transition_guards` | Trạng thái, cạnh chuyển, ma trận phân quyền, ràng buộc Poka-yoke theo cạnh |
 | Cơ cấu tổ chức | `departments` · `request_types` · `request_type_fields` · `request_type_routing` · `priorities` | Phần doanh nghiệp triển khai sửa đầu tiên; trường riêng theo loại ở mục 5.3 |
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
@@ -665,7 +750,7 @@ dung khác hẳn nhau. Dữ liệu khởi tạo nạp **một lần**, lúc dự
    một trạng thái kết thúc, không thể tạo cạnh thường đi ra từ đó. Trước #102 `CHECK` cấm
    hẳn; "kết thúc" nay nghĩa là hết chu kỳ hồ sơ, chưa hẳn là không còn đường ra
 2. **Chỉ mục duy nhất từng phần** bảo đảm mỗi bộ quy tắc có đúng một trạng thái bắt đầu,
-   mỗi lúc có đúng một bộ quy tắc kích hoạt, mỗi loại yêu cầu có đúng một phòng ban mặc định
+   mỗi lúc mỗi quy trình có đúng một bộ quy tắc kích hoạt (#376), mỗi loại yêu cầu có đúng một phòng ban mặc định
 3. **Kiểm tra mức đồ thị** — hàm `kiem_tra_cau_hinh()` trong cơ sở dữ liệu (bản sửa `0018`,
    #254; trước đó là khối `infra/seed/99-…` chỉ chạy lúc nạp) — bắt những
    lỗi mà từng dòng vẫn hợp lệ nhưng cả luồng thì hỏng: ngõ cụt không phải trạng thái
@@ -773,7 +858,8 @@ from app.cau_hinh.bo_quy_tac import kich_hoat, sao_chep
 
 def upgrade() -> None:
     ket_noi = op.get_bind()
-    cu = ket_noi.execute(text("SELECT id FROM rule_sets WHERE is_active")).scalar_one()
+    cu = ket_noi.execute(text("SELECT id FROM rule_sets WHERE is_active AND process_code = :qt"),
+                         {"qt": "internal-requests"}).scalar_one()  # bộ đang bật của MỘT quy trình (#376)
     moi = sao_chep(ket_noi, cu, "v2", "Thêm bước xác nhận của trưởng phòng")
     ket_noi.execute(text("INSERT INTO transitions (rule_set_id, from_state, …) VALUES (:moi, …)"),
                     {"moi": moi})
@@ -1167,6 +1253,60 @@ chính, đồng hồ hạn đúng bằng cách hệ thống tự đo, không s�
 chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang tiền tố `[Mẫu]` (trừ khi thêm
 `--cho-tron`). Hồ sơ mẫu không gỡ ra được — trigger chặn xóa nhật ký — nên muốn sạch thì `down -v`.
 
+### 6.3a. Lưu trữ lạnh và phả hệ dữ liệu (không gian `D`)
+
+**Đã cài đặt** — #378 (lưu trữ lạnh, nguyên lý (i) của đề) và #379 (phả hệ, nguyên lý (iii)).
+
+**Hai tầng theo vòng đời.** Tầng nóng là PostgreSQL: bảng tác nghiệp, nhật ký chỉ ghi thêm, view báo cáo.
+Tầng lạnh là kho đối tượng SeaweedFS: mỗi **tháng UTC đã khép** một bản lưu niêm phong. Tầng lạnh là **bản
+sao** để phân tích dài hạn, không phải nơi dời dữ liệu đi: đợt này **không dọn gì khỏi tầng nóng** — nhật
+ký chỉ ghi thêm là nền của khai phá quy trình và kiểm toán. Xóa khỏi tầng nóng là việc tương lai, theo
+chính sách lưu giữ của ADR-0009, và khi làm thì bản lưu lạnh là thứ cho phép làm.
+
+**Bộ quét `cold-archive`** (`app/analytics/luu_tru_lanh.py`) theo khuôn `nhip_quet.py` (mục 7.1): khóa tư
+vấn, dòng nhịp, hiện trên màn Hệ thống; vòng nền riêng để lần đầu bật trên cụm nhiều năm dữ liệu không làm
+trễ bộ quét hạn. Mỗi lượt lấy các tháng từ mốc sớm nhất có dữ liệu tới tháng đã khép cuối cùng còn thiếu
+bản lưu, cũ trước, tối đa `ARCHIVE_MAX_MONTHS_PER_RUN`. Tháng trống cũng có bản lưu, nên sổ không lỗ hổng.
+Cấu hình (`app/config.py`, `infra/.env.example`): `ARCHIVE_ENABLED`, `ARCHIVE_INTERVAL_SECONDS`,
+`ARCHIVE_MIN_AGE_MONTHS` (tối thiểu 1 — tháng đang chạy còn nhận sự kiện), `ARCHIVE_BUCKET` (rỗng là chung
+thùng tệp đính kèm — khóa S3 mẫu chỉ được tạo đúng thùng đó), `ARCHIVE_PREFIX`. Chạy ngay một lượt:
+`POST /archive/scan` (quản trị viên) — tắt bộ quét là tắt lịch, không tắt khả năng xuất.
+
+Một bản lưu, dưới `<tiền tố><YYYY-MM>/`:
+
+| Tệp | Nội dung |
+|---|---|
+| `nhat-ky-su-kien.csv.gz` | sự kiện của tháng từ view `bao_cao_nhat_ky`, **đúng cột của `GET /core/v1/events`** |
+| `ho-so-ket-thuc.csv.gz` | hồ sơ kết thúc trong tháng (cùng nghĩa "kết thúc" với `bao_cao_ho_so`: trạng thái `is_terminal`, mốc là sự kiện cuối) — trường quyết định, người bằng mã, đồng hồ hạn |
+| `manifest.json` | định dạng, phiên bản lược đồ, kỳ, khoảng UTC, lúc xuất, số sự kiện và hồ sơ theo quy trình, mỗi tệp: cột, số dòng, số byte, SHA-256 |
+
+- **Định dạng mở, không thư viện mới.** CSV RFC 4180, UTF-8 có dòng tiêu đề, nén gzip với `mtime=0` — cùng
+  nội dung ra cùng byte. Đọc được bằng mọi bảng tính hay pandas, không cần hệ thống
+- **Bất biến, chạy lại an toàn.** `manifest.json` ghi **sau cùng**: có nó là bản đã niêm phong, không bao
+  giờ ghi đè. Bảng `cold_archives` (migration `0029`) là sổ, chỉ ghi thêm bằng trigger như `event_log`.
+  Lượt hỏng giữa lúc ghi kho và ghi sổ: lượt sau thấy manifest trong kho, ghi sổ theo nó, không xuất lại.
+  Tệp dữ liệu không có manifest là dở dang, ghi lại được
+- **Dữ liệu cá nhân (ADR-0009).** Không nhãn tên, không nội dung tự do (tiêu đề, mô tả, trường riêng, lời
+  nhắn), không nội dung tệp đính kèm; người chỉ có mã định danh. Lý do: bản lưu bất biến, nên tên lọt vào
+  thì không bao giờ ẩn danh hóa được nữa — giữ tên ngoài bản lưu thì thao tác ẩn danh hóa ở tầng nóng
+  vẫn đủ
+- **Đọc lại.** `GET /core/v1/archive` (mục 2.3) liệt kê, đọc bản kê, tải từng tệp; dịch vụ kiểm mã băm
+  trước khi trả, tệp bị sửa trong kho thì `502 archive-corrupted`. `scripts/doc_luu_tru.py <YYYY-MM>`
+  tải qua container dịch vụ hoặc qua API, kiểm SHA-256, giải nén, đếm dòng so với bản kê; `--doi-chieu`
+  so thêm số dòng nhật ký với tầng nóng — chứng minh báo cáo dựng từ tầng lạnh khớp nguồn
+
+Cụm mới chỉ có bản lưu khi có dữ liệu của tháng trước: dữ liệu trình diễn (`nap_du_lieu_trinh_dien.py`,
+mặc định rải 90 ngày) có sẵn hai, ba tháng đã khép.
+
+**Phả hệ dữ liệu** (`scripts/pha_he.py`, chỉ thư viện chuẩn) đọc **tĩnh** từ kho, không cần cụm: định nghĩa
+view từ các bản sửa Alembic (chạy `upgrade()` với mô-đun giả, ghi lại mọi `CREATE`/`DROP VIEW` theo chuỗi
+`down_revision`), biểu đồ và bộ dữ liệu từ YAML ở `infra/superset/bang-dieu-khien/`, và câu SQL của những
+nơi khác đọc nhật ký (xuất dữ liệu, khai phá, lưu trữ lạnh). Kết quả là [`pha-he-du-lieu.md`](pha-he-du-lieu.md)
+cùng trang tương ứng của trang tài liệu: biểu đồ → bộ dữ liệu → view → bảng nguồn và cột, sơ đồ mermaid,
+và nguồn gốc nhật ký từ cửa chuyển trạng thái tới mọi nơi đọc. Không sửa tay hai tệp đó: đổi view hay
+bảng điều khiển thì chạy lại `python scripts/pha_he.py`. Tích hợp liên tục chạy `--kiem` trong việc
+kiểm header — trang lệch định nghĩa là đỏ.
+
 ### 6.4. Khai phá quy trình (không gian `I`)
 
 **Đã cài đặt** — #314, theo [ADR-0007](adr/0007-chon-thu-vien-khai-pha-quy-trinh.md). Màn trình bày ở
@@ -1434,6 +1574,27 @@ khoản danh bạ — quyết định để ngỏ.
 `default_enabled` của loại. `GET /me/notifications`, `POST /me/notifications/{loại}` — định danh lấy từ
 token, không ai đổi được tùy chọn của người khác. Cổng có trang `/thong-bao`, mở từ biểu tượng chuông
 cạnh tên ở thanh bên.
+
+**Webhook — truyền phát sự kiện ra ngoài (#390).** Cùng khuôn hàng đợi, nhưng cho ứng dụng khác chứ không
+cho người: `backend/app/webhook.py`, bản sửa 0031. Quản trị viên (người hay tài khoản dịch vụ mang vai
+`administrator` — cùng mức với xuất nhật ký, vì đăng ký nhận sự kiện của mọi hồ sơ) đăng ký một địa chỉ ở
+`POST /core/v1/webhooks`, bộ lọc theo mã hoạt động và mã quy trình nằm trong dòng đăng ký. Nguồn là
+`event_log` — không thêm chỗ ghi nào vào cửa chuyển trạng thái. Mỗi đăng ký giữ con trỏ `last_event_id`
+(đăng ký mới bắt đầu từ sự kiện lớn nhất lúc tạo); mỗi lượt bộ gửi biến sự kiện mới khớp bộ lọc thành dòng
+`webhook_deliveries` — khóa duy nhất (đăng ký, sự kiện) nên không gửi trùng — rồi dời con trỏ, cùng giao
+dịch. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
+`X-DXOS-Signature: sha256=HMAC(bí mật, "<X-DXOS-Timestamp>.<thân>")`; bí mật chỉ trả một lần lúc tạo. 2xx là
+xong; khác thì chờ `DXLAB_WEBHOOK_RETRY_AFTER_SECONDS` nhân đôi mỗi lần, quá `DXLAB_WEBHOOK_MAX_ATTEMPTS` lần
+là hỏng hẳn; `GET /core/v1/webhooks/{id}/deliveries` cho thấy mã phản hồi và lỗi cuối. Bộ gửi chạy theo
+khuôn #253 (khóa tư vấn, dòng nhịp "Bộ gửi webhook" ở màn Hệ thống), chu kỳ `DXLAB_WEBHOOK_SCAN_INTERVAL_SECONDS`
+(5 giây; 0 là tắt). Bên nhận có thể nhận lại một sự kiện nếu trả lời không kịp — bỏ trùng theo
+`X-DXOS-Event-Id`; ví dụ bên nhận ở `examples/goi-loi/nhan_webhook.py`. Sự kiện "tạo hồ sơ" không phải
+dòng `event_log` (nó dựng từ `requests` trong view xuất nhật ký) nên không đi qua webhook.
+
+Chọn webhook qua HTTP chứ không một trục truyền phát như Kafka: quy mô trình diễn (mục 9), không thêm dịch
+vụ hay phụ thuộc, bên nhận chỉ cần một địa chỉ HTTP; đọc lại từ đầu đã có `GET /core/v1/events` trên nhật ký
+chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng con trỏ — cần khảo sát và ADR
+trước; Redpanda dùng BSL, không thuộc danh sách OSI.
 
 ### 6.9. Kho tri thức (không gian `H`)
 
@@ -1998,6 +2159,21 @@ trình duyệt khi lời nhắn thật sự đang hiện — không ghi lúc d�
 thanh bên hỏi riêng con số qua `app/api/hop-thu/chua-doc` — không thêm dịch vụ nào vào
 Compose.
 
+**Từ #387, cổng nhận tín hiệu thời gian thực** (`backend/app/thoi_gian_thuc.py`,
+`frontend/app/api/su-kien/`, `frontend/components/nghe-thay-doi.tsx`). Bản sửa 0030 đặt trigger
+`pg_notify('ho_so_thay_doi', <mã hồ sơ>)` sau mỗi lần tạo hay sửa dòng `requests` và mỗi lời nhắn
+mới — mã ghi hồ sơ, cửa chuyển trạng thái và `event_log` không đổi. `GET /me/stream` trả
+Server-Sent Events: mỗi luồng `LISTEN` trên một kết nối bất đồng bộ riêng của psycopg, lọc mã hồ sơ
+bằng đúng luật cửa của hộp thư (`_Cua.noi_mo`) rồi mới đẩy `event: ho-so` chỉ mang `case_id` — người
+không mở được hồ sơ không biết nó vừa đổi. Luồng gửi dòng giữ kết nối mỗi
+`DXLAB_REALTIME_KEEPALIVE_SECONDS` (15 giây, dưới hạn chờ đọc của cổng API), tự đóng sau
+`DXLAB_REALTIME_MAX_STREAM_SECONDS` (240 giây) để trình duyệt nối lại bằng token mới, và có trần
+`DXLAB_REALTIME_MAX_STREAMS` (40) vì mỗi luồng giữ một kết nối PostgreSQL — quá trần trả 503. Phản hồi
+mang `X-Accel-Buffering: no` nên APISIX không gom vào bộ đệm; cổng API không thêm tuyến nào. Máy chủ
+Next.js chuyển tiếp luồng ở `/api/su-kien` (token vẫn ở máy chủ, dịch vụ từ chối thì trả 204 để
+trình duyệt thôi nối lại); khung ứng dụng nhận tín hiệu thì gộp trong 300 ms rồi `router.refresh()`
+và báo thanh bên hỏi lại số chưa đọc. Hỏi định kỳ 12 giây giữ nguyên làm đường dự phòng.
+
 **Từ #156, mỗi hồ sơ có hai cuộc trò chuyện.** Hộp thư trả mỗi cặp (hồ sơ, kênh) thành một
 cuộc với cờ `internal`; mốc đã đọc thêm cột `internal` vào khóa chính (migration 0009), nên
 đọc cuộc này không làm cuộc kia thành đã đọc. Địa chỉ `?ho-so=<id>&kenh=noi-bo` mở cuộc nội
@@ -2130,7 +2306,7 @@ thêm vào cả `apisix.yaml` lẫn bảng này.
 |---|---|---|
 | `/`, `/health`, `/health/live`, `/health/ready` (GET, HEAD) | Công khai | Công khai; `/health*` chỉ trả trạng thái chung (dưới) |
 | `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json` (GET, HEAD) | Công khai | Công khai (tài liệu tự sinh) |
-| `/metrics`, `/system/health`, `/sla/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
+| `/metrics`, `/system/health`, `/sla/scan`, `/archive/scan` | Cần token | Cần vai `administrator` — chính sách #247 giữ nguyên |
 | `/core/v1/*` — API của nền tảng lõi (mục 2.3) | Cần token, kể cả đường lõi chưa có | Như đường cũ tương ứng: cùng hàm, cùng phụ thuộc |
 | Mọi đường khác, và đường công khai với phương thức khác (`POST /health`) | Cần token | Cần token; phân quyền theo vai trò và phạm vi như cũ |
 

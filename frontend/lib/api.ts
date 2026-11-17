@@ -144,6 +144,31 @@ export async function goiDichVu<T>(duongDan: string): Promise<T | null> {
   }
 }
 
+/**
+ * Mở một luồng dài của dịch vụ ứng dụng (#387) — `text/event-stream` — và trả nguyên phản hồi để tuyến
+ * API chuyển tiếp thân luồng cho trình duyệt. Không đặt thời hạn chờ như `goiDichVu`: luồng sống tới khi
+ * dịch vụ tự đóng hay `huy` được kích (trình duyệt rời trang). Trả `null` khi chưa đăng nhập, dịch vụ từ
+ * chối (401, 503 khi đủ số luồng) hay không tới được.
+ */
+export async function moLuongDichVu(duongDan: string, huy: AbortSignal): Promise<Response | null> {
+  const phien = await layPhien();
+  if (!phien) return null;
+
+  const dungPhien = await lamMoiNeuSapHet(phien);
+
+  try {
+    const phanHoi = await fetch(`${diaChiDichVu}${duongDan}`, {
+      signal: huy,
+      headers: { ...(await tieuDeGoi(dungPhien.accessToken)), Accept: "text/event-stream" },
+      cache: "no-store",
+    });
+    if (!phanHoi.ok || !phanHoi.body) return null;
+    return phanHoi;
+  } catch {
+    return null;
+  }
+}
+
 export type DanhTinh = {
   id: string;
   username: string | null;

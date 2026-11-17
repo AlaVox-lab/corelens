@@ -20,7 +20,7 @@ from sqlalchemy import select
 from app.auth.dependencies import current_actor
 from app.db import get_session
 from app.main import app
-from app.models.workflow_config import Department, Priority, RequestType, State
+from app.models.workflow_config import Priority, RequestType, State
 from app.workflow.context import Actor
 from app.workflow.engine import perform_transition
 from tests.truong_mau import chi_tiet_mau
@@ -87,7 +87,8 @@ def test_danh_muc_loai_yeu_cau_lay_tu_du_lieu(client, session, rule_set):
     tu_api = {x["code"] for x in r.json()}
     tu_bang = set(
         session.scalars(
-            select(RequestType.code).where(RequestType.is_active)
+            # Không truyền `process` là quy trình mặc định của ứng dụng — bộ đang bật của fixture (#376)
+            select(RequestType.code).where(RequestType.is_active, RequestType.process_code == rule_set.process_code)
         ).all()
     )
     assert tu_api == tu_bang

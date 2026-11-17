@@ -46,6 +46,7 @@ from app.workflow.engine import (
     case_history,
     create_case,
     get_active_rule_set,
+    ma_quy_trinh_ung_dung,
     perform_transition,
 )
 from app.workflow.errors import TransitionNotAllowed
@@ -223,7 +224,7 @@ def test_ho_so_moi_nhan_bo_dang_bat_ho_so_cu_giu_bo_cu(session, hai_bo):
     _bat_bo(session, moi)
     ho_so_moi = _tao(session)
 
-    assert get_active_rule_set(session).id == moi
+    assert get_active_rule_set(session, ma_quy_trinh_ung_dung(session)).id == moi
     assert ho_so_cu.rule_set_id == cu
     assert ho_so_moi.rule_set_id == moi
     assert ho_so_cu.current_state == ho_so_moi.current_state == bat_dau

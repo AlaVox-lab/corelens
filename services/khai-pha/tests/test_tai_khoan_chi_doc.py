@@ -14,7 +14,8 @@ import psycopg
 import pytest
 from psycopg import errors
 
-# Đúng danh sách migration 0019 cấp SELECT
+# Đúng danh sách migration 0019 cấp SELECT, cộng danh mục quy trình của 0028 (#376) — khai phá từng quy
+# trình cần biết quy trình mặc định
 BANG_DUOC_DOC = (
     "bao_cao_nhat_ky",
     "event_log",
@@ -23,6 +24,7 @@ BANG_DUOC_DOC = (
     "work_calendars",
     "work_hours",
     "holidays",
+    "processes",
 )
 # Có trong lược đồ nhưng không được cấp: dữ liệu hồ sơ, danh mục, người dùng
 BANG_KHONG_DUOC_DOC = ("requests", "departments", "request_types", "priorities", "rule_sets")

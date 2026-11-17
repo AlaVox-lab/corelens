@@ -234,9 +234,13 @@ ba trong bốn dịch vụ lõi; đợt này bổ sung cổng API và vẽ ranh 
 - [x] Phân tích đề thi, đối chiếu với bộ khung hiện có — [`doi-chieu-de-thi.md`](doi-chieu-de-thi.md) (#363)
 - [x] Khảo sát nền tảng cổng API — ADR-0010, đã chấp nhận 15/11 (#363)
 - [x] Cổng API làm cửa vào duy nhất của cụm (#364)
-- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`. Mức 2 — engine chạy nhiều quy trình — chưa làm, xét sau khi phát hành
+- [x] Tách nền tảng lõi không giao diện khỏi ứng dụng minh họa, Mức 1 (#365): API của lõi dưới `/core/v1`, tài khoản dịch vụ, ví dụ `examples/goi-loi/`
+- [x] Nền tảng lõi Mức 2 (#376): engine chạy nhiều quy trình, quy trình mẫu thứ hai (đề xuất mua sắm duyệt hai cấp) chạy trọn qua `/core/v1`, cửa bước chuyển trung lập với vai. Mức 3 — tách engine thành dịch vụ riêng — ngoài đợt này
+- [x] Siết realm mẫu (#377): chống dò mật khẩu, chính sách mật khẩu tối thiểu
 - [x] Xác thực hai lớp tùy chọn (#366)
 - [x] Viết lại tài liệu theo mô hình ba tầng của đề (#367)
+- [x] Lưu trữ lạnh dữ liệu lịch sử ra kho đối tượng (#378) — nguyên lý (i): mỗi tháng đã khép một bản lưu bất biến, CSV gzip kèm bản kê có mã băm, đọc lại qua `GET /core/v1/archive` và `scripts/doc_luu_tru.py`
+- [x] Trang phả hệ dữ liệu sinh từ định nghĩa (#379) — nguyên lý (iii): biểu đồ → bộ dữ liệu → view → bảng nguồn, tích hợp liên tục kiểm bằng `scripts/pha_he.py --kiem`
 - [ ] Phát hành `v1.0.0`, kiểm dựng từ tệp phát hành (#368)
 
 **Chuẩn bị trước để giảm rủi ro**: tuân thủ nghiêm nguyên tắc cấu hình thay vì mã
@@ -273,6 +277,11 @@ chỉ là thay dữ liệu.
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` đầy đủ
 - [ ] Nhãn `good first issue` và `help wanted` có issue thật
 - [ ] Trang tài liệu kỹ thuật dựng từ thư mục `docs/`
+- [x] `README.en.md` cho người không đọc tiếng Việt, hai README dẫn qua lại (#380)
+- [ ] Trang tài liệu đăng công khai, ô Website của kho trỏ tới (#381) — cấu hình và hướng dẫn đăng đã có
+  (`CONTRIBUTING.md` mục 7.1), chờ kho công khai
+- [x] Linter Python và TypeScript cho mọi pull request; toàn bộ kịch bản giao diện cho pull request vào
+  `main` (#382)
 
 ---
 

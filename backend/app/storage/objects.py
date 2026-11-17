@@ -5,8 +5,9 @@
 #
 # Mọi cuộc gọi sang SeaweedFS đi qua tệp này, bằng S3 API chuẩn qua boto3. Không nhúng
 # thư viện của SeaweedFS, không dùng API riêng của nó — đổi sang Garage hay MinIO chỉ là đổi
-# bốn giá trị cấu hình. Phần còn lại của dịch vụ chỉ biết bốn hàm dưới đây và `KhoLoi`, nên
-# kho có tắt hay lỗi cũng chỉ làm đúng phần đính kèm báo lỗi.
+# bốn giá trị cấu hình. Phần còn lại của dịch vụ chỉ biết các hàm dưới đây và `KhoLoi`, nên
+# kho có tắt hay lỗi cũng chỉ làm đúng phần đính kèm (và lưu trữ lạnh, #378) báo lỗi. Mặc định là
+# thùng tệp đính kèm; lưu trữ lạnh truyền thùng của nó.
 
 from __future__ import annotations
 
@@ -51,10 +52,10 @@ def _khach():
     )
 
 
-def _dam_bao_thung() -> None:
+def _dam_bao_thung(thung: str | None = None) -> None:
     """Tạo thùng nếu chưa có. Gọi trước mỗi lần ghi — rẻ, và nhờ đó không có bước khởi tạo kho
     nào phải nhớ làm, kể cả khi volume của kho vừa bị xóa."""
-    thung = get_settings().s3_bucket
+    thung = thung or get_settings().s3_bucket
     try:
         _khach().head_bucket(Bucket=thung)
     except ClientError as loi:
@@ -64,22 +65,37 @@ def _dam_bao_thung() -> None:
         _khach().create_bucket(Bucket=thung)
 
 
-def luu_tep(khoa: str, noi_dung: bytes, loai: str) -> None:
-    """Ghi một tệp vào kho dưới khóa cho trước."""
+def luu_tep(khoa: str, noi_dung: bytes, loai: str, thung: str | None = None) -> None:
+    """Ghi một tệp vào kho dưới khóa cho trước. `thung` bỏ trống là thùng tệp đính kèm."""
+    thung = thung or get_settings().s3_bucket
     try:
-        _dam_bao_thung()
-        _khach().put_object(
-            Bucket=get_settings().s3_bucket, Key=khoa, Body=noi_dung, ContentType=loai
-        )
+        _dam_bao_thung(thung)
+        _khach().put_object(Bucket=thung, Key=khoa, Body=noi_dung, ContentType=loai)
     except (BotoCoreError, ClientError) as loi:
         logger.exception("Không ghi được tệp vào kho: %s", khoa)
         raise KhoLoi("Kho tệp không phản hồi.") from loi
 
 
-def doc_tep(khoa: str) -> bytes:
+def co_tep(khoa: str, thung: str | None = None) -> bool:
+    """Khóa đã có trong kho chưa — bản lưu trữ lạnh (#378) hỏi trước khi ghi để không bao giờ ghi đè."""
+    try:
+        _khach().head_object(Bucket=thung or get_settings().s3_bucket, Key=khoa)
+        return True
+    except ClientError as loi:
+        ma = str(loi.response.get("Error", {}).get("Code", ""))
+        if ma in {"404", "NoSuchKey", "NotFound", "NoSuchBucket"}:
+            return False
+        logger.exception("Không hỏi được kho tệp: %s", khoa)
+        raise KhoLoi("Kho tệp không phản hồi.") from loi
+    except BotoCoreError as loi:
+        logger.exception("Không hỏi được kho tệp: %s", khoa)
+        raise KhoLoi("Kho tệp không phản hồi.") from loi
+
+
+def doc_tep(khoa: str, thung: str | None = None) -> bytes:
     """Đọc nguyên một tệp. Tệp tối đa vài chục MB nên đọc cả vào bộ nhớ là đủ."""
     try:
-        phan_hoi = _khach().get_object(Bucket=get_settings().s3_bucket, Key=khoa)
+        phan_hoi = _khach().get_object(Bucket=thung or get_settings().s3_bucket, Key=khoa)
         return phan_hoi["Body"].read()
     except ClientError as loi:
         ma = str(loi.response.get("Error", {}).get("Code", ""))

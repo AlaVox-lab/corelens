@@ -9,11 +9,30 @@
 import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 
+// Địa chỉ trang và đường gốc lấy từ biến môi trường lúc dựng (#381), để một mã nguồn đăng được ở
+// nhiều nơi — cách đăng ở CONTRIBUTING.md mục "Đăng trang tài liệu":
+//   - DOCS_SITE_URL  — địa chỉ đầy đủ, ví dụ `https://dx-os-lab.vercel.app`. Bỏ trống thì dùng tên miền
+//     chính thức mà Vercel tự cấp (VERCEL_PROJECT_PRODUCTION_URL); dựng ở máy thì để trống.
+//   - DOCS_BASE_PATH — đường gốc, mặc định `/` (Vercel, tên miền riêng). GitHub Pages của kho cần
+//     `/dx-os-lab`.
+// Liên kết giữa các trang và ảnh đều viết tương đối hoặc qua `import`, nên trang chạy đúng với mọi
+// đường gốc.
+function diaChiTrang() {
+  const dat = process.env.DOCS_SITE_URL?.trim();
+  if (dat) return dat;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  return vercel ? `https://${vercel}` : undefined;
+}
+
+function duongGoc() {
+  const dat = process.env.DOCS_BASE_PATH?.trim().replace(/\/+$/, "");
+  if (!dat) return "/";
+  return dat.startsWith("/") ? dat : `/${dat}`;
+}
+
 export default defineConfig({
-  // Địa chỉ GitHub Pages của kho, bật khi kho chuyển công khai. Liên kết giữa các trang viết tương
-  // đối nên trang chạy đúng dưới tiền tố này lẫn khi đổi sang tên miền riêng.
-  site: "https://alavox-lab.github.io",
-  base: "/dx-os-lab",
+  site: diaChiTrang(),
+  base: duongGoc(),
   integrations: [
     starlight({
       title: "DX-OS Lab",

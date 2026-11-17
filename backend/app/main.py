@@ -22,6 +22,8 @@ from sqlalchemy.orm import Session
 from app.analytics.bang_dieu_khien import pham_vi_cua
 from app.analytics.bang_dieu_khien import router as router_bang_dieu_khien
 from app.analytics.khai_pha import router as router_khai_pha
+from app.analytics.luu_tru_lanh import NHAN_BO_QUET_LUU_TRU, TEN_BO_QUET_LUU_TRU, quet_luu_tru
+from app.analytics.luu_tru_lanh import router as router_luu_tru
 from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import VAI_TRO_QUAN_TRI, current_actor, current_claims, require_roles
 from app.cau_hinh.quan_tri import router as router_quan_tri
@@ -58,8 +60,13 @@ from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau_ung_dung
 from app.workflow.routes import router_loi as router_yeu_cau
+from app.workflow.routes import router_nguoi_gui as router_yeu_cau_nguoi_gui
+from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
+from app.thoi_gian_thuc import router as router_thoi_gian_thuc
+from app.webhook import NHAN_BO_QUET_WEBHOOK, TEN_BO_QUET_WEBHOOK, co_dang_ky_dang_bat, quet_webhook
+from app.webhook import router as router_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -217,6 +224,41 @@ async def _vong_gui_thu() -> None:
             logger.exception("Lượt gửi thư thông báo thất bại, sẽ thử lại ở lượt sau")
 
 
+def _luu_tru_mot_lan() -> list[str]:
+    """Một lượt bộ lưu trữ lạnh (#378), có khóa tư vấn và dòng nhịp (#253). Trả về các kỳ vừa niêm phong."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_LUU_TRU, quet_luu_tru)
+    return (luot.ket_qua or []) if luot.da_chay else []
+
+
+async def _vong_luu_tru() -> None:
+    """Vòng riêng: lần đầu bật trên cụm nhiều năm dữ liệu, một lượt ghi kho vài tháng — không được làm trễ
+    bộ quét hạn. Muốn chạy ngay (trình diễn, kiểm chứng) thì `POST /archive/scan`."""
+    while True:
+        await asyncio.sleep(settings.archive_interval_seconds)
+        try:
+            await asyncio.to_thread(_luu_tru_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt lưu trữ lạnh thất bại, sẽ thử lại ở lượt sau")
+
+
+def _gui_webhook_mot_lan() -> int:
+    """Một lượt bộ gửi webhook (#390), có khóa tư vấn và dòng nhịp (#253)."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_WEBHOOK, quet_webhook)
+    return (luot.ket_qua or 0) if luot.da_chay else 0
+
+
+async def _vong_gui_webhook() -> None:
+    """Vòng riêng như bộ gửi thư: một bên nhận chậm không được làm trễ bộ quét hạn."""
+    while True:
+        await asyncio.sleep(settings.webhook_scan_interval_seconds)
+        try:
+            await asyncio.to_thread(_gui_webhook_mot_lan)
+        except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
+            logger.exception("Lượt gửi webhook thất bại, sẽ thử lại ở lượt sau")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Bật bộ quét SLA và bộ quét gợi ý lúc khởi động, tắt gọn lúc dừng."""
@@ -251,14 +293,24 @@ async def lifespan(app: FastAPI):
             settings.notify_scan_interval_seconds,
         )
 
+    # Lưu trữ lạnh (#378): mặc định bật, chu kỳ trong cấu hình
+    if settings.archive_enabled:
+        cac_tac_vu.append(asyncio.create_task(_vong_luu_tru()))
+        logger.info("Lưu trữ lạnh bật; bộ quét chạy mỗi %d giây", settings.archive_interval_seconds)
+
+    # Webhook (#390): luôn chạy trừ khi đặt chu kỳ 0 — không đăng ký nào thì lượt gần như không tốn gì
+    if settings.webhook_enabled:
+        cac_tac_vu.append(asyncio.create_task(_vong_gui_webhook()))
+        logger.info("Bộ gửi webhook chạy mỗi %d giây", settings.webhook_scan_interval_seconds)
+
     yield
 
     for tac_vu in cac_tac_vu:
         tac_vu.cancel()
 
 
-# Năm nhóm API của nền tảng lõi (#365), mỗi nhóm một nhãn OpenAPI kèm mô tả hiện ở /docs. Khai trong
-# `openapi_tags` nên năm nhóm này đứng đầu trang tài liệu, trước các nhóm của ứng dụng minh họa. Khóa là
+# Sáu nhóm API của nền tảng lõi (#365; lưu trữ lạnh #378), mỗi nhóm một nhãn OpenAPI kèm mô tả hiện ở /docs. Khai trong
+# `openapi_tags` nên sáu nhóm này đứng đầu trang tài liệu, trước các nhóm của ứng dụng minh họa. Khóa là
 # đoạn đường ngay sau `/core/v1`.
 NHOM_LOI: dict[str, dict[str, str]] = {
     "workflow": {
@@ -277,9 +329,20 @@ NHOM_LOI: dict[str, dict[str, str]] = {
         "description": "Dữ liệu có cấu trúc: xuất nhật ký sự kiện chuẩn hóa dạng CSV hoặc JSON. Chỉ quản "
         "trị viên.",
     },
+    "archive": {
+        "name": "Lõi — Lưu trữ lạnh",
+        "description": "Dữ liệu lịch sử ở tầng lạnh: mỗi tháng đã khép một bản lưu bất biến trong kho đối "
+        "tượng — nhật ký sự kiện và hồ sơ đã kết thúc (CSV gzip) kèm bản kê có mã băm SHA-256. Liệt kê, đọc "
+        "bản kê, tải từng tệp. Chỉ quản trị viên.",
+    },
     "notifications": {
         "name": "Lõi — Thông báo",
         "description": "Tùy chọn nhận thông báo thư của chính người gọi.",
+    },
+    "webhooks": {
+        "name": "Lõi — Webhook",
+        "description": "Truyền phát sự kiện ra ngoài: đăng ký một địa chỉ nhận, mỗi bản ghi mới của nhật ký sự "
+        "kiện khớp bộ lọc được POST tới đó, ký HMAC-SHA256, thử lại khi hỏng. Chỉ quản trị viên.",
     },
     "identity": {
         "name": "Lõi — Định danh",
@@ -308,6 +371,7 @@ app.add_middleware(LopQuanSat)
 # Đường cũ. Nhãn OpenAPI gắn ở đây chứ không ở router, vì router của lõi còn được gắn lần nữa dưới
 # /core/v1 với nhãn riêng (cuối tệp) — nhãn của router thì cộng dồn vào mọi lần gắn.
 app.include_router(router_yeu_cau, tags=["Yêu cầu"])
+app.include_router(router_yeu_cau_nguoi_gui, tags=["Yêu cầu"])
 app.include_router(router_yeu_cau_ung_dung, tags=["Yêu cầu"])
 app.include_router(router_dieu_phoi)
 app.include_router(router_giao_viec)
@@ -322,6 +386,7 @@ app.include_router(router_tuong_tu)
 app.include_router(router_thong_bao, prefix="/me/notifications", tags=["Thông báo"])
 app.include_router(router_quan_tri)
 app.include_router(router_uy_quyen)
+app.include_router(router_thoi_gian_thuc)
 
 
 def _do_suc_khoe(session: Session) -> dict:
@@ -406,12 +471,30 @@ def _do_suc_khoe(session: Session) -> dict:
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
+        # Bộ lưu trữ lạnh (#378): mặc định bật; như các bộ quét tùy chọn khác, tắt thì không có dòng
+        if settings.archive_enabled:
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_LUU_TRU: NHAN_BO_QUET_LUU_TRU},
+                nguong_qua_lau_giay=settings.archive_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
         # Bộ gửi thư (#251): chỉ hiện khi máy chủ thư được cấu hình
         if settings.notify_enabled:
             ket_qua["scanners"] += danh_gia_bo_quet(
                 session,
                 {TEN_BO_QUET_THU: NHAN_BO_QUET_THU},
                 nguong_qua_lau_giay=settings.notify_scan_stale_threshold_seconds,
+                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
+            )
+        # Bộ gửi webhook (#390): chỉ hiện khi có đăng ký đang bật — không ai nghe thì nhịp không nói lên gì
+        if settings.webhook_enabled and co_dang_ky_dang_bat(session):
+            ket_qua["scanners"] += danh_gia_bo_quet(
+                session,
+                {TEN_BO_QUET_WEBHOOK: NHAN_BO_QUET_WEBHOOK},
+                nguong_qua_lau_giay=settings.webhook_scan_stale_threshold_seconds,
                 loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
@@ -679,6 +762,20 @@ def sla_scan(
     }
 
 
+@app.post("/archive/scan", tags=["Vận hành"])
+def archive_scan(
+    actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
+) -> dict:
+    """Chạy ngay một lượt lưu trữ lạnh (#378), không đợi chu kỳ — để trình diễn và kiểm chứng.
+
+    Chỉ niêm phong tháng đã khép chưa có bản lưu; bản đã có không bao giờ bị ghi đè, nên bấm bao nhiêu lần
+    cũng an toàn. Bản dịch vụ khác đang giữ khóa thì lượt này bỏ qua (`skipped`). Chạy cả khi bộ quét định kỳ
+    tắt bằng cấu hình: tắt là tắt lịch, không tắt khả năng xuất."""
+    with SessionLocal() as phien:
+        luot = chay_luot_quet(phien, TEN_BO_QUET_LUU_TRU, quet_luu_tru)
+    return {"exported_periods": luot.ket_qua or [], "skipped": not luot.da_chay, "triggered_by": actor.id}
+
+
 # ---------------------------------------------------------------------------
 # Nền tảng lõi — Tầng 1 của đề thi (#365, ARCHITECTURE.md mục 2.3)
 # ---------------------------------------------------------------------------
@@ -700,8 +797,13 @@ def _gan_loi(router: APIRouter, nhom: str, duong: str = "") -> None:
 
 
 _gan_loi(router_yeu_cau, "workflow")
+# Danh sách, chi tiết, bước chuyển của lõi: phạm vi theo vai (#376), khác cửa "hồ sơ của mình" ở đường cũ
+_gan_loi(router_yeu_cau_loi, "workflow")
 _gan_loi(router_tep, "files")
 _gan_loi(router_tai_tep, "files")
 _gan_loi(router_du_lieu_mo, "events")
+# Lưu trữ lạnh (#378): chỉ có ở lõi, không có đường cũ — cổng người dùng không dùng
+_gan_loi(router_luu_tru, "archive")
 _gan_loi(router_thong_bao, "notifications", "/preferences")
 _gan_loi(router_dinh_danh, "identity")
+_gan_loi(router_webhook, "webhooks")

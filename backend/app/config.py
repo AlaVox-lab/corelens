@@ -10,6 +10,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Bộ quét im quá chừng này chu kỳ mà không có lượt thành công nào thì coi là quá lâu. Năm chu kỳ:
@@ -309,6 +310,31 @@ class Settings(BaseSettings):
     # SeaweedFS không dùng vùng, nhưng chữ ký S3 vẫn đòi một giá trị
     s3_region: str = "us-east-1"
 
+    # --- Lưu trữ lạnh, xem #378 -------------------------------------------------
+    #
+    # Bộ quét theo khuôn `nhip_quet.py` xuất nhật ký sự kiện và hồ sơ đã kết thúc của mỗi tháng đã khép
+    # ra kho đối tượng (CSV gzip + manifest.json có mã băm). Bản lưu đã niêm phong thì không ghi đè.
+    archive_enabled: bool = True
+    # Một giờ là đủ: mỗi tháng chỉ có một bản, lượt không có việc chỉ là vài truy vấn nhỏ
+    archive_interval_seconds: int = 3600
+    # Tháng đã khép: cũ hơn chừng này tháng so với tháng hiện tại (UTC). 1 — tháng trước trở về trước.
+    # Tối thiểu 1: tháng đang chạy còn nhận sự kiện, chưa niêm phong được.
+    archive_min_age_months: int = Field(default=1, ge=1)
+    # Số tháng tối đa mỗi lượt, để lần đầu bật trên cụm có nhiều năm dữ liệu không giữ khóa quá lâu
+    archive_max_months_per_run: int = Field(default=6, ge=1)
+    # Thùng rỗng là dùng chung thùng tệp đính kèm: khóa S3 mẫu chỉ có quyền tạo đúng thùng đó
+    # (infra/seaweedfs/s3-config.json). Thùng riêng thì cấp thêm `Admin:<tên thùng>` ở tệp đó.
+    archive_bucket: str = ""
+    archive_prefix: str = "luu-tru-lanh/"
+
+    @property
+    def archive_bucket_name(self) -> str:
+        return self.archive_bucket.strip() or self.s3_bucket
+
+    @property
+    def archive_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.archive_interval_seconds
+
     # Giới hạn tệp đính kèm là cấu hình triển khai, không phải mã (CLAUDE.md mục 1.2). Giao
     # diện hỏi dịch vụ giới hạn thay vì tự giữ bản sao — xem GET /attachments/policy.
     attachment_allowed_extensions: str = (
@@ -378,6 +404,39 @@ class Settings(BaseSettings):
     # Gốc của cổng — Superset chỉ cho trang này nhúng bảng điều khiển (allowed_domains)
     portal_public_url: str = "http://localhost:3000"
     superset_timeout_seconds: float = 5.0
+
+    # --- Cập nhật thời gian thực, xem #387 và app/thoi_gian_thuc.py -----------------------
+    #
+    # Nhịp gửi dòng giữ kết nối khi không có tín hiệu: phải ngắn hơn hạn chờ đọc của cổng API
+    # (GATEWAY_TIMEOUT_SECONDS) và của mọi proxy đứng trước, không thì luồng bị cắt giữa chừng.
+    realtime_keepalive_seconds: float = 15.0
+    # Luồng tự đóng sau chừng này giây; trình duyệt nối lại ngay, bằng token mới. Nhờ vậy không có
+    # luồng nào sống lâu hơn hạn của access token đã mở nó (Keycloak mặc định 5 phút).
+    realtime_max_stream_seconds: float = 240.0
+    # Mỗi luồng giữ riêng một kết nối PostgreSQL để LISTEN. Quá số này thì từ chối 503 và cổng quay
+    # về hỏi định kỳ — không để luồng ăn hết kết nối mà các lời gọi khác cần.
+    realtime_max_streams: int = 40
+
+    # --- Webhook — truyền phát sự kiện ra ngoài, xem #390 và app/webhook.py ---------------
+    #
+    # Bộ gửi luôn chạy (không đăng ký nào thì một lượt chỉ là hai câu truy vấn rỗng). Đặt chu kỳ 0 để tắt.
+    webhook_scan_interval_seconds: int = 5
+    # Mỗi lượt xét tối đa chừng này sự kiện cho mỗi đăng ký, và gửi tối đa chừng này lần
+    webhook_batch_size: int = 100
+    # Hạn chờ một bên nhận trả lời. Ngắn: một bên nhận chậm không được giữ cả lượt
+    webhook_timeout_seconds: float = 5.0
+    # Thử lại khi hỏng: chờ `webhook_retry_after_seconds`, nhân đôi mỗi lần, tối đa `webhook_max_attempts`
+    # lần rồi đánh dấu hỏng hẳn
+    webhook_max_attempts: int = 6
+    webhook_retry_after_seconds: int = 10
+
+    @property
+    def webhook_enabled(self) -> bool:
+        return self.webhook_scan_interval_seconds > 0
+
+    @property
+    def webhook_scan_stale_threshold_seconds(self) -> int:
+        return BOI_SO_CHU_KY_QUA_LAU * self.webhook_scan_interval_seconds
 
 
 @lru_cache

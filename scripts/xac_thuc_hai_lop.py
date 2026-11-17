@@ -7,6 +7,12 @@
 #     python scripts/xac_thuc_hai_lop.py bat
 #     python scripts/xac_thuc_hai_lop.py tat              # thôi buộc; mã đã thiết lập vẫn được hỏi
 #     python scripts/xac_thuc_hai_lop.py tat --xoa-ma     # thôi buộc VÀ xóa mã đã thiết lập
+#     python scripts/xac_thuc_hai_lop.py chong-do         # áp chống dò mật khẩu + chính sách mật khẩu (#377)
+#
+# `chong-do` đưa realm đang chạy về đúng mặc định bảo mật đăng nhập của realm mẫu: chống dò mật khẩu (khóa tạm
+# tài khoản sau một số lần sai liên tiếp, tự mở sau vài phút) và chính sách mật khẩu tối thiểu. Giá trị đọc
+# từ chính infra/keycloak/realm-dx-os-lab.json — một nguồn sự thật cho cụm dựng mới và cụm nâng cấp; kịch bản
+# không mang con số nào. Chạy lại bao nhiêu lần cũng được. `trang-thai` in cả hai thứ này.
 #
 # Cách làm — chỉ cấu hình qua API quản trị của Keycloak, không sửa mã hay ảnh của nền tảng (ADR-0001):
 #
@@ -42,6 +48,32 @@ HANH_DONG = "CONFIGURE_TOTP"
 LOAI_MA = "otp"
 BUOC_HOI_MA = "auth-otp-form"
 TRANG = 100
+
+# Mặc định bảo mật đăng nhập của realm mẫu (#377): các khóa này của realm-dx-os-lab.json được áp lên realm đang
+# chạy. Tên khóa là từ vựng của Keycloak; giá trị nằm trong tệp realm.
+TEP_REALM = GOC_KHO / "infra" / "keycloak" / "realm-dx-os-lab.json"
+KHOA_CHONG_DO = (
+    "bruteForceProtected",
+    "permanentLockout",
+    "failureFactor",
+    "waitIncrementSeconds",
+    "maxFailureWaitSeconds",
+    "maxDeltaTimeSeconds",
+    "quickLoginCheckMilliSeconds",
+    "minimumQuickLoginWaitSeconds",
+    "passwordPolicy",
+)
+
+
+def mac_dinh_bao_mat() -> dict:
+    """Các khóa chống dò mật khẩu và chính sách mật khẩu, đọc từ tệp realm mẫu."""
+    if not TEP_REALM.is_file():
+        sys.exit(f"Không thấy {TEP_REALM} — chạy kịch bản từ kho mã.")
+    realm = json.loads(TEP_REALM.read_text(encoding="utf-8"))
+    thieu = [k for k in KHOA_CHONG_DO if k not in realm]
+    if thieu:
+        sys.exit(f"{TEP_REALM.name} thiếu khóa {', '.join(thieu)}.")
+    return {k: realm[k] for k in KHOA_CHONG_DO}
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +296,36 @@ def trang_thai(kc: Keycloak) -> int:
     print(f"  đã thiết lập mã:                    {len(co_ma)}" + (f"  ({ten_tk(co_ma)})" if co_ma else ""))
     print(f"  phải thiết lập ở lần đăng nhập kế:  {len(cho)}")
     print(f"  chưa có mã, không bị buộc:          {len(tu_do)}")
+    in_chong_do(r)
+    return 0
+
+
+def in_chong_do(r: dict) -> None:
+    mau = mac_dinh_bao_mat()
+    lech = sorted(k for k, v in mau.items() if r.get(k) != v)
+    if r.get("bruteForceProtected"):
+        print(f"Chống dò mật khẩu: BẬT — khóa tạm sau {r.get('failureFactor')} lần sai, mỗi lần chờ thêm "
+              f"{r.get('waitIncrementSeconds')} giây, tối đa {r.get('maxFailureWaitSeconds')} giây"
+              + (", khóa vĩnh viễn" if r.get("permanentLockout") else ", tự mở"))
+    else:
+        print("Chống dò mật khẩu: TẮT")
+    print(f"Chính sách mật khẩu: {r.get('passwordPolicy') or 'không có'}")
+    print("  Khớp mặc định của realm mẫu." if not lech
+          else f"  LỆCH realm mẫu ở {', '.join(lech)} — chạy `chong-do` để áp.")
+
+
+def chong_do(kc: Keycloak) -> int:
+    """Áp các khóa của realm mẫu lên realm đang chạy. Gửi TRỌN bản ghi realm vừa đọc với các khóa đã sửa."""
+    r = kc.realm_rep()
+    mau = mac_dinh_bao_mat()
+    doi = {k: v for k, v in mau.items() if r.get(k) != v}
+    if doi:
+        kc.goi("", "PUT", {**r, **doi})
+        print(f"Đã áp: {', '.join(f'{k}={v}' for k, v in doi.items())}")
+    else:
+        print("Realm đã khớp mặc định bảo mật của realm mẫu, không đổi gì.")
+    in_chong_do(kc.realm_rep())
+    print("Xong. Mật khẩu đã đặt trước khi có chính sách vẫn dùng được; chính sách áp ở lần đặt hay đổi mật khẩu kế.")
     return 0
 
 
@@ -312,8 +374,10 @@ def main() -> int:
     for luong in (sys.stdout, sys.stderr):
         if hasattr(luong, "reconfigure"):
             luong.reconfigure(encoding="utf-8")
-    p = argparse.ArgumentParser(description="Bật, tắt, xem xác thực hai lớp (TOTP) cho mọi tài khoản của realm.")
-    p.add_argument("lenh", choices=("bat", "tat", "trang-thai"))
+    p = argparse.ArgumentParser(
+        description="Bật, tắt, xem xác thực hai lớp (TOTP) cho mọi tài khoản của realm; áp chống dò mật khẩu."
+    )
+    p.add_argument("lenh", choices=("bat", "tat", "trang-thai", "chong-do"))
     p.add_argument("--xoa-ma", action="store_true", help="với tat: xóa luôn mã đã thiết lập của mọi tài khoản")
     p.add_argument("--env-file", type=Path, default=Path("infra/.env"), help="tệp env của cụm (mặc định infra/.env)")
     p.add_argument("--keycloak", help="địa chỉ Keycloak, mặc định http://localhost:<KEYCLOAK_PORT>")
@@ -327,6 +391,8 @@ def main() -> int:
         return bat(kc)
     if ts.lenh == "tat":
         return tat(kc, ts.xoa_ma)
+    if ts.lenh == "chong-do":
+        return chong_do(kc)
     return trang_thai(kc)
 
 

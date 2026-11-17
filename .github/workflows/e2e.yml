@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Kịch bản giao diện qua đăng nhập thật trong tích hợp liên tục (#382). Dựng trọn cụm mặc định từ
+# `.env.example` trên máy sạch — đúng lệnh trong README — rồi chạy toàn bộ Playwright trong `e2e/`.
+#
+# Chỉ chạy cho pull request vào `main` (nhịp phát hành) và khi bấm chạy tay: dựng trọn cụm cộng gần
+# hai trăm kịch bản mất khoảng nửa giờ, quá lâu cho mỗi pull request vào `dev`. Pull request vào `dev`
+# vẫn chạy linter và kiểm thử dịch vụ ở ci.yml.
+#
+# Trình duyệt: Chromium do Playwright tải về (có sẵn cách cài trên runner Ubuntu). Muốn chạy bằng
+# kênh khác (ví dụ `chrome`) thì nhập ô `kenh` khi chạy tay — playwright.config.ts đọc biến KENH.
+
+name: Kịch bản giao diện
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      kenh:
+        description: "Kênh trình duyệt cho Playwright (trống = Chromium tải về; ví dụ: chrome)"
+        required: false
+        default: ""
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Kịch bản giao diện — cụm sạch, đăng nhập thật
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
+    steps:
+      - uses: actions/checkout@v4
+      # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa
+      - run: cp infra/.env.example infra/.env
+      - name: Dựng và bật cụm mặc định
+        run: $COMPOSE up -d --build --wait --wait-timeout 900
+      # `--wait` chờ healthcheck; Keycloak còn phải nạp xong realm mẫu thì trang đăng nhập mới mở được
+      - name: Chờ cổng người dùng, cổng API và realm Keycloak
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:9080/health >/dev/null \
+              && curl -fsS http://localhost:8080/realms/dx-os-lab >/dev/null \
+              && curl -sS -o /dev/null http://localhost:3000/; then
+              echo "Sẵn sàng sau $((i * 2)) giây"; exit 0
+            fi
+            sleep 2
+          done
+          echo "Hết thời gian chờ cụm khởi động"; exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Cài Playwright và Chromium
+        working-directory: e2e
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Chạy trọn kịch bản giao diện
+        working-directory: e2e
+        env:
+          KENH: ${{ inputs.kenh }}
+        run: npm run kiem
+      # Báo cáo HTML và vết (trace) của bài hỏng — mở bằng `npx playwright show-report <thư mục>` hoặc
+      # kéo tệp trace.zip vào https://trace.playwright.dev
+      - name: Lưu báo cáo và vết khi hỏng
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bao-cao-e2e
+          path: |
+            e2e/ket-qua/bao-cao/
+            e2e/ket-qua/tam/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Nhật ký cụm khi hỏng
+        if: failure()
+        run: $COMPOSE logs --no-color --tail=200

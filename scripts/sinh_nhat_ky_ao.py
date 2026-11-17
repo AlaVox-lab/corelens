@@ -137,7 +137,7 @@ KICH_BAN_MAC_DINH: dict = {
 }
 
 CAU_TRUY_VAN = """
-WITH bo AS (SELECT id, version FROM rule_sets WHERE is_active)
+WITH bo AS (SELECT id, version FROM rule_sets WHERE is_active AND process_code = (SELECT code FROM processes WHERE is_app_default))
 SELECT json_build_object(
   'phien_ban', (SELECT version FROM bo),
   'trang_thai', (
@@ -164,7 +164,7 @@ SELECT json_build_object(
     SELECT json_agg(json_build_object(
              'ma', code, 'sla_gio', sla_hours, 'an_han_gio', sla_grace_hours)
            ORDER BY display_order)
-    FROM request_types WHERE is_active),
+    FROM request_types WHERE is_active AND process_code = (SELECT code FROM processes WHERE is_app_default)),
   'phong_ban', (SELECT json_agg(code ORDER BY display_order) FROM departments WHERE is_active),
   'phong_mac_dinh', (SELECT json_object_agg(request_type_code, department_code)
                      FROM request_type_routing WHERE is_default),

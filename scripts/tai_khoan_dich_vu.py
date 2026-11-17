@@ -16,6 +16,11 @@
 # tạo, có rồi thì đặt lại cấu hình và bí mật theo tệp env — chạy được cho cả cụm mới lẫn cụm cũ nâng lên,
 # không cần `down -v`. Cùng khuôn với infra/tri-thuc/khoi_tao.py và scripts/xac_thuc_hai_lop.py.
 #
+# Từ #376 kịch bản dựng thêm hai tài khoản DUYỆT cho ví dụ quy trình thứ hai (đề xuất mua sắm duyệt hai cấp):
+# KEYCLOAK_INTEGRATION_HEAD_* (trưởng phòng — vai approver, vào group phòng ban ở *_GROUP, token mang claim
+# `groups`) và KEYCLOAK_INTEGRATION_REVIEWER_* (duyệt cấp hai — vai classifier). Hai tài khoản này tùy chọn:
+# tệp env không khai thì bỏ qua. Mỗi tài khoản đi đúng các bước như tài khoản đầu.
+#
 # Chạy lại bao nhiêu lần cũng được. Kịch bản không gỡ vai nào tài khoản đã có ngoài danh sách — quản trị
 # viên có thể đã cố ý gán thêm — chỉ báo ra. Địa chỉ Keycloak, realm, tài khoản quản trị và các biến
 # KEYCLOAK_API_CLIENT_ID, KEYCLOAK_INTEGRATION_* đọc từ tệp env của cụm (mặc định infra/.env); biến môi
@@ -37,11 +42,19 @@ GOC_KHO = Path(__file__).resolve().parent.parent
 
 # Từ vựng của chính Keycloak, không phải giá trị nghiệp vụ
 BO_ANH_XA_NGUOI_NHAN = "oidc-audience-mapper"
+BO_ANH_XA_NHOM = "oidc-group-membership-mapper"
+
+# (tiền tố biến, bắt buộc) — tài khoản tạo hồ sơ của #365, rồi hai tài khoản duyệt của quy trình thứ hai (#376)
+TAI_KHOAN = (
+    ("KEYCLOAK_INTEGRATION", True),
+    ("KEYCLOAK_INTEGRATION_HEAD", False),
+    ("KEYCLOAK_INTEGRATION_REVIEWER", False),
+)
 
 # Nhãn và mô tả chỉ đặt khi TẠO client; client đã có thì giữ nguyên, quản trị viên có thể đã đổi
 NHAN_CLIENT = "Ứng dụng tích hợp mẫu"
 MO_TA_CLIENT = (
-    "Tài khoản dịch vụ để một ứng dụng khác gọi API của nền tảng lõi (/core/v1) qua cổng API (#365). "
+    "Tài khoản dịch vụ để một ứng dụng khác gọi API của nền tảng lõi (/core/v1) qua cổng API (#365, #376). "
     "Chỉ bật client credentials. Tạo bởi scripts/tai_khoan_dich_vu.py."
 )
 
@@ -83,9 +96,6 @@ def cau_hinh(ts: argparse.Namespace) -> dict:
         "nguoi": lay("KEYCLOAK_ADMIN_USER"),
         "mat_khau": lay("KEYCLOAK_ADMIN_PASSWORD"),
         "nguoi_nhan": lay("KEYCLOAK_API_CLIENT_ID"),
-        "client": lay("KEYCLOAK_INTEGRATION_CLIENT_ID"),
-        "bi_mat": lay("KEYCLOAK_INTEGRATION_SECRET"),
-        "vai": lay("KEYCLOAK_INTEGRATION_ROLES"),
     }
     ten_bien = {
         "goc": "KEYCLOAK_PORT (hoặc --keycloak)",
@@ -93,20 +103,36 @@ def cau_hinh(ts: argparse.Namespace) -> dict:
         "nguoi": "KEYCLOAK_ADMIN_USER",
         "mat_khau": "KEYCLOAK_ADMIN_PASSWORD",
         "nguoi_nhan": "KEYCLOAK_API_CLIENT_ID",
-        "client": "KEYCLOAK_INTEGRATION_CLIENT_ID",
-        "bi_mat": "KEYCLOAK_INTEGRATION_SECRET",
-        "vai": "KEYCLOAK_INTEGRATION_ROLES",
     }
-    thieu = [k for k, v in gia_tri.items() if not v]
+    thieu = [ten_bien[k] for k, v in gia_tri.items() if not v]
+
+    # Mỗi tài khoản một tiền tố biến: _CLIENT_ID, _SECRET, _ROLES, _GROUP (tùy chọn). Tài khoản đầu bắt buộc
+    # (#365); hai tài khoản duyệt của ví dụ quy trình thứ hai (#376) có biến thì dựng, không thì bỏ qua
+    gia_tri["tai_khoan"] = []
+    for tien_to, bat_buoc in TAI_KHOAN:
+        tk = {
+            "client": lay(f"{tien_to}_CLIENT_ID"),
+            "bi_mat": lay(f"{tien_to}_SECRET"),
+            "vai": lay(f"{tien_to}_ROLES"),
+            "nhom": lay(f"{tien_to}_GROUP"),
+            "tien_to": tien_to,
+        }
+        if not bat_buoc and not tk["client"]:
+            print(f"Bỏ qua {tien_to}_*: không khai trong tệp env (tùy chọn).")
+            continue
+        thieu += [f"{tien_to}_{ten}" for k, ten in (("client", "CLIENT_ID"), ("bi_mat", "SECRET"), ("vai", "ROLES"))
+                  if not tk[k]]
+        if tk["vai"]:
+            tk["vai"] = [v.strip() for v in tk["vai"].split(",") if v.strip()]
+            if not tk["vai"]:
+                sys.exit(f"{tien_to}_ROLES rỗng: tài khoản dịch vụ không vai nào thì không đi được bước nào.")
+        gia_tri["tai_khoan"].append(tk)
     if thieu:
         sys.exit(
-            f"Thiếu {', '.join(ten_bien[k] for k in thieu)} — không thấy trong {tep} lẫn biến môi trường. "
+            f"Thiếu {', '.join(thieu)} — không thấy trong {tep} lẫn biến môi trường. "
             "Cụm nâng cấp từ bản cũ: chép các dòng KEYCLOAK_INTEGRATION_* từ infra/.env.example sang tệp env."
         )
     gia_tri["goc"] = gia_tri["goc"].rstrip("/")
-    gia_tri["vai"] = [v.strip() for v in gia_tri["vai"].split(",") if v.strip()]
-    if not gia_tri["vai"]:
-        sys.exit("KEYCLOAK_INTEGRATION_ROLES rỗng: tài khoản dịch vụ không vai nào thì không đi được bước nào.")
     return gia_tri
 
 
@@ -184,22 +210,22 @@ class Keycloak:
 # ---------------------------------------------------------------------------
 
 
-def dam_bao_client(kc: Keycloak, ch: dict) -> tuple[str, bool]:
+def dam_bao_client(kc: Keycloak, tk: dict) -> tuple[str, bool]:
     """(mã nội bộ của client, vừa tạo hay không). Client đã có thì đặt lại cấu hình và bí mật theo tệp env."""
     mong_muon = {
-        "clientId": ch["client"],
+        "clientId": tk["client"],
         "enabled": True,
         "protocol": "openid-connect",
         "publicClient": False,
         "clientAuthenticatorType": "client-secret",
-        "secret": ch["bi_mat"],
+        "secret": tk["bi_mat"],
         # Chỉ tài khoản dịch vụ: không đăng nhập người dùng qua client này
         "standardFlowEnabled": False,
         "implicitFlowEnabled": False,
         "directAccessGrantsEnabled": False,
         "serviceAccountsEnabled": True,
     }
-    tim = f"/clients?clientId={urllib.parse.quote(ch['client'])}"
+    tim = f"/clients?clientId={urllib.parse.quote(tk['client'])}"
     co_san = kc.goi(tim)
     if co_san:
         kc.goi(f"/clients/{co_san[0]['id']}", "PUT", {**co_san[0], **mong_muon})
@@ -235,7 +261,7 @@ def dam_bao_vai(kc: Keycloak, id_client: str, vai_can: list[str]) -> tuple[list[
             continue
         vai = kc.goi(f"/roles/{urllib.parse.quote(ten)}", chap_nhan=(404,))
         if vai is None:
-            sys.exit(f"Realm {kc.realm} không có vai '{ten}' (KEYCLOAK_INTEGRATION_ROLES). Không gán gì thêm.")
+            sys.exit(f"Realm {kc.realm} không có vai '{ten}' (biến *_ROLES). Không gán gì thêm.")
         can_gan.append(vai)
     if can_gan:
         kc.goi(duong, "POST", can_gan)
@@ -244,14 +270,14 @@ def dam_bao_vai(kc: Keycloak, id_client: str, vai_can: list[str]) -> tuple[list[
     return [v["name"] for v in can_gan], khac
 
 
-def kiem_token(ch: dict) -> dict:
+def kiem_token(ch: dict, tk: dict) -> dict:
     """Xin một token bằng chính client vừa dựng, kiểm `aud` và vai. Không kiểm chữ ký — việc đó cổng API và
     dịch vụ ứng dụng làm; ở đây chỉ chắc cấu hình cho ra đúng token."""
     ma, than = xin_token(ch["goc"], ch["realm"], {
-        "grant_type": "client_credentials", "client_id": ch["client"], "client_secret": ch["bi_mat"],
+        "grant_type": "client_credentials", "client_id": tk["client"], "client_secret": tk["bi_mat"],
     })
     if ma != 200:
-        sys.exit(f"Không xin được token bằng client {ch['client']} ({ma}): {than[:200].decode('utf-8', 'replace')}")
+        sys.exit(f"Không xin được token bằng client {tk['client']} ({ma}): {than[:200].decode('utf-8', 'replace')}")
     phan_giua = json.loads(than)["access_token"].split(".")[1]
     claim = json.loads(base64.urlsafe_b64decode(phan_giua + "=" * (-len(phan_giua) % 4)))
     aud = claim.get("aud")
@@ -259,10 +285,59 @@ def kiem_token(ch: dict) -> dict:
     if ch["nguoi_nhan"] not in aud:
         sys.exit(f"Token thiếu '{ch['nguoi_nhan']}' trong aud (đang là {aud}): cổng API sẽ trả 403.")
     vai = claim.get("realm_access", {}).get("roles", [])
-    thieu = [v for v in ch["vai"] if v not in vai]
+    thieu = [v for v in tk["vai"] if v not in vai]
     if thieu:
         sys.exit(f"Token thiếu vai {', '.join(thieu)} (đang có {sorted(vai)}).")
+    if tk["nhom"] and tk["nhom"] not in claim.get("groups", []):
+        sys.exit(f"Token thiếu group {tk['nhom']} (đang có {claim.get('groups')}): trưởng phòng sẽ không thấy hồ sơ "
+                 "của phòng mình.")
     return claim
+
+
+def dam_bao_nhom(kc: Keycloak, id_client: str, nhom: str) -> tuple[bool, bool]:
+    """(vừa thêm bộ ánh xạ groups, vừa vào group). Tài khoản dịch vụ thuộc group phòng ban và token mang claim
+    `groups` như token của cổng người dùng — dịch vụ ứng dụng đọc phòng của người gọi từ đó (#376)."""
+    duong = f"/clients/{id_client}/protocol-mappers/models"
+    them_bo = not any(m.get("protocolMapper") == BO_ANH_XA_NHOM for m in kc.goi(duong))
+    if them_bo:
+        kc.goi(duong, "POST", {
+            "name": "groups",
+            "protocol": "openid-connect",
+            "protocolMapper": BO_ANH_XA_NHOM,
+            "config": {"full.path": "true", "claim.name": "groups", "access.token.claim": "true",
+                       "id.token.claim": "false", "userinfo.token.claim": "false"},
+        })
+    nhom_kc = kc.goi(f"/group-by-path/{urllib.parse.quote(nhom.lstrip('/'))}", chap_nhan=(404,))
+    if nhom_kc is None:
+        sys.exit(f"Realm {kc.realm} không có group '{nhom}' (biến *_GROUP).")
+    tai_khoan = kc.goi(f"/clients/{id_client}/service-account-user")
+    da_vao = any(g.get("id") == nhom_kc["id"] for g in kc.goi(f"/users/{tai_khoan['id']}/groups"))
+    if not da_vao:
+        kc.goi(f"/users/{tai_khoan['id']}/groups/{nhom_kc['id']}", "PUT")
+    return them_bo, not da_vao
+
+
+def dung_tai_khoan(kc: Keycloak, ch: dict, tk: dict) -> None:
+    id_client, moi = dam_bao_client(kc, tk)
+    print(f"Client {tk['client']}: " + (
+        "đã tạo — chỉ bật tài khoản dịch vụ (client credentials)" if moi
+        else "đã có — đặt lại cấu hình và bí mật theo tệp env"
+    ))
+    them = dam_bao_nguoi_nhan(kc, id_client, ch["nguoi_nhan"])
+    print(f"  Người nhận của token: {'đã thêm bộ ánh xạ' if them else 'đã có bộ ánh xạ'}, aud mang {ch['nguoi_nhan']}")
+    gan, khac = dam_bao_vai(kc, id_client, tk["vai"])
+    print(f"  Vai của tài khoản dịch vụ: {', '.join(tk['vai'])}"
+          + (f" (vừa gán {', '.join(gan)})" if gan else " (đã có từ trước)"))
+    if khac:
+        print(f"  Tài khoản còn mang vai khác: {', '.join(khac)} — giữ nguyên, gỡ tay nếu không cần.")
+    if tk["nhom"]:
+        them_bo, vao = dam_bao_nhom(kc, id_client, tk["nhom"])
+        print(f"  Group {tk['nhom']}: {'vừa thêm' if vao else 'đã ở trong'}"
+              + (", vừa thêm bộ ánh xạ groups" if them_bo else ""))
+    claim = kiem_token(ch, tk)
+    print(f"  Kiểm token: aud {claim.get('aud')}, vai {sorted(claim.get('realm_access', {}).get('roles', []))}"
+          + (f", groups {claim.get('groups')}" if tk["nhom"] else "")
+          + f", sống {claim['exp'] - claim['iat']} giây.")
 
 
 def main() -> int:
@@ -280,21 +355,8 @@ def main() -> int:
 
     kc = Keycloak(ch)
     print(f"Realm {kc.realm} tại {kc.goc}")
-    id_client, moi = dam_bao_client(kc, ch)
-    print(f"Client {ch['client']}: " + (
-        "đã tạo — chỉ bật tài khoản dịch vụ (client credentials)" if moi
-        else "đã có — đặt lại cấu hình và bí mật theo tệp env"
-    ))
-    them = dam_bao_nguoi_nhan(kc, id_client, ch["nguoi_nhan"])
-    print(f"Người nhận của token: {'đã thêm bộ ánh xạ' if them else 'đã có bộ ánh xạ'}, aud mang {ch['nguoi_nhan']}")
-    gan, khac = dam_bao_vai(kc, id_client, ch["vai"])
-    print(f"Vai của tài khoản dịch vụ: {', '.join(ch['vai'])}"
-          + (f" (vừa gán {', '.join(gan)})" if gan else " (đã có từ trước)"))
-    if khac:
-        print(f"  Tài khoản còn mang vai khác: {', '.join(khac)} — giữ nguyên, gỡ tay nếu không cần.")
-    claim = kiem_token(ch)
-    print(f"Kiểm token: aud {claim.get('aud')}, vai {sorted(claim.get('realm_access', {}).get('roles', []))}, "
-          f"sống {claim['exp'] - claim['iat']} giây.")
+    for tk in ch["tai_khoan"]:
+        dung_tai_khoan(kc, ch, tk)
     print("Xong. Ứng dụng khác lấy token bằng client credentials rồi gọi /core/v1 qua cổng API — xem examples/goi-loi/.")
     return 0
 

@@ -66,6 +66,8 @@ TABLES_OWNED_BY_INIT_SQL = frozenset(
         "work_calendars",
         "work_hours",
         "holidays",
+        # Danh mục quy trình (#376), bản sửa 0028
+        "processes",
     }
 )
 

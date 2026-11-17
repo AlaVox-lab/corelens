@@ -100,18 +100,36 @@ Quy trình cập nhật của người điều phối:
 ### 2.6. Tích hợp liên tục
 
 Mỗi pull request vào `dev` hay `main` chạy quy trình
-`.github/workflows/ci.yml`. Bốn kiểm tra hiện riêng trên trang pull request:
+`.github/workflows/ci.yml`. Sáu kiểm tra hiện riêng trên trang pull request:
 
 | Kiểm tra | Làm gì | Chạy tay ở máy |
 |---|---|---|
-| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục | `python scripts/kiem_header.py` |
+| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục; trang phả hệ dữ liệu khớp định nghĩa view | `python scripts/kiem_header.py` và `python scripts/pha_he.py --kiem` |
+| Linter — ruff và eslint | `ruff check .` cho mọi mã Python (cấu hình `ruff.toml` ở gốc); `npm run lint` trong `frontend/` (cấu hình `frontend/eslint.config.mjs`). Lỗi làm đỏ, cảnh báo thì không | Xem đoạn *Linter* ngay dưới |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
 | Cụm — dựng ảnh và kiểm thử dịch vụ | Dựng hai ảnh `backend`, `frontend` từ `.env.example`, bật PostgreSQL, Keycloak, SeaweedFS và cổng API, kiểm từ máy chủ rằng cổng `8000`, `5432` đã đóng và cổng API chặn lời gọi thiếu token, chạy toàn bộ `pytest` trong container (kể cả `tests/test_cong_api.py` đi qua cổng API) | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
 | Bảng điều khiển — dựng và tự nạp | Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset; dashboard *Vận hành yêu cầu* đủ năm biểu đồ đã tự nạp từ `infra/superset/bang-dieu-khien/`, tài khoản chỉ đọc đọc được mọi view mà dataset trỏ tới (#304) | `docker compose ... up -d --build --wait postgres backend superset` rồi mở `http://localhost:8088` |
 
+**Linter** (#382) — chạy ở gốc kho trước khi push:
+
+```bash
+pip install ruff==0.17.3        # một lần; hoặc: pipx run --spec ruff==0.17.3 ruff check .
+ruff check .                    # thêm --fix để ruff tự sửa phần sửa được an toàn
+cd frontend && npm run lint     # sau npm ci
+```
+
+Bộ luật ruff chọn tường minh trong `ruff.toml` (lỗi cú pháp, import và biến thừa, mẫu dễ sinh lỗi của
+bugbear); luật nào tắt đều ghi lý do ngay cạnh. Kho không chạy `ruff format` — không ép kiểu trình bày.
+Phiên bản ruff ghim ở hai chỗ, `ruff.toml` (`required-version`) và `ci.yml`; nâng thì nâng cả hai.
+
 **Kiểm thử giao diện qua đăng nhập thật** (#238) chạy tay trước khi mở pull request có sửa giao diện,
-trên cụm thử: `npm ci`, `npm run cai-trinh-duyet` (lần đầu), `npm run kiem` trong `e2e/`. Kịch bản đăng
+trên cụm thử: `npm ci`, `npm run cai-trinh-duyet` (lần đầu), `npm run kiem` trong `e2e/`. Trên tích hợp
+liên tục, quy trình riêng `.github/workflows/e2e.yml` dựng trọn cụm mặc định từ `.env.example` trên máy
+sạch rồi chạy **toàn bộ** kịch bản bằng Chromium — chỉ cho pull request vào `main` và khi bấm *Run
+workflow* ở thẻ *Actions* (mất khoảng nửa giờ, nên không chạy cho mỗi pull request vào `dev`). Hỏng thì
+tải tệp `bao-cao-e2e` ở trang lượt chạy: báo cáo HTML (`npx playwright show-report bao-cao`) và vết của
+bài hỏng (kéo `trace.zip` vào `https://trace.playwright.dev`). Kịch bản đăng
 nhập bốn vai qua Keycloak, kiểm các màn chính ở bốn cấu hình hiển thị và chụp ảnh — chi tiết ở trang tài
 liệu, phần *Phát triển → Kiểm thử giao diện*. Kịch bản gửi một hồ sơ thật, nên không chạy trên hệ thống
 đang dùng thật.
@@ -130,12 +148,13 @@ dịch vụ khi hỏng. Sửa trên cùng nhánh, push tiếp, quy trình tự c
 **Khi kho chuyển công khai**, quy tắc bảo vệ nhánh mới có hiệu lực. Bật thêm cho cả `main` và
 `dev` (*Settings → Branches*):
 
-- *Require status checks to pass before merging*, chọn đủ năm kiểm tra ở bảng trên
+- *Require status checks to pass before merging*, chọn đủ sáu kiểm tra ở bảng trên; riêng `main`
+  chọn thêm *Kịch bản giao diện — cụm sạch, đăng nhập thật*
 - *Require branches to be up to date before merging*
 - Giữ nguyên các tùy chọn đã có: bắt buộc pull request, 1 phê duyệt, bỏ phê duyệt cũ khi có
   commit mới, giải quyết hết hội thoại, cấm force push, cấm xóa nhánh
 
-Tới lúc đó, pull request lỡ đặt `base: main` (như #215) vẫn phải chờ năm kiểm tra xanh mới
+Tới lúc đó, pull request lỡ đặt `base: main` (như #215) vẫn phải chờ các kiểm tra xanh mới
 merge được.
 
 ---
@@ -325,6 +344,47 @@ và chạy kiểm thử. Không sửa tay từng dòng của `constraints.txt`.
 Không commit: biến môi trường thật, khóa API, mật khẩu, tệp cơ sở dữ liệu,
 thư mục phụ thuộc, tệp build. Dùng `.env.example` với giá trị mặc định an toàn.
 
+### 5.5. Migration lược đồ (phạm vi `d-schema`)
+
+Mọi thay đổi lược đồ là một migration Alembic trong `backend/alembic/versions/`, tên
+`NNNN_mo_ta_khong_dau.py`. Trong tệp, `revision` trùng tên tệp bỏ đuôi `.py`, `down_revision`
+trỏ bản ngay trước — ví dụ `0031_webhook.py` có `revision = "0031_webhook"`,
+`down_revision = "0030_bao_thay_doi_ho_so"`. Dịch vụ ứng dụng chạy `alembic upgrade head` lúc
+khởi động, nên chuỗi phải **thẳng một đường**: hai bản cùng nối sau một bản là hai đầu, Alembic
+từ chối và cụm không lên.
+
+**Số migration dùng chung cho cả kho, không phải của riêng nhánh.** Hai người làm song song, mỗi
+người lấy "số kế tiếp" trong thư mục ở máy mình, là trùng số. GitHub vẫn báo pull request "không
+xung đột" vì hai tệp khác tên — lỗi chỉ lộ ra khi cụm khởi động. Mỗi lần công việc có migration:
+
+1. **Trước khi tạo**, xem số lớn nhất trên `origin/dev`, không xem thư mục ở máy:
+
+   ```bash
+   git fetch origin
+   git ls-tree --name-only origin/dev backend/alembic/versions/
+   ```
+
+   Lấy số kế tiếp; `down_revision` trỏ bản cuối đó. Có pull request khác đang mở cũng thêm
+   migration thì trao đổi trên issue trước khi chốt số.
+2. **Trước khi mở pull request** — và mỗi lần `dev` nhận migration mới khi pull request còn mở —
+   đưa `dev` vào nhánh bằng `git merge origin/dev` (không rebase rồi force push). Nếu `dev` đã có
+   bản **cùng số**: đổi tên tệp sang số kế tiếp, sửa `revision`, `down_revision`, chú thích, tài
+   liệu nhắc số cũ và tệp SQL đi kèm trong `backend/alembic/sql/` nếu có. Migration tạo hay đổi
+   view báo cáo thì chạy lại `python scripts/pha_he.py`.
+3. **Kiểm đúng một đầu** sau khi dựng lại cụm (`docker compose ... up -d --build`):
+
+   ```bash
+   docker exec dxlab-backend alembic heads
+   ```
+
+   phải ra **đúng một dòng**, mang tên migration của bạn. Ghi kết quả vào mô tả pull request.
+4. **Không nối vào migration của pull request chưa merge.** `down_revision` chỉ trỏ bản đã có trên
+   `dev`; cũng không đặt nhánh đích là nhánh của pull request kia. Cần lược đồ của nó thì chờ nó
+   vào `dev` rồi tạo migration theo bước 1.
+5. Cụm thử của bạn đã chạy migration mang số cũ thì bảng `alembic_version` ghi tên một bản không
+   còn tồn tại, dịch vụ ứng dụng không lên: dựng lại cụm thử (`down -v` rồi `up -d --build`, mất
+   dữ liệu thử).
+
 ---
 
 ## 6. Nhãn issue
@@ -349,6 +409,43 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 4. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
    ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`
 5. Cập nhật `CHANGELOG.md` vào kho mã
+
+### 7.1. Đăng trang tài liệu
+
+Trang tài liệu `docs-site/` là trang tĩnh (Astro + Starlight). Địa chỉ và đường gốc lấy từ biến
+môi trường lúc dựng (`docs-site/astro.config.mjs`), nên cùng một mã nguồn đăng được ở nhiều nơi:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `DOCS_SITE_URL` | trống — trên Vercel tự lấy tên miền chính thức của dự án | Địa chỉ đầy đủ, dùng cho đường dẫn chuẩn và sơ đồ trang (`sitemap`). GitHub Pages của kho: `https://alavox-lab.github.io` |
+| `DOCS_BASE_PATH` | `/` | Đường gốc. GitHub Pages của kho: `/dx-os-lab`; Vercel và tên miền riêng để trống |
+
+Liên kết giữa các trang và ảnh viết tương đối hoặc qua `import`, nên trang chạy đúng với mọi đường
+gốc. Dựng ở máy không cần biến nào: `npm run build` trong `docs-site/`, xem ở `npm run preview`.
+
+**Đăng lên GitHub Pages** — cách kho đang dùng, tại `https://alavox-lab.github.io/dx-os-lab/`.
+Workflow `.github/workflows/trang-tai-lieu.yml` dựng trang với `DOCS_SITE_URL=https://alavox-lab.github.io`
+và `DOCS_BASE_PATH=/dx-os-lab` rồi đăng mỗi lần `main` đổi, hoặc khi bấm chạy tay (*Actions → Trang tài
+liệu → Run workflow*). GitHub Pages miễn phí chỉ dành cho kho công khai, nên khi kho còn riêng tư việc tự
+bỏ qua. Người điều phối kho mã bật một lần sau khi kho công khai:
+
+1. *Settings → Pages → Build and deployment → Source*: chọn **GitHub Actions**.
+2. Chạy tay workflow *Trang tài liệu* một lần, hoặc chờ lần phát hành kế tiếp lên `main`.
+3. Sửa ô *Website* của kho:
+
+   ```bash
+   gh repo edit AlaVox-lab/dx-os-lab --homepage https://alavox-lab.github.io/dx-os-lab/
+   ```
+
+Dựng thử bản Pages ở máy: đặt hai biến trên rồi `npm run build`. Trên Git Bash cho Windows, đặt thêm
+`MSYS_NO_PATHCONV=1` — không thì Git Bash đổi `/dx-os-lab` thành đường thư mục cài Git và bản dựng hỏng.
+
+**Phương án khác — Vercel** (khi cần bản xem trước cho từng pull request hay tên miền gọn): đăng
+nhập [vercel.com](https://vercel.com) bằng tài khoản GitHub, *Add New → Project*, nhập kho
+`AlaVox-lab/dx-os-lab`, *Root Directory* `docs-site`. Vercel tự nhận Astro (lệnh dựng `npm run build`,
+thư mục ra `dist`, Node theo `engines` trong `docs-site/package.json`) và tự lấy tên miền của dự án cho
+`DOCS_SITE_URL`; `DOCS_BASE_PATH` để trống. Rồi trỏ ô *Website* tới địa chỉ Vercel cấp bằng
+`gh repo edit --homepage`.
 
 ---
 

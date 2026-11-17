@@ -28,6 +28,7 @@ from app.thong_bao.hang_doi import TRIGGER_VAO_TRANG_THAI, xep_hang
 from app.models.workflow_config import (
     Department,
     Priority,
+    Process,
     RequestType,
     Role,
     RuleSet,
@@ -121,12 +122,15 @@ DANH_MUC_CUA_TRUONG = {
 }
 
 
-def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict) -> None:
+def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict, ho_so: Request) -> None:
     """Mọi giá trị gửi kèm phải có trong danh mục, và danh mục đó còn hoạt động.
 
     Giá trị rỗng thì bỏ qua ở đây: ràng buộc Poka-yoke gắn trên cạnh mới là nơi quyết
     định rỗng có được phép hay không — `set-priority` thì không, còn ở cạnh phân công
     lại thì phòng ban vốn không được đổi.
+
+    Loại yêu cầu mới phải cùng quy trình với hồ sơ (#376): hồ sơ ghim bộ quy tắc của quy trình lúc tạo,
+    nên đổi sang loại của quy trình khác sẽ để hồ sơ chạy theo luồng không phải của loại nó mang.
     """
     for truong, gia_tri in thay_doi.items():
         mo_hinh = DANH_MUC_CUA_TRUONG.get(truong)
@@ -146,6 +150,12 @@ def _kiem_gia_tri_danh_muc(session: Session, thay_doi: dict) -> None:
                 gia_tri,
                 f"'{gia_tri}' không có trong danh mục đang dùng của {truong}.",
             )
+        if mo_hinh is RequestType and ban_ghi.process_code != _quy_trinh_cua_bo(session, ho_so.rule_set_id):
+            raise InvalidFieldValue(
+                truong,
+                gia_tri,
+                f"Loại “{ban_ghi.label}” thuộc quy trình khác — hồ sơ không đổi quy trình được.",
+            )
 
 
 def _nhan_trang_thai(session: Session, rule_set_id: int, ma: str) -> str:
@@ -160,33 +170,63 @@ def _nhan_vai_tro(session: Session, ma: str) -> str:
     return vai_tro.label if vai_tro is not None else ma
 
 
-def get_active_rule_set(session: Session) -> RuleSet:
-    """Bộ quy tắc đang kích hoạt. Hồ sơ mới luôn nhận bộ này."""
-    bo = session.scalars(select(RuleSet).where(RuleSet.is_active)).one()
-    return bo
+def ma_quy_trinh_ung_dung(session: Session) -> str:
+    """Mã quy trình mà các màn của ứng dụng minh họa dùng — dòng mang cờ `processes.is_app_default` (#376).
+
+    Mã nguồn hỏi cờ, không viết tên quy trình nào. `kiem_tra_cau_hinh()` bảo đảm có đúng một dòng.
+    """
+    return session.scalars(select(Process.code).where(Process.is_app_default)).one()
 
 
-def rule_sets_in_use(session: Session) -> list[int]:
-    """Những bộ quy tắc còn hồ sơ chạy theo: bộ đang bật trước, rồi các bộ cũ còn hồ sơ chưa kết
-    thúc, mới trước cũ sau (#299).
+def get_active_rule_set(session: Session, process_code: str) -> RuleSet:
+    """Bộ quy tắc đang kích hoạt của một quy trình. Hồ sơ mới của quy trình đó luôn nhận bộ này.
+
+    Bắt buộc truyền quy trình (#376): từ nền tảng lõi Mức 2 mỗi quy trình có đúng một bộ đang bật, không
+    còn "bộ đang bật của cả hệ thống". Màn của ứng dụng minh họa truyền `ma_quy_trinh_ung_dung(session)`.
+    """
+    return session.scalars(
+        select(RuleSet).where(RuleSet.is_active, RuleSet.process_code == process_code)
+    ).one()
+
+
+def bo_cua_quy_trinh(session: Session, process_code: str) -> list[int]:
+    """Mọi bộ quy tắc của một quy trình, đang bật hay đã thay — hồ sơ của quy trình là hồ sơ ghim một
+    trong các bộ này (#376). Quy trình của hồ sơ suy từ bộ nó ghim, không có cột riêng."""
+    return list(session.scalars(select(RuleSet.id).where(RuleSet.process_code == process_code)))
+
+
+def rule_sets_in_use(session: Session, process_code: str) -> list[int]:
+    """Những bộ quy tắc của một quy trình còn hồ sơ chạy theo: bộ đang bật trước, rồi các bộ cũ còn
+    hồ sơ chưa kết thúc, mới trước cũ sau (#299).
 
     Hàng đợi lấy hồ sơ của mọi bộ trong danh sách này và xét từng hồ sơ theo bộ của nó. Chỉ lấy bộ
     đang bật thì ngay sau khi doanh nghiệp đổi quy trình, hồ sơ cũ còn mở biến khỏi hàng đợi — vẫn
     chạy đồng hồ, vẫn tự leo thang, mà không ai thấy để bấm. Bộ cũ hết hồ sơ mở thì tự rơi khỏi
     danh sách. Bộ đứng trước giữ nhãn khi hai bộ trùng mã trạng thái.
+
+    Chỉ bộ của `process_code` (#376): hồ sơ của quy trình khác không lọt vào hàng đợi của quy trình này.
     """
-    dang_bat = get_active_rule_set(session).id
+    dang_bat = get_active_rule_set(session, process_code).id
     bo_cu = session.scalars(
         select(Request.rule_set_id)
         .join(
             State,
             (State.rule_set_id == Request.rule_set_id) & (State.code == Request.current_state),
         )
-        .where(Request.rule_set_id != dang_bat, State.is_terminal.is_(False))
+        .join(RuleSet, RuleSet.id == Request.rule_set_id)
+        .where(
+            Request.rule_set_id != dang_bat,
+            RuleSet.process_code == process_code,
+            State.is_terminal.is_(False),
+        )
         .distinct()
         .order_by(Request.rule_set_id.desc())
     ).all()
     return [dang_bat, *bo_cu]
+
+
+def _quy_trinh_cua_bo(session: Session, rule_set_id: int) -> str:
+    return session.get(RuleSet, rule_set_id).process_code
 
 
 def kiem_loai_yeu_cau(session: Session, ma: str | None) -> str | None:
@@ -263,8 +303,15 @@ def create_case(
     trạng thái — không có trạng thái nào trước nó. Mốc bắt đầu của hồ sơ là cột
     `created_at`. Khi xuất dữ liệu cho khai phá quy trình, tầng `D` dựng thêm một sự
     kiện mở đầu từ cột đó nếu công cụ phân tích cần.
+
+    Bộ quy tắc là bộ đang bật của **quy trình mà loại yêu cầu thuộc về** (#376) — loại yêu cầu quyết
+    định quy trình. Lối gọi nội bộ không truyền loại thì nhận quy trình mặc định của ứng dụng.
     """
-    bo_quy_tac = get_active_rule_set(session)
+    ma_loai = kiem_loai_yeu_cau(session, request_type_code)
+    quy_trinh = (
+        session.get(RequestType, ma_loai).process_code if ma_loai else ma_quy_trinh_ung_dung(session)
+    )
+    bo_quy_tac = get_active_rule_set(session, quy_trinh)
 
     trang_thai_dau = session.scalars(
         select(State).where(
@@ -280,7 +327,7 @@ def create_case(
         description=description,
         requester_id=requester_id,
         requester_label=requester_label,
-        request_type_code=kiem_loai_yeu_cau(session, request_type_code),
+        request_type_code=ma_loai,
         parent_request_id=parent_request_id,
         # Trường riêng theo loại (#250): kiểm theo khai báo của loại, thiếu bắt buộc là từ chối.
         # `None` là lối gọi nội bộ chưa có trường riêng (bộ sinh dữ liệu, kiểm thử cũ) — điểm
@@ -532,7 +579,7 @@ def perform_transition(
             f"{', '.join(sorted(ngoai_canh))}.",
         )
 
-    _kiem_gia_tri_danh_muc(session, thay_doi)
+    _kiem_gia_tri_danh_muc(session, thay_doi, ho_so)
 
     ctx = TransitionContext(
         case=ho_so,

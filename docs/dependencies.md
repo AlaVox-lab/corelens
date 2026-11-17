@@ -84,6 +84,10 @@ sách OSI vì nó không phải giấy phép phần mềm. Đây **không phải
 
 Ghi lại ở đây để nếu ban giám khảo tra `package-lock.json` thì đã có sẵn câu trả lời.
 
+Cùng lý lẽ cho `language-subtag-registry` (**CC0-1.0**, bảng mã ngôn ngữ), do `eslint-plugin-jsx-a11y`
+kéo theo khi thêm linter ở #382: dữ liệu chứ không phải mã, CC0 là từ bỏ quyền về phạm vi công cộng, và gói
+chỉ chạy lúc soát mã — không vào bản dựng của cổng.
+
 ---
 
 ## Phụ thuộc hạ tầng
@@ -124,6 +128,8 @@ Khai báo trong `frontend/package.json`, ghim chính xác trong `frontend/packag
 | @xyflow/react | `12.12.0` | MIT | Có | Có | Vẽ sơ đồ quy trình thực tế ở màn Báo cáo → Quy trình thực tế (#315): nút, cạnh, kéo, phóng to. Chỉ chạy ở trình duyệt, nạp CSS nền `base.css` của gói rồi chỉnh màu bằng biến CSS của cổng — không sửa mã gói. Dòng đầu `LICENSE`: `MIT License` |
 | @dagrejs/dagre | `3.1.3` | MIT | Có | Có | Bố cục sơ đồ quy trình thực tế (#315): xếp trạng thái theo hàng và dẫn đường cho cạnh quay ngược. Hàm thuần trong `lib/bo-cuc-quy-trinh.ts`. Dòng đầu `LICENSE`: `Copyright (c) 2012-2014 Chris Pettitt` (giấy phép MIT) |
 | @types/node · @types/react · @types/react-dom | `26.5.1` · `19.3.0` · `19.3.0` | MIT | Có | Có | Chỉ là khai báo kiểu, không đi vào kết quả dựng |
+| eslint | `9.39.5` | MIT | Có | Có | Linter (#382), chỉ là `devDependencies`, chạy bằng `npm run lint` — không vào bản dựng. Dòng đầu `LICENSE`: `Copyright OpenJS Foundation and other contributors`. Giữ nhánh 9 dù npm đánh dấu hết hỗ trợ: `eslint-plugin-react`, `eslint-plugin-import`, `eslint-plugin-jsx-a11y` mà `eslint-config-next` kéo theo chỉ khai tương thích tới ESLint 9 |
+| eslint-config-next | `16.4.5` | MIT | Có | Có | Bộ luật chính thức của Next.js (React, hook, khả năng truy cập, Core Web Vitals, TypeScript), cùng phiên bản với `next`. Cấu hình ở `frontend/eslint.config.mjs` |
 
 Hai gói của sơ đồ (#315) ghim **chính xác** `12.12.0` và `3.1.3`: các bản mới hơn tại thời điểm thêm
 (10/11/2026) chưa đủ hai tuần phát hành, nên không lấy bản mới nhất.
@@ -148,7 +154,15 @@ Phụ thuộc gián tiếp của sơ đồ (#315), 20 gói do hai gói trên ké
 
 Cả hai giấy phép ngoài MIT — ISC và BSD-3-Clause — đều thuộc danh sách OSI và tương thích MIT.
 
-Toàn bộ cây phụ thuộc có **89 gói** (đếm lại ở #315, trước đó 67 gói ở #305). Đã rà giấy phép từng
+Linter (#382) thêm **340 gói chỉ dùng lúc phát triển** — không gói nào vào bản dựng `standalone` của
+cổng. Rà giấy phép bằng siêu dữ liệu trong tệp khóa: 294 MIT, 17 Apache-2.0, 16 ISC, 7 BSD-2-Clause,
+2 BlueOak-1.0.0 (`minimatch` và một gói con — OSI công nhận), 1 Python-2.0 (`argparse`), 1 BSD-3-Clause,
+1 MPL-2.0 (`axe-core` — copyleft theo tệp như `lightningcss` ở trên, dùng nguyên gói), 1 CC0-1.0
+(`language-subtag-registry`, xem mục Một gói không mang giấy phép phần mềm). Thêm linter kéo
+`caniuse-lite` lên `1.0.30001826` và `baseline-browser-mapping` lên `2.11.38`, vì `browserslist` mới mà
+cây ESLint cần đòi tối thiểu hai bản đó — chỉ là bảng dữ liệu trình duyệt.
+
+Cây phụ thuộc của sản phẩm (không kể linter) có **89 gói** (đếm lại ở #315, trước đó 67 gói ở #305). Đã rà giấy phép từng
 gói bằng siêu dữ liệu trong tệp khóa, không dựa vào trí nhớ: 41 MIT, 19 Apache-2.0, 14 gói
 `sharp`/`libvips` mang LGPL, 11 ISC, 2 BSD-3-Clause, 1 0BSD, 1 CC-BY-4.0. Hai nhóm cuối đã giải thích
 ở mục Lưu ý về giấy phép copyleft.
@@ -293,7 +307,8 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 |---|---|---|---|
 | git-cliff | MIT hoặc Apache-2.0 | Sinh nhật ký thay đổi | Không |
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
-| `actions/checkout`, `actions/setup-node` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
+| `actions/checkout`, `actions/setup-node`, `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
+| ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
 **Lưu ý về bảng chấm**: mục PoF số 4 trừ 5 điểm nếu *"mã nguồn được dịch bằng công

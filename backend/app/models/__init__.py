@@ -14,12 +14,14 @@ Hai nhóm bảng, hai chủ sở hữu khác nhau:
 - `case` — hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ, do Alembic sở hữu
 - `van_hanh` — nhịp bộ quét nền và bộ đếm giới hạn tốc độ (#243, #253), do Alembic sở hữu
 - `quan_tri` — nhật ký thay đổi cấu hình (#255) và ủy quyền khi vắng mặt (#252), do Alembic sở hữu
+- `luu_tru` — sổ các bản lưu trữ lạnh đã xuất ra kho đối tượng (#378), do Alembic sở hữu
 
 Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên `alembic/env.py` chỉ cần
 một dòng import.
 """
 
 from app.models.case import AttachmentFileType, CaseAttachment, CaseMessage, EventLog, Request
+from app.models.luu_tru import ColdArchive
 from app.models.quan_tri import ConfigChange, Delegation
 from app.models.thong_bao import (
     NotificationDelivery,
@@ -28,12 +30,14 @@ from app.models.thong_bao import (
     NotificationType,
 )
 from app.models.van_hanh import RateLimitHit, ScannerHeartbeat
+from app.models.webhook import WebhookDelivery, WebhookSubscription
 from app.models.workflow_config import (
     Department,
     Guard,
     MessageKind,
     MessageKindRole,
     Priority,
+    Process,
     RequestType,
     RequestTypeRouting,
     Role,
@@ -48,6 +52,7 @@ __all__ = [
     "AttachmentFileType",
     "CaseAttachment",
     "CaseMessage",
+    "ColdArchive",
     "ConfigChange",
     "Delegation",
     "Department",
@@ -60,6 +65,7 @@ __all__ = [
     "NotificationPreference",
     "NotificationType",
     "Priority",
+    "Process",
     "RateLimitHit",
     "Request",
     "RequestType",
@@ -67,6 +73,8 @@ __all__ = [
     "Role",
     "RuleSet",
     "ScannerHeartbeat",
+    "WebhookDelivery",
+    "WebhookSubscription",
     "State",
     "Transition",
     "TransitionGuard",

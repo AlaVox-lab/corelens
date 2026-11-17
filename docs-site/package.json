@@ -5,6 +5,9 @@
   "license": "MIT",
   "description": "Trang tài liệu của DX-OS Lab, dựng bằng Starlight",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

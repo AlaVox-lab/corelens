@@ -68,5 +68,13 @@ chuyển động hỏng đúng chỗ.
 
 ## Khi nào chạy
 
-Trước khi mở pull request có sửa giao diện, cùng với `npm run typecheck` và `npm run build` trong
-`frontend/`. Thêm màn mới thì thêm vào `e2e/kiem/giao-dien.spec.ts`.
+Trước khi mở pull request có sửa giao diện, cùng với `npm run typecheck`, `npm run lint` và
+`npm run build` trong `frontend/`. Thêm màn mới thì thêm vào `e2e/kiem/giao-dien.spec.ts`.
+
+Trên tích hợp liên tục, quy trình `.github/workflows/e2e.yml` chạy **toàn bộ** kịch bản cho mỗi pull
+request vào `main` và khi bấm *Run workflow* ở thẻ *Actions* — không chạy cho pull request vào `dev` vì
+dựng trọn cụm mất khoảng nửa giờ. Quy trình dựng cụm mặc định từ `infra/.env.example` trên máy sạch,
+chờ Keycloak nạp xong realm rồi chạy bằng Chromium do Playwright tải về; ô `kenh` khi chạy tay đặt biến
+`KENH`. Bài hỏng thì tải tệp `bao-cao-e2e` ở trang lượt chạy: thư mục `bao-cao/` mở bằng
+`npx playwright show-report bao-cao`, vết của từng bài hỏng (`trace.zip` trong `tam/`) mở ở
+`https://trace.playwright.dev`.

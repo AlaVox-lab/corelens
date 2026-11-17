@@ -140,7 +140,7 @@ def lenh_dung(ts: argparse.Namespace) -> int:
 
     cum.in_dia_chi(co_superset=not ts.khong_superset)
     print("\nTài khoản mẫu và mật khẩu mẫu: xem README. Gỡ cụm thử khi xong:")
-    print(f"  python -m scripts.kiem_chung.cum_thu go --xoa-anh")
+    print("  python -m scripts.kiem_chung.cum_thu go --xoa-anh")
     return 0
 
 

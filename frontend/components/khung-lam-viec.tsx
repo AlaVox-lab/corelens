@@ -73,6 +73,8 @@ export function KhongPhanHoi() {
           <a className="nut" data-loai="chinh" href="">
             Thử lại
           </a>
+          {/* Tải lại trọn trang chủ thay vì điều hướng phía máy khách: trang đang lỗi nên không dựa vào trạng thái của nó */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a className="nut" href="/">
             Về trang chủ
           </a>

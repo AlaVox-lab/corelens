@@ -17,6 +17,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { createPortal } from "react-dom";
 
 import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huong";
+import { NgheThayDoi } from "@/components/nghe-thay-doi";
 
 /** Khóa lưu lựa chọn sáng/tối. Đoạn mã đầu trang trong `app/layout.tsx` đọc cùng khóa. */
 export const KHOA_CHE_DO = "dxlab-theme";
@@ -139,6 +140,7 @@ export function KhungUngDung({
 
   return (
     <div className="app" data-menu-mo={moMenu ? "" : undefined} data-thu-gon={thuGon ? "" : undefined}>
+      <NgheThayDoi />
       <aside className="sb khong-in" aria-label="Thanh bên">
         <div className="sb-dau">
           <span className="logo">YC</span>

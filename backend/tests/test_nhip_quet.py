@@ -58,7 +58,11 @@ def _may_khach(phien, actor: Actor | None = None):
 
 @pytest.fixture
 def bo_quet_thu(monkeypatch, session, rule_set):
-    """Danh sách bộ quét của `/health` thành hai bộ thử, cấu hình mặc định, tiến trình mới khởi động."""
+    """Danh sách bộ quét của `/health` thành hai bộ thử, cấu hình mặc định, tiến trình mới khởi động.
+
+    Bộ lưu trữ lạnh (#378) mặc định bật nên có dòng nhịp — tắt qua biến môi trường để mọi `Settings()` dựng
+    trong bài (kể cả sau fixture) chỉ thấy hai bộ thử; bộ đó có bài riêng ở test_luu_tru_lanh.py."""
+    monkeypatch.setenv("DXLAB_ARCHIVE_ENABLED", "false")
     monkeypatch.setattr(main_mod, "BO_QUET", BO_THU)
     monkeypatch.setattr(main_mod, "settings", Settings(sla_scan_interval_seconds=60))
     monkeypatch.setattr(main_mod, "THOI_DIEM_KHOI_DONG", time.monotonic())
