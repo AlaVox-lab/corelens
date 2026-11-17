@@ -65,6 +65,7 @@ from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
 from app.thoi_gian_thuc import router as router_thoi_gian_thuc
+from app.workflow.bpmn import router as router_bpmn
 from app.webhook import NHAN_BO_QUET_WEBHOOK, TEN_BO_QUET_WEBHOOK, co_dang_ky_dang_bat, quet_webhook
 from app.webhook import router as router_webhook
 
@@ -799,6 +800,8 @@ def _gan_loi(router: APIRouter, nhom: str, duong: str = "") -> None:
 _gan_loi(router_yeu_cau, "workflow")
 # Danh sách, chi tiết, bước chuyển của lõi: phạm vi theo vai (#376), khác cửa "hồ sơ của mình" ở đường cũ
 _gan_loi(router_yeu_cau_loi, "workflow")
+# Quy trình dạng BPMN 2.0 (#405): chỉ có ở lõi, cổng người dùng không dùng
+_gan_loi(router_bpmn, "workflow")
 _gan_loi(router_tep, "files")
 _gan_loi(router_tai_tep, "files")
 _gan_loi(router_du_lieu_mo, "events")

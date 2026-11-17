@@ -70,6 +70,20 @@ tạo, hồ sơ của phòng mình nếu mang vai phòng ban, mọi hồ sơ n�
 được đề xuất của phòng mình, người gửi gọi nhầm bước của trưởng phòng nhận `403`. Đường cũ `/requests` của
 cổng người dùng vẫn chỉ là hồ sơ do chính người gọi tạo.
 
+### Quy trình dạng BPMN 2.0
+
+`GET /core/v1/workflow/processes/{code}/bpmn` trả bộ quy tắc đang bật của quy trình `code` thành tệp **BPMN
+2.0** (chuẩn OMG, ISO/IEC 19510) kèm bố cục sơ đồ, tải về tên `<code>.bpmn`. Kéo tệp vào
+[demo.bpmn.io](https://demo.bpmn.io) hay mở bằng Camunda Modeler là thấy sơ đồ quy trình:
+
+- trạng thái thành `userTask`, trạng thái kết thúc thành `endEvent`, một `startEvent` dẫn vào trạng thái đầu
+- mỗi cạnh thành `sequenceFlow` mang nhãn hoạt động; cạnh hệ thống tự đi ghi "(tự động)"; vai đi được, ghi chú
+  bắt buộc, cạnh làm lại nằm trong `documentation` của cạnh
+
+Xuất một chiều để đọc, trao đổi với người phân tích nghiệp vụ hay mang sang công cụ khác — sửa quy trình vẫn là
+sửa dữ liệu cấu hình ([Tùy biến quy trình](../../quan-tri/tuy-bien-quy-trinh/)). Mọi tài khoản đăng nhập gọi
+được, như danh mục quy trình.
+
 ### Token cho ứng dụng khác: tài khoản dịch vụ
 
 Một ứng dụng không có người dùng đăng nhập (phần mềm nhân sự, ứng dụng di động, kịch bản tích hợp) xin token
