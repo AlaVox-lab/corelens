@@ -266,11 +266,12 @@ chỉ là thay dữ liệu.
 
 ### 6.2. Chuẩn bị trình diễn
 
-- [ ] Kịch bản trình diễn tám phút, có điểm nhấn ở phần khai phá quy trình
-- [ ] Dữ liệu trình diễn đủ phong phú
+- [x] Kịch bản trình diễn — 15 phút theo bốn phần của đề, demo khoảng sáu phút, điểm nhấn ở phần khai phá quy
+  trình: [`kich-ban-trinh-dien.md`](kich-ban-trinh-dien.md) (#399)
+- [x] Dữ liệu trình diễn đủ phong phú — `scripts/nap_du_lieu_trinh_dien.py`, các bước ở mục 5 của kịch bản
 - [ ] Luyện tập ít nhất ba lần
-- [ ] Phương án dự phòng nếu mạng chậm hoặc mô hình lỗi
-- [ ] Chuẩn bị trả lời các câu hỏi dự kiến của ban giám khảo
+- [x] Phương án dự phòng nếu mạng chậm hoặc mô hình lỗi — mục 6 của kịch bản
+- [x] Chuẩn bị trả lời các câu hỏi dự kiến của ban giám khảo — mục 7 của kịch bản
 
 ### 6.3. Thu hút cộng đồng
 
