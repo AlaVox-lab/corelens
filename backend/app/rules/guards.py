@@ -32,6 +32,7 @@ from sqlalchemy.orm import object_session
 
 from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU, Request
 from app.models.workflow_config import RequestType, Transition
+from app.rules.dieu_kien import dieu_kien_khong_dat, kiem_dieu_kien
 from app.rules.han_cho import luc_vao_trang_thai
 from app.rules.sla import giay_lam_viec, han_goc_giay
 from app.rules.truong_rieng import kiem_chi_tiet
@@ -580,9 +581,10 @@ def permitted_fields(guard_codes: Iterable[str]) -> frozenset[str]:
 
 
 def run_guards(ctx: TransitionContext) -> None:
-    """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi."""
+    """Chạy lần lượt mọi ràng buộc gắn với cạnh đang đi, rồi điều kiện trên cạnh (#397)."""
     for ma in ctx.transition.guard_codes:
         _tra_rang_buoc(ma).check(ctx)
+    kiem_dieu_kien(ctx)
 
 
 def apply_effects(ctx: TransitionContext) -> dict[str, Any]:
@@ -620,4 +622,5 @@ def input_free_guards_pass(ctx: TransitionContext) -> bool:
                 rang_buoc.check(ctx)
     except GuardViolation:
         return False
-    return True
+    # Điều kiện trên cạnh (#397) chỉ đọc hồ sơ, không đọc nhập liệu — chạy được lúc chào nút
+    return not dieu_kien_khong_dat(ctx)

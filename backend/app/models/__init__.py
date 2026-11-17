@@ -44,6 +44,7 @@ from app.models.workflow_config import (
     RuleSet,
     State,
     Transition,
+    TransitionCondition,
     TransitionGuard,
     TransitionRole,
 )
@@ -77,6 +78,7 @@ __all__ = [
     "WebhookSubscription",
     "State",
     "Transition",
+    "TransitionCondition",
     "TransitionGuard",
     "TransitionRole",
 ]

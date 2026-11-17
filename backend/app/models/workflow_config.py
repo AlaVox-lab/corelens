@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -24,7 +25,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -143,6 +144,10 @@ class Transition(Base):
     guards: Mapped[list[TransitionGuard]] = relationship(
         back_populates="transition", lazy="selectin"
     )
+    # Điều kiện trên cạnh (#397): mọi điều kiện đúng thì cạnh mới đi được — app/rules/dieu_kien.py
+    conditions: Mapped[list[TransitionCondition]] = relationship(
+        back_populates="transition", lazy="selectin"
+    )
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -207,6 +212,24 @@ class TransitionGuard(Base):
     )
 
     transition: Mapped[Transition] = relationship(back_populates="guards")
+
+
+class TransitionCondition(Base):
+    """Điều kiện trên một cạnh (#397): so trường riêng `field_code` của hồ sơ với `value` bằng `operator`.
+
+    Lược đồ ở bản sửa 0032_dieu_kien_tren_canh; mô hình chỉ để đọc, như mọi bảng cấu hình.
+    """
+
+    __tablename__ = "transition_conditions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    transition_id: Mapped[int] = mapped_column(Integer, ForeignKey("transitions.id", ondelete="CASCADE"))
+    field_code: Mapped[str] = mapped_column(Text)
+    operator: Mapped[str] = mapped_column(Text)
+    value: Mapped[Any] = mapped_column(JSONB)
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+
+    transition: Mapped[Transition] = relationship(back_populates="conditions")
 
 
 class Priority(Base):

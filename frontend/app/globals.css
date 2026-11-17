@@ -3353,6 +3353,113 @@ html.doi-mau * {
   }
 }
 
+/* Khối Webhook trên màn Hệ thống (#401) — cùng lề, cùng chữ phụ với khối xuất nhật ký */
+.wh-ds-dang-ky,
+.wh-ds-lan-gui {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wh-ds-dang-ky {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.wh-dang-ky {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.wh-dau-dong {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wh-dia-chi {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wh-phu {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.wh-ds-lan-gui {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.wh-lan-gui {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.wh-bieu-mau {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.wh-rong {
+  grid-column: 1 / -1;
+}
+
+.wh-loi {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--f-r-ink);
+}
+
+.wh-bi-mat {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--f-a-line);
+  border-radius: 10px;
+  background: var(--f-a-bg);
+  color: var(--f-a-ink);
+  font-size: 13px;
+}
+
+.wh-bi-mat p {
+  margin: 0 0 8px;
+}
+
+.wh-bi-mat-dong {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wh-bi-mat-dong code {
+  overflow-wrap: anywhere;
+  font-size: 12.5px;
+}
+
+@media (max-width: 560px) {
+  .wh-bieu-mau {
+    grid-template-columns: 1fr;
+  }
+
+  .wh-dau-dong {
+    flex-direction: column;
+  }
+}
+
 .o-truong-rieng {
   display: grid;
   gap: 14px;
@@ -4896,5 +5003,133 @@ span.qt-ma {
 @media (min-width: 768px) {
   .app[data-thu-gon] .sb-nguon {
     display: none;
+  }
+}
+
+/* Bảng Kanban của buồng lái phòng ban (#403): cột theo trạng thái, cuộn ngang khi nhiều cột */
+.kb-thanh {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.kb-ghi-chu {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.kb-bang {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  align-items: start;
+}
+
+.kb-cot {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.kb-dau-cot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: inherit;
+}
+
+.kb-so {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.kb-ds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.kb-the {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.kb-the:hover {
+  border-color: var(--ink-3);
+}
+
+.kb-the:focus-visible {
+  outline: 2px solid var(--f-b-solid);
+  outline-offset: 2px;
+}
+
+.kb-the[data-muc="qua"] {
+  border-left-color: var(--f-r-solid);
+}
+
+.kb-the[data-muc="sap"] {
+  border-left-color: var(--f-a-solid);
+}
+
+.kb-ma {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.kb-tieu-de {
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.kb-phu {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.kb-chan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.kb-han {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.kb-the[data-muc="qua"] .kb-han {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.kb-the[data-muc="sap"] .kb-han {
+  color: var(--f-a-ink);
+}
+
+@media (max-width: 560px) {
+  .kb-bang {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
   }
 }

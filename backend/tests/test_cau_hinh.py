@@ -68,6 +68,8 @@ def cum_moi(session):
     goc.execute("DROP INDEX rule_sets_chi_mot_bo_kich_hoat")
     goc.execute("CREATE UNIQUE INDEX rule_sets_mot_bo_bat_moi_quy_trinh ON rule_sets (process_code) WHERE is_active")
     goc.execute((THU_MUC_SQL / "0028_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
+    # Điều kiện trên cạnh (0032, #397): bảng mà tệp 07 của dữ liệu khởi tạo nạp
+    goc.execute("CREATE TABLE transition_conditions (LIKE public.transition_conditions INCLUDING ALL)")
     return goc
 
 

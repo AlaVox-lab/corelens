@@ -72,12 +72,14 @@ vụ (luồng client credentials):
 
 Danh mục quy trình → loại và trạng thái của quy trình → người đề xuất tạo hồ sơ, gửi trưởng phòng của phòng
 đề xuất → trưởng phòng thấy hồ sơ trong việc chờ mình (`needs_action=true`) và duyệt → người duyệt cấp hai
-duyệt → đọc lịch sử. Mỗi người đi **bước chính** mà lõi trả về cho chính họ; không mã cứng mã quy trình,
+duyệt → đọc lịch sử. Từ #397 quy trình **rẽ nhánh theo số tiền** bằng điều kiện trên cạnh khai trong dữ liệu:
+dưới 5.000.000 đồng trưởng phòng duyệt là xong; `--so-tien` chọn số tiền gửi (mặc định 2.500.000). Mỗi người đi **bước chính** mà lõi trả về cho chính họ; không mã cứng mã quy trình,
 trạng thái hay bước nào. Cửa bước chuyển của lõi xét vai và phạm vi của từng người gọi: trưởng phòng chỉ thấy
 đề xuất của phòng mình, người đề xuất gọi nhầm bước của trưởng phòng nhận `403`.
 
 ```bash
 python examples/goi-loi/quy_trinh_mua_sam.py
+python examples/goi-loi/quy_trinh_mua_sam.py --so-tien 12000000
 python examples/goi-loi/quy_trinh_mua_sam.py --quy-trinh purchase-approval --env-file duong/toi/tep.env
 ```
 
@@ -85,7 +87,19 @@ Cụm dựng từ `v1.0.0` trở về trước: chép thêm các dòng `KEYCLOAK
 `KEYCLOAK_INTEGRATION_REVIEWER_*` từ `infra/.env.example` sang `.env`, rồi chạy `python
 scripts/tai_khoan_dich_vu.py` một lần. Quy trình thứ hai do bản sửa lược đồ `0028` thêm lúc dịch vụ khởi động.
 
-Đầu ra trên cụm thử vừa dựng sạch, sau một lượt kiểm thử, 16/11/2026:
+Đầu ra phần duyệt, cụm phát triển 17/11/2026 — dưới ngưỡng (mặc định, 2.500.000 đồng):
+
+```
+4. Trưởng phòng: hồ sơ CÓ trong danh sách đang chờ mình
+   Bước trưởng phòng đi được: Duyệt (dưới ngưỡng) → Đã duyệt (chính); Trả lại để bổ sung → Trả lại bổ sung; Từ chối đề xuất → Từ chối
+   Trưởng phòng đã đi “Duyệt (dưới ngưỡng)”: hồ sơ giờ ở “Đã duyệt” — trạng thái kết thúc
+6. Lịch sử hồ sơ YC-2026-7150 — các dòng nhật ký sự kiện (2, giờ UTC):
+   2026-11-17 11:12:03 · dx-integration · Gửi trưởng phòng duyệt: Đã gửi đề xuất → Chờ trưởng phòng duyệt
+   2026-11-17 11:12:03 · dx-integration-truong-phong · Duyệt (dưới ngưỡng): Chờ trưởng phòng duyệt → Đã duyệt
+```
+
+Từ ngưỡng trở lên (`--so-tien 12000000`) thì đi đủ hai cấp như đầu ra trước #397, trên cụm thử vừa dựng sạch,
+16/11/2026:
 
 ```
 1. Token client credentials của ba tài khoản dịch vụ: dx-integration (người đề xuất), dx-integration-truong-phong (trưởng phòng), dx-integration-duyet (duyệt cấp hai)
