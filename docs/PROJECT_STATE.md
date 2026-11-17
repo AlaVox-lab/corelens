@@ -15,12 +15,12 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-17 |
-| Phiên bản hiện tại | **`v1.0.0`** (16/11) — bản dự thi theo đề: cổng API Apache APISIX, xác thực hai lớp tùy chọn, tách nền tảng lõi Mức 1 dưới `/core/v1` (PR #370, #371). **`dev` đi trước `main` bảy pull request của Giai đoạn 6** (#375, #384, #389, #386, #388, #391, #392) — sẽ phát hành thành `v1.1.0` |
+| Phiên bản hiện tại | **`v1.1.0`** (17/11) — Giai đoạn 6 đợt một: lõi Mức 2 chạy nhiều quy trình, lưu trữ lạnh, phả hệ dữ liệu, thời gian thực, webhook, README tiếng Anh, linter và kịch bản giao diện trên tích hợp liên tục (PR #394, #396). **`dev` đi trước `main` năm pull request** (#398, #406, #402, #404, #400 — điều kiện trên cạnh, xuất BPMN, quản lý webhook, bảng Kanban, kịch bản trình diễn) — sẽ phát hành thành `v1.2.0` |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): #376–#380, #382, #385, #387, #390 đã làm xong trên `dev`, đóng khi `v1.1.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`; #397, #399, #401, #403, #405 đã làm xong trên `dev`, đóng khi `v1.2.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* duyệt hai cấp (#376) |
-| Issue đang mở | **11** — #376–#383, #385, #387, #390 (mốc 18); chín issue đã làm xong trên `dev` |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
+| Issue đang mở | **7** — #381, #383, #397, #399, #401, #403, #405 (mốc 18); năm issue đã làm xong trên `dev` |
 | Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) thay Ngô Hoàng Đại (`@Senning-Dd`); đóng góp cũ của bạn Đại giữ nguyên trong lịch sử kho |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
@@ -1056,14 +1056,31 @@ sau đổi số. Quy tắc đánh số đưa vào `CONTRIBUTING.md` mục 5.5.
 dịch vụ khai phá 176 → **179**, kịch bản giao diện **180 đạt, 24 bỏ qua có chủ đích**; thử thật luồng SSE và webhook
 qua cổng API.
 
-**Issue sẽ đóng khi `v1.1.0` lên `main`**: #376, #377, #378, #379, #380, #382, #385, #387, #390
+**Phát hành `v1.1.0`** (17/11, PR #394, nhật ký thay đổi #395, PR #396): lần đầu kịch bản giao diện chạy trọn trên
+tích hợp liên tục ở pull request vào `main` — đạt, khoảng 12 phút. Issue đã đóng: #376, #377, #378, #379, #380, #382,
+#385, #387, #390.
+
+**Đợt hai, sau `v1.1.0`** — năm pull request của `@phuctiensinh`:
+
+- **Điều kiện trên cạnh** (#397, PR #398): migration `0032`, bảng `transition_conditions` so một trường riêng của hồ
+  sơ với một hằng số; engine kiểm cùng chỗ với ràng buộc Poka-yoke — cạnh không thỏa không hiện nút, gọi thẳng thì bị
+  từ chối, thiếu trường là sai. Quy trình mua vật tư rẽ nhánh theo số tiền: dưới 5.000.000 đồng trưởng phòng duyệt
+  là xong, từ ngưỡng trở lên mới sang cấp hai; ngưỡng nằm trong `infra/seed/07-dieu-kien-mua-sam.sql`
+- **Xuất quy trình ra BPMN 2.0** (#405, PR #406): `GET /core/v1/workflow/processes/{mã}/bpmn` dựng bộ quy tắc đang
+  bật thành tệp BPMN kèm bố cục sơ đồ, chỉ dùng thư viện chuẩn
+- **Quản lý webhook trên màn Hệ thống** (#401, PR #402) và **bảng Kanban cho buồng lái phòng ban** (#403, PR #404):
+  chỉ giao diện, gọi API sẵn có
+- **Kịch bản trình diễn chung kết** (#399, PR #400): `docs/kich-ban-trinh-dien.md` — 15 phút theo bốn phần của đề,
+  thứ tự demo, chuẩn bị, dự phòng, câu hỏi dự kiến
+
+Cụm cũ nâng bằng `up -d --build`, migration `0032` tự áp điều kiện cho quy trình mua vật tư; không `down -v`.
 
 ---
 
 ## Đang làm
 
-Phát hành `v1.1.0` cho Giai đoạn 6: pull request phát hành `dev → main` — lần đầu kịch bản giao diện chạy trọn trên
-tích hợp liên tục — rồi nhật ký thay đổi và thẻ.
+Phát hành `v1.2.0` cho đợt hai: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên năm pull
+request ghép lại, rồi nhật ký thay đổi và thẻ.
 
 ---
 
@@ -1071,7 +1088,7 @@ tích hợp liên tục — rồi nhật ký thay đổi và thẻ.
 
 ### Theo thứ tự
 
-1. **Phát hành `v1.1.0`** — Giai đoạn 6 đã nằm trên `dev`
+1. **Phát hành `v1.2.0`** — đợt hai của Giai đoạn 6 đã nằm trên `dev`
 2. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
    vệ nhánh, bắt buộc dấu xanh, bật GitHub Pages (*Settings → Pages → Source: GitHub Actions*) và sửa ô Website của
    kho — khép #381
@@ -1155,7 +1172,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `core` — Apache APISIX `3.20.0` làm cổng API, cửa vào duy nhất của API | Standalone, một tiến trình; cổng `8000` và `5432` không mở ra máy, mở lại bằng `infra/docker-compose.phat-trien.yml`; dịch vụ ứng dụng vẫn kiểm token lại — ADR-0010, navigator chấp nhận 15/11 |
 | Tách nền tảng lõi theo Mức 1: API có phiên bản dưới `/core/v1`, chung một dịch vụ | Giảng viên chốt 15/11: làm Mức 1 trước cho nhanh, xong thấy khả thi thì lên Mức 2 (engine chạy nhiều quy trình); Mức 3 (tách engine thành dịch vụ riêng) quá sức, bỏ |
 | Xác thực hai lớp là tùy chọn, mặc định tắt | Navigator chốt 15/11; đợt `v1.0.0` không làm lưu trữ lạnh, phả hệ dữ liệu, sao lưu theo lịch |
-| Nền tảng lõi lên Mức 2: mỗi quy trình một bộ quy tắc đang bật, quy trình mẫu thứ hai thuần dữ liệu | Navigator chốt 16/11 theo ý giảng viên ngày 15/11; không làm điều kiện trên cạnh (mọi đề xuất mua đi đủ hai cấp), cổng người dùng chưa hiện hồ sơ quy trình 2 — #376 |
+| Nền tảng lõi lên Mức 2: mỗi quy trình một bộ quy tắc đang bật, quy trình mẫu thứ hai thuần dữ liệu | Navigator chốt 16/11 theo ý giảng viên ngày 15/11, #376. Ban đầu không làm điều kiện trên cạnh; ngày 17/11 navigator nhận #397: điều kiện chỉ nối "và", chỉ so trường riêng với hằng số. Cổng người dùng chưa hiện hồ sơ quy trình 2 |
 | Lưu trữ lạnh là bản sao niêm phong theo tháng, không xóa tầng nóng | CSV nén và manifest SHA-256 trong SeaweedFS, không chứa tên người. Loại Parquet (thêm phụ thuộc) và dọn tầng nóng (phá nhật ký chỉ ghi thêm) — #378 |
 | Trang tài liệu đăng trên GitHub Pages | Navigator chốt 17/11: không thêm tài khoản bên thứ ba, mọi thứ nằm trong kho; Vercel ghi làm phương án khác. Cụm Docker không đăng lên Internet được — trình diễn trên máy nhóm, kèm video dự phòng |
 | Linter ở mọi pull request, kịch bản giao diện trọn bộ chỉ ở pull request vào `main` | Trọn bộ Playwright trên cụm sạch mất khoảng nửa giờ, quá lâu cho mỗi pull request vào `dev` — #382 |
