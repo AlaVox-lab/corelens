@@ -168,6 +168,7 @@ hệt.
 | | `GET /requests` ¹ | `GET /core/v1/workflow/requests` (`process`) ¹ |
 | | `GET /requests/{case_id}` ¹ | `GET /core/v1/workflow/requests/{case_id}` ¹ |
 | | `POST /requests/{case_id}/transitions` ¹ | `POST /core/v1/workflow/requests/{case_id}/transitions` ¹ |
+| | — | `GET /core/v1/workflow/processes/{code}/bpmn` ² — bộ quy tắc đang bật dạng BPMN 2.0 kèm bố cục (#405) |
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
