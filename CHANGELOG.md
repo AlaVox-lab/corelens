@@ -5,6 +5,25 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.1.0] - 2026-11-17
+
+### Tài liệu
+
+- **state:** Cập nhật trạng thái tới v1.0.0 ([#375](https://github.com/AlaVox-lab/dx-os-lab/issues/375)) ([7ea976f](https://github.com/AlaVox-lab/dx-os-lab/commit/7ea976f23794a0192f439e1823247974d24b6390))
+- Bổ sung cách xử lý container tạo dở sau lỗi trùng cổng ([#386](https://github.com/AlaVox-lab/dx-os-lab/issues/386)) ([4032a74](https://github.com/AlaVox-lab/dx-os-lab/commit/4032a7456b702572b0b45df480ddeb0c1d649015))
+- **state:** Cập nhật trạng thái Giai đoạn 6 trước v1.1.0 ([#393](https://github.com/AlaVox-lab/dx-os-lab/issues/393)) ([8f5ece7](https://github.com/AlaVox-lab/dx-os-lab/commit/8f5ece71ca98e4158a260dddc2b3502cabf974d3))
+
+### Tích hợp liên tục
+
+- **ci:** Linter, e2e, trang tài liệu Pages và README tiếng Anh ([#392](https://github.com/AlaVox-lab/dx-os-lab/issues/392)) ([1975212](https://github.com/AlaVox-lab/dx-os-lab/commit/19752128433e95c7cefdfc6da7a8ab88487921fd))
+
+### Tính năng mới
+
+- **p-workflow:** Engine chạy nhiều quy trình, siết realm mẫu ([#384](https://github.com/AlaVox-lab/dx-os-lab/issues/384)) ([476b8e3](https://github.com/AlaVox-lab/dx-os-lab/commit/476b8e3a7f9994637292986b0140023b1da82328))
+- **d-analytics:** Lưu trữ lạnh theo tháng và phả hệ dữ liệu ([#389](https://github.com/AlaVox-lab/dx-os-lab/issues/389)) ([dca4560](https://github.com/AlaVox-lab/dx-os-lab/commit/dca45600700fba3e4222360c80669da966b5050e))
+- **h-portal:** Cập nhật thời gian thực bằng Server-Sent Events ([#388](https://github.com/AlaVox-lab/dx-os-lab/issues/388)) ([b9b4bf8](https://github.com/AlaVox-lab/dx-os-lab/commit/b9b4bf80fdc45fbe469cc49cc0fd41c39a4c8476))
+- **d-analytics:** Truyền phát sự kiện ra ngoài bằng webhook ([#391](https://github.com/AlaVox-lab/dx-os-lab/issues/391)) ([a70abb6](https://github.com/AlaVox-lab/dx-os-lab/commit/a70abb6c77e8c3d66f6201ae19f31394b31588d1))
+
 ## [1.0.0] - 2026-11-15
 
 ### Tính năng mới

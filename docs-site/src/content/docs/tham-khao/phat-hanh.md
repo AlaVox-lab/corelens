@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.1.0` | Nền tảng lõi Mức 2: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai *đề xuất mua vật tư* thuần dữ liệu; lưu trữ lạnh theo tháng ra kho đối tượng và trang phả hệ dữ liệu; cổng người dùng cập nhật thời gian thực; webhook có chữ ký; siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục |
 | `v1.0.0` | Bản dự thi OLP 2026 theo mô hình của đề: cổng API Apache APISIX làm cửa vào duy nhất, kiểm token tại biên; nền tảng lõi không giao diện phơi qua API `/core/v1` kèm tài khoản dịch vụ và ví dụ gọi lõi; xác thực hai lớp tùy chọn; khóa phiên bản cả gói Python kéo theo |
 | `v0.16.0` | Kho tri thức Wiki.js (tùy chọn, hồ sơ `tri-thuc`): đăng nhập một lần qua Keycloak, quyền theo vai trò, bài hướng dẫn hiện trong gợi ý khi đang soạn yêu cầu; khép nhóm nền tảng vận hành |
 | `v0.15.0` | Màn quản trị cấu hình: xem luồng xử lý, sửa hạn, hệ số ưu tiên, loại yêu cầu, phòng ban ngay trên cổng, có xem trước và nhật ký sửa; ủy quyền khi vắng mặt cho người cùng phòng theo khoảng ngày, ghi "thay mặt"; sao lưu tay và khôi phục có đối soát; chính sách dữ liệu cá nhân (ADR-0009) |
