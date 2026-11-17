@@ -250,8 +250,22 @@ engine — không một dòng mã nào biết quy trình nào tồn tại.
   gửi lại hoặc rút. Hai trạng thái chờ duyệt chạy đồng hồ, cạnh vào mỗi cấp mang `restarts_sla`, nên **mỗi
   cấp có hạn riêng** bằng `sla_hours` của loại
 
-**Giới hạn của Mức 2.** Engine không có điều kiện trên cạnh, nên quy trình mẫu không rẽ nhánh theo số tiền —
-mọi đề xuất qua đủ hai cấp; thêm điều kiện là thêm một ràng buộc Poka-yoke mới, chưa làm. Màn của ứng dụng
+**Điều kiện trên cạnh (#397).** Rẽ nhánh theo dữ liệu của hồ sơ là dữ liệu: bảng `transition_conditions`
+(bản sửa 0032) gắn vào một cạnh các dòng *trường riêng — phép so — giá trị* (`<`, `<=`, `>`, `>=`, `=`, `!=`
+trên `requests.details`). Cạnh chỉ đi được khi mọi điều kiện đúng; cạnh không có dòng nào chạy như trước.
+`app/rules/dieu_kien.py` chỉ biết cách so, không biết trường hay ngưỡng nào; nó chạy trong chính hai hàm của
+ràng buộc Poka-yoke — `input_free_guards_pass` (lúc chào nút: cạnh không thỏa không hiện, kể cả ở bước chính
+và hàng việc "đang chờ tôi") và `run_guards` (lúc đi: từ chối bằng mã ràng buộc `edge-condition`). Quy tắc
+so để rẽ nhánh đoán trước được: hai phía là số thì so số, `=`/`!=` với chữ thì so chữ, trường thiếu hay so
+lớn nhỏ chữ với số là sai. Bản sửa nội dung gửi kèm cạnh (`changes.details`) được xét thay bản đang lưu.
+Quy trình mua sắm mẫu dùng hai cạnh rời "Chờ trưởng phòng duyệt" với điều kiện bù nhau trên `so-tien`:
+dưới 5.000.000 đồng thì "Duyệt (dưới ngưỡng)" sang thẳng "Đã duyệt", từ ngưỡng trở lên "Duyệt cấp một" sang
+cấp hai (`infra/seed/07-dieu-kien-mua-sam.sql`; bản sửa 0032 chạy tệp đó trên cụm đã có quy trình). Đổi
+ngưỡng là một câu `UPDATE` trên hai dòng điều kiện. Bài kiểm thử chặn điều kiện trỏ tới trường không khai
+cho loại nào của cùng quy trình.
+
+**Giới hạn của Mức 2.** Điều kiện chỉ so trường riêng của hồ sơ với hằng số, nối bằng "và" — chưa có "hoặc",
+chưa so trường quyết định (phòng, mức ưu tiên). Màn của ứng dụng
 minh họa chỉ hiện quy trình mặc định: người gửi không thấy đề xuất mua sắm của mình trong cổng (thấy qua
 `/core/v1`), màn cấu hình quy trình chỉ sửa quy trình mặc định — quy trình khác sửa bằng seed và bản sửa.
 Các view báo cáo về gợi ý AI (`bao_cao_goi_y`, `bao_cao_ngan_chan`) không lọc quy trình vì chỉ quy trình mặc
@@ -541,7 +555,7 @@ dx-os-lab/
 │   │   ├── db.py                # kết nối dùng chung
 │   │   ├── models/              # lược đồ dữ liệu, dùng chung mọi không gian
 │   │   ├── workflow/            # [P] ĐIỂM CHUYỂN TRẠNG THÁI DUY NHẤT; ủy quyền khi vắng mặt (#252)
-│   │   ├── rules/               # [P] ràng buộc Poka-yoke và đồng hồ SLA
+│   │   ├── rules/               # [P] ràng buộc Poka-yoke, đồng hồ SLA, điều kiện trên cạnh (#397)
 │   │   ├── events/              # [P→D] nơi ghi nhật ký sự kiện duy nhất
 │   │   ├── auth/                # [H] kiểm token OIDC, dịch claim thành Actor, danh bạ
 │   │   ├── analytics/           # [D] xuất nhật ký CSV, JSON (#306), lưu trữ lạnh (#378); [I] lối vào khai phá (#314)

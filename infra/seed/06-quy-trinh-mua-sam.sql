@@ -19,7 +19,8 @@
 -- buộc actor-in-case-department), duyệt cấp hai là `classifier` (không tự duyệt đề xuất của chính mình —
 -- actor-not-requester). "Phòng đề xuất" là trường quyết định `department_code`, người đề xuất chọn ở cạnh Gửi
 -- trưởng phòng duyệt (ràng buộc select-department): đó là cột mà phạm vi trưởng phòng đọc. Từ chối và trả lại
--- bắt buộc ghi lý do. Engine không có điều kiện trên cạnh, nên mọi đề xuất qua đủ hai cấp, kể cả khoản nhỏ.
+-- bắt buộc ghi lý do. Tệp này cho mọi đề xuất qua đủ hai cấp; tệp 07 thêm điều kiện trên cạnh (#397) để khoản
+-- dưới ngưỡng chỉ cần trưởng phòng duyệt.
 --
 -- Hạn từng bước: hai trạng thái chờ duyệt bật `sla_running`, cạnh vào mỗi bước chờ duyệt mang `restarts_sla`
 -- — mỗi cấp duyệt có hạn riêng bằng `sla_hours` của loại yêu cầu (nhân hệ số mức ưu tiên nếu có).

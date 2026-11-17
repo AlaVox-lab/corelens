@@ -112,12 +112,20 @@ def client(session, vai):
     app.dependency_overrides.clear()
 
 
-def _tao_qua_loi(client, vai, quy_trinh: Process) -> dict:
-    """Người đề xuất tạo một hồ sơ của quy trình thứ hai bằng loại đầu tiên của nó, chỉ qua /core/v1."""
+# Số tiền đủ lớn để quy trình mua sắm mẫu đi đủ hai cấp duyệt (#397 rẽ nhánh theo trường số này)
+SO_TIEN_LON = 50_000_000
+
+
+def _tao_qua_loi(client, vai, quy_trinh: Process, so_tien: int = SO_TIEN_LON) -> dict:
+    """Người đề xuất tạo một hồ sơ của quy trình thứ hai bằng loại đầu tiên của nó, chỉ qua /core/v1.
+
+    Mọi trường số bắt buộc nhận `so_tien` — không biết tên trường, như ví dụ quy_trinh_mua_sam.py."""
     c = client.la(vai["gui"])
     loai = c.get(f"{LOI}/request-types", params={"process": quy_trinh.code}).json()[0]
+    chi_tiet = chi_tiet_mau(loai)
+    chi_tiet.update({t["code"]: so_tien for t in loai["fields"] if t["required"] and t["kind"] == "number"})
     tra = c.post(f"{LOI}/requests", json={
-        "title": "Đề xuất mua máy chiếu phòng họp", "request_type_code": loai["code"], "details": chi_tiet_mau(loai),
+        "title": "Đề xuất mua máy chiếu phòng họp", "request_type_code": loai["code"], "details": chi_tiet,
     })
     assert tra.status_code == 201, tra.text
     return tra.json()
@@ -261,6 +269,60 @@ def test_chay_tron_quy_trinh_thu_hai_chi_qua_loi(client, session, vai, quy_trinh
     nhat_ky = session.scalars(select(EventLog).where(EventLog.case_id == ho_so["id"]).order_by(EventLog.id)).all()
     assert [e.actor for e in nhat_ky] == [vai["gui"].id, vai["truong_phong"].id, vai["dieu_phoi"].id]
     assert len(ho_so["history"]) == 3
+
+
+def _nguong(session, quy_trinh: Process) -> tuple[str, float]:
+    """Trường và ngưỡng của điều kiện "<" trên cạnh rời trạng thái chờ trưởng phòng — đọc từ dữ liệu."""
+    dong = session.execute(text(
+        "SELECT c.field_code, c.value FROM transition_conditions c "
+        "JOIN transitions t ON t.id = c.transition_id JOIN rule_sets b ON b.id = t.rule_set_id "
+        "WHERE b.process_code = :q AND b.is_active AND c.operator = '<'"), {"q": quy_trinh.code}).first()
+    if dong is None:
+        pytest.skip("Quy trình thứ hai chưa khai điều kiện trên cạnh (infra/seed/07).")
+    return dong[0], float(dong[1])
+
+
+def test_duoi_nguong_truong_phong_duyet_la_xong(client, session, vai, quy_trinh_khac):
+    """#397: dưới ngưỡng, trưởng phòng chỉ thấy một nút duyệt và đi thẳng tới trạng thái kết thúc."""
+    _, nguong = _nguong(session, quy_trinh_khac)
+    ho_so = _gui_duyet(client, vai, _tao_qua_loi(client, vai, quy_trinh_khac, so_tien=int(nguong) - 1))
+
+    c = client.la(vai["truong_phong"])
+    chi_tiet = c.get(f"{LOI}/requests/{ho_so['id']}").json()
+    duyet = [b for b in chi_tiet["allowed_transitions"] if b["is_primary"]]
+    assert len(duyet) == 1
+    tra = c.post(f"{LOI}/requests/{ho_so['id']}/transitions", json={"to_state": duyet[0]["to_state"]})
+    assert tra.status_code == 200, tra.text
+    assert tra.json()["state"]["is_terminal"]
+
+
+def test_dung_nguong_phai_qua_cap_hai(client, session, vai, quy_trinh_khac):
+    """Đúng bằng ngưỡng là nhánh trên: hai điều kiện bù nhau, không có số nào lọt giữa hai cạnh."""
+    _, nguong = _nguong(session, quy_trinh_khac)
+    ho_so = _gui_duyet(client, vai, _tao_qua_loi(client, vai, quy_trinh_khac, so_tien=int(nguong)))
+
+    c = client.la(vai["truong_phong"])
+    duyet = [b for b in c.get(f"{LOI}/requests/{ho_so['id']}").json()["allowed_transitions"] if b["is_primary"]]
+    assert len(duyet) == 1
+    tra = c.post(f"{LOI}/requests/{ho_so['id']}/transitions", json={"to_state": duyet[0]["to_state"]})
+    assert tra.status_code == 200, tra.text
+    assert not tra.json()["state"]["is_terminal"]
+
+
+def test_di_canh_khong_thoa_dieu_kien_bi_tu_choi(client, session, vai, quy_trinh_khac):
+    """Gọi thẳng cạnh dưới ngưỡng với hồ sơ trên ngưỡng: engine từ chối, hồ sơ không đổi."""
+    _, nguong = _nguong(session, quy_trinh_khac)
+    ho_so = _gui_duyet(client, vai, _tao_qua_loi(client, vai, quy_trinh_khac, so_tien=int(nguong) * 2))
+    dich = session.scalar(text(
+        "SELECT t.to_state FROM transition_conditions c JOIN transitions t ON t.id = c.transition_id "
+        "JOIN rule_sets b ON b.id = t.rule_set_id WHERE b.process_code = :q AND b.is_active AND c.operator = '<'"),
+        {"q": quy_trinh_khac.code})
+
+    c = client.la(vai["truong_phong"])
+    tra = c.post(f"{LOI}/requests/{ho_so['id']}/transitions", json={"to_state": dich})
+    assert tra.status_code in (403, 409, 422), tra.text
+    assert "điều kiện" in tra.text
+    assert c.get(f"{LOI}/requests/{ho_so['id']}").json()["state"]["code"] == ho_so["state"]["code"]
 
 
 def test_sai_phong_khong_thay_sai_vai_bi_chan(client, vai, quy_trinh_khac):
