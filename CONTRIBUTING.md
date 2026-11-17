@@ -303,7 +303,9 @@ Copyright (c) 2026 AlaVox-lab
 
 Yêu cầu này bắt nguồn từ tiêu chí chấm điểm của cuộc thi: mã nguồn không ghi
 giấy phép trong từng tệp sẽ bị trừ điểm. `scripts/kiem_header.py` báo lỗi cả tệp
-thiếu header lẫn tệp mang giấy phép của thư mục khác.
+thiếu header lẫn tệp mang giấy phép của thư mục khác. Kịch bản xét mã nguồn và
+cả tệp cấu hình có cú pháp chú thích (`.yml`, `.yaml`, `.toml`, `.ini`,
+`.properties`, `.svg`, `Dockerfile`, `.env.example`); không xét JSON và Markdown.
 
 ### 5.2. Thư viện bên thứ ba
 
