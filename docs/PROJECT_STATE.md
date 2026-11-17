@@ -14,19 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-16 |
-| Phiên bản hiện tại | **`v1.0.0`** (16/11) — bản dự thi theo đề: cổng API Apache APISIX, xác thực hai lớp tùy chọn, bảng đối chiếu đề thi (#363, #364, #366, PR #370); tách nền tảng lõi Mức 1 dưới `/core/v1`, tài liệu theo mô hình lõi và ứng dụng minh họa, khóa gói Python kéo theo (#365, #367, #368, PR #371). Trước đó: `v0.16.0` (14/11) kho tri thức Wiki.js tùy chọn (#321). `main` không có gì chưa phát hành |
-| Giai đoạn | **Giai đoạn 5 — thích ứng đề thi, đã phát hành `v1.0.0`** (15–16/11, issue gốc #369 đóng). Đề yêu cầu nền tảng lõi không giao diện (định danh, cổng API, dữ liệu, luồng công việc) và ít nhất một ứng dụng minh họa H-P-D-I: cả bốn dịch vụ lõi đã có, đối chiếu ở `doi-chieu-de-thi.md`. Lõi đang ở **Mức 1** (giảng viên chốt 15/11); Mức 2 — engine chạy nhiều quy trình — chờ quyết định. Giai đoạn 2 tới 4 đã khép |
-| Mốc công việc | **Giai đoạn 5 - Thích ứng đề thi** (số 17): #363–#369 đều đóng khi `v1.0.0` lên `main`; mốc không còn issue mở, chờ đóng |
+| Cập nhật lần cuối | 2026-11-17 |
+| Phiên bản hiện tại | **`v1.0.0`** (16/11) — bản dự thi theo đề: cổng API Apache APISIX, xác thực hai lớp tùy chọn, tách nền tảng lõi Mức 1 dưới `/core/v1` (PR #370, #371). **`dev` đi trước `main` bảy pull request của Giai đoạn 6** (#375, #384, #389, #386, #388, #391, #392) — sẽ phát hành thành `v1.1.0` |
+| Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): #376–#380, #382, #385, #387, #390 đã làm xong trên `dev`, đóng khi `v1.1.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
-| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Bộ quy tắc mẫu có **11 trạng thái, 32 cạnh** |
-| Issue đang mở | **0** |
+| Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* duyệt hai cấp (#376) |
+| Issue đang mở | **11** — #376–#383, #385, #387, #390 (mốc 18); chín issue đã làm xong trên `dev` |
+| Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) thay Ngô Hoàng Đại (`@Senning-Dd`); đóng góp cũ của bạn Đại giữ nguyên trong lịch sử kho |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **842 bài** pytest ở dịch vụ ứng dụng (thêm 31 bài cổng API, 59 bài ranh giới lõi) và **176 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request. Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 15/11, mọi lời gọi đi qua cổng API, không lần nào 502. Dựng lại từ đúng tệp `dx-os-lab-1.0.0.tar.gz` theo README: 842 + 176 bài đạt, ví dụ gọi lõi đủ sáu bước (ghi ở #368). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Bộ kiểm thử tự động | **908 bài** pytest ở dịch vụ ứng dụng và **179 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 17/11 trên cụm dựng sạch; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.0.0.tar.gz` (16/11). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
 | Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` chưa đo lại — ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
-| Số ngày còn lại tới chấm kho mã | **21 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
+| Số ngày còn lại tới chấm kho mã | **20 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
@@ -75,8 +76,14 @@ làm thay ghi "thay mặt" trên dòng thời gian. Sao lưu tay và khôi phụ
 soát. Bật hồ sơ `tri-thuc` thì có **kho tri thức** Wiki.js đăng nhập một lần, và bài hướng dẫn hiện cạnh hồ
 sơ tương tự khi người gửi đang soạn.
 
+Ứng dụng khác dùng **nền tảng lõi** qua cổng API dưới `/core/v1`: lõi chạy được **nhiều quy trình**, mỗi quy
+trình một bộ quy tắc trong dữ liệu — quy trình mẫu thứ hai *đề xuất mua vật tư* duyệt hai cấp không thêm dòng mã
+nghiệp vụ nào. Lõi tự báo sự kiện ra ngoài bằng **webhook** có chữ ký, niêm phong từng tháng đã khép thành bản
+**lưu trữ lạnh** trong kho đối tượng, và trang **phả hệ dữ liệu** chỉ ra mỗi con số trên bảng điều khiển lấy từ
+đâu. Cổng người dùng **tự cập nhật ngay** khi hồ sơ đổi hay có lời nhắn mới.
+
 Luồng thủ công đã đủ theo các quyết định của giảng viên, tầng `D` đã chạy, tầng `I` đã khép về chức năng,
-nhóm nền tảng vận hành đã khép.
+nhóm nền tảng vận hành đã khép, nền tảng lõi đã lên Mức 2.
 
 ---
 
@@ -995,10 +1002,68 @@ một lần để có client dịch vụ (realm chỉ nạp lúc tạo). API c�
 
 ---
 
+### Tuần 19 (16–17/11) — Giai đoạn 6: lõi Mức 2, nguyên lý dữ liệu, cộng đồng
+
+Nhóm đọc lại thể lệ và đề, đối chiếu với bản `v1.0.0`; giảng viên chốt 15/11: Mức 1 xong thấy khả thi thì lên
+Mức 2, bỏ Mức 3. Navigator mở mốc 18 *Giai đoạn 6 - Hoàn thiện dự thi* (hạn 29/11) với issue gốc #383 và bảy issue
+#376–#382. Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm thay Ngô Hoàng Đại; bạn tự mở và làm ba
+issue #385, #387, #390 ngay trong tuần đầu.
+
+**PR #375** — sổ trạng thái tới `v1.0.0`.
+
+**PR #384** — nền tảng lõi Mức 2 và siết realm:
+
+- **Động cơ chạy nhiều quy trình** (#376): migration `0028` thêm bảng `processes`; mỗi quy trình đúng một bộ quy tắc
+  đang bật, loại yêu cầu quyết định quy trình của hồ sơ. Quy trình mẫu thứ hai *đề xuất mua vật tư*
+  (`purchase-approval`) duyệt trưởng phòng rồi điều phối viên, nằm trọn trong dữ liệu khởi tạo. API lõi có
+  `GET /core/v1/workflow/processes`; bước chuyển qua lõi xét vai và phạm vi người gọi. Hai tài khoản dịch vụ mới
+  cho ví dụ, `examples/goi-loi/quy_trinh_mua_sam.py` đi trọn quy trình 2 chỉ qua cổng API. Hàng đợi, buồng lái và
+  bảng điều khiển cũ chỉ đọc quy trình mặc định nên số liệu không đổi
+- **Siết realm mẫu** (#377): chống dò mật khẩu, chính sách mật khẩu tối thiểu; `xac_thuc_hai_lop.py chong-do` áp cho
+  cụm cũ
+
+**PR #389** — hai nguyên lý dữ liệu của đề:
+
+- **Lưu trữ lạnh** (#378): migration `0029`, bộ quét `cold-archive` niêm phong mỗi tháng đã khép thành CSV nén kèm
+  `manifest.json` có SHA-256 trong SeaweedFS; bất biến, không xóa tầng nóng. API `GET /core/v1/archive`, đọc lại và
+  đối chiếu bằng `scripts/doc_luu_tru.py`
+- **Phả hệ dữ liệu** (#379): `scripts/pha_he.py` sinh `docs/pha-he-du-lieu.md` từ định nghĩa view và bảng điều khiển;
+  tích hợp liên tục báo đỏ khi trang lệch mã
+
+**PR #386, #388, #391** — ba pull request đầu của `@phuctiensinh`:
+
+- **Trang sự cố** (#385): cách tạo lại container dựng dở sau lỗi trùng cổng
+- **Cập nhật thời gian thực** (#387): migration `0030` phát `pg_notify` khi hồ sơ đổi hay có lời nhắn; `GET /me/stream`
+  (Server-Sent Events) lọc theo đúng quyền xem của hộp thư, cổng người dùng tự làm mới, hỏi định kỳ giữ làm dự phòng
+- **Webhook** (#390): migration `0031`, API lõi `/core/v1/webhooks`; mỗi bản ghi nhật ký khớp bộ lọc được POST tới
+  địa chỉ đăng ký, ký HMAC kèm mốc thời gian, thử lại giãn dần; ví dụ bên nhận `examples/goi-loi/nhan_webhook.py`
+
+Hai nhánh song song của #388 và #389 từng cùng lấy số migration `0029` mà GitHub vẫn báo không xung đột; nhánh vào
+sau đổi số. Quy tắc đánh số đưa vào `CONTRIBUTING.md` mục 5.5.
+
+**PR #392** — cộng đồng và tích hợp liên tục:
+
+- **README tiếng Anh** (#380) dựng được cụm độc lập, bảng đội ngũ mới
+- **Trang tài liệu đăng được** (#381): địa chỉ và đường gốc lấy từ biến môi trường; workflow đăng GitHub Pages mỗi
+  lần `main` đổi, tự bỏ qua khi kho còn riêng tư
+- **Linter và kịch bản giao diện trên tích hợp liên tục** (#382): ruff và eslint ở mọi pull request; trọn bộ
+  Playwright trên cụm sạch ở pull request vào `main`
+
+**Không có lần `down -v` nào**: cụm cũ nâng bằng `up -d --build`, rồi chạy `python scripts/tai_khoan_dich_vu.py` và
+`python scripts/xac_thuc_hai_lop.py chong-do` một lần (realm chỉ nạp lúc tạo).
+
+**Bộ kiểm thử**: lượt trọn bộ cho cả đợt ngày 17/11 trên cụm dựng sạch — pytest dịch vụ ứng dụng 842 → **908**,
+dịch vụ khai phá 176 → **179**, kịch bản giao diện **180 đạt, 24 bỏ qua có chủ đích**; thử thật luồng SSE và webhook
+qua cổng API.
+
+**Issue sẽ đóng khi `v1.1.0` lên `main`**: #376, #377, #378, #379, #380, #382, #385, #387, #390
+
+---
+
 ## Đang làm
 
-Không có việc đang làm. `v1.0.0` đã phát hành, 0 issue và 0 pull request mở. Đang chờ quyết định có làm Mức 2 của
-nền tảng lõi trước hạn gửi bài.
+Phát hành `v1.1.0` cho Giai đoạn 6: pull request phát hành `dev → main` — lần đầu kịch bản giao diện chạy trọn trên
+tích hợp liên tục — rồi nhật ký thay đổi và thẻ.
 
 ---
 
@@ -1006,16 +1071,16 @@ nền tảng lõi trước hạn gửi bài.
 
 ### Theo thứ tự
 
-1. **Chuyển kho sang công khai** trước hạn gửi bài 17:00 ngày 06/12 — điều kiện để được chấm; sau đó bật bảo vệ
-   nhánh, bắt buộc dấu xanh, đăng trang tài liệu và sửa ô Website của kho
-2. **Mức 2 của nền tảng lõi** nếu chốt làm — engine chạy nhiều quy trình, một quy trình mẫu thứ hai thuần dữ liệu,
-   cửa bước chuyển của lõi không gắn với vai người gửi; giảng viên chốt 15/11: Mức 1 xong thấy khả thi thì lên Mức 2,
-   bỏ Mức 3
+1. **Phát hành `v1.1.0`** — Giai đoạn 6 đã nằm trên `dev`
+2. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
+   vệ nhánh, bắt buộc dấu xanh, bật GitHub Pages (*Settings → Pages → Source: GitHub Actions*) và sửa ô Website của
+   kho — khép #381
 3. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), bộ nhớ hồ sơ `tri-tue`, cấu hình máy
    tối thiểu
-4. **README tiếng Anh, issue cho người mới**, linter và kịch bản giao diện trong tích hợp liên tục
+4. **Issue cho người mới** (nhãn `good first issue`) khi kho công khai
 5. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
-   bài toán minh họa; kết quả và demo; định hướng
+   bài toán minh họa; kết quả và demo; định hướng. Video dự phòng cho phần demo, vì cụm Docker không đăng lên
+   Internet được
 6. **Đăng ký dự thi qua trường và gửi bài** theo mẫu thư ở mục 5 của đề; hỏi ban tổ chức năm trong hạn gửi bài
    (đề in 06/12/2025)
 7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng viên giao từ 15/10
@@ -1033,7 +1098,6 @@ Sáu issue Tuần 16 giảng viên đã chốt ngày 13/11 (ghi ở *Tuần 17*)
   đính kèm 10 MB, 5 tệp mỗi lần, 20 tệp mỗi hồ sơ (#80)
 - **Nghẽn ở điều phối viên khi hồ sơ nhiều** (góp ý 29/10) — nhóm đã làm hướng gợi ý phân loại có xác
   nhận (#239, #317); còn chờ ý giảng viên có cần thêm lối cho loại rõ ràng đi thẳng phòng không
-- **Có làm Mức 2 của nền tảng lõi không** — Mức 1 đã phát hành ở `v1.0.0`
 - **Công khai kho mã khi nào** — phải trước hạn gửi bài 06/12; công khai thì bật lại quy tắc bảo vệ nhánh
 - **AI trong hộp thư được tự động tới đâu** — nhóm đề xuất AI chỉ soạn nháp câu hỏi và tóm
   tắt câu trả lời, không tự bấm cạnh nào, theo `CLAUDE.md` mục 4.3
@@ -1091,6 +1155,10 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `core` — Apache APISIX `3.20.0` làm cổng API, cửa vào duy nhất của API | Standalone, một tiến trình; cổng `8000` và `5432` không mở ra máy, mở lại bằng `infra/docker-compose.phat-trien.yml`; dịch vụ ứng dụng vẫn kiểm token lại — ADR-0010, navigator chấp nhận 15/11 |
 | Tách nền tảng lõi theo Mức 1: API có phiên bản dưới `/core/v1`, chung một dịch vụ | Giảng viên chốt 15/11: làm Mức 1 trước cho nhanh, xong thấy khả thi thì lên Mức 2 (engine chạy nhiều quy trình); Mức 3 (tách engine thành dịch vụ riêng) quá sức, bỏ |
 | Xác thực hai lớp là tùy chọn, mặc định tắt | Navigator chốt 15/11; đợt `v1.0.0` không làm lưu trữ lạnh, phả hệ dữ liệu, sao lưu theo lịch |
+| Nền tảng lõi lên Mức 2: mỗi quy trình một bộ quy tắc đang bật, quy trình mẫu thứ hai thuần dữ liệu | Navigator chốt 16/11 theo ý giảng viên ngày 15/11; không làm điều kiện trên cạnh (mọi đề xuất mua đi đủ hai cấp), cổng người dùng chưa hiện hồ sơ quy trình 2 — #376 |
+| Lưu trữ lạnh là bản sao niêm phong theo tháng, không xóa tầng nóng | CSV nén và manifest SHA-256 trong SeaweedFS, không chứa tên người. Loại Parquet (thêm phụ thuộc) và dọn tầng nóng (phá nhật ký chỉ ghi thêm) — #378 |
+| Trang tài liệu đăng trên GitHub Pages | Navigator chốt 17/11: không thêm tài khoản bên thứ ba, mọi thứ nằm trong kho; Vercel ghi làm phương án khác. Cụm Docker không đăng lên Internet được — trình diễn trên máy nhóm, kèm video dự phòng |
+| Linter ở mọi pull request, kịch bản giao diện trọn bộ chỉ ở pull request vào `main` | Trọn bộ Playwright trên cụm sạch mất khoảng nửa giờ, quá lâu cho mỗi pull request vào `dev` — #382 |
 | `core` — SeaweedFS `4.45` làm kho lưu trữ đối tượng | Garage là bản lùi mặc định, MinIO là bản lùi có điều kiện — ADR-0002 |
 | `D` — Apache Superset `6.1.0` làm nền tảng BI | Metabase bị loại vì khóa tính năng nhúng sau giấy phép trả phí — ADR-0003 |
 | `P` — **tự viết engine máy trạng thái**, không lắp ghép | Theo ý kiến giảng viên: engine không phải nơi tạo giá trị, và Flowable không giúp giảm việc vì nhật ký vẫn phải tự viết — ADR-0004 |
