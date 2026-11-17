@@ -195,7 +195,7 @@ def _dung_ho_so(session, tieu_de: str, mo_ta: str, cac_canh: list[Transition], g
         request_type_code=_loai(session),
     )
     session.flush()
-    for i, t in enumerate(cac_canh):
+    for t in cac_canh:
         session.add(
             EventLog(
                 case_id=ho_so.id,

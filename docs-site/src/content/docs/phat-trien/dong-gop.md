@@ -32,15 +32,20 @@ Quy ước đầy đủ ở
 
 ## Kiểm thử và tích hợp liên tục
 
-Mỗi pull request tự chạy năm kiểm tra:
+Mỗi pull request tự chạy sáu kiểm tra:
 
 | Kiểm tra | Chạy tay ở máy |
 |---|---|
 | Header giấy phép | `python scripts/kiem_header.py` |
+| Linter — ruff cho Python, eslint cho cổng | `ruff check .` ở gốc kho (ruff `0.17.3`); `npm run lint` trong `frontend/` |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` |
 | Cụm — toàn bộ kiểm thử dịch vụ trên PostgreSQL và Keycloak thật, kể cả các đường qua cổng API | `docker exec dxlab-backend python -m pytest -p no:cacheprovider -q` khi cụm đang chạy |
 | Bảng điều khiển — Superset tự nạp dashboard từ tệp cấu hình, đọc được view báo cáo | mở `http://localhost:8088` sau khi dựng cụm |
+
+Pull request vào `main` chạy thêm **toàn bộ kịch bản giao diện** trên một cụm dựng sạch (quy trình
+`e2e.yml`, cũng bấm chạy tay được ở thẻ *Actions*); hỏng thì báo cáo HTML và vết của bài hỏng được lưu
+lại ở trang lượt chạy — xem [Kiểm thử giao diện](../kiem-thu-giao-dien/).
 
 Tính năng ở dịch vụ còn được thử bằng **phép thử đột biến**: cố ý cài lỗi vào mã, bài kiểm thử phải
 bắt được.
@@ -53,7 +58,7 @@ Node.js:
 ```bash
 cd docs-site
 npm ci
-npm run dev      # xem trực tiếp ở http://localhost:4321/dx-os-lab/
+npm run dev      # xem trực tiếp ở http://localhost:4321/
 npm run build    # dựng ra docs-site/dist
 ```
 

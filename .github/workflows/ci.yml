@@ -2,9 +2,9 @@
 # Copyright (c) 2026 AlaVox-lab
 #
 # Tích hợp liên tục (#241): chạy trên mỗi pull request vào dev và main. Không chạy lại khi
-# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Năm việc tách thành năm job chạy song song để kết quả hiện
+# hai nhánh nhận commit: nội dung đó vừa chạy xanh ở chính pull request đưa nó vào. Sáu việc tách thành sáu job chạy song song để kết quả hiện
 # riêng trên pull request; tên job là tên kiểm tra sẽ đặt bắt buộc khi kho công khai
-# (CONTRIBUTING.md mục 2.6).
+# (CONTRIBUTING.md mục 2.6). Kịch bản giao diện chạy riêng ở e2e.yml, chỉ cho pull request vào main.
 
 name: Tích hợp liên tục
 
@@ -31,6 +31,29 @@ jobs:
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
         run: python3 scripts/pha_he.py --kiem
+
+  # Linter (#382): ruff cho mọi mã Python (cấu hình ruff.toml ở gốc), eslint cho cổng người dùng
+  # (frontend/eslint.config.mjs). Lỗi làm đỏ, cảnh báo thì không. Phiên bản ruff ghim ở đây và ở
+  # `required-version` của ruff.toml — đổi thì đổi cả hai.
+  linter:
+    name: Linter — ruff và eslint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # pipx có sẵn trên runner Ubuntu; chạy ruff trong môi trường riêng, không cài vào Python hệ thống
+      - name: Ruff — Python
+        run: pipx run --spec ruff==0.17.3 ruff check --output-format=github .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: ESLint — cổng người dùng
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
 
   giao-dien:
     name: Giao diện — dựng và kiểm kiểu
