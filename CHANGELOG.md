@@ -5,6 +5,20 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.2.0] - 2026-11-17
+
+### Tài liệu
+
+- **docs:** Thêm kịch bản trình diễn chung kết ([#400](https://github.com/AlaVox-lab/dx-os-lab/issues/400)) ([85c4ead](https://github.com/AlaVox-lab/dx-os-lab/commit/85c4ead976df13fe0b272826b0f19cdbb6dd1894))
+- **state:** Ghi đợt hai Giai đoạn 6 trước v1.2.0 ([#407](https://github.com/AlaVox-lab/dx-os-lab/issues/407)) ([3389623](https://github.com/AlaVox-lab/dx-os-lab/commit/3389623b81201471872e9355c82d107b760ca0cd))
+
+### Tính năng mới
+
+- **p-workflow:** Điều kiện trên cạnh cho động cơ luồng công việc ([#398](https://github.com/AlaVox-lab/dx-os-lab/issues/398)) ([87b693b](https://github.com/AlaVox-lab/dx-os-lab/commit/87b693bf3be5d49e0e61f0c2d36aa82565053efa))
+- **p-workflow:** Xuất quy trình ra BPMN 2.0 ([#406](https://github.com/AlaVox-lab/dx-os-lab/issues/406)) ([819ed19](https://github.com/AlaVox-lab/dx-os-lab/commit/819ed19309f267d9dabf6304f9303f873b1c01d4))
+- **h-portal:** Quản lý webhook trên màn Hệ thống ([#402](https://github.com/AlaVox-lab/dx-os-lab/issues/402)) ([c9eddef](https://github.com/AlaVox-lab/dx-os-lab/commit/c9eddefaa658b7c38610e95b2867204c2e90853f))
+- **h-portal:** Bảng Kanban cho buồng lái phòng ban ([#404](https://github.com/AlaVox-lab/dx-os-lab/issues/404)) ([9ff4d1d](https://github.com/AlaVox-lab/dx-os-lab/commit/9ff4d1d45b227d8438718c043e2259acb3433489))
+
 ## [1.1.0] - 2026-11-17
 
 ### Tài liệu
