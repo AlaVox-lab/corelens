@@ -152,7 +152,7 @@ def chay(ch: dict, ma_quy_trinh: str | None) -> int:
         sys.exit(f"Tài khoản trưởng phòng {ch['tai_khoan'][1]['client']} không thuộc phòng nào "
                  "(KEYCLOAK_INTEGRATION_HEAD_GROUP).")
     chi_tiet = chi_tiet_mau(loai)
-    chi_tiet.update({t["code"]: SO_MAU for t in loai["fields"] if t["required"] and t["kind"] == "number"})
+    chi_tiet.update({t["code"]: ch["so_tien"] for t in loai["fields"] if t["required"] and t["kind"] == "number"})
     ho_so = nguoi_gui.post("/workflow/requests", {
         "title": f"Đề xuất từ ứng dụng mua sắm mẫu, {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}",
         "description": "Tạo bằng examples/goi-loi/quy_trinh_mua_sam.py qua API của nền tảng lõi.",
@@ -170,6 +170,9 @@ def chay(ch: dict, ma_quy_trinh: str | None) -> int:
         print(f"{so}. {ai.capitalize()}: hồ sơ {'CÓ' if cho_toi(nen_tang, quy_trinh['code'], ma) else 'KHÔNG'} "
               "trong danh sách đang chờ mình")
         ho_so = di(nen_tang, ma, buoc_chinh(nen_tang, ma, ai), ai)
+        # Điều kiện trên cạnh (#397): dưới ngưỡng thì trưởng phòng duyệt là xong, không còn cấp hai
+        if ho_so["state"]["is_terminal"]:
+            break
 
     ho_so = nguoi_gui.get(f"/workflow/requests/{ma}")
     print(f"6. Lịch sử hồ sơ {ho_so['code']} — các dòng nhật ký sự kiện ({len(ho_so['history'])}, giờ UTC):")
@@ -186,12 +189,15 @@ def main() -> int:
         if hasattr(luong, "reconfigure"):
             luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description="Ví dụ ứng dụng khác chạy trọn quy trình của nó qua API của nền tảng lõi.")
+    p.add_argument("--so-tien", type=int, default=SO_MAU,
+                   help=f"giá trị cho trường số bắt buộc (mặc định {SO_MAU:_}); quy trình mua sắm mẫu rẽ nhánh theo nó")
     p.add_argument("--quy-trinh", help="mã quy trình; mặc định quy trình đầu tiên không phải của ứng dụng minh họa")
     p.add_argument("--env-file", type=Path, default=Path("infra/.env"), help="tệp env của cụm (mặc định infra/.env)")
     p.add_argument("--cong-api", help="địa chỉ cổng API, mặc định http://localhost:<GATEWAY_PORT>")
     p.add_argument("--keycloak", help="địa chỉ Keycloak, mặc định http://localhost:<KEYCLOAK_PORT>")
     ts = p.parse_args()
     ch = cau_hinh(ts)
+    ch["so_tien"] = ts.so_tien
     try:
         return chay(ch, ts.quy_trinh)
     except LoiGoi as loi:
