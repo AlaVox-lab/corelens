@@ -31,6 +31,9 @@ jobs:
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
         run: python3 scripts/pha_he.py --kiem
+      # Mọi biến của infra/.env.example có dòng giải thích trên trang Cấu hình (#413)
+      - name: Biến môi trường có tài liệu
+        run: python3 scripts/kiem_bien_moi_truong.py
 
   # Linter (#382): ruff cho mọi mã Python (cấu hình ruff.toml ở gốc), eslint cho cổng người dùng
   # (frontend/eslint.config.mjs). Lỗi làm đỏ, cảnh báo thì không. Phiên bản ruff ghim ở đây và ở

@@ -23,6 +23,9 @@ cần xóa dữ liệu.
 | `KEYCLOAK_INTEGRATION_SECRET` | Bí mật của tài khoản dịch vụ gọi API của lõi — đổi xong chạy `python scripts/tai_khoan_dich_vu.py` để Keycloak nhận bí mật mới |
 | `PORTAL_SESSION_SECRET` | Khóa mã hóa cookie phiên của cổng — sinh bằng `openssl rand -base64 32` |
 | `SUPERSET_SECRET_KEY` | Khóa ký phiên của Superset — sinh bằng `openssl rand -base64 42` |
+| `MINING_READONLY_PASSWORD` | Tài khoản chỉ đọc của dịch vụ khai phá — đổi sau khi đã dựng cụm thì `ALTER ROLE` bằng tay rồi đổi ở đây |
+| `KEYCLOAK_INTEGRATION_HEAD_SECRET`, `KEYCLOAK_INTEGRATION_REVIEWER_SECRET` | Hai tài khoản dịch vụ của ví dụ quy trình mua sắm — đổi, hoặc tắt hai client đó |
+| `WIKI_OIDC_SECRET`, `WIKI_ADMIN_PASSWORD` | Chỉ khi bật kho tri thức (hồ sơ `tri-thuc`) |
 
 ## Cổng
 
@@ -68,6 +71,10 @@ Giao diện hỏi dịch vụ các giới hạn này, nên đổi một chỗ l�
 |---|---|---|
 | `KEYCLOAK_REALM` | `dx-os-lab` | Realm nạp từ `infra/keycloak/realm-dx-os-lab.json` |
 | `KEYCLOAK_DEPARTMENT_GROUP_PREFIX` | `/phong-ban/` | Phòng ban là nhóm Keycloak dưới đường dẫn này. Tổ chức cây nhóm khác thì đổi ở đây |
+| `KEYCLOAK_ADMIN_USER` | `admin` | Tài khoản quản trị Keycloak, đi cùng `KEYCLOAK_ADMIN_PASSWORD` |
+| `KEYCLOAK_PORTAL_CLIENT_ID` | `dx-portal` | Client bí mật của cổng người dùng; luồng OIDC chạy phía máy chủ Next.js |
+| `KEYCLOAK_API_CLIENT_ID` | `dx-api` | Token gọi dịch vụ ứng dụng phải mang tên này trong claim `aud` |
+| `KEYCLOAK_DIRECTORY_CLIENT_ID` | `dx-directory` | Tài khoản dịch vụ chỉ đọc (`view-users`) để tra tên người trong phòng ban |
 | `KEYCLOAK_MAX_HEAP` | `768m` | Keycloak là dịch vụ nặng nhất cụm; dưới `512m` khởi động chậm hẳn |
 
 ### Tài khoản dịch vụ gọi API của lõi
@@ -157,3 +164,105 @@ hạn đó. Cả tám biến có mặc định trong `docker-compose.yml`, nên 
 | `RATE_LIMIT_UPLOAD_MAX` / `_WINDOW_SECONDS` | `20` / `60` | Tải tệp đính kèm lên |
 | `RATE_LIMIT_MESSAGE_MAX` / `_WINDOW_SECONDS` | `60` / `60` | Gửi lời nhắn, ở cả ba buồng lái |
 | `RATE_LIMIT_LOGIN_MAX` / `_WINDOW_SECONDS` | `30` / `60` | Đăng nhập quay về, theo địa chỉ IP. Đếm trong bộ nhớ của từng bản cổng; địa chỉ IP lấy từ `X-Forwarded-For` nên cần reverse proxy đặt header đó |
+
+## Bảng đầy đủ các biến còn lại
+
+Mọi biến trong `infra/.env.example` đều có một dòng trên trang này. `scripts/kiem_bien_moi_truong.py`
+chạy trong tích hợp liên tục và báo lỗi khi thêm biến vào `.env.example` mà quên ghi ở đây (#413).
+
+### Cơ sở dữ liệu và phiên bản
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `DXLAB_DB_NAME` | `dxlab` | Database nghiệp vụ, cũng là chủ sở hữu thực thể PostgreSQL |
+| `DXLAB_DB_USER` | `dxlab` | Tài khoản của dịch vụ ứng dụng, đi cùng `DXLAB_DB_PASSWORD` |
+| `KEYCLOAK_DB_NAME` | `keycloak` | Database của Keycloak, tạo bởi kịch bản trong `infra/postgres/init/` |
+| `SUPERSET_DB_NAME` | `superset` | Database siêu dữ liệu của Superset, như trên |
+| `SUPERSET_READONLY_USER` | `superset_readonly` | Tài khoản chỉ đọc Superset dùng trên database nghiệp vụ (ADR-0003) |
+| `SUPERSET_ADMIN_USER` | `admin` | Tài khoản quản trị Superset, đi cùng `SUPERSET_ADMIN_PASSWORD` |
+| `SUPERSET_VERSION` | `6.1.0` | Phiên bản ảnh Superset; đổi là đổi nền tảng, đọc ADR-0003 trước |
+| `DXLAB_VERSION` | `0.3.0` | Thẻ của các ảnh do nhóm tự dựng, chỉ để nhận diện ảnh trên máy |
+
+### Kho tệp và quét mã độc
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `SEAWEEDFS_ACCESS_KEY` | `dxlab_access_key` | Khóa truy cập S3, phải khớp `infra/seaweedfs/s3-config.json` |
+| `SEAWEEDFS_VOLUME_LIMIT_MB` | `512` | Kích thước tối đa một khối lưu trữ của SeaweedFS |
+| `CLAMAV_HOST` | rỗng | **Rỗng là tắt** quét mã độc. Bật: đặt `quet-tep` và chạy hồ sơ Compose `quet-tep` (khoảng 1 GB bộ nhớ) |
+| `CLAMAV_PORT` | `3310` | Cổng của dịch vụ quét trong cụm |
+| `CLAMAV_TIMEOUT_SECONDS` | `15` | Hạn chót một lần quét |
+| `CLAMAV_ON_UNAVAILABLE` | `accept` | Dịch vụ quét không phản hồi: `accept` nhận tệp và gắn cờ "chưa quét", `reject` từ chối lượt tải. Tệp có mã độc luôn bị từ chối |
+| `CLAMAV_NO_FRESHCLAMD` | `false` | `true` thì không tự cập nhật mẫu nhận diện, dùng bộ mẫu kèm ảnh khi không có mạng |
+
+Chi tiết ở [Thư điện tử và quét tệp](../thu-va-quet-tep/).
+
+### Thông báo thư điện tử
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `SMTP_HOST` | rỗng | **Rỗng là tắt** thông báo thư. Trình diễn: `thu-thu` với hồ sơ Compose `thu-thu` (Mailpit) |
+| `SMTP_PORT` | `25` | Mailpit dùng `1025` |
+| `SMTP_USERNAME`, `SMTP_PASSWORD` | rỗng | Tài khoản máy chủ thư thật |
+| `SMTP_SECURITY` | `none` | `none`, `starttls` (587) hay `ssl` (465) |
+| `SMTP_FROM` | `DX-OS Lab <khong-tra-loi@dx-os-lab.test>` | Người gửi hiện trên thư |
+| `NOTIFY_SCAN_INTERVAL_SECONDS` | `30` | Nhịp bộ gửi thư |
+| `NOTIFY_MAX_ATTEMPTS` | `5` | Số lần thử tối đa một thư |
+| `NOTIFY_RETRY_AFTER_SECONDS` | `60` | Chờ trước lần thử lại đầu, nhân đôi mỗi lần |
+| `NOTIFY_DIRECTORY_CACHE_SECONDS` | `120` | Bộ gửi nhớ danh bạ Keycloak chừng này giây |
+| `MAILPIT_UI_PORT` | `8025` | Giao diện web của hộp thư thử Mailpit |
+| `MAILPIT_MAX_MESSAGES` | `500` | Số thư Mailpit giữ |
+
+### Nhật ký dịch vụ ứng dụng
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `LOG_FORMAT` | `json` | `json`: mỗi dòng một đối tượng mang `request_id`; `text`: dạng chữ để đọc tay |
+| `LOG_LEVEL` | `INFO` | Mức nhật ký theo chuẩn của Python |
+
+### Khai phá quy trình
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `MINING_READONLY_USER` | `khai_pha_readonly` | Tài khoản chỉ đọc riêng của dịch vụ khai phá, tạo bằng migration |
+| `MINING_ENGINE` | `pm4py` | `pm4py` hay `noi_bo` — bộ máy dự phòng không dùng thư viện AGPL, cùng kết quả |
+| `MINING_BOTTLENECK_FACTOR` | `2` | Trạng thái là điểm nghẽn khi thời gian chờ trung vị gấp chừng này lần trung vị chung |
+| `MINING_SOURCE_URL` | thư mục `services/khai-pha` trên GitHub | Màn Quy trình thực tế dẫn tới đây (AGPL điều 13). Bản đã sửa thì trỏ về kho chứa bản đó |
+
+### Mô hình ngôn ngữ và gợi ý
+
+Cách bật ở [Mô hình ngôn ngữ](../mo-hinh-ngon-ngu/).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `LLM_URL` | rỗng | **Rỗng là tắt**: không gợi ý nào được sinh, điều phối chạy thủ công |
+| `LLM_TIMEOUT_SECONDS` | `30` | Hạn chót một lần hỏi mô hình; quá hạn là "không có gợi ý" |
+| `LLM_CONTEXT_SIZE` | `4096` | Ngữ cảnh của dịch vụ mô hình sinh văn bản |
+| `LLM_THREADS` | `4` | Số luồng CPU của dịch vụ mô hình |
+| `EMBEDDING_CONTEXT_SIZE` | `8192` | Ngữ cảnh của dịch vụ mô hình nhúng |
+| `SUGGEST_SCAN_INTERVAL_SECONDS` | `30` | Nhịp bộ quét bù gợi ý |
+| `SUGGEST_MAX_ATTEMPTS` | `3` | Số lần thử tối đa cho một hồ sơ |
+| `SUGGEST_RETRY_AFTER_SECONDS` | `600` | Khoảng cách tối thiểu giữa hai lần thử |
+| `SUGGEST_DEPARTMENT_FROM_MODEL` | `false` | Chỉ bật khi `scripts/do_chinh_xac_goi_y.py` đo được từ 80 % và hơn bảng ánh xạ |
+
+### Ủy quyền
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `DELEGATION_MAX_DAYS` | `60` | Một lần ủy quyền dài tối đa chừng này ngày |
+
+### Kho tri thức
+
+Chỉ dùng khi bật hồ sơ Compose `tri-thuc`; cách bật ở [Kho tri thức](../kho-tri-thuc/).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `WIKI_PORT` | `3100` | Cổng web của Wiki.js trên máy |
+| `WIKI_URL` | rỗng | Địa chỉ trình duyệt mở wiki. **Rỗng là tắt** lối vào và gợi ý bài trên cổng |
+| `WIKI_INDEX_INTERVAL_SECONDS` | `120` | Nhịp bộ lập chỉ mục bài viết |
+| `WIKI_DB_NAME` | `wiki` | Database riêng của Wiki.js, bước khởi tạo tự tạo |
+| `WIKI_OIDC_CLIENT_ID` | `dx-wiki` | Client OIDC của wiki trong Keycloak, bước khởi tạo tự tạo |
+| `WIKI_READ_ROLES` | năm vai | Vai realm được đọc bài, cách nhau dấu phẩy |
+| `WIKI_WRITE_ROLES` | `classifier,approver,administrator` | Vai realm được viết bài |
+| `WIKI_ADMIN_EMAIL` | `quan-tri-wiki@dx-os-lab.test` | Tài khoản quản trị cục bộ của Wiki.js, không qua Keycloak |
+| `WIKI_LOCALE` | `vi` | Ngôn ngữ giao diện; tải gói ngôn ngữ cần mạng, không tải được thì giữ tiếng Anh |
