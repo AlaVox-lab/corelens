@@ -307,7 +307,7 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 |---|---|---|---|
 | git-cliff | MIT hoặc Apache-2.0 | Sinh nhật ký thay đổi | Không |
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
-| `actions/checkout`, `actions/setup-node`, `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
+| `actions/checkout@v5`, `actions/setup-node@v5` (chạy Node 24, #477), `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
