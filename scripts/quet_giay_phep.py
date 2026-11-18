@@ -98,6 +98,10 @@ def goi_anh(thanh_phan: str, anh: str) -> list[tuple[str, str, str, str | None]]
 
 
 def main() -> int:
+    # Bảng điều khiển Windows mặc định không phải UTF-8 (#368, #472)
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--anh", action="append", default=[], metavar="THÀNH_PHẦN=ẢNH",
                    help="Ảnh Python cần quét, vd backend=dxlab-backend:0.3.0 (nhiều lần)")
