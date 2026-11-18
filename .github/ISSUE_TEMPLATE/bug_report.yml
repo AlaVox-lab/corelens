@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Mẫu báo lỗi dạng biểu mẫu (#422): phiên bản, môi trường, bước tái hiện, kết quả mong đợi và thực tế
+# là trường bắt buộc — báo lỗi thiếu chúng thì người sửa không tái hiện được.
+
+name: Báo lỗi
+description: Báo cáo một hành vi sai của hệ thống
+title: "[Fix] "
+labels: ["type/fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. Tìm trong danh sách issue trước để tránh trùng; trường có dấu * là bắt buộc.
+  - type: textarea
+    id: mo-ta
+    attributes:
+      label: Mô tả lỗi
+      description: Điều gì đang xảy ra sai, ngắn gọn.
+    validations:
+      required: true
+  - type: input
+    id: phien-ban
+    attributes:
+      label: Phiên bản hoặc nhánh
+      description: Số phiên bản phát hành (ví dụ v1.2.0) hoặc tên nhánh và mã commit.
+      placeholder: v1.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: he-dieu-hanh
+    attributes:
+      label: Hệ điều hành
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Khác (ghi ở Thông tin bổ sung)
+    validations:
+      required: true
+  - type: input
+    id: trinh-duyet
+    attributes:
+      label: Trình duyệt
+      description: Khi lỗi nằm ở giao diện.
+      placeholder: Chrome 140
+  - type: textarea
+    id: tai-hien
+    attributes:
+      label: Các bước tái hiện
+      description: Từng bước, kèm tài khoản mẫu đã dùng.
+      placeholder: |
+        1. Đăng nhập bằng an.nguyen
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: mong-doi
+    attributes:
+      label: Kết quả mong đợi
+    validations:
+      required: true
+  - type: textarea
+    id: thuc-te
+    attributes:
+      label: Kết quả thực tế
+      description: Kèm thông báo lỗi; ảnh chụp màn hình kéo thả vào đây.
+    validations:
+      required: true
+  - type: textarea
+    id: nhat-ky
+    attributes:
+      label: Nhật ký
+      description: Ví dụ `docker compose logs backend --tail 100`.
+      render: text
+  - type: checkboxes
+    id: khong-gian
+    attributes:
+      label: Phạm vi ảnh hưởng
+      options:
+        - label: "`space/H` — nhân sự, định danh"
+        - label: "`space/P` — quy trình"
+        - label: "`space/D` — dữ liệu"
+        - label: "`space/I` — trí tuệ nhân tạo"
+        - label: "`space/core` — nền tảng lõi"
+  - type: textarea
+    id: issue-trung
+    attributes:
+      label: Issue trùng đã tìm
+      description: Các issue gần giống đã xem, nếu có.
+  - type: textarea
+    id: bo-sung
+    attributes:
+      label: Thông tin bổ sung
