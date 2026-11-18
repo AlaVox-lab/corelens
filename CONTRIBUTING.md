@@ -237,6 +237,15 @@ Phạm vi phản ánh không gian kiến trúc hoặc thành phần bị ảnh h
 | `ci` | Quy trình tự động hóa |
 | `docs` | Tài liệu |
 
+Tích hợp liên tục kiểm tiêu đề pull request vào `dev` theo đúng bảng trên: loại hợp lệ, có phạm vi
+thuộc bảng, tối đa 64 ký tự (`.github/workflows/tieu-de-pr.yml`), và kiểm mọi commit trong lịch sử
+đều được git-cliff nhận vào changelog. Chạy trước ở máy:
+
+```
+python scripts/kiem_commit.py --tieu-de "feat(p-workflow): thêm …"
+python scripts/kiem_commit.py --lich-su HEAD
+```
+
 ### 4.4. Ví dụ
 
 ```

@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Kiểm tiêu đề pull request (#421). Pull request vào dev được squash nên tiêu đề thành dòng đầu commit,
+# rồi thành một dòng CHANGELOG.md: sai loại, sai phạm vi hay dài quá 64 ký tự là hỏng changelog. Tách
+# khỏi ci.yml để chạy lại ngay khi sửa tiêu đề (sự kiện edited) mà không chạy lại cả cụm kiểm thử.
+# Tiêu đề đi qua biến môi trường, không chèn thẳng vào lệnh, để chuỗi do người gõ không thành mã.
+
+name: Tiêu đề pull request
+
+on:
+  pull_request:
+    branches: [dev, main]
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  tieu-de:
+    name: Tiêu đề đúng Conventional Commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    # Pull request dev → main do navigator mở mang tiêu đề phát hành, không được squash
+    if: github.base_ref == 'dev'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kiểm tiêu đề
+        env:
+          TIEU_DE: ${{ github.event.pull_request.title }}
+        run: python3 scripts/kiem_commit.py --tieu-de "$TIEU_DE"

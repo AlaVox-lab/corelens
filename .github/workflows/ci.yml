@@ -27,6 +27,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Lấy đủ lịch sử cho bước kiểm commit dưới đây
+          fetch-depth: 0
       - run: python3 scripts/kiem_header.py
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
@@ -34,6 +37,10 @@ jobs:
       # Mọi biến của infra/.env.example có dòng giải thích trên trang Cấu hình (#413)
       - name: Biến môi trường có tài liệu
         run: python3 scripts/kiem_bien_moi_truong.py
+      # Mọi commit không phải merge tới đầu pull request phải được git-cliff nhận, không thì lặng lẽ rơi
+      # khỏi CHANGELOG.md (#420). Tiêu đề pull request kiểm riêng ở tieu-de-pr.yml (#421)
+      - name: Lịch sử commit đúng chuẩn changelog
+        run: python3 scripts/kiem_commit.py --lich-su HEAD
 
   # Linter (#382): ruff cho mọi mã Python (cấu hình ruff.toml ở gốc), eslint cho cổng người dùng
   # (frontend/eslint.config.mjs). Lỗi làm đỏ, cảnh báo thì không. Phiên bản ruff ghim ở đây và ở
