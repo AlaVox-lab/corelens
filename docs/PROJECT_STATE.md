@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-17 |
-| Phiên bản hiện tại | **`v1.1.0`** (17/11) — Giai đoạn 6 đợt một: lõi Mức 2 chạy nhiều quy trình, lưu trữ lạnh, phả hệ dữ liệu, thời gian thực, webhook, README tiếng Anh, linter và kịch bản giao diện trên tích hợp liên tục (PR #394, #396). **`dev` đi trước `main` năm pull request** (#398, #406, #402, #404, #400 — điều kiện trên cạnh, xuất BPMN, quản lý webhook, bảng Kanban, kịch bản trình diễn) — sẽ phát hành thành `v1.2.0` |
+| Cập nhật lần cuối | 2026-11-18 |
+| Phiên bản hiện tại | **`v1.2.0`** (17/11) — Giai đoạn 6 đợt hai: điều kiện trên cạnh, xuất BPMN, quản lý webhook, bảng Kanban, kịch bản trình diễn (PR #408, #410). **`dev` đi trước `main` chín pull request** (#454–#462 — kiểm header trên tệp cấu hình, tài liệu biến cấu hình, kiểm chuẩn tiêu đề và lịch sử commit, mẫu issue dạng biểu mẫu, ngày lễ 2027, kiểm thử độc lập dữ liệu trình diễn, bước nâng cấp) — sẽ phát hành thành `v1.3.0` |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`; #397, #399, #401, #403, #405 đã làm xong trên `dev`, đóng khi `v1.2.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`; #412, #413, #419, #420, #421, #422, #439, #442, #453 đã làm xong trên `dev`, đóng khi `v1.3.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **7** — #381, #383, #397, #399, #401, #403, #405 (mốc 18); năm issue đã làm xong trên `dev` |
+| Issue đang mở | **40** (mốc 18) — 4 `P0`, 14 `P1`, 4 `P2`, 18 `P3`; chín issue đã làm xong trên `dev`. 38 issue do `@phuctiensinh` mở ngày 17/11, đã soát và đánh lại ưu tiên (mục *Tuần 20*) |
 | Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) thay Ngô Hoàng Đại (`@Senning-Dd`); đóng góp cũ của bạn Đại giữ nguyên trong lịch sử kho |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **908 bài** pytest ở dịch vụ ứng dụng và **179 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 17/11 trên cụm dựng sạch; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.0.0.tar.gz` (16/11). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Bộ kiểm thử tự động | **932 bài** pytest ở dịch vụ ứng dụng (lượt 18/11, PR #461 — xanh cả trên cụm đã nạp dữ liệu trình diễn) và **179 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 17/11 trên cụm dựng sạch; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.0.0.tar.gz` (16/11). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
 | Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` chưa đo lại — ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
-| Số ngày còn lại tới chấm kho mã | **20 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
+| Số ngày còn lại tới chấm kho mã | **19 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
@@ -1077,9 +1077,52 @@ Cụm cũ nâng bằng `up -d --build`, migration `0032` tự áp điều kiện
 
 ---
 
+### Tuần 20 (17–18/11) — `v1.2.0`, soát 43 issue, đợt ba
+
+**Phát hành `v1.2.0`** (17/11, PR #408, nhật ký thay đổi #409, PR #410). Issue đã đóng: #397, #399, #401, #403, #405.
+
+**Soát 43 issue** — tối 17/11 `@phuctiensinh` mở cùng lúc 43 issue "cải thiện dự án" (#411–#453). Navigator soát từng
+issue với mã trên `dev`: **10 issue đã có sẵn trong mã** và **2 issue đi ngược quyết định cũ**.
+
+- Đóng, không làm: #416, #427, #437, #449, #452 — đã có trong mã, mỗi issue một bình luận chỉ tới chỗ đã cài
+- Thu hẹp về phần còn thiếu: #415, #419, #422, #439, #453
+- Gắn `status/needs-discussion`: #430 (ngược quyết định 26/10 — tệp đi qua dịch vụ ứng dụng, không cấp đường dẫn
+  ký sẵn), #432 (kích thước phiên trong cookie, xem #87)
+- Hạ ưu tiên: #429, #438, #444 xuống `P2`; mười tám issue tính năng xuống `P3`. Giữ `P0`/`P1` cho nhóm nên làm:
+  biên bản kiểm, tích hợp liên tục, kiểm thử, tài liệu
+
+Nguyên nhân gốc: `CLAUDE.md` mục 1.3 còn ghi trạng thái cũ (pgvector "để #319", không nêu các phần lõi đã có), nên
+trợ lý AI của thành viên đề xuất lại thứ đã làm. **PR #456** cập nhật mục đó và thêm quy tắc tra kho trước khi đề
+xuất (`git grep`, `ARCHITECTURE.md`, `docs/adr/`, issue đã đóng); #422 thêm vào mẫu đề xuất trường bắt buộc *Đã kiểm
+trong mã chưa*.
+
+**Đợt ba, sau `v1.2.0`** — tám pull request của `@phuctiensinh`, một của navigator:
+
+- **Kiểm header giấy phép trên cả tệp cấu hình** (#412, PR #454): thêm `.yaml`, `.yml`, `.toml`, `.ini`, `.mako`,
+  `.properties`, `.svg`, `.example`
+- **Giải thích mọi biến của `.env.example`** (#413, PR #455): `scripts/kiem_bien_moi_truong.py` trong tích hợp liên
+  tục báo đỏ khi một biến chưa có dòng trên trang *Cấu hình*
+- **`CLAUDE.md` khớp trạng thái kho** (PR #456)
+- **Kiểm chuẩn tiêu đề pull request và lịch sử commit** (#420, #421, PR #457): `scripts/kiem_commit.py`; workflow
+  `tieu-de-pr.yml` kiểm tiêu đề pull request vào `dev` (loại, phạm vi trong bảng, tối đa 64 ký tự), job *Header giấy
+  phép* kiểm mọi commit đều được git-cliff nhận
+- **Dẫn thẳng tới `LICENSE`, `LICENSES.md`, `NOTICE`** ở đầu hai README (#419, PR #458)
+- **Mẫu issue dạng biểu mẫu** (#422, PR #459): báo lỗi bắt buộc phiên bản và bước tái hiện; đề xuất bắt buộc *Đã kiểm
+  trong mã chưa*. Biểu mẫu chỉ hiện khi tệp nằm trên `main`
+- **Ngày nghỉ lễ 2027** (#439, PR #460): `infra/seed/08-ngay-le-2027.sql`, migration `0033` áp cho cụm đang chạy; vài
+  ngày còn theo lịch dự kiến, sửa được trên màn cấu hình
+- **Kiểm thử độc lập dữ liệu trình diễn** (#442, PR #461): bài so kết quả bộ quét chỉ xét hồ sơ do chính bài tạo —
+  17 bài đỏ giả trên cụm có 150 hồ sơ trình diễn về 0
+- **Bước nâng cấp từ `v1.0.0` theo thứ tự** (#453, PR #462): chạy thử `v1.0.0` → `v1.2.0` trên cụm cách ly, dữ liệu
+  giữ nguyên (biên bản ở #453); README thêm lệnh in biến còn thiếu trong `.env`
+
+Cụm cũ nâng bằng `up -d --build`, migration `0033` tự thêm ngày lễ 2027; không `down -v`.
+
+---
+
 ## Đang làm
 
-Phát hành `v1.2.0` cho đợt hai: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên năm pull
+Phát hành `v1.3.0` cho đợt ba: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên chín pull
 request ghép lại, rồi nhật ký thay đổi và thẻ.
 
 ---
@@ -1088,19 +1131,21 @@ request ghép lại, rồi nhật ký thay đổi và thẻ.
 
 ### Theo thứ tự
 
-1. **Phát hành `v1.2.0`** — đợt hai của Giai đoạn 6 đã nằm trên `dev`
-2. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
+1. **Phát hành `v1.3.0`** — đợt ba của Giai đoạn 6 đã nằm trên `dev`
+2. **Soát pull request tiếp theo của `@phuctiensinh`** theo thứ tự đã dặn: #414, #411 (biên bản, không mã) → tích
+   hợp liên tục #415 + #423, #417 + #418 → #438, #444, #429 khi navigator đồng ý. #430, #432 bàn trước khi làm
+3. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
    vệ nhánh, bắt buộc dấu xanh, bật GitHub Pages (*Settings → Pages → Source: GitHub Actions*) và sửa ô Website của
    kho — khép #381
-3. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), bộ nhớ hồ sơ `tri-tue`, cấu hình máy
+4. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), bộ nhớ hồ sơ `tri-tue`, cấu hình máy
    tối thiểu
-4. **Issue cho người mới** (nhãn `good first issue`) khi kho công khai
-5. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
+5. **Issue cho người mới** (nhãn `good first issue`) khi kho công khai
+6. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
    bài toán minh họa; kết quả và demo; định hướng. Video dự phòng cho phần demo, vì cụm Docker không đăng lên
    Internet được
-6. **Đăng ký dự thi qua trường và gửi bài** theo mẫu thư ở mục 5 của đề; hỏi ban tổ chức năm trong hạn gửi bài
+7. **Đăng ký dự thi qua trường và gửi bài** theo mẫu thư ở mục 5 của đề; hỏi ban tổ chức năm trong hạn gửi bài
    (đề in 06/12/2025)
-7. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng viên giao từ 15/10
+8. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng viên giao từ 15/10
 
 ### Chờ giảng viên
 
@@ -1172,6 +1217,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `core` — Apache APISIX `3.20.0` làm cổng API, cửa vào duy nhất của API | Standalone, một tiến trình; cổng `8000` và `5432` không mở ra máy, mở lại bằng `infra/docker-compose.phat-trien.yml`; dịch vụ ứng dụng vẫn kiểm token lại — ADR-0010, navigator chấp nhận 15/11 |
 | Tách nền tảng lõi theo Mức 1: API có phiên bản dưới `/core/v1`, chung một dịch vụ | Giảng viên chốt 15/11: làm Mức 1 trước cho nhanh, xong thấy khả thi thì lên Mức 2 (engine chạy nhiều quy trình); Mức 3 (tách engine thành dịch vụ riêng) quá sức, bỏ |
 | Xác thực hai lớp là tùy chọn, mặc định tắt | Navigator chốt 15/11; đợt `v1.0.0` không làm lưu trữ lạnh, phả hệ dữ liệu, sao lưu theo lịch |
+| Thành viên tự mở issue và pull request, navigator duyệt vào `dev` và `main` | Navigator chốt 17/11. Đề xuất mới phải tra kho trước (`CLAUDE.md` mục 1.3, trường *Đã kiểm trong mã chưa* của mẫu đề xuất) — ngày 17/11, 10 trên 43 issue mở cùng lúc đã có sẵn trong mã |
 | Nền tảng lõi lên Mức 2: mỗi quy trình một bộ quy tắc đang bật, quy trình mẫu thứ hai thuần dữ liệu | Navigator chốt 16/11 theo ý giảng viên ngày 15/11, #376. Ban đầu không làm điều kiện trên cạnh; ngày 17/11 navigator nhận #397: điều kiện chỉ nối "và", chỉ so trường riêng với hằng số. Cổng người dùng chưa hiện hồ sơ quy trình 2 |
 | Lưu trữ lạnh là bản sao niêm phong theo tháng, không xóa tầng nóng | CSV nén và manifest SHA-256 trong SeaweedFS, không chứa tên người. Loại Parquet (thêm phụ thuộc) và dọn tầng nóng (phá nhật ký chỉ ghi thêm) — #378 |
 | Trang tài liệu đăng trên GitHub Pages | Navigator chốt 17/11: không thêm tài khoản bên thứ ba, mọi thứ nằm trong kho; Vercel ghi làm phương án khác. Cụm Docker không đăng lên Internet được — trình diễn trên máy nhóm, kèm video dự phòng |
