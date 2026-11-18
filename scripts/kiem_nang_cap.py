@@ -11,6 +11,8 @@
 #     (lấy mã bản mới, rồi: docker compose --env-file infra/.env -f infra/docker-compose.yml up -d --build)
 #     python scripts/kiem_nang_cap.py so truoc-nang-cap.json
 #
+# Trên cụm thử cách ly (`python -m scripts.kiem_chung.cum_thu dung`) thêm `--cum-thu` vào cả hai lệnh.
+#
 # Thứ được so, trên các dòng đã có lúc chụp (định danh không lớn hơn định danh lớn nhất lúc đó):
 #
 #   - hồ sơ, dòng nhật ký sự kiện, lời nhắn, tệp đính kèm: cùng số dòng, cùng mã băm của các cột
@@ -28,6 +30,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scripts.kiem_chung.chung import TIEN_TO_MAC_DINH as TIEN_TO_CUM_THU  # noqa: E402
 
 # Bảng → cột đưa vào mã băm. Chỉ cột không bao giờ đổi sau khi ghi; bảng nào cũng có cột `id`.
 BANG = {
@@ -141,7 +146,12 @@ def main() -> int:
     p.add_argument("--backend", default="dxlab-backend", help="Container dịch vụ ứng dụng")
     p.add_argument("--nguoi-dung", default="dxlab")
     p.add_argument("--csdl", default="dxlab")
+    p.add_argument("--cum-thu", nargs="?", const=TIEN_TO_CUM_THU, metavar="TIỀN_TỐ",
+                   help="Kiểm trên cụm thử cách ly (#249): lấy tên hai container theo tiền tố của cụm thử "
+                        f"(mặc định {TIEN_TO_CUM_THU!r}) thay cho --container và --backend")
     ts = p.parse_args()
+    if ts.cum_thu:
+        ts.container, ts.backend = f"{ts.cum_thu}postgres", f"{ts.cum_thu}backend"
 
     if ts.viec == "chup":
         anh = chup(ts)
@@ -151,7 +161,15 @@ def main() -> int:
         print(f"  kho tệp: {anh['kho_tep']['con_trong_kho']} tệp ({anh['kho_tep']['byte']} byte)")
         print(f"Đã chụp vào {ts.tep} (bản sửa {anh['ban_sua']}).")
         return 0
-    return so(ts, json.loads(ts.tep.read_text(encoding="utf-8")))
+    try:
+        anh = json.loads(ts.tep.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        sys.exit(f"Không thấy tệp chụp {ts.tep}. Chạy `chup` trên cụm TRƯỚC khi nâng cấp để có tệp này.")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        sys.exit(f"{ts.tep} không phải tệp chụp của lệnh này (không đọc được JSON).")
+    if not isinstance(anh, dict) or "bang" not in anh:
+        sys.exit(f"{ts.tep} không phải tệp chụp của lệnh này (thiếu mục 'bang').")
+    return so(ts, anh)
 
 
 if __name__ == "__main__":

@@ -26,11 +26,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Lấy đủ lịch sử cho bước kiểm commit dưới đây
           fetch-depth: 0
       - run: python3 scripts/kiem_header.py
+      # Mọi phụ thuộc trực tiếp có dòng trong docs/dependencies.md, đúng phiên bản ghim (#417)
+      - name: Tài liệu phụ thuộc khớp tệp khai báo
+        run: python3 scripts/doi_soat_phu_thuoc.py
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
         run: python3 scripts/pha_he.py --kiem
@@ -50,11 +53,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # pipx có sẵn trên runner Ubuntu; chạy ruff trong môi trường riêng, không cài vào Python hệ thống
       - name: Ruff — Python
         run: pipx run --spec ruff==0.17.3 ruff check --output-format=github .
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -73,8 +76,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -95,8 +98,8 @@ jobs:
       run:
         working-directory: docs-site
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -105,6 +108,18 @@ jobs:
       - run: npm run build
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
+      # Liên kết nội bộ hỏng (#423): lychee (Apache-2.0 OR MIT) kiểm Markdown của kho và trang đã dựng,
+      # chế độ --offline nên chỉ kiểm liên kết tới tệp trong kho — không gọi mạng, không đỏ vì trang
+      # ngoài chập chờn. Nguồn Markdown của trang tài liệu dùng đường dẫn tuyến nên kiểm trên bản dựng.
+      - name: Kiểm liên kết nội bộ hỏng
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          args: >-
+            --offline --no-progress --include-fragments=none
+            --root-dir ${{ github.workspace }}/docs-site/dist
+            --exclude-path docs-site/src --exclude-path docs-site/node_modules
+            './**/*.md' 'docs-site/dist/**/*.html'
 
   cum:
     name: Cụm — dựng ảnh và kiểm thử dịch vụ
@@ -113,7 +128,7 @@ jobs:
     env:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Ranh giới AGPL (ADR-0007): PM4Py chỉ được nhập trong services/khai-pha/. Bước rẻ nhất nên đứng
       # đầu — vi phạm thì dừng trước khi dựng ảnh. `git grep` thoát 0 khi TÌM THẤY, nên tìm thấy là hỏng.
       - name: Ranh giới AGPL — không nhập pm4py ngoài dịch vụ khai phá
@@ -129,8 +144,32 @@ jobs:
           fi
       # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa.
       - run: cp infra/.env.example infra/.env
+      # Hồ sơ tùy chọn (#415) không bật trong job này nên lỗi tệp Compose của chúng lọt qua; kiểm cú
+      # pháp và biến của từng hồ sơ, kèm hai tệp ghi đè, mà không kéo ảnh nào.
+      - name: Kiểm tệp Compose — cụm mặc định, từng hồ sơ tùy chọn, tệp ghi đè
+        run: |
+          $COMPOSE config -q
+          for hs in $(docker compose --env-file infra/.env -f infra/docker-compose.yml config --profiles); do
+            echo "hồ sơ $hs"; $COMPOSE --profile "$hs" config -q
+          done
+          $COMPOSE -f infra/docker-compose.phat-trien.yml config -q
       - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
         run: $COMPOSE build backend khai-pha frontend
+      # Giấy phép mọi gói, kể cả gián tiếp (#418): npm đọc từ tệp khóa, Python đọc trong ảnh vừa dựng.
+      # Danh sách cho phép ở scripts/giay_phep.toml; báo cáo lưu kèm lần chạy để đính vào bản phát hành.
+      - name: Giấy phép phụ thuộc bắc cầu nằm trong danh sách cho phép
+        run: |
+          V=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)
+          python3 scripts/quet_giay_phep.py --anh backend=dxlab-backend:$V --anh khai-pha=dxlab-khai-pha:$V \
+            --bao-cao bao-cao-giay-phep.md
+      - name: Lưu báo cáo giấy phép
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bao-cao-giay-phep
+          path: bao-cao-giay-phep.md
+          if-no-files-found: ignore
+          retention-days: 90
       # Hợp đồng API của lõi trong kho phải khớp mã: đổi /core/v1 thì sinh lại docs/api/core-v1.openapi.json
       - name: Đặc tả OpenAPI của lõi khớp mã
         run: |
@@ -196,7 +235,7 @@ jobs:
     env:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cp infra/.env.example infra/.env
       # Superset chờ dịch vụ ứng dụng chạy xong migration tạo view báo cáo, rồi nạp dashboard từ
       # infra/superset/bang-dieu-khien/ (#304). Keycloak không cần cho bước này.
