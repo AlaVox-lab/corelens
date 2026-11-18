@@ -97,6 +97,8 @@ Bảng đối chiếu từng yêu cầu của đề, kể cả phần để ngo�
 
 Cần Docker Engine 24 trở lên kèm Compose v2 (hoặc Docker Desktop), khoảng 2 GB bộ nhớ, 6 GB ổ
 đĩa, và các cổng 3000 · 8080 · 8088 · 8333 · 9080 đang trống.
+Các lệnh `python scripts/...` bên dưới cần thêm Python 3.10 trở lên (chỉ thư viện chuẩn, không cần
+`pip install`); trên Ubuntu và Debian gõ `python3` thay cho `python`. Cụm tự nó không cần Python.
 
 Tải **Source code (tar.gz)** của bản mới nhất ở trang
 [Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `1.0.0` bằng phiên bản đã tải):

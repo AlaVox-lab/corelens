@@ -104,7 +104,7 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 
 | Kiểm tra | Làm gì | Chạy tay ở máy |
 |---|---|---|
-| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục; trang phả hệ dữ liệu khớp định nghĩa view | `python scripts/kiem_header.py` và `python scripts/pha_he.py --kiem` |
+| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục; trang phả hệ dữ liệu khớp định nghĩa view; phụ thuộc trực tiếp có dòng trong `docs/dependencies.md` | `python scripts/kiem_header.py`, `python scripts/pha_he.py --kiem` và `python scripts/doi_soat_phu_thuoc.py` |
 | Linter — ruff và eslint | `ruff check .` cho mọi mã Python (cấu hình `ruff.toml` ở gốc); `npm run lint` trong `frontend/` (cấu hình `frontend/eslint.config.mjs`). Lỗi làm đỏ, cảnh báo thì không | Xem đoạn *Linter* ngay dưới |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |
@@ -118,6 +118,11 @@ pip install ruff==0.17.3        # một lần; hoặc: pipx run --spec ruff==0.1
 ruff check .                    # thêm --fix để ruff tự sửa phần sửa được an toàn
 cd frontend && npm run lint     # sau npm ci
 ```
+
+**Tùy chọn — tự kiểm trước mỗi commit** (#484): `.pre-commit-config.yaml` ở gốc chạy ruff (cùng bản với CI),
+kiểm header giấy phép, trang phả hệ dữ liệu, chặn dấu xung đột hợp nhất và tệp trên 1 MB — lỗi hiện ngay trên
+máy thay vì chờ CI. Cài một lần: `pip install pre-commit==4.7.0` rồi `pre-commit install`; chạy trên cả kho:
+`pre-commit run --all-files`. Không cài thì không ảnh hưởng gì.
 
 Bộ luật ruff chọn tường minh trong `ruff.toml` (lỗi cú pháp, import và biến thừa, mẫu dễ sinh lỗi của
 bugbear); luật nào tắt đều ghi lý do ngay cạnh. Kho không chạy `ruff format` — không ép kiểu trình bày.
@@ -419,7 +424,11 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 2. Sinh nhật ký thay đổi từ lịch sử commit
 3. Đặt tag theo [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 4. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
-   ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`
+   ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`. Đính kèm thêm
+   `bao-cao-giay-phep.md` — giấy phép của mọi gói phụ thuộc kể cả gián tiếp — tải từ artifact
+   *bao-cao-giay-phep* của lần chạy CI trên pull request phát hành cuối cùng vào `main` (CI chỉ chạy trên
+   pull request, không chạy trên thẻ), hoặc sinh ở máy bằng
+   `python scripts/quet_giay_phep.py --anh backend=dxlab-backend:<bản> --anh khai-pha=dxlab-khai-pha:<bản> --bao-cao bao-cao-giay-phep.md`
 5. Cập nhật `CHANGELOG.md` vào kho mã
 
 ### 7.1. Đăng trang tài liệu

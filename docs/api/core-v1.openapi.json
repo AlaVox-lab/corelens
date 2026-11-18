@@ -1,0 +1,3198 @@
+{
+  "components": {
+    "schemas": {
+      "Body_tai_len_core_v1_files_requests__case_id__attachments_post": {
+        "properties": {
+          "files": {
+            "description": "Một hay nhiều tệp",
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_tai_len_core_v1_files_requests__case_id__attachments_post",
+        "type": "object"
+      },
+      "BuocChuyenLoiVao": {
+        "description": "Bước chuyển qua cửa trung lập với vai của nền tảng lõi (#376).\n\nNhư cổng người gửi, nhưng `changes` nhận mọi kiểu giá trị JSON — bộ trường riêng `details` là một đối\ntượng, gia hạn là một số. Không kiểm trường nào được phép ở đây: engine kiểm theo từng cạnh (#78), tra\ndanh mục, kiểm trường riêng theo khai báo của loại.",
+        "properties": {
+          "changes": {
+            "additionalProperties": true,
+            "title": "Changes",
+            "type": "object"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to_state"
+        ],
+        "title": "BuocChuyenLoiVao",
+        "type": "object"
+      },
+      "CanhDiDuocRa": {
+        "description": "Một thao tác người dùng thực hiện được từ trạng thái hiện tại.\n\nDanh sách này do `allowed_transitions()` sinh ra từ bảng `transitions` và ma trận\nphân quyền, **không phải** từ một bảng ánh xạ viết cứng trong giao diện. Nhờ vậy\nnút bấm luôn khớp dữ liệu: doanh nghiệp sửa bộ quy tắc thì giao diện đổi theo, và\nkhông bao giờ hiện ra nút dẫn tới một cạnh không tồn tại.",
+        "properties": {
+          "activity_code": {
+            "title": "Activity Code",
+            "type": "string"
+          },
+          "activity_label": {
+            "title": "Activity Label",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "is_primary": {
+            "default": false,
+            "title": "Is Primary",
+            "type": "boolean"
+          },
+          "keeps_state": {
+            "default": false,
+            "title": "Keeps State",
+            "type": "boolean"
+          },
+          "note_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Label"
+          },
+          "requires_note": {
+            "title": "Requires Note",
+            "type": "boolean"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          },
+          "to_state_is_terminal": {
+            "default": false,
+            "title": "To State Is Terminal",
+            "type": "boolean"
+          },
+          "to_state_label": {
+            "title": "To State Label",
+            "type": "string"
+          },
+          "to_state_reopen_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To State Reopen Hours"
+          }
+        },
+        "required": [
+          "to_state",
+          "to_state_label",
+          "activity_code",
+          "activity_label",
+          "requires_note"
+        ],
+        "title": "CanhDiDuocRa",
+        "type": "object"
+      },
+      "ChinhSachTepRa": {
+        "description": "Giới hạn tệp đính kèm — giao diện hỏi dịch vụ thay vì tự giữ bản sao (#80).",
+        "properties": {
+          "allowed_extensions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Extensions",
+            "type": "array"
+          },
+          "max_files": {
+            "title": "Max Files",
+            "type": "integer"
+          },
+          "max_files_per_case": {
+            "title": "Max Files Per Case",
+            "type": "integer"
+          },
+          "max_mb": {
+            "title": "Max Mb",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "allowed_extensions",
+          "max_mb",
+          "max_files",
+          "max_files_per_case"
+        ],
+        "title": "ChinhSachTepRa",
+        "type": "object"
+      },
+      "DangKyMoiRa": {
+        "properties": {
+          "activities": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activities"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_event_id": {
+            "title": "Last Event Id",
+            "type": "integer"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "process": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Process"
+          },
+          "secret": {
+            "description": "Bí mật ký HMAC — chỉ trả đúng một lần, lúc tạo",
+            "title": "Secret",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "activities",
+          "process",
+          "is_active",
+          "owner_id",
+          "last_event_id",
+          "created_at",
+          "secret"
+        ],
+        "title": "DangKyMoiRa",
+        "type": "object"
+      },
+      "DangKyRa": {
+        "properties": {
+          "activities": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activities"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_event_id": {
+            "title": "Last Event Id",
+            "type": "integer"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "process": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Process"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "activities",
+          "process",
+          "is_active",
+          "owner_id",
+          "last_event_id",
+          "created_at"
+        ],
+        "title": "DangKyRa",
+        "type": "object"
+      },
+      "DangKyVao": {
+        "properties": {
+          "activities": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Chỉ các mã hoạt động này (cột `activity` của nhật ký); bỏ trống là mọi hoạt động",
+            "title": "Activities"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "process": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Chỉ một quy trình (GET /core/v1/workflow/processes); bỏ trống là mọi quy trình",
+            "title": "Process"
+          },
+          "url": {
+            "description": "Địa chỉ nhận, http hoặc https. Lõi POST JSON tới đây",
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "DangKyVao",
+        "type": "object"
+      },
+      "DanhSachHoSoRa": {
+        "description": "Hồ sơ của người gửi, có phân trang (#232).",
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/NhomHangDoiRa"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HoSoTomTatRa"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "open_count": {
+            "default": 0,
+            "title": "Open Count",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "urgent": {
+            "default": false,
+            "title": "Urgent",
+            "type": "boolean"
+          },
+          "waiting_me": {
+            "default": 0,
+            "title": "Waiting Me",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "offset",
+          "limit",
+          "items",
+          "groups"
+        ],
+        "title": "DanhSachHoSoRa",
+        "type": "object"
+      },
+      "DoiTuyChonVao": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "DoiTuyChonVao",
+        "type": "object"
+      },
+      "GoiYRa": {
+        "description": "Một gợi ý của hệ thống cho trường quyết định (#239): giá trị, lý do, nguồn.\n\n`confidence` trống khi nguồn không có con số thật — giao diện chỉ hiện độ tin cậy khi có.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "reason",
+          "source",
+          "source_label"
+        ],
+        "title": "GoiYRa",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HoSoChiTietRa": {
+        "properties": {
+          "allowed_transitions": {
+            "items": {
+              "$ref": "#/components/schemas/CanhDiDuocRa"
+            },
+            "title": "Allowed Transitions",
+            "type": "array"
+          },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/TepDinhKemRa"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "auto_transition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TuDongRa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "can_attach": {
+            "default": false,
+            "title": "Can Attach",
+            "type": "boolean"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/HoSoLienQuanRa"
+            },
+            "title": "Children",
+            "type": "array"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "detail_fields": {
+            "items": {
+              "$ref": "#/components/schemas/TruongRiengRa"
+            },
+            "title": "Detail Fields",
+            "type": "array"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/SuKienRa"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_message_from_requester": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Message From Requester"
+          },
+          "message_kinds": {
+            "items": {
+              "$ref": "#/components/schemas/LoaiLoiNhanRa"
+            },
+            "title": "Message Kinds",
+            "type": "array"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/LoiNhanRa"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "needs_my_action": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs My Action"
+          },
+          "next_step_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step Label"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HoSoLienQuanRa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "process": {
+            "$ref": "#/components/schemas/NhanCoMa"
+          },
+          "reopen_count": {
+            "default": 0,
+            "title": "Reopen Count",
+            "type": "integer"
+          },
+          "reopen_max_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reopen Max Count"
+          },
+          "request_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requester_id": {
+            "title": "Requester Id",
+            "type": "string"
+          },
+          "sees_internal": {
+            "default": false,
+            "title": "Sees Internal",
+            "type": "boolean"
+          },
+          "sla_due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Due At"
+          },
+          "sla_due_soon": {
+            "default": false,
+            "title": "Sla Due Soon",
+            "type": "boolean"
+          },
+          "sla_extension_count": {
+            "default": 0,
+            "title": "Sla Extension Count",
+            "type": "integer"
+          },
+          "sla_extension_total_hours": {
+            "default": 0,
+            "title": "Sla Extension Total Hours",
+            "type": "integer"
+          },
+          "sla_grace_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Grace Seconds"
+          },
+          "sla_limit_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Limit Seconds"
+          },
+          "sla_overdue": {
+            "title": "Sla Overdue",
+            "type": "boolean"
+          },
+          "sla_paused": {
+            "title": "Sla Paused",
+            "type": "boolean"
+          },
+          "sla_paused_seconds": {
+            "title": "Sla Paused Seconds",
+            "type": "integer"
+          },
+          "sla_running_seconds": {
+            "title": "Sla Running Seconds",
+            "type": "integer"
+          },
+          "sla_started": {
+            "title": "Sla Started",
+            "type": "boolean"
+          },
+          "state": {
+            "$ref": "#/components/schemas/TrangThaiRa"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "state",
+          "created_at",
+          "updated_at",
+          "sla_running_seconds",
+          "sla_paused_seconds",
+          "sla_overdue",
+          "sla_paused",
+          "sla_started",
+          "process",
+          "requester_id",
+          "history",
+          "allowed_transitions"
+        ],
+        "title": "HoSoChiTietRa",
+        "type": "object"
+      },
+      "HoSoLienQuanRa": {
+        "description": "Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id` (#102): bản gốc hay bản tạo lại.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/TrangThaiRa"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "state"
+        ],
+        "title": "HoSoLienQuanRa",
+        "type": "object"
+      },
+      "HoSoTomTatRa": {
+        "properties": {
+          "auto_transition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TuDongRa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_message_from_requester": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Message From Requester"
+          },
+          "needs_my_action": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs My Action"
+          },
+          "next_step_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step Label"
+          },
+          "request_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sla_due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Due At"
+          },
+          "sla_due_soon": {
+            "default": false,
+            "title": "Sla Due Soon",
+            "type": "boolean"
+          },
+          "sla_extension_count": {
+            "default": 0,
+            "title": "Sla Extension Count",
+            "type": "integer"
+          },
+          "sla_extension_total_hours": {
+            "default": 0,
+            "title": "Sla Extension Total Hours",
+            "type": "integer"
+          },
+          "sla_grace_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Grace Seconds"
+          },
+          "sla_limit_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Limit Seconds"
+          },
+          "sla_overdue": {
+            "title": "Sla Overdue",
+            "type": "boolean"
+          },
+          "sla_paused": {
+            "title": "Sla Paused",
+            "type": "boolean"
+          },
+          "sla_paused_seconds": {
+            "title": "Sla Paused Seconds",
+            "type": "integer"
+          },
+          "sla_running_seconds": {
+            "title": "Sla Running Seconds",
+            "type": "integer"
+          },
+          "sla_started": {
+            "title": "Sla Started",
+            "type": "boolean"
+          },
+          "state": {
+            "$ref": "#/components/schemas/TrangThaiRa"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "state",
+          "created_at",
+          "updated_at",
+          "sla_running_seconds",
+          "sla_paused_seconds",
+          "sla_overdue",
+          "sla_paused",
+          "sla_started"
+        ],
+        "title": "HoSoTomTatRa",
+        "type": "object"
+      },
+      "LanGuiRa": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status Code"
+          },
+          "next_attempt_at": {
+            "format": "date-time",
+            "title": "Next Attempt At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "status",
+          "attempts",
+          "next_attempt_at",
+          "last_status_code",
+          "last_error",
+          "delivered_at"
+        ],
+        "title": "LanGuiRa",
+        "type": "object"
+      },
+      "LoaiLoiNhanRa": {
+        "description": "Một loại lời nhắn người đang xem gửi được trên hồ sơ lúc này (#128).\n\nDanh sách do bảng `message_kinds` và cửa nhìn thấy quyết, giống `allowed_transitions`\n— giao diện dựng nút từ đây. `retry_at` có giá trị thì loại đó đang chờ luật hỏi lại:\nhiện nút mờ kèm mốc, chưa gửi được trước mốc đó.",
+        "properties": {
+          "body_required": {
+            "title": "Body Required",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "internal": {
+            "default": false,
+            "title": "Internal",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "retry_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry At"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "body_required"
+        ],
+        "title": "LoaiLoiNhanRa",
+        "type": "object"
+      },
+      "LoaiThongBaoRa": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "description",
+          "enabled"
+        ],
+        "title": "LoaiThongBaoRa",
+        "type": "object"
+      },
+      "LoaiYeuCauRa": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/TruongRiengRa"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "process_code": {
+            "title": "Process Code",
+            "type": "string"
+          },
+          "sla_hours": {
+            "title": "Sla Hours",
+            "type": "integer"
+          },
+          "suggested_department": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoiYRa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "process_code",
+          "sla_hours"
+        ],
+        "title": "LoaiYeuCauRa",
+        "type": "object"
+      },
+      "LoiNhanRa": {
+        "description": "Một lời nhắn trên hồ sơ (#128).\n\nKhông phải mốc chuyển trạng thái: dòng thời gian trộn lời nhắn với `history` theo\nthời gian, nhưng số lần đổi trạng thái chỉ đếm `history`.",
+        "properties": {
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "author_label": {
+            "title": "Author Label",
+            "type": "string"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "from_requester": {
+            "title": "From Requester",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "internal": {
+            "default": false,
+            "title": "Internal",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "kind_label": {
+            "title": "Kind Label",
+            "type": "string"
+          },
+          "mine": {
+            "default": false,
+            "title": "Mine",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "kind_label",
+          "author",
+          "author_label",
+          "from_requester",
+          "created_at"
+        ],
+        "title": "LoiNhanRa",
+        "type": "object"
+      },
+      "MucUuTienRa": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "is_default": {
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "is_default"
+        ],
+        "title": "MucUuTienRa",
+        "type": "object"
+      },
+      "NhanCoMa": {
+        "description": "Một giá trị danh mục: mã để mã nguồn so sánh, nhãn để người đọc.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "NhanCoMa",
+        "type": "object"
+      },
+      "NhomHangDoiRa": {
+        "description": "Một trạng thái trong hàng đợi, kèm số hồ sơ đang nằm ở đó.\n\nDanh sách trạng thái suy từ bộ quy tắc — trạng thái nào vai trò điều phối có cạnh\nđi ra — nên giao diện dựng nút lọc từ đây, không liệt kê cứng.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "due_soon": {
+            "default": 0,
+            "title": "Due Soon",
+            "type": "integer"
+          },
+          "is_terminal": {
+            "default": false,
+            "title": "Is Terminal",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "overdue": {
+            "default": 0,
+            "title": "Overdue",
+            "type": "integer"
+          },
+          "watch_only": {
+            "default": false,
+            "title": "Watch Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "count"
+        ],
+        "title": "NhomHangDoiRa",
+        "type": "object"
+      },
+      "PhongBanRa": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "PhongBanRa",
+        "type": "object"
+      },
+      "QuyTrinhRa": {
+        "description": "Một quy trình của động cơ luồng công việc (#376).",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_app_default": {
+            "title": "Is App Default",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "is_app_default"
+        ],
+        "title": "QuyTrinhRa",
+        "type": "object"
+      },
+      "SuKienRa": {
+        "description": "Một mốc trong dòng thời gian, dựng thẳng từ bảng `event_log`.",
+        "properties": {
+          "activity": {
+            "title": "Activity",
+            "type": "string"
+          },
+          "activity_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Label"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "actor_label": {
+            "title": "Actor Label",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ThayDoiTruongRa"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "from_state": {
+            "title": "From State",
+            "type": "string"
+          },
+          "from_state_label": {
+            "title": "From State Label",
+            "type": "string"
+          },
+          "is_rework": {
+            "default": false,
+            "title": "Is Rework",
+            "type": "boolean"
+          },
+          "is_system": {
+            "title": "Is System",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "note_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Label"
+          },
+          "on_behalf_of_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Behalf Of Label"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          },
+          "to_state_label": {
+            "title": "To State Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "activity",
+          "actor",
+          "actor_label",
+          "is_system",
+          "from_state",
+          "from_state_label",
+          "to_state",
+          "to_state_label"
+        ],
+        "title": "SuKienRa",
+        "type": "object"
+      },
+      "TaoHoSoVao": {
+        "description": "Biểu mẫu gửi yêu cầu.\n\nCố ý **không** có `priority_code`: người gửi không tự đặt mức ưu tiên cho yêu cầu\ncủa mình. Gửi kèm trường đó thì Pydantic bỏ qua, không ghi vào hồ sơ — ràng buộc\nPoka-yoke bằng sự vắng mặt, không phải bằng một câu `if`.\n\n`request_type_code` thì có, vì người gửi là người biết rõ nhất họ đang cần gì, và\nngười phân loại vẫn nắn lại được ở cạnh kế tiếp. Xem `app/models/case.py`.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "parent_request_id": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Request Id"
+          },
+          "request_type_code": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Type Code"
+          },
+          "similar_session_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similar Session Id"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "TaoHoSoVao",
+        "type": "object"
+      },
+      "TepDinhKemRa": {
+        "description": "Một tệp đính kèm trên hồ sơ (#80). Không có khóa kho: tải về đi qua `id`.",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "has_macro": {
+            "default": false,
+            "title": "Has Macro",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "scan_status": {
+            "default": "disabled",
+            "title": "Scan Status",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "uploaded_by_label": {
+            "title": "Uploaded By Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "content_type",
+          "size_bytes",
+          "uploaded_by_label",
+          "created_at"
+        ],
+        "title": "TepDinhKemRa",
+        "type": "object"
+      },
+      "ThayDoiTruongRa": {
+        "description": "Một trường quyết định, hay từ #127 một trường nội dung, mà lần chuyển đã đổi giá\ntrị (#100).\n\n`before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc\nđọc từ danh mục — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được. Riêng người\nxử lý thì nhãn là tên ghi lúc đổi. Tiêu đề và mô tả không có danh mục, nên nhãn là\nchính nội dung — nhờ vậy bản gốc người gửi viết vẫn đọc được sau khi họ sửa.",
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NhanCoMa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "ThayDoiTruongRa",
+        "type": "object"
+      },
+      "TrangThaiRa": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "is_terminal": {
+            "title": "Is Terminal",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "is_terminal"
+        ],
+        "title": "TrangThaiRa",
+        "type": "object"
+      },
+      "TruongRiengRa": {
+        "description": "Một trường thông tin riêng khai cho loại yêu cầu (#250) — giao diện dựng ô nhập từ đây.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "help_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Help Text"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "kind",
+          "required"
+        ],
+        "title": "TruongRiengRa",
+        "type": "object"
+      },
+      "TuDongRa": {
+        "description": "Cạnh hệ thống sẽ tự đi từ trạng thái hiện tại khi hết hạn chờ (#142).",
+        "properties": {
+          "activity_label": {
+            "title": "Activity Label",
+            "type": "string"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "warn": {
+            "title": "Warn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "activity_label",
+          "at",
+          "warn"
+        ],
+        "title": "TuDongRa",
+        "type": "object"
+      },
+      "TuyChonThongBaoRa": {
+        "properties": {
+          "email_enabled": {
+            "title": "Email Enabled",
+            "type": "boolean"
+          },
+          "types": {
+            "items": {
+              "$ref": "#/components/schemas/LoaiThongBaoRa"
+            },
+            "title": "Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "email_enabled",
+          "types"
+        ],
+        "title": "TuyChonThongBaoRa",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Keycloak": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Dịch vụ ứng dụng của DX-OS Lab. Toàn bộ quy trình nghiệp vụ nằm trong bảng dữ liệu, không mã cứng trong mã nguồn.\n\n**Nền tảng lõi (Tầng 1)**: mọi điểm cuối dưới `/core/v1`, nhóm theo dịch vụ lõi (nhãn \"Lõi — …\"), dành cho mọi ứng dụng tầng trên. Ứng dụng khác gọi bằng token của tài khoản dịch vụ (client credentials). Các đường còn lại thuộc ứng dụng minh họa — cổng vận hành yêu cầu nội bộ.",
+    "title": "DX-OS Lab — Cổng vận hành yêu cầu nội bộ"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/core/v1/archive": {
+      "get": {
+        "description": "Các bản lưu trữ lạnh đã niêm phong, mới trước: kỳ, số dòng, quy trình có mặt, mã băm của bản kê.\n\nMỗi tháng UTC đã khép một bản, gồm nhật ký sự kiện và hồ sơ đã kết thúc trong tháng (CSV gzip) cùng\n`manifest.json`. Bản lưu bất biến: đã niêm phong thì không bao giờ ghi đè.",
+        "operationId": "liet_ke_ban_luu_tru_core_v1_archive_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Liet Ke Ban Luu Tru Core V1 Archive Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Liet Ke Ban Luu Tru",
+        "tags": [
+          "Lõi — Lưu trữ lạnh"
+        ]
+      }
+    },
+    "/core/v1/archive/{ky}": {
+      "get": {
+        "description": "Bản kê của một kỳ và liên kết tải từng tệp. Người đọc tải tệp, tính SHA-256 rồi so với `sha256` của\ntệp trong `manifest`, và so mã băm của chính manifest.json với `manifest_sha256`.",
+        "operationId": "doc_ban_luu_tru_core_v1_archive__ky__get",
+        "parameters": [
+          {
+            "description": "Kỳ dạng YYYY-MM (tháng UTC)",
+            "in": "path",
+            "name": "ky",
+            "required": true,
+            "schema": {
+              "description": "Kỳ dạng YYYY-MM (tháng UTC)",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "title": "Ky",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Doc Ban Luu Tru Core V1 Archive  Ky  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Doc Ban Luu Tru",
+        "tags": [
+          "Lõi — Lưu trữ lạnh"
+        ]
+      }
+    },
+    "/core/v1/archive/{ky}/files/{ten_tep}": {
+      "get": {
+        "description": "Tải một tệp của bản lưu (`manifest.json` hoặc một tệp mà bản kê liệt kê). Dịch vụ kiểm mã băm với\nbản kê trước khi trả: bản lưu bị sửa trong kho thì trả 502 thay vì trả dữ liệu sai.",
+        "operationId": "tai_tep_luu_tru_core_v1_archive__ky__files__ten_tep__get",
+        "parameters": [
+          {
+            "description": "Kỳ dạng YYYY-MM (tháng UTC)",
+            "in": "path",
+            "name": "ky",
+            "required": true,
+            "schema": {
+              "description": "Kỳ dạng YYYY-MM (tháng UTC)",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "title": "Ky",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ten_tep",
+            "required": true,
+            "schema": {
+              "title": "Ten Tep",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Tai Tep Luu Tru",
+        "tags": [
+          "Lõi — Lưu trữ lạnh"
+        ]
+      }
+    },
+    "/core/v1/events": {
+      "get": {
+        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.",
+        "operationId": "xuat_nhat_ky_core_v1_events_get",
+        "parameters": [
+          {
+            "description": "csv hoặc json",
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "description": "csv hoặc json",
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Từ ngày, tính theo UTC",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Từ ngày, tính theo UTC",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Tới hết ngày này, UTC",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tới hết ngày này, UTC",
+              "title": "To"
+            }
+          },
+          {
+            "description": "Chỉ một quy trình (GET /core/v1/workflow/processes); bỏ trống là mọi quy trình",
+            "in": "query",
+            "name": "process",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Chỉ một quy trình (GET /core/v1/workflow/processes); bỏ trống là mọi quy trình",
+              "title": "Process"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Xuat Nhat Ky",
+        "tags": [
+          "Lõi — Nhật ký sự kiện"
+        ]
+      }
+    },
+    "/core/v1/files/policy": {
+      "get": {
+        "description": "Giới hạn đang áp dụng. Giao diện chặn theo con số này ở lớp của nó, còn lớp ở đây vẫn\nkiểm lại — chặn ở giao diện thôi thì không đủ, ai cũng gọi thẳng API được.",
+        "operationId": "chinh_sach_tep_core_v1_files_policy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChinhSachTepRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Chinh Sach Tep",
+        "tags": [
+          "Lõi — Tệp"
+        ]
+      }
+    },
+    "/core/v1/files/requests/{case_id}/attachments": {
+      "post": {
+        "description": "Người gửi đính kèm tệp vào hồ sơ của chính mình, ở những bước cho phép.",
+        "operationId": "tai_len_core_v1_files_requests__case_id__attachments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_tai_len_core_v1_files_requests__case_id__attachments_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TepDinhKemRa"
+                  },
+                  "title": "Response Tai Len Core V1 Files Requests  Case Id  Attachments Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Tai Len",
+        "tags": [
+          "Lõi — Tệp"
+        ]
+      }
+    },
+    "/core/v1/files/{attachment_id}": {
+      "get": {
+        "description": "Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.",
+        "operationId": "tai_ve_core_v1_files__attachment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "required": true,
+            "schema": {
+              "title": "Attachment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Tai Ve",
+        "tags": [
+          "Lõi — Tệp"
+        ]
+      }
+    },
+    "/core/v1/identity/me": {
+      "get": {
+        "description": "Danh tính của người đang gọi, dịch từ token sang ngôn ngữ của engine.\n\nCổng người dùng gọi điểm cuối này sau khi đăng nhập để biết hiển thị những gì.\nNó cũng là cách nhanh nhất để kiểm tra chuỗi định danh có thông không: gọi được\nnghĩa là chữ ký, hạn dùng, nơi phát và người nhận đều đã qua.\n\nChỉ trả về những claim cần cho giao diện. Không trả nguyên token lẫn các claim\nnội bộ của Keycloak — cổng không cần chúng, và lộ ra chỉ thêm bề mặt tấn công.\n\n`workspaces` cho giao diện biết dựng mục điều hướng nào. Dịch vụ quyết, dựa trên\nvai trò, để mã giao diện không phải chứa tên vai trò nào cả. Đây chỉ là chuyện hiển\nthị: mỗi điểm cuối vẫn tự gác cửa của nó.",
+        "operationId": "me_core_v1_identity_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Me Core V1 Identity Me Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "Lõi — Định danh"
+        ]
+      }
+    },
+    "/core/v1/notifications/preferences": {
+      "get": {
+        "operationId": "xem_tuy_chon_core_v1_notifications_preferences_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TuyChonThongBaoRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Xem Tuy Chon",
+        "tags": [
+          "Lõi — Thông báo"
+        ]
+      }
+    },
+    "/core/v1/notifications/preferences/{code}": {
+      "post": {
+        "operationId": "doi_tuy_chon_core_v1_notifications_preferences__code__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoiTuyChonVao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TuyChonThongBaoRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Doi Tuy Chon",
+        "tags": [
+          "Lõi — Thông báo"
+        ]
+      }
+    },
+    "/core/v1/webhooks": {
+      "get": {
+        "description": "Mọi đăng ký webhook, mới nhất trước. Không trả bí mật.",
+        "operationId": "danh_sach_dang_ky_core_v1_webhooks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DangKyRa"
+                  },
+                  "title": "Response Danh Sach Dang Ky Core V1 Webhooks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Sach Dang Ky",
+        "tags": [
+          "Lõi — Webhook"
+        ]
+      },
+      "post": {
+        "description": "Đăng ký một địa chỉ nhận sự kiện. Chỉ nhận sự kiện xảy ra SAU lúc đăng ký.\n\nMỗi sự kiện tới là một `POST` thân JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, trạng thái từ → sang,\nngười làm, mốc UTC), ký bằng bí mật trả về ở đây — lưu lại, lần sau không xem được nữa.",
+        "operationId": "tao_dang_ky_core_v1_webhooks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DangKyVao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DangKyMoiRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Tao Dang Ky",
+        "tags": [
+          "Lõi — Webhook"
+        ]
+      }
+    },
+    "/core/v1/webhooks/{webhook_id}": {
+      "delete": {
+        "description": "Hủy đăng ký; các lần gửi đang chờ bỏ theo.",
+        "operationId": "huy_dang_ky_core_v1_webhooks__webhook_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Huy Dang Ky",
+        "tags": [
+          "Lõi — Webhook"
+        ]
+      },
+      "get": {
+        "operationId": "xem_dang_ky_core_v1_webhooks__webhook_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DangKyRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Xem Dang Ky",
+        "tags": [
+          "Lõi — Webhook"
+        ]
+      }
+    },
+    "/core/v1/webhooks/{webhook_id}/deliveries": {
+      "get": {
+        "description": "Năm mươi lần gửi gần nhất của một đăng ký, mới nhất trước.",
+        "operationId": "lan_gui_gan_day_core_v1_webhooks__webhook_id__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LanGuiRa"
+                  },
+                  "title": "Response Lan Gui Gan Day Core V1 Webhooks  Webhook Id  Deliveries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Lan Gui Gan Day",
+        "tags": [
+          "Lõi — Webhook"
+        ]
+      }
+    },
+    "/core/v1/workflow/departments": {
+      "get": {
+        "description": "Các phòng ban đang hoạt động, cho ô chọn phòng khi định tuyến hồ sơ.",
+        "operationId": "danh_muc_phong_ban_core_v1_workflow_departments_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PhongBanRa"
+                  },
+                  "title": "Response Danh Muc Phong Ban Core V1 Workflow Departments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Muc Phong Ban",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/priorities": {
+      "get": {
+        "description": "Các mức ưu tiên, cho ô chọn ở buồng lái. Cờ `is_default` để giao diện điền sẵn.",
+        "operationId": "danh_muc_muc_uu_tien_core_v1_workflow_priorities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MucUuTienRa"
+                  },
+                  "title": "Response Danh Muc Muc Uu Tien Core V1 Workflow Priorities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Muc Muc Uu Tien",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/processes": {
+      "get": {
+        "description": "Các quy trình mà động cơ luồng công việc đang chạy (#376).\n\nMỗi quy trình có bộ quy tắc đang bật riêng và loại yêu cầu riêng. Ứng dụng tầng trên chọn quy trình\ncủa mình bằng mã ở đây, rồi truyền `process` cho các điểm cuối đọc theo quy trình.",
+        "operationId": "danh_muc_quy_trinh_core_v1_workflow_processes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuyTrinhRa"
+                  },
+                  "title": "Response Danh Muc Quy Trinh Core V1 Workflow Processes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Muc Quy Trinh",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/processes/{code}/bpmn": {
+      "get": {
+        "description": "Bộ quy tắc đang bật của quy trình `code`, dạng BPMN 2.0 kèm bố cục — mở bằng bpmn.io, Camunda Modeler.\n\nXuất một chiều để đọc và trao đổi: trạng thái thành `userTask` (kết thúc thành `endEvent`), cạnh thành\n`sequenceFlow` mang nhãn hoạt động, vai và cờ của cạnh ghi trong `documentation`. Sửa quy trình vẫn là sửa\ndữ liệu cấu hình.",
+        "operationId": "xuat_bpmn_core_v1_workflow_processes__code__bpmn_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/xml": {}
+            },
+            "description": "Tệp BPMN 2.0 kèm bố cục sơ đồ"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Quy trình dạng BPMN 2.0",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/request-types": {
+      "get": {
+        "description": "Các loại yêu cầu đang dùng của một quy trình, cho biểu mẫu gửi.\n\nGiao diện **phải** dựng danh sách từ đây chứ không viết cứng bốn lựa chọn, vì doanh\nnghiệp triển khai sẽ khai lại danh mục của họ — xem ARCHITECTURE.md mục 5.1.\n\nLoại yêu cầu quyết định quy trình của hồ sơ (#376): tạo hồ sơ bằng một loại ở đây là tạo hồ sơ của\nquy trình đó.",
+        "operationId": "danh_muc_loai_yeu_cau_core_v1_workflow_request_types_get",
+        "parameters": [
+          {
+            "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+            "in": "query",
+            "name": "process",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+              "title": "Process"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LoaiYeuCauRa"
+                  },
+                  "title": "Response Danh Muc Loai Yeu Cau Core V1 Workflow Request Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Muc Loai Yeu Cau",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/requests": {
+      "get": {
+        "description": "Hồ sơ của một quy trình mà người gọi được thấy, mới nhất trước, có phân trang.\n\nPhạm vi theo vai, đúng luật của ba cửa nhìn thấy sẵn có: hồ sơ mình tạo; hồ sơ của phòng mình nếu mang\nvai phòng ban; mọi hồ sơ nếu là điều phối viên. `needs_action=true` lọc hồ sơ đang chờ chính người gọi\nlàm bước chính — hàng việc của một người duyệt.",
+        "operationId": "ho_so_trong_pham_vi_core_v1_workflow_requests_get",
+        "parameters": [
+          {
+            "description": "Tìm theo mã, tiêu đề",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tìm theo mã, tiêu đề",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Chỉ một trạng thái",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Chỉ một trạng thái",
+              "title": "State"
+            }
+          },
+          {
+            "description": "Chỉ một loại yêu cầu",
+            "in": "query",
+            "name": "request_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Chỉ một loại yêu cầu",
+              "title": "Request Type"
+            }
+          },
+          {
+            "description": "Chỉ hồ sơ đang chờ chính người gọi",
+            "in": "query",
+            "name": "needs_action",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Chỉ hồ sơ đang chờ chính người gọi",
+              "title": "Needs Action",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+            "in": "query",
+            "name": "process",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+              "title": "Process"
+            }
+          },
+          {
+            "description": "Số dòng tối đa một trang",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Số dòng tối đa một trang",
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Bỏ qua chừng này dòng đầu",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Bỏ qua chừng này dòng đầu",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DanhSachHoSoRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Ho So Trong Pham Vi",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      },
+      "post": {
+        "description": "Gửi một yêu cầu mới.\n\nTrạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết\nđịnh quy trình (#376): hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.\n\nMức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì\nngười gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.\n\nMô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên\n(#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô\nhình hỏng không làm hỏng lần gửi.",
+        "operationId": "tao_ho_so_core_v1_workflow_requests_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaoHoSoVao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoSoChiTietRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Tao Ho So",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/requests/{case_id}": {
+      "get": {
+        "description": "Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước\nngười gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.",
+        "operationId": "chi_tiet_trong_pham_vi_core_v1_workflow_requests__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoSoChiTietRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Chi Tiet Trong Pham Vi",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/requests/{case_id}/transitions": {
+      "post": {
+        "description": "Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi\nđược theo bảng `transitions`.\n\nNgoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine\n(409, 403, 422) — cùng mã như ở mọi cửa khác.",
+        "operationId": "buoc_chuyen_trong_pham_vi_core_v1_workflow_requests__case_id__transitions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuocChuyenLoiVao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoSoChiTietRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Buoc Chuyen Trong Pham Vi",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/states": {
+      "get": {
+        "description": "Toàn bộ trạng thái của bộ quy tắc đang kích hoạt của một quy trình, theo thứ tự hiển thị.\n\nKhác `state` trong từng hồ sơ ở chỗ đây là **danh mục**: giao diện cần nó để vẽ\nbảng chú giải, chứ không phải để biết một hồ sơ cụ thể đang ở đâu. Không lấy được\ndanh mục này từ danh sách hồ sơ, vì người dùng mới chỉ đi qua vài trạng thái trong\nsố đó — mà bảng chú giải phải giải thích cả những trạng thái họ chưa gặp.",
+        "operationId": "danh_muc_trang_thai_core_v1_workflow_states_get",
+        "parameters": [
+          {
+            "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+            "in": "query",
+            "name": "process",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mã quy trình (GET /processes); bỏ trống là quy trình mặc định của ứng dụng",
+              "title": "Process"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrangThaiRa"
+                  },
+                  "title": "Response Danh Muc Trang Thai Core V1 Workflow States Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Danh Muc Trang Thai",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Động cơ luồng công việc: danh mục cấu hình, tạo và đọc hồ sơ, bước chuyển được phép và thực hiện bước chuyển, lịch sử. Mọi bước chuyển qua cùng một cửa của engine và ghi nhật ký sự kiện.",
+      "name": "Lõi — Luồng công việc"
+    },
+    {
+      "description": "Dữ liệu phi cấu trúc: chính sách tệp, tải tệp lên một hồ sơ, tải tệp về. Tệp nằm trong kho đối tượng SeaweedFS, quyền kiểm ở mỗi lần.",
+      "name": "Lõi — Tệp"
+    },
+    {
+      "description": "Dữ liệu có cấu trúc: xuất nhật ký sự kiện chuẩn hóa dạng CSV hoặc JSON. Chỉ quản trị viên.",
+      "name": "Lõi — Nhật ký sự kiện"
+    },
+    {
+      "description": "Dữ liệu lịch sử ở tầng lạnh: mỗi tháng đã khép một bản lưu bất biến trong kho đối tượng — nhật ký sự kiện và hồ sơ đã kết thúc (CSV gzip) kèm bản kê có mã băm SHA-256. Liệt kê, đọc bản kê, tải từng tệp. Chỉ quản trị viên.",
+      "name": "Lõi — Lưu trữ lạnh"
+    },
+    {
+      "description": "Tùy chọn nhận thông báo thư của chính người gọi.",
+      "name": "Lõi — Thông báo"
+    },
+    {
+      "description": "Truyền phát sự kiện ra ngoài: đăng ký một địa chỉ nhận, mỗi bản ghi mới của nhật ký sự kiện khớp bộ lọc được POST tới đó, ký HMAC-SHA256, thử lại khi hỏng. Chỉ quản trị viên.",
+      "name": "Lõi — Webhook"
+    },
+    {
+      "description": "Người gọi là ai theo token Keycloak: vai trò, phòng ban.",
+      "name": "Lõi — Định danh"
+    }
+  ]
+}

@@ -20,6 +20,13 @@ cổng `9080` — đường dẫn giữ nguyên như của dịch vụ. Khi cụ
 Dịch vụ ứng dụng không mở cổng `8000` ra máy ở cấu hình mặc định; gọi thẳng nó chỉ được khi thêm tệp
 `docker-compose.phat-trien.yml` — xem [Cài đặt](../../cai-dat/cai-dat/).
 
+Không cần dựng cụm để đọc **hợp đồng API của nền tảng lõi**: đặc tả OpenAPI riêng các đường dưới `/core/v1`
+nằm trong kho ở
+[`docs/api/core-v1.openapi.json`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/api/core-v1.openapi.json)
+— mở bằng bất kỳ công cụ đọc OpenAPI nào, hoặc sinh mã khách từ đó. Tệp sinh từ mã nguồn bằng
+`python scripts/dac_ta_loi.py --anh dxlab-backend:<phiên bản>`; CI sinh lại ở mỗi PR và báo đỏ khi API lõi
+đổi mà tệp chưa cập nhật, nên mỗi lần hợp đồng đổi đều hiện trong lịch sử git.
+
 ## Xác thực
 
 Mọi điểm cuối, trừ `/`, `/health`, `/health/live`, `/health/ready` và bốn đường tài liệu ở trên, cần
