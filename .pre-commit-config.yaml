@@ -22,18 +22,18 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=1024"]
 
-  # Kịch bản của kho, chỉ thư viện chuẩn: chạy bằng Python đang có trên máy, không dựng môi trường riêng
+  # Kịch bản của kho, chỉ thư viện chuẩn: pre-commit tự dựng môi trường Python riêng (không cài gói nào), nên lệnh `python` có trên cả Windows lẫn Linux
   - repo: local
     hooks:
       - id: kiem-header
         name: Header giấy phép đúng thư mục
         entry: python scripts/kiem_header.py
-        language: system
+        language: python
         pass_filenames: false
       - id: pha-he
         name: Trang phả hệ dữ liệu khớp định nghĩa view
         entry: python scripts/pha_he.py --kiem
-        language: system
+        language: python
         pass_filenames: false
         # Chỉ chạy khi đổi thứ trang phả hệ đọc: bản sửa CSDL, bảng điều khiển Superset, chính hai trang
         files: ^(backend/alembic/versions/|infra/superset/|scripts/pha_he\.py|docs/pha-he-du-lieu\.md|docs-site/src/content/docs/tham-khao/pha-he-du-lieu\.md)
