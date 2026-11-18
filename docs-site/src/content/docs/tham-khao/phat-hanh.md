@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.4.0` | Đặc tả OpenAPI của nền tảng lõi `/core/v1` nằm trong kho, tích hợp liên tục báo khi lệch mã; quét giấy phép mọi gói phụ thuộc kể cả gián tiếp, báo cáo đính kèm bản phát hành; đối soát tài liệu phụ thuộc, kiểm liên kết hỏng, kiểm tệp Compose từng hồ sơ; pre-commit tùy chọn; kịch bản in tiếng Việt trên Windows, kiểm nâng cấp trên cụm thử; yêu cầu Python cho kịch bản tiện ích |
 | `v1.3.0` | Tích hợp liên tục kiểm chuẩn tiêu đề pull request và lịch sử commit, kiểm header giấy phép cả trên tệp cấu hình, mọi biến cấu hình có dòng giải thích; mẫu issue dạng biểu mẫu; ngày nghỉ lễ năm 2027 trong lịch làm việc mẫu; kiểm thử độc lập với dữ liệu trình diễn; bước nâng cấp từ `v1.0.0` theo thứ tự |
 | `v1.2.0` | Điều kiện trên cạnh: quy trình rẽ nhánh theo trường của hồ sơ, khai trong dữ liệu — đề xuất mua vật tư dưới ngưỡng chỉ cần một cấp duyệt; xuất quy trình ra BPMN 2.0 qua API lõi; quản lý webhook trên màn Hệ thống; bảng Kanban cho buồng lái phòng ban; kịch bản trình diễn chung kết |
 | `v1.1.0` | Nền tảng lõi Mức 2: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai *đề xuất mua vật tư* thuần dữ liệu; lưu trữ lạnh theo tháng ra kho đối tượng và trang phả hệ dữ liệu; cổng người dùng cập nhật thời gian thực; webhook có chữ ký; siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục |

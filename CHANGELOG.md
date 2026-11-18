@@ -5,6 +5,32 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.4.0] - 2026-11-18
+
+### Công việc phụ trợ
+
+- **ci:** Cấu hình pre-commit chạy kiểm tra của CI trên máy ([#485](https://github.com/AlaVox-lab/dx-os-lab/issues/485)) ([a48eb0f](https://github.com/AlaVox-lab/dx-os-lab/commit/a48eb0f5389f4dbb2b14387688086530c02fdb19))
+
+### Sửa lỗi
+
+- **d-analytics:** In tiếng Việt trên Windows ở hai kịch bản ([#474](https://github.com/AlaVox-lab/dx-os-lab/issues/474)) ([616822e](https://github.com/AlaVox-lab/dx-os-lab/commit/616822e92cf6a80c0eee07f1777c46ce89d9346e))
+- **infra:** Kiem_nang_cap báo lỗi dễ hiểu và nhận cờ cụm thử ([#476](https://github.com/AlaVox-lab/dx-os-lab/issues/476)) ([e7ad345](https://github.com/AlaVox-lab/dx-os-lab/commit/e7ad345412341db43b7be7904920c34f970004c1))
+
+### Tài liệu
+
+- **docs:** Nêu yêu cầu Python cho các kịch bản tiện ích ([#475](https://github.com/AlaVox-lab/dx-os-lab/issues/475)) ([9fd99d4](https://github.com/AlaVox-lab/dx-os-lab/commit/9fd99d406b815f324b54e875419f8a9e08a05902))
+- **docs:** Thêm CITATION.cff và .editorconfig ([#487](https://github.com/AlaVox-lab/dx-os-lab/issues/487)) ([3ba60a7](https://github.com/AlaVox-lab/dx-os-lab/commit/3ba60a7a804292950eeae910f481064c2e915b40))
+- **docs:** Đối soát dependencies.md với tệp khai báo ([#469](https://github.com/AlaVox-lab/dx-os-lab/issues/469)) ([5960d8c](https://github.com/AlaVox-lab/dx-os-lab/commit/5960d8cecf16427c1da6b8b2fdba4c28cfc001d4))
+- **docs:** Đưa đặc tả OpenAPI của lõi vào kho ([#482](https://github.com/AlaVox-lab/dx-os-lab/issues/482)) ([c27ea38](https://github.com/AlaVox-lab/dx-os-lab/commit/c27ea38030d5f6b8b6ac656261b2ac44396645b8))
+- **state:** Ghi đợt bốn Giai đoạn 6 trước v1.4.0 ([#488](https://github.com/AlaVox-lab/dx-os-lab/issues/488)) ([3b7cc86](https://github.com/AlaVox-lab/dx-os-lab/commit/3b7cc863e8f58fac3a2858d302f9d694ebb35bf5))
+
+### Tích hợp liên tục
+
+- **ci:** Nâng checkout và setup-node lên v5 (Node 24) ([#478](https://github.com/AlaVox-lab/dx-os-lab/issues/478)) ([4a2950a](https://github.com/AlaVox-lab/dx-os-lab/commit/4a2950a2ea9598337a2dfd0b49563c8971fee044))
+- **ci:** Kiểm tệp Compose cho từng hồ sơ tùy chọn ([#467](https://github.com/AlaVox-lab/dx-os-lab/issues/467)) ([96086c5](https://github.com/AlaVox-lab/dx-os-lab/commit/96086c583a923dee0be8be36019cb770f4aca996))
+- **ci:** Kiểm liên kết nội bộ hỏng trong tài liệu ([#468](https://github.com/AlaVox-lab/dx-os-lab/issues/468)) ([f25d6b5](https://github.com/AlaVox-lab/dx-os-lab/commit/f25d6b5037e4a4077090a4ac63e947fe035b57cd))
+- **ci:** Quét giấy phép phụ thuộc bắc cầu ([#470](https://github.com/AlaVox-lab/dx-os-lab/issues/470)) ([30150c5](https://github.com/AlaVox-lab/dx-os-lab/commit/30150c5a5a7b672c112626f62ae3a42aa7a64000))
+
 ## [1.3.0] - 2026-11-18
 
 ### Kiểm thử
