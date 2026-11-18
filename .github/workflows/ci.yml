@@ -113,7 +113,7 @@ jobs:
         with:
           fail: true
           args: >-
-            --offline --no-progress --include-fragments=false
+            --offline --no-progress --include-fragments=none
             --root-dir ${{ github.workspace }}/docs-site/dist
             --exclude-path docs-site/src --exclude-path docs-site/node_modules
             './**/*.md' 'docs-site/dist/**/*.html'
