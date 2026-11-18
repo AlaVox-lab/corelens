@@ -745,6 +745,11 @@ def _dau_trang() -> str:
 
 
 def main() -> int:
+    # Bảng điều khiển Windows mặc định không phải UTF-8: không có dòng này, lệnh in câu tiếng Việt đầu tiên
+    # ném UnicodeEncodeError trừ khi người chạy tự đặt PYTHONIOENCODING (#368, #472)
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     tham_so = argparse.ArgumentParser(description="Sinh hoặc kiểm trang phả hệ dữ liệu (#379).")
     tham_so.add_argument("--kiem", action="store_true", help="chỉ kiểm hai tệp đã sinh có khớp định nghĩa không")
     ts = tham_so.parse_args()
