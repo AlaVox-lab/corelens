@@ -267,11 +267,15 @@ def test_mo_hinh_tat_thi_khong_lam_gi(session, rule_set, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_bo_quet_bu_goi_y_ho_so_dang_cho_dieu_phoi(session, rule_set, mo_hinh_gia):
+def test_bo_quet_bu_goi_y_ho_so_dang_cho_dieu_phoi(session, rule_set, mo_hinh_gia, monkeypatch):
     ho_so = _tao(session)
     mo_hinh_gia.tra_dap_an(dap_an_hop_le(session))
+    # Một lượt chỉ xử lý suggest_scan_batch_size hồ sơ cũ nhất; cụm có hồ sơ trình diễn đang chờ điều phối
+    # thì hồ sơ của bài nằm sau chúng (#442) — nới cỡ lượt cho đủ mọi hồ sơ đang chờ
+    can = phan_loai.ho_so_can_goi_y(session, 100_000)
+    dat_cau_hinh(monkeypatch, llm_url=mo_hinh_gia.url, llm_timeout_seconds=1.0, suggest_scan_batch_size=len(can))
 
-    assert ho_so.id in phan_loai.ho_so_can_goi_y(session, 1000)
+    assert ho_so.id in can
     da_ghi = phan_loai.quet_goi_y(session, mo_phien=_mo_phien(session))
 
     assert ho_so.id in da_ghi

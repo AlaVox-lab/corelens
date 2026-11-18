@@ -428,16 +428,16 @@ def test_mo_lai_het_luot_tinh_chung_hai_canh(session, phong_ban):
     assert _nut(session, ho_so, _nguoi_gui()) == set()
 
 
-def test_tu_dong_sau_hoan_tat_van_mo_lai_duoc(session, phong_ban):
+def test_tu_dong_sau_hoan_tat_van_mo_lai_duoc(session, loc_cua_bai, phong_ban):
     """Tự đóng sau Hoàn tất (#144) không khác người gửi xác nhận: hồ sơ đã làm xong."""
     ho_so = _hoan_tat(session, phong_ban)
     bay = bay_gio(session)
-    assert quet_het_han_cho(session, bay + dt.timedelta(hours=24)) == [ho_so.id]
+    assert loc_cua_bai(quet_het_han_cho(session, bay + dt.timedelta(hours=24))) == [ho_so.id]
     assert case_history(session, ho_so.id)[-1].actor == TAC_NHAN_HAN_CHO
     assert MO_LAI_SAU_DONG in _nut(session, ho_so, _nguoi_gui())
 
 
-def test_tu_dong_vi_chua_bo_sung_khong_mo_lai_duoc(session, phong_ban):
+def test_tu_dong_vi_chua_bo_sung_khong_mo_lai_duoc(session, loc_cua_bai, phong_ban):
     """Hồ sơ tự đóng vì người gửi không bổ sung thông tin (#143) chưa có gì để "chưa đạt":
     nút Mở lại không hiện, lần chuyển bị từ chối — người gửi tạo hồ sơ mới."""
     ho_so = _den_dang_xu_ly(session, phong_ban)
@@ -449,7 +449,7 @@ def test_tu_dong_vi_chua_bo_sung_khong_mo_lai_duoc(session, phong_ban):
         note="Cần số máy",
     )
     bay = bay_gio(session)
-    assert quet_het_han_cho(session, bay + dt.timedelta(hours=40)) == [ho_so.id]
+    assert loc_cua_bai(quet_het_han_cho(session, bay + dt.timedelta(hours=40))) == [ho_so.id]
     assert ho_so.current_state == "closed"
 
     assert _nut(session, ho_so, _nguoi_gui()) == set()

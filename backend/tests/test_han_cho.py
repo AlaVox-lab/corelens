@@ -180,15 +180,15 @@ def test_trang_thai_cho_phong_vao_hang_doi_dieu_phoi(session, rule_set):
 # ---------------------------------------------------------------------------
 
 
-def test_chua_het_han_cho_thi_khong_tu_tra(session, phong_ban):
+def test_chua_het_han_cho_thi_khong_tu_tra(session, loc_cua_bai, phong_ban):
     ho_so = _cho_phong(session, phong_ban)
-    assert quet_het_han_cho(session, bay_gio(session) + 24 * GIO - dt.timedelta(minutes=1)) == []
+    assert loc_cua_bai(quet_het_han_cho(session, bay_gio(session) + 24 * GIO - dt.timedelta(minutes=1))) == []
     assert ho_so.current_state == "awaiting-acceptance"
 
 
-def test_het_han_cho_thi_tu_tra_ve_dieu_phoi_va_ghi_nhat_ky(session, phong_ban):
+def test_het_han_cho_thi_tu_tra_ve_dieu_phoi_va_ghi_nhat_ky(session, loc_cua_bai, phong_ban):
     ho_so = _cho_phong(session, phong_ban)
-    da_di = quet_het_han_cho(session, bay_gio(session) + 24 * GIO)
+    da_di = loc_cua_bai(quet_het_han_cho(session, bay_gio(session) + 24 * GIO))
 
     assert da_di == [ho_so.id]
     assert ho_so.current_state == "classified"
@@ -200,10 +200,10 @@ def test_het_han_cho_thi_tu_tra_ve_dieu_phoi_va_ghi_nhat_ky(session, phong_ban):
     assert "24 giờ làm việc" in (cuoi.note or "")
 
 
-def test_bo_quet_leo_thang_khong_dong_toi_canh_tu_di(session, phong_ban):
+def test_bo_quet_leo_thang_khong_dong_toi_canh_tu_di(session, loc_cua_bai, phong_ban):
     """Hai bộ quét, hai loại cạnh hệ thống: quét SLA không đi cạnh có hạn chờ."""
     ho_so = _cho_phong(session, phong_ban)
-    assert ho_so.id not in quet_va_leo_thang(session)
+    assert ho_so.id not in loc_cua_bai(quet_va_leo_thang(session))
     assert ho_so.current_state == "awaiting-acceptance"
 
 
@@ -289,12 +289,12 @@ def test_hoan_tat_co_canh_xac_nhan_va_canh_tu_dong(session, rule_set):
     assert he_thong[0].role_codes == set() and he_thong[0].guard_codes == []
 
 
-def test_nguoi_gui_khong_xac_nhan_thi_tu_dong(session, phong_ban):
+def test_nguoi_gui_khong_xac_nhan_thi_tu_dong(session, loc_cua_bai, phong_ban):
     ho_so = _hoan_tat(session, phong_ban)
     bay = bay_gio(session)
-    assert quet_het_han_cho(session, bay + 24 * GIO - dt.timedelta(minutes=1)) == []
+    assert loc_cua_bai(quet_het_han_cho(session, bay + 24 * GIO - dt.timedelta(minutes=1))) == []
 
-    assert quet_het_han_cho(session, bay + 24 * GIO) == [ho_so.id]
+    assert loc_cua_bai(quet_het_han_cho(session, bay + 24 * GIO)) == [ho_so.id]
     assert ho_so.current_state == "closed"
     # Đồng hồ SLA dừng hẳn như mọi lần vào trạng thái kết thúc
     assert ho_so.sla_segment_since is None
@@ -353,13 +353,13 @@ def test_cho_bo_sung_co_canh_tu_dong(session, rule_set):
     assert not cac[0].is_rework
 
 
-def test_nguoi_gui_khong_bo_sung_thi_tu_dong(session, phong_ban):
+def test_nguoi_gui_khong_bo_sung_thi_tu_dong(session, loc_cua_bai, phong_ban):
     ho_so = _cho_bo_sung(session, phong_ban)
     sla_truoc = ho_so.sla_running_seconds
     bay = bay_gio(session)
-    assert quet_het_han_cho(session, bay + 40 * GIO - dt.timedelta(minutes=1)) == []
+    assert loc_cua_bai(quet_het_han_cho(session, bay + 40 * GIO - dt.timedelta(minutes=1))) == []
 
-    assert quet_het_han_cho(session, bay + 40 * GIO) == [ho_so.id]
+    assert loc_cua_bai(quet_het_han_cho(session, bay + 40 * GIO)) == [ho_so.id]
     assert ho_so.current_state == "closed"
     # Thời gian chờ người gửi không tính vào hạn của phòng ban
     assert ho_so.sla_running_seconds == sla_truoc
@@ -369,7 +369,7 @@ def test_nguoi_gui_khong_bo_sung_thi_tu_dong(session, phong_ban):
     assert cuoi.note
 
 
-def test_bo_sung_truoc_han_thi_khong_tu_dong(session, phong_ban):
+def test_bo_sung_truoc_han_thi_khong_tu_dong(session, loc_cua_bai, phong_ban):
     ho_so = _cho_bo_sung(session, phong_ban)
     nguoi_gui = Actor(id=NGUOI_GUI, roles=frozenset({"requester"}))
     assert "auto-close-no-info" not in {
@@ -378,7 +378,7 @@ def test_bo_sung_truoc_han_thi_khong_tu_dong(session, phong_ban):
     perform_transition(
         session, case_id=ho_so.id, to_state="in-progress", actor=nguoi_gui, note="Máy số 12"
     )
-    assert quet_het_han_cho(session, bay_gio(session) + 40 * GIO) == []
+    assert loc_cua_bai(quet_het_han_cho(session, bay_gio(session) + 40 * GIO)) == []
     assert ho_so.current_state == "in-progress"
 
 
