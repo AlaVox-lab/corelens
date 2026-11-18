@@ -538,9 +538,9 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 dx-os-lab/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
+│   │   ├── bug_report.yml       # biểu mẫu, trường bắt buộc (#422)
 │   │   ├── config.yml
-│   │   ├── feature_request.md
+│   │   ├── feature_request.yml  # bắt buộc trường "Đã kiểm trong mã chưa"
 │   │   └── research.md
 │   └── pull_request_template.md
 ├── backend/                     # FastAPI — dịch vụ ứng dụng
