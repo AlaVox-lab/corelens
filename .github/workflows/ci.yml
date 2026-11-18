@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Lấy đủ lịch sử cho bước kiểm commit dưới đây
           fetch-depth: 0
@@ -50,11 +50,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # pipx có sẵn trên runner Ubuntu; chạy ruff trong môi trường riêng, không cài vào Python hệ thống
       - name: Ruff — Python
         run: pipx run --spec ruff==0.17.3 ruff check --output-format=github .
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -73,8 +73,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -95,8 +95,8 @@ jobs:
       run:
         working-directory: docs-site
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -113,7 +113,7 @@ jobs:
     env:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Ranh giới AGPL (ADR-0007): PM4Py chỉ được nhập trong services/khai-pha/. Bước rẻ nhất nên đứng
       # đầu — vi phạm thì dừng trước khi dựng ảnh. `git grep` thoát 0 khi TÌM THẤY, nên tìm thấy là hỏng.
       - name: Ranh giới AGPL — không nhập pm4py ngoài dịch vụ khai phá
@@ -191,7 +191,7 @@ jobs:
     env:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cp infra/.env.example infra/.env
       # Superset chờ dịch vụ ứng dụng chạy xong migration tạo view báo cáo, rồi nạp dashboard từ
       # infra/superset/bang-dieu-khien/ (#304). Keycloak không cần cho bước này.
