@@ -207,22 +207,25 @@ Lần đăng nhập kế, người dùng quét mã QR bằng ứng dụng xác t
 ### Nâng cấp
 
 Cụm dựng từ `v0.9.1` trở đi lên bản mới **mà không mất hồ sơ, nhật ký hay tệp đính kèm**: lược đồ do
-migration quản lý và tự chạy lúc dịch vụ khởi động, dữ liệu cấu hình chỉ nạp lần đầu. Giải nén bản mới
-(hoặc `git pull`), chép biến mới từ `.env.example` sang `.env` nếu có, rồi trong `infra/`:
+migration quản lý và tự chạy lúc dịch vụ khởi động, dữ liệu cấu hình chỉ nạp lần đầu. Theo thứ tự:
 
-```bash
-docker compose --env-file .env up -d --build
-```
+1. Muốn chứng minh không mất gì, chụp số liệu **trước** khi lấy mã mới — ở gốc kho mã:
+   `python scripts/kiem_nang_cap.py chup truoc-nang-cap.json`
+2. Giải nén bản mới (hoặc `git pull`). Chép sang `infra/.env` mọi biến có trong `.env.example` mà `.env`
+   chưa có — lệnh dưới in tên chúng; biến thiếu thì Compose dùng giá trị mặc định, nhưng có biến không có
+   mặc định (đoạn sau danh sách này):
 
-Muốn chứng minh không mất gì, chụp số liệu trước khi nâng và so sau khi nâng — ở gốc kho mã:
+   ```bash
+   python -c "k=lambda p:{l.split('=')[0] for l in open(p,encoding='utf-8') if '=' in l and not l.startswith('#')};print(*sorted(k('infra/.env.example')-k('infra/.env')))"
+   ```
 
-```bash
-python scripts/kiem_nang_cap.py chup truoc-nang-cap.json
-python scripts/kiem_nang_cap.py so truoc-nang-cap.json
-```
+3. Trong `infra/`: `docker compose --env-file .env up -d --build`
+4. So số liệu ở gốc kho mã: `python scripts/kiem_nang_cap.py so truoc-nang-cap.json`
 
 Keycloak chỉ nạp realm lúc tạo, nên cụm dựng từ `v1.0.0` trở về trước chạy thêm hai lệnh một lần — tạo
-tài khoản dịch vụ của ví dụ quy trình thứ hai và bật chống dò mật khẩu:
+tài khoản dịch vụ của ví dụ quy trình thứ hai và bật chống dò mật khẩu. Lệnh đầu chỉ tạo hai client
+`dx-integration-truong-phong`, `dx-integration-duyet` khi `.env` đã có các dòng `KEYCLOAK_INTEGRATION_HEAD_*`
+và `KEYCLOAK_INTEGRATION_REVIEWER_*` (bước 2); thiếu thì nó vẫn báo xong mà bỏ qua hai client đó:
 
 ```bash
 python scripts/tai_khoan_dich_vu.py
