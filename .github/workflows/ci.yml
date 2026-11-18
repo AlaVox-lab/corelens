@@ -105,6 +105,18 @@ jobs:
       - run: npm run build
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
+      # Liên kết nội bộ hỏng (#423): lychee (Apache-2.0 OR MIT) kiểm Markdown của kho và trang đã dựng,
+      # chế độ --offline nên chỉ kiểm liên kết tới tệp trong kho — không gọi mạng, không đỏ vì trang
+      # ngoài chập chờn. Nguồn Markdown của trang tài liệu dùng đường dẫn tuyến nên kiểm trên bản dựng.
+      - name: Kiểm liên kết nội bộ hỏng
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          args: >-
+            --offline --no-progress --include-fragments=false
+            --root-dir ${{ github.workspace }}/docs-site/dist
+            --exclude-path docs-site/src --exclude-path docs-site/node_modules
+            './**/*.md' 'docs-site/dist/**/*.html'
 
   cum:
     name: Cụm — dựng ảnh và kiểm thử dịch vụ
