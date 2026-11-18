@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Chạy ngay trên máy, trước mỗi commit, những kiểm tra CI sẽ làm (#484). Tùy chọn: ai không cài thì không
+# bị ảnh hưởng gì, CI vẫn kiểm như cũ. Cài một lần ở gốc kho:
+#
+#     pip install pre-commit==4.7.0
+#     pre-commit install
+#
+# Chạy tay trên cả kho: `pre-commit run --all-files`. Bỏ qua một lần (không khuyến khích): `git commit --no-verify`.
+repos:
+  # Cùng phiên bản ruff với CI (.github/workflows/ci.yml) và cùng cấu hình ruff.toml ở gốc
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+
+  # Kịch bản của kho, chỉ thư viện chuẩn: chạy bằng Python đang có trên máy, không dựng môi trường riêng
+  - repo: local
+    hooks:
+      - id: kiem-header
+        name: Header giấy phép đúng thư mục
+        entry: python scripts/kiem_header.py
+        language: system
+        pass_filenames: false
+      - id: pha-he
+        name: Trang phả hệ dữ liệu khớp định nghĩa view
+        entry: python scripts/pha_he.py --kiem
+        language: system
+        pass_filenames: false
+        # Chỉ chạy khi đổi thứ trang phả hệ đọc: bản sửa CSDL, bảng điều khiển Superset, chính hai trang
+        files: ^(backend/alembic/versions/|infra/superset/|scripts/pha_he\.py|docs/pha-he-du-lieu\.md|docs-site/src/content/docs/tham-khao/pha-he-du-lieu\.md)
