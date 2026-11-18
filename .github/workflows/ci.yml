@@ -135,7 +135,10 @@ jobs:
       # anchore/sbom-action (Apache-2.0). Lưu thành artifact để đính vào bản phát hành — CONTRIBUTING.md mục 7.
       - name: Phiên bản ảnh
         id: phien-ban
-        run: echo "v=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+        # Syft ghi tệp SBOM nhưng không tự tạo thư mục chứa
+        run: |
+          mkdir -p sbom
+          echo "v=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)" >> "$GITHUB_OUTPUT"
       - name: SBOM — dịch vụ ứng dụng
         uses: anchore/sbom-action@v0
         with:
