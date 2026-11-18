@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Danh sách giấy phép cho phép của scripts/quet_giay_phep.py (#418). Đổi danh sách là đổi dữ liệu ở đây,
+# không sửa kịch bản. Thêm một giấy phép mới thì đối chiếu https://opensource.org/licenses và ghi lý do vào
+# docs/dependencies.md trước — đúng quy trình ở đầu tệp đó.
+
+# Mọi thành phần (dịch vụ ứng dụng, cổng, trang tài liệu, kiểm thử giao diện) — mã định danh SPDX, đều thuộc
+# danh sách OSI. LGPL và MPL là copyleft yếu, dùng được khi chỉ nạp như thư viện, không sửa mã — ranh giới ghi
+# ở docs/dependencies.md mục "Lưu ý về giấy phép copyleft mạnh".
+cho_phep = [
+  "MIT", "MIT-0", "ISC", "0BSD", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "Zlib",
+  "PSF-2.0", "Python-2.0", "BlueOak-1.0.0", "Unlicense", "MIT-CMU",
+  "MPL-2.0", "LGPL-3.0-only", "LGPL-3.0-or-later",
+]
+
+# Giấy phép chỉ được phép bên trong một thành phần — ranh giới AGPL của ADR-0007: PM4Py và cvxopt chỉ nằm
+# trong ảnh của dịch vụ khai phá.
+[them_theo_thanh_phan]
+khai-pha = ["AGPL-3.0-or-later", "GPL-3.0-or-later"]
+
+# Gói mà siêu dữ liệu không ghi được mã SPDX đọc tự động (chỉ có văn bản giấy phép dài, hay ghi chung chung),
+# hoặc mang giấy phép dữ liệu chứ không phải phần mềm. Mỗi dòng ghi giấy phép đã đọc tận tay và lý do;
+# `chi_trong` giới hạn ngoại lệ vào một thành phần — gói GPL lọt sang thành phần khác vẫn bị chặn.
+[ngoai_le]
+caniuse-lite = { giay_phep = "CC-BY-4.0", ly_do = "bảng dữ liệu, chỉ dùng lúc dựng — docs/dependencies.md mục Một gói không mang giấy phép phần mềm" }
+language-subtag-registry = { giay_phep = "CC0-1.0", ly_do = "bảng mã ngôn ngữ, chỉ dùng lúc soát mã — cùng mục trên" }
+matplotlib = { giay_phep = "PSF-2.0", ly_do = "văn bản 'License agreement for matplotlib', kiểu PSF; phân loại Python Software Foundation License" }
+scipy = { giay_phep = "BSD-3-Clause", ly_do = "tệp LICENSE.txt trong gói: BSD 3 điều khoản" }
+kiwisolver = { giay_phep = "BSD-3-Clause", ly_do = "văn bản 'The Kiwi licensing terms' — BSD đã sửa, phân loại BSD License" }
+cycler = { giay_phep = "BSD-3-Clause", ly_do = "văn bản BSD 3 điều khoản của dự án matplotlib" }
+contourpy = { giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
+pandas = { giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
+cvxopt = { chi_trong = "khai-pha", giay_phep = "GPL-3.0-or-later", ly_do = "văn bản 'either version 3 … or any later version'; chỉ trong dịch vụ khai phá (ADR-0007)" }
+python-dateutil = { giay_phep = "Apache-2.0 OR BSD-3-Clause", ly_do = "ghi 'Dual License', phân loại Apache và BSD" }
+uvloop = { giay_phep = "MIT OR Apache-2.0", ly_do = "ghi 'MIT License', phân loại MIT và Apache" }
+mdn-data = { giay_phep = "CC0-1.0", ly_do = "dữ liệu thuộc tính CSS của MDN, chỉ dùng lúc dựng trang tài liệu — docs/dependencies.md mục trang tài liệu" }
+numpy = { giay_phep = "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0", ly_do = "phần CC0-1.0 là tệp dữ liệu đi kèm, mã mang BSD-3-Clause; chỉ trong dịch vụ khai phá" }
