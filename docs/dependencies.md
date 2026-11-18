@@ -319,6 +319,7 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 | `actions/checkout@v5`, `actions/setup-node@v5` (chạy Node 24, #477), `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
 | lychee (`lycheeverse/lychee-action@v2`) | Apache-2.0 hoặc MIT | Kiểm liên kết nội bộ hỏng trong Markdown của kho và trang tài liệu đã dựng (#423), job `tai-lieu` của `ci.yml`; chạy `--offline` nên không gọi mạng | Không |
+| pre-commit `4.7.0`, `pre-commit-hooks` `v6.0.0` | MIT (cả hai) | Tự kiểm trước mỗi commit, **tùy chọn** (#484), cấu hình `.pre-commit-config.yaml` ở gốc; móc ruff dùng `astral-sh/ruff-pre-commit` `v0.17.3` (MIT), cùng bản ruff với CI | Không |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
 **Lưu ý về bảng chấm**: mục PoF số 4 trừ 5 điểm nếu *"mã nguồn được dịch bằng công

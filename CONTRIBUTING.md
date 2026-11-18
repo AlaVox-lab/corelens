@@ -119,6 +119,11 @@ ruff check .                    # thêm --fix để ruff tự sửa phần sửa
 cd frontend && npm run lint     # sau npm ci
 ```
 
+**Tùy chọn — tự kiểm trước mỗi commit** (#484): `.pre-commit-config.yaml` ở gốc chạy ruff (cùng bản với CI),
+kiểm header giấy phép, trang phả hệ dữ liệu, chặn dấu xung đột hợp nhất và tệp trên 1 MB — lỗi hiện ngay trên
+máy thay vì chờ CI. Cài một lần: `pip install pre-commit==4.7.0` rồi `pre-commit install`; chạy trên cả kho:
+`pre-commit run --all-files`. Không cài thì không ảnh hưởng gì.
+
 Bộ luật ruff chọn tường minh trong `ruff.toml` (lỗi cú pháp, import và biến thừa, mẫu dễ sinh lỗi của
 bugbear); luật nào tắt đều ghi lý do ngay cạnh. Kho không chạy `ruff format` — không ép kiểu trình bày.
 Phiên bản ruff ghim ở hai chỗ, `ruff.toml` (`required-version`) và `ci.yml`; nâng thì nâng cả hai.
