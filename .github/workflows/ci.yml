@@ -129,6 +129,15 @@ jobs:
           fi
       # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa.
       - run: cp infra/.env.example infra/.env
+      # Hồ sơ tùy chọn (#415) không bật trong job này nên lỗi tệp Compose của chúng lọt qua; kiểm cú
+      # pháp và biến của từng hồ sơ, kèm hai tệp ghi đè, mà không kéo ảnh nào.
+      - name: Kiểm tệp Compose — cụm mặc định, từng hồ sơ tùy chọn, tệp ghi đè
+        run: |
+          $COMPOSE config -q
+          for hs in $(docker compose --env-file infra/.env -f infra/docker-compose.yml config --profiles); do
+            echo "hồ sơ $hs"; $COMPOSE --profile "$hs" config -q
+          done
+          $COMPOSE -f infra/docker-compose.phat-trien.yml config -q
       - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
         run: $COMPOSE build backend khai-pha frontend
       # Cổng API (#364) là ảnh kéo về, không dựng; nó chờ dịch vụ ứng dụng khỏe rồi mới lên
