@@ -538,9 +538,9 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 dx-os-lab/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
+│   │   ├── bug_report.yml       # biểu mẫu, trường bắt buộc (#422)
 │   │   ├── config.yml
-│   │   ├── feature_request.md
+│   │   ├── feature_request.yml  # bắt buộc trường "Đã kiểm trong mã chưa"
 │   │   └── research.md
 │   └── pull_request_template.md
 ├── backend/                     # FastAPI — dịch vụ ứng dụng
@@ -623,7 +623,9 @@ dx-os-lab/
 │   └── seed/                    # DỮ LIỆU — phần doanh nghiệp triển khai sửa, nạp lần đầu dựng cụm
 │       ├── 01-quy-tac-quy-trinh.sql
 │       ├── 02-co-cau-to-chuc.sql
-│       └── 03-lich-lam-viec.sql
+│       ├── 03-lich-lam-viec.sql
+│       ├── …
+│       └── 08-ngay-le-2027.sql  # ngày nghỉ năm 2027, bản sửa 0033 áp cho cụm đang chạy (#439)
 ├── scripts/
 │   ├── setup-labels.sh          # khởi tạo hệ thống nhãn
 │   ├── sinh_nhat_ky_ao.py       # sinh nhật ký sự kiện ảo theo bộ quy tắc đang chạy

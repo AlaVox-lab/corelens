@@ -207,7 +207,7 @@ def test_ho_so_dong_thi_dong_ho_dung_han(session, rule_set, phong_ban):
 # ---------------------------------------------------------------------------
 
 
-def test_ho_so_qua_han_tu_leo_thang(session, rule_set, phong_ban):
+def test_ho_so_qua_han_tu_leo_thang(session, loc_cua_bai, rule_set, phong_ban):
     loai = _loai_yeu_cau(session)
     ho_so = _den_dang_xu_ly(session, phong_ban, loai)
 
@@ -215,7 +215,7 @@ def test_ho_so_qua_han_tu_leo_thang(session, rule_set, phong_ban):
 
     assert ho_so in ho_so_qua_han(session)
 
-    da_leo_thang = quet_va_leo_thang(session)
+    da_leo_thang = loc_cua_bai(quet_va_leo_thang(session))
 
     assert ho_so.id in da_leo_thang
     assert ho_so.current_state == "escalated"
@@ -240,18 +240,18 @@ def test_leo_thang_sinh_nhat_ky_voi_tac_nhan_he_thong(session, rule_set, phong_b
     assert cuoi.activity == "escalate"
 
 
-def test_chua_qua_han_thi_khong_dong_toi(session, rule_set, phong_ban):
+def test_chua_qua_han_thi_khong_dong_toi(session, loc_cua_bai, rule_set, phong_ban):
     loai = _loai_yeu_cau(session)
     ho_so = _den_dang_xu_ly(session, phong_ban, loai)
 
     _lui_dong_ho(session, ho_so, gio=loai.sla_hours - 1)
 
     assert ho_so not in ho_so_qua_han(session)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
     assert ho_so.current_state == "in-progress"
 
 
-def test_da_leo_thang_roi_thi_khong_nhat_lai(session, rule_set, phong_ban):
+def test_da_leo_thang_roi_thi_khong_nhat_lai(session, loc_cua_bai, rule_set, phong_ban):
     """Từ `escalated` không có cạnh hệ thống nào nữa, nên bộ quét tự bỏ qua.
 
     Cơ chế tự giới hạn bằng dữ liệu, không cần cột "đã leo thang chưa".
@@ -265,10 +265,10 @@ def test_da_leo_thang_roi_thi_khong_nhat_lai(session, rule_set, phong_ban):
 
     _lui_dong_ho(session, ho_so, gio=loai.sla_hours * 5)
     assert ho_so not in ho_so_qua_han(session)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
 
 
-def test_ho_so_dang_dung_dong_ho_khong_qua_han_duoc(session, rule_set, phong_ban):
+def test_ho_so_dang_dung_dong_ho_khong_qua_han_duoc(session, loc_cua_bai, rule_set, phong_ban):
     """Hồ sơ đang chờ người tạo trả lời thì không bị leo thang, dù chờ bao lâu."""
     loai = _loai_yeu_cau(session)
     ho_so = _den_dang_xu_ly(session, phong_ban, loai)
@@ -287,7 +287,7 @@ def test_ho_so_dang_dung_dong_ho_khong_qua_han_duoc(session, rule_set, phong_ban
     _lui_dong_ho(session, ho_so, gio=loai.sla_hours * 10)
 
     assert ho_so not in ho_so_qua_han(session)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
 
 
 def test_chua_phan_loai_thi_khong_co_nguong(session, rule_set):
@@ -347,7 +347,7 @@ def _da_leo_thang_vi_qua_han(session, phong_ban: str, loai: RequestType):
     return ho_so
 
 
-def test_phan_cong_lai_thi_co_an_han(session, rule_set, phong_ban):
+def test_phan_cong_lai_thi_co_an_han(session, loc_cua_bai, rule_set, phong_ban):
     """Đúng lỗi của #94: phân công lại xong, lượt quét kế tiếp KHÔNG leo thang lại."""
     loai = _loai_co_an_han(session)
     ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
@@ -357,7 +357,7 @@ def test_phan_cong_lai_thi_co_an_han(session, rule_set, phong_ban):
 
     assert da_chay_giay(session, ho_so) > gioi_han_giay(session, ho_so),         "đồng hồ tổng không đặt lại — hồ sơ vẫn quá hạn"
     assert ho_so not in ho_so_qua_han(session)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
     assert ho_so.current_state == "in-progress"
 
     con = an_han_con_lai_giay(session, ho_so)
@@ -365,7 +365,7 @@ def test_phan_cong_lai_thi_co_an_han(session, rule_set, phong_ban):
 
     # Nửa khoảng ân hạn trôi qua vẫn phải yên — bắt lỗi nhầm đơn vị giờ với phút
     _lui_dong_ho(session, ho_so, gio=loai.sla_grace_hours / 2)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
     assert ho_so.current_state == "in-progress"
 
 
@@ -377,7 +377,7 @@ def test_chua_qua_han_thi_khong_noi_ve_an_han(session, rule_set, phong_ban):
     assert an_han_con_lai_giay(session, ho_so) is None
 
 
-def test_het_an_han_thi_leo_thang_lai(session, rule_set, phong_ban):
+def test_het_an_han_thi_leo_thang_lai(session, loc_cua_bai, rule_set, phong_ban):
     """Ân hạn không che việc bị bỏ bê lần hai: hết ân hạn mà chưa xong thì leo thang."""
     loai = _loai_co_an_han(session)
     ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
@@ -387,11 +387,11 @@ def test_het_an_han_thi_leo_thang_lai(session, rule_set, phong_ban):
     _lui_dong_ho(session, ho_so, gio=loai.sla_grace_hours + 0.1)
 
     assert an_han_con_lai_giay(session, ho_so) is None
-    assert ho_so.id in quet_va_leo_thang(session)
+    assert ho_so.id in loc_cua_bai(quet_va_leo_thang(session))
     assert ho_so.current_state == "escalated"
 
 
-def test_mo_lai_ho_so_da_qua_han_duoc_cap_han_moi(session, rule_set, phong_ban):
+def test_mo_lai_ho_so_da_qua_han_duoc_cap_han_moi(session, loc_cua_bai, rule_set, phong_ban):
     """Lối vào thứ hai: người gửi mở lại một hồ sơ đã quá hạn. Từ #102 (giảng viên chốt 08/10,
     thay quyết định 23/09 "không cấp hạn mới") mở lại là chu kỳ xử lý mới: đồng hồ đếm lại từ
     0, nên hồ sơ không còn quá hạn và không cần ân hạn để cứu."""
@@ -406,13 +406,13 @@ def test_mo_lai_ho_so_da_qua_han_duoc_cap_han_moi(session, rule_set, phong_ban):
                        actor=nguoi_gui, note="Vẫn chưa được.")
 
     assert ho_so not in ho_so_qua_han(session)
-    assert quet_va_leo_thang(session) == []
+    assert loc_cua_bai(quet_va_leo_thang(session)) == []
     # Hạn mới, không kế thừa hạn đã hết của chu kỳ cũ — ân hạn không phải dùng tới
     assert ho_so.sla_running_seconds == 0
     assert an_han_con_lai_giay(session, ho_so) is None
 
 
-def test_an_han_bang_khong_thi_leo_thang_ngay(session, rule_set, phong_ban):
+def test_an_han_bang_khong_thi_leo_thang_ngay(session, loc_cua_bai, rule_set, phong_ban):
     """Ân hạn là dữ liệu: đặt về 0 thì hành vi cũ trở lại, không sửa mã."""
     loai = _loai_co_an_han(session)
     ho_so = _da_leo_thang_vi_qua_han(session, phong_ban, loai)
@@ -422,7 +422,7 @@ def test_an_han_bang_khong_thi_leo_thang_ngay(session, rule_set, phong_ban):
     perform_transition(session, case_id=ho_so.id, to_state="in-progress",
                        actor=_truong_phong(phong_ban))
 
-    assert ho_so.id in quet_va_leo_thang(session)
+    assert ho_so.id in loc_cua_bai(quet_va_leo_thang(session))
 
 
 def test_an_han_khong_duoc_dai_hon_han_xu_ly(session, rule_set):

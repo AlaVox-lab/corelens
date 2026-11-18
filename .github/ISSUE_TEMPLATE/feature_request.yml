@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Mẫu đề xuất tính năng dạng biểu mẫu (#422). Giữ đủ các phần của mẫu cũ, thêm trường bắt buộc "Đã kiểm
+# trong mã chưa": ngày 17/11/2026, 10 trên 43 issue mở cùng đợt đã có sẵn trong mã và 2 issue đi ngược
+# quyết định đã chốt — người đề xuất phải tra trước khi mở.
+
+name: Đề xuất tính năng
+description: Đề xuất một tính năng hoặc cải tiến mới
+title: "[Feat] "
+labels: ["type/feat"]
+body:
+  - type: textarea
+    id: da-kiem
+    attributes:
+      label: Đã kiểm trong mã chưa
+      description: |
+        Liệt kê tệp, issue, bản ghi quyết định đã tra (`git grep` trên `origin/dev`, `docs/ARCHITECTURE.md`,
+        `docs/adr/`, danh sách issue kể cả đã đóng) và kết luận: phần nào kho đã có, phần nào còn thiếu.
+      placeholder: |
+        - Đã tra: …
+        - Kho đã có: …
+        - Còn thiếu: …
+    validations:
+      required: true
+  - type: textarea
+    id: boi-canh
+    attributes:
+      label: Bối cảnh
+      description: Vấn đề nào đang tồn tại? Ai gặp phải và trong tình huống nào?
+    validations:
+      required: true
+  - type: textarea
+    id: de-xuat
+    attributes:
+      label: Đề xuất
+      description: Hành vi cần có. Chưa cần bàn cách cài đặt.
+    validations:
+      required: true
+  - type: dropdown
+    id: khong-gian
+    attributes:
+      label: Không gian kiến trúc
+      options:
+        - "space/H — nhân sự"
+        - "space/P — quy trình"
+        - "space/D — dữ liệu"
+        - "space/I — trí tuệ nhân tạo"
+        - "space/core — nền tảng lõi"
+    validations:
+      required: true
+  - type: textarea
+    id: viec-can-lam
+    attributes:
+      label: Việc cần làm
+      description: Mỗi dòng một ô kiểm chứng được.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: hoan-thanh
+    attributes:
+      label: Định nghĩa hoàn thành
+      description: Điều kiện cụ thể, kiểm chứng được, để đóng issue. Tránh từ mơ hồ như "hoàn thiện".
+    validations:
+      required: true
+  - type: textarea
+    id: phuong-an
+    attributes:
+      label: Phương án đã cân nhắc
+      description: Hướng khác đã nghĩ tới và vì sao không chọn. Nếu chọn nền tảng nguồn mở, nêu giấy phép từng phương án.
+  - type: textarea
+    id: phu-thuoc
+    attributes:
+      label: Phụ thuộc
+      description: Ghi `Blocked by #N` nếu bị chặn bởi issue khác.
+  - type: textarea
+    id: tham-chieu
+    attributes:
+      label: Tham chiếu
+      description: Tài liệu, tiêu chí chấm điểm hoặc thảo luận liên quan.

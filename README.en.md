@@ -9,6 +9,10 @@
 
 [![License: MIT and AGPL-3.0](https://img.shields.io/badge/License-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
+**Licence:** the code is under [MIT](LICENSE), except the process mining service `services/khai-pha/`,
+which is AGPL-3.0-or-later — per-directory table in [`LICENSES.md`](LICENSES.md), third-party notices in
+[`NOTICE`](NOTICE).
+
 The full documentation, the user interface and the sample data are in Vietnamese. This page is enough to
 build and run the stack; see [Documentation](#documentation) for the rest.
 

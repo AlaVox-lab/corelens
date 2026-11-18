@@ -126,12 +126,31 @@ Kho mã **đã có ứng dụng chạy được**: dịch vụ FastAPI trong `ba
 ràng buộc Poka-yoke, đồng hồ SLA, nhật ký sự kiện), cổng Next.js trong `frontend/` (cổng
 người gửi, buồng lái điều phối, buồng lái phòng ban), cả cụm dựng bằng Docker Compose
 trong `infra/`. Bốn không gian `H`, `P`, `D`, `I` đều đã cài đặt: bảng điều khiển Superset nhúng trong
-cổng, dịch vụ khai phá quy trình `services/khai-pha/`, gợi ý bằng mô hình cục bộ (tùy chọn).
+cổng, dịch vụ khai phá quy trình `services/khai-pha/`, gợi ý bằng mô hình cục bộ (tùy chọn), hồ sơ đã giải
+quyết tương tự bằng pgvector và mô hình nhúng (tùy chọn).
+
+Nền tảng lõi không giao diện phơi qua API `/core/v1` sau cổng APISIX, và **đã có nhiều hơn tên gọi gợi ý** —
+liệt kê để khỏi đề xuất lại thứ đã làm:
+
+- **Luồng công việc:** nhiều quy trình, mỗi quy trình một bộ quy tắc trong dữ liệu (bảng `processes`); điều kiện
+  trên cạnh theo trường của hồ sơ (`transition_conditions`); xuất quy trình ra BPMN 2.0; lịch làm việc có ngày
+  nghỉ lễ (`holidays`) cho đồng hồ SLA; ủy quyền khi vắng mặt; màn quản trị cấu hình
+- **Dữ liệu:** nhật ký sự kiện chỉ ghi thêm, view báo cáo, xuất CSV/JSON, lưu trữ lạnh theo tháng ra kho đối
+  tượng, trang phả hệ dữ liệu sinh tự động; webhook có chữ ký, thử lại lùi dần; cập nhật thời gian thực (SSE)
+- **Định danh và vận hành:** tài khoản dịch vụ, xác thực hai lớp tùy chọn, chống dò mật khẩu; sao lưu và khôi
+  phục; nâng cấp giữ dữ liệu; container chạy bằng người dùng không phải root; thông báo thư qua hàng đợi
+- **Giao diện:** dòng thời gian hồ sơ từ nhật ký sự kiện, thẻ gợi ý có đo tỷ lệ ghi đè, bảng Kanban, màn Quy
+  trình thực tế, màn Hệ thống
 
 Phiên bản phát hành mới nhất xem bằng `git tag` hoặc trang Releases — tệp này không ghi
 số phiên bản để khỏi lỗi thời. Tiến độ theo tuần ở `docs/PROJECT_STATE.md`; việc mới hơn
 thế thì đọc `git log` của nhánh `dev`. Nếu người dùng yêu cầu sửa một tệp mã nguồn nào
 đó, kiểm tra sự tồn tại trước thay vì giả định.
+
+**Trước khi đề xuất tính năng hay mở issue "cải thiện dự án"**, tra kho trước: `git grep` trên `origin/dev`,
+`docs/ARCHITECTURE.md`, `docs/adr/`, `docs/PROJECT_STATE.md`, issue đã đóng. Ghi rõ đã tra tệp nào và kết luận
+phần nào kho đã có, phần nào còn thiếu. Đề xuất đi ngược một quyết định đã chốt thì nêu quyết định đó và lý do
+muốn đổi. Ngày 17/11/2026, 10 trên 43 issue mở cùng lúc đã có sẵn trong mã và 2 issue đi ngược quyết định cũ.
 
 **Tám quyết định Open-Core đã chốt** — đọc `docs/adr/` trước khi đề xuất lại bất cứ
 thứ gì thuộc các mảng này:
@@ -145,7 +164,7 @@ thứ gì thuộc các mảng này:
 | `D` | Apache Superset `6.1.0` làm nền tảng báo cáo | ADR-0003 |
 | `P` | **Tự viết engine máy trạng thái**, không lắp ghép nền tảng nào | ADR-0004 |
 | `I` | PM4Py `2.7.23.8` trong **dịch vụ khai phá tách riêng** (`services/khai-pha/`), kèm bộ máy dự phòng không dùng thư viện đó | ADR-0007 |
-| `I` | llama.cpp server + Qwen2.5-1.5B-Instruct (Apache-2.0) làm mô hình ngôn ngữ **tùy chọn** (hồ sơ Compose `tri-tue`), gọi qua một lớp duy nhất `backend/app/intelligence/mo_hinh.py`; pgvector và mô hình nhúng để #319 | ADR-0008 |
+| `I` | llama.cpp server + Qwen2.5-1.5B-Instruct (Apache-2.0) làm mô hình ngôn ngữ **tùy chọn** (hồ sơ Compose `tri-tue`), gọi qua một lớp duy nhất `backend/app/intelligence/mo_hinh.py`; pgvector (ảnh `pgvector/pgvector:0.8.6-pg16`) cùng mô hình nhúng Qwen3-Embedding-0.6B **tùy chọn** cho hồ sơ tương tự và kho tri thức, đã cài ở #319 | ADR-0008 |
 
 Bản ghi mang trạng thái *Đề xuất* **chưa phải quyết định**. Không viết mã theo nó cho tới
 khi nó chuyển sang *Đã chấp nhận*. ADR-0005 — ranh giới máy trạng thái với thao tác không
@@ -296,7 +315,7 @@ gắn AI vào như một lớp hỗ trợ. Không xây AI song song với luồn
 |---|---|---|
 | Giao diện | Next.js (React) | MIT |
 | Dịch vụ ứng dụng | FastAPI (Python) | MIT |
-| Cơ sở dữ liệu | PostgreSQL | PostgreSQL License |
+| Cơ sở dữ liệu | PostgreSQL 16 kèm pgvector (ảnh `pgvector/pgvector`) | PostgreSQL License |
 | Đóng gói | Docker + Docker Compose | Apache-2.0 |
 | Định danh tập trung | Keycloak `26.7.3` | Apache-2.0 |
 | Lưu trữ đối tượng | SeaweedFS `4.45` | Apache-2.0 |
@@ -323,7 +342,7 @@ phép (#340). Bộ máy dự phòng không dùng thư viện AGPL vẫn giữ (`
 ADR-0006 (kho tri thức cho `H`, #46) được navigator chấp nhận ngày 14/11/2026 theo cùng nguyên tắc đó, cài ở
 #321: Wiki.js chạy nguyên bản như dịch vụ độc lập nên không thêm thư mục AGPL nào; chờ giảng viên xác nhận.
 ADR-0008 (cơ sở dữ liệu véc-tơ và mô hình ngôn ngữ cho `I`, #47) đã chấp nhận ngày 08/11/2026; phần sinh
-văn bản cài ở #316/#317, phần nhúng véc-tơ và pgvector để #319.
+văn bản cài ở #316/#317, phần nhúng véc-tơ và pgvector cài ở #319.
 
 ADR-0010 (cổng API cho `core`, #363) được navigator chấp nhận ngày 15/11/2026 và cài ở #364: mọi lời gọi
 API từ ngoài cụm, kể cả từ cổng người dùng, đi qua APISIX; dịch vụ ứng dụng vẫn kiểm token lại.

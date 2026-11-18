@@ -11,7 +11,7 @@
 # Kho theo mô hình nhiều giấy phép (#340, LICENSES.md): mã trong services/khai-pha/ theo
 # AGPL-3.0-or-later, mọi nơi khác theo MIT. Tệp đạt khi trong 10 dòng đầu có dòng SPDX ĐÚNG
 # giấy phép của thư mục chứa nó và dòng bản quyền; mang giấy phép của thư mục khác cũng là lỗi.
-# Tệp JSON không có cú pháp chú thích nên không xét; giấy phép của gói giao diện khai ở trường
+# Tệp JSON và Markdown không xét (JSON không có cú pháp chú thích); giấy phép của gói giao diện khai ở trường
 # license trong frontend/package.json.
 
 from __future__ import annotations
@@ -22,6 +22,9 @@ import sys
 from pathlib import Path, PurePosixPath
 
 DUOI_TEP_MA = {".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".sh", ".css", ".sql"}
+# Tệp cấu hình có cú pháp chú thích cũng mang header (#412): Compose, quy trình CI, cấu hình cổng API và
+# bảng điều khiển, công cụ dựng — giám khảo đọc chúng như một phần mã của kho
+DUOI_TEP_CAU_HINH = {".yaml", ".yml", ".toml", ".ini", ".mako", ".properties", ".svg", ".example"}
 TEN_TEP_MA = {"Dockerfile"}
 GIAY_PHEP_MAC_DINH = "MIT"
 # Thư mục mang giấy phép riêng, khớp với bảng trong LICENSES.md
@@ -47,7 +50,7 @@ def tep_can_kiem() -> list[Path]:
         Path(ten)
         for ten in dict.fromkeys(ket_qua.split("\0"))
         if ten
-        and (Path(ten).suffix in DUOI_TEP_MA or Path(ten).name in TEN_TEP_MA)
+        and (Path(ten).suffix in DUOI_TEP_MA | DUOI_TEP_CAU_HINH or Path(ten).name in TEN_TEP_MA)
         and Path(ten).is_file()
     ]
 

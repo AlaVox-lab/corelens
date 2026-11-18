@@ -196,7 +196,8 @@ nên việc tuân thủ chuẩn này là bắt buộc.
 <footer, tùy chọn>
 ```
 
-- Dòng tiêu đề tối đa 72 ký tự, viết ở thì hiện tại, không kết thúc bằng dấu chấm
+- Dòng tiêu đề tối đa 64 ký tự, viết ở thì hiện tại, không kết thúc bằng dấu chấm. Khi squash,
+  GitHub gắn thêm ` (#số PR)` vào cuối, nên dòng đầu commit trên `dev` vẫn dưới 72 ký tự
 - Thân commit giải thích **tại sao** thay đổi, không phải **thay đổi cái gì**
 - Footer chứa từ khóa liên kết issue hoặc thông báo phá vỡ tương thích
 
@@ -236,6 +237,15 @@ Phạm vi phản ánh không gian kiến trúc hoặc thành phần bị ảnh h
 | `infra` | Docker, biến môi trường, triển khai |
 | `ci` | Quy trình tự động hóa |
 | `docs` | Tài liệu |
+
+Tích hợp liên tục kiểm tiêu đề pull request vào `dev` theo đúng bảng trên: loại hợp lệ, có phạm vi
+thuộc bảng, tối đa 64 ký tự (`.github/workflows/tieu-de-pr.yml`), và kiểm mọi commit trong lịch sử
+đều được git-cliff nhận vào changelog. Chạy trước ở máy:
+
+```
+python scripts/kiem_commit.py --tieu-de "feat(p-workflow): thêm …"
+python scripts/kiem_commit.py --lich-su HEAD
+```
 
 ### 4.4. Ví dụ
 
@@ -303,7 +313,9 @@ Copyright (c) 2026 AlaVox-lab
 
 Yêu cầu này bắt nguồn từ tiêu chí chấm điểm của cuộc thi: mã nguồn không ghi
 giấy phép trong từng tệp sẽ bị trừ điểm. `scripts/kiem_header.py` báo lỗi cả tệp
-thiếu header lẫn tệp mang giấy phép của thư mục khác.
+thiếu header lẫn tệp mang giấy phép của thư mục khác. Kịch bản xét mã nguồn và
+cả tệp cấu hình có cú pháp chú thích (`.yml`, `.yaml`, `.toml`, `.ini`,
+`.properties`, `.svg`, `Dockerfile`, `.env.example`); không xét JSON và Markdown.
 
 ### 5.2. Thư viện bên thứ ba
 
