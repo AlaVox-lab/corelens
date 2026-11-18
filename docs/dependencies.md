@@ -20,6 +20,11 @@
 5. Nếu là nền tảng lớn (không phải thư viện nhỏ), tạo thêm một bản ghi quyết định
    trong `docs/adr/`
 
+Phụ thuộc gián tiếp không ghi từng dòng ở đây; CI quét giấy phép của **mọi** gói — npm từ tệp khóa, Python
+trong ảnh đã dựng — bằng `scripts/quet_giay_phep.py`, chặn giấy phép ngoài danh sách cho phép ở
+`scripts/giay_phep.toml` (#418). Gói gián tiếp mới mang giấy phép lạ thì CI đỏ: đọc giấy phép tận tay, rồi
+hoặc thêm mã SPDX vào danh sách (khi thuộc OSI và tương thích), hoặc thêm một ngoại lệ có lý do.
+
 **Không thêm phụ thuộc mà bỏ qua bước kiểm tra.** Một giấy phép sai có thể khiến
 toàn bộ dự án không được chấm điểm.
 

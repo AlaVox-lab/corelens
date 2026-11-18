@@ -131,6 +131,21 @@ jobs:
       - run: cp infra/.env.example infra/.env
       - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
         run: $COMPOSE build backend khai-pha frontend
+      # Giấy phép mọi gói, kể cả gián tiếp (#418): npm đọc từ tệp khóa, Python đọc trong ảnh vừa dựng.
+      # Danh sách cho phép ở scripts/giay_phep.toml; báo cáo lưu kèm lần chạy để đính vào bản phát hành.
+      - name: Giấy phép phụ thuộc bắc cầu nằm trong danh sách cho phép
+        run: |
+          V=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)
+          python3 scripts/quet_giay_phep.py --anh backend=dxlab-backend:$V --anh khai-pha=dxlab-khai-pha:$V \
+            --bao-cao bao-cao-giay-phep.md
+      - name: Lưu báo cáo giấy phép
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bao-cao-giay-phep
+          path: bao-cao-giay-phep.md
+          if-no-files-found: ignore
+          retention-days: 90
       # Cổng API (#364) là ảnh kéo về, không dựng; nó chờ dịch vụ ứng dụng khỏe rồi mới lên
       - name: Bật PostgreSQL, Keycloak, SeaweedFS, dịch vụ ứng dụng, dịch vụ khai phá và cổng API
         run: $COMPOSE up -d postgres keycloak seaweedfs backend khai-pha cong-api
