@@ -16,7 +16,7 @@
 #     importlib.metadata: `License-Expression` (PEP 639) trước, rồi trường `License` ngắn, rồi phân loại.
 #     pip-licenses 5.0.0 chưa đọc `License-Expression` nên báo UNKNOWN cho cả chục gói — vì vậy tự đọc.
 #
-# Chỉ thư viện chuẩn và lệnh `docker`; thoát 1 khi có gói ngoài danh sách.
+# Chỉ thư viện chuẩn của Python 3.11 trở lên (cần `tomllib`) và lệnh `docker`; thoát 1 khi có gói ngoài danh sách.
 from __future__ import annotations
 
 import argparse
