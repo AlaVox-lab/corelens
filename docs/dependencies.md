@@ -16,7 +16,9 @@
 1. Tra tên giấy phép của dự án đó trên trang chính thức của họ
 2. Đối chiếu với danh sách được công nhận tại `https://opensource.org/licenses`
 3. Kiểm tra tương thích với giấy phép MIT của sản phẩm
-4. Ghi kết quả vào bảng tương ứng bên dưới
+4. Ghi kết quả vào bảng tương ứng bên dưới. `python scripts/doi_soat_phu_thuoc.py` (CI chạy ở mỗi PR)
+   báo phụ thuộc trực tiếp nào trong `requirements.txt` hay `package.json` chưa có dòng, sai phiên bản
+   hay để trống giấy phép
 5. Nếu là nền tảng lớn (không phải thư viện nhỏ), tạo thêm một bản ghi quyết định
    trong `docs/adr/`
 
@@ -223,6 +225,8 @@ trong ảnh dựng lại có ràng buộc giống hệt ảnh trước đó, 47 
 | cryptography | `50.0.2` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
 | boto3 | `1.43.118` | Apache-2.0 | Có | Có | Gọi S3 API chuẩn của SeaweedFS để lưu tệp đính kèm (#80) — đúng cách ADR-0002 chốt: dịch vụ độc lập qua giao thức chuẩn, không nhúng thư viện của SeaweedFS. Kiểm giấy phép trên gói đã cài: `Apache-2.0` |
 | python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
+| pytest | `9.1.1` | MIT | Có | Có | Chỉ khi phát triển và kiểm thử — xem đoạn dưới bảng |
+| httpx | `0.28.1` | BSD-3-Clause | Có | Có | Chỉ khi kiểm thử: `TestClient` của FastAPI |
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause). Do `boto3` kéo theo:
 `botocore` (Apache-2.0), `s3transfer` (Apache-2.0), `jmespath` (MIT), `urllib3` (MIT),

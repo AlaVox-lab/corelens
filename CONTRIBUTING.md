@@ -104,7 +104,7 @@ Mỗi pull request vào `dev` hay `main` chạy quy trình
 
 | Kiểm tra | Làm gì | Chạy tay ở máy |
 |---|---|---|
-| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục; trang phả hệ dữ liệu khớp định nghĩa view | `python scripts/kiem_header.py` và `python scripts/pha_he.py --kiem` |
+| Header giấy phép | Mọi tệp mã kho đang theo dõi có dòng bản quyền và dòng SPDX đúng giấy phép theo thư mục; trang phả hệ dữ liệu khớp định nghĩa view; phụ thuộc trực tiếp có dòng trong `docs/dependencies.md` | `python scripts/kiem_header.py`, `python scripts/pha_he.py --kiem` và `python scripts/doi_soat_phu_thuoc.py` |
 | Linter — ruff và eslint | `ruff check .` cho mọi mã Python (cấu hình `ruff.toml` ở gốc); `npm run lint` trong `frontend/` (cấu hình `frontend/eslint.config.mjs`). Lỗi làm đỏ, cảnh báo thì không | Xem đoạn *Linter* ngay dưới |
 | Giao diện — dựng và kiểm kiểu | `npm ci`, `npm run build`, `npm run typecheck` trong `frontend/` | Ba lệnh đó |
 | Trang tài liệu — dựng | `npm ci`, `npm run build` trong `docs-site/` (cần Node.js 22.12 trở lên) | Hai lệnh đó; xem trực tiếp bằng `npm run dev` |

@@ -31,6 +31,9 @@ jobs:
           # Lấy đủ lịch sử cho bước kiểm commit dưới đây
           fetch-depth: 0
       - run: python3 scripts/kiem_header.py
+      # Mọi phụ thuộc trực tiếp có dòng trong docs/dependencies.md, đúng phiên bản ghim (#417)
+      - name: Tài liệu phụ thuộc khớp tệp khai báo
+        run: python3 scripts/doi_soat_phu_thuoc.py
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
         run: python3 scripts/pha_he.py --kiem
