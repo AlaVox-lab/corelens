@@ -196,7 +196,8 @@ nên việc tuân thủ chuẩn này là bắt buộc.
 <footer, tùy chọn>
 ```
 
-- Dòng tiêu đề tối đa 72 ký tự, viết ở thì hiện tại, không kết thúc bằng dấu chấm
+- Dòng tiêu đề tối đa 64 ký tự, viết ở thì hiện tại, không kết thúc bằng dấu chấm. Khi squash,
+  GitHub gắn thêm ` (#số PR)` vào cuối, nên dòng đầu commit trên `dev` vẫn dưới 72 ký tự
 - Thân commit giải thích **tại sao** thay đổi, không phải **thay đổi cái gì**
 - Footer chứa từ khóa liên kết issue hoặc thông báo phá vỡ tương thích
 
