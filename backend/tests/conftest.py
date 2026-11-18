@@ -90,6 +90,22 @@ def session(db_engine):
 
 
 @pytest.fixture
+def loc_cua_bai(session):
+    """Lọc danh sách mã hồ sơ, chỉ giữ hồ sơ do chính bài tạo ra (#442).
+
+    Bộ quét hạn, bộ tự đi, bộ quét gợi ý chạy trên MỌI hồ sơ trong cơ sở dữ liệu. Cụm đã nạp dữ liệu trình
+    diễn (`scripts/nap_du_lieu_trinh_dien.py`) hay còn hồ sơ của kịch bản giao diện thì bài so kết quả bộ
+    quét với một danh sách tuyệt đối sẽ đỏ giả. Mã chụp lúc bài bắt đầu là mã đã có sẵn — bỏ chúng đi.
+    """
+    co_san = frozenset(session.scalars(text("SELECT id FROM requests")))
+
+    def loc(ds):
+        return [ma for ma in ds if ma not in co_san]
+
+    return loc
+
+
+@pytest.fixture
 def lich_ca_ngay(session) -> None:
     """Lịch làm việc mặc định thành cả ngày, cả tuần, không ngày nghỉ (#199).
 
