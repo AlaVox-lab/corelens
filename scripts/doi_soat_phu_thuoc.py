@@ -76,6 +76,10 @@ def phu_thuoc_npm(thu_muc: Path) -> dict[str, str]:
 
 
 def main() -> int:
+    # Bảng điều khiển Windows mặc định không phải UTF-8 (#368, #472)
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     van_ban = TAI_LIEU.read_text(encoding="utf-8")
     lech: list[str] = []
     so_goi = 0
