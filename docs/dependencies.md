@@ -309,6 +309,7 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
 | `actions/checkout`, `actions/setup-node`, `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
+| Syft qua `anchore/sbom-action@v0` | Apache-2.0 (cả hai) | Sinh SBOM chuẩn SPDX JSON cho ba ảnh tự dựng (#481), job `cum` của `ci.yml`; lưu thành artifact *sbom* để đính vào bản phát hành | Không — chỉ đọc ảnh đã dựng |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
 **Lưu ý về bảng chấm**: mục PoF số 4 trừ 5 điểm nếu *"mã nguồn được dịch bằng công

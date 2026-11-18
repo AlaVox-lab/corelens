@@ -131,6 +131,38 @@ jobs:
       - run: cp infra/.env.example infra/.env
       - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
         run: $COMPOSE build backend khai-pha frontend
+      # SBOM (#481): danh mục mọi gói trong ba ảnh tự dựng, chuẩn SPDX JSON, bằng Syft (Apache-2.0) qua
+      # anchore/sbom-action (Apache-2.0). Lưu thành artifact để đính vào bản phát hành — CONTRIBUTING.md mục 7.
+      - name: Phiên bản ảnh
+        id: phien-ban
+        run: echo "v=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+      - name: SBOM — dịch vụ ứng dụng
+        uses: anchore/sbom-action@v0
+        with:
+          image: dxlab-backend:${{ steps.phien-ban.outputs.v }}
+          format: spdx-json
+          output-file: sbom/dxlab-backend.spdx.json
+          upload-artifact: false
+      - name: SBOM — dịch vụ khai phá
+        uses: anchore/sbom-action@v0
+        with:
+          image: dxlab-khai-pha:${{ steps.phien-ban.outputs.v }}
+          format: spdx-json
+          output-file: sbom/dxlab-khai-pha.spdx.json
+          upload-artifact: false
+      - name: SBOM — cổng người dùng
+        uses: anchore/sbom-action@v0
+        with:
+          image: dxlab-frontend:${{ steps.phien-ban.outputs.v }}
+          format: spdx-json
+          output-file: sbom/dxlab-frontend.spdx.json
+          upload-artifact: false
+      - name: Lưu SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          retention-days: 90
       # Cổng API (#364) là ảnh kéo về, không dựng; nó chờ dịch vụ ứng dụng khỏe rồi mới lên
       - name: Bật PostgreSQL, Keycloak, SeaweedFS, dịch vụ ứng dụng, dịch vụ khai phá và cổng API
         run: $COMPOSE up -d postgres keycloak seaweedfs backend khai-pha cong-api

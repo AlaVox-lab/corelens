@@ -419,7 +419,9 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 2. Sinh nhật ký thay đổi từ lịch sử commit
 3. Đặt tag theo [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 4. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
-   ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`
+   ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`. Đính kèm thêm ba
+   tệp SBOM chuẩn SPDX (`dxlab-backend.spdx.json`, `dxlab-khai-pha.spdx.json`, `dxlab-frontend.spdx.json`) —
+   danh mục mọi gói trong từng ảnh — tải từ artifact *sbom* của lần chạy CI trên commit được gắn tag (#481)
 5. Cập nhật `CHANGELOG.md` vào kho mã
 
 ### 7.1. Đăng trang tài liệu
