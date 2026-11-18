@@ -170,6 +170,11 @@ jobs:
           path: bao-cao-giay-phep.md
           if-no-files-found: ignore
           retention-days: 90
+      # Hợp đồng API của lõi trong kho phải khớp mã: đổi /core/v1 thì sinh lại docs/api/core-v1.openapi.json
+      - name: Đặc tả OpenAPI của lõi khớp mã
+        run: |
+          V=$(grep -E '^DXLAB_VERSION=' infra/.env | cut -d= -f2)
+          python3 scripts/dac_ta_loi.py --anh dxlab-backend:$V --kiem
       # Cổng API (#364) là ảnh kéo về, không dựng; nó chờ dịch vụ ứng dụng khỏe rồi mới lên
       - name: Bật PostgreSQL, Keycloak, SeaweedFS, dịch vụ ứng dụng, dịch vụ khai phá và cổng API
         run: $COMPOSE up -d postgres keycloak seaweedfs backend khai-pha cong-api
