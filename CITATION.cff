@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Thông tin trích dẫn (#486) — GitHub đọc tệp này để hiện nút "Cite this repository". Định dạng CFF 1.2.0.
+cff-version: 1.2.0
+message: "Nếu dùng dx-os-lab trong báo cáo hay công trình nghiên cứu, xin trích dẫn như dưới đây."
+type: software
+title: "dx-os-lab — Hệ điều hành Doanh nghiệp số (DX-OS) theo kiến trúc Open-Core"
+abstract: >-
+  Nền tảng lõi không giao diện (định danh, cổng API, dữ liệu, luồng công việc cấu hình bằng dữ liệu) dưới
+  /core/v1, cùng ứng dụng minh họa cổng vận hành yêu cầu nội bộ phủ bốn không gian Nhân sự, Quy trình,
+  Dữ liệu, Trí tuệ — có vòng phản hồi khai phá quy trình thực tế từ nhật ký sự kiện.
+authors:
+  - name: AlaVox-lab
+repository-code: "https://github.com/AlaVox-lab/dx-os-lab"
+url: "https://alavox-lab.github.io/dx-os-lab/"
+# Mô hình nhiều giấy phép (LICENSES.md): services/khai-pha/ theo AGPL-3.0-or-later, phần còn lại MIT
+license:
+  - MIT
+  - AGPL-3.0-or-later
+keywords:
+  - open-core
+  - digital-transformation
+  - workflow-engine
+  - process-mining
+  - fastapi
+  - keycloak

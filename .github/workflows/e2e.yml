@@ -38,7 +38,7 @@ jobs:
     env:
       COMPOSE: docker compose --env-file infra/.env -f infra/docker-compose.yml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa
       - run: cp infra/.env.example infra/.env
       - name: Dựng và bật cụm mặc định
@@ -55,7 +55,7 @@ jobs:
             sleep 2
           done
           echo "Hết thời gian chờ cụm khởi động"; exit 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

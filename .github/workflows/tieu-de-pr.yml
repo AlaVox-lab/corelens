@@ -24,7 +24,7 @@ jobs:
     # Pull request dev → main do navigator mở mang tiêu đề phát hành, không được squash
     if: github.base_ref == 'dev'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Kiểm tiêu đề
         env:
           TIEU_DE: ${{ github.event.pull_request.title }}

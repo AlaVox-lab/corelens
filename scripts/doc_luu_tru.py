@@ -86,6 +86,11 @@ class NguonApi:
 
 
 def main() -> int:
+    # Bảng điều khiển Windows mặc định không phải UTF-8: không có dòng này, lệnh in câu tiếng Việt đầu tiên
+    # ném UnicodeEncodeError trừ khi người chạy tự đặt PYTHONIOENCODING (#368, #472)
+    for luong in (sys.stdout, sys.stderr):
+        if hasattr(luong, "reconfigure"):
+            luong.reconfigure(encoding="utf-8")
     ts = argparse.ArgumentParser(description="Đọc lại và kiểm một bản lưu trữ lạnh (#378).")
     ts.add_argument("ky", help="Kỳ dạng YYYY-MM")
     ts.add_argument("--container", default="dxlab-backend", help="container dịch vụ ứng dụng (mặc định dxlab-backend)")

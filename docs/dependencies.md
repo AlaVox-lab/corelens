@@ -16,9 +16,16 @@
 1. Tra tên giấy phép của dự án đó trên trang chính thức của họ
 2. Đối chiếu với danh sách được công nhận tại `https://opensource.org/licenses`
 3. Kiểm tra tương thích với giấy phép MIT của sản phẩm
-4. Ghi kết quả vào bảng tương ứng bên dưới
+4. Ghi kết quả vào bảng tương ứng bên dưới. `python scripts/doi_soat_phu_thuoc.py` (CI chạy ở mỗi PR)
+   báo phụ thuộc trực tiếp nào trong `requirements.txt` hay `package.json` chưa có dòng, sai phiên bản
+   hay để trống giấy phép
 5. Nếu là nền tảng lớn (không phải thư viện nhỏ), tạo thêm một bản ghi quyết định
    trong `docs/adr/`
+
+Phụ thuộc gián tiếp không ghi từng dòng ở đây; CI quét giấy phép của **mọi** gói — npm từ tệp khóa, Python
+trong ảnh đã dựng — bằng `scripts/quet_giay_phep.py`, chặn giấy phép ngoài danh sách cho phép ở
+`scripts/giay_phep.toml` (#418). Gói gián tiếp mới mang giấy phép lạ thì CI đỏ: đọc giấy phép tận tay, rồi
+hoặc thêm mã SPDX vào danh sách (khi thuộc OSI và tương thích), hoặc thêm một ngoại lệ có lý do.
 
 **Không thêm phụ thuộc mà bỏ qua bước kiểm tra.** Một giấy phép sai có thể khiến
 toàn bộ dự án không được chấm điểm.
@@ -223,6 +230,8 @@ trong ảnh dựng lại có ràng buộc giống hệt ảnh trước đó, 47 
 | cryptography | `50.0.2` | Apache-2.0 hoặc BSD-3-Clause | Có | Có | Phụ thuộc gián tiếp của `pyjwt[crypto]`, dùng để đọc khóa RSA từ JWKS |
 | boto3 | `1.43.118` | Apache-2.0 | Có | Có | Gọi S3 API chuẩn của SeaweedFS để lưu tệp đính kèm (#80) — đúng cách ADR-0002 chốt: dịch vụ độc lập qua giao thức chuẩn, không nhúng thư viện của SeaweedFS. Kiểm giấy phép trên gói đã cài: `Apache-2.0` |
 | python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
+| pytest | `9.1.1` | MIT | Có | Có | Chỉ khi phát triển và kiểm thử — xem đoạn dưới bảng |
+| httpx | `0.28.1` | BSD-3-Clause | Có | Có | Chỉ khi kiểm thử: `TestClient` của FastAPI |
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause). Do `boto3` kéo theo:
 `botocore` (Apache-2.0), `s3transfer` (Apache-2.0), `jmespath` (MIT), `urllib3` (MIT),
@@ -307,8 +316,9 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 |---|---|---|---|
 | git-cliff | MIT hoặc Apache-2.0 | Sinh nhật ký thay đổi | Không |
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
-| `actions/checkout`, `actions/setup-node`, `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
+| `actions/checkout@v5`, `actions/setup-node@v5` (chạy Node 24, #477), `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
+| lychee (`lycheeverse/lychee-action@v2`) | Apache-2.0 hoặc MIT | Kiểm liên kết nội bộ hỏng trong Markdown của kho và trang tài liệu đã dựng (#423), job `tai-lieu` của `ci.yml`; chạy `--offline` nên không gọi mạng | Không |
 | pre-commit `4.7.0`, `pre-commit-hooks` `v6.0.0` | MIT (cả hai) | Tự kiểm trước mỗi commit, **tùy chọn** (#484), cấu hình `.pre-commit-config.yaml` ở gốc; móc ruff dùng `astral-sh/ruff-pre-commit` `v0.17.3` (MIT), cùng bản ruff với CI | Không |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 
