@@ -426,7 +426,8 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 4. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
    ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`. Đính kèm thêm
    `bao-cao-giay-phep.md` — giấy phép của mọi gói phụ thuộc kể cả gián tiếp — tải từ artifact
-   *bao-cao-giay-phep* của lần chạy CI trên commit được gắn tag, hoặc sinh ở máy bằng
+   *bao-cao-giay-phep* của lần chạy CI trên pull request phát hành cuối cùng vào `main` (CI chỉ chạy trên
+   pull request, không chạy trên thẻ), hoặc sinh ở máy bằng
    `python scripts/quet_giay_phep.py --anh backend=dxlab-backend:<bản> --anh khai-pha=dxlab-khai-pha:<bản> --bao-cao bao-cao-giay-phep.md`
 5. Cập nhật `CHANGELOG.md` vào kho mã
 
