@@ -18,7 +18,7 @@ mới (dữ liệu khởi tạo nạp một lần — [Nâng cấp](../../cai-da
 | Phòng mặc định của loại yêu cầu | Màn Cấu hình quy trình | `request_type_routing` |
 | Giới hạn gia hạn và mở lại, trường riêng của từng loại | Bản sửa dữ liệu | `request_types`, `request_type_fields` |
 | Mức ưu tiên: tên, hệ số hạn | Màn Cấu hình quy trình | `priorities` trong `infra/seed/01-quy-tac-quy-trinh.sql` |
-| Lịch làm việc, ngày lễ | Bản sửa dữ liệu | `work_calendars`, `work_hours`, `holidays` trong `infra/seed/03-lich-lam-viec.sql` |
+| Lịch làm việc, ngày lễ | Bản sửa dữ liệu | `work_calendars`, `work_hours`, `holidays` trong `infra/seed/03-lich-lam-viec.sql`; ngày lễ năm 2027 ở `infra/seed/08-ngay-le-2027.sql` (bản sửa 0033 thêm vào cụm đang chạy) |
 | Hạn chờ để hệ thống tự đi | Bộ quy tắc phiên bản mới | cột `auto_after_hours`, `warn_before_hours` trong `01-quy-tac-quy-trinh.sql` |
 | Người dùng, vai trò, nhóm phòng ban | Màn quản trị của Keycloak | `infra/keycloak/realm-dx-os-lab.json` |
 | Giới hạn tệp đính kèm | `infra/.env` — xem [Cấu hình](../../cai-dat/cau-hinh/) | — |

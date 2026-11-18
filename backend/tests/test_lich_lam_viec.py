@@ -160,6 +160,23 @@ def test_lich_mau_nghi_ngay_van_hoa_viet_nam(session):
     assert _giay(session, _moc(11, 24, 8), _moc(11, 24, 17), None) == 0
 
 
+def _moc_2027(thang: int, ngay: int, gio: int) -> dt.datetime:
+    return dt.datetime(2027, thang, ngay, gio, tzinfo=VN)
+
+
+def test_lich_mau_co_ngay_le_2027(session):
+    """#439: dữ liệu mẫu (tệp 08) có ngày nghỉ của năm 2027, kể cả nghỉ bù."""
+    for thang, ngay in [(2, 4), (2, 10), (4, 16), (4, 30), (5, 3), (9, 2), (9, 3), (11, 24)]:
+        assert _giay(session, _moc_2027(thang, ngay, 8), _moc_2027(thang, ngay, 17), None) == 0, (thang, ngay)
+
+
+def test_ho_so_gui_truoc_tet_2027_lui_han_qua_ky_nghi(session):
+    """Gửi sáng thứ Tư 3/2/2027, trước kỳ nghỉ Tết 4/2–10/2: một ngày làm việc (8 giờ) sau đó là hết
+    ngày 3/2, còn 16 giờ thì hạn rơi vào 17:00 thứ Năm 11/2 — lùi đúng năm ngày làm việc bị nghỉ."""
+    assert _giay(session, _moc_2027(2, 3, 8), _moc_2027(2, 11, 8), None) == 8 * GIO
+    assert _moc_sau(session, _moc_2027(2, 3, 8), 16 * GIO, None) == _moc_2027(2, 11, 17)
+
+
 # ---------------------------------------------------------------------------
 # Đồng hồ SLA đo bằng giờ làm việc
 # ---------------------------------------------------------------------------
