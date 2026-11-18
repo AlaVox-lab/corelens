@@ -8,6 +8,10 @@
 
 [![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
+**Giấy phép:** mã theo [MIT](LICENSE), riêng dịch vụ khai phá quy trình `services/khai-pha/` theo
+AGPL-3.0-or-later — bảng theo thư mục ở [`LICENSES.md`](LICENSES.md), thông báo bên thứ ba ở
+[`NOTICE`](NOTICE).
+
 **Tài liệu đầy đủ:** trang tài liệu trong [`docs-site/`](docs-site/) — bắt đầu nhanh, cài đặt, hướng
 dẫn theo từng vai, quản trị và tùy biến, phát triển. Cách xem ở mục [Tài liệu](#tài-liệu).
 
