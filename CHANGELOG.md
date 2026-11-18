@@ -5,6 +5,30 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.3.0] - 2026-11-18
+
+### Kiểm thử
+
+- **ci:** Bỏ đỏ giả khi cụm có sẵn hồ sơ trình diễn ([#461](https://github.com/AlaVox-lab/dx-os-lab/issues/461)) ([bdbd35e](https://github.com/AlaVox-lab/dx-os-lab/commit/bdbd35e00337e08731b604a9c5b37decf5095ffc))
+
+### Tài liệu
+
+- **docs:** Giải thích mọi biến cấu hình của .env.example ([#455](https://github.com/AlaVox-lab/dx-os-lab/issues/455)) ([998957e](https://github.com/AlaVox-lab/dx-os-lab/commit/998957eb8dc235b3f2660525e76191a5e6eb4923))
+- **docs:** Cập nhật CLAUDE.md theo trạng thái kho hiện tại ([#456](https://github.com/AlaVox-lab/dx-os-lab/issues/456)) ([0fc8884](https://github.com/AlaVox-lab/dx-os-lab/commit/0fc88849422824d77dc3dadfd7d61b0dafbbc31f))
+- **docs:** Dẫn thẳng tới LICENSE và NOTICE ở đầu hai README ([#458](https://github.com/AlaVox-lab/dx-os-lab/issues/458)) ([87ab890](https://github.com/AlaVox-lab/dx-os-lab/commit/87ab8902e1e5c64767f5716e0ceca51fc45af066))
+- **docs:** Đổi mẫu báo lỗi và đề xuất sang dạng biểu mẫu ([#459](https://github.com/AlaVox-lab/dx-os-lab/issues/459)) ([1104dac](https://github.com/AlaVox-lab/dx-os-lab/commit/1104dac60ad57e611d3131f96a3aaa91c27157e6))
+- **docs:** Ghi rõ bước nâng cấp từ v1.0.0 theo đúng thứ tự ([#462](https://github.com/AlaVox-lab/dx-os-lab/issues/462)) ([3dfb420](https://github.com/AlaVox-lab/dx-os-lab/commit/3dfb4208c716b4d7d993c22b7a77e4776b3515ca))
+- **state:** Ghi đợt ba Giai đoạn 6 trước v1.3.0 ([#463](https://github.com/AlaVox-lab/dx-os-lab/issues/463)) ([5ebdd86](https://github.com/AlaVox-lab/dx-os-lab/commit/5ebdd86d9a7e96063671fe658f2cfc0689fa7842))
+
+### Tích hợp liên tục
+
+- **ci:** Kiểm header giấy phép cả trên tệp cấu hình ([#454](https://github.com/AlaVox-lab/dx-os-lab/issues/454)) ([724f1df](https://github.com/AlaVox-lab/dx-os-lab/commit/724f1dfe0065ecb76d1ce75f126a8f2d78fab7fe))
+- **ci:** Kiểm chuẩn tiêu đề pull request và lịch sử commit ([#457](https://github.com/AlaVox-lab/dx-os-lab/issues/457)) ([7dd1ff0](https://github.com/AlaVox-lab/dx-os-lab/commit/7dd1ff073d40e07109faf6caa65aff641386db78))
+
+### Tính năng mới
+
+- **p-rules:** Thêm ngày nghỉ lễ năm 2027 vào lịch làm việc mẫu ([#460](https://github.com/AlaVox-lab/dx-os-lab/issues/460)) ([14fb0c2](https://github.com/AlaVox-lab/dx-os-lab/commit/14fb0c2fcf3012f2358e78b71bc09c80bc4b85e4))
+
 ## [1.2.0] - 2026-11-17
 
 ### Tài liệu
