@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Quy ước định dạng cho trình soạn thảo (#486), khớp với mã đang có: .gitattributes ép LF khi commit, tệp này
+# giữ LF và UTF-8 ngay lúc lưu. Visual Studio Code cần tiện ích EditorConfig; JetBrains hỗ trợ sẵn.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_size = 4
+
+# Hai dấu cách cuối dòng là ngắt dòng trong Markdown — không cắt
+[*.{md,mdx}]
+trim_trailing_whitespace = false
