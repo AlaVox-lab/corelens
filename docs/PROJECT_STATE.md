@@ -15,17 +15,17 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-19 |
-| Phiên bản hiện tại | **`v1.4.0`** (18/11) — Giai đoạn 6 đợt bốn: quét giấy phép phụ thuộc bắc cầu, đặc tả OpenAPI của lõi trong kho, kiểm liên kết hỏng và tệp Compose từng hồ sơ, pre-commit tùy chọn (PR #489, #491); bản phát hành đính kèm báo cáo giấy phép. **`dev` đi trước `main` mười pull request** (#495–#504 — webhook không bỏ sót sự kiện, xuất XES, thời gian chờ theo trạng thái và hai biểu đồ mới trên Superset, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự, kịch bản giao diện cho Kanban, webhook, thời gian thực, dọn cấu hình CI) — sẽ phát hành thành `v1.5.0` |
+| Phiên bản hiện tại | **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`; #429, #434, #436, #443, #444, #445, #446, #447, #450, #492, #493, #494 đã làm xong trên `dev`, đóng khi `v1.5.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
-| Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Trạng thái kho mã | **Công khai** từ 19/11 tại https://github.com/AlaVox-lab/corelens (đổi tên từ `dx-os-lab`, link cũ tự chuyển hướng); trang tài liệu https://alavox-lab.github.io/corelens/ |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **27** (mốc 18) — 0 `P0`, 4 `P1`, 4 `P2`, 19 `P3`; mười hai issue đã làm xong trên `dev`, còn **15** sau `v1.5.0`. Sau `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
+| Issue đang mở | **14** (mốc 18) — 0 `P0`, 3 `P1`, 0 `P2`, 11 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
 | Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **932 bài** pytest ở dịch vụ ứng dụng (lượt 18/11, PR #461 — xanh cả trên cụm đã nạp dữ liệu trình diễn) và **179 bài** ở dịch vụ khai phá, trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **180 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 17/11 trên cụm dựng sạch; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.0.0.tar.gz` (16/11). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Bộ kiểm thử tự động | **945 bài** pytest ở dịch vụ ứng dụng và **183 bài** ở dịch vụ khai phá (lượt 19/11 trên bản clone công khai của kho, cụm thử dựng mới), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
 | Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` chưa đo lại — ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
 | Số ngày còn lại tới chấm kho mã | **18 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
@@ -1200,12 +1200,25 @@ một lần). Cụm cũ nâng bằng `up -d --build`, không `down -v`.
 (quy trình mẫu thứ ba không chứng minh thêm điều gì); #425 (khóa lạc quan) để sau kỳ thi vì đổi hợp đồng của lệnh
 chuyển trạng thái.
 
+**Phát hành `v1.5.0`** (19/11, PR #506, nhật ký thay đổi #507, PR #508), đính kèm báo cáo giấy phép. Kịch bản giao diện
+chạy trọn trên PR #506. Issue đã đóng: #429, #434, #436, #443, #444, #445, #446, #447, #450, #492, #493, #494.
+
+**Đổi tên dự án thành Corelens và công khai kho** (19/11, PR #509, #510): kho GitHub thành `AlaVox-lab/corelens`, link
+cũ tự chuyển hướng; đổi tên hiển thị, mọi link GitHub và đường gốc trang tài liệu; định danh kỹ thuật giữ nguyên. Gỡ
+quyền ghi của thành viên cũ, quét lịch sử kho trước khi công khai (không lộ bí mật nào). Bật GitHub Pages, trang tài
+liệu đăng tại https://alavox-lab.github.io/corelens/ — khép #381. Công khai cũng mở lại tích hợp liên tục: kho riêng
+tư đã dùng hết hạn mức GitHub Actions của tháng từ PR #507.
+
+**Chạy thử từ bản clone công khai** (19/11), cụm thử cách ly dựng mới: 8/8 dịch vụ khỏe sau 97 giây; năm cổng mở đúng,
+cổng dịch vụ ứng dụng và PostgreSQL đóng; đăng nhập thật sáu vai; pytest 945 + 183, kịch bản giao diện 216 đạt, 24 bỏ
+qua có chủ đích; ba hồ sơ tùy chọn `thu-thu`, `tri-thuc`, `quet-tep` lên và nối được. Thấy README trong tệp nén
+`v1.5.0` còn tên thư mục cũ trong khi GitHub đã đặt tên tệp nén theo tên kho mới — sửa ở **`v1.5.1`**.
+
 ---
 
 ## Đang làm
 
-Phát hành `v1.5.0` cho đợt năm: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên mười pull request
-ghép lại, rồi nhật ký thay đổi, thẻ, và bản phát hành đính kèm báo cáo giấy phép.
+Đợt sáu của `@phuctiensinh` (mục *Việc tiếp theo*).
 
 ---
 
@@ -1213,15 +1226,14 @@ ghép lại, rồi nhật ký thay đổi, thẻ, và bản phát hành đính k
 
 ### Theo thứ tự
 
-1. **Phát hành `v1.5.0`** — đợt năm của Giai đoạn 6 đã nằm trên `dev`
-2. **Đợt sáu của `@phuctiensinh`, sau `v1.5.0`** — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
+1. **Đợt sáu của `@phuctiensinh`, sau `v1.5.0`** — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
    quy trình theo từng hồ sơ, chỉ hiển thị) → #435 (rà khả năng tiếp cận WCAG 2.1 AA); #424 (API lõi trả lý do cạnh
    không đi được, chỉ thêm thông tin) → #441 (kiểm thử dựa trên tính chất cho máy trạng thái). Còn thời gian thì hỏi
    navigator trước: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt),
    #451, #481 (hoãn)
-3. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
-   vệ nhánh, bắt buộc dấu xanh, bật GitHub Pages (*Settings → Pages → Source: GitHub Actions*) và sửa ô Website của
-   kho — khép #381
+2. **Bật bảo vệ nhánh** cho `main` và `dev`, bắt buộc dấu xanh của tích hợp liên tục — kho đã công khai nên bật được
+   (`CONTRIBUTING.md` mục 2.6)
+3. **Chạy thử hồ sơ mô hình ngôn ngữ `tri-tue`** trên cụm thử từ bản phát hành mới nhất
 4. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), bộ nhớ hồ sơ `tri-tue`, cấu hình máy
    tối thiểu
 5. **Issue cho người mới** (nhãn `good first issue`) khi kho công khai
@@ -1265,7 +1277,7 @@ Sáu issue Tuần 16 giảng viên đã chốt ngày 13/11 (ghi ở *Tuần 17*)
 
 | Vấn đề | Ảnh hưởng | Hướng xử lý |
 |---|---|---|
-| Quy tắc bảo vệ nhánh chưa có hiệu lực | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Chuyển kho mã sang công khai. Trong lúc chờ, tuân thủ tự giác |
+| Quy tắc bảo vệ nhánh chưa bật | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Kho đã công khai từ 19/11 nên bật được — mục *Việc tiếp theo* |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
 | Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Cụm mặc định tám dịch vụ khoảng 1,7 GiB** (bảy dịch vụ đo 12/11: 1,66 GiB; cổng API thêm 50 MiB đo 15/11), phần lớn là Keycloak phình theo JVM. Mọi thành phần nặng mới đều nằm sau hồ sơ tùy chọn: ClamAV +1,03 GiB, Wiki.js +276 MiB, mô hình chưa đo lại. Công bố **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | **Ảnh dịch vụ khai phá nặng khoảng 1 GB** (982 MB, vì bộ thư viện số học kéo theo PM4Py) | Lần dựng đầu trên máy sạch lâu hơn, tốn ổ đĩa; README và trang tài liệu còn ghi 6 GB ổ đĩa đo trước khi có dịch vụ này | Đo lại ổ đĩa cả cụm ở giai đoạn đóng gói. Nếu cần nhẹ hơn, bộ máy dự phòng `noi_bo` không dùng PM4Py đã có sẵn |

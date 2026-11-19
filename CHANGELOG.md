@@ -5,6 +5,12 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.5.1] - 2026-11-19
+
+### Công việc phụ trợ
+
+- **docs:** Đổi tên hiển thị dự án thành Corelens ([#509](https://github.com/AlaVox-lab/corelens/issues/509)) ([e16a392](https://github.com/AlaVox-lab/corelens/commit/e16a392875abb7565d9183cb27258b017178d887))
+
 ## [1.5.0] - 2026-11-19
 
 ### Công việc phụ trợ
