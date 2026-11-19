@@ -1,4 +1,4 @@
-# dx-os-lab
+# Corelens
 
 [Tiếng Việt](README.md) · **English**
 
@@ -6,6 +6,10 @@
 > a **reference application** covering all four H-P-D-I spaces — an internal request operations portal
 > for businesses. Entry for the Open Source Software track of the Vietnam Student Informatics Olympiad
 > (OLP) 2026.
+>
+> *Corelens* — an Open-Core platform that inspects its own processes from the event log. The former name
+> `dx-os-lab` remains in technical identifiers (Keycloak realm, Compose project name, `dxlab-*` containers,
+> `DXLAB_*` variables), kept so running clusters need no rebuild.
 
 [![License: MIT and AGPL-3.0](https://img.shields.io/badge/License-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
@@ -24,7 +28,7 @@ In many companies, internal requests — a broken laptop, a software licence, an
 purchase proposal — travel through chat apps, email or paper. Requesters cannot see where their request
 is, nobody is reminded when it is overdue, and managers have no numbers on which step is slow.
 
-**The dx-os-lab reference application is one portal for all of those requests.** A case moves between
+**The Corelens reference application is one portal for all of those requests.** A case moves between
 four roles — requester, dispatcher, department head, handler — and each person sees their own queue as
 soon as they log in. Underneath sits an API-only core platform that other applications can reuse. The
 workflow is data, not code: states, transitions, roles, error-proofing (Poka-yoke) rules and every
@@ -78,18 +82,18 @@ You need Docker Engine 24+ with Compose v2 (or Docker Desktop), about 2 GB of RA
 ports 3000 · 8080 · 8088 · 8333 · 9080.
 
 Download **Source code (tar.gz)** of the latest release from the
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases) page, then (replace `1.0.0` with the version
+[Releases](https://github.com/AlaVox-lab/corelens/releases) page, then (replace `1.0.0` with the version
 you downloaded):
 
 ```bash
-tar -xzf dx-os-lab-1.0.0.tar.gz
-cd dx-os-lab-1.0.0/infra
+tar -xzf corelens-1.0.0.tar.gz
+cd corelens-1.0.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-On PowerShell use `Copy-Item .env.example .env` and `cd dx-os-lab-1.0.0\infra`. From a clone, run the last
-three commands in `dx-os-lab/infra`. The first build takes about 10–20 minutes.
+On PowerShell use `Copy-Item .env.example .env` and `cd corelens-1.0.0\infra`. From a clone, run the last
+three commands in `corelens/infra`. The first build takes about 10–20 minutes.
 
 Open `http://localhost:3000` and click **Đăng nhập bằng tài khoản công ty** (*Sign in with company
 account*). Sample accounts, shared password `matkhau123`:

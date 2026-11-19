@@ -10,7 +10,7 @@
 
 ## 1. Thông điệp một câu
 
-> **DX-OS Lab là nền tảng lõi nguồn mở không giao diện — định danh, cổng API, dữ liệu, động cơ luồng công
+> **Corelens là nền tảng lõi nguồn mở không giao diện — định danh, cổng API, dữ liệu, động cơ luồng công
 > việc — mà quy trình chạy trên nó *tự soi lại chính mình*: mọi bước chuyển ghi nhật ký, từ nhật ký hệ
 > thống vẽ lại quy trình thật và chỉ ra chỗ nghẽn.**
 

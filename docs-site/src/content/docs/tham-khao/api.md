@@ -22,7 +22,7 @@ Dịch vụ ứng dụng không mở cổng `8000` ra máy ở cấu hình mặc
 
 Không cần dựng cụm để đọc **hợp đồng API của nền tảng lõi**: đặc tả OpenAPI riêng các đường dưới `/core/v1`
 nằm trong kho ở
-[`docs/api/core-v1.openapi.json`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/api/core-v1.openapi.json)
+[`docs/api/core-v1.openapi.json`](https://github.com/AlaVox-lab/corelens/blob/main/docs/api/core-v1.openapi.json)
 — mở bằng bất kỳ công cụ đọc OpenAPI nào, hoặc sinh mã khách từ đó. Tệp sinh từ mã nguồn bằng
 `python scripts/dac_ta_loi.py --anh dxlab-backend:<phiên bản>`; CI sinh lại ở mỗi PR và báo đỏ khi API lõi
 đổi mà tệp chưa cập nhật, nên mỗi lần hợp đồng đổi đều hiện trong lịch sử git.

@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  * `MINING_SOURCE_URL`; giá trị dự phòng chỉ để chạy `npm run dev` ngoài cụm. Chỉ nhận http(s) để
  * không giá trị lạ nào thành liên kết chạy mã. */
 function nguonMaKhaiPha(): string {
-  const duPhong = "https://github.com/AlaVox-lab/dx-os-lab/tree/main/services/khai-pha";
+  const duPhong = "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha";
   try {
     const diaChi = new URL(process.env.MINING_SOURCE_URL ?? "");
     return diaChi.protocol === "https:" || diaChi.protocol === "http:" ? diaChi.href : duPhong;

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Dựng toàn bộ hệ thống DX-OS Lab bằng một lệnh:
+# Dựng toàn bộ hệ thống Corelens bằng một lệnh:
 #     docker compose --env-file .env up
 #
 # Tám dịch vụ ở cụm mặc định, một thực thể PostgreSQL duy nhất chứa ba database riêng biệt:
@@ -612,7 +612,7 @@ services:
       SUPERSET_PUBLIC_URL: http://localhost:${SUPERSET_PORT}
       # Mã nguồn của dịch vụ khai phá (AGPL-3.0-or-later, điều 13 — #340): màn Quy trình thực tế dẫn
       # tới đây. Có mặc định để tệp .env cũ vẫn chạy được.
-      MINING_SOURCE_URL: ${MINING_SOURCE_URL:-https://github.com/AlaVox-lab/dx-os-lab/tree/main/services/khai-pha}
+      MINING_SOURCE_URL: ${MINING_SOURCE_URL:-https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha}
       # Giới hạn đăng nhập quay về theo địa chỉ IP (#243), đếm trong bộ nhớ của cổng. Có giá trị
       # mặc định để tệp .env cũ vẫn chạy được.
       RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-30}

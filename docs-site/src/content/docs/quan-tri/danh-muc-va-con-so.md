@@ -56,4 +56,4 @@ thời gian tự hiện nhãn và giá trị. Giá trị lưu ở cột `request
 
 Cơ sở và nguồn của từng con số — giá trị mặc định của các nền tảng bàn dịch vụ phổ biến, quy định
 pháp luật, hoặc ghi rõ là giá trị mẫu để doanh nghiệp tự đặt — ở
-[`docs/process-flow.md` mục 9](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/process-flow.md#9-cơ-sở-các-con-số-trong-bộ-quy-tắc-mẫu).
+[`docs/process-flow.md` mục 9](https://github.com/AlaVox-lab/corelens/blob/main/docs/process-flow.md#9-cơ-sở-các-con-số-trong-bộ-quy-tắc-mẫu).

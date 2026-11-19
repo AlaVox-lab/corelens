@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     database_uri: str = "postgresql+psycopg://dxlab:dxlab@localhost:5432/dxlab"
 
     # Nhãn hiển thị trong tài liệu API tự sinh
-    app_name: str = "DX-OS Lab — Cổng vận hành yêu cầu nội bộ"
+    app_name: str = "Corelens — Cổng vận hành yêu cầu nội bộ"
     app_version: str = "0.3.0"
 
     # Bật chế độ gỡ lỗi của SQLAlchemy. Không bao giờ bật ở bản triển khai thật.

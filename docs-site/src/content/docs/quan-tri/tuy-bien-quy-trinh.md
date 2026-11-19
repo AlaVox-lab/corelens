@@ -6,7 +6,7 @@ sidebar:
 ---
 
 Toàn bộ quy trình là **dữ liệu** trong tệp
-[`infra/seed/01-quy-tac-quy-trinh.sql`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/infra/seed/01-quy-tac-quy-trinh.sql).
+[`infra/seed/01-quy-tac-quy-trinh.sql`](https://github.com/AlaVox-lab/corelens/blob/main/infra/seed/01-quy-tac-quy-trinh.sql).
 Engine không biết tên trạng thái nào: nó tra bảng rồi làm theo. Giao diện cũng không giữ bảng
 "trạng thái nào hiện nút nào" — nút dựng từ danh sách bước đi mà dịch vụ trả về.
 
@@ -21,7 +21,7 @@ Engine không biết tên trạng thái nào: nó tra bảng rồi làm theo. Gi
 | `message_kinds` | Loại lời nhắn và ai gửi được | Lời nhắn, Hỏi tiến độ, Nhắn nội bộ |
 
 Toàn văn từng trạng thái, từng bước và ai bấm được ở
-[`docs/process-flow.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/process-flow.md).
+[`docs/process-flow.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/process-flow.md).
 
 ## Ví dụ: thêm một bước đi
 

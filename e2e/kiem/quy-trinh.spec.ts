@@ -254,7 +254,7 @@ test.describe("điều phối viên", () => {
     // Điều 13 của AGPL (#340). Địa chỉ cấu hình ở MINING_SOURCE_URL của cổng; chạy bài với cụm đặt
     // giá trị khác thì truyền cùng biến cho Playwright.
     const diaChi =
-      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/dx-os-lab/tree/main/services/khai-pha";
+      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha";
     const kiemDong = async () => {
       const dong = page.locator(".qt-nguon-ma");
       await expect(dong).toHaveCount(1);

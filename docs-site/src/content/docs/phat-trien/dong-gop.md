@@ -6,7 +6,7 @@ sidebar:
 ---
 
 Quy ước đầy đủ ở
-[`CONTRIBUTING.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/CONTRIBUTING.md). Tóm tắt:
+[`CONTRIBUTING.md`](https://github.com/AlaVox-lab/corelens/blob/main/CONTRIBUTING.md). Tóm tắt:
 
 ## Quy trình
 
@@ -23,7 +23,7 @@ Quy ước đầy đủ ở
 ```
 
 - Riêng thư mục dịch vụ khai phá `services/khai-pha/` theo AGPL-3.0-or-later
-  ([bảng giấy phép theo thư mục](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSES.md)):
+  ([bảng giấy phép theo thư mục](https://github.com/AlaVox-lab/corelens/blob/main/LICENSES.md)):
 
 ```python
 # SPDX-License-Identifier: AGPL-3.0-or-later

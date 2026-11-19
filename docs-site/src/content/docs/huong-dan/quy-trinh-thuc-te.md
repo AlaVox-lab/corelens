@@ -142,7 +142,7 @@ khoảng dài hơn.
 ## Mã nguồn của dịch vụ khai phá
 
 Dịch vụ khai phá dùng thư viện PM4Py nên theo giấy phép **AGPL-3.0-or-later**, khác phần còn lại của
-DX-OS Lab (MIT). Điều 13 của AGPL đòi người dùng qua mạng lấy được mã nguồn, nên cuối màn luôn có dòng
+Corelens (MIT). Điều 13 của AGPL đòi người dùng qua mạng lấy được mã nguồn, nên cuối màn luôn có dòng
 *"Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 — mã nguồn"*, kể cả khi khoảng ngày
 không có hồ sơ nào.
 

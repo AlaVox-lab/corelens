@@ -195,7 +195,7 @@ Lý do chọn:
 
 Nguồn chính:
 
-- [Issue #46](https://github.com/AlaVox-lab/dx-os-lab/issues/46)
+- [Issue #46](https://github.com/AlaVox-lab/corelens/issues/46)
 - [Wiki.js LICENSE](https://github.com/requarks/wiki/blob/main/LICENSE)
 - [Wiki.js Docker Hub](https://hub.docker.com/r/requarks/wiki)
 - [Wiki.js API](https://docs.requarks.io/dev/api)

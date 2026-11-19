@@ -356,7 +356,7 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description=(
-        "Dịch vụ ứng dụng của DX-OS Lab. Toàn bộ quy trình nghiệp vụ nằm trong bảng "
+        "Dịch vụ ứng dụng của Corelens. Toàn bộ quy trình nghiệp vụ nằm trong bảng "
         "dữ liệu, không mã cứng trong mã nguồn.\n\n"
         "**Nền tảng lõi (Tầng 1)**: mọi điểm cuối dưới `/core/v1`, nhóm theo dịch vụ lõi (nhãn "
         "\"Lõi — …\"), dành cho mọi ứng dụng tầng trên. Ứng dụng khác gọi bằng token của tài khoản "

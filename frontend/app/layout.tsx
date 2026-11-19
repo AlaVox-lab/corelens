@@ -42,7 +42,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DX-OS Lab — Cổng yêu cầu nội bộ",
+  title: "Corelens — Cổng yêu cầu nội bộ",
   description:
     "Tiếp nhận và điều phối tập trung mọi loại yêu cầu nội bộ trong doanh nghiệp.",
 };

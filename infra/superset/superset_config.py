@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Cấu hình Apache Superset cho DX-OS Lab.
+# Cấu hình Apache Superset cho Corelens.
 #
 # Superset KHÔNG đọc biến môi trường tuỳ ý — nó nạp cấu hình từ tệp Python trỏ bởi
 # SUPERSET_CONFIG_PATH. Đặt SQLALCHEMY_DATABASE_URI trực tiếp bằng biến môi trường
