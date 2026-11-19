@@ -16,7 +16,7 @@ bảng nguồn, cùng các cột được dùng ở mỗi chặng. Mọi dòng d
 
 ## Biểu đồ → bộ dữ liệu → view → bảng nguồn
 
-Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 6 biểu đồ, theo thứ tự trên lưới.
+Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 8 biểu đồ, theo thứ tự trên lưới.
 
 | Biểu đồ | Bộ dữ liệu · cột dùng | View đọc qua | Bảng nguồn |
 |---|---|---|---|
@@ -26,6 +26,8 @@ Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 6 biểu
 | Phân bố loại yêu cầu theo tuần | `bao_cao_phan_bo_loai` · `loai_yeu_cau`, `so_ho_so`, `tuan` | `bao_cao_phan_bo_loai` → `bao_cao_ho_so` | `departments`, `event_log`, `priorities`, `processes`, `request_types`, `requests`, `rule_sets`, `states`, `work_calendars` |
 | Tỷ lệ ghi đè gợi ý của hệ thống (% lượt người xác nhận chọn khác) | `bao_cao_goi_y` · `nguon`, `so_ghi_de`, `truong` | `bao_cao_goi_y` | `departments`, `event_log`, `requests`, `transitions` |
 | Tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý hồ sơ tương tự (%) | `bao_cao_ngan_chan` · `so_da_ket_thuc`, `so_ngan_chan` | `bao_cao_ngan_chan` | `departments`, `requests`, `similar_case_views` |
+| Tỷ lệ vi phạm hạn theo loại yêu cầu (% hồ sơ đã xong) | `bao_cao_vi_pham` · `loai_yeu_cau`, `so_ho_so`, `so_vi_pham` | `bao_cao_vi_pham` → `bao_cao_ho_so` | `departments`, `event_log`, `priorities`, `processes`, `request_types`, `requests`, `rule_sets`, `states` |
+| Tỷ lệ ghi đè gợi ý theo tuần (%) | `bao_cao_goi_y` · `luc`, `nguon`, `so_ghi_de`, `truong` | `bao_cao_goi_y` | `departments`, `event_log`, `requests`, `transitions` |
 
 *Cột dùng* là cột của bộ dữ liệu xuất hiện trong trục, nhóm, chỉ số hay bộ lọc của biểu đồ; cột tính của
 bộ dữ liệu được thay bằng các cột vật lý trong biểu thức của nó. *Bảng nguồn* gộp mọi bảng mà các view
