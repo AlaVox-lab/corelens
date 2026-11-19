@@ -752,6 +752,11 @@ Mười bảy bảng, định nghĩa ở bản sửa gốc `0000_luoc_do_cau_hin
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
 | Lịch làm việc | `work_calendars` · `work_hours` · `holidays` | Giờ làm theo thứ, ngày nghỉ, múi giờ (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định — xem mục 7.1 |
 
+**Từ điển dữ liệu** của mọi bảng — nghĩa, cột, kiểu, để trống được không, khóa — sinh tự động từ mô hình
+`backend/app/models/` bằng `scripts/tu_dien_du_lieu.py` (#446), ở trang tài liệu *Tham khảo → Từ điển dữ liệu*
+([`tu-dien-du-lieu.md`](../docs-site/src/content/docs/tham-khao/tu-dien-du-lieu.md)); bảng chưa có mô hình liệt
+kê kèm bản sửa tạo ra nó. Tích hợp liên tục chạy `--kiem`: thêm cột mà quên sinh lại trang là đỏ.
+
 **Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong chuỗi migration vì nó
 thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu mà công ty
 khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò giữa hai loại nội
