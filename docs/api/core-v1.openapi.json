@@ -2026,20 +2026,21 @@
     },
     "/core/v1/events": {
       "get": {
-        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.",
+        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\n`format=xes` cho tệp XES (IEEE 1849) mở thẳng bằng ProM, Disco, PM4Py: mỗi hồ sơ một trace, hoạt động là\n`concept:name`, mốc UTC là `time:timestamp`, người thao tác là `org:resource`.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.",
         "operationId": "xuat_nhat_ky_core_v1_events_get",
         "parameters": [
           {
-            "description": "csv hoặc json",
+            "description": "csv, json, hoặc xes (IEEE 1849) cho công cụ khai phá quy trình",
             "in": "query",
             "name": "format",
             "required": false,
             "schema": {
               "default": "csv",
-              "description": "csv hoặc json",
+              "description": "csv, json, hoặc xes (IEEE 1849) cho công cụ khai phá quy trình",
               "enum": [
                 "csv",
-                "json"
+                "json",
+                "xes"
               ],
               "title": "Format",
               "type": "string"

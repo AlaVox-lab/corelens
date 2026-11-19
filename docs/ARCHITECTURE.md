@@ -172,7 +172,7 @@ hệt.
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
-| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
+| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json\|xes`, `from`, `to`, `process`) |
 | Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
 | Lõi — Webhook ² | — | `POST`, `GET /core/v1/webhooks` · `GET`, `DELETE /core/v1/webhooks/{id}` · `GET /core/v1/webhooks/{id}/deliveries` (#390, mục 6.8) |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
@@ -1256,10 +1256,13 @@ tắt thì điểm cuối trả 503 và mục Báo cáo hiện màn "không ph�
 bình thường. Lưới của Superset không xếp lại dưới 768 px, nên màn hẹp giữ khung rộng 760 px và cuộn
 ngang trong khung.
 
-**Dữ liệu mở.** `GET /analytics/event-log?format=csv|json&from=&to=`, chỉ quản trị viên, trên màn
+**Dữ liệu mở.** `GET /analytics/event-log?format=csv|json|xes&from=&to=`, chỉ quản trị viên, trên màn
 Hệ thống của cổng. Cột cố định (`app/analytics/xuat_du_lieu.py` `COT`), mốc UTC, khoảng ngày theo
 UTC; người thao tác bằng mã định danh, không có tên và ghi chú; CSV có BOM để bảng tính trên Windows
-hiện đúng chữ có dấu.
+hiện đúng chữ có dấu. `xes` (#444) là chuẩn trao đổi của khai phá quy trình (IEEE 1849), mở thẳng bằng ProM,
+Disco, PM4Py: mỗi hồ sơ một trace, `concept:name` là hoạt động, `time:timestamp` mốc UTC, `org:resource` người
+thao tác. Viết bằng thư viện chuẩn — dịch vụ ứng dụng không nhập PM4Py (ADR-0007); bài kiểm cho PM4Py đọc lại
+một tệp xuất mẫu nằm trong `services/khai-pha/tests/test_doc_xes.py`.
 
 **Dữ liệu trình diễn.** `scripts/nap_du_lieu_trinh_dien.py --xac-nhan` nạp vài trăm hồ sơ giả theo
 kịch bản của bộ sinh nhật ký ảo (#124), đi đúng bộ quy tắc đang bật và qua bước tự kiểm của bộ
