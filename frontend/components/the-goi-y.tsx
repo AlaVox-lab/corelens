@@ -17,6 +17,7 @@
 // trường khác về sau (loại, mức ưu tiên, người xử lý) dùng nguyên khuôn này.
 
 import { Lightbulb } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { GoiY } from "@/lib/kieu";
 
@@ -29,12 +30,15 @@ export function TheGoiY({
   id,
   goiY,
   dangChon,
+  canCu,
 }: {
   /** Để ô chọn trỏ `aria-describedby` vào thẻ. */
   id?: string;
   goiY: GoiY;
   /** Giá trị ô chọn lúc này. Trống nghĩa là chưa chọn gì — chưa gọi là "khác gợi ý". */
   dangChon: string;
+  /** Căn cứ thêm dưới dòng nguồn — hồ sơ đã giải quyết tương tự ở màn điều phối (#450). */
+  canCu?: ReactNode;
 }) {
   const chonKhac = dangChon !== "" && dangChon !== goiY.code;
 
@@ -51,6 +55,7 @@ export function TheGoiY({
         Nguồn: {goiY.source_label}
         {goiY.confidence !== null && <> · Độ tin cậy {phanTram(goiY.confidence)}</>}
       </p>
+      {canCu}
       {/* Luôn có mặt trong cây để trình đọc màn hình đọc được khi nội dung hiện ra */}
       <p className="the-goi-y-khac" role="status">
         {chonKhac ? "Bạn đang chọn khác gợi ý. Lựa chọn của bạn được ghi lại trong nhật ký." : ""}
