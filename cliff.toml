@@ -33,7 +33,7 @@ body = """
 {% for commit in commits %}
 - {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
 {{ commit.message | upper_first }} \
-([{{ commit.id | truncate(length=7, end="") }}](https://github.com/AlaVox-lab/dx-os-lab/commit/{{ commit.id }}))\
+([{{ commit.id | truncate(length=7, end="") }}](https://github.com/AlaVox-lab/corelens/commit/{{ commit.id }}))\
 {% endfor %}
 {% endfor %}\n
 """
@@ -76,5 +76,5 @@ commit_parsers = [
 ]
 
 commit_preprocessors = [
-  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/AlaVox-lab/dx-os-lab/issues/${1}))" },
+  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/AlaVox-lab/corelens/issues/${1}))" },
 ]

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Trang tài liệu của DX-OS Lab (#279). Chia theo người đọc như trang tài liệu của các nền tảng
+// Trang tài liệu của Corelens (#279). Chia theo người đọc như trang tài liệu của các nền tảng
 // nguồn mở lớn: bắt đầu, cài đặt, hướng dẫn theo vai, quản trị, phát triển, tham khảo. Nội dung
 // kỹ thuật sâu (kiến trúc, luồng nghiệp vụ, ADR) vẫn nằm ở `docs/` của kho — trang này dẫn sang,
 // không chép lại, để một sự thật chỉ nằm một chỗ.
@@ -11,10 +11,10 @@ import { defineConfig } from "astro/config";
 
 // Địa chỉ trang và đường gốc lấy từ biến môi trường lúc dựng (#381), để một mã nguồn đăng được ở
 // nhiều nơi — cách đăng ở CONTRIBUTING.md mục "Đăng trang tài liệu":
-//   - DOCS_SITE_URL  — địa chỉ đầy đủ, ví dụ `https://dx-os-lab.vercel.app`. Bỏ trống thì dùng tên miền
+//   - DOCS_SITE_URL  — địa chỉ đầy đủ, ví dụ `https://corelens.vercel.app`. Bỏ trống thì dùng tên miền
 //     chính thức mà Vercel tự cấp (VERCEL_PROJECT_PRODUCTION_URL); dựng ở máy thì để trống.
 //   - DOCS_BASE_PATH — đường gốc, mặc định `/` (Vercel, tên miền riêng). GitHub Pages của kho cần
-//     `/dx-os-lab`.
+//     `/corelens`.
 // Liên kết giữa các trang và ảnh đều viết tương đối hoặc qua `import`, nên trang chạy đúng với mọi
 // đường gốc.
 function diaChiTrang() {
@@ -35,11 +35,11 @@ export default defineConfig({
   base: duongGoc(),
   integrations: [
     starlight({
-      title: "DX-OS Lab",
+      title: "Corelens",
       description: "Cổng vận hành yêu cầu nội bộ — tài liệu cài đặt, sử dụng và phát triển",
       locales: { root: { label: "Tiếng Việt", lang: "vi" } },
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/AlaVox-lab/dx-os-lab" }],
-      editLink: { baseUrl: "https://github.com/AlaVox-lab/dx-os-lab/edit/main/docs-site/" },
+      social: [{ icon: "github", label: "GitHub", href: "https://github.com/AlaVox-lab/corelens" }],
+      editLink: { baseUrl: "https://github.com/AlaVox-lab/corelens/edit/main/docs-site/" },
       customCss: ["./src/styles/nhan-dien.css"],
       lastUpdated: true,
       sidebar: [

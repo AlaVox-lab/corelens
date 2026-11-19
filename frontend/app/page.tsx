@@ -43,7 +43,7 @@ function ChuaDangNhap() {
     <main className="chua-dang-nhap">
       <span className="logo-lon mono">YC</span>
       <h1 className="tieu-de-trang">Cổng yêu cầu nội bộ</h1>
-      <p className="cdn-phu">DX-OS Lab · Hệ điều hành Doanh nghiệp số</p>
+      <p className="cdn-phu">Corelens · Hệ điều hành Doanh nghiệp số</p>
       <p className="cdn-mo-ta">
         Gửi yêu cầu nội bộ, theo dõi hồ sơ, và biết ngay hôm nay việc nào đang chờ bạn.
       </p>

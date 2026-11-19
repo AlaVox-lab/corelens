@@ -22,7 +22,7 @@ Hồ sơ đã kết thúc thì phần trao đổi chỉ đọc.
 Lời nhắn **không đổi trạng thái** hồ sơ và **không dừng đồng hồ hạn**, không bắt ai phải trả lời.
 *Yêu cầu bổ sung thông tin* là một bước của quy trình: hồ sơ sang *Chờ bổ sung thông tin*, đồng hồ của
 phòng dừng, người gửi bắt buộc trả lời. Ranh giới này ghi ở
-[ADR-0005](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/adr/0005-ranh-gioi-may-trang-thai.md).
+[ADR-0005](https://github.com/AlaVox-lab/corelens/blob/main/docs/adr/0005-ranh-gioi-may-trang-thai.md).
 :::
 
 ## Hộp thư

@@ -1,6 +1,6 @@
 ---
 title: Giới thiệu
-description: DX-OS Lab là gì, giải quyết vấn đề nào, và khác các phần mềm cùng loại ở đâu.
+description: Corelens là gì, giải quyết vấn đề nào, và khác các phần mềm cùng loại ở đâu.
 sidebar:
   order: 1
 ---
@@ -11,7 +11,7 @@ sidebar:
 mua vật tư — được gửi qua Zalo, email hay giấy tờ. Người gửi không biết yêu cầu đã tới đâu, quá
 hạn không ai nhắc, và lãnh đạo không có số liệu để biết khâu nào đang chậm.
 
-## DX-OS Lab làm gì
+## Corelens làm gì
 
 **Một cổng chung cho mọi yêu cầu nội bộ.** Một hồ sơ đi qua bốn vai:
 
@@ -57,4 +57,4 @@ phần lõi tạo khác biệt — engine quy trình — nhóm **tự viết**. 
 ý, con người xác nhận mới thành quyết định.
 
 So sánh với tám sản phẩm cùng loại trong nước và quốc tế:
-[docs/so-sanh-san-pham.md](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/so-sanh-san-pham.md).
+[docs/so-sanh-san-pham.md](https://github.com/AlaVox-lab/corelens/blob/main/docs/so-sanh-san-pham.md).

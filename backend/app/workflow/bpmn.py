@@ -88,8 +88,8 @@ def dung_bpmn(quy_trinh: Process, cac_trang_thai: list[State], cac_canh: list[Tr
         f"{{{BPMN}}}definitions",
         {
             "id": _ma("Definitions", quy_trinh.code),
-            "targetNamespace": "https://github.com/AlaVox-lab/dx-os-lab/bpmn",
-            "exporter": "DX-OS Lab",
+            "targetNamespace": "https://github.com/AlaVox-lab/corelens/bpmn",
+            "exporter": "Corelens",
         },
     )
     ma_qt = _ma("Process", quy_trinh.code)

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "private": true,
   "license": "MIT",
-  "description": "Cổng người dùng của DX-OS Lab. Giấy phép khai ở trường license vì JSON không có cú pháp chú thích để mang header SPDX.",
+  "description": "Cổng người dùng của Corelens. Giấy phép khai ở trường license vì JSON không có cú pháp chú thích để mang header SPDX.",
   "engines": {
     "node": ">=20.9.0"
   },

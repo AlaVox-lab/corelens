@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Ví dụ một ứng dụng KHÁC cổng người dùng gọi nền tảng lõi của DX-OS Lab (#365).
+# Ví dụ một ứng dụng KHÁC cổng người dùng gọi nền tảng lõi của Corelens (#365).
 #
 #     python examples/goi-loi/goi_loi.py
 #     python examples/goi-loi/goi_loi.py --env-file duong/toi/tep.env
@@ -258,7 +258,7 @@ def main() -> int:
     for luong in (sys.stdout, sys.stderr):
         if hasattr(luong, "reconfigure"):
             luong.reconfigure(encoding="utf-8")
-    p = argparse.ArgumentParser(description="Ví dụ ứng dụng khác gọi API của nền tảng lõi DX-OS Lab qua cổng API.")
+    p = argparse.ArgumentParser(description="Ví dụ ứng dụng khác gọi API của nền tảng lõi Corelens qua cổng API.")
     p.add_argument("--env-file", type=Path, default=Path("infra/.env"), help="tệp env của cụm (mặc định infra/.env)")
     p.add_argument("--cong-api", help="địa chỉ cổng API, mặc định http://localhost:<GATEWAY_PORT>")
     p.add_argument("--keycloak", help="địa chỉ Keycloak, mặc định http://localhost:<KEYCLOAK_PORT>")

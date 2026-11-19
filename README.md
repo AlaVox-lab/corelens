@@ -1,10 +1,14 @@
-# dx-os-lab
+# Corelens
 
 **Tiếng Việt** · [English](README.en.md)
 
 > Mô hình DX-OS Open-Core: một **nền tảng lõi không giao diện** (định danh, cổng API, dữ liệu, luồng
 > công việc) và một **ứng dụng minh họa** phủ đủ H-P-D-I — cổng vận hành yêu cầu nội bộ cho doanh nghiệp.
 > Dự án dự thi Phần mềm nguồn mở, Olympic Tin học Sinh viên Việt Nam 2026.
+>
+> *Corelens* — một lõi Open-Core tự soi quy trình của chính nó từ nhật ký sự kiện. Tên cũ `dx-os-lab` còn
+> nằm trong các định danh kỹ thuật (realm Keycloak, tên dự án Compose, container `dxlab-*`, biến `DXLAB_*`),
+> giữ nguyên để cụm đang chạy không phải dựng lại.
 
 [![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
 
@@ -23,7 +27,7 @@ dẫn theo từng vai, quản trị và tùy biến, phát triển. Cách xem �
 vật tư — được gửi qua Zalo, email hay giấy tờ. Người gửi không biết yêu cầu đã tới đâu, quá hạn không
 ai nhắc, và lãnh đạo không có số liệu để biết khâu nào đang chậm.
 
-**Ứng dụng minh họa của dx-os-lab là một cổng chung cho mọi yêu cầu đó.** Một hồ sơ đi qua bốn vai —
+**Ứng dụng minh họa của Corelens là một cổng chung cho mọi yêu cầu đó.** Một hồ sơ đi qua bốn vai —
 người gửi, điều phối viên, trưởng phòng, người xử lý — và mỗi người mở cổng lên là thấy ngay việc đang
 chờ mình. Phía dưới cổng là nền tảng lõi chỉ có API, dùng lại được cho ứng dụng khác.
 
@@ -102,17 +106,17 @@ Các lệnh `python scripts/...` bên dưới cần thêm Python 3.10 trở lên
 `scripts/quet_giay_phep.py` (quét giấy phép, CI chạy) cần 3.11 vì đọc cấu hình bằng `tomllib`.
 
 Tải **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), rồi (thay `1.0.0` bằng phiên bản đã tải):
+[Releases](https://github.com/AlaVox-lab/corelens/releases), rồi (thay `1.0.0` bằng phiên bản đã tải):
 
 ```bash
-tar -xzf dx-os-lab-1.0.0.tar.gz
-cd dx-os-lab-1.0.0/infra
+tar -xzf corelens-1.0.0.tar.gz
+cd corelens-1.0.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-Trên PowerShell dùng `Copy-Item .env.example .env` và `cd dx-os-lab-1.0.0\infra`. Từ kho mã thì
-`git clone` rồi chạy ba lệnh cuối trong `dx-os-lab/infra`. Lần đầu mất khoảng 10–20 phút.
+Trên PowerShell dùng `Copy-Item .env.example .env` và `cd corelens-1.0.0\infra`. Từ kho mã thì
+`git clone` rồi chạy ba lệnh cuối trong `corelens/infra`. Lần đầu mất khoảng 10–20 phút.
 
 Mở `http://localhost:3000`, bấm **Đăng nhập bằng tài khoản công ty**. Tài khoản mẫu, mật khẩu chung
 `matkhau123`:
@@ -330,7 +334,7 @@ Trợ lý AI lập trình đọc [`CLAUDE.md`](CLAUDE.md) (qua [`AGENTS.md`](AGE
 | Thành viên | Nguyễn Phạm Đại Phúc | [`@phuctiensinh`](https://github.com/phuctiensinh) |
 | Thành viên | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
 
-Công việc chia theo từng [issue](https://github.com/AlaVox-lab/dx-os-lab/issues), không cố định ai phụ
+Công việc chia theo từng [issue](https://github.com/AlaVox-lab/corelens/issues), không cố định ai phụ
 trách không gian nào.
 
 ## Giấy phép

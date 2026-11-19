@@ -6,7 +6,7 @@ Dự án đang phát triển nhanh; bản vá bảo mật chỉ làm trên bản
 
 | Phiên bản | Nhận bản vá bảo mật |
 |---|---|
-| Bản mới nhất ở trang [Releases](https://github.com/AlaVox-lab/dx-os-lab/releases) | Có |
+| Bản mới nhất ở trang [Releases](https://github.com/AlaVox-lab/corelens/releases) | Có |
 | Các bản cũ hơn | Không — nâng cấp lên bản mới nhất |
 
 ## Báo lỗ hổng

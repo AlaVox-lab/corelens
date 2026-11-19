@@ -26,7 +26,7 @@ from .phan_tich import phan_tich
 
 log = logging.getLogger("dxlab.khai_pha")
 
-app = FastAPI(title="DX-OS Lab — Dịch vụ khai phá quy trình", version="0.11.0")
+app = FastAPI(title="Corelens — Dịch vụ khai phá quy trình", version="0.11.0")
 
 # Chọn bộ máy một lần lúc khởi động: cấu hình sai thì dịch vụ không lên, thay vì hỏng ở lượt gọi đầu.
 # Nạp PM4Py mất vài giây — trả lúc khởi động, không trả ở yêu cầu của người dùng.

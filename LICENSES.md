@@ -1,6 +1,6 @@
 # Giấy phép theo thư mục
 
-DX-OS Lab dùng **mô hình nhiều giấy phép**: phần lớn kho theo MIT, riêng dịch vụ khai phá quy trình theo
+Corelens dùng **mô hình nhiều giấy phép**: phần lớn kho theo MIT, riêng dịch vụ khai phá quy trình theo
 GNU AGPL phiên bản 3 hoặc mới hơn. Cả hai đều thuộc danh sách giấy phép được
 [OSI công nhận](https://opensource.org/licenses).
 
@@ -49,7 +49,7 @@ chạy trên mỗi pull request và báo lỗi tệp thiếu header lẫn tệp 
 | **Người dùng tương tác qua mạng lấy được mã nguồn (điều 13)** | Màn *Báo cáo → Quy trình thực tế* của cổng — nơi người dùng thấy kết quả của dịch vụ khai phá — luôn có dòng *"Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 — mã nguồn"* dẫn tới mã nguồn của dịch vụ. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`), mặc định thư mục `services/khai-pha` trên kho GitHub của dự án |
 | Không sửa mã thư viện | Dự án cài PM4Py từ PyPI, không chép, không sửa mã của nó |
 
-**Bạn tự triển khai DX-OS Lab và sửa dịch vụ khai phá?** Phần sửa cũng theo AGPL-3.0-or-later: công khai
+**Bạn tự triển khai Corelens và sửa dịch vụ khai phá?** Phần sửa cũng theo AGPL-3.0-or-later: công khai
 mã đã sửa và đặt `MINING_SOURCE_URL` trỏ về nơi chứa bản đó, để người dùng của bạn lấy được đúng mã đang
 chạy. Bộ máy dự phòng không cần PM4Py ([`services/khai-pha/README.md`](services/khai-pha/README.md)) bỏ
 được thư viện, nhưng mã của thư mục vẫn phát hành theo AGPL-3.0-or-later.

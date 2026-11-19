@@ -4,8 +4,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Hướng dẫn đóng góp
-    url: https://github.com/AlaVox-lab/dx-os-lab/blob/main/CONTRIBUTING.md
+    url: https://github.com/AlaVox-lab/corelens/blob/main/CONTRIBUTING.md
     about: Đọc quy trình làm việc, quy ước commit và quy ước mã nguồn trước khi tạo issue.
   - name: Thảo luận
-    url: https://github.com/AlaVox-lab/dx-os-lab/discussions
+    url: https://github.com/AlaVox-lab/corelens/discussions
     about: Đặt câu hỏi hoặc thảo luận ý tưởng chưa thành công việc cụ thể.
