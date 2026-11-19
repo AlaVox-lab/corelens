@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Hai bảng của webhook (#390) — lược đồ ở bản sửa 0031_webhook.
+# Hai bảng của webhook (#390) — lược đồ ở bản sửa 0031_webhook. Lần gửi do trigger trên `event_log` sinh ra
+# (0035, #492), không còn con trỏ trên đăng ký.
 
 from __future__ import annotations
 
@@ -30,8 +31,6 @@ class WebhookSubscription(Base):
     process_code: Mapped[str | None] = mapped_column(Text, ForeignKey("processes.code"), default=None)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     owner_id: Mapped[str] = mapped_column(Text)
-    # Con trỏ trên event_log: sự kiện có mã lớn hơn số này chưa được xét cho đăng ký
-    last_event_id: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
 
 

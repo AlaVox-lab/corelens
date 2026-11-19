@@ -697,7 +697,6 @@ export type DangKyWebhook = {
   process: string | null;
   is_active: boolean;
   owner_id: string;
-  last_event_id: number;
   created_at: string;
 };
 
