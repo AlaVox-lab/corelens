@@ -2,8 +2,8 @@
 # Copyright (c) 2026 AlaVox-lab
 #
 # Đăng trang tài liệu `docs-site/` lên GitHub Pages (#381). Mỗi lần `main` đổi — tức mỗi lần phát
-# hành — trang được dựng lại với đường gốc `/dx-os-lab` và đăng tại
-# https://alavox-lab.github.io/dx-os-lab/. Bấm chạy tay được khi cần đăng lại.
+# hành — trang được dựng lại với đường gốc `/corelens` và đăng tại
+# https://alavox-lab.github.io/corelens/. Bấm chạy tay được khi cần đăng lại.
 #
 # GitHub Pages miễn phí chỉ dành cho kho công khai, nên việc tự bỏ qua khi kho còn riêng tư thay vì
 # báo hỏng. Bật một lần: Settings → Pages → Source: GitHub Actions (CONTRIBUTING.md mục 7.1).
@@ -44,7 +44,7 @@ jobs:
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
           DOCS_SITE_URL: https://alavox-lab.github.io
-          DOCS_BASE_PATH: /dx-os-lab
+          DOCS_BASE_PATH: /corelens
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs-site/dist

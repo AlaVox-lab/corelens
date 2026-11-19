@@ -14,7 +14,7 @@
 
 ## 1. Tóm tắt dự án
 
-**dx-os-lab** — Trạm thực hành số (DX-Lab) mô phỏng một Hệ điều hành Doanh nghiệp
+**Corelens** — Trạm thực hành số (DX-Lab) mô phỏng một Hệ điều hành Doanh nghiệp
 số, xây dựng theo kiến trúc Open-Core cho cuộc thi Phần mềm nguồn mở, Olympic Tin
 học Sinh viên Việt Nam 2026.
 
@@ -535,7 +535,7 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 ### 4.1. Hiện trạng
 
 ```
-dx-os-lab/
+corelens/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.yml       # biểu mẫu, trường bắt buộc (#422)
@@ -662,7 +662,7 @@ Phần đã tồn tại xem mục 4.1 — đó là nguồn đúng về hiện tr
 đầu dự án để mỗi người không đặt một kiểu; chỗ nào lệch với mục 4.1 thì theo mục 4.1.
 
 ```
-dx-os-lab/
+corelens/
 ├── frontend/                    # Next.js
 │   ├── app/
 │   │   ├── (portal)/            # [H] cổng người dùng, tự phục vụ

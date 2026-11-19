@@ -3,7 +3,7 @@
   "version": "0.7.0",
   "private": true,
   "license": "MIT",
-  "description": "Trang tài liệu của DX-OS Lab, dựng bằng Starlight",
+  "description": "Trang tài liệu của Corelens, dựng bằng Starlight",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

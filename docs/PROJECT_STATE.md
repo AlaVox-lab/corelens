@@ -21,7 +21,7 @@
 | Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
 | Issue đang mở | **27** (mốc 18) — 0 `P0`, 4 `P1`, 4 `P2`, 19 `P3`; mười hai issue đã làm xong trên `dev`, còn **15** sau `v1.5.0`. Sau `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
-| Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) thay Ngô Hoàng Đại (`@Senning-Dd`); đóng góp cũ của bạn Đại giữ nguyên trong lịch sử kho |
+| Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
@@ -430,7 +430,7 @@ phải `down -v` hai lần.
 - **Kho tri thức `H`** (#46, ADR-0006) — đề xuất **Wiki.js `2.5.315`** chạy như dịch vụ
   độc lập, đăng nhập qua Keycloak đã thử được, GraphQL tạo và đọc lại nguyên văn trang
   tiếng Việt. Outline bị loại vì BSL 1.1 không thuộc danh sách OSI. Đây là **pull request
-  đầu tiên của thành viên** được hợp nhất (`@Senning-Dd`), qua một lượt yêu cầu sửa bốn
+  đầu tiên của thành viên** được hợp nhất, qua một lượt yêu cầu sửa bốn
   điểm — trong đó ba đường dẫn giấy phép trỏ tới trang không tồn tại
 - **Khai phá quy trình `I`** (#48, ADR-0007) — navigator tiếp quản vì máy thành viên thiếu
   dung lượng dựng cụm. PM4Py và pm4js chạy thử trên 1.000 hồ sơ ảo: cả hai vẽ lại đúng 24
@@ -1006,7 +1006,7 @@ một lần để có client dịch vụ (realm chỉ nạp lúc tạo). API c�
 
 Nhóm đọc lại thể lệ và đề, đối chiếu với bản `v1.0.0`; giảng viên chốt 15/11: Mức 1 xong thấy khả thi thì lên
 Mức 2, bỏ Mức 3. Navigator mở mốc 18 *Giai đoạn 6 - Hoàn thiện dự thi* (hạn 29/11) với issue gốc #383 và bảy issue
-#376–#382. Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm thay Ngô Hoàng Đại; bạn tự mở và làm ba
+#376–#382. Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm; bạn tự mở và làm ba
 issue #385, #387, #390 ngay trong tuần đầu.
 
 **PR #375** — sổ trạng thái tới `v1.0.0`.
@@ -1394,6 +1394,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | `H` — **Wiki.js là kho tri thức tùy chọn** (hồ sơ `tri-thuc`), ảnh nguyên bản | Đăng nhập một lần qua Keycloak, quyền theo vai trò, bài viết làm nguồn gợi ý thứ hai; navigator chấp nhận 14/11, chờ giảng viên xác nhận — ADR-0006, #321 |
 | **Webhook sinh lần gửi bằng trigger** trong giao dịch ghi sự kiện, không dùng con trỏ | Con trỏ theo mã lớn nhất bỏ sót sự kiện của giao dịch commit muộn; bộ gửi không giữ giao dịch trong lúc gọi mạng — #492, PR #500 |
 | **Sau `v1.5.0` chỉ làm issue tăng độ hoàn thiện**, không mở hướng mới | Navigator chốt 19/11: hướng dự án từ đầu là đúng; đợt sáu gồm #448, #435, #424, #441 |
+| **Tên dự án: Corelens** (từ 19/11, trước là `dx-os-lab`) | Đổi tên kho GitHub và tên hiển thị; định danh kỹ thuật (realm, tên dự án Compose, container `dxlab-*`, biến `DXLAB_*`, tên CSDL, dữ liệu khởi tạo) giữ nguyên để cụm đang chạy không phải dựng lại — navigator chốt 19/11 |
 | **#425 khóa lạc quan để sau kỳ thi** | Đổi hợp đồng của lệnh chuyển trạng thái, kéo theo cổng, ví dụ, kiểm thử; engine đã khóa dòng hồ sơ khi chuyển nên không ghi đè lặng lẽ — navigator chốt 19/11 |
 
 ---

@@ -18,12 +18,12 @@ Chi tiết ở [Cài đặt](../../cai-dat/cai-dat/).
 ## 2. Dựng cụm
 
 Tải tệp **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), bật Docker, rồi chạy (thay `0.7.0`
+[Releases](https://github.com/AlaVox-lab/corelens/releases), bật Docker, rồi chạy (thay `0.7.0`
 bằng phiên bản đã tải):
 
 ```bash
-tar -xzf dx-os-lab-0.7.0.tar.gz
-cd dx-os-lab-0.7.0/infra
+tar -xzf corelens-0.7.0.tar.gz
+cd corelens-0.7.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```

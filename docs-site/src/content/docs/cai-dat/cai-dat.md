@@ -24,17 +24,17 @@ và PostgreSQL không mở cổng ra máy.
 
 Dành cho người chỉ muốn dựng và dùng thử. Không cần Git.
 
-1. Mở trang [Releases](https://github.com/AlaVox-lab/dx-os-lab/releases), chọn bản mang nhãn
+1. Mở trang [Releases](https://github.com/AlaVox-lab/corelens/releases), chọn bản mang nhãn
    **Latest**, tải tệp **Source code (tar.gz)**
 2. Bật Docker Desktop và chờ tới khi nó báo đang chạy
 3. Mở terminal ở thư mục chứa tệp vừa tải và chạy bốn lệnh dưới. Thay `0.7.0` bằng phiên bản đã
-   tải — tệp nén giải ra thư mục `dx-os-lab-<phiên bản>`, không phải `dx-os-lab`
+   tải — tệp nén giải ra thư mục `corelens-<phiên bản>`, không phải `corelens`
 
 Windows — PowerShell (Windows 10 và 11 có sẵn lệnh `tar`):
 
 ```powershell
-tar -xzf dx-os-lab-0.7.0.tar.gz
-cd dx-os-lab-0.7.0\infra
+tar -xzf corelens-0.7.0.tar.gz
+cd corelens-0.7.0\infra
 Copy-Item .env.example .env
 docker compose --env-file .env up -d --build
 ```
@@ -42,8 +42,8 @@ docker compose --env-file .env up -d --build
 Linux và macOS:
 
 ```bash
-tar -xzf dx-os-lab-0.7.0.tar.gz
-cd dx-os-lab-0.7.0/infra
+tar -xzf corelens-0.7.0.tar.gz
+cd corelens-0.7.0/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
@@ -53,8 +53,8 @@ docker compose --env-file .env up -d --build
 Dành cho người sẽ sửa mã và gửi đóng góp. Cần thêm Git.
 
 ```bash
-git clone https://github.com/AlaVox-lab/dx-os-lab.git
-cd dx-os-lab/infra
+git clone https://github.com/AlaVox-lab/corelens.git
+cd corelens/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```

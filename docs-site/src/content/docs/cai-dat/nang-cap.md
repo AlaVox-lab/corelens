@@ -64,7 +64,7 @@ Superset. Realm và dữ liệu khởi tạo tự nạp lại.
 ## Realm Keycloak
 
 Keycloak chỉ nạp `infra/keycloak/realm-dx-os-lab.json` khi realm chưa có. Bản mới đổi realm (vai trò,
-client, chủ đề đăng nhập) thì ghi chú phát hành ([Releases](https://github.com/AlaVox-lab/dx-os-lab/releases))
+client, chủ đề đăng nhập) thì ghi chú phát hành ([Releases](https://github.com/AlaVox-lab/corelens/releases))
 nêu rõ; khi đó sửa tay trong trang quản trị Keycloak, hoặc dựng lại cụm.
 
 ### Tài khoản dịch vụ gọi API của lõi

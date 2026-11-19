@@ -1,6 +1,6 @@
 # So sánh với các sản phẩm cùng loại
 
-Tài liệu đặt DX-OS Lab cạnh các sản phẩm đang dùng để tiếp nhận và xử lý yêu cầu nội bộ, trong
+Tài liệu đặt Corelens cạnh các sản phẩm đang dùng để tiếp nhận và xử lý yêu cầu nội bộ, trong
 nước và quốc tế, để chỉ ra dự án khác ở đâu và còn kém ở đâu (#277, góp ý buổi báo cáo 29/10/2026).
 
 **Cách làm.** Thông tin lấy từ trang chính thức và tài liệu hướng dẫn của từng sản phẩm, mở ngày
@@ -18,14 +18,14 @@ có; ô ghi "chưa kiểm" là chưa tìm được trang nguồn để xác nh�
 | **Bàn dịch vụ nguồn mở** (quốc tế) | Zammad, GLPI, osTicket | Như trên, tự cài được trên máy chủ riêng |
 | **Phần mềm phê duyệt văn phòng** (Việt Nam) | Base Request (Base.vn), 1Office, MISA AMIS Quy trình | Đề xuất đi qua chuỗi người duyệt dựng sẵn cho từng loại đề xuất: tuần tự, song song, hay rẽ nhánh theo điều kiện |
 
-DX-OS Lab đứng giữa hai mô hình: hồ sơ không đi theo một chuỗi người duyệt cố định, mà **điều
+Corelens đứng giữa hai mô hình: hồ sơ không đi theo một chuỗi người duyệt cố định, mà **điều
 phối viên chọn phòng ban phù hợp cho từng hồ sơ** (gợi ý theo loại, chọn khác được); phòng sai
 chuyên môn thì từ chối kèm lý do và hồ sơ được chuyển lại. Trong phòng, trưởng phòng xác duyệt
 rồi giao người xử lý.
 
 ## 2. Bảng so sánh
 
-| Tiêu chí | Jira Service Management | ServiceNow | Zammad | GLPI | osTicket | Base Request | 1Office | MISA AMIS Quy trình | **DX-OS Lab** |
+| Tiêu chí | Jira Service Management | ServiceNow | Zammad | GLPI | osTicket | Base Request | 1Office | MISA AMIS Quy trình | **Corelens** |
 |---|---|---|---|---|---|---|---|---|---|
 | Giấy phép | Thương mại | Thương mại | AGPL-3.0 | GPL-3.0 | GPL-2.0 | Thương mại | Thương mại | Thương mại | **MIT** |
 | Tự cài trên máy chủ riêng | Có bản tự quản (Server, Data Center) | Không thấy | Có | Có | Có | Không thấy | Không thấy | Không thấy | **Có**, một lệnh Docker Compose |
@@ -36,13 +36,13 @@ rồi giao người xử lý.
 | Nhật ký phục vụ khai phá quy trình | Không thấy | Có sản phẩm Process Mining riêng | Không thấy | Không thấy | Không thấy | Không thấy | Không thấy | Có lịch sử hoạt động | **Có**: nhật ký chỉ ghi thêm theo dạng `case_id, activity, timestamp`; khai phá ở Giai đoạn 4 |
 | Tiếng Việt | Chưa kiểm | Chưa kiểm | Chưa kiểm | Chưa kiểm | Chưa kiểm | Gốc tiếng Việt | Gốc tiếng Việt | Gốc tiếng Việt | **Gốc tiếng Việt** |
 
-## 3. Điểm khác của DX-OS Lab
+## 3. Điểm khác của Corelens
 
 1. **Điều phối theo từng hồ sơ, không theo chuỗi duyệt cố định.** Phần mềm phê duyệt trong nước
    giỏi ở việc "đề xuất này đi qua những ai" — chuỗi người duyệt dựng trước cho mỗi loại. Yêu cầu
    nội bộ thì nhiều khi người gửi không biết thuộc phòng nào: điều phối viên đọc, phân loại, đặt
    ưu tiên, chọn phòng; phòng sai thì trả lại kèm lý do. Đây là chỗ bị hiểu nhầm ở buổi báo cáo
-   — DX-OS Lab không phải luồng cố định qua các phòng như cổng dịch vụ công.
+   — Corelens không phải luồng cố định qua các phòng như cổng dịch vụ công.
 2. **Quy trình là dữ liệu đọc được.** Trạng thái, cạnh, vai trò, ràng buộc và mọi con số nằm trong
    bảng, có tệp kiểm tính nhất quán chặn khởi động khi khai sai, có bộ kiểm thử chạy trên cơ sở
    dữ liệu thật. Đổi quy trình là sửa dữ liệu khởi tạo, xem lại được trong lịch sử mã nguồn —
@@ -56,17 +56,17 @@ rồi giao người xử lý.
 5. **Thiết kế cho Việt Nam từ đầu.** Lịch làm việc và ngày lễ theo Bộ luật Lao động 2019, từ ngữ
    giao diện thống nhất bằng tiếng Việt.
 
-## 4. Chỗ DX-OS Lab còn kém
+## 4. Chỗ Corelens còn kém
 
 Nói thẳng để người đọc cân nhắc đúng:
 
-- **Độ trưởng thành.** Các sản phẩm trên có nhiều năm vận hành và nhiều khách hàng; DX-OS Lab là
+- **Độ trưởng thành.** Các sản phẩm trên có nhiều năm vận hành và nhiều khách hàng; Corelens là
   dự án dự thi, chưa triển khai thật ở doanh nghiệp nào.
 - **Chưa có màn quản trị cấu hình** — sửa quy trình hiện là sửa dữ liệu khởi tạo (#255).
 - **Chưa gửi thông báo thư điện tử** (#251), chưa có ứng dụng di động.
 - **Chưa có khai phá quy trình** — tầng Dữ liệu đã có bảng điều khiển (v0.9.0), tầng Trí tuệ (v0.10.0) chưa làm.
 - **Ít tích hợp.** Không có kho tích hợp sẵn với công cụ khác như các sản phẩm thương mại.
-- **Một bộ quy tắc mẫu.** Phần mềm phê duyệt trong nước có hàng trăm mẫu quy trình; DX-OS Lab có
+- **Một bộ quy tắc mẫu.** Phần mềm phê duyệt trong nước có hàng trăm mẫu quy trình; Corelens có
   một bộ quy tắc mẫu cho bốn loại yêu cầu.
 
 ## 5. Nguồn

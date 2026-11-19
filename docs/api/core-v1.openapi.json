@@ -1876,8 +1876,8 @@
     }
   },
   "info": {
-    "description": "Dịch vụ ứng dụng của DX-OS Lab. Toàn bộ quy trình nghiệp vụ nằm trong bảng dữ liệu, không mã cứng trong mã nguồn.\n\n**Nền tảng lõi (Tầng 1)**: mọi điểm cuối dưới `/core/v1`, nhóm theo dịch vụ lõi (nhãn \"Lõi — …\"), dành cho mọi ứng dụng tầng trên. Ứng dụng khác gọi bằng token của tài khoản dịch vụ (client credentials). Các đường còn lại thuộc ứng dụng minh họa — cổng vận hành yêu cầu nội bộ.",
-    "title": "DX-OS Lab — Cổng vận hành yêu cầu nội bộ"
+    "description": "Dịch vụ ứng dụng của Corelens. Toàn bộ quy trình nghiệp vụ nằm trong bảng dữ liệu, không mã cứng trong mã nguồn.\n\n**Nền tảng lõi (Tầng 1)**: mọi điểm cuối dưới `/core/v1`, nhóm theo dịch vụ lõi (nhãn \"Lõi — …\"), dành cho mọi ứng dụng tầng trên. Ứng dụng khác gọi bằng token của tài khoản dịch vụ (client credentials). Các đường còn lại thuộc ứng dụng minh họa — cổng vận hành yêu cầu nội bộ.",
+    "title": "Corelens — Cổng vận hành yêu cầu nội bộ"
   },
   "openapi": "3.1.0",
   "paths": {

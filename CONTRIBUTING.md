@@ -439,14 +439,14 @@ môi trường lúc dựng (`docs-site/astro.config.mjs`), nên cùng một mã 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
 | `DOCS_SITE_URL` | trống — trên Vercel tự lấy tên miền chính thức của dự án | Địa chỉ đầy đủ, dùng cho đường dẫn chuẩn và sơ đồ trang (`sitemap`). GitHub Pages của kho: `https://alavox-lab.github.io` |
-| `DOCS_BASE_PATH` | `/` | Đường gốc. GitHub Pages của kho: `/dx-os-lab`; Vercel và tên miền riêng để trống |
+| `DOCS_BASE_PATH` | `/` | Đường gốc. GitHub Pages của kho: `/corelens`; Vercel và tên miền riêng để trống |
 
 Liên kết giữa các trang và ảnh viết tương đối hoặc qua `import`, nên trang chạy đúng với mọi đường
 gốc. Dựng ở máy không cần biến nào: `npm run build` trong `docs-site/`, xem ở `npm run preview`.
 
-**Đăng lên GitHub Pages** — cách kho đang dùng, tại `https://alavox-lab.github.io/dx-os-lab/`.
+**Đăng lên GitHub Pages** — cách kho đang dùng, tại `https://alavox-lab.github.io/corelens/`.
 Workflow `.github/workflows/trang-tai-lieu.yml` dựng trang với `DOCS_SITE_URL=https://alavox-lab.github.io`
-và `DOCS_BASE_PATH=/dx-os-lab` rồi đăng mỗi lần `main` đổi, hoặc khi bấm chạy tay (*Actions → Trang tài
+và `DOCS_BASE_PATH=/corelens` rồi đăng mỗi lần `main` đổi, hoặc khi bấm chạy tay (*Actions → Trang tài
 liệu → Run workflow*). GitHub Pages miễn phí chỉ dành cho kho công khai, nên khi kho còn riêng tư việc tự
 bỏ qua. Người điều phối kho mã bật một lần sau khi kho công khai:
 
@@ -455,15 +455,15 @@ bỏ qua. Người điều phối kho mã bật một lần sau khi kho công kh
 3. Sửa ô *Website* của kho:
 
    ```bash
-   gh repo edit AlaVox-lab/dx-os-lab --homepage https://alavox-lab.github.io/dx-os-lab/
+   gh repo edit AlaVox-lab/corelens --homepage https://alavox-lab.github.io/corelens/
    ```
 
 Dựng thử bản Pages ở máy: đặt hai biến trên rồi `npm run build`. Trên Git Bash cho Windows, đặt thêm
-`MSYS_NO_PATHCONV=1` — không thì Git Bash đổi `/dx-os-lab` thành đường thư mục cài Git và bản dựng hỏng.
+`MSYS_NO_PATHCONV=1` — không thì Git Bash đổi `/corelens` thành đường thư mục cài Git và bản dựng hỏng.
 
 **Phương án khác — Vercel** (khi cần bản xem trước cho từng pull request hay tên miền gọn): đăng
 nhập [vercel.com](https://vercel.com) bằng tài khoản GitHub, *Add New → Project*, nhập kho
-`AlaVox-lab/dx-os-lab`, *Root Directory* `docs-site`. Vercel tự nhận Astro (lệnh dựng `npm run build`,
+`AlaVox-lab/corelens`, *Root Directory* `docs-site`. Vercel tự nhận Astro (lệnh dựng `npm run build`,
 thư mục ra `dist`, Node theo `engines` trong `docs-site/package.json`) và tự lấy tên miền của dự án cho
 `DOCS_SITE_URL`; `DOCS_BASE_PATH` để trống. Rồi trỏ ô *Website* tới địa chỉ Vercel cấp bằng
 `gh repo edit --homepage`.

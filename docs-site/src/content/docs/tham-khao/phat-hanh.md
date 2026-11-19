@@ -8,8 +8,8 @@ sidebar:
 ## Bản phát hành
 
 Mỗi bản phát hành có thẻ theo **Semantic Versioning** và tệp mã nguồn `.tar.gz` ở trang
-[Releases](https://github.com/AlaVox-lab/dx-os-lab/releases). Nhật ký thay đổi
-[`CHANGELOG.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/CHANGELOG.md) sinh tự động từ
+[Releases](https://github.com/AlaVox-lab/corelens/releases). Nhật ký thay đổi
+[`CHANGELOG.md`](https://github.com/AlaVox-lab/corelens/blob/main/CHANGELOG.md) sinh tự động từ
 lịch sử commit.
 
 | Bản | Nội dung chính |
@@ -39,30 +39,30 @@ lịch sử commit.
 | `v0.1.0` | Bộ khung kho mã và tài liệu chuẩn |
 
 Xem đầy đủ ở trang Releases. Lộ trình các bản tới ở
-[`docs/ROADMAP.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/ROADMAP.md): tầng Trí tuệ
+[`docs/ROADMAP.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/ROADMAP.md): tầng Trí tuệ
 từ `v0.10.0`.
 
 ## Giấy phép
 
 Kho theo mô hình nhiều giấy phép, bảng đầy đủ ở
-[`LICENSES.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSES.md):
+[`LICENSES.md`](https://github.com/AlaVox-lab/corelens/blob/main/LICENSES.md):
 
 | Phần | Giấy phép |
 |---|---|
-| Dịch vụ ứng dụng, cổng, kiểm thử giao diện, kịch bản, hạ tầng, tài liệu | [MIT](https://github.com/AlaVox-lab/dx-os-lab/blob/main/LICENSE) |
-| Dịch vụ khai phá quy trình `services/khai-pha/` | [AGPL-3.0-or-later](https://github.com/AlaVox-lab/dx-os-lab/blob/main/services/khai-pha/LICENSE) |
+| Dịch vụ ứng dụng, cổng, kiểm thử giao diện, kịch bản, hạ tầng, tài liệu | [MIT](https://github.com/AlaVox-lab/corelens/blob/main/LICENSE) |
+| Dịch vụ khai phá quy trình `services/khai-pha/` | [AGPL-3.0-or-later](https://github.com/AlaVox-lab/corelens/blob/main/services/khai-pha/LICENSE) |
 
 Dịch vụ khai phá dùng thư viện PM4Py (AGPL-3.0-or-later) nên cả thư mục theo AGPL; phần còn lại chỉ
 trao đổi JSON với nó qua HTTP. Mọi tệp mã nguồn mang định danh giấy phép SPDX đúng thư mục ở đầu
 tệp. Màn Quy trình thực tế có dòng dẫn tới mã nguồn của dịch vụ khai phá (điều 13 của AGPL).
 
 Mọi phụ thuộc đều có giấy phép thuộc danh sách OSI và tương thích với giấy phép của phần dùng nó, ghi
-trong [`docs/dependencies.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/dependencies.md);
-thông báo bên thứ ba ở [`NOTICE`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/NOTICE).
+trong [`docs/dependencies.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/dependencies.md);
+thông báo bên thứ ba ở [`NOTICE`](https://github.com/AlaVox-lab/corelens/blob/main/NOTICE).
 Các nền tảng lắp ghép — Keycloak, SeaweedFS, Apache Superset — đều Apache-2.0, chạy như dịch vụ
 độc lập, không sửa mã nguồn.
 
 ## So sánh với sản phẩm cùng loại
 
-[`docs/so-sanh-san-pham.md`](https://github.com/AlaVox-lab/dx-os-lab/blob/main/docs/so-sanh-san-pham.md)
+[`docs/so-sanh-san-pham.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/so-sanh-san-pham.md)
 đặt dự án cạnh tám sản phẩm trong nước và quốc tế, nêu điểm khác và chỗ còn kém.

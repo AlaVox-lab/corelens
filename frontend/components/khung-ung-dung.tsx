@@ -146,7 +146,7 @@ export function KhungUngDung({
           <span className="logo">YC</span>
           <span className="sb-ten">
             <b>Cổng yêu cầu nội bộ</b>
-            <span>DX-OS Lab</span>
+            <span>Corelens</span>
           </span>
         </div>
 
