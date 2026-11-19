@@ -115,7 +115,8 @@ jobs:
       # chế độ --offline nên chỉ kiểm liên kết tới tệp trong kho — không gọi mạng, không đỏ vì trang
       # ngoài chập chờn. Nguồn Markdown của trang tài liệu dùng đường dẫn tuyến nên kiểm trên bản dựng.
       - name: Kiểm liên kết nội bộ hỏng
-        uses: lycheeverse/lychee-action@v2
+        # Action bên thứ ba: ghim theo mã băm commit vì nhãn có thể bị dời sang mã khác (#494)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           fail: true
           args: >-
@@ -148,14 +149,18 @@ jobs:
       # Đúng cách dựng ghi trong README: tệp .env mẫu chạy được ngay không cần sửa.
       - run: cp infra/.env.example infra/.env
       # Hồ sơ tùy chọn (#415) không bật trong job này nên lỗi tệp Compose của chúng lọt qua; kiểm cú
-      # pháp và biến của từng hồ sơ, kèm hai tệp ghi đè, mà không kéo ảnh nào.
-      - name: Kiểm tệp Compose — cụm mặc định, từng hồ sơ tùy chọn, tệp ghi đè
+      # pháp và biến của từng hồ sơ, kèm hai tệp ghi đè, mà không kéo ảnh nào. Tệp ghi đè cụm thử (#494)
+      # đòi hai biến CUM_THU_* — sinh tệp env bằng chính scripts/kiem_chung như khi dựng cụm thử thật.
+      - name: Kiểm tệp Compose — cụm mặc định, từng hồ sơ tùy chọn, tệp ghi đè phát triển và cụm thử
         run: |
           $COMPOSE config -q
           for hs in $(docker compose --env-file infra/.env -f infra/docker-compose.yml config --profiles); do
             echo "hồ sơ $hs"; $COMPOSE --profile "$hs" config -q
           done
           $COMPOSE -f infra/docker-compose.phat-trien.yml config -q
+          python3 -c "import argparse; from scripts.kiem_chung.chung import CumThu, them_tham_so_cum; p = argparse.ArgumentParser(); them_tham_so_cum(p); CumThu.tu_tham_so(p.parse_args([])).sinh_env()"
+          docker compose -p dxlab-thu --env-file infra/.env.cum-thu -f infra/docker-compose.yml \
+            -f infra/docker-compose.cum-thu.yml config -q
       - name: Dựng ảnh dịch vụ, dịch vụ khai phá và giao diện
         run: $COMPOSE build backend khai-pha frontend
       # Giấy phép mọi gói, kể cả gián tiếp (#418): npm đọc từ tệp khóa, Python đọc trong ảnh vừa dựng.
@@ -167,7 +172,7 @@ jobs:
             --bao-cao bao-cao-giay-phep.md
       - name: Lưu báo cáo giấy phép
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bao-cao-giay-phep
           path: bao-cao-giay-phep.md

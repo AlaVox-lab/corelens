@@ -122,6 +122,13 @@ def main() -> int:
     for thanh_phan, ten, phien_ban, giay_phep in sorted(goi):
         nguon = "siêu dữ liệu"
         if ten in ngoai_le and ngoai_le[ten].get("chi_trong", thanh_phan) == thanh_phan:
+            # Ngoại lệ chỉ đúng cho đúng phiên bản đã đọc tận tay (#494): bản khác có thể đã đổi giấy phép
+            da_doc = ngoai_le[ten].get("phien_ban", [])
+            if phien_ban not in da_doc:
+                loi.append(f"{thanh_phan}: {ten} {phien_ban} — ngoại lệ chỉ ghi phiên bản đã đọc "
+                           f"{', '.join(da_doc) or '(chưa ghi)'}; đọc lại giấy phép của bản này rồi thêm vào phien_ban")
+                dong_bao_cao.append(f"| {thanh_phan} | {ten} | {phien_ban} | chưa đọc lại | scripts/giay_phep.toml |")
+                continue
             giay_phep, nguon = ngoai_le[ten]["giay_phep"], "scripts/giay_phep.toml"
         cho = chung | them.get(thanh_phan, set())
         # Ngoại lệ đã được người đọc tận tay và ghi lý do, nên đạt dù giấy phép không nằm trong danh sách
@@ -135,7 +142,7 @@ def main() -> int:
             "# Giấy phép mọi gói phụ thuộc\n\n| Thành phần | Gói | Phiên bản | Giấy phép | Nguồn |\n"
             "|---|---|---|---|---|\n" + "\n".join(dong_bao_cao) + "\n", encoding="utf-8")
     if loi:
-        print("Gói mang giấy phép ngoài danh sách cho phép (scripts/giay_phep.toml):")
+        print("Gói cần xem lại giấy phép — ngoài danh sách cho phép, hay phiên bản chưa đọc (scripts/giay_phep.toml):")
         print("\n".join(f"  {x}" for x in loi))
         return 1
     print(f"Đạt: {len(goi)} gói, mọi giấy phép nằm trong danh sách cho phép.")
