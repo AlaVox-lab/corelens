@@ -48,7 +48,7 @@ chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
 | [`transition_roles`](#transition_roles) | 2 | `TransitionRole` · `backend/app/models/workflow_config.py` |
 | [`transitions`](#transitions) | 18 | `Transition` · `backend/app/models/workflow_config.py` |
 | [`webhook_deliveries`](#webhook_deliveries) | 10 | `WebhookDelivery` · `backend/app/models/webhook.py` |
-| [`webhook_subscriptions`](#webhook_subscriptions) | 10 | `WebhookSubscription` · `backend/app/models/webhook.py` |
+| [`webhook_subscriptions`](#webhook_subscriptions) | 9 | `WebhookSubscription` · `backend/app/models/webhook.py` |
 
 6 bảng khác không có lớp mô hình — dịch vụ đọc và ghi chúng bằng SQL thô, nên trang
 này chưa liệt kê cột; định nghĩa đầy đủ ở tệp bản sửa tạo ra chúng:
@@ -633,5 +633,4 @@ Mô hình `WebhookSubscription` trong `backend/app/models/webhook.py`.
 | `process_code` | `Text` | có | khóa ngoại → `processes.code` |  |
 | `is_active` | `Boolean` | không |  |  |
 | `owner_id` | `Text` | không |  |  |
-| `last_event_id` | `BigInteger` | không |  | Con trỏ trên event_log: sự kiện có mã lớn hơn số này chưa được xét cho đăng ký |
 | `created_at` | `DateTime` | không | mặc định `func.now()` |  |
