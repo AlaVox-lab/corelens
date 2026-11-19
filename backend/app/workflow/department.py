@@ -219,7 +219,7 @@ def hang_doi(
     state: Annotated[str | None, Query(description="Chỉ lấy một trạng thái")] = None,
     mine: Annotated[bool, Query(description="Chỉ lấy hồ sơ giao cho người đang xem")] = False,
     group: Annotated[str | None, Query(description="Chỉ một nhóm độ gấp")] = None,
-    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu")] = None,
     request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
     priority: Annotated[str | None, Query(description="Chỉ một mức ưu tiên")] = None,
     sort: Annotated[
@@ -315,7 +315,7 @@ def hang_doi(
     da_loc = [
         d
         for d in ca
-        if khop_tim(q, d.ho_so.title, d.ho_so.requester_label, _ma_ho_so(d.ho_so))
+        if khop_tim(q, d.ho_so.title, d.ho_so.requester_label, d.ho_so.description, _ma_ho_so(d.ho_so))
         and (not request_type or d.ho_so.request_type_code == request_type)
         and (not priority or d.ho_so.priority_code == priority)
         and (not needs_action or buoc[d.ho_so.id] is not None)

@@ -37,3 +37,10 @@ repos:
         pass_filenames: false
         # Chỉ chạy khi đổi thứ trang phả hệ đọc: bản sửa CSDL, bảng điều khiển Superset, chính hai trang
         files: ^(backend/alembic/versions/|infra/superset/|scripts/pha_he\.py|docs/pha-he-du-lieu\.md|docs-site/src/content/docs/tham-khao/pha-he-du-lieu\.md)
+      - id: tu-dien-du-lieu
+        name: Từ điển dữ liệu khớp mô hình
+        entry: python scripts/tu_dien_du_lieu.py --kiem
+        language: python
+        pass_filenames: false
+        # Chỉ chạy khi đổi mô hình, chính kịch bản hay trang nó sinh (#446)
+        files: ^(backend/app/models/|scripts/tu_dien_du_lieu\.py|docs-site/src/content/docs/tham-khao/tu-dien-du-lieu\.md)

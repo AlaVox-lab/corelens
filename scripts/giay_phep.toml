@@ -22,17 +22,19 @@ khai-pha = ["AGPL-3.0-or-later", "GPL-3.0-or-later"]
 # Gói mà siêu dữ liệu không ghi được mã SPDX đọc tự động (chỉ có văn bản giấy phép dài, hay ghi chung chung),
 # hoặc mang giấy phép dữ liệu chứ không phải phần mềm. Mỗi dòng ghi giấy phép đã đọc tận tay và lý do;
 # `chi_trong` giới hạn ngoại lệ vào một thành phần — gói GPL lọt sang thành phần khác vẫn bị chặn.
+# `phien_ban` là các bản đã đọc tận tay (#494): nâng gói lên bản khác thì bản quét dừng, chờ người đọc lại giấy
+# phép của bản mới rồi thêm nó vào danh sách.
 [ngoai_le]
-caniuse-lite = { giay_phep = "CC-BY-4.0", ly_do = "bảng dữ liệu, chỉ dùng lúc dựng — docs/dependencies.md mục Một gói không mang giấy phép phần mềm" }
-language-subtag-registry = { giay_phep = "CC0-1.0", ly_do = "bảng mã ngôn ngữ, chỉ dùng lúc soát mã — cùng mục trên" }
-matplotlib = { giay_phep = "PSF-2.0", ly_do = "văn bản 'License agreement for matplotlib', kiểu PSF; phân loại Python Software Foundation License" }
-scipy = { giay_phep = "BSD-3-Clause", ly_do = "tệp LICENSE.txt trong gói: BSD 3 điều khoản" }
-kiwisolver = { giay_phep = "BSD-3-Clause", ly_do = "văn bản 'The Kiwi licensing terms' — BSD đã sửa, phân loại BSD License" }
-cycler = { giay_phep = "BSD-3-Clause", ly_do = "văn bản BSD 3 điều khoản của dự án matplotlib" }
-contourpy = { giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
-pandas = { giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
-cvxopt = { chi_trong = "khai-pha", giay_phep = "GPL-3.0-or-later", ly_do = "văn bản 'either version 3 … or any later version'; chỉ trong dịch vụ khai phá (ADR-0007)" }
-python-dateutil = { giay_phep = "Apache-2.0 OR BSD-3-Clause", ly_do = "ghi 'Dual License', phân loại Apache và BSD" }
-uvloop = { giay_phep = "MIT OR Apache-2.0", ly_do = "ghi 'MIT License', phân loại MIT và Apache" }
-mdn-data = { giay_phep = "CC0-1.0", ly_do = "dữ liệu thuộc tính CSS của MDN, chỉ dùng lúc dựng trang tài liệu — docs/dependencies.md mục trang tài liệu" }
-numpy = { giay_phep = "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0", ly_do = "phần CC0-1.0 là tệp dữ liệu đi kèm, mã mang BSD-3-Clause; chỉ trong dịch vụ khai phá" }
+caniuse-lite = { phien_ban = ["1.0.30001826"], giay_phep = "CC-BY-4.0", ly_do = "bảng dữ liệu, chỉ dùng lúc dựng — docs/dependencies.md mục Một gói không mang giấy phép phần mềm" }
+language-subtag-registry = { phien_ban = ["0.3.23"], giay_phep = "CC0-1.0", ly_do = "bảng mã ngôn ngữ, chỉ dùng lúc soát mã — cùng mục trên" }
+matplotlib = { phien_ban = ["3.11.1"], giay_phep = "PSF-2.0", ly_do = "văn bản 'License agreement for matplotlib', kiểu PSF; phân loại Python Software Foundation License" }
+scipy = { phien_ban = ["1.18.0"], giay_phep = "BSD-3-Clause", ly_do = "tệp LICENSE.txt trong gói: BSD 3 điều khoản" }
+kiwisolver = { phien_ban = ["1.5.0"], giay_phep = "BSD-3-Clause", ly_do = "văn bản 'The Kiwi licensing terms' — BSD đã sửa, phân loại BSD License" }
+cycler = { phien_ban = ["0.12.1"], giay_phep = "BSD-3-Clause", ly_do = "văn bản BSD 3 điều khoản của dự án matplotlib" }
+contourpy = { phien_ban = ["1.3.3"], giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
+pandas = { phien_ban = ["3.0.5"], giay_phep = "BSD-3-Clause", ly_do = "văn bản mở đầu 'BSD 3-Clause License'" }
+cvxopt = { phien_ban = ["1.3.3"], chi_trong = "khai-pha", giay_phep = "GPL-3.0-or-later", ly_do = "văn bản 'either version 3 … or any later version'; chỉ trong dịch vụ khai phá (ADR-0007)" }
+python-dateutil = { phien_ban = ["2.9.0.post0"], giay_phep = "Apache-2.0 OR BSD-3-Clause", ly_do = "ghi 'Dual License', phân loại Apache và BSD" }
+uvloop = { phien_ban = ["0.23.0"], giay_phep = "MIT OR Apache-2.0", ly_do = "ghi 'MIT License', phân loại MIT và Apache" }
+mdn-data = { phien_ban = ["2.0.28", "2.27.1"], giay_phep = "CC0-1.0", ly_do = "dữ liệu thuộc tính CSS của MDN, chỉ dùng lúc dựng trang tài liệu — docs/dependencies.md mục trang tài liệu" }
+numpy = { phien_ban = ["2.5.1"], giay_phep = "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0", ly_do = "phần CC0-1.0 là tệp dữ liệu đi kèm, mã mang BSD-3-Clause; chỉ trong dịch vụ khai phá" }

@@ -6,21 +6,25 @@
 # Năm điều phải canh:
 #
 #   Quyền      — chỉ quản trị viên đăng ký, xem, hủy; bí mật chỉ trả một lần.
-#   Con trỏ    — đăng ký mới không nhận sự kiện cũ; mỗi sự kiện mới đúng một lần gửi, kể cả khi mở rộng
-#                chạy hai lượt.
+#   Sinh lần gửi — trigger trên `event_log` (#492): đăng ký mới không nhận sự kiện cũ; mỗi sự kiện đúng
+#                một lần gửi, ngay trong giao dịch ghi sự kiện; hai giao dịch commit ngược thứ tự mã
+#                không làm mất sự kiện nào.
 #   Lọc        — theo mã hoạt động và quy trình là dữ liệu của đăng ký.
 #   Gửi        — thân JSON đúng sự kiện, chữ ký HMAC kiểm lại được; 2xx là xong.
 #   Thử lại    — hỏng thì chờ rồi thử lại, quá số lần thì đánh dấu hỏng; lỗi mạng không ném ra ngoài.
+#   Không chặn — một địa chỉ treo tốn một lần hết hạn chờ mỗi lượt; hủy đăng ký không chờ lượt gửi.
 #
 # Không gọi mạng thật: `app.webhook.gui_http` được thay bằng hàm ghi lại lời gọi.
 
 from __future__ import annotations
 
 import json
+import threading
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select, text
+from sqlalchemy.orm import Session
 
 from app import webhook
 from app.auth.dependencies import current_actor
@@ -29,7 +33,7 @@ from app.main import app
 from app.models.case import EventLog, Request
 from app.models.webhook import CHO_GUI, DA_GUI, HONG, WebhookDelivery, WebhookSubscription
 from app.models.workflow_config import Priority, RequestType
-from app.webhook import kiem_chu_ky, mo_rong, quet_webhook
+from app.webhook import kiem_chu_ky, quet_webhook
 from app.workflow.context import Actor
 from app.workflow.engine import create_case, perform_transition
 
@@ -71,7 +75,6 @@ def _dang_ky(session, **kw) -> WebhookSubscription:
         url="http://ben-nhan.test/su-kien",
         secret="bi-mat-thu",
         owner_id=QUAN_TRI.id,
-        last_event_id=session.scalar(text("SELECT coalesce(max(id), 0) FROM event_log")),
         **kw,
     )
     session.add(dk)
@@ -148,24 +151,32 @@ def test_khong_token_401():
 
 
 # ---------------------------------------------------------------------------
-# Con trỏ và lọc
+# Sinh lần gửi và lọc — trigger trên event_log (#492)
 # ---------------------------------------------------------------------------
 
 
 def test_dang_ky_moi_chi_nhan_su_kien_sau_luc_tao(session, rule_set):
     _phan_loai(session)
     dk = _dang_ky(session)
-    assert mo_rong(session) == 0
+    assert _lan_gui(session, dk) == []
 
     _phan_loai(session)
-    assert mo_rong(session) == 1
-    # Lượt thứ hai không sinh trùng
-    assert mo_rong(session) == 0
+    (lg,) = _lan_gui(session, dk)
+    assert lg.status == CHO_GUI
+    assert lg.event_id == session.scalar(select(EventLog.id).order_by(EventLog.id.desc()))
+
+
+def test_lan_gui_sinh_cung_giao_dich_voi_su_kien(session, rule_set):
+    """Sự kiện hoàn tác thì lần gửi cũng mất — không có lần gửi nào trỏ tới sự kiện không tồn tại."""
+    dk = _dang_ky(session)
+    diem = session.begin_nested()
+    _phan_loai(session)
     assert len(_lan_gui(session, dk)) == 1
+    diem.rollback()
+    assert _lan_gui(session, dk) == []
 
 
 def test_loc_theo_hoat_dong(session, rule_set):
-    hoat_dong = None
     dk_khop = _dang_ky(session)
     _phan_loai(session)
     hoat_dong = session.scalars(select(EventLog.activity).order_by(EventLog.id.desc())).first()
@@ -173,14 +184,10 @@ def test_loc_theo_hoat_dong(session, rule_set):
     dk_dung = _dang_ky(session, activities=[hoat_dong])
     dk_lech = _dang_ky(session, activities=["khong-bao-gio-xay-ra"])
     _phan_loai(session)
-    mo_rong(session)
 
     assert len(_lan_gui(session, dk_dung)) == 1
     assert len(_lan_gui(session, dk_lech)) == 0
     assert len(_lan_gui(session, dk_khop)) == 2
-    # Không khớp vẫn dời con trỏ
-    session.refresh(dk_lech)
-    assert dk_lech.last_event_id == session.scalar(select(EventLog.id).order_by(EventLog.id.desc()))
 
 
 def test_loc_theo_quy_trinh(session, rule_set):
@@ -194,7 +201,6 @@ def test_loc_theo_quy_trinh(session, rule_set):
     dk_dung = _dang_ky(session, process_code=ma_quy_trinh)
     dk_khac = _dang_ky(session, process_code=quy_trinh_khac)
     _phan_loai(session)
-    mo_rong(session)
 
     assert len(_lan_gui(session, dk_dung)) == 1
     assert len(_lan_gui(session, dk_khac)) == 0
@@ -203,8 +209,60 @@ def test_loc_theo_quy_trinh(session, rule_set):
 def test_dang_ky_tat_khong_nhan(session, rule_set):
     dk = _dang_ky(session, is_active=False)
     _phan_loai(session)
-    mo_rong(session)
     assert _lan_gui(session, dk) == []
+
+
+def test_hai_giao_dich_commit_nguoc_thu_tu_ma_khong_mat_su_kien(db_engine):
+    """Kịch bản của #492: A giữ mã nhỏ chưa commit, B commit mã lớn hơn, bộ gửi chạy, rồi A mới commit.
+
+    Hai kết nối thật, commit thật — sự kiện của giao dịch kia chỉ thấy được sau commit, đúng như ngoài đời.
+    Dữ liệu ghi thật được dọn ở cuối bài (nhật ký chỉ ghi thêm nên tạm tắt trigger chặn xóa để dọn).
+    """
+    with Session(db_engine) as chuan_bi:
+        loai = chuan_bi.scalars(
+            select(RequestType.code).where(RequestType.is_active).order_by(RequestType.display_order)
+        ).first()
+        ho_so = create_case(chuan_bi, title="Kiểm webhook chồng giao dịch", requester_id=NGUOI_GUI.id,
+                            requester_label=NGUOI_GUI.label, request_type_code=loai)
+        dk = WebhookSubscription(url="http://ben-nhan.test/chong", secret="bi-mat", owner_id=QUAN_TRI.id)
+        chuan_bi.add(dk)
+        chuan_bi.commit()
+        ma_ho_so, ma_dk, trang_thai = ho_so.id, dk.id, ho_so.current_state
+
+    ghi = text(
+        "INSERT INTO event_log (case_id, activity, actor, from_state, to_state) "
+        "VALUES (:h, 'kiem-chong-giao-dich', 'kc-kiem', :s, :s) RETURNING id"
+    )
+    a, b = db_engine.connect(), db_engine.connect()
+    try:
+        ma_a = a.execute(ghi, {"h": ma_ho_so, "s": trang_thai}).scalar_one()  # A giữ mã nhỏ, chưa commit
+        ma_b = b.execute(ghi, {"h": ma_ho_so, "s": trang_thai}).scalar_one()
+        b.commit()
+        assert ma_a < ma_b
+
+        # Bộ gửi chạy lúc A còn dở: chỉ thấy sự kiện của B
+        with Session(db_engine) as bo_gui:
+            thay = bo_gui.scalars(select(WebhookDelivery.event_id).where(
+                WebhookDelivery.subscription_id == ma_dk)).all()
+        assert thay == [ma_b]
+
+        a.commit()
+        with Session(db_engine) as doc:
+            sau = sorted(doc.scalars(select(WebhookDelivery.event_id).where(
+                WebhookDelivery.subscription_id == ma_dk)).all())
+        assert sau == [ma_a, ma_b]
+    finally:
+        a.close()
+        b.close()
+        with db_engine.begin() as don:
+            don.execute(text("DELETE FROM webhook_subscriptions WHERE id = :d"), {"d": ma_dk})
+            don.execute(text("ALTER TABLE event_log DISABLE TRIGGER USER"))
+            # Lần gửi của đăng ký khác (nếu cơ sở dữ liệu có) cũng trỏ tới sự kiện của bài này
+            don.execute(text("DELETE FROM webhook_deliveries WHERE event_id IN "
+                             "(SELECT id FROM event_log WHERE case_id = :h)"), {"h": ma_ho_so})
+            don.execute(text("DELETE FROM event_log WHERE case_id = :h"), {"h": ma_ho_so})
+            don.execute(text("ALTER TABLE event_log ENABLE TRIGGER USER"))
+            don.execute(text("DELETE FROM requests WHERE id = :h"), {"h": ma_ho_so})
 
 
 # ---------------------------------------------------------------------------
@@ -285,3 +343,84 @@ def test_xem_lan_gui_qua_api(client, session, rule_set, mang_gia):
     tra = client.get(f"/core/v1/webhooks/{dk.id}/deliveries")
     assert tra.status_code == 200
     assert [d["status"] for d in tra.json()] == [DA_GUI]
+
+
+# ---------------------------------------------------------------------------
+# Không chặn nhau (#492)
+# ---------------------------------------------------------------------------
+
+
+def test_dia_chi_treo_ton_mot_lan_het_han_moi_luot(session, rule_set, monkeypatch):
+    """Ba sự kiện cho một bên nhận treo và một bên nhận tốt: bên treo chỉ bị gọi một lần mỗi lượt."""
+    goi: list[str] = []
+
+    def gui(url, _than, _tieu_de, _han):
+        goi.append(url)
+        if "treo" in url:
+            raise TimeoutError("timed out")
+        return 200
+
+    monkeypatch.setattr(webhook, "gui_http", gui)
+    dk_treo = _dang_ky(session, description="treo")
+    dk_treo.url = "http://ben-nhan.test/treo"
+    dk_tot = _dang_ky(session)
+    for _ in range(3):
+        _phan_loai(session)
+
+    assert quet_webhook(session) == 3
+    assert goi.count(dk_treo.url) == 1
+    assert goi.count(dk_tot.url) == 3
+    # Hai lần chưa thử của bên treo không bị tính là một lần thử, và đến hạn lại ngay cho lượt sau
+    lan_treo = _lan_gui(session, dk_treo)
+    assert sorted(lg.attempts for lg in lan_treo) == [0, 0, 1]
+    assert all(lg.status == CHO_GUI for lg in lan_treo)
+
+
+def test_huy_dang_ky_khong_cho_luot_gui(db_engine, monkeypatch):
+    """Trong lúc bộ gửi đang gọi mạng, một kết nối khác hủy được đăng ký ngay — không giao dịch nào giữ khóa."""
+    with Session(db_engine) as chuan_bi:
+        loai = chuan_bi.scalars(
+            select(RequestType.code).where(RequestType.is_active).order_by(RequestType.display_order)
+        ).first()
+        ho_so = create_case(chuan_bi, title="Kiểm hủy webhook giữa lượt", requester_id=NGUOI_GUI.id,
+                            requester_label=NGUOI_GUI.label, request_type_code=loai)
+        dk = WebhookSubscription(url="http://ben-nhan.test/huy", secret="bi-mat", owner_id=QUAN_TRI.id)
+        chuan_bi.add(dk)
+        chuan_bi.commit()
+        ma_ho_so, ma_dk, trang_thai = ho_so.id, dk.id, ho_so.current_state
+    with db_engine.begin() as ghi:
+        ghi.execute(text(
+            "INSERT INTO event_log (case_id, activity, actor, from_state, to_state) "
+            "VALUES (:h, 'kiem-huy-giua-luot', 'kc-kiem', :s, :s)"), {"h": ma_ho_so, "s": trang_thai})
+
+    huy_duoc: list[bool] = []
+
+    def gui(_url, _than, _tieu_de, _han):
+        # Đang "gọi mạng": một kết nối khác hủy đăng ký, chờ khóa tối đa 2 giây
+        def huy():
+            with db_engine.begin() as k:
+                k.execute(text("SET LOCAL lock_timeout = '2s'"))
+                k.execute(text("DELETE FROM webhook_subscriptions WHERE id = :d"), {"d": ma_dk})
+            huy_duoc.append(True)
+
+        luong = threading.Thread(target=huy)
+        luong.start()
+        luong.join(timeout=5)
+        return 200
+
+    monkeypatch.setattr(webhook, "gui_http", gui)
+    try:
+        with Session(db_engine) as bo_gui:
+            # Chỉ lần gửi của bài này đến hạn — lần của bài khác (nếu còn) đã được hoàn tác
+            assert quet_webhook(bo_gui) == 0
+        assert huy_duoc == [True]
+    finally:
+        with db_engine.begin() as don:
+            don.execute(text("DELETE FROM webhook_subscriptions WHERE id = :d"), {"d": ma_dk})
+            don.execute(text("ALTER TABLE event_log DISABLE TRIGGER USER"))
+            # Lần gửi của đăng ký khác (nếu cơ sở dữ liệu có) cũng trỏ tới sự kiện của bài này
+            don.execute(text("DELETE FROM webhook_deliveries WHERE event_id IN "
+                             "(SELECT id FROM event_log WHERE case_id = :h)"), {"h": ma_ho_so})
+            don.execute(text("DELETE FROM event_log WHERE case_id = :h"), {"h": ma_ho_so})
+            don.execute(text("ALTER TABLE event_log ENABLE TRIGGER USER"))
+            don.execute(text("DELETE FROM requests WHERE id = :h"), {"h": ma_ho_so})

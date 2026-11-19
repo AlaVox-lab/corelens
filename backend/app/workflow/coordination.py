@@ -169,7 +169,7 @@ def hang_doi(
     actor: _Cua,
     trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
     state: Annotated[str | None, Query(description="Chỉ lấy một trạng thái")] = None,
-    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu")] = None,
     request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
     priority: Annotated[str | None, Query(description="Chỉ một mức ưu tiên")] = None,
     department: Annotated[str | None, Query(description="Chỉ hồ sơ đang gắn một phòng")] = None,
@@ -230,7 +230,7 @@ def hang_doi(
 
     def khop(ho_so: Request) -> bool:
         return (
-            khop_tim(q, ho_so.title, ho_so.requester_label, _ma_ho_so(ho_so))
+            khop_tim(q, ho_so.title, ho_so.requester_label, ho_so.description, _ma_ho_so(ho_so))
             and (not request_type or ho_so.request_type_code == request_type)
             and (not priority or ho_so.priority_code == priority)
             and (not department or ho_so.department_code == department)

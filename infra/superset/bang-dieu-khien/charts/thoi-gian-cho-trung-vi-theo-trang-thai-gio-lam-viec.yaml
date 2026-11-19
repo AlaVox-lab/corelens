@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+slice_name: Thời gian chờ trung vị theo trạng thái (giờ làm việc)
+description: Mỗi lượt hồ sơ ở một trạng thái, kể cả lượt còn dở tính tới bây giờ — cùng cách tính với màn Quy trình thực tế (#445).
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 15__table
+  adhoc_filters: []
+  row_limit: 10000
+  color_scheme: supersetColors
+  show_legend: true
+  rich_tooltip: true
+  orientation: horizontal
+  x_axis_title_margin: 15
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  truncateXAxis: true
+  sort_series_type: sum
+  zoomable: false
+  x_axis: trang_thai
+  groupby: []
+  metrics:
+  - expressionType: SQL
+    sqlExpression: ROUND(CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY so_gio_lam_viec) AS NUMERIC), 1)
+    label: Thời gian chờ (trung vị, giờ làm việc)
+    hasCustomLabel: true
+    optionName: metric_cho_trung_vi_trang_thai
+  x_axis_title: ''
+  y_axis_title: ''
+  show_value: true
+query_context: null
+cache_timeout: null
+uuid: cac20aa2-5f50-4085-9c01-0b14339b7e48
+version: 1.0.0
+dataset_uuid: 62d67b7a-cdf5-41b7-8404-116697bcd4ab

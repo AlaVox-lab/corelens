@@ -479,6 +479,39 @@ select.o-nhap {
   font-size: 12.5px;
 }
 
+/* Hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ có mặt khi mô hình nhúng bật và có hồ sơ đủ gần */
+.can-cu-tuong-tu {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+  font-size: 12.5px;
+}
+
+.can-cu-tuong-tu-dau {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.can-cu-tuong-tu-dau svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.can-cu-tuong-tu ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+}
+
+.can-cu-tuong-tu-phu {
+  color: var(--ink-2);
+}
+
 .the-goi-y-khac {
   font-size: 12.5px;
   color: var(--f-a-ink);

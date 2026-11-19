@@ -25,7 +25,8 @@
 Phụ thuộc gián tiếp không ghi từng dòng ở đây; CI quét giấy phép của **mọi** gói — npm từ tệp khóa, Python
 trong ảnh đã dựng — bằng `scripts/quet_giay_phep.py`, chặn giấy phép ngoài danh sách cho phép ở
 `scripts/giay_phep.toml` (#418). Gói gián tiếp mới mang giấy phép lạ thì CI đỏ: đọc giấy phép tận tay, rồi
-hoặc thêm mã SPDX vào danh sách (khi thuộc OSI và tương thích), hoặc thêm một ngoại lệ có lý do.
+hoặc thêm mã SPDX vào danh sách (khi thuộc OSI và tương thích), hoặc thêm một ngoại lệ có lý do và phiên bản
+đã đọc (`phien_ban`). Nâng một gói có ngoại lệ lên bản khác thì CI dừng, chờ người đọc lại giấy phép của bản mới (#494).
 
 **Không thêm phụ thuộc mà bỏ qua bước kiểm tra.** Một giấy phép sai có thể khiến
 toàn bộ dự án không được chấm điểm.
@@ -316,9 +317,9 @@ Không phải phụ thuộc của sản phẩm, nhưng ghi lại để minh bạ
 |---|---|---|---|
 | git-cliff | MIT hoặc Apache-2.0 | Sinh nhật ký thay đổi | Không |
 | GitHub CLI | MIT | Khởi tạo hệ thống nhãn | Không |
-| `actions/checkout@v5`, `actions/setup-node@v5` (chạy Node 24, #477), `actions/upload-artifact` (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
+| `actions/checkout@v5`, `actions/setup-node@v5` (#477), `actions/upload-artifact@v7`, `actions/upload-pages-artifact@v5`, `actions/deploy-pages@v5` (#494) — mọi bản đều chạy Node 24 (GitHub Actions) | MIT | Tích hợp liên tục, `.github/workflows/ci.yml` và `e2e.yml` (lưu báo cáo kịch bản giao diện khi hỏng) | Không — chỉ chạy kiểm tra, sản phẩm vẫn dựng bằng `docker compose` |
 | ruff `0.17.3` | MIT | Linter Python (#382), cấu hình `ruff.toml` ở gốc; CI chạy bằng `pipx run --spec ruff==0.17.3`. Không nằm trong `requirements.txt` của dịch vụ nào — ảnh chứa không cần nó. Bản phát hành 27/10/2026 (bản mới hơn chưa đủ hai tuần lúc chọn, 17/11/2026) | Không |
-| lychee (`lycheeverse/lychee-action@v2`) | Apache-2.0 hoặc MIT | Kiểm liên kết nội bộ hỏng trong Markdown của kho và trang tài liệu đã dựng (#423), job `tai-lieu` của `ci.yml`; chạy `--offline` nên không gọi mạng | Không |
+| lychee (`lycheeverse/lychee-action` v2.9.0, ghim theo mã băm commit `e747777…` vì là action bên thứ ba, #494) | Apache-2.0 hoặc MIT | Kiểm liên kết nội bộ hỏng trong Markdown của kho và trang tài liệu đã dựng (#423), job `tai-lieu` của `ci.yml`; chạy `--offline` nên không gọi mạng | Không |
 | pre-commit `4.7.0`, `pre-commit-hooks` `v6.0.0` | MIT (cả hai) | Tự kiểm trước mỗi commit, **tùy chọn** (#484), cấu hình `.pre-commit-config.yaml` ở gốc; móc ruff dùng `astral-sh/ruff-pre-commit` `v0.17.3` (MIT), cùng bản ruff với CI | Không |
 | Visual Studio Code | MIT (bản mã nguồn) | Trình soạn thảo | Không |
 

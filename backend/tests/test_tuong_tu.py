@@ -394,3 +394,72 @@ def test_phien_cua_nguoi_khac_khong_bi_dung(session, chi_muc):
 def test_quet_khi_mo_hinh_tat_van_danh_dau_bo_khong_gui_va_khong_lap(session, monkeypatch):
     dat_cau_hinh(monkeypatch, embedding_url="")
     assert tuong_tu.quet_chi_muc(session) == 0
+
+
+# ---------------------------------------------------------------------------
+# Căn cứ cho thẻ gợi ý của điều phối viên (#450)
+# ---------------------------------------------------------------------------
+
+DIEU_PHOI = Actor(id="kc-dp-450", name="Điều phối viên", roles=frozenset({"classifier"}))
+
+
+@pytest.fixture
+def client_dieu_phoi(session):
+    nguoi = {"actor": DIEU_PHOI}
+    app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[current_actor] = lambda: nguoi["actor"]
+    with TestClient(app) as c:
+        c.nguoi = nguoi
+        yield c
+    app.dependency_overrides.clear()
+
+
+def _ho_so_dang_cho(session) -> Request:
+    loai = session.scalars(select(RequestType.code).where(RequestType.is_active)).first()
+    h = create_case(session, title="Máy chiếu phòng họp tầng 2 không có tín hiệu",
+                    description="Cắm HDMI vào laptop thì máy chiếu báo không có tín hiệu",
+                    requester_id=NGUOI_GUI.id, requester_label=NGUOI_GUI.label, request_type_code=loai)
+    session.commit()
+    return h
+
+
+def test_can_cu_mo_hinh_tat_thi_khong_hien_gi(client_dieu_phoi, session, monkeypatch):
+    dat_cau_hinh(monkeypatch, embedding_url="")
+    tra = client_dieu_phoi.get(f"/similar-cases/for-case/{_ho_so_dang_cho(session).id}")
+    assert tra.status_code == 200
+    assert tra.json() == {"items": [], "enabled": False}
+
+
+def test_can_cu_tra_ho_so_da_giai_quyet_gan_nhat_kem_ma(client_dieu_phoi, session, chi_muc):
+    h = _ho_so_dang_cho(session)
+    tra = client_dieu_phoi.get(f"/similar-cases/for-case/{h.id}")
+    assert tra.status_code == 200
+    du_lieu = tra.json()
+    assert du_lieu["enabled"] is True
+    dau = du_lieu["items"][0]
+    assert dau["case_id"] == chi_muc["may-chieu"].id
+    assert dau["code"].startswith("YC-") and dau["code"].endswith(str(chi_muc["may-chieu"].id).zfill(4))
+    assert "cáp HDMI" in dau["resolution"]
+    assert h.id not in [m["case_id"] for m in du_lieu["items"]]
+
+
+def test_can_cu_khong_tra_chinh_ho_so_dang_xet(client_dieu_phoi, chi_muc):
+    """Hồ sơ đã giải quyết rồi mở lại vẫn có thể nằm trong chỉ mục — không làm căn cứ cho chính nó."""
+    ma = chi_muc["may-chieu"].id
+    tra = client_dieu_phoi.get(f"/similar-cases/for-case/{ma}").json()
+    assert ma not in [m["case_id"] for m in tra["items"]]
+
+
+def test_can_cu_cong_dong_thi_rong_khong_loi(client_dieu_phoi, session, monkeypatch):
+    dat_cau_hinh(monkeypatch, embedding_url=_cong_dong(), similar_timeout_seconds=HAN_CHOT)
+    tra = client_dieu_phoi.get(f"/similar-cases/for-case/{_ho_so_dang_cho(session).id}")
+    assert tra.status_code == 200 and tra.json() == {"items": [], "enabled": True}
+
+
+def test_can_cu_chi_cho_dieu_phoi(client_dieu_phoi, session):
+    client_dieu_phoi.nguoi["actor"] = NGUOI_GUI
+    assert client_dieu_phoi.get(f"/similar-cases/for-case/{_ho_so_dang_cho(session).id}").status_code == 403
+
+
+def test_can_cu_ho_so_khong_co_tra_404(client_dieu_phoi, chi_muc):
+    assert client_dieu_phoi.get("/similar-cases/for-case/999999999").status_code == 404

@@ -120,6 +120,29 @@ test.describe("người gửi", () => {
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
+  test("bước 2 của biểu mẫu không cuộn ngang, có ô tải tệp (#436)", async ({ page }) => {
+    // Bước 2 có trường riêng của loại và ô tải tệp — rộng nhất trong ba bước
+    await moMan(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau-buoc-1");
+    // Bấm thẻ loại là sang thẳng bước 2, như guiYeuCauThu trong chung.ts
+    await page.getByText("Sự cố thiết bị").first().click();
+    await expect(page.locator('input[name="title"]')).toBeVisible();
+    await expect(page.locator('input[type="file"]')).toHaveCount(1);
+    const cuonNgang = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(cuonNgang, "thanh cuộn ngang ở bước 2 của biểu mẫu").toBe(false);
+    await chup(page, test.info().project.name, "nguoi-gui-gui-yeu-cau-buoc-2");
+  });
+
+  test("?loai= mở thẳng bước 2 với loại chọn sẵn; mã lạ về bước 1 (#434)", async ({ page }) => {
+    // `device-incident` là mã của loại "Sự cố thiết bị" trong dữ liệu khởi tạo (infra/seed/)
+    await moMan(page, "/yeu-cau/moi?loai=device-incident", "nguoi-gui-gui-yeu-cau-loai-san");
+    await expect(page.locator('input[name="title"]')).toBeVisible();
+    await expect(page.locator("#truong-rieng-ma-tai-san")).toBeVisible();
+
+    await moMan(page, "/yeu-cau/moi?loai=khong-co-loai-nay", "nguoi-gui-gui-yeu-cau-loai-la");
+    await expect(page.locator('input[name="title"]')).toBeHidden();
+    await expect(page.getByText("Sự cố thiết bị").first()).toBeVisible();
+  });
+
   test("mô hình nhúng tắt: gõ nội dung không hiện hồ sơ tương tự, vẫn gửi bình thường (#319)", async ({ page }) => {
     // Cụm mặc định không bật hồ sơ `tri-tue`: dịch vụ báo tắt, biểu mẫu không hiện gì, không báo lỗi
     const tra = await page.request.post("/api/yeu-cau/tuong-tu", {
@@ -444,6 +467,47 @@ test.describe("điều phối viên", () => {
     // Phòng người dùng chọn có thể trùng đúng gợi ý của loại đầu; khi khác thì thẻ phải nói
     const oPhongKhacGoiY = !(await oPhong.locator("option:checked").innerText()).includes(goiYDau);
     if (oPhongKhacGoiY) await expect(the.locator(".the-goi-y-khac")).toHaveText(/Bạn đang chọn khác gợi ý/);
+  });
+
+  test("mô hình nhúng tắt: thẻ gợi ý phòng ban y như cũ, không khối hồ sơ tương tự (#450)", async ({ browser, page }) => {
+    // Cụm mặc định không bật hồ sơ `tri-tue`: tuyến căn cứ báo tắt, thẻ không có gì thêm, không lỗi
+    const loi: string[] = [];
+    page.on("pageerror", (e) => loi.push(e.message));
+    const traLoi = page.waitForResponse((r) => r.url().includes("/api/dieu-phoi/tuong-tu/"));
+    await dungHoSoChoChuyenPhong(browser, page, "Căn cứ tắt");
+    const { the } = await moBangChuyenPhong(page);
+    await expect(the).toBeVisible();
+    expect(await (await traLoi).json()).toEqual({ items: [], enabled: false });
+    await expect(the.locator(".can-cu-tuong-tu")).toHaveCount(0);
+    expect(loi).toEqual([]);
+  });
+
+  test("mô hình nhúng bật: thẻ gợi ý kèm hồ sơ đã giải quyết tương tự, mã mở hồ sơ đó (#450)", async ({ browser, page }) => {
+    // Cụm thử không chạy mô hình nhúng: giả lập đúng phản hồi của tuyến để kiểm phần hiển thị
+    await page.route("**/api/dieu-phoi/tuong-tu/*", (route) =>
+      route.fulfill({
+        json: {
+          enabled: true,
+          items: [
+            { case_id: 7, code: "YC-2026-0007", title: "Máy chiếu không lên hình", request_type: "Sự cố thiết bị",
+              resolution: "Đổi cáp HDMI mới.", closed_at: "2026-10-01T03:00:00+00:00", score: 0.81 },
+            { case_id: 9, code: "YC-2026-0009", title: "Màn hình phòng họp nhấp nháy", request_type: null,
+              resolution: "Thay nguồn màn hình.", closed_at: "2026-10-03T03:00:00+00:00", score: 0.66 },
+          ],
+        },
+      }),
+    );
+    await dungHoSoChoChuyenPhong(browser, page, "Căn cứ bật");
+    const { the } = await moBangChuyenPhong(page);
+    const khoi = the.locator(".can-cu-tuong-tu");
+    await expect(khoi).toContainText("Hồ sơ đã giải quyết tương tự");
+    await expect(khoi.locator("li")).toHaveCount(2);
+    await expect(khoi.getByRole("link", { name: "YC-2026-0007" })).toHaveAttribute("href", "/dieu-phoi/7");
+    await expect(khoi).toContainText("Đổi cáp HDMI mới.");
+    // Không cuộn ngang dù thêm khối
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
+    await the.scrollIntoViewIfNeeded();
+    await chup(page, test.info().project.name, "dieu-phoi-the-goi-y-can-cu");
   });
 
   test("Báo cáo có số của toàn công ty (#305)", async ({ page }) => {

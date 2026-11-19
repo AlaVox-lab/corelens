@@ -172,7 +172,7 @@ hệt.
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
-| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json`, `from`, `to`, `process`) |
+| Lõi — Nhật ký sự kiện | `GET /analytics/event-log` | `GET /core/v1/events` (`format=csv\|json\|xes`, `from`, `to`, `process`) |
 | Lõi — Lưu trữ lạnh ² | — | `GET /core/v1/archive` · `GET /core/v1/archive/{YYYY-MM}` · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` |
 | Lõi — Webhook ² | — | `POST`, `GET /core/v1/webhooks` · `GET`, `DELETE /core/v1/webhooks/{id}` · `GET /core/v1/webhooks/{id}/deliveries` (#390, mục 6.8) |
 | Lõi — Thông báo | `GET /me/notifications` | `GET /core/v1/notifications/preferences` |
@@ -206,7 +206,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 | Giao việc, danh bạ | `GET /departments/{department_code}/assignees` |
 | Báo cáo nhúng | `POST /analytics/dashboard/guest-token` |
 | Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
-| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
+| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon`, `/similar-cases/for-case/{case_id}` (#450) |
 | Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
 | Vận hành | `/system/health`, `/sla/scan`, `/archive/scan` (#378), `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
 
@@ -752,6 +752,11 @@ Mười bảy bảng, định nghĩa ở bản sửa gốc `0000_luoc_do_cau_hin
 | Lời nhắn | `message_kinds` · `message_kind_roles` | Loại lời nhắn trên hồ sơ và vai trò gửi được từng loại (#128), kể cả loại nội bộ ẩn với người gửi (#156) — xem mục 6.2 |
 | Lịch làm việc | `work_calendars` · `work_hours` · `holidays` | Giờ làm theo thứ, ngày nghỉ, múi giờ (#199). Mọi khoảng thời gian của quy trình đo bằng giờ làm việc theo lịch mặc định — xem mục 7.1 |
 
+**Từ điển dữ liệu** của mọi bảng — nghĩa, cột, kiểu, để trống được không, khóa — sinh tự động từ mô hình
+`backend/app/models/` bằng `scripts/tu_dien_du_lieu.py` (#446), ở trang tài liệu *Tham khảo → Từ điển dữ liệu*
+([`tu-dien-du-lieu.md`](../docs-site/src/content/docs/tham-khao/tu-dien-du-lieu.md)); bảng chưa có mô hình liệt
+kê kèm bản sửa tạo ra nó. Tích hợp liên tục chạy `--kiem`: thêm cột mà quên sinh lại trang là đỏ.
+
 **Lược đồ và dữ liệu để tách nhau có chủ ý.** Lược đồ nằm trong chuỗi migration vì nó
 thuộc kiến trúc; dữ liệu khởi tạo nằm trong `infra/seed/` vì nó chỉ là ví dụ mẫu mà công ty
 khác sẽ xóa đi khai lại. Lẫn hai thứ vào nhau thì người triển khai phải dò giữa hai loại nội
@@ -1203,6 +1208,7 @@ sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi —
 | `bao_cao_thoi_gian_xu_ly` | loại: trung vị giờ xử lý, tỷ lệ vi phạm toàn công ty | tóm tắt |
 | `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
 | `bao_cao_goi_y` | một gợi ý đã được giữ hay ghi đè: trường, nguồn, giá trị gợi ý và giá trị chọn (migration `0016`, #239) | Tỷ lệ ghi đè gợi ý |
+| `bao_cao_thoi_gian_trang_thai` | một lượt hồ sơ ở một trạng thái chưa kết thúc: lúc vào, lúc ra, giây và giờ làm việc — cùng định nghĩa lượt với dịch vụ khai phá (migration `0034`, #445) | Thời gian chờ trung vị theo trạng thái |
 
 Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
 
@@ -1221,7 +1227,7 @@ View đặt ở schema `public` và chạy bằng quyền của chủ sở hữu
 quyền đọc mặc định cấp lúc dựng cụm, không đọc thẳng được gì nó không cần. Đổi một view thì tạo
 migration mới bằng `CREATE OR REPLACE VIEW`.
 
-**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, năm biểu đồ (thứ năm là tỷ lệ ghi đè gợi ý, #239) và dashboard *Vận hành
+**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, các biểu đồ (danh sách đầy đủ ở trang phả hệ dữ liệu, sinh tự động) và dashboard *Vận hành
 yêu cầu* nằm ở `infra/superset/bang-dieu-khien/` dạng YAML. Lúc khởi động, điểm vào của ảnh
 Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi chạy `superset import-directory
 --overwrite` — nạp đè theo uuid, khởi động lại không sinh bản trùng, cụm dựng mới có sẵn bảng
@@ -1255,10 +1261,13 @@ tắt thì điểm cuối trả 503 và mục Báo cáo hiện màn "không ph�
 bình thường. Lưới của Superset không xếp lại dưới 768 px, nên màn hẹp giữ khung rộng 760 px và cuộn
 ngang trong khung.
 
-**Dữ liệu mở.** `GET /analytics/event-log?format=csv|json&from=&to=`, chỉ quản trị viên, trên màn
+**Dữ liệu mở.** `GET /analytics/event-log?format=csv|json|xes&from=&to=`, chỉ quản trị viên, trên màn
 Hệ thống của cổng. Cột cố định (`app/analytics/xuat_du_lieu.py` `COT`), mốc UTC, khoảng ngày theo
 UTC; người thao tác bằng mã định danh, không có tên và ghi chú; CSV có BOM để bảng tính trên Windows
-hiện đúng chữ có dấu.
+hiện đúng chữ có dấu. `xes` (#444) là chuẩn trao đổi của khai phá quy trình (IEEE 1849), mở thẳng bằng ProM,
+Disco, PM4Py: mỗi hồ sơ một trace, `concept:name` là hoạt động, `time:timestamp` mốc UTC, `org:resource` người
+thao tác. Viết bằng thư viện chuẩn — dịch vụ ứng dụng không nhập PM4Py (ADR-0007); bài kiểm cho PM4Py đọc lại
+một tệp xuất mẫu nằm trong `services/khai-pha/tests/test_doc_xes.py`.
 
 **Dữ liệu trình diễn.** `scripts/nap_du_lieu_trinh_dien.py --xac-nhan` nạp vài trăm hồ sơ giả theo
 kịch bản của bộ sinh nhật ký ảo (#124), đi đúng bộ quy tắc đang bật và qua bước tự kiểm của bộ
@@ -1499,6 +1508,15 @@ hạn chót trình duyệt 4 giây; Route Handler `app/api/yeu-cau/tuong-tu` chu
 `DXLAB_SIMILAR_MAX_RESULTS`). Mô hình tắt, chậm, hỏng — danh sách rỗng, không lỗi; dịch vụ báo tắt thì biểu
 mẫu thôi hỏi trong phiên. Nút Gửi không phụ thuộc khối này.
 
+**Căn cứ cho thẻ gợi ý của điều phối viên (#450).** Cùng chỉ mục phục vụ người duyệt gợi ý: ở màn điều phối,
+thẻ gợi ý loại (bước phân loại) và thẻ gợi ý phòng (bước chuyển phòng) kèm vài hồ sơ đã giải quyết gần nội dung
+hồ sơ đang xét, có mã mở được hồ sơ cũ — người quyết định thấy "lần trước loại việc này giải quyết thế nào"
+trước khi giữ hay đổi gợi ý. `GET /similar-cases/for-case/{case_id}` chỉ cho vai điều phối (thấy mọi hồ sơ nên
+được kèm mã), nhúng tiêu đề và mô tả của hồ sơ rồi tìm như biểu mẫu, bỏ chính hồ sơ đó; không ghi lượt xem.
+`components/can-cu-tuong-tu.tsx` hỏi qua `app/api/dieu-phoi/tuong-tu/[id]` sau khi thẻ hiện, hạn chót 4 giây,
+và không vẽ gì khi mô hình nhúng tắt, chậm, hỏng hay không có hồ sơ đủ gần — màn điều phối khi đó y như trước.
+Bảng thao tác chỉ gắn khối này vào trường mà trang truyền (`canCuTuongTu`), một trường mỗi bước.
+
 **Đo ngăn chặn.** Mỗi biểu mẫu sinh một mã phiên soạn. Có gợi ý thì `similar_case_views` ghi một dòng (hồ
 sơ gợi ý, số lần xem); gửi hồ sơ kèm mã phiên thì nối `submitted_case_id`; bấm "không gửi nữa"
 (`POST /similar-cases/abandon`) hay quá `DXLAB_SIMILAR_ABANDON_AFTER_MINUTES` mà không gửi (bộ quét đánh
@@ -1596,10 +1614,16 @@ cạnh tên ở thanh bên.
 cho người: `backend/app/webhook.py`, bản sửa 0031. Quản trị viên (người hay tài khoản dịch vụ mang vai
 `administrator` — cùng mức với xuất nhật ký, vì đăng ký nhận sự kiện của mọi hồ sơ) đăng ký một địa chỉ ở
 `POST /core/v1/webhooks`, bộ lọc theo mã hoạt động và mã quy trình nằm trong dòng đăng ký. Nguồn là
-`event_log` — không thêm chỗ ghi nào vào cửa chuyển trạng thái. Mỗi đăng ký giữ con trỏ `last_event_id`
-(đăng ký mới bắt đầu từ sự kiện lớn nhất lúc tạo); mỗi lượt bộ gửi biến sự kiện mới khớp bộ lọc thành dòng
-`webhook_deliveries` — khóa duy nhất (đăng ký, sự kiện) nên không gửi trùng — rồi dời con trỏ, cùng giao
-dịch. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
+`event_log`. Lần gửi sinh bằng trigger `AFTER INSERT` trên `event_log` (bản sửa 0035, #492): mỗi đăng ký đang
+bật khớp bộ lọc được một dòng `webhook_deliveries` ngay trong giao dịch ghi sự kiện — khóa duy nhất (đăng ký,
+sự kiện) nên không gửi trùng; đăng ký mới chỉ nhận sự kiện ghi sau lúc tạo. Trước bản đó mỗi đăng ký giữ con
+trỏ `last_event_id` trên mã sự kiện, và có thể bỏ sót: mã cấp lúc ghi dòng nhưng giao dịch không commit theo
+thứ tự mã, nên con trỏ vượt qua sự kiện của một lượt quét nền commit muộn. Cửa chuyển trạng thái vẫn không
+gọi mạng — trigger chỉ chèn một dòng hàng đợi. Bộ gửi không giữ giao dịch trong lúc gọi mạng: nhận một lô
+đến hạn bằng giao dịch ngắn (`SKIP LOCKED`, dời hạn qua hết lượt để bản khác không nhận trùng), gửi ngoài
+giao dịch, ghi kết quả từng lần bằng giao dịch ngắn; một lượt có trần 30 giây, và một địa chỉ không phản hồi
+thì các lần còn lại của nó để lượt sau — một bên nhận treo không kéo chậm đăng ký khác, hủy đăng ký không
+phải chờ hết lượt. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
 `X-DXOS-Signature: sha256=HMAC(bí mật, "<X-DXOS-Timestamp>.<thân>")`; bí mật chỉ trả một lần lúc tạo. 2xx là
 xong; khác thì chờ `DXLAB_WEBHOOK_RETRY_AFTER_SECONDS` nhân đôi mỗi lần, quá `DXLAB_WEBHOOK_MAX_ATTEMPTS` lần
 là hỏng hẳn; `GET /core/v1/webhooks/{id}/deliveries` cho thấy mã phản hồi và lỗi cuối. Bộ gửi chạy theo
@@ -1612,7 +1636,7 @@ dòng `event_log` (nó dựng từ `requests` trong view xuất nhật ký) nên
 
 Chọn webhook qua HTTP chứ không một trục truyền phát như Kafka: quy mô trình diễn (mục 9), không thêm dịch
 vụ hay phụ thuộc, bên nhận chỉ cần một địa chỉ HTTP; đọc lại từ đầu đã có `GET /core/v1/events` trên nhật ký
-chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng con trỏ — cần khảo sát và ADR
+chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng hàng đợi do trigger sinh — cần khảo sát và ADR
 trước; Redpanda dùng BSL, không thuộc danh sách OSI.
 
 ### 6.9. Kho tri thức (không gian `H`)

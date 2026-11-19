@@ -18,7 +18,7 @@ và PostgreSQL không mở cổng ra máy.
 | Ổ đĩa trống | khoảng **6 GB** cho ảnh chứa và dữ liệu, tính trên ổ chứa dữ liệu của Docker |
 | Mạng | cần Internet ở lần dựng đầu để tải ảnh chứa và thư viện; các lần sau không cần |
 | Cổng cần trống | 3000 · 8080 · 8088 · 8333 · 9080 |
-| Python *(tùy chọn)* | **3.10 trở lên**, chỉ để chạy các kịch bản tiện ích trong `scripts/` — nạp dữ liệu trình diễn, nâng cấp, sao lưu, tài khoản dịch vụ. Cụm không cần Python trên máy. Chỉ dùng thư viện chuẩn, không phải `pip install`. Trên Ubuntu và Debian lệnh tên là `python3`: gõ `python3` ở mọi chỗ tài liệu ghi `python` |
+| Python *(tùy chọn)* | **3.10 trở lên**, chỉ để chạy các kịch bản tiện ích trong `scripts/` — nạp dữ liệu trình diễn, nâng cấp, sao lưu, tài khoản dịch vụ. Cụm không cần Python trên máy; riêng `scripts/quet_giay_phep.py` (quét giấy phép) cần 3.11 vì đọc cấu hình bằng `tomllib`. Chỉ dùng thư viện chuẩn, không phải `pip install`. Trên Ubuntu và Debian lệnh tên là `python3`: gõ `python3` ở mọi chỗ tài liệu ghi `python` |
 
 ## Cách 1 — cài từ bản phát hành
 

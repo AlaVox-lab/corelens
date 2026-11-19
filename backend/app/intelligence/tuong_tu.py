@@ -38,12 +38,12 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import current_actor
+from app.auth.dependencies import current_actor, require_roles
 from app.config import get_settings
 from app.db import get_session
 from app.intelligence import mo_hinh, tri_thuc
@@ -577,6 +577,78 @@ def tim_cho_bieu_mau(
             for b in bai
         ],
         articles_source_url=cau_hinh.wiki_source_url if bai else None,
+        enabled=True,
+    )
+
+
+class HoSoCanCuRa(BaseModel):
+    """Một hồ sơ đã giải quyết tương tự, làm căn cứ cho thẻ gợi ý của điều phối viên (#450)."""
+
+    case_id: int
+    code: str
+    title: str
+    request_type: str | None
+    resolution: str
+    closed_at: dt.datetime
+    score: float
+
+
+class CanCuTuongTuRa(BaseModel):
+    items: list[HoSoCanCuRa]
+    # Mô hình nhúng tắt — màn điều phối không hiện gì, y như trước #450
+    enabled: bool
+
+
+# Vai điều phối — cùng mã với VAI_TRO_DIEU_PHOI của app/workflow/coordination.py (nhập trực tiếp thì vòng
+# import: coordination → routes → tệp này)
+VAI_TRO_CAN_CU = "classifier"
+
+
+@router.get("/for-case/{case_id}", response_model=CanCuTuongTuRa)
+def can_cu_cho_dieu_phoi(
+    case_id: int,
+    session: Annotated[Session, Depends(get_session)],
+    _: Annotated[Actor, Depends(require_roles(VAI_TRO_CAN_CU))],
+) -> CanCuTuongTuRa:
+    """Vài hồ sơ đã giải quyết gần nội dung của một hồ sơ đang chờ, làm căn cứ cho thẻ gợi ý (#450).
+
+    Điều phối viên thấy mọi hồ sơ, nên được kèm mã để mở hồ sơ cũ xem cách giải quyết. Như biểu mẫu, KHÔNG
+    BAO GIỜ báo lỗi: mô hình nhúng tắt thì `enabled=false`; chậm hay hỏng thì danh sách rỗng — thẻ gợi ý vẫn
+    như cũ. Không ghi lượt xem: đo ngăn chặn (#319) chỉ tính phía người gửi.
+    """
+    cau_hinh = get_settings()
+    if not cau_hinh.embedding_enabled:
+        return CanCuTuongTuRa(items=[], enabled=False)
+    from app.models.case import Request
+    from app.workflow.routes import _ma_ho_so
+
+    ho_so = session.get(Request, case_id)
+    if ho_so is None:
+        raise HTTPException(
+            status_code=404, detail={"code": "case-not-found", "message": "Không có hồ sơ này."}
+        )
+    try:
+        vec = nhung_cau_hoi(ho_so.title, ho_so.description)
+    except mo_hinh.LoiMoHinh as loi:
+        log.info("Không tìm được hồ sơ tương tự cho điều phối: %s", loi)
+        return CanCuTuongTuRa(items=[], enabled=True)
+    # Lấy dư một kết quả: hồ sơ đã giải quyết rồi mở lại vẫn có thể nằm trong chỉ mục — bỏ chính nó
+    ket_qua = [
+        k for k in tim_theo_vec(session, vec, so_ket_qua=cau_hinh.similar_max_results + 1) if k.case_id != case_id
+    ][: cau_hinh.similar_max_results]
+    return CanCuTuongTuRa(
+        items=[
+            HoSoCanCuRa(
+                case_id=k.case_id,
+                code=_ma_ho_so(session.get(Request, k.case_id)),
+                title=k.title,
+                request_type=k.request_type_label,
+                resolution=k.resolution,
+                closed_at=k.closed_at,
+                score=round(k.score, 3),
+            )
+            for k in ket_qua
+        ],
         enabled=True,
     )
 

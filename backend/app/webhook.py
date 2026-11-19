@@ -12,16 +12,29 @@
 # Chỉ `administrator` (người hay tài khoản dịch vụ mang vai đó): một đăng ký nhận sự kiện của MỌI hồ sơ,
 # ngang quyền với xuất nhật ký sự kiện `GET /core/v1/events`.
 #
-# Nguồn là `event_log` — chỉ ghi thêm, mỗi bước chuyển đúng một dòng. Mỗi đăng ký giữ con trỏ
-# `last_event_id`; bộ gửi (chạy nền theo khuôn bộ gửi thư #251, có khóa tư vấn và dòng nhịp) làm hai việc:
+# Nguồn là `event_log` — chỉ ghi thêm, mỗi bước chuyển đúng một dòng. Lần gửi KHÔNG do bộ gửi sinh ra: trigger
+# `webhook_sinh_lan_gui` trên `event_log` (bản sửa 0035, #492) chèn một dòng `webhook_deliveries` cho mỗi đăng ký
+# đang bật khớp bộ lọc, ngay trong giao dịch ghi sự kiện. Sự kiện commit thì lần gửi commit cùng, hoàn tác thì
+# cùng mất — không còn con trỏ nào có thể vượt qua sự kiện của một giao dịch commit muộn. Khóa duy nhất
+# (đăng ký, sự kiện) nên không bao giờ gửi trùng.
 #
-#   1. Mở rộng: sự kiện mới hơn con trỏ, khớp bộ lọc → một dòng `webhook_deliveries` (khóa duy nhất theo
-#      (đăng ký, sự kiện) nên không bao giờ gửi trùng), rồi dời con trỏ. Cùng một giao dịch.
-#   2. Gửi: lần gửi đến hạn → POST JSON, ký HMAC-SHA256. 2xx là xong; khác thì thử lại sau, chờ nhân đôi
-#      mỗi lần, quá số lần thì đánh dấu hỏng.
+# Bộ gửi (chạy nền theo khuôn bộ gửi thư #251, có khóa tư vấn và dòng nhịp) chỉ gửi, và không giữ giao dịch
+# trong lúc gọi mạng:
 #
-# Chuyển trạng thái không biết gì về webhook: không gọi mạng trong giao dịch nghiệp vụ, bên nhận sập
-# không làm chậm hay hỏng thao tác nào. Bên nhận phải chịu được nhận lại một sự kiện (thử lại sau khi bên
+#   1. Nhận lô: một giao dịch ngắn khóa các lần gửi đến hạn (`SKIP LOCKED`), dời hạn của chúng qua hết lượt
+#      này để bản khác không nhận trùng, đọc sẵn địa chỉ, bí mật, thân — rồi commit.
+#   2. Gửi từng lần, NGOÀI giao dịch: POST JSON, ký HMAC-SHA256. Lượt có trần thời gian; một địa chỉ không
+#      phản hồi (lỗi mạng, hết hạn chờ) thì các lần còn lại của đăng ký đó để lượt sau — một bên nhận treo
+#      tốn nhiều nhất một lần hết hạn chờ mỗi lượt, không kéo chậm đăng ký khác.
+#   3. Ghi kết quả từng lần bằng một giao dịch ngắn: 2xx là xong; khác thì thử lại sau, chờ nhân đôi mỗi
+#      lần, quá số lần thì đánh dấu hỏng. Lần chưa kịp gửi trả về hạn ngay.
+#
+# Không giao dịch nào giữ khóa trên `webhook_subscriptions` trong lúc gọi mạng, nên hủy đăng ký không phải chờ
+# hết lượt. Commit giữa lượt cũng nhả khóa tư vấn của `chay_luot_quet` — không sao: dời hạn lúc nhận lô đã
+# ngăn hai bản nhận trùng một lần gửi.
+#
+# Chuyển trạng thái không gọi mạng: trigger chỉ chèn một dòng vào bảng hàng đợi, bên nhận sập không làm chậm
+# hay hỏng thao tác nào. Bên nhận phải chịu được nhận lại một sự kiện (thử lại sau khi bên
 # nhận đã xử lý mà trả lời không kịp) — dùng `X-DXOS-Event-Id` để bỏ trùng.
 #
 # Chữ ký: `X-DXOS-Signature: sha256=<hex HMAC-SHA256(bí mật, "<X-DXOS-Timestamp>.<thân>")>`. Bên nhận tính
@@ -38,12 +51,12 @@ import secrets
 import time
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field, HttpUrl
-from sqlalchemy import func, select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
@@ -60,6 +73,8 @@ TEN_BO_QUET_WEBHOOK = "webhook"
 NHAN_BO_QUET_WEBHOOK = "Bộ gửi webhook"
 VAI_TRO_WEBHOOK = "administrator"
 DO_DAI_CAU_LOI = 300
+# Trần thời gian gửi của một lượt (#492). Lần đã nhận mà chưa kịp gửi thì trả về hạn ngay cho lượt sau
+THOI_GIAN_MOT_LUOT_GIAY = 30
 
 router = APIRouter()
 _QuanTri = Annotated[Actor, Depends(require_roles(VAI_TRO_WEBHOOK))]
@@ -106,7 +121,6 @@ class DangKyRa(BaseModel):
     process: str | None
     is_active: bool
     owner_id: str
-    last_event_id: int
     created_at: dt.datetime
 
 
@@ -133,7 +147,6 @@ def _ra(dk: WebhookSubscription) -> dict:
         "process": dk.process_code,
         "is_active": dk.is_active,
         "owner_id": dk.owner_id,
-        "last_event_id": dk.last_event_id,
         "created_at": dk.created_at,
     }
 
@@ -167,7 +180,6 @@ def tao_dang_ky(vao: DangKyVao, session: _Phien, actor: _QuanTri) -> dict:
         activities=sorted(set(vao.activities)) if vao.activities else None,
         process_code=vao.process,
         owner_id=actor.id,
-        last_event_id=session.scalar(select(func.coalesce(func.max(EventLog.id), 0))),
     )
     session.add(dk)
     session.commit()
@@ -213,39 +225,6 @@ def lan_gui_gan_day(webhook_id: int, session: _Phien, _: _QuanTri) -> list[Webho
 # ---------------------------------------------------------------------------
 
 
-def mo_rong(session: Session) -> int:
-    """Sự kiện mới hơn con trỏ của từng đăng ký đang bật → lần gửi chờ. Dời con trỏ. Không tự commit."""
-    co = get_settings().webhook_batch_size
-    tong = 0
-    for dk in session.scalars(select(WebhookSubscription).where(WebhookSubscription.is_active)):
-        hang = session.execute(
-            select(EventLog.id, EventLog.activity, RuleSet.process_code)
-            .join(Request, Request.id == EventLog.case_id)
-            .join(RuleSet, RuleSet.id == Request.rule_set_id)
-            .where(EventLog.id > dk.last_event_id)
-            .order_by(EventLog.id)
-            .limit(co)
-        ).all()
-        if not hang:
-            continue
-        khop = [
-            ma
-            for ma, hoat_dong, quy_trinh in hang
-            if (not dk.activities or hoat_dong in dk.activities)
-            and (dk.process_code is None or quy_trinh == dk.process_code)
-        ]
-        if khop:
-            session.execute(
-                insert(WebhookDelivery)
-                .values([{"subscription_id": dk.id, "event_id": ma} for ma in khop])
-                .on_conflict_do_nothing(constraint="webhook_delivery_once")
-            )
-            tong += len(khop)
-        # Dời qua cả sự kiện không khớp: lần sau không xét lại
-        dk.last_event_id = hang[-1][0]
-    return tong
-
-
 def than_su_kien(session: Session, event_id: int) -> dict:
     """Thân JSON gửi cho bên nhận — một sự kiện của nhật ký, mốc UTC."""
     e, ma_quy_trinh = session.execute(
@@ -282,8 +261,20 @@ def _post(url: str, than: bytes, tieu_de: dict[str, str], han_giay: float) -> in
 gui_http = _post
 
 
-def gui_den_han(session: Session) -> tuple[int, int]:
-    """Gửi các lần đến hạn. Trả (số thành công, số hỏng ở lượt này). Không tự commit."""
+@dataclass(frozen=True)
+class LanGuiDaNhan:
+    """Đủ mọi thứ để gửi một lần mà không cần giao dịch nào mở."""
+
+    id: int
+    subscription_id: int
+    event_id: int
+    url: str
+    secret: str
+    than: bytes
+
+
+def nhan_lo(session: Session) -> list[LanGuiDaNhan]:
+    """Giao dịch ngắn: nhận các lần gửi đến hạn, dời hạn qua hết lượt này, đọc sẵn thân. Tự commit."""
     ch = get_settings()
     lan_gui = session.scalars(
         select(WebhookDelivery)
@@ -292,43 +283,88 @@ def gui_den_han(session: Session) -> tuple[int, int]:
         .limit(ch.webhook_batch_size)
         .with_for_update(skip_locked=True)
     ).all()
-    thanh_cong = hong = 0
+    giu = dt.timedelta(seconds=THOI_GIAN_MOT_LUOT_GIAY + ch.webhook_timeout_seconds)
+    da_nhan = []
     for lg in lan_gui:
         dk = session.get(WebhookSubscription, lg.subscription_id)
         than = json.dumps(than_su_kien(session, lg.event_id), ensure_ascii=False).encode()
-        moc = str(int(time.time()))
-        tieu_de = {
-            "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": "DX-OS-Lab-Webhook",
-            "X-DXOS-Event-Id": str(lg.event_id),
-            "X-DXOS-Timestamp": moc,
-            "X-DXOS-Signature": ky(dk.secret, moc, than),
-        }
-        lg.attempts += 1
-        try:
-            ma = gui_http(dk.url, than, tieu_de, ch.webhook_timeout_seconds)
-            lg.last_status_code, lg.last_error = ma, None if 200 <= ma < 300 else f"HTTP {ma}"
-        except Exception as loi:  # noqa: BLE001 — mọi lỗi mạng đều là "chưa tới", thử lại sau
-            lg.last_status_code, lg.last_error = None, str(loi)[:DO_DAI_CAU_LOI]
-        if lg.last_error is None:
-            lg.status, lg.delivered_at = DA_GUI, func.now()
-            thanh_cong += 1
-        elif lg.attempts >= ch.webhook_max_attempts:
-            lg.status = HONG
-            hong += 1
-        else:
-            cho = ch.webhook_retry_after_seconds * 2 ** (lg.attempts - 1)
-            lg.next_attempt_at = func.now() + dt.timedelta(seconds=cho)
-    return thanh_cong, hong
+        da_nhan.append(LanGuiDaNhan(lg.id, dk.id, lg.event_id, dk.url, dk.secret, than))
+        lg.next_attempt_at = func.now() + giu
+    session.commit()
+    return da_nhan
+
+
+def gui_mot_lan(lg: LanGuiDaNhan) -> tuple[int | None, str | None]:
+    """Gửi một lần, ngoài mọi giao dịch. Trả (mã phản hồi, lỗi) — lỗi `None` là đã tới."""
+    moc = str(int(time.time()))
+    tieu_de = {
+        "Content-Type": "application/json; charset=utf-8",
+        "User-Agent": "DX-OS-Lab-Webhook",
+        "X-DXOS-Event-Id": str(lg.event_id),
+        "X-DXOS-Timestamp": moc,
+        "X-DXOS-Signature": ky(lg.secret, moc, lg.than),
+    }
+    try:
+        ma = gui_http(lg.url, lg.than, tieu_de, get_settings().webhook_timeout_seconds)
+    except Exception as loi:  # noqa: BLE001 — mọi lỗi mạng đều là "chưa tới", thử lại sau
+        return None, str(loi)[:DO_DAI_CAU_LOI]
+    return ma, None if 200 <= ma < 300 else f"HTTP {ma}"
+
+
+def ghi_ket_qua(session: Session, ma_lan_gui: int, ma: int | None, loi: str | None) -> str | None:
+    """Giao dịch ngắn: ghi kết quả một lần thử. Trả trạng thái mới, `None` nếu đăng ký đã bị hủy. Tự commit."""
+    ch = get_settings()
+    lg = session.get(WebhookDelivery, ma_lan_gui, with_for_update=True)
+    if lg is None or lg.status != CHO_GUI:
+        session.commit()
+        return None
+    lg.attempts += 1
+    lg.last_status_code, lg.last_error = ma, loi
+    if loi is None:
+        lg.status, lg.delivered_at = DA_GUI, func.now()
+    elif lg.attempts >= ch.webhook_max_attempts:
+        lg.status = HONG
+    else:
+        cho = ch.webhook_retry_after_seconds * 2 ** (lg.attempts - 1)
+        lg.next_attempt_at = func.now() + dt.timedelta(seconds=cho)
+    trang_thai = lg.status
+    session.commit()
+    return trang_thai
+
+
+def tra_ve_han(session: Session, cac_ma: list[int]) -> None:
+    """Lần đã nhận mà chưa gửi: đến hạn lại ngay, cho lượt sau. Tự commit."""
+    if cac_ma:
+        session.execute(
+            update(WebhookDelivery)
+            .where(WebhookDelivery.id.in_(cac_ma), WebhookDelivery.status == CHO_GUI)
+            .values(next_attempt_at=func.now())
+        )
+    session.commit()
 
 
 def quet_webhook(session: Session) -> int:
-    """Một lượt bộ gửi: mở rộng rồi gửi. Trả số lần gửi thành công. Ranh giới giao dịch do `chay_luot_quet`."""
-    mo_rong(session)
-    session.flush()
-    thanh_cong, hong = gui_den_han(session)
-    # Ghi ngay vết lần thử: phía gọi đọc lại hay làm mới đối tượng thì không mất số lần thử
-    session.flush()
+    """Một lượt bộ gửi: nhận lô, gửi ngoài giao dịch, ghi từng kết quả. Trả số lần gửi thành công.
+
+    Tự commit nhiều lần (xem đầu tệp); `chay_luot_quet` chỉ còn ghi dòng nhịp ở giao dịch cuối.
+    """
+    da_nhan = nhan_lo(session)
+    het_gio = time.monotonic() + THOI_GIAN_MOT_LUOT_GIAY
+    treo: set[int] = set()
+    chua_gui: list[int] = []
+    thanh_cong = hong = 0
+    for lg in da_nhan:
+        if lg.subscription_id in treo or time.monotonic() >= het_gio:
+            chua_gui.append(lg.id)
+            continue
+        ma, loi = gui_mot_lan(lg)
+        if ma is None:
+            # Không phản hồi: đừng để mọi lần còn lại của địa chỉ này đều chờ hết hạn
+            treo.add(lg.subscription_id)
+        trang_thai = ghi_ket_qua(session, lg.id, ma, loi)
+        thanh_cong += trang_thai == DA_GUI
+        hong += trang_thai == HONG
+    tra_ve_han(session, chua_gui)
     if hong:
         logger.warning("Webhook: %d lần gửi hỏng hẳn sau %d lần thử", hong, get_settings().webhook_max_attempts)
     return thanh_cong
