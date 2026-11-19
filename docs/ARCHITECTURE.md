@@ -1602,10 +1602,16 @@ cạnh tên ở thanh bên.
 cho người: `backend/app/webhook.py`, bản sửa 0031. Quản trị viên (người hay tài khoản dịch vụ mang vai
 `administrator` — cùng mức với xuất nhật ký, vì đăng ký nhận sự kiện của mọi hồ sơ) đăng ký một địa chỉ ở
 `POST /core/v1/webhooks`, bộ lọc theo mã hoạt động và mã quy trình nằm trong dòng đăng ký. Nguồn là
-`event_log` — không thêm chỗ ghi nào vào cửa chuyển trạng thái. Mỗi đăng ký giữ con trỏ `last_event_id`
-(đăng ký mới bắt đầu từ sự kiện lớn nhất lúc tạo); mỗi lượt bộ gửi biến sự kiện mới khớp bộ lọc thành dòng
-`webhook_deliveries` — khóa duy nhất (đăng ký, sự kiện) nên không gửi trùng — rồi dời con trỏ, cùng giao
-dịch. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
+`event_log`. Lần gửi sinh bằng trigger `AFTER INSERT` trên `event_log` (bản sửa 0035, #492): mỗi đăng ký đang
+bật khớp bộ lọc được một dòng `webhook_deliveries` ngay trong giao dịch ghi sự kiện — khóa duy nhất (đăng ký,
+sự kiện) nên không gửi trùng; đăng ký mới chỉ nhận sự kiện ghi sau lúc tạo. Trước bản đó mỗi đăng ký giữ con
+trỏ `last_event_id` trên mã sự kiện, và có thể bỏ sót: mã cấp lúc ghi dòng nhưng giao dịch không commit theo
+thứ tự mã, nên con trỏ vượt qua sự kiện của một lượt quét nền commit muộn. Cửa chuyển trạng thái vẫn không
+gọi mạng — trigger chỉ chèn một dòng hàng đợi. Bộ gửi không giữ giao dịch trong lúc gọi mạng: nhận một lô
+đến hạn bằng giao dịch ngắn (`SKIP LOCKED`, dời hạn qua hết lượt để bản khác không nhận trùng), gửi ngoài
+giao dịch, ghi kết quả từng lần bằng giao dịch ngắn; một lượt có trần 30 giây, và một địa chỉ không phản hồi
+thì các lần còn lại của nó để lượt sau — một bên nhận treo không kéo chậm đăng ký khác, hủy đăng ký không
+phải chờ hết lượt. Gửi là `POST` JSON (mã sự kiện, hồ sơ, quy trình, hoạt động, từ → sang, người làm, mốc UTC) ký
 `X-DXOS-Signature: sha256=HMAC(bí mật, "<X-DXOS-Timestamp>.<thân>")`; bí mật chỉ trả một lần lúc tạo. 2xx là
 xong; khác thì chờ `DXLAB_WEBHOOK_RETRY_AFTER_SECONDS` nhân đôi mỗi lần, quá `DXLAB_WEBHOOK_MAX_ATTEMPTS` lần
 là hỏng hẳn; `GET /core/v1/webhooks/{id}/deliveries` cho thấy mã phản hồi và lỗi cuối. Bộ gửi chạy theo
@@ -1618,7 +1624,7 @@ dòng `event_log` (nó dựng từ `requests` trong view xuất nhật ký) nên
 
 Chọn webhook qua HTTP chứ không một trục truyền phát như Kafka: quy mô trình diễn (mục 9), không thêm dịch
 vụ hay phụ thuộc, bên nhận chỉ cần một địa chỉ HTTP; đọc lại từ đầu đã có `GET /core/v1/events` trên nhật ký
-chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng con trỏ — cần khảo sát và ADR
+chỉ ghi thêm. Hướng mở rộng: thêm một "đầu ra" Kafka (Apache-2.0) đọc cùng hàng đợi do trigger sinh — cần khảo sát và ADR
 trước; Redpanda dùng BSL, không thuộc danh sách OSI.
 
 ### 6.9. Kho tri thức (không gian `H`)
