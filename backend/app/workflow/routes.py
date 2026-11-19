@@ -698,7 +698,7 @@ def ho_so_cua_toi(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
     trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
-    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu")] = None,
     state: Annotated[str | None, Query(description="Chỉ một trạng thái")] = None,
     request_type: Annotated[str | None, Query(description="Chỉ một loại yêu cầu")] = None,
     needs_action: Annotated[bool, Query(description="Chỉ hồ sơ đang chờ chính người xem")] = False,

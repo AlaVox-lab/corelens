@@ -6,9 +6,9 @@ Mọi điểm cuối danh sách nhận `limit` và `offset`, trả kèm `total` 
 tập mà không có giới hạn. Ô tìm của giao diện đi qua tham số `q` phía dịch vụ: đã cắt trang thì tìm
 trên trang đang tải là tìm sai.
 
-Tìm khớp tiêu đề, tên người gửi, hay mã hồ sơ. Mã hiển thị `YC-2026-0184` dựng từ năm và định
-danh (`routes._ma_ho_so`), nên chuỗi tìm có chữ số thì khớp thêm định danh — gõ `184` hay
-`YC-2026-0184` đều ra hồ sơ đó.
+Tìm khớp tiêu đề, tên người gửi, nội dung mô tả (#429), hay mã hồ sơ. Mã hiển thị `YC-2026-0184`
+dựng từ năm và định danh (`routes._ma_ho_so`), nên chuỗi tìm có chữ số thì khớp thêm định danh — gõ
+`184` hay `YC-2026-0184` đều ra hồ sơ đó.
 
 Tìm không phân biệt dấu và hoa thường, như ô tìm trên trình duyệt trước đây: gõ "may in" ra
 "Máy in", "dung" ra "Dũng". Phía SQL bỏ dấu bằng `translate` có sẵn của PostgreSQL — không cần
@@ -76,6 +76,9 @@ def dieu_kien_tim(q: str | None):
     dieu_kien = [
         _bo_dau_sql(Request.title).contains(khoa, autoescape=True),
         _bo_dau_sql(Request.requester_label).contains(khoa, autoescape=True),
+        # Nội dung mô tả (#429): người dùng nhớ chi tiết trong lời kể hơn là tiêu đề. Mô tả trống
+        # cho NULL, trong OR không làm hỏng hai điều kiện trên
+        _bo_dau_sql(Request.description).contains(khoa, autoescape=True),
     ]
     so = re.findall(r"\d+", q)
     if so:

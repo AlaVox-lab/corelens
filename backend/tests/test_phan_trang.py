@@ -131,6 +131,26 @@ def test_tim_khong_phan_biet_dau_va_hoa_thuong(session, client):
     assert _trang(client, "/requests", q=f"{dau}%")["total"] == 0
 
 
+def test_tim_ca_trong_noi_dung_mo_ta(session, client):
+    """Tìm khớp cả mô tả, vẫn không dấu (#429) — cả đường SQL lẫn bản Python của hộp thư."""
+    dau = _dau()
+    nguoi = Actor(id=f"kc-mt-{dau}", name="Người Kể Chi Tiết", roles=frozenset({"requester"}))
+    h = create_case(session, title=f"{dau} Hỏng thiết bị", requester_id=nguoi.id,
+                    requester_label=nguoi.label, request_type_code=None,
+                    description=f"{dau} Máy chiếu phòng họp tầng 5 không lên hình")
+    khong_mo_ta = create_case(session, title=f"{dau} Không có mô tả", requester_id=nguoi.id,
+                              requester_label=nguoi.label, request_type_code=None)
+    gui_loi_nhan(session, h, nguoi, "message", "Nhờ xem giúp")
+    session.commit()
+    _goi_bang(client, nguoi)
+
+    for khoa in ("may chieu phong hop", "MÁY CHIẾU phòng họp"):
+        assert [d["id"] for d in _trang(client, "/requests", q=f"{dau} {khoa}")["items"]] == [h.id], khoa
+        assert [c["case_id"] for c in _trang(client, "/inbox", q=f"{dau} {khoa}")["items"]] == [h.id], khoa
+    # Hồ sơ không có mô tả vẫn tìm được theo tiêu đề — mô tả NULL không làm hỏng điều kiện
+    assert [d["id"] for d in _trang(client, "/requests", q=f"{dau} khong co mo ta")["items"]] == [khong_mo_ta.id]
+
+
 def test_bang_bo_dau_sql_khop_ban_python():
     """Bảng `translate` của SQL và hàm bỏ dấu Python phải cho cùng kết quả trên mọi ký tự."""
     assert len(phan_trang._CO_DAU) == len(phan_trang._KHONG_DAU)

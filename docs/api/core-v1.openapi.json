@@ -2808,7 +2808,7 @@
         "operationId": "ho_so_trong_pham_vi_core_v1_workflow_requests_get",
         "parameters": [
           {
-            "description": "Tìm theo mã, tiêu đề",
+            "description": "Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu",
             "in": "query",
             "name": "q",
             "required": false,
@@ -2821,7 +2821,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Tìm theo mã, tiêu đề",
+              "description": "Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu",
               "title": "Q"
             }
           },

@@ -138,7 +138,7 @@ def hop_thu(
     session: _Phien,
     actor: _NguoiGoi,
     trang: Annotated[ThamSoTrang, Depends(tham_so_trang)],
-    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi")] = None,
+    q: Annotated[str | None, Query(description="Tìm theo mã, tiêu đề, người gửi, mô tả — không phân biệt dấu")] = None,
     unread: Annotated[bool, Query(description="Chỉ cuộc còn lời nhắn chưa đọc")] = False,
     internal: Annotated[
         bool | None, Query(description="true: chỉ cuộc nội bộ · false: chỉ cuộc với người gửi")
@@ -181,7 +181,7 @@ def hop_thu(
     khop = [
         (h, nb, cuoi)
         for h, nb, cuoi in cac_khoa
-        if khop_tim(q, h.title, h.requester_label, _ma_ho_so(h))
+        if khop_tim(q, h.title, h.requester_label, h.description, _ma_ho_so(h))
         and (case_id is None or h.id == case_id)
     ]
     da_loc = [
