@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function GuiYeuCau({
   searchParams,
 }: {
-  searchParams: Promise<{ tu?: string }>;
+  searchParams: Promise<{ tu?: string; loai?: string }>;
 }) {
   const cacLoai = await goiDichVu<LoaiYeuCau[]>("/request-types");
   // Giới hạn tệp đính kèm (#80). Không nạp được thì biểu mẫu vẫn gửi được, chỉ không có ô tệp
@@ -25,9 +25,12 @@ export default async function GuiYeuCau({
   // Tạo lại từ một hồ sơ cũ của chính mình (#102): `?tu=<mã hồ sơ>`. Dịch vụ trả 404 cho hồ
   // sơ của người khác, nên mã lạ chỉ làm biểu mẫu trống như thường. Cái dịch vụ kiểm lại lúc
   // gửi mới là cái quyết định — chép sẵn ở đây chỉ để người gửi đỡ gõ lại.
-  const { tu } = await searchParams;
+  const { tu, loai } = await searchParams;
   const maGoc = tu && /^\d+$/.test(tu) ? Number(tu) : null;
   const goc = maGoc ? await goiDichVu<HoSoChiTiet>(`/requests/${maGoc}`) : null;
+
+  // Mở thẳng một loại (#434): `?loai=<mã loại>` để trang tri thức hay thư thông báo dẫn vào đúng
+  // biểu mẫu. Mã chỉ được dùng khi khớp một loại trong danh mục vừa nạp — kiểm ở biểu mẫu
 
   return (
     <>
@@ -79,6 +82,7 @@ export default async function GuiYeuCau({
         <BieuMauGuiYeuCau
           chinhSach={chinhSachTep}
           cacLoai={cacLoai}
+          loaiSan={loai ?? null}
           goc={
             goc && goc.state.is_terminal
               ? {

@@ -66,10 +66,13 @@ export type HoSoGoc = {
 export function BieuMauGuiYeuCau({
   cacLoai,
   goc,
+  loaiSan,
   chinhSach,
 }: {
   cacLoai: LoaiYeuCau[];
   goc: HoSoGoc | null;
+  /** Mã loại lấy từ `?loai=` (#434). Mã không khớp danh mục thì bỏ qua, biểu mẫu mở ở bước 1. */
+  loaiSan: string | null;
   /** Giới hạn tệp đính kèm do dịch vụ trả. Không nạp được thì ẩn ô chọn tệp (#80). */
   chinhSach: ChinhSachTep | null;
 }) {
@@ -106,13 +109,17 @@ export function BieuMauGuiYeuCau({
     CHUA_CO_LOI,
   );
 
-  const [buoc, datBuoc] = useState(1);
   // Loại của hồ sơ cũ có thể đã ngừng dùng — khi đó để trống cho người gửi chọn lại
-  const [loai, datLoai] = useState<string | null>(
+  const loaiCuaGoc =
     goc?.request_type_code && cacLoai.some((l) => l.code === goc.request_type_code)
       ? goc.request_type_code
-      : null,
-  );
+      : null;
+  // `?loai=` chỉ dùng khi không chép từ hồ sơ cũ và mã có trong danh mục: khi đó đã chọn xong
+  // bước 1 nên mở thẳng bước 2. Mã lạ hay đã ngừng dùng thì như vào trang bình thường (#434)
+  const loaiTuDuongDan =
+    !goc && loaiSan && cacLoai.some((l) => l.code === loaiSan) ? loaiSan : null;
+  const [buoc, datBuoc] = useState(loaiTuDuongDan ? 2 : 1);
+  const [loai, datLoai] = useState<string | null>(loaiCuaGoc ?? loaiTuDuongDan);
   const [tieuDe, datTieuDe] = useState(goc?.title ?? "");
   const [moTa, datMoTa] = useState(goc?.description ?? "");
   // Mã phiên soạn (#319): nối "đã xem gợi ý tương tự" với lần gửi này — không phải dữ liệu hồ sơ
