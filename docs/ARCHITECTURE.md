@@ -1203,6 +1203,7 @@ sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi —
 | `bao_cao_thoi_gian_xu_ly` | loại: trung vị giờ xử lý, tỷ lệ vi phạm toàn công ty | tóm tắt |
 | `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
 | `bao_cao_goi_y` | một gợi ý đã được giữ hay ghi đè: trường, nguồn, giá trị gợi ý và giá trị chọn (migration `0016`, #239) | Tỷ lệ ghi đè gợi ý |
+| `bao_cao_thoi_gian_trang_thai` | một lượt hồ sơ ở một trạng thái chưa kết thúc: lúc vào, lúc ra, giây và giờ làm việc — cùng định nghĩa lượt với dịch vụ khai phá (migration `0034`, #445) | Thời gian chờ trung vị theo trạng thái |
 
 Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
 
