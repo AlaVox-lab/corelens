@@ -15,12 +15,12 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-19 |
-| Phiên bản hiện tại | **`v1.3.0`** (18/11) — Giai đoạn 6 đợt ba: kiểm chuẩn commit và tiêu đề pull request, header trên tệp cấu hình, mẫu issue dạng biểu mẫu, ngày lễ 2027 (PR #464, #466). **`dev` đi trước `main` mười một pull request** (#467–#487 — kiểm tệp Compose từng hồ sơ, liên kết hỏng, đối soát và quét giấy phép phụ thuộc, đặc tả OpenAPI của lõi trong kho, action Node 24, pre-commit tùy chọn, hai sửa lỗi kịch bản) — sẽ phát hành thành `v1.4.0` |
+| Phiên bản hiện tại | **`v1.4.0`** (18/11) — Giai đoạn 6 đợt bốn: quét giấy phép phụ thuộc bắc cầu, đặc tả OpenAPI của lõi trong kho, kiểm liên kết hỏng và tệp Compose từng hồ sơ, pre-commit tùy chọn (PR #489, #491); bản phát hành đính kèm báo cáo giấy phép. **`dev` đi trước `main` mười pull request** (#495–#504 — webhook không bỏ sót sự kiện, xuất XES, thời gian chờ theo trạng thái và hai biểu đồ mới trên Superset, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự, kịch bản giao diện cho Kanban, webhook, thời gian thực, dọn cấu hình CI) — sẽ phát hành thành `v1.5.0` |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`; #415, #417, #418, #423, #471, #472, #473, #477, #479, #484, #486 đã làm xong trên `dev`, đóng khi `v1.4.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`; #429, #434, #436, #443, #444, #445, #446, #447, #450, #492, #493, #494 đã làm xong trên `dev`, đóng khi `v1.5.0` lên `main`; #381 (đăng trang tài liệu) chờ kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | Riêng tư. **Thể lệ chỉ chấm dự án truy cập tự do trên Internet** — phải chuyển công khai trước hạn gửi bài 06/12 |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **39** (mốc 18) — 2 `P0`, 9 `P1`, 9 `P2`, 19 `P3`; mười một issue đã làm xong trên `dev`, còn **28** sau `v1.4.0`. Issue do `@phuctiensinh` mở ngày 17–18/11, đã soát, thu hẹp và đánh lại ưu tiên (mục *Tuần 20*) |
+| Issue đang mở | **27** (mốc 18) — 0 `P0`, 4 `P1`, 4 `P2`, 19 `P3`; mười hai issue đã làm xong trên `dev`, còn **15** sau `v1.5.0`. Sau `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
 | Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) thay Ngô Hoàng Đại (`@Senning-Dd`); đóng góp cũ của bạn Đại giữ nguyên trong lịch sử kho |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
@@ -1152,12 +1152,60 @@ hiện lý do và nguồn). Mỗi issue một bình luận *Thu hẹp — Chỉ 
 
 Không đổi lược đồ, không thêm biến cấu hình: cụm cũ nâng bằng `up -d --build`.
 
+### Tuần 20 (tiếp, 19/11) — `v1.4.0`, hai biên bản `P0`, đợt năm
+
+**Phát hành `v1.4.0`** (18/11, PR #489, nhật ký thay đổi #490, PR #491), đính kèm `bao-cao-giay-phep.md` lấy từ lần
+chạy tích hợp liên tục của pull request phát hành. Issue đã đóng: #415, #417, #418, #423, #471, #472, #473, #477,
+#479, #484, #486.
+
+**Hai biên bản `P0`**, đóng 19/11:
+
+- **Dựng trên máy sạch** (#411): Windows 11 từ bản sao mới của `main` (`8d4805b`) — dựng lại ảnh 74 giây, cụm lên 54
+  giây, đăng nhập thật ba vai, không bước tay nào ngoài README. Linux lấy từ job kịch bản giao diện của tích hợp liên
+  tục trên Ubuntu 24.04 trống: tải và dựng từ đầu **3 phút 55 giây**, rồi chạy trọn kịch bản; job này chạy lại trên mỗi
+  pull request phát hành. macOS ghi là giới hạn đã biết — nhóm không có máy
+- **Chạy từ tệp phát hành ngoài thư mục mã** (#414): `dx-os-lab-1.4.0.tar.gz` giải nén vào đường dẫn có dấu cách, cụm
+  lên 63 giây, 8/8 container, không sửa tay tệp nào. Kho còn riêng tư thì phải đăng nhập mới tải được tệp nén
+
+**Soát chất lượng** — đọc lại mã của 28 pull request đã merge từ 16/11. Mã đúng quy ước, có kiểm thử phía dịch vụ;
+thấy hai lỗi ở bộ gửi webhook và vài việc dọn dẹp, mở thành #492 (`P1`), #493, #494 và làm ngay trong đợt năm.
+
+**Đợt năm, sau `v1.4.0`** — mười pull request của `@phuctiensinh` (#495–#504):
+
+- **Webhook không bỏ sót sự kiện** (#492, PR #500): lần gửi sinh bằng trigger `AFTER INSERT` trên `event_log`, cùng
+  giao dịch với sự kiện, thay cho con trỏ dời theo mã lớn nhất — con trỏ có thể vượt qua sự kiện của một giao dịch
+  commit muộn (lượt quét nền chạy song song với thao tác người dùng). Bộ gửi nhận lô, gửi ngoài giao dịch, ghi từng kết
+  quả bằng giao dịch ngắn, có trần 30 giây mỗi lượt. Kiểm thử bằng hai kết nối thật commit ngược thứ tự mã
+- **Xuất nhật ký sự kiện chuẩn XES** (#444, PR #502): `format=xes` ở điểm xuất đang có, viết bằng thư viện chuẩn;
+  dịch vụ khai phá có bài cho PM4Py đọc lại tệp mẫu
+- **Bảng điều khiển**: tỷ lệ vi phạm hạn theo loại yêu cầu và tỷ lệ ghi đè gợi ý theo tuần (#443, #447, PR #497);
+  thời gian chờ trung vị theo trạng thái trên view mới `bao_cao_thoi_gian_trang_thai`, cùng định nghĩa lượt với dịch
+  vụ khai phá — đối chiếu tám trạng thái trùng số lượt và trung vị (#445, PR #498). Bước kiểm bảng điều khiển của CI
+  đếm biểu đồ từ thư mục cấu hình
+- **Từ điển dữ liệu sinh tự động** (#446, PR #501): `scripts/tu_dien_du_lieu.py` đọc tĩnh mô hình, trang *Tham khảo →
+  Từ điển dữ liệu*, chế độ `--kiem` trong CI và pre-commit
+- **Màn gửi yêu cầu và tìm kiếm**: `?loai=<mã loại>` mở biểu mẫu với loại chọn sẵn, câu kiểm bước 2 không cuộn ngang ở
+  375 px (#434, #436, PR #495); tìm thêm trong nội dung mô tả, vẫn không dấu (#429, PR #496)
+- **Thẻ gợi ý của điều phối viên kèm hồ sơ đã giải quyết tương tự** khi bật mô hình nhúng (#450, PR #504); mô hình tắt
+  thì màn điều phối y như trước
+- **Kịch bản giao diện** cho bảng Kanban, quản lý webhook, cập nhật thời gian thực (#493, PR #499)
+- **Dọn cấu hình CI** (#494, PR #503): kiểm cả tệp ghi đè cụm thử, action lên bản chạy Node 24, lychee ghim theo mã
+  băm, ngoại lệ giấy phép ghi phiên bản đã đọc
+
+Hai migration mới: `0034` (view thời gian chờ theo trạng thái), `0035` (trigger sinh lần gửi webhook, bỏ cột
+`webhook_subscriptions.last_event_id` — trường này cũng bỏ khỏi API `/core/v1/webhooks`; sự kiện cũ chưa xét được bù
+một lần). Cụm cũ nâng bằng `up -d --build`, không `down -v`.
+
+**Soát lại issue còn mở** (19/11): đóng #428 (ví dụ ứng dụng chỉ dùng API lõi đã có ở `examples/goi-loi/`) và #438
+(quy trình mẫu thứ ba không chứng minh thêm điều gì); #425 (khóa lạc quan) để sau kỳ thi vì đổi hợp đồng của lệnh
+chuyển trạng thái.
+
 ---
 
 ## Đang làm
 
-Phát hành `v1.4.0` cho đợt bốn: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên mười một pull
-request ghép lại, rồi nhật ký thay đổi, thẻ, và bản phát hành đính kèm báo cáo giấy phép.
+Phát hành `v1.5.0` cho đợt năm: pull request phát hành `dev → main` chạy trọn kịch bản giao diện trên mười pull request
+ghép lại, rồi nhật ký thay đổi, thẻ, và bản phát hành đính kèm báo cáo giấy phép.
 
 ---
 
@@ -1165,11 +1213,12 @@ request ghép lại, rồi nhật ký thay đổi, thẻ, và bản phát hành 
 
 ### Theo thứ tự
 
-1. **Phát hành `v1.4.0`** — đợt bốn của Giai đoạn 6 đã nằm trên `dev`
-2. **Đợt năm của `@phuctiensinh`, sau `v1.4.0`** — mười một issue, theo thứ tự: hai biên bản `P0` #411 (dựng trên máy
-   sạch), #414 (chạy từ tệp phát hành ngoài thư mục mã) → việc nhỏ đã thu hẹp #434, #436, #429 → bảng điều khiển
-   #443 + #447 rồi #445 → #444 (xuất XES), #446 (từ điển dữ liệu), #450. Issue đã thu hẹp chỉ làm phần *Chỉ còn*
-   trong bình luận của navigator. #424, #425, #426 (đổi hành vi lõi), #430, #432 bàn trước khi làm
+1. **Phát hành `v1.5.0`** — đợt năm của Giai đoạn 6 đã nằm trên `dev`
+2. **Đợt sáu của `@phuctiensinh`, sau `v1.5.0`** — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
+   quy trình theo từng hồ sơ, chỉ hiển thị) → #435 (rà khả năng tiếp cận WCAG 2.1 AA); #424 (API lõi trả lý do cạnh
+   không đi được, chỉ thêm thông tin) → #441 (kiểm thử dựa trên tính chất cho máy trạng thái). Còn thời gian thì hỏi
+   navigator trước: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt),
+   #451, #481 (hoãn)
 3. **Chuyển kho sang công khai** trước 29/11 (hạn gửi bài 17:00 ngày 06/12) — điều kiện để được chấm; sau đó bật bảo
    vệ nhánh, bắt buộc dấu xanh, bật GitHub Pages (*Settings → Pages → Source: GitHub Actions*) và sửa ô Website của
    kho — khép #381
@@ -1343,6 +1392,9 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Sao lưu **tay**, khôi phục dưới 15 phút | Giảng viên đồng ý 13/11; không đặt lịch tự động — #245 |
 | Yêu cầu xóa dữ liệu cá nhân: **ẩn danh hóa nhãn tên**, không xóa dòng nhật ký | Giảng viên đồng ý 13/11; thời hạn lưu giữ để cấu hình — ADR-0009, #246 |
 | `H` — **Wiki.js là kho tri thức tùy chọn** (hồ sơ `tri-thuc`), ảnh nguyên bản | Đăng nhập một lần qua Keycloak, quyền theo vai trò, bài viết làm nguồn gợi ý thứ hai; navigator chấp nhận 14/11, chờ giảng viên xác nhận — ADR-0006, #321 |
+| **Webhook sinh lần gửi bằng trigger** trong giao dịch ghi sự kiện, không dùng con trỏ | Con trỏ theo mã lớn nhất bỏ sót sự kiện của giao dịch commit muộn; bộ gửi không giữ giao dịch trong lúc gọi mạng — #492, PR #500 |
+| **Sau `v1.5.0` chỉ làm issue tăng độ hoàn thiện**, không mở hướng mới | Navigator chốt 19/11: hướng dự án từ đầu là đúng; đợt sáu gồm #448, #435, #424, #441 |
+| **#425 khóa lạc quan để sau kỳ thi** | Đổi hợp đồng của lệnh chuyển trạng thái, kéo theo cổng, ví dụ, kiểm thử; engine đã khóa dòng hồ sơ khi chuyển nên không ghi đè lặng lẽ — navigator chốt 19/11 |
 
 ---
 
