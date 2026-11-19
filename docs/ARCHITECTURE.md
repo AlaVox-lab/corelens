@@ -1221,7 +1221,7 @@ View đặt ở schema `public` và chạy bằng quyền của chủ sở hữu
 quyền đọc mặc định cấp lúc dựng cụm, không đọc thẳng được gì nó không cần. Đổi một view thì tạo
 migration mới bằng `CREATE OR REPLACE VIEW`.
 
-**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, năm biểu đồ (thứ năm là tỷ lệ ghi đè gợi ý, #239) và dashboard *Vận hành
+**Bảng điều khiển là tệp cấu hình.** Kết nối dữ liệu, dataset, các biểu đồ (danh sách đầy đủ ở trang phả hệ dữ liệu, sinh tự động) và dashboard *Vận hành
 yêu cầu* nằm ở `infra/superset/bang-dieu-khien/` dạng YAML. Lúc khởi động, điểm vào của ảnh
 Superset thay chuỗi kết nối chỉ đọc vào chỗ giữ chỗ rồi chạy `superset import-directory
 --overwrite` — nạp đè theo uuid, khởi động lại không sinh bản trùng, cụm dựng mới có sẵn bảng

@@ -241,12 +241,14 @@ jobs:
       # infra/superset/bang-dieu-khien/ (#304). Keycloak không cần cho bước này.
       - name: Dựng và bật PostgreSQL, dịch vụ ứng dụng, Superset
         run: $COMPOSE up -d --build --wait --wait-timeout 600 postgres backend superset
-      - name: Dashboard và sáu biểu đồ đã nạp, đọc được view báo cáo
+      - name: Dashboard và mọi biểu đồ đã nạp, đọc được view báo cáo
         run: |
           q() { docker exec dxlab-postgres psql -U dxlab -d "$1" -At -c "$2"; }
+          # Số biểu đồ đếm từ tệp cấu hình, không viết cứng: thêm biểu đồ không phải sửa bước này (#443)
+          so_bieu_do=$(ls infra/superset/bang-dieu-khien/charts/*.yaml | wc -l)
           test "$(q superset 'SELECT count(*) FROM dashboards')" = 1
-          test "$(q superset 'SELECT count(*) FROM slices')" = 6
-          test "$(q superset 'SELECT count(*) FROM dashboard_slices')" = 6
+          test "$(q superset 'SELECT count(*) FROM slices')" = "$so_bieu_do"
+          test "$(q superset 'SELECT count(*) FROM dashboard_slices')" = "$so_bieu_do"
           for bang in $(q superset 'SELECT table_name FROM tables'); do
             docker exec dxlab-postgres psql -U superset_readonly -d dxlab -At -c "SELECT count(*) FROM $bang"
           done
