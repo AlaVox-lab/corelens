@@ -37,6 +37,9 @@ jobs:
       # Trang phả hệ dữ liệu (#379) phải khớp định nghĩa view và bảng điều khiển; chỉ thư viện chuẩn, không cần cụm
       - name: Phả hệ dữ liệu khớp định nghĩa
         run: python3 scripts/pha_he.py --kiem
+      # Trang từ điển dữ liệu (#446) phải khớp mô hình; đọc tĩnh, chỉ thư viện chuẩn, không cần cụm
+      - name: Từ điển dữ liệu khớp mô hình
+        run: python3 scripts/tu_dien_du_lieu.py --kiem
       # Mọi biến của infra/.env.example có dòng giải thích trên trang Cấu hình (#413)
       - name: Biến môi trường có tài liệu
         run: python3 scripts/kiem_bien_moi_truong.py
