@@ -200,10 +200,6 @@
             "title": "Is Active",
             "type": "boolean"
           },
-          "last_event_id": {
-            "title": "Last Event Id",
-            "type": "integer"
-          },
           "owner_id": {
             "title": "Owner Id",
             "type": "string"
@@ -237,7 +233,6 @@
           "process",
           "is_active",
           "owner_id",
-          "last_event_id",
           "created_at",
           "secret"
         ],
@@ -284,10 +279,6 @@
             "title": "Is Active",
             "type": "boolean"
           },
-          "last_event_id": {
-            "title": "Last Event Id",
-            "type": "integer"
-          },
           "owner_id": {
             "title": "Owner Id",
             "type": "string"
@@ -316,7 +307,6 @@
           "process",
           "is_active",
           "owner_id",
-          "last_event_id",
           "created_at"
         ],
         "title": "DangKyRa",
