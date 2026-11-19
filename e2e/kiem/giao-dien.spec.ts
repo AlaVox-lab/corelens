@@ -120,6 +120,29 @@ test.describe("người gửi", () => {
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
+  test("bước 2 của biểu mẫu không cuộn ngang, có ô tải tệp (#436)", async ({ page }) => {
+    // Bước 2 có trường riêng của loại và ô tải tệp — rộng nhất trong ba bước
+    await moMan(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau-buoc-1");
+    // Bấm thẻ loại là sang thẳng bước 2, như guiYeuCauThu trong chung.ts
+    await page.getByText("Sự cố thiết bị").first().click();
+    await expect(page.locator('input[name="title"]')).toBeVisible();
+    await expect(page.locator('input[type="file"]')).toHaveCount(1);
+    const cuonNgang = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(cuonNgang, "thanh cuộn ngang ở bước 2 của biểu mẫu").toBe(false);
+    await chup(page, test.info().project.name, "nguoi-gui-gui-yeu-cau-buoc-2");
+  });
+
+  test("?loai= mở thẳng bước 2 với loại chọn sẵn; mã lạ về bước 1 (#434)", async ({ page }) => {
+    // `device-incident` là mã của loại "Sự cố thiết bị" trong dữ liệu khởi tạo (infra/seed/)
+    await moMan(page, "/yeu-cau/moi?loai=device-incident", "nguoi-gui-gui-yeu-cau-loai-san");
+    await expect(page.locator('input[name="title"]')).toBeVisible();
+    await expect(page.locator("#truong-rieng-ma-tai-san")).toBeVisible();
+
+    await moMan(page, "/yeu-cau/moi?loai=khong-co-loai-nay", "nguoi-gui-gui-yeu-cau-loai-la");
+    await expect(page.locator('input[name="title"]')).toBeHidden();
+    await expect(page.getByText("Sự cố thiết bị").first()).toBeVisible();
+  });
+
   test("mô hình nhúng tắt: gõ nội dung không hiện hồ sơ tương tự, vẫn gửi bình thường (#319)", async ({ page }) => {
     // Cụm mặc định không bật hồ sơ `tri-tue`: dịch vụ báo tắt, biểu mẫu không hiện gì, không báo lỗi
     const tra = await page.request.post("/api/yeu-cau/tuong-tu", {
