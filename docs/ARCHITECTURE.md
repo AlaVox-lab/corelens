@@ -206,7 +206,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 | Giao việc, danh bạ | `GET /departments/{department_code}/assignees` |
 | Báo cáo nhúng | `POST /analytics/dashboard/guest-token` |
 | Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
-| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon` |
+| Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon`, `/similar-cases/for-case/{case_id}` (#450) |
 | Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
 | Vận hành | `/system/health`, `/sla/scan`, `/archive/scan` (#378), `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
 
@@ -1507,6 +1507,15 @@ hạn chót trình duyệt 4 giây; Route Handler `app/api/yeu-cau/tuong-tu` chu
 (hạn chót `DXLAB_SIMILAR_TIMEOUT_SECONDS`, ngưỡng `DXLAB_SIMILAR_MIN_SCORE`, tối đa
 `DXLAB_SIMILAR_MAX_RESULTS`). Mô hình tắt, chậm, hỏng — danh sách rỗng, không lỗi; dịch vụ báo tắt thì biểu
 mẫu thôi hỏi trong phiên. Nút Gửi không phụ thuộc khối này.
+
+**Căn cứ cho thẻ gợi ý của điều phối viên (#450).** Cùng chỉ mục phục vụ người duyệt gợi ý: ở màn điều phối,
+thẻ gợi ý loại (bước phân loại) và thẻ gợi ý phòng (bước chuyển phòng) kèm vài hồ sơ đã giải quyết gần nội dung
+hồ sơ đang xét, có mã mở được hồ sơ cũ — người quyết định thấy "lần trước loại việc này giải quyết thế nào"
+trước khi giữ hay đổi gợi ý. `GET /similar-cases/for-case/{case_id}` chỉ cho vai điều phối (thấy mọi hồ sơ nên
+được kèm mã), nhúng tiêu đề và mô tả của hồ sơ rồi tìm như biểu mẫu, bỏ chính hồ sơ đó; không ghi lượt xem.
+`components/can-cu-tuong-tu.tsx` hỏi qua `app/api/dieu-phoi/tuong-tu/[id]` sau khi thẻ hiện, hạn chót 4 giây,
+và không vẽ gì khi mô hình nhúng tắt, chậm, hỏng hay không có hồ sơ đủ gần — màn điều phối khi đó y như trước.
+Bảng thao tác chỉ gắn khối này vào trường mà trang truyền (`canCuTuongTu`), một trường mỗi bước.
 
 **Đo ngăn chặn.** Mỗi biểu mẫu sinh một mã phiên soạn. Có gợi ý thì `similar_case_views` ghi một dòng (hồ
 sơ gợi ý, số lần xem); gửi hồ sơ kèm mã phiên thì nối `submitted_case_id`; bấm "không gửi nữa"

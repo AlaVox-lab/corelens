@@ -561,6 +561,20 @@ export type HoSoTuongTu = {
   score: number;
 };
 
+/** Một hồ sơ đã giải quyết tương tự, làm căn cứ cho thẻ gợi ý của điều phối viên (#450). */
+export type HoSoCanCu = {
+  case_id: number;
+  code: string;
+  title: string;
+  request_type: string | null;
+  resolution: string;
+  closed_at: string;
+  score: number;
+};
+
+/** `GET /similar-cases/for-case/{id}` — `enabled: false` khi mô hình nhúng tắt. */
+export type KetQuaCanCu = { items: HoSoCanCu[]; enabled: boolean };
+
 /** Một bài của kho tri thức gần với nội dung đang soạn (#321), mở trên wiki bằng `url`. */
 export type BaiTriThuc = {
   title: string;

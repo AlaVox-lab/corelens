@@ -24,11 +24,12 @@
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import { CanCuTuongTu } from "@/components/can-cu-tuong-tu";
 import { TheGoiY } from "@/components/the-goi-y";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import { useAnCham } from "@/lib/chuyen-dong";
@@ -57,6 +58,11 @@ type Props = {
   khiHet: { cau: string; veHangDoi: string };
   /** Bảng nằm ở đáy ngăn xem nhanh (#233): gửi xong thì sang `sauKhiXong`. */
   ngan?: { sauKhiXong: string };
+  /**
+   * Trường mà thẻ gợi ý kèm hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ màn điều phối truyền. Một
+   * trường mỗi bước, để danh sách không lặp lại dưới mọi thẻ của cùng một bảng.
+   */
+  canCuTuongTu?: readonly string[];
 };
 
 const KIEU_NHAN: React.CSSProperties = { fontSize: "13px", fontWeight: 600 };
@@ -71,6 +77,7 @@ export function OTruong({
   goiY,
   cacLoai,
   nguon,
+  canCu,
 }: {
   truong: string;
   giaTriDau: string;
@@ -78,6 +85,7 @@ export function OTruong({
   /** Xem `Props.cacLoai`. */
   cacLoai?: LoaiYeuCau[];
   nguon?: NguonLuaChon;
+  canCu?: ReactNode;
 }) {
   const kieu = kieuTruong(truong);
   const ten = `${TIEN_TO_TRUONG}${truong}`;
@@ -130,6 +138,7 @@ export function OTruong({
       goiY={goiY}
       cacLoai={cacLoai}
       lua={nguon}
+      canCu={canCu}
     />
   );
 }
@@ -151,6 +160,7 @@ function OChon({
   goiY,
   cacLoai,
   lua,
+  canCu,
 }: {
   ten: string;
   kieu: KieuTruong;
@@ -158,6 +168,7 @@ function OChon({
   goiY?: GoiY;
   cacLoai?: LoaiYeuCau[];
   lua: NhanCoMa[];
+  canCu?: ReactNode;
 }) {
   const id = useId();
   const idThe = `${id}-goi-y`;
@@ -192,7 +203,7 @@ function OChon({
       <label htmlFor={id} style={KIEU_NHAN}>
         {kieu.nhan}
       </label>
-      {goiYHienTai && <TheGoiY id={idThe} goiY={goiYHienTai} dangChon={chon} />}
+      {goiYHienTai && <TheGoiY id={idThe} goiY={goiYHienTai} dangChon={chon} canCu={canCu} />}
       <select
         id={id}
         ref={oChon}
@@ -229,6 +240,7 @@ export function BangThaoTac({
   hanhDong,
   khiHet,
   ngan,
+  canCuTuongTu,
 }: Props) {
   const router = useRouter();
   // Trong ngăn: thao tác thành công thì sang hồ sơ kế. Server Action trả `CHUA_CO_LOI` cả khi
@@ -370,6 +382,7 @@ export function BangThaoTac({
                 goiY={goiY[truong]}
                 cacLoai={cacLoai}
                 nguon={nguonMa ? danhMuc[nguonMa] : undefined}
+                canCu={canCuTuongTu?.includes(truong) ? <CanCuTuongTu maHoSo={maHoSo} /> : undefined}
               />
             );
           })}

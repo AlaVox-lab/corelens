@@ -113,6 +113,8 @@ export function ThaoTacDieuPhoi({ d, ngan }: { d: DuLieuDieuPhoi; ngan?: { sauKh
           ...(goiYPhong ? { department_code: goiYPhong } : {}),
         }}
         cacLoai={cacLoai ?? undefined}
+        // Hồ sơ đã giải quyết tương tự làm căn cứ (#450): thẻ loại ở bước phân loại, thẻ phòng ở bước chuyển phòng
+        canCuTuongTu={["request_type_code", "department_code"]}
         danhMuc={{
           "request-types": thanhNhanCoMa(cacLoai),
           priorities: thanhNhanCoMa(cacMuc),
