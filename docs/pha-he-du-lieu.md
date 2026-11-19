@@ -11,7 +11,7 @@ bảng nguồn, cùng các cột được dùng ở mỗi chặng. Mọi dòng d
 
 ## Biểu đồ → bộ dữ liệu → view → bảng nguồn
 
-Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 8 biểu đồ, theo thứ tự trên lưới.
+Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 9 biểu đồ, theo thứ tự trên lưới.
 
 | Biểu đồ | Bộ dữ liệu · cột dùng | View đọc qua | Bảng nguồn |
 |---|---|---|---|
@@ -23,6 +23,7 @@ Bảng điều khiển **Vận hành yêu cầu** (`van-hanh-yeu-cau`), 8 biểu
 | Tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý hồ sơ tương tự (%) | `bao_cao_ngan_chan` · `so_da_ket_thuc`, `so_ngan_chan` | `bao_cao_ngan_chan` | `departments`, `requests`, `similar_case_views` |
 | Tỷ lệ vi phạm hạn theo loại yêu cầu (% hồ sơ đã xong) | `bao_cao_vi_pham` · `loai_yeu_cau`, `so_ho_so`, `so_vi_pham` | `bao_cao_vi_pham` → `bao_cao_ho_so` | `departments`, `event_log`, `priorities`, `processes`, `request_types`, `requests`, `rule_sets`, `states` |
 | Tỷ lệ ghi đè gợi ý theo tuần (%) | `bao_cao_goi_y` · `luc`, `nguon`, `so_ghi_de`, `truong` | `bao_cao_goi_y` | `departments`, `event_log`, `requests`, `transitions` |
+| Thời gian chờ trung vị theo trạng thái (giờ làm việc) | `bao_cao_thoi_gian_trang_thai` · `so_gio_lam_viec`, `trang_thai` | `bao_cao_thoi_gian_trang_thai` → `bao_cao_nhat_ky` | `departments`, `event_log`, `processes`, `request_types`, `requests`, `rule_sets`, `states` |
 
 *Cột dùng* là cột của bộ dữ liệu xuất hiện trong trục, nhóm, chỉ số hay bộ lọc của biểu đồ; cột tính của
 bộ dữ liệu được thay bằng các cột vật lý trong biểu thức của nó. *Bảng nguồn* gộp mọi bảng mà các view
@@ -40,11 +41,13 @@ flowchart LR
   bd6["Tỷ lệ yêu cầu được ngăn chặn nhờ gợi ý hồ sơ tương tự (%)"]
   bd7["Tỷ lệ vi phạm hạn theo loại yêu cầu (% hồ sơ đã xong)"]
   bd8["Tỷ lệ ghi đè gợi ý theo tuần (%)"]
+  bd9["Thời gian chờ trung vị theo trạng thái (giờ làm việc)"]
   v_bao_cao_goi_y[("bao_cao_goi_y")]
   v_bao_cao_ho_so[("bao_cao_ho_so")]
   v_bao_cao_ngan_chan[("bao_cao_ngan_chan")]
   v_bao_cao_nhat_ky[("bao_cao_nhat_ky")]
   v_bao_cao_phan_bo_loai[("bao_cao_phan_bo_loai")]
+  v_bao_cao_thoi_gian_trang_thai[("bao_cao_thoi_gian_trang_thai")]
   v_bao_cao_thoi_gian_xu_ly[("bao_cao_thoi_gian_xu_ly")]
   v_bao_cao_ton_dong[("bao_cao_ton_dong")]
   v_bao_cao_vi_pham[("bao_cao_vi_pham")]
@@ -67,6 +70,7 @@ flowchart LR
   bd6 --> v_bao_cao_ngan_chan
   bd7 --> v_bao_cao_vi_pham
   bd8 --> v_bao_cao_goi_y
+  bd9 --> v_bao_cao_thoi_gian_trang_thai
   v_bao_cao_goi_y --> t_event_log
   v_bao_cao_goi_y --> t_requests
   v_bao_cao_goi_y --> t_transitions
@@ -88,6 +92,12 @@ flowchart LR
   v_bao_cao_nhat_ky --> t_event_log
   v_bao_cao_phan_bo_loai --> v_bao_cao_ho_so
   v_bao_cao_phan_bo_loai --> t_work_calendars
+  v_bao_cao_thoi_gian_trang_thai --> v_bao_cao_nhat_ky
+  v_bao_cao_thoi_gian_trang_thai --> t_states
+  v_bao_cao_thoi_gian_trang_thai --> t_requests
+  v_bao_cao_thoi_gian_trang_thai --> t_request_types
+  v_bao_cao_thoi_gian_trang_thai --> t_departments
+  v_bao_cao_thoi_gian_trang_thai --> t_processes
   v_bao_cao_thoi_gian_xu_ly --> v_bao_cao_ho_so
   v_bao_cao_thoi_gian_xu_ly --> t_request_types
   v_bao_cao_ton_dong --> v_bao_cao_ho_so
@@ -109,6 +119,7 @@ view trả ra.
 | `bao_cao_ngan_chan` | `0022_ho_so_tuong_tu.py` | `departments`, `requests`, `similar_case_views` | `departments` (code, label)<br>`requests` (department_code, id)<br>`similar_case_views` (abandon_reason, abandoned_at, session_id, submitted_case_id, suggested_case_ids, top_case_id, viewed_at) | ma_phien, luc_xem, tuan, ket_qua, so_ngan_chan, so_da_ket_thuc, ly_do_bo, so_goi_y, ma_phong, phong_ban |
 | `bao_cao_nhat_ky` | `0028_nhieu_quy_trinh.py` | `event_log`, `requests`, `rule_sets`, `states` | `event_log` (activity, actor, case_id, from_state, id, timestamp, to_state)<br>`requests` (created_at, department_code, id, priority_code, request_type_code, requester_id, rule_set_id)<br>`rule_sets` (id, process_code)<br>`states` (code, is_initial, rule_set_id) | case_id, activity, timestamp, actor, from_state, to_state, request_type_code, department_code, priority_code, rule_set_id, thu_tu, process_code |
 | `bao_cao_phan_bo_loai` | `0014_lop_bao_cao.py` | `bao_cao_ho_so`, `work_calendars` | `departments` (code, label)<br>`event_log` (case_id, to_state)<br>`priorities` (code, label, sla_factor_percent)<br>`processes` (code, is_app_default)<br>`request_types` (code, label, sla_hours)<br>`requests` (created_at, current_state, department_code, id, priority_code, request_type_code, rule_set_id, sla_extension_total_hours, sla_running_seconds)<br>`rule_sets` (id, process_code)<br>`states` (code, is_terminal, label, rule_set_id, sla_running)<br>`work_calendars` (—) | tuan, ma_phong, phong_ban, ma_loai, loai_yeu_cau, so_ho_so |
+| `bao_cao_thoi_gian_trang_thai` | `0034_thoi_gian_moi_trang_thai.py` | `bao_cao_nhat_ky`, `departments`, `processes`, `request_types`, `requests`, `states` | `departments` (code, label)<br>`event_log` (activity, actor, case_id, from_state, id, timestamp, to_state)<br>`processes` (—)<br>`request_types` (code, label)<br>`requests` (created_at, department_code, id, priority_code, request_type_code, requester_id, rule_set_id)<br>`rule_sets` (id, process_code)<br>`states` (code, is_initial, is_terminal, label, rule_set_id) | ma_ho_so, ma_trang_thai, trang_thai, luc_vao, luc_ra, dang_o, so_giay_lam_viec, so_gio_lam_viec, ma_loai, loai_yeu_cau, ma_phong, phong_ban |
 | `bao_cao_thoi_gian_xu_ly` | `0014_lop_bao_cao.py` | `bao_cao_ho_so`, `request_types` | `departments` (code, label)<br>`event_log` (case_id, to_state)<br>`priorities` (code, label, sla_factor_percent)<br>`processes` (code, is_app_default)<br>`request_types` (code, label, sla_hours)<br>`requests` (created_at, current_state, department_code, id, priority_code, request_type_code, rule_set_id, sla_extension_total_hours, sla_running_seconds)<br>`rule_sets` (id, process_code)<br>`states` (code, is_terminal, label, rule_set_id, sla_running) | ma_loai, loai_yeu_cau, gio_han_chuan, so_ho_so, gio_xu_ly_trung_vi, so_vi_pham, ty_le_vi_pham |
 | `bao_cao_ton_dong` | `0014_lop_bao_cao.py` | `bao_cao_ho_so` | `departments` (code, label)<br>`event_log` (case_id, to_state)<br>`priorities` (code, label, sla_factor_percent)<br>`processes` (code, is_app_default)<br>`request_types` (code, label, sla_hours)<br>`requests` (created_at, current_state, department_code, id, priority_code, request_type_code, rule_set_id, sla_extension_total_hours, sla_running_seconds)<br>`rule_sets` (id, process_code)<br>`states` (code, is_terminal, label, rule_set_id, sla_running) | ma_phong, phong_ban, ma_trang_thai, trang_thai, so_ho_so |
 | `bao_cao_vi_pham` | `0014_lop_bao_cao.py` | `bao_cao_ho_so` | `departments` (code, label)<br>`event_log` (case_id, to_state)<br>`priorities` (code, label, sla_factor_percent)<br>`processes` (code, is_app_default)<br>`request_types` (code, label, sla_hours)<br>`requests` (created_at, current_state, department_code, id, priority_code, request_type_code, rule_set_id, sla_extension_total_hours, sla_running_seconds)<br>`rule_sets` (id, process_code)<br>`states` (code, is_terminal, label, rule_set_id, sla_running) | ma_phong, phong_ban, ma_loai, loai_yeu_cau, so_ho_so, so_vi_pham |
