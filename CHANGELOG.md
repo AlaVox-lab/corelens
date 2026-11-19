@@ -5,6 +5,34 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.5.0] - 2026-11-19
+
+### Công việc phụ trợ
+
+- **ci:** Dọn cấu hình CI, ghim action và ngoại lệ giấy phép ([#503](https://github.com/AlaVox-lab/dx-os-lab/issues/503)) ([79d69f3](https://github.com/AlaVox-lab/dx-os-lab/commit/79d69f3b6ae9c19feaf0c67542d4678969fae9a8))
+
+### Kiểm thử
+
+- **h-portal:** E2e cho Kanban, webhook và thời gian thực ([#499](https://github.com/AlaVox-lab/dx-os-lab/issues/499)) ([710049b](https://github.com/AlaVox-lab/dx-os-lab/commit/710049b8213523f63ab1896c23f1e3a2f78d5f5c))
+
+### Sửa lỗi
+
+- **d-analytics:** Webhook theo trigger, gửi ngoài giao dịch ([#500](https://github.com/AlaVox-lab/dx-os-lab/issues/500)) ([d4d0f2f](https://github.com/AlaVox-lab/dx-os-lab/commit/d4d0f2fb11b4fb03afc0fb6a2f5a73be77b7aa3e))
+
+### Tài liệu
+
+- **d-schema:** Sinh từ điển dữ liệu tự động từ mô hình ([#501](https://github.com/AlaVox-lab/dx-os-lab/issues/501)) ([c2dfe8b](https://github.com/AlaVox-lab/dx-os-lab/commit/c2dfe8b29ff1e576cf9154279358500ef0221afb))
+- **state:** Ghi đợt năm Giai đoạn 6 trước v1.5.0 ([#505](https://github.com/AlaVox-lab/dx-os-lab/issues/505)) ([aa7c724](https://github.com/AlaVox-lab/dx-os-lab/commit/aa7c724dc89af51670c9508a94c5536bbb4fbaa5))
+
+### Tính năng mới
+
+- **h-portal:** Mở biểu mẫu gửi với loại chọn sẵn qua ?loai= ([#495](https://github.com/AlaVox-lab/dx-os-lab/issues/495)) ([d2151e2](https://github.com/AlaVox-lab/dx-os-lab/commit/d2151e2bdfc7724a5f992720c4068e515e57ac53))
+- **d-analytics:** Tìm hồ sơ cả trong nội dung mô tả, không dấu ([#496](https://github.com/AlaVox-lab/dx-os-lab/issues/496)) ([503c5f9](https://github.com/AlaVox-lab/dx-os-lab/commit/503c5f92d68d56fde5440f07b9411221a7df9650))
+- **d-analytics:** Biểu đồ vi phạm theo loại, ghi đè theo tuần ([#497](https://github.com/AlaVox-lab/dx-os-lab/issues/497)) ([15b77e9](https://github.com/AlaVox-lab/dx-os-lab/commit/15b77e948876fedd0b80ba7230cdcbd0c5acdecd))
+- **d-analytics:** Thời gian chờ theo trạng thái trên Superset ([#498](https://github.com/AlaVox-lab/dx-os-lab/issues/498)) ([392b937](https://github.com/AlaVox-lab/dx-os-lab/commit/392b93778fc54e77e02dfdeb51b8949daa2716b5))
+- **d-analytics:** Xuất nhật ký sự kiện chuẩn XES ([#502](https://github.com/AlaVox-lab/dx-os-lab/issues/502)) ([98cb94a](https://github.com/AlaVox-lab/dx-os-lab/commit/98cb94ad3d23d860e79126617a4e8cace78b0099))
+- **i-rag:** Thẻ gợi ý điều phối kèm hồ sơ tương tự ([#504](https://github.com/AlaVox-lab/dx-os-lab/issues/504)) ([c800a29](https://github.com/AlaVox-lab/dx-os-lab/commit/c800a292a493539536d6e5726af84da415fb5e9d))
+
 ## [1.4.0] - 2026-11-18
 
 ### Công việc phụ trợ

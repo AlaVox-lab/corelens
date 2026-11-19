@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.5.0` | Webhook không bỏ sót sự kiện: lần gửi sinh bằng trigger trong giao dịch ghi nhật ký, gửi ngoài giao dịch; xuất nhật ký sự kiện chuẩn XES; bảng điều khiển thêm vi phạm hạn theo loại, ghi đè gợi ý theo tuần, thời gian chờ theo trạng thái; từ điển dữ liệu sinh tự động; tìm cả trong mô tả; mở biểu mẫu với loại chọn sẵn; thẻ gợi ý của điều phối viên kèm hồ sơ đã giải quyết tương tự; kịch bản giao diện cho Kanban, webhook, thời gian thực; action lên bản chạy Node 24 |
 | `v1.4.0` | Đặc tả OpenAPI của nền tảng lõi `/core/v1` nằm trong kho, tích hợp liên tục báo khi lệch mã; quét giấy phép mọi gói phụ thuộc kể cả gián tiếp, báo cáo đính kèm bản phát hành; đối soát tài liệu phụ thuộc, kiểm liên kết hỏng, kiểm tệp Compose từng hồ sơ; pre-commit tùy chọn; kịch bản in tiếng Việt trên Windows, kiểm nâng cấp trên cụm thử; yêu cầu Python cho kịch bản tiện ích |
 | `v1.3.0` | Tích hợp liên tục kiểm chuẩn tiêu đề pull request và lịch sử commit, kiểm header giấy phép cả trên tệp cấu hình, mọi biến cấu hình có dòng giải thích; mẫu issue dạng biểu mẫu; ngày nghỉ lễ năm 2027 trong lịch làm việc mẫu; kiểm thử độc lập với dữ liệu trình diễn; bước nâng cấp từ `v1.0.0` theo thứ tự |
 | `v1.2.0` | Điều kiện trên cạnh: quy trình rẽ nhánh theo trường của hồ sơ, khai trong dữ liệu — đề xuất mua vật tư dưới ngưỡng chỉ cần một cấp duyệt; xuất quy trình ra BPMN 2.0 qua API lõi; quản lý webhook trên màn Hệ thống; bảng Kanban cho buồng lái phòng ban; kịch bản trình diễn chung kết |
