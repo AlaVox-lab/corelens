@@ -52,7 +52,7 @@ hành yêu cầu nội bộ — và có thể đổi theo giao diện của nó.
 |---|---|
 | Luồng công việc | `GET /core/v1/workflow/processes` — danh mục quy trình · `GET /core/v1/workflow/request-types`, `/states` (`?process=`), `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ, loại yêu cầu quyết định quy trình · `GET /core/v1/workflow/requests` (`?process=`, `needs_action=true`), `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
 | Tệp | `GET /core/v1/files/policy` · `POST /core/v1/files/requests/{case_id}/attachments` · `GET /core/v1/files/{attachment_id}` |
-| Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json&from=…&to=…&process=…` — chỉ quản trị viên; mỗi dòng mang `process_code` |
+| Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json\|xes&from=…&to=…&process=…` — chỉ quản trị viên; mỗi dòng mang `process_code`; `xes` mở thẳng bằng công cụ khai phá quy trình (ProM, Disco, PM4Py) |
 | Lưu trữ lạnh | `GET /core/v1/archive` — các bản lưu theo tháng · `GET /core/v1/archive/{YYYY-MM}` — bản kê (`manifest`, số dòng, SHA-256) và liên kết tải · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` — tải một tệp; chỉ quản trị viên, chỉ có ở lõi |
 | Thông báo | `GET /core/v1/notifications/preferences` · `POST /core/v1/notifications/preferences/{code}` |
 | Định danh | `GET /core/v1/identity/me` |
