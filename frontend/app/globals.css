@@ -512,6 +512,52 @@ select.o-nhap {
   color: var(--ink-2);
 }
 
+/* Bước lệch quy trình trên trang hồ sơ phía nhân viên (#448): chỉ thông tin, chỉ hiện khi có bước lệch.
+   Tiêu đề là h2 có biểu tượng: dồn trái như "Nội dung yêu cầu", không giãn hai đầu như thẻ có nút */
+.the.buoc-lech > .khoi-dau {
+  justify-content: flex-start;
+  font-size: 13.5px;
+}
+
+.buoc-lech .khoi-dau svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.buoc-lech-giai {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.buoc-lech-ds {
+  margin: 10px 0 0;
+  padding: 0 0 0 18px;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.buoc-lech-ds li {
+  display: grid;
+  gap: 1px;
+}
+
+.buoc-lech-loai {
+  font-weight: 600;
+}
+
+.buoc-lech-phu {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.qt-nguon-ma.buoc-lech-nguon {
+  margin: 12px 0 0;
+}
+
 .the-goi-y-khac {
   font-size: 12.5px;
   color: var(--f-a-ink);

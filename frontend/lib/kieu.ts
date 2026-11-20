@@ -575,6 +575,28 @@ export type HoSoCanCu = {
 /** `GET /similar-cases/for-case/{id}` — `enabled: false` khi mô hình nhúng tắt. */
 export type KetQuaCanCu = { items: HoSoCanCu[]; enabled: boolean };
 
+/** Một bước hồ sơ đi lệch quy trình thiết kế (#448). `kind` là mã nhánh lệch của màn Quy trình thực tế;
+ * nhãn trạng thái tra từ bộ quy tắc của hồ sơ; `at` theo UTC. `actor_label` là tên lúc thao tác. */
+export type BuocLech = {
+  kind: string;
+  activity: string;
+  from: string | null;
+  to: string;
+  from_label: string | null;
+  to_label: string;
+  at: string;
+  actor: string | null;
+  actor_label: string | null;
+};
+
+/** `GET /analytics/process-mining/cases/{id}` — chỉ `ready` mới có bước; mọi trạng thái khác là "không có". */
+export type KetQuaTuanThu = {
+  status: "ready" | "disabled" | "unavailable";
+  case_id: number;
+  deviates: boolean;
+  steps: BuocLech[];
+};
+
 /** Một bài của kho tri thức gần với nội dung đang soạn (#321), mở trên wiki bằng `url`. */
 export type BaiTriThuc = {
   title: string;

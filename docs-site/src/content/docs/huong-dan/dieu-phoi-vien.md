@@ -42,6 +42,9 @@ Phòng nhận sai chuyên môn thì **từ chối kèm lý do**, hồ sơ sang *
 lại sang phòng khác**. Không phòng nào nhận thì kết thúc bằng **Không tiếp nhận, không phòng nào
 nhận** — bắt buộc ghi lý do; người gửi có thể tạo hồ sơ mới rõ hơn.
 
+Hồ sơ đã bị trả, bị leo thang hay chuyển phòng nhiều lần thì trang hồ sơ có khối **Đi lệch quy
+trình thiết kế** liệt kê từng bước lệch — chỉ để thông tin, xem trang [Phòng ban](../phong-ban/), mục *Hồ sơ đi lệch quy trình*.
+
 Phòng giữ hồ sơ quá lâu mà chưa xác duyệt: bạn **Rút hồ sơ về điều phối** kèm lý do, hoặc hệ thống
 tự trả về sau **24 giờ làm việc**.
 

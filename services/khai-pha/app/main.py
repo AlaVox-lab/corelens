@@ -10,6 +10,7 @@
 #
 #   GET  /health    — {service, status}; 503 khi không đọc được cơ sở dữ liệu
 #   POST /khai-pha  — {from, to, departments|null} → kết quả của app/phan_tich.py
+#   GET  /ho-so/{case_id}/tuan-thu — bước lệch của một hồ sơ (#448); 404 khi nhật ký không có hồ sơ đó
 
 from __future__ import annotations
 
@@ -21,8 +22,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from .bo_may import chon_bo_may
 from .cau_hinh import cau_hinh
-from .du_lieu import doc_du_lieu, mo_ket_noi
-from .phan_tich import phan_tich
+from .du_lieu import doc_du_lieu, doc_ho_so, mo_ket_noi
+from .phan_tich import phan_tich, tuan_thu_ho_so
 
 log = logging.getLogger("dxlab.khai_pha")
 
@@ -81,3 +82,18 @@ def khai_pha(yeu_cau: YeuCau) -> dict:
         "process": yeu_cau.process,
         **ket_qua,
     }
+
+
+@app.get("/ho-so/{case_id}/tuan-thu")
+def tuan_thu(case_id: int) -> dict:
+    """Hồ sơ này có đi lệch quy trình thiết kế không, lệch ở bước nào (#448). Chỉ thông tin: không ghi
+    gì, không bộ máy nào tham gia (định nghĩa lệch chỉ đọc cờ trên cạnh, xem `phan_tich.buoc_lech`)."""
+    try:
+        with mo_ket_noi(cau_hinh().database_uri) as ket_noi:
+            du_lieu = doc_ho_so(ket_noi, case_id)
+    except Exception as loi:  # noqa: BLE001
+        log.exception("Không đọc được nhật ký của hồ sơ")
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Không đọc được nhật ký sự kiện.") from loi
+    if not du_lieu.su_kien:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Nhật ký không có hồ sơ này.")
+    return tuan_thu_ho_so(case_id, du_lieu)
