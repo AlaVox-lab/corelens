@@ -227,7 +227,7 @@ Chi tiết ở [Thư điện tử và quét tệp](../thu-va-quet-tep/).
 | `MINING_READONLY_USER` | `khai_pha_readonly` | Tài khoản chỉ đọc riêng của dịch vụ khai phá, tạo bằng migration |
 | `MINING_ENGINE` | `pm4py` | `pm4py` hay `noi_bo` — bộ máy dự phòng không dùng thư viện AGPL, cùng kết quả |
 | `MINING_BOTTLENECK_FACTOR` | `2` | Trạng thái là điểm nghẽn khi thời gian chờ trung vị gấp chừng này lần trung vị chung |
-| `MINING_SOURCE_URL` | thư mục `services/khai-pha` trên GitHub | Màn Quy trình thực tế dẫn tới đây (AGPL điều 13). Bản đã sửa thì trỏ về kho chứa bản đó |
+| `MINING_SOURCE_URL` | thư mục `services/khai-pha` trên GitHub | Màn Quy trình thực tế và khối bước lệch trên trang hồ sơ dẫn tới đây (AGPL điều 13). Bản đã sửa thì trỏ về kho chứa bản đó |
 
 ### Mô hình ngôn ngữ và gợi ý
 

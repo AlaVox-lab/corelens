@@ -523,7 +523,7 @@ trong bản ghi quyết định và `docs/dependencies.md`.
   Thêm một thư mục mang giấy phép riêng thì sửa cùng lúc bảng `GIAY_PHEP_THEO_THU_MUC` trong kịch bản đó
   và `LICENSES.md`
 - **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên màn Quy trình thực
-  tế có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
+  tế và khối bước lệch trên trang hồ sơ (#448) có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
   cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa
 - Chiều MIT sang AGPL tương thích, nên mã MIT của kho dùng lại được trong dịch vụ khai phá; chiều ngược
   lại thì không — **không chép mã từ `services/khai-pha/` sang thư mục MIT**
@@ -1413,6 +1413,40 @@ thái, nhánh lệch hay đường đi mở ngăn danh sách hồ sơ (`longest_
 trình, giấy phép AGPL-3.0 — mã nguồn"* (#340, điều 13 — mục 3.3): trang máy chủ đọc `MINING_SOURCE_URL`,
 chỉ nhận `http(s)`, truyền xuống thành phần; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site`
 — *Quy trình thực tế*.
+
+**Tuân thủ theo từng hồ sơ (#448).** Vòng tự soi tới tận một hồ sơ: trang hồ sơ phía nhân viên cho thấy hồ
+sơ đã đi lệch quy trình thiết kế ở bước nào. **Một định nghĩa lệch duy nhất**: hàm `buoc_lech` ở
+`app/phan_tich.py` của dịch vụ khai phá trả các cặp (sự kiện, mã nhánh lệch) — sự kiện đi cạnh `rework` /
+`escalation` / `wait_expiry` / `reopen` như bảng trên, và lần đặt `department_code` **thứ hai trở đi** của
+cùng hồ sơ (`multiple_routing`; lần đầu là định tuyến bình thường). Nhánh lệch của kết quả toàn bộ dựng
+từ chính hàm đó, nên hồ sơ có bước loại *k* khi và chỉ khi nó nằm trong `deviations[k].cases` — bài kiểm
+thử đòi đúng điều này trên bộ dữ liệu đáp án và dữ liệu thật, với cả hai bộ máy. Hàm chỉ đọc cờ, không
+bộ máy nào tham gia, không dùng alignment hay token replay. Đọc nhật ký bằng cùng thân câu SQL với lần
+khai phá theo khoảng (`_CHON_SU_KIEN` ở `app/du_lieu.py`), không lọc ngày, qua tài khoản chỉ đọc.
+
+```
+Cổng ──► /api/tuan-thu/{id} ──► dịch vụ ứng dụng ──HTTP──► dịch vụ khai phá
+         (Route Handler)         GET /analytics/process-mining/cases/{id}     GET /ho-so/{id}/tuan-thu
+```
+
+- **Dịch vụ khai phá** `GET /ho-so/{case_id}/tuan-thu` → `case`, `deviates`, `steps[]` (theo thứ tự thời
+  gian: `kind` — mã trong `NHANH_LECH`, `activity`, `from`, `to`, `from_label`, `to_label` — nhãn trạng
+  thái của bộ quy tắc hồ sơ đã đi, `at` — UTC, ISO 8601 hậu tố `Z`, `actor` — định danh như nhật ký ghi).
+  404 khi nhật ký không có hồ sơ, 503 khi không đọc được cơ sở dữ liệu. Không ghi gì
+- **Dịch vụ ứng dụng** `GET /analytics/process-mining/cases/{case_id}` (API của ứng dụng, không thuộc
+  `/core/v1`): người gọi phải xem được hồ sơ theo luật của hai trang hồ sơ phía nhân viên — điều phối viên
+  mọi hồ sơ (`vao_duoc_buong_lai`), nhân viên phòng ban hồ sơ của phòng mình (`vao_duoc_phong_ban`) — nhưng
+  **không** có luật người gửi xem hồ sơ của mình: người không vào được buồng lái nào nhận 403
+  `conformance-forbidden` (như căn cứ gợi ý ở #504), nhân viên ngoài phạm vi nhận 404 như trang hồ sơ. Trả
+  `status`, `case_id`, `deviates`, `steps[]` (thêm `actor_label` — tên lúc thao tác, đọc từ
+  `event_log.actor_label`). **Không bao giờ lỗi vì dịch vụ khai phá**: `DXLAB_MINING_URL` rỗng là
+  `disabled`; dịch vụ tắt, chậm, trả lỗi hay kết quả sai hình là `unavailable` — cả hai không có bước nào
+- **Cổng** (`components/buoc-lech-ho-so.tsx`, trên `phong-ban/[id]` và `dieu-phoi/[id]`; trang `yeu-cau/[id]`
+  của người gửi không có): khối hỏi sau khi trang hiện, có hạn chót, và **chỉ vẽ khi `status` là `ready` và
+  có bước** — hồ sơ chuẩn, khai phá tắt hay hỏng thì trang y như trước, không khung trống. Nhãn loại lệch là
+  bảng `NHAN_NHANH_LECH` của màn Quy trình thực tế; nhãn trạng thái từ kết quả. Không nút nào, không đổi gì
+  trên hồ sơ (ADR-0005: xem không phải thao tác). Khối mang dòng mã nguồn AGPL điều 13 như màn Quy trình
+  thực tế, cùng hàm `lib/nguon-ma-khai-pha.ts` đọc `MINING_SOURCE_URL`
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 

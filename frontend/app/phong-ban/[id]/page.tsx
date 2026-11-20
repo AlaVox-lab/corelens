@@ -28,7 +28,9 @@ import { duongHopThu } from "@/lib/hop-thu";
 import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
 import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
 import { DauHoSo, TheHan, TheNoiDung, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
+import { BuocLechHoSo } from "@/components/buoc-lech-ho-so";
 import { laHetPhien } from "@/lib/api";
+import { nguonMaKhaiPha } from "@/lib/nguon-ma-khai-pha";
 import { cacBuoc } from "@/lib/buoc";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +74,8 @@ export default async function ChiTietPhongBan({
         {/* --- Cột trái: đọc. Màn hẹp thì xuống sau Hạn và thao tác (#189) ------- */}
         <div className="cot-doc" style={{ display: "grid", gap: "16px", minWidth: 0 }}>
           <TheNoiDung ho_so={ho_so} />
+          {/* Bước lệch quy trình (#448): chỉ thông tin, chỉ hiện khi hồ sơ có bước lệch */}
+          <BuocLechHoSo maHoSo={ho_so.id} nguonMa={nguonMaKhaiPha()} />
 
           <TheLichSu
             maHoSo={ho_so.id}
