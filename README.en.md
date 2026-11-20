@@ -199,7 +199,6 @@ to the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 |---|---|---|
 | Faculty advisor | MSc. Trần Phước Đức | [`@tranphuocduc1998`](https://github.com/tranphuocduc1998) |
 | Repository coordinator | Nguyễn Thanh Sơn | [`@AlaVox-lab`](https://github.com/AlaVox-lab) |
-| Member | Nguyễn Phạm Đại Phúc | [`@phuctiensinh`](https://github.com/phuctiensinh) |
 | Member | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
 
 ## License

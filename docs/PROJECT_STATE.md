@@ -21,7 +21,7 @@
 | Trạng thái kho mã | **Công khai** từ 19/11 tại https://github.com/AlaVox-lab/corelens (đổi tên từ `dx-os-lab`, link cũ tự chuyển hướng); trang tài liệu https://alavox-lab.github.io/corelens/ |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
 | Issue đang mở | **14** (mốc 18) — 0 `P0`, 3 `P1`, 0 `P2`, 11 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
-| Đội | Từ 16/11 **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) vào nhóm |
+| Đội | **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) tham gia từ 16/11 tới 20/11; các đợt hai tới năm bên dưới là phần việc của bạn. Từ 20/11 navigator nhận lại các issue đang mở |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
@@ -1218,7 +1218,7 @@ qua có chủ đích; ba hồ sơ tùy chọn `thu-thu`, `tri-thuc`, `quet-tep` 
 
 ## Đang làm
 
-Đợt sáu của `@phuctiensinh` (mục *Việc tiếp theo*).
+Đợt sáu, navigator làm (mục *Việc tiếp theo*).
 
 ---
 
@@ -1226,7 +1226,7 @@ qua có chủ đích; ba hồ sơ tùy chọn `thu-thu`, `tri-thuc`, `quet-tep` 
 
 ### Theo thứ tự
 
-1. **Đợt sáu của `@phuctiensinh`, sau `v1.5.0`** — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
+1. **Đợt sáu, sau `v1.5.0`, navigator làm từ 20/11** (không gấp, làm tiếp tới ngày chấm kho mã) — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
    quy trình theo từng hồ sơ, chỉ hiển thị) → #435 (rà khả năng tiếp cận WCAG 2.1 AA); #424 (API lõi trả lý do cạnh
    không đi được, chỉ thêm thông tin) → #441 (kiểm thử dựa trên tính chất cho máy trạng thái). Còn thời gian thì hỏi
    navigator trước: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt),
