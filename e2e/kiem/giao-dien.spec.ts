@@ -541,6 +541,97 @@ test.describe("trưởng phòng", () => {
   });
 });
 
+/** Mở trang hồ sơ và chờ tuyến bước lệch trả lời (#448) — khối vẽ sau khi trang hiện. */
+async function moVaChoTuanThu(page: Page, duong: string) {
+  const traLoi = page.waitForResponse((r) => r.url().includes("/api/tuan-thu/"));
+  await page.goto(duong, { waitUntil: "networkidle" });
+  return (await traLoi).json();
+}
+
+test.describe("bước lệch quy trình trên trang hồ sơ (#448)", () => {
+  theoVai("dieu-phoi");
+
+  test("hồ sơ đi đúng luồng không có khối; bị phòng từ chối thì khối hiện đúng bước, chỉ đọc", async ({ browser, page }) => {
+    // Luồng thật, không giả lập: người gửi gửi, điều phối viên phân loại và chuyển về phòng của trưởng phòng
+    const h = await dungHoSoChoChuyenPhong(browser, page, "Bước lệch");
+    const { thaoTac, oPhong } = await moBangChuyenPhong(page);
+    // Phòng của trưởng phòng mẫu; tùy chọn được gợi ý mang thêm đuôi "· gợi ý" nên tìm theo đầu chữ
+    const maPhong = await oPhong
+      .locator("option")
+      .evaluateAll((os) => (os as HTMLOptionElement[]).find((o) => o.text.startsWith("Công nghệ thông tin"))?.value);
+    expect(maPhong, "danh mục có phòng Công nghệ thông tin").toBeTruthy();
+    await oPhong.selectOption(maPhong!);
+    await thaoTac.getByRole("button", { name: /^Xác nhận · Chuyển về phòng ban/ }).click();
+    await expect(page.getByText("Chờ phòng ban xác duyệt").first()).toBeVisible();
+
+    const tp = await browser.newContext({ storageState: tepPhien("truong-phong") });
+    const trang = await tp.newPage();
+    const loi: string[] = [];
+    trang.on("pageerror", (e) => loi.push(e.message));
+
+    // Chưa lệch: dịch vụ trả lời đủ, trang không có khối, không khung trống
+    const truoc = await moVaChoTuanThu(trang, `/phong-ban/${h.ma}`);
+    expect(truoc).toMatchObject({ status: "ready", deviates: false, steps: [] });
+    await expect(trang.locator(".buoc-lech")).toHaveCount(0);
+
+    // Trưởng phòng từ chối vì sai chuyên môn — cạnh làm lại của bộ quy tắc mẫu
+    const tt = trang.locator("#thao-tac");
+    await tt.getByRole("button", { name: "Từ chối vì sai chuyên môn", exact: true }).click();
+    await tt.locator('textarea[name="note"]').fill("Việc này thuộc phòng khác — kịch bản #448.");
+    await tt.getByRole("button", { name: /^Xác nhận · Từ chối vì sai chuyên môn/ }).click();
+    // Chờ bước chuyển ghi xong: tên trạng thái đích đã có sẵn trong bảng xác nhận nên không dùng làm dấu
+    // được; hồ sơ rời trạng thái chờ xác duyệt thì thao tác từ chối không còn
+    await expect(tt.getByRole("button", { name: "Từ chối vì sai chuyên môn", exact: true })).toHaveCount(0);
+
+    const sau = await moVaChoTuanThu(trang, `/phong-ban/${h.ma}`);
+    // Trang dựng sau khi bước chuyển đã ghi: không còn thao tác của trạng thái chờ xác duyệt
+    await expect(trang.locator("#thao-tac").getByRole("button", { name: "Xác duyệt và giao xử lý", exact: true })).toHaveCount(0);
+    expect(sau).toMatchObject({ status: "ready", deviates: true });
+    const khoi = trang.locator(".buoc-lech");
+    await expect(khoi).toBeVisible();
+    await expect(khoi.locator("li")).toHaveCount(1);
+    // Nhãn loại lệch của màn Quy trình thực tế; nhãn trạng thái từ bộ quy tắc
+    await expect(khoi).toContainText("Trả về làm lại");
+    await expect(khoi).toContainText("Chờ phòng ban xác duyệt → Bị phòng ban từ chối");
+    // Chỉ thông tin: không nút nào. Dẫn tới mã nguồn của dịch vụ khai phá (AGPL điều 13)
+    await expect(khoi.getByRole("button")).toHaveCount(0);
+    await expect(khoi.getByRole("link", { name: "mã nguồn" })).toHaveAttribute(
+      "href",
+      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha",
+    );
+    expect(await trang.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
+    await khoi.scrollIntoViewIfNeeded();
+    await chup(trang, test.info().project.name, "phong-ban-buoc-lech");
+    expect(loi).toEqual([]);
+    await tp.close();
+
+    // Điều phối viên mở cùng hồ sơ cũng thấy cùng bước
+    await moVaChoTuanThu(page, `/dieu-phoi/${h.ma}`);
+    await expect(page.locator(".buoc-lech")).toContainText("Trả về làm lại");
+
+    // Người gửi: trang của mình không có khối, gọi thẳng tuyến cũng chỉ nhận "không có"
+    const ng = await browser.newContext({ storageState: tepPhien("nguoi-gui") });
+    const trangNg = await ng.newPage();
+    await trangNg.goto(`/yeu-cau/${h.ma}`, { waitUntil: "networkidle" });
+    await expect(trangNg.locator(".buoc-lech")).toHaveCount(0);
+    const tuyen = await trangNg.request.get(`/api/tuan-thu/${h.ma}`);
+    expect(await tuyen.json()).toMatchObject({ status: "unavailable", steps: [] });
+    await ng.close();
+  });
+
+  test("dịch vụ khai phá không trả lời: trang hồ sơ y như cũ, không lỗi", async ({ page }) => {
+    await page.route("**/api/tuan-thu/*", (route) =>
+      route.fulfill({ json: { status: "unavailable", case_id: 0, deviates: false, steps: [] } }),
+    );
+    const loi: string[] = [];
+    page.on("pageerror", (e) => loi.push(e.message));
+    await moVaChoTuanThu(page, `/dieu-phoi/${docHoSo().ma}`);
+    await expect(page.locator(".buoc-lech")).toHaveCount(0);
+    await expect(page.locator("#thao-tac")).toBeVisible();
+    expect(loi).toEqual([]);
+  });
+});
+
 test.describe("quản trị viên", () => {
   theoVai("quan-tri");
 

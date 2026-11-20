@@ -18,8 +18,9 @@ lệch, điểm nghẽn và biến thể dưới dạng JSON. Không ghi gì và
 - **Chỉ thư mục này** cài và nhập `pm4py` — đúng một tệp: `app/bo_may/pm4py_bo_may.py`. Dịch vụ ứng
   dụng (`backend/`) và cổng (`frontend/`) không bao giờ nhập nó; chúng nhận JSON qua HTTP, nên AGPL không
   lan sang phần còn lại (tác phẩm riêng biệt gộp chung, điều 5 của AGPL). CI chặn nhập `pm4py` ở nơi khác
-- **Điều 13**: người dùng thấy kết quả của dịch vụ này ở màn *Báo cáo → Quy trình thực tế*; chân màn luôn
-  có dòng dẫn tới mã nguồn của thư mục này. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`).
+- **Điều 13**: người dùng thấy kết quả của dịch vụ này ở màn *Báo cáo → Quy trình thực tế* và ở khối
+  *Đi lệch quy trình thiết kế* trên trang hồ sơ phía nhân viên (#448); cả hai luôn có dòng dẫn tới mã
+  nguồn của thư mục này. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`).
   Tự triển khai mà sửa dịch vụ này thì công khai bản sửa và trỏ biến đó về nơi chứa nó
 - Không sửa mã PM4Py, không chép mã thư viện vào kho. Không chép mã từ thư mục này sang thư mục MIT
 - Danh sách phụ thuộc và giấy phép từng gói: [`docs/dependencies.md`](../../docs/dependencies.md); thông
@@ -38,6 +39,18 @@ kiểm thử có đáp án biết trước kiểm:
 Muốn bỏ thư viện PM4Py thì đặt `KHAI_PHA_BO_MAY=noi_bo` và xóa dòng `pm4py` trong `requirements.txt` —
 dịch vụ ứng dụng và cổng không phải sửa gì. Mã của thư mục này vẫn phát hành theo AGPL-3.0-or-later.
 
+## Điểm cuối
+
+| Điểm cuối | Trả về |
+|---|---|
+| `GET /health` | `service`, `status`, `engine`; 503 khi không đọc được cơ sở dữ liệu |
+| `POST /khai-pha` | `{from, to, departments, process}` → đồ thị, nhánh lệch, điểm nghẽn, biến thể của các hồ sơ gửi trong khoảng ngày |
+| `GET /ho-so/{case_id}/tuan-thu` | (#448) `case`, `deviates`, `steps[]` — bước lệch của một hồ sơ theo thứ tự thời gian: `kind`, `activity`, `from`, `to`, `from_label`, `to_label`, `at` (UTC), `actor`. 404 khi nhật ký không có hồ sơ |
+
+Bước lệch của một hồ sơ dùng **đúng định nghĩa nhánh lệch** của `POST /khai-pha` — hàm `buoc_lech` ở
+`app/phan_tich.py`, chung cho cả hai đường — nên hồ sơ có bước loại *k* khi và chỉ khi nó nằm trong
+`deviations[k].cases`. Hàm chỉ đọc cờ trên cạnh, không bộ máy nào tham gia, nên hai bộ máy cho cùng kết quả.
+
 ## Cấu hình
 
 | Biến | Mặc định | Ý nghĩa |
@@ -49,5 +62,6 @@ dịch vụ ứng dụng và cổng không phải sửa gì. Mã của thư mụ
 | `KHAI_PHA_SO_HO_SO_MOI_NHOM` | `200` | Số mã hồ sơ tối đa kèm mỗi nhánh lệch, mỗi biến thể |
 
 Dịch vụ chỉ nghe trong mạng của Compose, không mở cổng ra máy. Người gọi duy nhất là dịch vụ ứng dụng
-(`GET /analytics/process-mining`), nơi kiểm vai trò và gắn phạm vi phòng. Khuôn đầy đủ:
+(`GET /analytics/process-mining` và `GET /analytics/process-mining/cases/{id}`), nơi kiểm vai trò, gắn phạm
+vi phòng và luật xem hồ sơ. Khuôn đầy đủ:
 [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) mục 6.4.

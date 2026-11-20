@@ -15,13 +15,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.analytics.khai_pha import KhaiPhaClient, KhaiPhaKhongPhanHoi, khai_pha_client
 from app.auth.dependencies import current_actor, current_claims
 from app.config import get_settings
 from app.db import get_session
 from app.main import app
+from app.models.case import EventLog
 from app.models.workflow_config import Department, RequestType
 from app.workflow.engine import ma_quy_trinh_ung_dung
 from app.workflow.context import Actor
@@ -41,6 +42,16 @@ class KhaiPhaGia:
             raise KhaiPhaKhongPhanHoi("tắt")
         self.lan_goi.append((tu, den, phong))
         return self.ket_qua
+
+    # Kết quả tuân thủ của một hồ sơ (#448)
+    tuan_thu_tra: dict | None = None
+
+    def tuan_thu(self, case_id):
+        if self.hong:
+            raise KhaiPhaKhongPhanHoi("tắt")
+        self.lan_goi.append(("tuan-thu", case_id))
+        return self.tuan_thu_tra if self.tuan_thu_tra is not None else {
+            "case": case_id, "deviates": False, "steps": []}
 
 
 @pytest.fixture
@@ -144,6 +155,110 @@ def test_dich_vu_khai_pha_tat_thi_503(client):
 
 
 # ---------------------------------------------------------------------------
+# Tuân thủ quy trình của một hồ sơ (#448)
+# ---------------------------------------------------------------------------
+
+BUOC_LAM_LAI = {"kind": "rework", "activity": "tra-lai", "from": "a", "to": "b", "from_label": "A",
+                "to_label": "B", "at": "2026-11-20T03:00:00Z", "actor": "kc-xl-448"}
+
+
+@pytest.fixture
+def ho_so_448(session, phong_ban):
+    """Hồ sơ của một phòng, kèm một dòng nhật ký mang tên người thực hiện lúc thao tác."""
+    h = create_case(session, title="Hồ sơ tuân thủ 448", requester_id="ng-448")
+    h.department_code = phong_ban
+    session.add(EventLog(case_id=h.id, activity="tra-lai", actor="kc-xl-448", actor_label="Người xử lý 448",
+                         from_state=h.current_state, to_state=h.current_state))
+    session.flush()
+    return h
+
+
+def _hoi_tuan_thu(client, actor, ma):
+    client.dang_goi["actor"] = actor
+    return client.get(f"/analytics/process-mining/cases/{ma}")
+
+
+def _nguoi_xu_ly(phong):
+    return Actor(id="kc-xl-448", roles=frozenset({"handler"}), departments=frozenset({phong}))
+
+
+def test_tuan_thu_nguoi_xu_ly_cua_phong_thay_buoc_lech_kem_ten(client, ho_so_448, phong_ban):
+    client.gia.tuan_thu_tra = {"case": ho_so_448.id, "deviates": True, "steps": [BUOC_LAM_LAI]}
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    assert r.status_code == 200, r.text
+    assert r.json() == {"status": "ready", "case_id": ho_so_448.id, "deviates": True,
+                        "steps": [{**BUOC_LAM_LAI, "actor_label": "Người xử lý 448"}]}
+    assert client.gia.lan_goi == [("tuan-thu", ho_so_448.id)]
+
+
+def test_tuan_thu_ho_so_chuan_khong_co_buoc(client, ho_so_448, phong_ban):
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    assert r.json() == {"status": "ready", "case_id": ho_so_448.id, "deviates": False, "steps": []}
+
+
+def test_tuan_thu_dieu_phoi_thay_moi_ho_so(client, ho_so_448):
+    r = _hoi_tuan_thu(client, Actor(id="dp-448", roles=frozenset({"classifier"})), ho_so_448.id)
+    assert r.status_code == 200 and r.json()["status"] == "ready"
+
+
+def test_tuan_thu_nguoi_gui_bi_403_ke_ca_ho_so_cua_minh(client, ho_so_448):
+    r = _hoi_tuan_thu(client, Actor(id="ng-448", roles=frozenset({"requester"})), ho_so_448.id)
+    assert r.status_code == 403
+    assert r.json()["detail"]["code"] == "conformance-forbidden"
+    assert client.gia.lan_goi == []
+
+
+def test_tuan_thu_nhan_vien_phong_khac_bi_chan_nhu_trang_ho_so(client, session, ho_so_448, phong_ban):
+    khac = session.scalars(
+        select(Department.code).where(Department.is_active, Department.code != phong_ban)
+    ).first()
+    assert khac, "dữ liệu khởi tạo cần ít nhất hai phòng"
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(khac), ho_so_448.id)
+    assert r.status_code == 404
+    assert client.gia.lan_goi == []
+
+
+def test_tuan_thu_ho_so_khong_co_tra_404(client, phong_ban):
+    r = _hoi_tuan_thu(client, Actor(id="dp-448", roles=frozenset({"classifier"})), 999999999)
+    assert r.status_code == 404
+    assert client.gia.lan_goi == []
+
+
+def test_tuan_thu_khai_pha_hong_thi_khong_co_khong_500(client, ho_so_448, phong_ban):
+    client.gia.hong = True
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    assert r.status_code == 200
+    assert r.json() == {"status": "unavailable", "case_id": ho_so_448.id, "deviates": False, "steps": []}
+
+
+@pytest.mark.parametrize("tra", [{}, {"steps": None}, {"steps": [1, 2]}, {"steps": "x"}])
+def test_tuan_thu_ket_qua_sai_hinh_thi_khong_co(client, ho_so_448, phong_ban, tra):
+    client.gia.tuan_thu_tra = tra
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    assert r.status_code == 200 and r.json()["status"] == "unavailable"
+
+
+def test_tuan_thu_khai_pha_tat_thi_khong_hoi(client, ho_so_448, phong_ban, monkeypatch):
+    monkeypatch.setattr(get_settings(), "mining_url", "")
+    r = _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    assert r.status_code == 200
+    assert r.json() == {"status": "disabled", "case_id": ho_so_448.id, "deviates": False, "steps": []}
+    assert client.gia.lan_goi == []
+
+
+def test_tuan_thu_khong_doi_ho_so(client, session, ho_so_448, phong_ban):
+    """Chỉ thông tin (ADR-0005): không thêm dòng nhật ký, không đổi trạng thái."""
+    client.gia.tuan_thu_tra = {"case": ho_so_448.id, "deviates": True, "steps": [BUOC_LAM_LAI]}
+    truoc = (ho_so_448.current_state, ho_so_448.updated_at,
+             session.scalar(select(func.count()).select_from(EventLog).where(EventLog.case_id == ho_so_448.id)))
+    _hoi_tuan_thu(client, _nguoi_xu_ly(phong_ban), ho_so_448.id)
+    session.refresh(ho_so_448)
+    sau = (ho_so_448.current_state, ho_so_448.updated_at,
+           session.scalar(select(func.count()).select_from(EventLog).where(EventLog.case_id == ho_so_448.id)))
+    assert truoc == sau
+
+
+# ---------------------------------------------------------------------------
 # Client HTTP thật
 # ---------------------------------------------------------------------------
 
@@ -158,6 +273,15 @@ def may_chu_gia(monkeypatch):
             do_dai = int(self.headers["Content-Length"])
             nhan.append((self.path, json.loads(self.rfile.read(do_dai))))
             than = json.dumps({"engine": "pm4py", "cases_count": 3}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(than)))
+            self.end_headers()
+            self.wfile.write(than)
+
+        def do_GET(self):  # noqa: N802
+            nhan.append((self.path, {}))
+            than = json.dumps({"case": 7, "deviates": False, "steps": []}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(than)))
@@ -187,3 +311,15 @@ def test_client_bao_khong_phan_hoi_khi_dich_vu_tat(monkeypatch):
     monkeypatch.setattr(get_settings(), "mining_timeout_seconds", 2.0)
     with pytest.raises(KhaiPhaKhongPhanHoi):
         KhaiPhaClient().khai_pha(dt.date(2026, 10, 1), dt.date(2026, 10, 31), None)
+
+
+def test_client_tuan_thu_goi_dung_duong_dan(may_chu_gia):
+    assert KhaiPhaClient().tuan_thu(7) == {"case": 7, "deviates": False, "steps": []}
+    assert may_chu_gia == [("/ho-so/7/tuan-thu", {})]
+
+
+def test_client_tuan_thu_bao_khong_phan_hoi_khi_dich_vu_tat(monkeypatch):
+    monkeypatch.setattr(get_settings(), "mining_url", "http://127.0.0.1:9")
+    monkeypatch.setattr(get_settings(), "mining_timeout_seconds", 2.0)
+    with pytest.raises(KhaiPhaKhongPhanHoi):
+        KhaiPhaClient().tuan_thu(7)

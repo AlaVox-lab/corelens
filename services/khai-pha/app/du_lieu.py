@@ -31,18 +31,13 @@ from psycopg.rows import dict_row
 
 CAU_MUI_GIO = "SELECT time_zone FROM work_calendars WHERE is_default"
 
-# Sự kiện mở đầu trong view mang thứ tự 0 (dựng từ requests.created_at, không phải dòng nhật ký)
-CAU_SU_KIEN = """
-WITH ho_so AS (
-    SELECT case_id
-    FROM bao_cao_nhat_ky
-    WHERE thu_tu = 0
-      AND timestamp >= %(tu)s::timestamp AT TIME ZONE %(mui_gio)s
-      AND timestamp < (%(den)s::date + 1)::timestamp AT TIME ZONE %(mui_gio)s
-      AND (%(tat_ca)s OR department_code = ANY(%(phong)s::text[]))
-      AND process_code = coalesce(%(quy_trinh)s::text, (SELECT code FROM processes WHERE is_app_default))
-)
-SELECT n.case_id, n.thu_tu, n.activity, n.timestamp, n.from_state, n.to_state, n.rule_set_id,
+# Sự kiện mở đầu trong view mang thứ tự 0 (dựng từ requests.created_at, không phải dòng nhật ký).
+# Một khuôn câu cho lần khai phá theo khoảng ngày và cho kết quả tuân thủ của MỘT hồ sơ (#448): hai
+# đường đọc cùng cờ từ cùng phép nối, nên một hồ sơ không bao giờ lệch ở đường này mà chuẩn ở đường kia.
+# Chỉ khác câu chọn tập hồ sơ `ho_so` điền vào khuôn.
+_KHUON_SU_KIEN = """
+WITH ho_so AS ({chon_ho_so})
+SELECT n.case_id, n.thu_tu, n.activity, n.timestamp, n.actor, n.from_state, n.to_state, n.rule_set_id,
        n.request_type_code, n.department_code,
        coalesce(e.changes ? 'department_code', FALSE) AS doi_phong,
        coalesce(t.is_rework, FALSE) AS lam_lai,
@@ -57,6 +52,22 @@ LEFT JOIN transitions t
       AND t.to_state = n.to_state AND t.activity_code = n.activity
 ORDER BY n.case_id, n.timestamp, n.thu_tu
 """
+
+CAU_SU_KIEN = _KHUON_SU_KIEN.format(chon_ho_so="""
+    SELECT case_id
+    FROM bao_cao_nhat_ky
+    WHERE thu_tu = 0
+      AND timestamp >= %(tu)s::timestamp AT TIME ZONE %(mui_gio)s
+      AND timestamp < (%(den)s::date + 1)::timestamp AT TIME ZONE %(mui_gio)s
+      AND (%(tat_ca)s OR department_code = ANY(%(phong)s::text[]))
+      AND process_code = coalesce(%(quy_trinh)s::text, (SELECT code FROM processes WHERE is_app_default))
+""")
+
+# Một hồ sơ, mọi quy trình: hồ sơ nào cũng thuộc đúng một quy trình, xét theo bộ quy tắc của chính nó.
+# Không lọc ngày: kết quả của hồ sơ không đổi theo khoảng người xem chọn trên màn quy trình thực tế
+CAU_SU_KIEN_MOT_HO_SO = _KHUON_SU_KIEN.format(
+    chon_ho_so="SELECT case_id FROM bao_cao_nhat_ky WHERE thu_tu = 0 AND case_id = %(ma)s"
+)
 
 # Mỗi lần hồ sơ VÀO một trạng thái (sự kiện mở đầu, hay sự kiện đổi trạng thái — cạnh tự trỏ của
 # ADR-0005 không tính) là một lượt; lượt kết thúc khi hồ sơ vào trạng thái kế. Lượt còn dở tính tới
@@ -118,6 +129,8 @@ class SuKien:
     leo_thang: bool
     het_han_cho: bool
     mo_lai: bool
+    # Người thực hiện như nhật ký ghi (`actor` — định danh, không phải tên); None khi nhật ký không có
+    nguoi: str | None = None
 
     @property
     def doi_trang_thai(self) -> bool:
@@ -179,12 +192,7 @@ def doc_du_lieu(
         su_kien: list[SuKien] = []
         ho_so: dict[int, HoSo] = {}
         for d in c.execute(CAU_SU_KIEN, tham_so):
-            su_kien.append(SuKien(
-                ho_so=d["case_id"], hoat_dong=d["activity"], luc=d["timestamp"], tu=d["from_state"],
-                den=d["to_state"], bo_quy_tac=d["rule_set_id"], doi_phong=d["doi_phong"],
-                lam_lai=d["lam_lai"], leo_thang=d["leo_thang"], het_han_cho=d["het_han_cho"],
-                mo_lai=d["mo_lai"],
-            ))
+            su_kien.append(_su_kien(d))
             ho_so.setdefault(d["case_id"], HoSo(loai=d["request_type_code"], phong=d["department_code"]))
         luot = [
             Luot(ho_so=d["case_id"], trang_thai=d["to_state"], luc_vao=d["luc_vao"],
@@ -192,13 +200,43 @@ def doc_du_lieu(
             for d in c.execute(CAU_LUOT, tham_so)
         ]
         bo = sorted({s.bo_quy_tac for s in su_kien})
-        trang_thai = {
-            d["code"]: TrangThai(ma=d["code"], nhan=d["label"], bat_dau=d["is_initial"],
-                                 ket_thuc=d["is_terminal"], thu_tu=d["display_order"])
-            for d in c.execute(CAU_TRANG_THAI, {"bo": bo})
-        }
+        trang_thai = _doc_trang_thai(c, bo)
         luong_chinh = [(d["from_state"], d["to_state"]) for d in c.execute(CAU_LUONG_CHINH, {"bo": bo})]
     return DuLieu(su_kien=su_kien, luot=luot, trang_thai=trang_thai, luong_chinh=luong_chinh, ho_so=ho_so)
+
+
+@dataclass(frozen=True)
+class DuLieuHoSo:
+    """Những gì kết quả tuân thủ của một hồ sơ cần (#448): sự kiện theo thứ tự thời gian, kèm nhãn
+    trạng thái của bộ quy tắc hồ sơ đã đi. Hồ sơ không có trong nhật ký thì cả hai rỗng."""
+
+    su_kien: list[SuKien]
+    trang_thai: dict[str, TrangThai]
+
+
+def doc_ho_so(ket_noi: psycopg.Connection, ma: int) -> DuLieuHoSo:
+    """Đọc nhật ký của MỘT hồ sơ, cùng thân câu và cùng cờ với `doc_du_lieu`. Chỉ đọc."""
+    with ket_noi.cursor(row_factory=dict_row) as c:
+        su_kien = [_su_kien(d) for d in c.execute(CAU_SU_KIEN_MOT_HO_SO, {"ma": ma})]
+        trang_thai = _doc_trang_thai(c, sorted({s.bo_quy_tac for s in su_kien}))
+    return DuLieuHoSo(su_kien=su_kien, trang_thai=trang_thai)
+
+
+def _su_kien(d: dict) -> SuKien:
+    return SuKien(
+        ho_so=d["case_id"], hoat_dong=d["activity"], luc=d["timestamp"], tu=d["from_state"],
+        den=d["to_state"], bo_quy_tac=d["rule_set_id"], doi_phong=d["doi_phong"],
+        lam_lai=d["lam_lai"], leo_thang=d["leo_thang"], het_han_cho=d["het_han_cho"],
+        mo_lai=d["mo_lai"], nguoi=d["actor"],
+    )
+
+
+def _doc_trang_thai(c: psycopg.Cursor, bo: list[int]) -> dict[str, TrangThai]:
+    return {
+        d["code"]: TrangThai(ma=d["code"], nhan=d["label"], bat_dau=d["is_initial"],
+                             ket_thuc=d["is_terminal"], thu_tu=d["display_order"])
+        for d in c.execute(CAU_TRANG_THAI, {"bo": bo})
+    }
 
 
 def mo_ket_noi(database_uri: str) -> psycopg.Connection:
