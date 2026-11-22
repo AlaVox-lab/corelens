@@ -15,8 +15,9 @@
 #        -r /src/requirements.txt && pip freeze"
 #
 # rồi thay mọi dòng dưới khối chú thích này bằng đầu ra, dựng lại ảnh và chạy kiểm thử. Git Bash trên
-# Windows thêm MSYS_NO_PATHCONV=1 trước lệnh. Bản dưới đây sinh bằng `pip freeze` trong ảnh đang chạy, dựng
-# từ requirements.txt hiện tại — nên không đổi phiên bản nào. Không sửa tay từng dòng.
+# Windows thêm MSYS_NO_PATHCONV=1 trước lệnh. Chỉ thêm một gói mà không muốn nâng gói đang có thì thêm
+# `-c /src/constraints.txt` sau `-r /src/requirements.txt`: bản dưới đây sinh như vậy khi thêm hypothesis
+# (#441) — chỉ có thêm hypothesis và sortedcontainers, mọi gói khác giữ nguyên. Không sửa tay từng dòng.
 
 alembic==1.20.0
 annotated-doc==0.0.5
@@ -34,6 +35,7 @@ h11==0.16.0
 httpcore==1.0.9
 httptools==0.9.0
 httpx==0.28.1
+hypothesis==6.170.15
 idna==3.20
 iniconfig==2.3.1
 jmespath==1.1.0
@@ -56,6 +58,7 @@ python-multipart==0.0.32
 PyYAML==6.0.3
 s3transfer==0.19.3
 six==1.17.0
+sortedcontainers==2.4.0
 SQLAlchemy==2.0.53
 starlette==1.10.0
 typing-inspection==0.4.4

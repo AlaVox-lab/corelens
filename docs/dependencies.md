@@ -234,6 +234,7 @@ trong ảnh dựng lại có ràng buộc giống hệt ảnh trước đó, 47 
 | python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
 | pytest | `9.1.1` | MIT | Có | Có | Chỉ khi phát triển và kiểm thử — xem đoạn dưới bảng |
 | httpx | `0.28.1` | BSD-3-Clause | Có | Có | Chỉ khi kiểm thử: `TestClient` của FastAPI |
+| hypothesis | `6.170.15` | MPL-2.0 | Có | Có — copyleft theo tệp, dùng nguyên gói, không sửa | Chỉ khi kiểm thử: kiểm thử dựa trên tính chất cho máy trạng thái (#441) — xem đoạn dưới bảng |
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause). Do `boto3` kéo theo:
 `botocore` (Apache-2.0), `s3transfer` (Apache-2.0), `jmespath` (MIT), `urllib3` (MIT),
@@ -251,6 +252,13 @@ này được OSI công nhận và là copyleft ở mức từng tệp: ràng bu
 **sửa tệp nguồn của chính gói đó**, mà điều đó thì CLAUDE.md mục 2.3 đã cấm sẵn.
 `certifi` cũng chỉ là một bó chứng thư số CA đi kèm, không phải mã nguồn chạy trong
 sản phẩm.
+
+`hypothesis` `6.170.15` (#441, phát hành 06/11/2026) cũng mang **MPL-2.0** — siêu dữ liệu gói ghi
+`License-Expression: MPL-2.0` — với cùng cách lý giải như `certifi`: copyleft theo từng tệp, nhóm dùng
+nguyên gói qua trình quản lý gói, không sửa, không chép tệp nào của nó. Nó chỉ chạy trong bộ kiểm thử
+(`backend/tests/test_tinh_chat_may_trang_thai.py`), không mô-đun nào của `app/` nạp nó. Kéo theo đúng một
+gói: `sortedcontainers` `2.4.0` (Apache-2.0, siêu dữ liệu ghi "Apache 2.0"). `constraints.txt` sinh lại
+với chính nó làm ràng buộc, nên mọi gói khác giữ nguyên phiên bản — 49 gói.
 
 ## Phụ thuộc dịch vụ khai phá quy trình
 
