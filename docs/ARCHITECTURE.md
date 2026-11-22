@@ -169,6 +169,7 @@ hệt.
 | | `GET /requests/{case_id}` ¹ | `GET /core/v1/workflow/requests/{case_id}` ¹ |
 | | `POST /requests/{case_id}/transitions` ¹ | `POST /core/v1/workflow/requests/{case_id}/transitions` ¹ |
 | | — | `GET /core/v1/workflow/processes/{code}/bpmn` ² — bộ quy tắc đang bật dạng BPMN 2.0 kèm bố cục (#405) |
+| | — | `GET /core/v1/workflow/requests/{case_id}/transition-options` ² — mọi cạnh rời trạng thái hiện tại kèm lý do không đi được (#424) |
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
@@ -187,10 +188,29 @@ Tham số `process` bỏ trống là quy trình mặc định của ứng dụng
 
 ² **Chỉ có ở lõi** (#378, mục 6.3a; webhook #390, mục 6.8): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
 trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
-quản trị viên.
+quản trị viên; riêng `transition-options` (#424) theo cửa nhìn thấy của chi tiết hồ sơ.
 
 Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
-`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
+`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ.
+
+**Lý do cạnh không đi được (#424).** `GET …/requests/{case_id}/transition-options` (ở `router_loi_rieng`,
+cùng cửa nhìn thấy với chi tiết) trả **mọi** cạnh rời trạng thái hiện tại, mỗi cạnh `allowed`, `reasons`,
+`requires_input`. Không có logic xét cạnh thứ hai: engine có một hàm xét MỘT cạnh, `xet_canh`, theo đúng thứ
+tự của `perform_transition` — quyền (`_actor_can_traverse`; sai vai thì dừng, lỗi dựng bằng `_loi_quyen` mà
+bước 2 của cửa chuyển trạng thái cũng ném) → ràng buộc `input_free` → điều kiện trên cạnh
+(`vi_pham_khong_nhap_lieu` ở `rules/guards.py`, mỗi điều kiện sai một `DieuKienKhongDat`). `allowed_transitions`
+chỉ là phép lọc "không lý do" trên `xet_cac_canh` (chế độ `dung_som`, dừng ở lý do đầu như trước), và
+`input_free_guards_pass` là `not vi_pham_khong_nhap_lieu(dung_som=True)`. Mỗi lý do là chính ngoại lệ engine sẽ
+ném, nên `code` là `RoleNotPermitted.code`/`SystemTransitionOnly.code` hay mã ràng buộc trong bảng `guards`
+(`edge-condition` kèm dòng `transition_conditions`), `message` là câu của chính lỗi đó — không mã lý do hay câu
+chữ nào viết lại. `requires_input` là `governs` của ràng buộc KHÔNG `input_free` trên cạnh (`truong_can_nhap`).
+Chỉ đọc: không nhật ký, không tác động của ràng buộc (ADR-0005). Bài `backend/tests/test_ly_do_canh.py` kiểm
+từng loại lý do — mã và thông điệp so với lỗi `perform_transition` ném thật — và bất biến: trên hồ sơ ở mọi
+trạng thái của hai quy trình mẫu với nhiều vai, tập cạnh `allowed` trùng hệt `allowed_transitions`. Cố ý chưa
+xét: ủy quyền khi vắng mặt (`_lam_thay_cho`) và trường gửi kèm — `allowed_transitions` cũng chưa xét, lỗi của
+chúng chỉ có lúc đi thật.
+
+Thêm điểm cuối cho lõi: khai
 trong router đã gắn ở cả hai nơi, thêm một dòng vào bảng trên và vào `ANH_XA` của
 `backend/tests/test_loi_api.py` — bài kiểm so khít tập đường `/core/v1` trong OpenAPI với bảng đó, nên điểm
 cuối của ứng dụng không lọt vào lõi mà không ai hay.
@@ -1799,7 +1819,9 @@ sơ của người khác, trưởng phòng không thấy nút trên hồ sơ c�
 `changes` thì chưa chạy được lúc chào nút, vì chưa ai biết người dùng sẽ chọn gì; chạy nó
 với `changes` rỗng sẽ giấu mất những cạnh hoàn toàn đi được. Lúc chào nút chỉ nuốt lỗi
 Poka-yoke: mã ràng buộc chưa cài đặt vẫn nổ, vì giấu nút đi thì cấu hình sai trông như
-"không có thao tác nào".
+"không có thao tác nào". Cùng hàm đó (`vi_pham_khong_nhap_lieu`) trả lại chính các lỗi
+Poka-yoke cho điểm cuối lõi `transition-options` (#424, mục 2.3): nút không hiện thì ứng dụng
+tầng trên vẫn biết ràng buộc nào chặn, và trường nào ràng buộc cần nhập liệu sẽ đòi.
 
 **Ràng buộc đầu tiên đọc lịch sử hồ sơ** — `return-to-previous-state`, cũng từ #79. Nó chỉ
 cho đi cạnh về đúng trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại. Không có bảng ánh

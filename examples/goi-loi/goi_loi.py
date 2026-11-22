@@ -12,7 +12,8 @@
 #
 #   1. Xin token của tài khoản dịch vụ bằng luồng client credentials của Keycloak
 #   2. Từ đó CHỈ gọi qua cổng API và CHỈ bằng đường `/core/v1`:
-#      danh tính → danh mục loại yêu cầu → tạo hồ sơ → bước chuyển được phép → đi một bước → lịch sử
+#      danh tính → danh mục loại yêu cầu → tạo hồ sơ → bước chuyển được phép, bước chưa được và lý do →
+#      đi một bước → lịch sử
 #
 # Không mã cứng mã trạng thái, mã loại hay mã bước nào: mọi thứ chọn từ dữ liệu API trả về, nên kịch bản
 # chạy đúng với bất kỳ quy trình nào doanh nghiệp khai trong dữ liệu. Với dữ liệu mẫu và vai `requester`
@@ -243,6 +244,11 @@ def chay(ch: dict[str, str]) -> int:
         return 1
     print("   Bước tài khoản dịch vụ đi được: "
           + "; ".join(f"{b['activity_label']} → {b['to_state_label']}" for b in cac_buoc))
+    # Bước chưa đi được và vì sao (#424) — cùng hàm xét cạnh với danh sách trên, ứng dụng không phải đoán
+    for canh in nen_tang.get(f"/workflow/requests/{ho_so['id']}/transition-options")["transitions"]:
+        if not canh["allowed"]:
+            ly_do = canh["reasons"][0]
+            print(f"   Chưa đi được “{canh['activity_label']}”: {ly_do['code']} — {ly_do['message']}")
     buoc = chon_buoc(cac_buoc)
     ghi_chu = "Ứng dụng tích hợp mẫu đi bước này qua API của lõi." if buoc["requires_note"] else None
     ho_so = nen_tang.post(f"/workflow/requests/{ho_so['id']}/transitions",

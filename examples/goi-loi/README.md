@@ -7,8 +7,8 @@ Ví dụ cho #365: một chương trình **không phải cổng người dùng**
 `goi_loi.py` chỉ dùng thư viện chuẩn của Python 3.10 trở lên:
 
 1. Xin token của tài khoản dịch vụ `dx-integration` bằng luồng **client credentials** của Keycloak
-2. Rồi chỉ gọi cổng API dưới `/core/v1`: danh tính → danh mục loại yêu cầu → tạo hồ sơ → bước được phép →
-   đi một bước → lịch sử
+2. Rồi chỉ gọi cổng API dưới `/core/v1`: danh tính → danh mục loại yêu cầu → tạo hồ sơ → bước được phép,
+   bước chưa được kèm lý do (`transition-options`, #424) → đi một bước → lịch sử
 
 Không mã cứng mã trạng thái, mã loại hay mã bước nào: kịch bản chọn từ dữ liệu API trả về — loại đầu tiên
 của danh mục, trường riêng bắt buộc điền theo kiểu khai báo, bước chính của người gọi hoặc bước đầu tiên

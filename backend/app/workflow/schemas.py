@@ -115,6 +115,63 @@ class CanhDiDuocRa(BaseModel):
     fields: list[str] = Field(default_factory=list)
 
 
+class DieuKienCanhRa(BaseModel):
+    """Một dòng của bảng `transition_conditions` (#397) mà hồ sơ chưa thỏa (#424)."""
+
+    id: int
+    field: str
+    operator: str
+    # Giá trị cần so với trường riêng của hồ sơ, đúng như lưu trong bảng (số hay chữ)
+    value: Any
+    description: str | None = None
+
+
+class LyDoChanRa(BaseModel):
+    """Một lý do tác nhân chưa đi được cạnh (#424).
+
+    `category` là mã lớp lỗi engine sẽ trả nếu cứ gọi bước chuyển: `role-not-permitted`,
+    `system-transition-only` hay `guard-violation`. `code` là mã máy đọc được của chính lý do:
+    với ràng buộc là mã ràng buộc trong bảng `guards` (điều kiện trên cạnh: `edge-condition`),
+    với quyền thì trùng `category`. `message` là thông điệp tiếng Việt của chính lỗi đó.
+    """
+
+    code: str
+    category: str
+    message: str
+    condition: DieuKienCanhRa | None = None
+
+
+class LuaChonCanhRa(BaseModel):
+    """Một cạnh rời trạng thái hiện tại của hồ sơ, kèm được đi hay không và vì sao (#424)."""
+
+    activity_code: str
+    activity_label: str
+    to_state: str
+    to_state_label: str
+    keeps_state: bool
+    # Cạnh hệ thống tự đi (leo thang, tự đóng) — con người nhận lý do `system-transition-only`
+    is_system: bool
+    # Người gọi đi được cạnh này lúc này, xét theo vai, ràng buộc không cần nhập liệu và điều
+    # kiện trên cạnh — trùng hệt tập `allowed_transitions` của chi tiết hồ sơ
+    allowed: bool
+    # Rỗng khi `allowed`. Sai vai thì chỉ có lý do quyền: ràng buộc không xét, như engine.
+    reasons: list[LyDoChanRa] = Field(default_factory=list)
+    # Trường nhập liệu của cạnh, gửi trong `changes` khi đi — do ràng buộc CẦN nhập liệu trên
+    # cạnh quản (thiếu hay sai do chính ràng buộc đó phán). Ràng buộc này chỉ xét lúc đi thật, nên
+    # cạnh vẫn `allowed`; thứ tự theo biểu mẫu như `fields` của `allowed_transitions`.
+    requires_input: list[str] = Field(default_factory=list)
+    requires_note: bool
+    note_label: str | None = None
+
+
+class LuaChonCanhCuaHoSoRa(BaseModel):
+    """Mọi cạnh rời trạng thái hiện tại của một hồ sơ, theo thứ tự hiển thị của bộ quy tắc (#424)."""
+
+    case_id: int
+    state: TrangThaiRa
+    transitions: list[LuaChonCanhRa]
+
+
 class ThayDoiTruongRa(BaseModel):
     """Một trường quyết định, hay từ #127 một trường nội dung, mà lần chuyển đã đổi giá
     trị (#100).
