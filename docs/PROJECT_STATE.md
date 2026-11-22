@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-19 |
-| Phiên bản hiện tại | **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
+| Cập nhật lần cuối | 2026-11-23 |
+| Phiên bản hiện tại | **`v1.6.0`** (23/11) — Giai đoạn 6 đợt sáu: bước lệch quy trình trên trang hồ sơ, khả năng tiếp cận WCAG 2.1 AA, API lõi trả lý do cạnh không đi được, kiểm thử dựa trên tính chất cho máy trạng thái (PR #515, #517, #518, #519). **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`, bốn với `v1.6.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | **Công khai** từ 19/11 tại https://github.com/AlaVox-lab/corelens (đổi tên từ `dx-os-lab`, link cũ tự chuyển hướng); trang tài liệu https://alavox-lab.github.io/corelens/ |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **14** (mốc 18) — 0 `P0`, 3 `P1`, 0 `P2`, 11 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
+| Issue đang mở | **10** (mốc 18) sau `v1.6.0` — 0 `P0`, 3 `P1`, 0 `P2`, 7 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
 | Đội | **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) tham gia từ 16/11 tới 20/11; các đợt hai tới năm bên dưới là phần việc của bạn. Từ 20/11 navigator nhận lại các issue đang mở |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **945 bài** pytest ở dịch vụ ứng dụng và **183 bài** ở dịch vụ khai phá (lượt 19/11 trên bản clone công khai của kho, cụm thử dựng mới), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
-| Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` chưa đo lại — ADR-0008 ước khoảng 2,8 GiB cho cả hai mô hình. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
-| Số ngày còn lại tới chấm kho mã | **18 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
+| Bộ kiểm thử tự động | **974 bài** pytest ở dịch vụ ứng dụng và **209 bài** ở dịch vụ khai phá (tích hợp liên tục trên PR #519, 22/11), gồm một bài kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis (#441), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; đợt sáu thêm kịch bản quét khả năng tiếp cận bằng axe trên màn chính của từng vai (#435) và kịch bản bước lệch trên trang hồ sơ (#448); từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` (hai mô hình) **+1,88 GiB**, đo 19/11 trên cụm thử. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
+| Số ngày còn lại tới chấm kho mã | **14 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
@@ -1214,11 +1214,38 @@ cổng dịch vụ ứng dụng và PostgreSQL đóng; đăng nhập thật sáu
 qua có chủ đích; ba hồ sơ tùy chọn `thu-thu`, `tri-thuc`, `quet-tep` lên và nối được. Thấy README trong tệp nén
 `v1.5.0` còn tên thư mục cũ trong khi GitHub đã đặt tên tệp nén theo tên kho mới — sửa ở **`v1.5.1`**.
 
+### Tuần 21 (20–23/11) — đợt sáu và `v1.6.0`
+
+**Thay đổi trong nhóm** (20/11, PR #513): một thành viên rời nhóm; bỏ tên khỏi bảng thành viên của README, gỡ quyền
+ghi trên kho. Lịch sử commit giữ nguyên. Navigator nhận lại mọi issue đang mở; PR #483 (SBOM, đã hoãn) đóng.
+
+**Đợt sáu** — chỉ tăng độ hoàn thiện của thứ đã có:
+
+- **Bước lệch quy trình trên trang hồ sơ** (#448, PR #515): dịch vụ khai phá thêm điểm cuối tuân thủ cho một hồ sơ,
+  dùng chung định nghĩa nhánh lệch với màn *Quy trình thực tế* nên chạy y hệt trên cả hai bộ máy. Trang hồ sơ của
+  điều phối viên và phòng ban hiện khối bước lệch chỉ để đọc, kèm đường dẫn mã nguồn dịch vụ khai phá; người gửi bị
+  chặn, hồ sơ chuẩn hay khai phá tắt thì trang y như trước
+- **Khả năng tiếp cận WCAG 2.1 AA** (#435, PR #517): kịch bản quét axe (`@axe-core/playwright`, chỉ dùng khi kiểm
+  thử) trên màn chính của từng vai, kèm bài thao tác chỉ bằng bàn phím. Trước khi sửa: 12 vi phạm `critical`, 102
+  `serious`; sau khi sửa: 0 ở mọi mức. Sửa tương phản nút đăng nhập ở chế độ tối, nhãn khớp chữ nhìn thấy, thuộc
+  tính ARIA, vùng cuộn nhận tiêu điểm, lối bỏ qua tới nội dung chính
+- **API lõi trả lý do cạnh không đi được** (#424, PR #518): `GET /core/v1/workflow/requests/{id}/transition-options`
+  trả mọi cạnh rời trạng thái hiện tại kèm `allowed`, `reasons`, `requires_input`. Mã lý do lấy từ lớp lỗi của
+  engine, bảng `guards` và `transition_conditions`. Danh sách nút trên cổng dùng chung hàm xét cạnh `xet_canh`, nên
+  hai nơi không thể nói khác nhau. Chỉ thêm, hợp đồng cũ giữ nguyên
+- **Kiểm thử dựa trên tính chất cho máy trạng thái** (#441, PR #519): Hypothesis sinh chuỗi thao tác ngẫu nhiên trên
+  cả hai quy trình mẫu và kiểm bốn bất biến sau mỗi bước — đi được thì ghi đúng một sự kiện theo một cạnh có thật, bị
+  từ chối thì hồ sơ và nhật ký không đổi. Chạy khoảng 30 giây trong tích hợp liên tục; lượt dài 800 ví dụ không có
+  phản ví dụ; phép thử đột biến bắt 5/5 lỗi cố ý cài vào engine
+
+Hai phụ thuộc mới, đều chỉ dùng khi kiểm thử: `@axe-core/playwright` (MPL-2.0) trong `e2e/`, `hypothesis` (MPL-2.0,
+kéo theo `sortedcontainers` Apache-2.0) trong dịch vụ ứng dụng. Không migration mới.
+
 ---
 
 ## Đang làm
 
-Đợt sáu, navigator làm (mục *Việc tiếp theo*).
+Phát hành `v1.6.0`; sau đó chuẩn bị trình diễn (mục *Việc tiếp theo*).
 
 ---
 
@@ -1226,17 +1253,15 @@ qua có chủ đích; ba hồ sơ tùy chọn `thu-thu`, `tri-thuc`, `quet-tep` 
 
 ### Theo thứ tự
 
-1. **Đợt sáu, sau `v1.5.0`, navigator làm từ 20/11** (không gấp, làm tiếp tới ngày chấm kho mã) — chỉ tăng độ hoàn thiện của thứ đã có, hai làn: #448 (kiểm tuân thủ
-   quy trình theo từng hồ sơ, chỉ hiển thị) → #435 (rà khả năng tiếp cận WCAG 2.1 AA); #424 (API lõi trả lý do cạnh
-   không đi được, chỉ thêm thông tin) → #441 (kiểm thử dựa trên tính chất cho máy trạng thái). Còn thời gian thì hỏi
-   navigator trước: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt),
-   #451, #481 (hoãn)
-2. **Bật bảo vệ nhánh** cho `main` và `dev`, bắt buộc dấu xanh của tích hợp liên tục — kho đã công khai nên bật được
-   (`CONTRIBUTING.md` mục 2.6)
-3. **Chạy thử hồ sơ mô hình ngôn ngữ `tri-tue`** trên cụm thử từ bản phát hành mới nhất
-4. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), bộ nhớ hồ sơ `tri-tue`, cấu hình máy
-   tối thiểu
-5. **Issue cho người mới** (nhãn `good first issue`) khi kho công khai
+1. **Bắt buộc dấu xanh của tích hợp liên tục** trên `main` và `dev` — bảo vệ nhánh đã bật 19/11 (một lượt duyệt,
+   cấm force push), chưa bắt buộc CI (`CONTRIBUTING.md` mục 2.6)
+2. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), cấu hình máy tối thiểu; cập nhật bộ nhớ
+   hồ sơ `tri-tue` trong README theo số đo 19/11
+3. **Issue còn mở, hỏi navigator trước khi làm**: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432
+   (ngược quyết định đã chốt), #451, #481 (hoãn)
+4. **Dọn dữ liệu cũ của cụm thử cách ly**: khoảng 90 hồ sơ còn lại làm 5 bài `test_coordination.py` đỏ khi chạy trên
+   cụm thử dùng lại (cụm sạch của tích hợp liên tục vẫn xanh)
+5. **Issue cho người mới** (nhãn `good first issue`) — kho đã công khai
 6. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
    bài toán minh họa; kết quả và demo; định hướng. Video dự phòng cho phần demo, vì cụm Docker không đăng lên
    Internet được
@@ -1257,18 +1282,14 @@ Sáu issue Tuần 16 giảng viên đã chốt ngày 13/11 (ghi ở *Tuần 17*)
   đính kèm 10 MB, 5 tệp mỗi lần, 20 tệp mỗi hồ sơ (#80)
 - **Nghẽn ở điều phối viên khi hồ sơ nhiều** (góp ý 29/10) — nhóm đã làm hướng gợi ý phân loại có xác
   nhận (#239, #317); còn chờ ý giảng viên có cần thêm lối cho loại rõ ràng đi thẳng phòng không
-- **Công khai kho mã khi nào** — phải trước hạn gửi bài 06/12; công khai thì bật lại quy tắc bảo vệ nhánh
 - **AI trong hộp thư được tự động tới đâu** — nhóm đề xuất AI chỉ soạn nháp câu hỏi và tóm
   tắt câu trả lời, không tự bấm cạnh nào, theo `CLAUDE.md` mục 4.3
 - **Mọi nhân viên có vai trò người gửi không** — ảnh hưởng realm mẫu
 
 ### Việc vận hành, không cần issue
 
-1. Bật bắt buộc dấu xanh của tích hợp liên tục trước khi merge — chỉ có hiệu lực khi kho công
-   khai (`CONTRIBUTING.md` mục 2.6)
-2. Chuyển kho mã sang công khai trước khi nộp bài; khi đó mới bật lại được
-   `delete_branch_on_merge` an toàn, và đăng trang tài liệu `docs-site/`
-3. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
+1. Kho đã công khai (19/11): cân nhắc bật lại `delete_branch_on_merge`
+2. Giai đoạn đóng gói: đo hiệu năng, công bố **cấu hình máy tối thiểu** — giảng viên nhắc
    trước để nhóm không quên
 
 ---
@@ -1277,9 +1298,9 @@ Sáu issue Tuần 16 giảng viên đã chốt ngày 13/11 (ghi ở *Tuần 17*)
 
 | Vấn đề | Ảnh hưởng | Hướng xử lý |
 |---|---|---|
-| Quy tắc bảo vệ nhánh chưa bật | Quy trình phụ thuộc kỷ luật cá nhân thay vì ràng buộc kỹ thuật | Kho đã công khai từ 19/11 nên bật được — mục *Việc tiếp theo* |
+| Tích hợp liên tục chưa là điều kiện bắt buộc khi merge | Bảo vệ nhánh đã bật 19/11 (một lượt duyệt) nhưng vẫn merge được khi CI đỏ | Navigator tự xem dấu xanh trước khi merge; bật bắt buộc — mục *Việc tiếp theo* |
 | Chưa chốt công cụ quản trị cơ sở dữ liệu | Chưa ảnh hưởng, chỉ là công cụ hỗ trợ | Đã trình hai phương án, chờ ý kiến giảng viên |
-| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Cụm mặc định tám dịch vụ khoảng 1,7 GiB** (bảy dịch vụ đo 12/11: 1,66 GiB; cổng API thêm 50 MiB đo 15/11), phần lớn là Keycloak phình theo JVM. Mọi thành phần nặng mới đều nằm sau hồ sơ tùy chọn: ClamAV +1,03 GiB, Wiki.js +276 MiB, mô hình chưa đo lại. Công bố **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
+| Ngân sách bộ nhớ tăng dần theo từng nền tảng | Bảng chấm đòi dựng được trên máy sạch ngày chấm | **Cụm mặc định tám dịch vụ khoảng 1,7 GiB** (bảy dịch vụ đo 12/11: 1,66 GiB; cổng API thêm 50 MiB đo 15/11), phần lớn là Keycloak phình theo JVM. Mọi thành phần nặng mới đều nằm sau hồ sơ tùy chọn: ClamAV +1,03 GiB, Wiki.js +276 MiB, hai mô hình +1,88 GiB (đo 19/11). Công bố **cấu hình máy tối thiểu** ở giai đoạn đóng gói |
 | **Ảnh dịch vụ khai phá nặng khoảng 1 GB** (982 MB, vì bộ thư viện số học kéo theo PM4Py) | Lần dựng đầu trên máy sạch lâu hơn, tốn ổ đĩa; README và trang tài liệu còn ghi 6 GB ổ đĩa đo trước khi có dịch vụ này | Đo lại ổ đĩa cả cụm ở giai đoạn đóng gói. Nếu cần nhẹ hơn, bộ máy dự phòng `noi_bo` không dùng PM4Py đã có sẵn |
 | **Mô hình 1,5B gợi ý mức ưu tiên yếu** (38,8 % trên 80 hồ sơ mẫu) và **gợi ý phòng dưới ngưỡng** (62,5 % so với bảng ánh xạ 86,2 %, ngưỡng 80 %) | Gợi ý sai làm điều phối viên mất tin vào thẻ gợi ý | Gợi ý phòng của mô hình tắt mặc định, giữ bảng ánh xạ. Mức ưu tiên vẫn hiện thẻ nhưng người quyết định; tỷ lệ ghi đè trên bảng điều khiển đo độ chính xác thật. Đổi mô hình lớn hơn là đổi tệp trong volume, không đổi mã |
 | **Bộ đo hồ sơ tương tự do nhóm soạn bằng công cụ** (#319) | Recall@3 40/40 đo trên câu hỏi do chính nhóm soạn, không phải dữ liệu người dùng thật — dễ bị ban giám khảo hỏi | Nói rõ nguồn bộ đo khi trình diễn; số thật là tỷ lệ ngăn chặn ghi nhận trên bảng điều khiển |
