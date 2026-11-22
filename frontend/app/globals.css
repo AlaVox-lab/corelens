@@ -205,6 +205,31 @@ select {
   border-radius: 4px;
 }
 
+/* Lối "Bỏ qua tới nội dung chính" (#435): nằm ngoài màn cho tới khi nhận tiêu điểm bàn phím */
+.bo-qua {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.bo-qua:focus-visible {
+  transform: none;
+}
+
+/* Vùng nội dung nhận tiêu điểm qua lối bỏ qua bằng lập trình, không cần viền */
+main:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* ---------------------------------------------------------------------------
  * Tầng 3 — bộ phận dùng lại
  * -------------------------------------------------------------------------*/
@@ -1421,7 +1446,9 @@ textarea.o-nhap {
   text-decoration: none;
 }
 
-.chip[aria-pressed="true"] {
+/* Chip là nút bật/tắt (`aria-pressed`) hay liên kết lọc đang chọn (`aria-current` — liên kết không mang được
+ * `aria-pressed`, #435): cùng một vẻ */
+:is(.chip[aria-pressed="true"], .chip[aria-current="true"]) {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--surface);
@@ -1430,14 +1457,14 @@ textarea.o-nhap {
 /* Ở chế độ tối --ink gần như trắng: chip đang chọn thành mảng sáng giữa màn tối. Dùng nền
  * tối nổi một bậc thay vì đảo màu */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .chip[aria-pressed="true"] {
+  :root:not([data-theme="light"]) :is(.chip[aria-pressed="true"], .chip[aria-current="true"]) {
     background: var(--surface-3);
     border-color: var(--line-2);
     color: var(--ink);
   }
 }
 
-:root[data-theme="dark"] .chip[aria-pressed="true"] {
+:root[data-theme="dark"] :is(.chip[aria-pressed="true"], .chip[aria-current="true"]) {
   background: var(--surface-3);
   border-color: var(--line-2);
   color: var(--ink);

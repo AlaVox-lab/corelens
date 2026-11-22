@@ -206,6 +206,7 @@ của cụm hay trang tài liệu.
 | Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|
 | @playwright/test | `1.64.1` | Apache-2.0 | Có | Có | Điều khiển trình duyệt thật, đăng nhập qua trang Keycloak. Kéo theo `playwright` và `playwright-core`, cùng Apache-2.0 — cả cây chỉ ba gói. Trình duyệt Chromium tải riêng bằng `npm run cai-trinh-duyet`, hoặc dùng Chrome cài sẵn |
+| @axe-core/playwright | `4.14.0` | MPL-2.0 | Có | Có — copyleft theo tệp, dùng nguyên gói, không sửa | Quét khả năng tiếp cận WCAG 2.1 A + AA trên các màn chính (#435, `e2e/kiem/kha-nang-tiep-can.spec.ts`). Kéo theo `axe-core` (MPL-2.0, cùng cách lý giải như `axe-core` của cây linter ở trên). Lõi ghim `4.14.0` bằng `overrides` trong `e2e/package.json`: bản `4.14.1` mà cây linter của cổng đang dùng phát hành 16/11/2026, chưa đủ hai tuần. Cả cây thêm hai gói |
 
 ---
 

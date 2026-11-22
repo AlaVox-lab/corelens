@@ -88,7 +88,7 @@ export default async function BangPhongBan({ searchParams }: { searchParams: Pro
           <List aria-hidden />
           Dạng danh sách
         </Link>
-        <Link href={cuaToi ? "/phong-ban/bang" : "/phong-ban/bang?mine=1"} className="chip" aria-pressed={cuaToi}>
+        <Link href={cuaToi ? "/phong-ban/bang" : "/phong-ban/bang?mine=1"} className="chip" aria-current={cuaToi ? "true" : undefined}>
           <User aria-hidden />
           Giao cho tôi
         </Link>

@@ -66,6 +66,42 @@ liệu hỏng đúng chỗ; bỏ bước trả tiêu điểm khi đóng ngăn xe
 bài xem nhanh hỏng đúng chỗ; cho hiện trang dài 0,4 giây, hay cho số cuộn ngay lần dựng đầu, thì bài
 chuyển động hỏng đúng chỗ.
 
+## Khả năng tiếp cận
+
+Kịch bản `e2e/kiem/kha-nang-tiep-can.spec.ts` (#435) quét các màn chính bằng
+[axe-core](https://github.com/dequelabs/axe-core) qua gói `@axe-core/playwright` (MPL-2.0, chỉ dùng khi
+kiểm thử) theo chuẩn **WCAG 2.1 mức A và AA**, cũng đăng nhập thật và chạy ở cả bốn cấu hình — nên tương
+phản được đo ở nền sáng, nền tối và màn hẹp. Chạy riêng:
+
+```bash
+npx playwright test kiem/kha-nang-tiep-can.spec.ts
+```
+
+| Vai | Màn quét |
+|---|---|
+| Chưa đăng nhập | Trang chủ của cổng, trang đăng nhập Keycloak (chủ đề của dự án) |
+| Người gửi | Trang chủ, Gửi yêu cầu bước 1 và bước 2, Hồ sơ của tôi, một hồ sơ |
+| Điều phối viên | Trang chủ, Hàng đợi điều phối, một hồ sơ — cả khi đang mở bảng thao tác; Báo cáo: bảng điều khiển và Quy trình thực tế |
+| Trưởng phòng | Trang chủ, Hàng đợi phòng ban, bảng Kanban, một hồ sơ của phòng, Hộp thư |
+| Người xử lý | Hàng đợi phòng ban, Hộp thư |
+| Quản trị viên | Hệ thống, Cấu hình quy trình |
+
+Bài **hỏng khi còn vi phạm mức `critical` hoặc `serious`**, in mã luật, số phần tử và bộ chọn đầu tiên.
+Vi phạm mức nhẹ hơn không làm hỏng bài; số của mọi mức ghi ở `e2e/ket-qua/kha-nang-tiep-can/<cấu hình>.jsonl`,
+mỗi màn một dòng. Bài chờ mọi hiệu ứng hiện ra chạy xong rồi mới quét, vì chữ đang mờ dần cho số tương
+phản thấp giả.
+
+**Loại trừ duy nhất**: khung Superset nhúng ở màn Báo cáo (`.bao-cao-khung iframe`) — đó là trang của
+Superset, nền tảng bên thứ ba, dự án không sửa mã của nó. Phần của cổng quanh khung vẫn được quét.
+
+Cùng tệp có hai bài **chỉ dùng bàn phím**: gửi một yêu cầu từ đầu tới cuối ở *Gửi yêu cầu*, và phân loại
+một hồ sơ ở trang hồ sơ của điều phối viên. Mỗi lần Tab, bài kiểm tiêu điểm đi tới theo thứ tự trên trang
+(không nhảy lùi) và phần tử đang giữ tiêu điểm có viền nhìn thấy; Tab đầu tiên của mọi trang là lối
+**Bỏ qua tới nội dung chính**.
+
+Sửa giao diện mà bài này hỏng thì sửa ở mã của cổng — biến màu trong `frontend/app/globals.css`, nhãn,
+thứ tự tiêu điểm — không tắt luật axe cho bài xanh.
+
 ## Khi nào chạy
 
 Trước khi mở pull request có sửa giao diện, cùng với `npm run typecheck`, `npm run lint` và

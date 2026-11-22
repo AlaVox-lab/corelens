@@ -156,8 +156,10 @@ function Muc({ muc, chon, dem }: { muc: MucDieuHuong; chon: boolean; dem?: numbe
   const laHopThu = muc.icon === "hop-thu";
   const cho = laHopThu ? (dem ?? muc.dem) : muc.cho;
   const mo = laHopThu ? undefined : muc.dem;
-  const nhan = [
-    muc.nhan,
+  // Phần số chỉ trình đọc màn hình đọc (#435): tên liên kết dựng từ NỘI DUNG — chữ nhìn thấy rồi tới phần
+  // này — chứ không bằng `aria-label`, để tên đọc lên luôn bắt đầu bằng đúng chữ người dùng thấy và gọi
+  // bằng giọng nói được (WCAG 2.5.3). Thanh bên thu gọn chỉ làm mờ nhãn, nên tên vẫn đủ.
+  const phu = [
     cho ? (laHopThu ? `${cho} tin chưa đọc` : `${cho} việc cần xử lý`) : null,
     mo ? `${mo} đang mở` : null,
     muc.gap ? "có việc quá hạn hoặc sắp tự đi" : null,
@@ -165,18 +167,13 @@ function Muc({ muc, chon, dem }: { muc: MucDieuHuong; chon: boolean; dem?: numbe
     .filter(Boolean)
     .join(", ");
   return (
-    <Link
-      className="sb-muc"
-      href={muc.duongDan}
-      aria-current={chon ? "page" : undefined}
-      aria-label={nhan}
-      title={muc.nhan}
-    >
+    <Link className="sb-muc" href={muc.duongDan} aria-current={chon ? "page" : undefined} title={muc.nhan}>
       <span className="sb-icon">
         <Icon aria-hidden />
         {muc.gap ? <span className="sb-cham" aria-hidden /> : null}
       </span>
       <span className="sb-nhan">{muc.nhan}</span>
+      {phu ? <span className="an-di">, {phu}</span> : null}
       {/* Ô số luôn có mặt, bằng 0 thì ẩn (#237): số đi từ 0 lên lúc đang xem vẫn cuộn —
           gắn ô mới vào trang thì đó là lần dựng đầu, không có hiệu ứng */}
       <span className="so" data-moi="" data-trong={cho ? undefined : ""} aria-hidden>

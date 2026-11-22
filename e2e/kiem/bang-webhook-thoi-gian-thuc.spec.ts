@@ -80,7 +80,7 @@ test.describe("bảng Kanban của phòng ban (#403)", () => {
 
     await page.getByRole("link", { name: "Giao cho tôi" }).click();
     await page.waitForURL(/\/phong-ban\/bang\?mine=1$/);
-    await expect(page.getByRole("link", { name: "Giao cho tôi" })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("link", { name: "Giao cho tôi" })).toHaveAttribute("aria-current", "true");
 
     const cuaToi = await theKanban(page).count();
     expect(cuaToi).toBeLessThanOrEqual(tatCa);
