@@ -1038,6 +1038,12 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
   nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
 
+Bảo đảm này còn được kiểm bằng **kiểm thử dựa trên tính chất** (#441):
+`backend/tests/test_tinh_chat_may_trang_thai.py` để Hypothesis sinh chuỗi thao tác ngẫu nhiên trên mọi
+quy trình — tác nhân bất kỳ, cạnh bất kỳ của bảng `transitions`, nhập liệu đúng lẫn sai — và sau mỗi
+bước kiểm rằng chuyển thành công ghi đúng một dòng nhật ký theo một cạnh có thật mà tác nhân có vai, còn
+bị từ chối thì không ghi gì và hồ sơ giữ nguyên.
+
 **Đổi quy trình giữa chừng: hồ sơ đi theo bộ quy tắc của chính nó** (#278, #299). `create_case`
 ghi vào hồ sơ `rule_set_id` của bộ đang bật, và cột đó giữ nguyên tới khi hồ sơ kết thúc. Mọi chỗ
 tra cấu hình đều tra theo bộ **của hồ sơ**, không theo bộ đang bật: cạnh đi được và nút trên giao

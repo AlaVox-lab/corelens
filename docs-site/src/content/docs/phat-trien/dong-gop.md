@@ -50,6 +50,39 @@ lại ở trang lượt chạy — xem [Kiểm thử giao diện](../kiem-thu-gi
 Tính năng ở dịch vụ còn được thử bằng **phép thử đột biến**: cố ý cài lỗi vào mã, bài kiểm thử phải
 bắt được.
 
+### Kiểm thử dựa trên tính chất cho máy trạng thái
+
+Bài theo ví dụ chỉ đi những đường người viết nghĩ ra. `backend/tests/test_tinh_chat_may_trang_thai.py`
+để [Hypothesis](https://hypothesis.readthedocs.io) (MPL-2.0) tự sinh chuỗi thao tác: tạo hồ sơ ở mọi quy
+trình đang bật, rồi cho một tác nhân bất kỳ — kể cả người không có vai nào và tác nhân hệ thống — thử
+đi một cạnh bất kỳ của bảng `transitions`, kèm nhập liệu đúng lẫn sai. Sau **mỗi** bước bài kiểm bốn bất
+biến của cửa chuyển trạng thái duy nhất:
+
+- chuyển thành công thì có đúng một dòng nhật ký mới, của đúng hồ sơ đó, với trạng thái trước và sau
+  khớp hồ sơ, theo một cạnh có thật trong bộ quy tắc của hồ sơ mà tác nhân có vai; rời trạng thái kết
+  thúc chỉ bằng cạnh mở lại mà dữ liệu khai `from_is_terminal`;
+- bị từ chối thì không có dòng nhật ký nào và hồ sơ giữ nguyên trạng thái lẫn mọi trường;
+- trạng thái của mọi hồ sơ luôn thuộc bộ quy tắc hồ sơ ghim;
+- `allowed_transitions` chỉ chào cạnh đi ra từ trạng thái hiện tại mà tác nhân có vai.
+
+Bản mặc định (80 ví dụ, mỗi ví dụ tới 50 bước, khoảng nửa phút) chạy trong bộ kiểm thử của cụm, cả CI. Bài
+tự kiểm nó không rỗng: mọi bộ quy tắc đang bật phải có lần chuyển thành công. Bản dài gấp mười số ví dụ (vài
+phút), chọn seed để lặp lại đúng một lượt, và `-s` để in thống kê — số lần thành công theo mã hoạt động, số
+lần bị từ chối theo mã lỗi:
+
+```bash
+docker exec -e DXLAB_TINH_CHAT_DAI=1 dxlab-backend python -m pytest -p no:cacheprovider -q -s \
+  tests/test_tinh_chat_may_trang_thai.py --hypothesis-seed=12345
+```
+
+Bài đỏ thì Hypothesis thu gọn phản ví dụ (việc này mất vài phút) rồi in nó dưới dòng
+`Failing test case: <state machine>`: các lời gọi `state.tao_ho_so_dau(...)`, `state.chuyen_trang_thai(...)`
+theo đúng thứ tự, trước mỗi lời gọi là các giá trị đã rút có nhãn — `Draw 9 (canh): Canh(...)` là cạnh,
+`(vai)`, `(phong)`, `(ma_tac_nhan)` là tác nhân, rồi trường gửi kèm và ghi chú — và trên cùng là câu khẳng
+định bị phá, ví dụ `một lần chuyển phải ghi đúng một dòng nhật ký`. Đó là lỗi của engine cần issue riêng:
+chép phản ví dụ vào issue và dựng lại nó thành một bài theo ví dụ, đừng nới bài cho xanh. Cơ sở dữ liệu ví
+dụ của Hypothesis tắt, nên lượt sau không tự phát lại phản ví dụ cũ — đầu ra của pytest là bản ghi duy nhất.
+
 ## Dựng trang tài liệu này
 
 Trang nằm ở thư mục `docs-site/`, dựng bằng [Starlight](https://starlight.astro.build) (MIT). Cần
