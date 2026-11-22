@@ -184,12 +184,13 @@ function NutTrangThai({ data }: NodeProps<NutRF>) {
         onFocus={hien}
         onBlur={tip.an}
       >
-        {data.nghen ? <span className="sdq-the-nghen">Nghẽn</span> : null}
+        {/* Khoảng trắng giữa các dòng: nút dàn flex nên không đổi hình, nhưng chữ đọc ra tách từng từ —
+            không có thì "Bắt đầu" và tên dính liền thành một từ, lệch với nhãn đọc màn hình (#435) */}
+        {data.nghen ? <span className="sdq-the-nghen">Nghẽn</span> : null}{" "}
         {data.batDau || data.ketThuc ? (
           <span className="sdq-the-moc">{data.batDau ? "Bắt đầu" : "Kết thúc"}</span>
-        ) : null}
-        <span className="sdq-nut-ten">{data.nhan}</span>
-        <span className="sdq-nut-so">{data.dong2}</span>
+        ) : null}{" "}
+        <span className="sdq-nut-ten">{data.nhan}</span> <span className="sdq-nut-so">{data.dong2}</span>{" "}
         <span className="sdq-nut-so">{data.dong3}</span>
       </button>
       <Handle type="source" position={viTriRa} isConnectable={false} className="sdq-tay" />
@@ -536,10 +537,15 @@ function KhungBen({
           daChon: chon?.loai === "trang-thai" && chon.ma === ma,
           mo: !!noiBat && !noiBat.nut.has(ma),
           huong,
+          // Mở đầu bằng ĐÚNG chữ nhìn thấy trên nút, cùng thứ tự (thẻ, tên, hai dòng số) — người dùng điều
+          // khiển bằng giọng nói gọi nút theo chữ họ thấy (WCAG 2.5.3, #435) — rồi mới tới phần giải thích
           ariaLabel: [
+            tt?.is_bottleneck ? "Nghẽn" : null,
+            tt?.is_initial ? "Bắt đầu" : tt?.is_terminal ? "Kết thúc" : null,
             nhan,
-            tt ? `${soVN(tt.visits)} lượt vào` : "chưa có hồ sơ vào",
-            tt?.is_bottleneck ? "điểm nghẽn" : null,
+            dong2,
+            dong3 || null,
+            tt ? `${soVN(tt.visits)} lượt vào` : null,
             trungVi !== null ? `chờ trung vị ${thoiLuongLamViec(trungVi)}` : null,
             coTheBam ? "bấm để xem hồ sơ chờ lâu nhất" : null,
           ]

@@ -79,14 +79,14 @@ export function DanhSachHopThu({
       <div className="ht-tim">
         <OTimUrl goiY="Tìm người, mã hồ sơ" nhan="Tìm cuộc trò chuyện" />
         <nav className="chip-hang" aria-label="Lọc cuộc trò chuyện">
-          <Link className="chip" href={duongLoc(null)} scroll={false} aria-pressed={!loc}>
+          <Link className="chip" href={duongLoc(null)} scroll={false} aria-current={!loc ? "true" : undefined}>
             Tất cả
           </Link>
-          <Link className="chip" href={duongLoc(LOC_CHUA_DOC)} scroll={false} aria-pressed={loc === LOC_CHUA_DOC}>
+          <Link className="chip" href={duongLoc(LOC_CHUA_DOC)} scroll={false} aria-current={loc === LOC_CHUA_DOC ? "true" : undefined}>
             Chưa đọc {soChuaDoc}
           </Link>
           {(soNoiBo > 0 || loc === LOC_NOI_BO) && (
-            <Link className="chip" href={duongLoc(LOC_NOI_BO)} scroll={false} aria-pressed={loc === LOC_NOI_BO}>
+            <Link className="chip" href={duongLoc(LOC_NOI_BO)} scroll={false} aria-current={loc === LOC_NOI_BO ? "true" : undefined}>
               <Lock aria-hidden />
               Nội bộ
             </Link>
