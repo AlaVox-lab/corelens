@@ -32,7 +32,7 @@ from sqlalchemy.orm import object_session
 
 from app.models.case import MO_TA_TOI_DA, TIEU_DE_TOI_DA, TIEU_DE_TOI_THIEU, Request
 from app.models.workflow_config import RequestType, Transition
-from app.rules.dieu_kien import dieu_kien_khong_dat, kiem_dieu_kien
+from app.rules.dieu_kien import kiem_dieu_kien, vi_pham_dieu_kien
 from app.rules.han_cho import luc_vao_trang_thai
 from app.rules.sla import giay_lam_viec, han_goc_giay
 from app.rules.truong_rieng import kiem_chi_tiet
@@ -609,18 +609,49 @@ def apply_effects(ctx: TransitionContext) -> dict[str, Any]:
     return tac_dong
 
 
-def input_free_guards_pass(ctx: TransitionContext) -> bool:
-    """Cạnh có qua được mọi ràng buộc không cần nhập liệu không. Dùng lúc chào nút.
+def vi_pham_khong_nhap_lieu(
+    ctx: TransitionContext, *, dung_som: bool = False
+) -> list[GuardViolation]:
+    """Những vi phạm của ràng buộc không cần nhập liệu, rồi của điều kiện trên cạnh (#424).
 
-    Chỉ nuốt `GuardViolation`. Mã ràng buộc chưa cài đặt vẫn ném `UnknownGuard` như ở
+    Nguồn sự thật duy nhất cho việc xét một cạnh lúc chưa biết người dùng sẽ nhập gì: lúc chào
+    nút (`input_free_guards_pass`) lẫn điểm cuối liệt kê cạnh kèm lý do. Mỗi vi phạm là chính
+    ngoại lệ ràng buộc ném ra — mã `guard_code` và thông điệp của nó, không viết lại. Điều kiện
+    sai mỗi dòng một vi phạm (`DieuKienKhongDat`).
+
+    `dung_som` dừng ở vi phạm đầu tiên — đúng hành vi cũ của lúc chào nút, không chạy ràng buộc
+    thừa. Bỏ trống thì thu đủ để người gọi biết mọi lý do.
+
+    Chỉ bắt `GuardViolation`. Mã ràng buộc chưa cài đặt vẫn ném `UnknownGuard` như ở
     `run_guards`: giấu nút đi thì cấu hình sai sẽ trông như "không có thao tác nào".
     """
-    try:
-        for ma in ctx.transition.guard_codes:
-            rang_buoc = _tra_rang_buoc(ma)
-            if rang_buoc.input_free:
-                rang_buoc.check(ctx)
-    except GuardViolation:
-        return False
+    vi_pham: list[GuardViolation] = []
+    for ma in ctx.transition.guard_codes:
+        rang_buoc = _tra_rang_buoc(ma)
+        if not rang_buoc.input_free:
+            continue
+        try:
+            rang_buoc.check(ctx)
+        except GuardViolation as loi:
+            vi_pham.append(loi)
+            if dung_som:
+                return vi_pham
     # Điều kiện trên cạnh (#397) chỉ đọc hồ sơ, không đọc nhập liệu — chạy được lúc chào nút
-    return not dieu_kien_khong_dat(ctx)
+    vi_pham.extend(vi_pham_dieu_kien(ctx))
+    return vi_pham
+
+
+def input_free_guards_pass(ctx: TransitionContext) -> bool:
+    """Cạnh có qua được mọi ràng buộc không cần nhập liệu không. Dùng lúc chào nút."""
+    return not vi_pham_khong_nhap_lieu(ctx, dung_som=True)
+
+
+def truong_can_nhap(guard_codes: Iterable[str]) -> frozenset[str]:
+    """Trường người dùng gửi kèm khi đi cạnh: trường mà ràng buộc CẦN nhập liệu trên cạnh quản (#424).
+
+    Những ràng buộc này chưa xét được lúc chưa biết nhập liệu, nên cạnh vẫn đi được nhưng người gọi
+    biết trước phải gửi gì. Ràng buộc `input_free` không quản trường nào người dùng gửi.
+    """
+    return frozenset().union(
+        *(rb.governs for rb in map(_tra_rang_buoc, guard_codes) if not rb.input_free)
+    )

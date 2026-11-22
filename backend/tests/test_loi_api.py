@@ -72,6 +72,8 @@ CHI_LOI: set[tuple[str, str]] = {
     ("GET", "/core/v1/archive/{ky}/files/{ten_tep}"),
     # Quy trình dạng BPMN 2.0 (#405)
     ("GET", "/core/v1/workflow/processes/{code}/bpmn"),
+    # Cạnh kèm lý do không đi được (#424)
+    ("GET", "/core/v1/workflow/requests/{case_id}/transition-options"),
     # Webhook (#390)
     ("POST", "/core/v1/webhooks"),
     ("GET", "/core/v1/webhooks"),

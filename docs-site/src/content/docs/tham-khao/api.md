@@ -50,7 +50,7 @@ hành yêu cầu nội bộ — và có thể đổi theo giao diện của nó.
 
 | Nhóm | Điểm cuối |
 |---|---|
-| Luồng công việc | `GET /core/v1/workflow/processes` — danh mục quy trình · `GET /core/v1/workflow/request-types`, `/states` (`?process=`), `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ, loại yêu cầu quyết định quy trình · `GET /core/v1/workflow/requests` (`?process=`, `needs_action=true`), `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
+| Luồng công việc | `GET /core/v1/workflow/processes` — danh mục quy trình · `GET /core/v1/workflow/request-types`, `/states` (`?process=`), `/priorities`, `/departments` — danh mục cấu hình · `POST /core/v1/workflow/requests` — tạo hồ sơ, loại yêu cầu quyết định quy trình · `GET /core/v1/workflow/requests` (`?process=`, `needs_action=true`), `/requests/{case_id}` — danh sách, chi tiết kèm **bước đi được** (`allowed_transitions`) và **lịch sử** (`history`) · `GET /core/v1/workflow/requests/{case_id}/transition-options` — mọi bước kèm **lý do chưa đi được** (chỉ có ở lõi) · `POST /core/v1/workflow/requests/{case_id}/transitions` — đi một bước |
 | Tệp | `GET /core/v1/files/policy` · `POST /core/v1/files/requests/{case_id}/attachments` · `GET /core/v1/files/{attachment_id}` |
 | Nhật ký sự kiện | `GET /core/v1/events?format=csv\|json\|xes&from=…&to=…&process=…` — chỉ quản trị viên; mỗi dòng mang `process_code`; `xes` mở thẳng bằng công cụ khai phá quy trình (ProM, Disco, PM4Py) |
 | Lưu trữ lạnh | `GET /core/v1/archive` — các bản lưu theo tháng · `GET /core/v1/archive/{YYYY-MM}` — bản kê (`manifest`, số dòng, SHA-256) và liên kết tải · `GET /core/v1/archive/{YYYY-MM}/files/{tệp}` — tải một tệp; chỉ quản trị viên, chỉ có ở lõi |
@@ -76,6 +76,48 @@ tạo, hồ sơ của phòng mình nếu mang vai phòng ban, mọi hồ sơ n�
 `404`. Đi bước nào thì engine quyết theo vai và ràng buộc của bước, như trên giao diện: trưởng phòng duyệt
 được đề xuất của phòng mình, người gửi gọi nhầm bước của trưởng phòng nhận `403`. Đường cũ `/requests` của
 cổng người dùng vẫn chỉ là hồ sơ do chính người gọi tạo.
+
+### Bước chưa đi được và vì sao
+
+`allowed_transitions` của chi tiết hồ sơ chỉ có bước người gọi đi được. Ứng dụng muốn nói với người dùng vì
+sao một nút không có thì gọi `GET /core/v1/workflow/requests/{case_id}/transition-options`: **mọi** bước rời
+trạng thái hiện tại (theo thứ tự hiển thị của quy trình), mỗi bước mang
+
+- `allowed` — người gọi đi được lúc này không. Tập bước `allowed` trùng hệt `allowed_transitions`: hai đường
+  dùng chung một hàm xét bước của engine
+- `reasons` — rỗng khi đi được; mỗi lý do có `code`, `category`, `message` (câu tiếng Việt của chính lỗi mà
+  engine sẽ trả nếu cứ gọi bước đó) và `condition`:
+
+  | `category` | `code` | Khi nào |
+  |---|---|---|
+  | `role-not-permitted` | `role-not-permitted` | Vai của người gọi không đi được bước này. Sai vai thì chỉ có lý do này — ràng buộc không xét, như engine |
+  | `system-transition-only` | `system-transition-only` | Bước do hệ thống tự đi (leo thang, tự đóng) |
+  | `guard-violation` | mã ràng buộc, ví dụ `actor-in-case-department`, `actor-not-requester`, `requester-owns-case` | Một ràng buộc không cần nhập liệu từ chối; vướng nhiều ràng buộc thì đủ cả |
+  | `guard-violation` | `edge-condition` | Hồ sơ chưa thỏa điều kiện trên bước; `condition` mang `id`, `field`, `operator`, `value` của dòng điều kiện |
+- `requires_input` — trường nhập liệu gửi trong `changes` khi đi bước (ví dụ phân loại: `request_type_code`,
+  `priority_code`). Ràng buộc trên các trường này chỉ xét lúc đi thật, nên bước vẫn `allowed` mà giá trị gửi
+  sai vẫn bị từ chối; `requires_note`, `note_label` — bước bắt buộc ghi chú
+
+Chỉ đọc — không ghi nhật ký, không đổi hồ sơ. Phạm vi nhìn thấy như chi tiết hồ sơ: ngoài phạm vi `404`; hồ
+sơ ở trạng thái không còn bước nào đi ra thì `transitions` rỗng. Ví dụ, tài khoản dịch vụ vai `requester` ở
+"Đã gửi" (rút gọn còn hai bước):
+
+```json
+{
+  "case_id": 1979,
+  "state": {"code": "submitted", "label": "Đã gửi", "is_terminal": false},
+  "transitions": [
+    {"activity_code": "classify", "activity_label": "Phân loại yêu cầu", "to_state": "classified",
+     "to_state_label": "Đã phân loại", "keeps_state": false, "is_system": false, "allowed": false,
+     "reasons": [{"code": "role-not-permitted", "category": "role-not-permitted", "condition": null,
+                  "message": "Vai trò hiện tại không thực hiện được “Phân loại yêu cầu”. Bước này dành cho: Người phân loại yêu cầu."}],
+     "requires_input": ["request_type_code", "priority_code"], "requires_note": false, "note_label": null},
+    {"activity_code": "cancel", "activity_label": "Hủy yêu cầu", "to_state": "cancelled",
+     "to_state_label": "Đã hủy", "keeps_state": false, "is_system": false, "allowed": true,
+     "reasons": [], "requires_input": [], "requires_note": false, "note_label": null}
+  ]
+}
+```
 
 ### Quy trình dạng BPMN 2.0
 

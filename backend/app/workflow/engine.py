@@ -41,6 +41,7 @@ from app.rules.guards import (
     input_free_guards_pass,
     permitted_fields,
     run_guards,
+    vi_pham_khong_nhap_lieu,
 )
 from app.rules.sla import cap_nhat_dong_ho
 from app.rules.truong_rieng import kiem_chi_tiet
@@ -52,6 +53,7 @@ from app.workflow.errors import (
     NoteRequired,
     RoleNotPermitted,
     SystemTransitionOnly,
+    TransitionError,
     TransitionNotAllowed,
 )
 
@@ -353,6 +355,20 @@ def allowed_transitions(
     quay về đúng chỗ cũ không. Cạnh chắc chắn bị từ chối thì không hiện ra. Ràng buộc
     cần biết người dùng định đặt giá trị gì thì chưa chạy được ở đây, nên một cạnh hiện
     ra vẫn có thể bị từ chối lúc thực hiện.
+
+    Là phép lọc trên `xet_cac_canh` — cạnh không có lý do chặn nào — nên danh sách nút và
+    điểm cuối liệt kê cạnh kèm lý do (#424) không bao giờ kể hai chuyện.
+    """
+    return [c for c, ly_do in xet_cac_canh(session, case, actor, dung_som=True) if not ly_do]
+
+
+def xet_cac_canh(
+    session: Session, case: Request, actor: Actor, *, dung_som: bool = False
+) -> list[tuple[Transition, list[TransitionError]]]:
+    """Mọi cạnh rời trạng thái hiện tại của hồ sơ (theo `display_order`), mỗi cạnh kèm lý do chặn (#424).
+
+    Danh sách lý do rỗng là tác nhân đi được cạnh đó — theo cùng nghĩa với `allowed_transitions`.
+    Chỉ đọc: không ghi nhật ký, không đổi hồ sơ, không chạy tác động của ràng buộc (ADR-0005).
     """
     cac_canh = session.scalars(
         select(Transition)
@@ -364,14 +380,33 @@ def allowed_transitions(
     ).all()
 
     truoc = _trang_thai_truoc(session, case.id)
-    return [
-        c
-        for c in cac_canh
-        if _actor_can_traverse(actor, c)
-        and input_free_guards_pass(
-            TransitionContext(case=case, transition=c, actor=actor, previous_state=truoc)
-        )
-    ]
+    return [(c, xet_canh(session, case, actor, c, truoc, dung_som=dung_som)) for c in cac_canh]
+
+
+def xet_canh(
+    session: Session,
+    case: Request,
+    actor: Actor,
+    canh: Transition,
+    previous_state: str | None,
+    *,
+    dung_som: bool = False,
+) -> list[TransitionError]:
+    """Lý do tác nhân không đi được MỘT cạnh lúc chưa biết nhập liệu; rỗng là đi được (#424).
+
+    Đúng thứ tự kiểm của engine: quyền theo vai (`_actor_can_traverse`) → ràng buộc không cần
+    nhập liệu → điều kiện trên cạnh. Sai vai thì dừng ở đó, ràng buộc không xét — như
+    `perform_transition` ném lỗi quyền trước khi chạy ràng buộc. Mỗi lý do là chính ngoại lệ mà
+    engine sẽ ném (`RoleNotPermitted`, `SystemTransitionOnly`, `GuardViolation`), nên mã và
+    thông điệp đi từ lớp lỗi và lớp ràng buộc, không chép lại.
+    """
+    loi_quyen = _loi_quyen(session, actor, canh)
+    if loi_quyen is not None:
+        return [loi_quyen]
+    return vi_pham_khong_nhap_lieu(
+        TransitionContext(case=case, transition=canh, actor=actor, previous_state=previous_state),
+        dung_som=dung_som,
+    )
 
 
 def needs_my_action(
@@ -531,22 +566,9 @@ def perform_transition(
         )
 
     # --- Bước 2: kiểm quyền ------------------------------------------------
-    if canh.is_system and not actor.is_system:
-        raise SystemTransitionOnly(
-            f"Bước “{canh.activity_label}” do hệ thống tự thực hiện, người dùng không "
-            f"bấm được."
-        )
-    if not canh.is_system and actor.is_system:
-        raise RoleNotPermitted(
-            f"Tác nhân hệ thống không thực hiện được “{canh.activity_label}” — "
-            f"bước này thuộc về con người."
-        )
-    if not canh.is_system and not (actor.roles & canh.role_codes):
-        danh_cho = ", ".join(sorted(_nhan_vai_tro(session, ma) for ma in canh.role_codes))
-        raise RoleNotPermitted(
-            f"Vai trò hiện tại không thực hiện được “{canh.activity_label}”. "
-            f"Bước này dành cho: {danh_cho or 'không ai'}."
-        )
+    loi_quyen = _loi_quyen(session, actor, canh)
+    if loi_quyen is not None:
+        raise loi_quyen
     # Ủy quyền (#252): bước chỉ đi được nhờ vai làm thay thì phải đúng phòng được ủy quyền, không
     # phải hồ sơ do chính người bấm gửi, và nhật ký ghi người vắng mà họ làm thay
     lam_thay = _lam_thay_cho(actor, canh, ho_so)
@@ -705,3 +727,30 @@ def _actor_can_traverse(actor: Actor, transition: Transition) -> bool:
     if actor.is_system:
         return False
     return bool(actor.roles & transition.role_codes)
+
+
+def _loi_quyen(
+    session: Session, actor: Actor, canh: Transition
+) -> RoleNotPermitted | SystemTransitionOnly | None:
+    """Lỗi quyền mà bước 2 của `perform_transition` ném khi tác nhân không đi được cạnh, hay `None`.
+
+    Quyết định là `_actor_can_traverse`; hàm này chỉ dựng lỗi đúng loại kèm thông điệp, để cửa chuyển
+    trạng thái và điểm cuối liệt kê cạnh kèm lý do (#424) dùng chung một câu chữ.
+    """
+    if _actor_can_traverse(actor, canh):
+        return None
+    if canh.is_system:
+        return SystemTransitionOnly(
+            f"Bước “{canh.activity_label}” do hệ thống tự thực hiện, người dùng không "
+            f"bấm được."
+        )
+    if actor.is_system:
+        return RoleNotPermitted(
+            f"Tác nhân hệ thống không thực hiện được “{canh.activity_label}” — "
+            f"bước này thuộc về con người."
+        )
+    danh_cho = ", ".join(sorted(_nhan_vai_tro(session, ma) for ma in canh.role_codes))
+    return RoleNotPermitted(
+        f"Vai trò hiện tại không thực hiện được “{canh.activity_label}”. "
+        f"Bước này dành cho: {danh_cho or 'không ai'}."
+    )

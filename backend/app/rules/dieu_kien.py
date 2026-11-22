@@ -83,12 +83,30 @@ def dieu_kien_khong_dat(ctx: TransitionContext) -> list:
     return [dk for dk in cac_dieu_kien if not dung(dk.operator, chi_tiet.get(dk.field_code), dk.value)]
 
 
+class DieuKienKhongDat(GuardViolation):
+    """Vi phạm của MỘT điều kiện, mang theo chính dòng điều kiện (#424).
+
+    Mã ràng buộc vẫn là `edge-condition` như lỗi `run_guards` ném; thêm dòng điều kiện để điểm cuối liệt kê
+    cạnh trả được định danh, trường, phép so và giá trị cần — đọc từ bảng, không chép lại.
+    """
+
+    def __init__(self, dieu_kien, message: str) -> None:
+        super().__init__(MA_RANG_BUOC, message)
+        self.dieu_kien = dieu_kien
+
+
+def _thong_diep(ctx: TransitionContext, sai: list) -> str:
+    mo_ta = "; ".join(dk.description or f"{dk.field_code} {dk.operator} {dk.value}" for dk in sai)
+    return f"Hồ sơ không thỏa điều kiện của bước “{ctx.transition.activity_label}”: {mo_ta}."
+
+
+def vi_pham_dieu_kien(ctx: TransitionContext) -> list[DieuKienKhongDat]:
+    """Mỗi điều kiện sai một vi phạm, thông điệp cùng khuôn với lỗi của `kiem_dieu_kien` (#424)."""
+    return [DieuKienKhongDat(dk, _thong_diep(ctx, [dk])) for dk in dieu_kien_khong_dat(ctx)]
+
+
 def kiem_dieu_kien(ctx: TransitionContext) -> None:
     """Ném `GuardViolation` khi có điều kiện sai — gọi từ `run_guards`."""
     sai = dieu_kien_khong_dat(ctx)
     if sai:
-        mo_ta = "; ".join(dk.description or f"{dk.field_code} {dk.operator} {dk.value}" for dk in sai)
-        raise GuardViolation(
-            MA_RANG_BUOC,
-            f"Hồ sơ không thỏa điều kiện của bước “{ctx.transition.activity_label}”: {mo_ta}.",
-        )
+        raise GuardViolation(MA_RANG_BUOC, _thong_diep(ctx, sai))
