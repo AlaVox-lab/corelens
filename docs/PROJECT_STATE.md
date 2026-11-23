@@ -15,17 +15,17 @@
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lần cuối | 2026-11-23 |
-| Phiên bản hiện tại | **`v1.6.0`** (23/11) — Giai đoạn 6 đợt sáu: bước lệch quy trình trên trang hồ sơ, khả năng tiếp cận WCAG 2.1 AA, API lõi trả lý do cạnh không đi được, kiểm thử dựa trên tính chất cho máy trạng thái (PR #515, #517, #518, #519). **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
+| Phiên bản hiện tại | **`v1.7.0`** (23/11) — Giai đoạn 6 đợt bảy: thao tác hàng loạt trên hàng đợi điều phối, đánh giá mức hài lòng khi người gửi xác nhận đạt kèm ba biểu đồ theo phòng, nhãn dòng thời gian đúng cạnh đã đi (PR #524, #525, #527). **`v1.6.0`** (23/11) — Giai đoạn 6 đợt sáu: bước lệch quy trình trên trang hồ sơ, khả năng tiếp cận WCAG 2.1 AA, API lõi trả lý do cạnh không đi được, kiểm thử dựa trên tính chất cho máy trạng thái (PR #515, #517, #518, #519). **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`, bốn với `v1.6.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`, bốn với `v1.6.0`, ba với `v1.7.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | **Công khai** từ 19/11 tại https://github.com/AlaVox-lab/corelens (đổi tên từ `dx-os-lab`, link cũ tự chuyển hướng); trang tài liệu https://alavox-lab.github.io/corelens/ |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **10** (mốc 18) sau `v1.6.0` — 0 `P0`, 3 `P1`, 0 `P2`, 7 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
+| Issue đang mở | **8** (mốc 18) sau `v1.7.0` — 0 `P0`, 3 `P1`, 0 `P2`, 5 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
 | Đội | **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) tham gia từ 16/11 tới 20/11; các đợt hai tới năm bên dưới là phần việc của bạn. Từ 20/11 navigator nhận lại các issue đang mở |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **974 bài** pytest ở dịch vụ ứng dụng và **209 bài** ở dịch vụ khai phá (tích hợp liên tục trên PR #519, 22/11), gồm một bài kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis (#441), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; đợt sáu thêm kịch bản quét khả năng tiếp cận bằng axe trên màn chính của từng vai (#435) và kịch bản bước lệch trên trang hồ sơ (#448); từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Bộ kiểm thử tự động | **1000 bài** pytest ở dịch vụ ứng dụng và **209 bài** ở dịch vụ khai phá (tích hợp liên tục trên PR #527, 23/11), gồm một bài kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis (#441), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; đợt sáu thêm kịch bản quét khả năng tiếp cận bằng axe trên màn chính của từng vai (#435) và kịch bản bước lệch trên trang hồ sơ (#448); từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
 | Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` (hai mô hình) **+1,88 GiB**, đo 19/11 trên cụm thử. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
 | Số ngày còn lại tới chấm kho mã | **14 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
@@ -56,7 +56,9 @@ cờ "cần tôi xử lý" tính từ bước chính khai trong dữ liệu. Bi�
 theo loại yêu cầu**, cũng khai trong dữ liệu. Giao diện có chế độ sáng và tối, màn đăng nhập
 Keycloak bằng tiếng Việt. Mọi danh sách **phân trang, tìm và lọc ở dịch vụ**, gõ không dấu vẫn ra; bấm một
 dòng hàng đợi là mở **ngăn xem nhanh** bên phải, duyệt bằng phím mũi tên, làm bước chính ngay trong
-ngăn. Tài liệu cho người dùng và người triển khai nằm ở trang tài liệu `docs-site/`.
+ngăn. Điều phối viên chọn nhiều hồ sơ để **phân loại hay chuyển phòng cả lô**, mỗi hồ sơ vẫn một lần chuyển và
+một dòng nhật ký riêng. Khi xác nhận đạt, người gửi **chấm mức hài lòng** 1–5 kèm nhận xét nếu muốn. Tài liệu cho
+người dùng và người triển khai nằm ở trang tài liệu `docs-site/`.
 
 Trưởng phòng, điều phối viên và quản trị viên mở mục **Báo cáo** là thấy bảng điều khiển phân tích
 ngay trong cổng, không đăng nhập lần hai: trưởng phòng chỉ thấy số của phòng mình. Quản trị viên tải
@@ -1241,11 +1243,32 @@ ghi trên kho. Lịch sử commit giữ nguyên. Navigator nhận lại mọi is
 Hai phụ thuộc mới, đều chỉ dùng khi kiểm thử: `@axe-core/playwright` (MPL-2.0) trong `e2e/`, `hypothesis` (MPL-2.0,
 kéo theo `sortedcontainers` Apache-2.0) trong dịch vụ ứng dụng. Không migration mới.
 
+### Tuần 21 (tiếp, 23/11) — đợt bảy và `v1.7.0`
+
+Hai issue navigator duyệt sau `v1.6.0` và một lỗi phát hiện trong lúc làm:
+
+- **Thao tác hàng loạt trên hàng đợi điều phối** (#440, PR #524): điều phối viên chọn nhiều hồ sơ trên trang rồi phân
+  loại hay chuyển về một phòng cho cả lô. Điểm cuối chỉ ở ứng dụng (`/coordination/bulk-transitions`), là vòng lặp
+  trên cửa chuyển trạng thái duy nhất: mỗi hồ sơ một giao dịch, một dòng nhật ký; hồ sơ bị chặn hoàn tác riêng và báo
+  đúng mã lỗi của engine, lô vẫn đi tiếp. Bước làm được hàng loạt và lô lớn nhất là cấu hình (`BULK_ACTIVITIES`,
+  `BULK_MAX_CASES` mặc định 50); lần chuyển hàng loạt không ghi dấu giữ hay ghi đè gợi ý. Buồng lái phòng ban không đổi
+- **Đánh giá mức hài lòng** (#433, PR #525): người gửi chấm 1–5 kèm nhận xét, cả hai tùy chọn, ngay trong bước *Xác
+  nhận đạt*. Cạnh nào cho chấm là dữ liệu (cờ `transitions.collects_feedback`); điểm không qua engine, không vào nhật
+  ký sự kiện (ADR-0005), ghi bảng chỉ ghi thêm `case_feedback` cùng giao dịch, mỗi lần xác nhận một dòng. Trang hồ sơ
+  của điều phối viên, phòng ban và người gửi hiện khối đánh giá; bảng điều khiển thêm điểm trung bình, tỷ lệ hồ sơ
+  được chấm theo phòng và phân bố điểm, tính theo lần chấm mới nhất. Migration `0036`, nâng cấp giữ dữ liệu
+- **Nhãn dòng thời gian** (#526, PR #527): nhãn của mỗi mốc tra theo cặp trạng thái kèm mã hoạt động của dòng nhật
+  ký. Trước đó cặp có cả cạnh người lẫn cạnh hệ thống ra nhãn sai — người gửi xác nhận đạt hiện thành "Tự đóng hồ sơ",
+  người gửi rút yêu cầu chờ phòng xác duyệt hiện thành "Tự trả về điều phối"
+
+Không phụ thuộc mới. Ba biến môi trường mới (`BULK_MAX_CASES`, `BULK_ACTIVITIES`, `FEEDBACK_COMMENT_MAX_CHARS`) và hai
+biến giới hạn tốc độ, đều có mặc định trong Compose nên tệp `.env` cũ vẫn chạy.
+
 ---
 
 ## Đang làm
 
-Phát hành `v1.6.0`; sau đó chuẩn bị trình diễn (mục *Việc tiếp theo*).
+Phát hành `v1.7.0`; sau đó chuẩn bị trình diễn (mục *Việc tiếp theo*).
 
 ---
 
@@ -1257,10 +1280,10 @@ Phát hành `v1.6.0`; sau đó chuẩn bị trình diễn (mục *Việc tiếp 
    cấm force push), chưa bắt buộc CI (`CONTRIBUTING.md` mục 2.6)
 2. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (README còn ghi 6 GB), cấu hình máy tối thiểu; cập nhật bộ nhớ
    hồ sơ `tri-tue` trong README theo số đo 19/11
-3. **Issue còn mở, hỏi navigator trước khi làm**: #433, #431, #426, #440. Không làm: #425 (sau kỳ thi), #430, #432
-   (ngược quyết định đã chốt), #451, #481 (hoãn)
-4. **Dọn dữ liệu cũ của cụm thử cách ly**: khoảng 90 hồ sơ còn lại làm 5 bài `test_coordination.py` đỏ khi chạy trên
-   cụm thử dùng lại (cụm sạch của tích hợp liên tục vẫn xanh)
+3. **Issue còn mở, hỏi navigator trước khi làm**: #431, #426. Không làm: #425 (sau kỳ thi), #430, #432 (ngược quyết
+   định đã chốt), #451, #481 (hoãn)
+4. **Dọn dữ liệu cũ của cụm thử cách ly**: vài trăm hồ sơ còn lại, kể cả dữ liệu trình diễn đã nạp, làm khoảng mười bài
+   đọc theo trang hay theo lô đỏ khi chạy trên cụm thử dùng lại (cụm sạch của tích hợp liên tục vẫn xanh)
 5. **Issue cho người mới** (nhãn `good first issue`) — kho đã công khai
 6. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
    bài toán minh họa; kết quả và demo; định hướng. Video dự phòng cho phần demo, vì cụm Docker không đăng lên
