@@ -24,7 +24,16 @@ Các bước, trong `infra/`:
 
 1. Giải nén bản mới đè lên (hoặc `git pull` nếu dùng kho mã)
 2. Mở `.env.example`, chép những dòng mới sang `.env` — biến mới thường có giá trị mặc định nên bỏ
-   qua vẫn chạy, nhưng muốn đổi thì phải chép
+   qua vẫn chạy, nhưng muốn đổi thì phải chép. Lệnh dưới (ở gốc kho mã) in tên các biến có trong
+   `.env.example` mà `.env` chưa có:
+
+   ```bash
+   python -c "k=lambda p:{l.split('=')[0] for l in open(p,encoding='utf-8') if '=' in l and not l.startswith('#')};print(*sorted(k('infra/.env.example')-k('infra/.env')))"
+   ```
+
+   Có biến không có mặc định: thiếu các dòng `KEYCLOAK_INTEGRATION_HEAD_*` và
+   `KEYCLOAK_INTEGRATION_REVIEWER_*` thì `scripts/tai_khoan_dich_vu.py` (cuối trang) vẫn báo xong nhưng bỏ qua
+   hai tài khoản duyệt của ví dụ quy trình thứ hai
 3. Dựng lại:
 
 ```bash

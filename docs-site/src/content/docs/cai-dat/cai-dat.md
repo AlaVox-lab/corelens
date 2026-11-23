@@ -1,6 +1,6 @@
 ---
 title: Cài đặt
-description: Yêu cầu máy, hai cách cài (từ bản phát hành, từ kho mã), kiểm cụm và các dịch vụ sau khi dựng.
+description: Yêu cầu máy, hai cách cài (từ bản phát hành, từ kho mã), kiểm cụm, các dịch vụ sau khi dựng, và việc phải làm trước khi dùng thật.
 sidebar:
   order: 1
 ---
@@ -106,7 +106,41 @@ volume); Keycloak mất kết nối cơ sở dữ liệu vài giây, đăng nh�
 Các kịch bản trong `scripts/` (nạp dữ liệu trình diễn, sao lưu, kiểm nâng cấp…) đi qua `docker exec`, không
 cần tệp này.
 
-:::caution[Bảo mật]
-Mọi mật khẩu trong `.env.example` là giá trị mẫu công khai, chỉ dùng để thử. Bắt buộc thay trước
-khi triển khai thật. Tệp `.env` thật không bao giờ được commit lên kho mã.
-:::
+## Dịch vụ tùy chọn
+
+Cụm mặc định chạy thủ công hoàn toàn và không tải mô hình nào. Mỗi phần dưới bật riêng, bằng một hồ sơ
+Compose hay một lệnh, tắt đi thì phần còn lại vẫn chạy:
+
+| Phần | Bật để làm gì | Thêm tài nguyên |
+|---|---|---|
+| [Mô hình ngôn ngữ](../../cai-dat/mo-hinh-ngon-ngu/) — hồ sơ `tri-tue` | Gợi ý loại, mức ưu tiên, phòng cho điều phối viên; hồ sơ đã giải quyết tương tự trên biểu mẫu gửi | khoảng 1,5 GB bộ nhớ, 2,4 GB ổ đĩa |
+| [Thông báo thư và quét mã độc](../../cai-dat/thu-va-quet-tep/) — hồ sơ `thu-thu`, `quet-tep` | Gửi thư khi hồ sơ tới bước cần người nhận thao tác hay sắp tự chuyển; quét tệp đính kèm bằng ClamAV | ClamAV khoảng 1 GB bộ nhớ |
+| [Kho tri thức](../../cai-dat/kho-tri-thuc/) — hồ sơ `tri-thuc` | Wiki.js đăng nhập một lần, bài hướng dẫn hiện trong gợi ý lúc soạn yêu cầu | khoảng 300 MiB bộ nhớ |
+| [Xác thực hai lớp](../../cai-dat/xac-thuc-hai-lop/) — một lệnh | Mã dùng một lần (TOTP) khi đăng nhập, chỉ bằng cấu hình Keycloak | — |
+
+Bảng điều khiển trống vì cụm mới chưa có hồ sơ: nạp vài trăm hồ sơ giả theo mục *Dữ liệu trình diễn* ở
+trang [Màn Hệ thống](../../quan-tri/he-thong/). Nâng lên bản mới: [Nâng cấp](../../cai-dat/nang-cap/); sao
+lưu tay cả cụm: [Sao lưu và khôi phục](../../cai-dat/sao-luu/).
+
+## Trước khi dùng thật
+
+Cụm dựng từ `.env.example` là cụm **trình diễn**: mật khẩu, khóa và mười ba tài khoản mẫu đều công khai.
+Hệ thống không tự chặn chúng — người cài thường tạo thêm tài khoản thử của riêng mình, và không phần mềm nào
+đoán đúng được tài khoản nào là mẫu. Trước khi đưa người dùng thật vào:
+
+1. Trong `infra/.env`, đổi mọi giá trị ghi "BẮT BUỘC đổi": mật khẩu cơ sở dữ liệu, khóa kho tệp, bí mật
+   của các client, khóa phiên, khóa Superset, mật khẩu quản trị Keycloak và Superset (`admin/admin`). Tệp
+   `.env` thật không bao giờ được commit lên kho mã
+2. Trong Keycloak (`http://localhost:8080`, realm `dx-os-lab`), xóa các tài khoản mẫu, chỉ giữ một tài khoản
+   quản trị, rồi tạo tài khoản thật theo nhu cầu. Tắt (hoặc đổi bí mật) ba client tích hợp mẫu
+   `dx-integration`, `dx-integration-truong-phong`, `dx-integration-duyet` nếu không dùng — hai client sau
+   chỉ để chạy ví dụ quy trình thứ hai
+3. Realm mẫu đã bật chống dò mật khẩu (khóa tạm sau 10 lần sai, tự mở) và chính sách mật khẩu tối thiểu
+   8 ký tự; cụm dựng trước bản đó áp bằng `python scripts/xac_thuc_hai_lop.py chong-do` (xem
+   [Nâng cấp](../../cai-dat/nang-cap/)). Muốn chặt hơn, sửa *Realm settings → Security defenses* và
+   *Authentication → Policies*. `sslRequired` để `none` vì cụm mẫu chạy `http://localhost`; khi đưa lên tên
+   miền có HTTPS, đổi thành `external` (hoặc `all`)
+4. Sao lưu một lần ngay sau khi cấu hình xong — [Sao lưu và khôi phục](../../cai-dat/sao-luu/)
+
+Báo lỗ hổng bảo mật theo
+[`SECURITY.md`](https://github.com/AlaVox-lab/corelens/blob/main/SECURITY.md).

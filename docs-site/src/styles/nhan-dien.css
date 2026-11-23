@@ -2,7 +2,8 @@
  * Copyright (c) 2026 AlaVox-lab
  *
  * Màu nhấn chàm của cổng (frontend/app/globals.css) cho trang tài liệu, để hai nơi cùng một
- * nhận diện. Chỉ đổi biến màu của Starlight, không đè bố cục. */
+ * nhận diện. Chỉ đổi biến màu của Starlight, không đè bố cục; thêm kiểu cho danh sách lối vào và ảnh màn
+ * hình của trang chủ tài liệu. */
 
 :root {
   --sl-color-accent-low: #23264a;
@@ -14,4 +15,48 @@
   --sl-color-accent-low: #eef0fe;
   --sl-color-accent: #4f46e5;
   --sl-color-accent-high: #312e81;
+}
+
+/* Lối vào trang chủ tài liệu (src/components/LoiVao.astro, #534): danh sách hai cột kẻ đường mảnh như bảng
+ * hướng dẫn của trang tài liệu Keycloak — tên trang bên trái, một dòng nội dung bên phải. */
+.loi-vao {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--sl-color-hairline);
+}
+
+.loi-vao li {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: 0.25rem 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+
+.loi-vao a {
+  font-weight: 600;
+  color: var(--sl-color-text-accent);
+  text-decoration: none;
+}
+
+.loi-vao a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.loi-vao span {
+  color: var(--sl-color-gray-2);
+}
+
+@media (max-width: 50rem) {
+  .loi-vao li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Ảnh màn hình ở trang chủ tài liệu: viền mảnh để ảnh nền sáng không tan vào nền trang */
+.anh-man-hinh img {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.5rem;
 }

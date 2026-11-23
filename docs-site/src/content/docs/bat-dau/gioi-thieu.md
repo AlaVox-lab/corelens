@@ -38,7 +38,8 @@ hồ sơ được chuyển sang phòng khác.
 2. **Chống sai từ gốc** (Poka-yoke — nguyên lý chống sai lỗi của hệ thống sản xuất Toyota). Thao
    tác sai thì hoặc không có nút để bấm, hoặc bấm vào bị dịch vụ chặn kèm lý do bằng tiếng Việt.
 3. **Mọi bước để lại dấu vết.** Mỗi lần hồ sơ đổi trạng thái ghi một dòng nhật ký chỉ ghi thêm.
-   Từ nhật ký này, hệ thống sẽ khai phá lại quy trình đang chạy thật và chỉ ra điểm nghẽn.
+   Từ nhật ký này, hệ thống khai phá lại quy trình đang chạy thật và chỉ ra điểm nghẽn — xem
+   [Quy trình thực tế](../../huong-dan/quy-trinh-thuc-te/).
 
 ## Kiến trúc H-P-D-I
 
@@ -49,12 +50,17 @@ Theo đề bài, hệ thống chia bốn không gian, xây theo đúng thứ t�
 | **H** | Nhân sự — đăng nhập một lần, phân quyền theo vai (Keycloak) | Đã chạy |
 | **P** | Quy trình — engine máy trạng thái tự viết, ràng buộc, hạn xử lý | Đã chạy |
 | **D** | Dữ liệu — bảng điều khiển trên nhật ký sự kiện (Apache Superset) | Đã chạy |
-| **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại có người xác nhận | Phiên bản `v0.10.0` |
+| **I** | Trí tuệ — khai phá quy trình, gợi ý phân loại có người xác nhận | Đã chạy; gợi ý bằng mô hình ngôn ngữ là tùy chọn |
 
 Nền tảng phổ thông được **lắp ghép** từ phần mềm nguồn mở có sẵn (Keycloak, Apache APISIX làm cổng
-API, SeaweedFS, Superset);
-phần lõi tạo khác biệt — engine quy trình — nhóm **tự viết**. AI ở tầng `I` chỉ ghi vào trường gợi
-ý, con người xác nhận mới thành quyết định.
+API, SeaweedFS, Superset); engine quy trình, phần tạo khác biệt, nhóm **tự viết**. AI ở tầng `I` chỉ ghi
+vào trường gợi ý, con người xác nhận mới thành quyết định. Bốn không gian này là tầng ứng dụng minh họa; bên
+dưới là nền tảng lõi chỉ có API, cho ứng dụng khác dùng lại — xem [Kiến trúc](../../phat-trien/kien-truc/).
 
 So sánh với tám sản phẩm cùng loại trong nước và quốc tế:
 [docs/so-sanh-san-pham.md](https://github.com/AlaVox-lab/corelens/blob/main/docs/so-sanh-san-pham.md).
+
+## Tên gọi
+
+Tên cũ của dự án là `dx-os-lab`. Tên đó còn nằm trong các định danh kỹ thuật — realm Keycloak `dx-os-lab`, dự
+án Compose, container `dxlab-*`, biến `DXLAB_*` — và được giữ nguyên để cụm đang chạy không phải dựng lại.

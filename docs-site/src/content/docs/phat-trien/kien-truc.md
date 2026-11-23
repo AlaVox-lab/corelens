@@ -1,12 +1,39 @@
 ---
 title: Kiến trúc
-description: Bức tranh tổng — các dịch vụ trong cụm, engine máy trạng thái, nhật ký sự kiện — và nơi đọc tài liệu kỹ thuật đầy đủ.
+description: Hai tầng lõi và ứng dụng minh họa, các dịch vụ trong cụm, engine máy trạng thái, nhật ký sự kiện — và nơi đọc tài liệu kỹ thuật đầy đủ.
 sidebar:
   order: 1
 ---
 
 Trang này là bản đồ. Tài liệu kỹ thuật đầy đủ nằm trong kho mã, ở thư mục `docs/`, và luôn đi cùng
 mã nguồn.
+
+## Hai tầng: nền tảng lõi và ứng dụng minh họa
+
+Đề thi yêu cầu mô hình DX-OS Open-Core hai tầng. **Tầng 1 — nền tảng lõi** chỉ có API, không có màn hình
+nào:
+
+| Dịch vụ lõi đề bắt buộc | Đáp ứng bằng |
+|---|---|
+| Định danh, đăng nhập một lần | Keycloak; xác thực hai lớp tùy chọn |
+| Cổng API | Apache APISIX — cửa vào duy nhất, kiểm token tại biên, giới hạn tốc độ |
+| Dữ liệu có cấu trúc và phi cấu trúc | PostgreSQL kèm pgvector; SeaweedFS qua S3 API |
+| Động cơ luồng công việc | Engine máy trạng thái tự viết, chạy nhiều quy trình cùng lúc — mỗi quy trình là dữ liệu — phơi qua API `/core/v1` |
+
+**Tầng 2 — ứng dụng minh họa**, cổng vận hành yêu cầu nội bộ, phủ bốn không gian H-P-D-I:
+
+| | Không gian | Có gì | Nền tảng lắp ghép |
+|---|---|---|---|
+| **H** | Nhân sự | Cổng theo vai, hộp thư trao đổi, ủy quyền khi vắng, kho tri thức (tùy chọn) | Next.js; Wiki.js (AGPL-3.0, dịch vụ riêng) |
+| **P** | Quy trình | Phân loại, định tuyến, leo thang, mở lại có giới hạn, màn cấu hình quy trình | — |
+| **D** | Dữ liệu | Bảng điều khiển nhúng trong cổng, xuất nhật ký CSV, JSON, XES, lưu trữ lạnh theo tháng | Apache Superset |
+| **I** | Trí tuệ | Khai phá quy trình thực tế, gợi ý phân loại và người xử lý, hồ sơ tương tự | PM4Py (AGPL-3.0, chỉ trong dịch vụ khai phá riêng); llama.cpp + Qwen2.5-1.5B (tùy chọn) |
+
+Một ứng dụng khác dùng lõi mà không cần cổng người dùng: lấy token bằng tài khoản dịch vụ rồi gọi `/core/v1`
+qua cổng API — xem [API](../../tham-khao/api/) và ví dụ chạy được ở
+[`examples/goi-loi/`](https://github.com/AlaVox-lab/corelens/tree/main/examples/goi-loi), kể cả quy trình thứ
+hai (đề xuất mua sắm duyệt hai cấp) chạy trọn chỉ qua lõi. Tầng `I` chỉ ghi vào trường gợi ý, con người xác
+nhận mới thành quyết định.
 
 ## Các dịch vụ trong cụm
 
@@ -58,3 +85,6 @@ chặn sửa và xóa. Định dạng này dùng thẳng được cho khai phá 
 | [`docs/ROADMAP.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/ROADMAP.md) | Lộ trình các giai đoạn |
 | [`docs/PROJECT_STATE.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/PROJECT_STATE.md) | Dự án đang ở đâu, cập nhật hằng tuần |
 | [`docs/dependencies.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/dependencies.md) | Mọi phụ thuộc và giấy phép |
+| [`docs/doi-chieu-de-thi.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/doi-chieu-de-thi.md) | Dự án đáp ứng từng yêu cầu của đề thi OLP 2026 bằng gì, còn thiếu gì |
+| [`docs/so-sanh-san-pham.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/so-sanh-san-pham.md) | So sánh với các sản phẩm cùng loại trong nước và quốc tế |
+| [`CHANGELOG.md`](https://github.com/AlaVox-lab/corelens/blob/main/CHANGELOG.md) | Nhật ký thay đổi, sinh tự động từ lịch sử commit |
