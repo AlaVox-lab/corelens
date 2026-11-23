@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 
+from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -91,14 +92,17 @@ from app.intelligence.phan_loai import goi_y_sau_khi_gui
 from app.intelligence.nguoi_xu_ly import hen_goi_y_neu_ve_phong
 from app.intelligence.tuong_tu import ghi_da_gui
 from app.config import get_settings
+from app.workflow.danh_gia import danh_gia_cua, dich_cho_cham, ghi_danh_gia, kiem_danh_gia
 from app.workflow.schemas import (
     GoiYRa,
     TruongRiengRa,
     CanhDiDuocRa,
+    CanhNguoiGuiRa,
     ChuyenTrangThaiVao,
     GuiLoiNhanVao,
     HoSoChiTietRa,
     HoSoLienQuanRa,
+    HoSoNguoiGuiRa,
     DanhSachHoSoRa,
     HoSoTomTatRa,
     NhomHangDoiRa,
@@ -807,15 +811,15 @@ def liet_ke_ho_so(
     )
 
 
-@router_nguoi_gui.get("/requests/{case_id}", response_model=HoSoChiTietRa)
+@router_nguoi_gui.get("/requests/{case_id}", response_model=HoSoNguoiGuiRa)
 def chi_tiet_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
-) -> HoSoChiTietRa:
+) -> HoSoNguoiGuiRa:
     """Chi tiết một hồ sơ, kèm dòng thời gian và những thao tác làm được lúc này."""
     ho_so = _lay_ho_so_cua_toi(session, case_id, actor)
-    return _dung_chi_tiet(session, ho_so, actor)
+    return _dung_chi_tiet_nguoi_gui(session, ho_so, actor)
 
 
 def di_buoc(
@@ -828,10 +832,14 @@ def di_buoc(
     to_state: str,
     note: str | None,
     changes: dict,
+    truoc_commit: Callable[[Request], None] | None = None,
 ) -> Request:
     """Phần chung của mọi cửa bước chuyển không phải buồng lái, SAU khi cửa nhìn thấy đã qua: kiểm người
     được giao (#83), gọi engine, dịch lỗi, commit, hẹn gợi ý người xử lý (#318). Cổng người gửi và cửa
-    trung lập với vai của lõi (#376) cùng gọi — một cửa engine, không bộ kiểm quyền thứ hai."""
+    trung lập với vai của lõi (#376) cùng gọi — một cửa engine, không bộ kiểm quyền thứ hai.
+
+    `truoc_commit` chạy sau khi engine đã chuyển, trong CÙNG giao dịch: điểm hài lòng (#433) ghi ở đây để
+    hỏng thì lần chuyển hoàn tác theo."""
     ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
         session,
         danh_ba,
@@ -854,6 +862,8 @@ def di_buoc(
         session.rollback()
         raise _bao_loi(loi) from loi
 
+    if truoc_commit is not None:
+        truoc_commit(ho_so)
     session.commit()
     session.refresh(ho_so)
     # Bổ sung thông tin có thể đưa hồ sơ về lại phòng: gợi ý người xử lý tính ở nền (#318)
@@ -861,7 +871,7 @@ def di_buoc(
     return ho_so
 
 
-@router_nguoi_gui.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
+@router_nguoi_gui.post("/requests/{case_id}/transitions", response_model=HoSoNguoiGuiRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiVao,
@@ -869,7 +879,7 @@ def chuyen_trang_thai(
     actor: Annotated[Actor, Depends(current_actor)],
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
     tac_vu_nen: BackgroundTasks,
-) -> HoSoChiTietRa:
+) -> HoSoNguoiGuiRa:
     """Thực hiện một thao tác trên hồ sơ.
 
     Điểm cuối này **không tự kiểm quyền**. Engine đã tra bảng `transitions` và ma trận
@@ -880,18 +890,25 @@ def chuyen_trang_thai(
     cuối nhận `changes` (#83). Không cạnh nào của người gửi cho đặt người xử lý, nên
     phép kiểm dừng ngay mà không tra danh bạ — nhưng bỏ qua ở đây là để hở một đường
     vòng quanh danh bạ cho người mang cùng lúc vai trò người gửi và vai trò giao việc.
+
+    Mức hài lòng (#433) đi kèm tùy chọn, chỉ ở cạnh mang cờ `collects_feedback` — kiểm TRƯỚC khi chuyển,
+    ghi SAU khi engine chuyển, trong cùng giao dịch (`app/workflow/danh_gia.py`). Điểm không vào `changes`
+    và không vào nhật ký sự kiện.
     """
     _kiem_chu_so_huu(session, case_id, actor)
+    danh_gia = du_lieu.feedback
+    nhan_xet = kiem_danh_gia(session, case_id, du_lieu.to_state, danh_gia) if danh_gia else None
     ho_so = di_buoc(
         session, danh_ba, tac_vu_nen, actor, case_id,
         to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
+        truoc_commit=(lambda h: ghi_danh_gia(session, h, danh_gia.score, nhan_xet)) if danh_gia else None,
     )
-    return _dung_chi_tiet(session, ho_so, actor)
+    return _dung_chi_tiet_nguoi_gui(session, ho_so, actor)
 
 
 @router.post(
     "/requests/{case_id}/messages",
-    response_model=HoSoChiTietRa,
+    response_model=HoSoNguoiGuiRa,
     dependencies=[Depends(gioi_han_toc_do("send-message"))],
 )
 def gui_loi_nhan(
@@ -899,7 +916,7 @@ def gui_loi_nhan(
     du_lieu: GuiLoiNhanVao,
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
-) -> HoSoChiTietRa:
+) -> HoSoNguoiGuiRa:
     """Gửi một lời nhắn trên hồ sơ của mình (#128).
 
     Không đổi hồ sơ: không trạng thái, không trường, không đồng hồ, không dòng nhật ký —
@@ -914,11 +931,26 @@ def gui_loi_nhan(
         raise _bao_loi_nhan(loi) from loi
 
     session.commit()
-    return _dung_chi_tiet(session, ho_so, actor)
+    return _dung_chi_tiet_nguoi_gui(session, ho_so, actor)
 
 
 def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoChiTietRa:
     return HoSoChiTietRa(**_du_lieu_chi_tiet(session, ho_so, actor))
+
+
+def _dung_chi_tiet_nguoi_gui(session: Session, ho_so: Request, actor: Actor) -> HoSoNguoiGuiRa:
+    """Chi tiết ở cổng người gửi: như lõi, thêm cờ chấm điểm trên cạnh và các lần đã chấm (#433)."""
+    du_lieu = _du_lieu_chi_tiet(session, ho_so, actor)
+    cho_cham = dich_cho_cham(session, ho_so)
+    du_lieu["allowed_transitions"] = [
+        CanhNguoiGuiRa(**c.model_dump(), collects_feedback=c.to_state in cho_cham)
+        for c in du_lieu["allowed_transitions"]
+    ]
+    return HoSoNguoiGuiRa(
+        **du_lieu,
+        feedback=danh_gia_cua(session, ho_so.id),
+        feedback_comment_max_chars=get_settings().feedback_comment_max_chars,
+    )
 
 
 def _ho_so_lien_quan(ho_so: Request, states: dict[str, State]) -> HoSoLienQuanRa:

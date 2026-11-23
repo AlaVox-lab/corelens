@@ -52,8 +52,13 @@ bảng điều khiển. Gợi ý không cần mô hình ngôn ngữ; danh bạ k
 phát sinh do chính phòng xử lý.
 
 **Báo cáo** trên thanh bên mở bảng điều khiển của phòng bạn: hồ sơ đang mở theo trạng thái, thời gian
-xử lý trung vị theo loại yêu cầu so với ngưỡng hạn, tỷ lệ trễ hạn, số yêu cầu mỗi tuần. Chỉ có số của
-phòng mình — dòng *Phạm vi số liệu* dưới tiêu đề ghi rõ.
+xử lý trung vị theo loại yêu cầu so với ngưỡng hạn, tỷ lệ trễ hạn, số yêu cầu mỗi tuần, và hàng **mức
+hài lòng**: điểm trung bình, tỷ lệ hồ sơ được chấm, phân bố điểm 1–5 (lần chấm mới nhất của mỗi hồ sơ;
+hồ sơ tự đóng không tính). Chỉ có số của phòng mình — dòng *Phạm vi số liệu* dưới tiêu đề ghi rõ.
+
+**Đánh giá của người gửi.** Người gửi chấm 1–5 sao kèm nhận xét khi xác nhận đạt, không bắt buộc. Có
+điểm thì trang hồ sơ có khối *Đánh giá của người gửi* — số sao, nhận xét, thời điểm; hồ sơ mở lại rồi
+xác nhận lần nữa thì liệt kê đủ, mới nhất trước. Khối chỉ để đọc; chưa ai chấm thì không có khối.
 
 ## Người xử lý
 

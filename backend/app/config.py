@@ -302,6 +302,12 @@ class Settings(BaseSettings):
     bulk_max_cases: int = Field(default=50, ge=1)
     bulk_activities: str = "classify,route-to-department"
 
+    # --- Đánh giá mức hài lòng, xem #433 --------------------------------------
+    #
+    # Người gửi chấm 1–5 kèm nhận xét khi xác nhận hồ sơ hoàn tất, đều tùy chọn. Cạnh nào cho chấm là dữ
+    # liệu (`transitions.collects_feedback`); ở đây chỉ trần độ dài nhận xét, tính bằng ký tự.
+    feedback_comment_max_chars: int = Field(default=1000, ge=1)
+
     @property
     def bulk_activity_codes(self) -> list[str]:
         """Các mã bước làm được hàng loạt, theo thứ tự khai — thứ tự nút trên thanh thao tác."""

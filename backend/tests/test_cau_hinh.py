@@ -70,6 +70,8 @@ def cum_moi(session):
     goc.execute((THU_MUC_SQL / "0028_kiem_tra_cau_hinh.sql").read_text(encoding="utf-8"))
     # Điều kiện trên cạnh (0032, #397): bảng mà tệp 07 của dữ liệu khởi tạo nạp
     goc.execute("CREATE TABLE transition_conditions (LIKE public.transition_conditions INCLUDING ALL)")
+    # Cạnh cho chấm mức hài lòng (0036, #433): cờ mà tệp 01 của dữ liệu khởi tạo bật
+    goc.execute("ALTER TABLE transitions ADD COLUMN collects_feedback BOOLEAN NOT NULL DEFAULT FALSE")
     return goc
 
 
@@ -88,7 +90,7 @@ def test_cum_moi_nap_khoi_tao_ra_dung_cau_hinh_dang_chay(cum_moi):
         ("states", "rule_set_id, code, label, is_initial, is_terminal, sla_running"),
         (
             "transitions",
-            "rule_set_id, from_state, to_state, activity_code, is_system, is_rework, primary_scope",
+            "rule_set_id, from_state, to_state, activity_code, is_system, is_rework, primary_scope, collects_feedback",
         ),
         ("roles", "code, label, report_scope"),
         ("departments", "code, label"),

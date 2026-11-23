@@ -436,6 +436,8 @@ services:
       # Thao tác hàng loạt ở buồng lái điều phối (#440): lô lớn nhất, và các bước làm được hàng loạt
       DXLAB_BULK_MAX_CASES: ${BULK_MAX_CASES:-50}
       DXLAB_BULK_ACTIVITIES: ${BULK_ACTIVITIES:-classify,route-to-department}
+      # Đánh giá mức hài lòng khi xác nhận hoàn tất (#433): nhận xét dài tối đa chừng này ký tự
+      DXLAB_FEEDBACK_COMMENT_MAX_CHARS: ${FEEDBACK_COMMENT_MAX_CHARS:-1000}
       # Tệp đính kèm (#80) qua S3 API của SeaweedFS, trong mạng của Compose. Có giá trị mặc
       # định để tệp .env cũ chưa có các biến này vẫn chạy được. Cố ý KHÔNG depends_on
       # seaweedfs: kho tệp tắt thì dịch vụ vẫn lên, chỉ phần đính kèm báo lỗi.

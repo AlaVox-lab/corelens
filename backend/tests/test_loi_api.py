@@ -159,6 +159,18 @@ def test_openapi_nhan_loi_va_ma_thao_tac_khong_trung():
 # ---------------------------------------------------------------------------
 
 
+def _phan_loi(than):
+    """Phần của phản hồi đường cũ mà lõi cũng trả. Chi tiết hồ sơ ở cổng người gửi có thêm trường riêng của
+    ứng dụng — đánh giá mức hài lòng (#433) — còn lõi `/core/v1` giữ nguyên: so phần còn lại."""
+    if not isinstance(than, dict) or "allowed_transitions" not in than:
+        return than
+    gon = {k: v for k, v in than.items() if k not in ("feedback", "feedback_comment_max_chars")}
+    gon["allowed_transitions"] = [
+        {k: v for k, v in c.items() if k != "collects_feedback"} for c in than["allowed_transitions"]
+    ]
+    return gon
+
+
 @pytest.mark.parametrize(
     ("cu", "moi"),
     [
@@ -180,7 +192,7 @@ def test_doc_qua_loi_cung_ket_qua_duong_cu(client, session, rule_set, cu, moi):
     tra_moi = client.get(_dien(moi, case_id=ho_so.id))
     assert tra_cu.status_code == 200, tra_cu.text
     assert tra_moi.status_code == tra_cu.status_code
-    assert tra_moi.json() == tra_cu.json()
+    assert tra_moi.json() == _phan_loi(tra_cu.json())
 
 
 def test_hoso_nguoi_khac_qua_loi_van_404(client, session, rule_set):
@@ -215,7 +227,7 @@ def test_tao_ho_so_va_di_buoc_qua_loi_nhu_duong_cu(client, session, rule_set):
     ho_so = tao.json()
     assert ho_so["history"] == []
     # Đọc lại ở đường cũ: đúng hồ sơ đó, cùng nội dung
-    assert client.get(f"/requests/{ho_so['id']}").json() == client.get(
+    assert _phan_loi(client.get(f"/requests/{ho_so['id']}").json()) == client.get(
         f"/core/v1/workflow/requests/{ho_so['id']}").json()
 
     cac_buoc = ho_so["allowed_transitions"]
@@ -225,7 +237,7 @@ def test_tao_ho_so_va_di_buoc_qua_loi_nhu_duong_cu(client, session, rule_set):
                      json={"to_state": buoc["to_state"], "note": "Đi qua lõi." if buoc["requires_note"] else None})
     assert di.status_code == 200, di.text
     assert di.json()["state"]["code"] == buoc["to_state"]
-    assert di.json() == client.get(f"/requests/{ho_so['id']}").json()
+    assert di.json() == _phan_loi(client.get(f"/requests/{ho_so['id']}").json())
 
     # Cùng một cửa chuyển trạng thái: một dòng nhật ký, tác nhân là người gọi
     nhat_ky = session.scalars(select(EventLog).where(EventLog.case_id == ho_so["id"])).all()

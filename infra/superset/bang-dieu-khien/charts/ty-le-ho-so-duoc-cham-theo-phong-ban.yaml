@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+slice_name: Tỷ lệ hồ sơ được chấm điểm theo phòng ban (% hồ sơ đã xác nhận)
+description: Mẫu số là hồ sơ đóng qua bước xác nhận của người gửi; hồ sơ tự đóng không tính (#433).
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 16__table
+  adhoc_filters: []
+  row_limit: 10000
+  color_scheme: supersetColors
+  show_legend: true
+  rich_tooltip: true
+  orientation: horizontal
+  x_axis_title_margin: 15
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  truncateXAxis: true
+  sort_series_type: sum
+  zoomable: false
+  x_axis: phong_ban
+  groupby: []
+  metrics:
+  - expressionType: SQL
+    sqlExpression: ROUND(100.0 * SUM(CASE WHEN da_cham THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 1)
+    label: Tỷ lệ được chấm (%)
+    hasCustomLabel: true
+    optionName: metric_hai_long_ty_le_cham
+  x_axis_title: ''
+  y_axis_title: ''
+  show_value: true
+query_context: null
+cache_timeout: null
+uuid: 468e6a6d-e687-4c54-94d5-4eedf5e404d8
+version: 1.0.0
+dataset_uuid: 0eaee8fa-f96a-451d-a315-a5402a53a80f

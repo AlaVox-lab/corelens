@@ -74,6 +74,12 @@ async function kiemBaoCao(page: Page, phamVi: string, anh: string) {
   for (const ten of ["Tồn đọng theo phòng ban", "Tỷ lệ vi phạm hạn theo phòng ban", "Tỷ lệ ghi đè gợi ý"]) {
     await expect(khung.getByText(new RegExp(ten)).first()).toBeVisible({ timeout: 30_000 });
   }
+  // Hàng đánh giá mức hài lòng (#433) ở cuối bảng: cuộn tới để Superset dựng nó, rồi không có thông báo lỗi
+  const hangHaiLong = khung.getByText(/Điểm hài lòng trung bình theo phòng ban/).first();
+  await hangHaiLong.scrollIntoViewIfNeeded({ timeout: 30_000 });
+  await expect(hangHaiLong).toBeVisible({ timeout: 30_000 });
+  await expect(khung.getByText(/Phân bố điểm hài lòng/).first()).toBeVisible({ timeout: 30_000 });
+  await expect(khung.getByText(/Unexpected error|Lỗi không mong đợi|An error occurred/i)).toHaveCount(0);
   // Khung Superset đã dựng xong: chính sách nội dung của cổng (frame-src) không được chặn nó
   expect(await viPhamCsp(page), "vi phạm chính sách nội dung sau khi nhúng Superset").toEqual([]);
   await chup(page, test.info().project.name, `${anh}-da-ve`);

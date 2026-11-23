@@ -71,6 +71,13 @@ sửa rồi làm lại; hồ sơ đã chuyển thì tự bỏ chọn. Lý do hay
 - *Người gửi chưa chọn loại yêu cầu, nên phải chọn khi phân loại* — chọn một loại trong hộp thoại, hay
   mở hồ sơ làm riêng
 
+## Đánh giá của người gửi
+
+Khi xác nhận đạt, người gửi chấm 1–5 sao kèm nhận xét nếu muốn. Hồ sơ có điểm thì trang hồ sơ có khối
+*Đánh giá của người gửi* — chỉ để đọc, mới nhất trước nếu hồ sơ đã mở lại và xác nhận nhiều lần. Mục
+**Báo cáo** có hàng mức hài lòng theo phòng: điểm trung bình, tỷ lệ hồ sơ được chấm, phân bố điểm — chỉ
+số tổng hợp, không có chữ nhận xét.
+
 ## Khi phòng ban trả hồ sơ
 
 Phòng nhận sai chuyên môn thì **từ chối kèm lý do**, hồ sơ sang *Bị phòng ban từ chối*. Bạn **chuyển

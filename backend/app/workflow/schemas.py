@@ -375,6 +375,24 @@ class HoSoChiTietRa(HoSoTomTatRa):
     sees_internal: bool = False
 
 
+class CanhNguoiGuiRa(CanhDiDuocRa):
+    """Cạnh đi được ở cổng người gửi — thêm cờ chấm điểm (#433). Chỉ ứng dụng; lõi `/core/v1` giữ
+    `CanhDiDuocRa` nguyên như cũ."""
+
+    # Cạnh mang cờ `transitions.collects_feedback`: hộp xác nhận hiện ô chấm 1–5 và nhận xét, đều tùy chọn
+    collects_feedback: bool = False
+
+
+class HoSoNguoiGuiRa(HoSoChiTietRa):
+    """Chi tiết hồ sơ ở cổng người gửi (#433): như lõi, thêm cờ chấm trên cạnh và các lần mình đã chấm."""
+
+    allowed_transitions: list[CanhNguoiGuiRa]
+    # Mỗi lần xác nhận có chấm một mục, theo thời gian
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
+    # Trần độ dài nhận xét (`DXLAB_FEEDBACK_COMMENT_MAX_CHARS`) — ô nhận xét đếm ký tự theo số này
+    feedback_comment_max_chars: int
+
+
 class TaoHoSoVao(BaseModel):
     """Biểu mẫu gửi yêu cầu.
 
@@ -413,6 +431,26 @@ class ChuyenTrangThaiVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+    # Mức hài lòng (#433), tùy chọn: chỉ nhận ở cạnh mang cờ `transitions.collects_feedback`
+    feedback: DanhGiaVao | None = None
+
+
+class DanhGiaVao(BaseModel):
+    """Điểm hài lòng 1–5 và nhận xét người gửi chấm khi xác nhận hoàn tất (#433).
+
+    Trần độ dài nhận xét là cấu hình (`DXLAB_FEEDBACK_COMMENT_MAX_CHARS`), đọc lúc chạy nên kiểm ở điểm cuối.
+    """
+
+    score: int = Field(ge=1, le=5)
+    comment: str | None = None
+
+
+class DanhGiaRa(BaseModel):
+    """Một lần chấm — chỉ đọc. Không có tên người: người chấm là người gửi của hồ sơ."""
+
+    score: int
+    comment: str | None = None
+    created_at: dt.datetime
 
 
 class BuocChuyenLoiVao(BaseModel):
@@ -533,6 +571,9 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     # Hồ sơ do chính người đang xem gửi (#154): bảng thao tác trống vì ràng buộc
     # `actor-not-requester`, không phải vì hồ sơ đã rời hàng đợi.
     requested_by_me: bool = False
+
+    # Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian — chỉ đọc
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
 
 
 class ChuyenTrangThaiCoTruongVao(BaseModel):
@@ -697,6 +738,8 @@ class HoSoPhongBanRa(HoSoChiTietRa):
     # kèm gợi ý tính lại (`/departments/{code}/assignees?case_id=`); trường này để màn không trống
     # khi danh bạ chưa trả lời kịp — và chính là thứ cửa chuyển trạng thái đem so.
     suggested_assignee: GoiYRa | None = None
+    # Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian — chỉ đọc
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------

@@ -66,6 +66,15 @@ giấy đen trắng — hay với người không phân biệt được màu —
 | *Hoàn tất* | **Xác nhận đạt**, hoặc **Mở lại, chưa đạt** kèm lý do |
 | *Đã đóng* | **Mở lại sau khi đóng** — trong 7 ngày làm việc, tối đa 2 lần mỗi hồ sơ |
 
+### Chấm mức hài lòng khi xác nhận đạt
+
+Bấm **Xác nhận đạt** thì bảng xác nhận có thêm câu *Bạn hài lòng với cách xử lý đến đâu?* — chọn từ 1 đến
+5 sao, và viết nhận xét nếu muốn (tối đa 1.000 ký tự, ô có đếm). Cả hai **không bắt buộc**: để *Không
+chấm* thì hồ sơ vẫn đóng như thường. Nhận xét chỉ gửi kèm khi đã chọn số sao. Điểm hiện lại trên hồ sơ
+của bạn ở khối *Đánh giá của bạn*; điều phối viên và phòng ban đọc được điểm kèm nhận xét, bảng điều
+khiển chỉ có số tổng hợp theo phòng. Mở lại rồi xác nhận lần nữa thì chấm được lần nữa — lần mới nhất
+được tính. Hồ sơ tự đóng vì không xác nhận thì không có điểm.
+
 Khi phòng ban đã bắt tay vào việc, nút Hủy không còn — đó là chủ ý. Hết lượt mở lại hay quá hạn
 thì bấm **Tạo hồ sơ mới từ hồ sơ này**: biểu mẫu chép sẵn nội dung và hai hồ sơ liên kết nhau.
 

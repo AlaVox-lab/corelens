@@ -101,6 +101,18 @@ export type CanhDiDuoc = {
    * có trường ở thao tác sửa nội dung (#127).
    */
   fields: string[];
+  /**
+   * Cạnh cho người gửi chấm mức hài lòng 1–5 kèm nhận xét, đều tùy chọn (#433) — cờ dữ liệu
+   * `transitions.collects_feedback`. Chỉ cổng người gửi trả trường này.
+   */
+  collects_feedback?: boolean;
+};
+
+/** Một lần người gửi chấm mức hài lòng khi xác nhận hoàn tất (#433). Chỉ đọc. */
+export type DanhGia = {
+  score: number;
+  comment: string | null;
+  created_at: string;
 };
 
 /**
@@ -289,6 +301,13 @@ export type HoSoChiTiet = HoSoTomTat & {
   message_kinds: LoaiLoiNhan[];
   /** Người đang xem đọc được cuộc nội bộ của hồ sơ này (#156). */
   sees_internal: boolean;
+  /**
+   * Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian. Chỉ chi tiết ở cổng
+   * người gửi, buồng lái điều phối và phòng ban trả.
+   */
+  feedback?: DanhGia[];
+  /** Trần độ dài nhận xét (#433) — chỉ cổng người gửi trả, ô nhận xét đếm theo số này. */
+  feedback_comment_max_chars?: number;
 };
 
 // ---------------------------------------------------------------------------

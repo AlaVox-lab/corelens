@@ -37,6 +37,7 @@ import { useActionState, useState } from "react";
 
 import { OTruong, type NguonLuaChon } from "@/components/bang-thao-tac";
 import { CanhBaoKetThuc } from "@/components/canh-bao-ket-thuc";
+import { OChamDiem } from "@/components/o-cham-diem";
 import { OTruongRieng } from "@/components/o-truong-rieng";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import { useAnCham } from "@/lib/chuyen-dong";
@@ -60,9 +61,11 @@ function laDuongXuoi(chiSo: number, tongSo: number): boolean {
   return tongSo > 1 && chiSo === 0;
 }
 
-/** Cạnh này cần mở bảng trước khi gửi, thay vì bấm là gửi. */
+/** Cạnh này cần mở bảng trước khi gửi, thay vì bấm là gửi. Cạnh cho chấm điểm (#433) cũng mở bảng. */
 function canHoiLai(canh: CanhDiDuoc): boolean {
-  return canh.requires_note || canh.to_state_is_terminal || canh.fields.length > 0;
+  return (
+    canh.requires_note || canh.to_state_is_terminal || canh.fields.length > 0 || canh.collects_feedback === true
+  );
 }
 
 export function ThaoTacHoSo({
@@ -71,8 +74,11 @@ export function ThaoTacHoSo({
   giaTriDau = {},
   danhMuc = {},
   truongRieng,
+  nhanXetToiDa = 1000,
 }: {
   maHoSo: number;
+  /** Trần độ dài nhận xét khi chấm mức hài lòng (#433), dịch vụ trả kèm chi tiết hồ sơ. */
+  nhanXetToiDa?: number;
   cacCanh: CanhDiDuoc[];
   /** Nội dung hồ sơ đang có, điền sẵn vào ô nhập của thao tác sửa nội dung (#127). */
   giaTriDau?: Record<string, string>;
@@ -217,6 +223,8 @@ export function ThaoTacHoSo({
               })}
             </>
           )}
+          {/* Chấm mức hài lòng (#433): chỉ ở cạnh mang cờ dữ liệu `collects_feedback` */}
+          {dangMo.collects_feedback && <OChamDiem toiDa={nhanXetToiDa} />}
           {/* Tên ô từ `transitions.note_label` (#79): ở cạnh bổ sung thông tin, ô này là
               câu trả lời của người gửi chứ không phải lý do. */}
           <label style={{ display: "grid", gap: "7px" }}>

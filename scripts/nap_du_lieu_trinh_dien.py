@@ -63,6 +63,41 @@ HO_SO_DA_GIAI_QUYET = Path(__file__).resolve().parent / "du_lieu" / "ho_so_da_gi
 # Giá trị `transitions.primary_scope` của bước chính do người được giao đi (#227)
 PHAM_VI_NGUOI_DUOC_GIAO = "assignee"
 
+# Mức hài lòng (#433): lần đi qua cạnh cho chấm (`transitions.collects_feedback`, tra từ bộ quy tắc) có điểm
+# với xác suất này; điểm rải theo trọng số, một phần kèm nhận xét. Rút từ hạt giống riêng, nên thêm phần này
+# không đổi hồ sơ và nhật ký mà hạt giống cũ sinh ra.
+TY_LE_CO_CHAM = 0.75
+TRONG_SO_DIEM = {5: 40, 4: 30, 3: 15, 2: 10, 1: 5}
+TY_LE_CO_NHAN_XET = 0.35
+NHAN_XET_MAU = {
+    5: ["Xử lý nhanh, hướng dẫn rõ ràng.", "Rất hài lòng, cảm ơn phòng đã hỗ trợ."],
+    4: ["Ổn, chỉ hơi chờ lâu lúc đầu.", "Đã xong việc, liên lạc tốt."],
+    3: ["Được việc nhưng phải hỏi lại nhiều lần.", "Tạm ổn."],
+    2: ["Chờ quá lâu mới có người nhận.", "Giải quyết chưa triệt để."],
+    1: ["Phải mở lại vì vẫn chưa xong.", "Không ai báo tiến độ."],
+}
+
+
+def sinh_danh_gia(ts: argparse.Namespace, su_kien: list[dict]) -> list[list]:
+    """Điểm cho những lần đi qua cạnh cho chấm, xác định theo hạt giống: `[mã hồ sơ, thứ tự sự kiện, điểm, nhận xét]`."""
+    canh_cham = set(psql(ts, """
+        SELECT from_state || E'\\t' || to_state || E'\\t' || activity_code FROM transitions
+        WHERE collects_feedback AND NOT is_system
+          AND rule_set_id = (SELECT id FROM rule_sets WHERE is_active
+                             AND process_code = (SELECT code FROM processes WHERE is_app_default))
+    """).splitlines())
+    rng = random.Random(ts.hat_giong + 433)
+    dong = []
+    for i, e in enumerate(su_kien):
+        if f"{e['from_state']}\t{e['to_state']}\t{e['activity']}" not in canh_cham:
+            continue
+        if rng.random() >= TY_LE_CO_CHAM:
+            continue
+        diem = rng.choices(list(TRONG_SO_DIEM), weights=list(TRONG_SO_DIEM.values()))[0]
+        nhan_xet = rng.choice(NHAN_XET_MAU[diem]) if rng.random() < TY_LE_CO_NHAN_XET else ""
+        dong.append([e["case_id"], i, diem, nhan_xet])
+    return dong
+
 
 def psql(ts: argparse.Namespace, cau: str, vao: str | None = None) -> str:
     lenh = ["docker", "exec", "-i", ts.container, "psql", "-U", ts.nguoi_dung, "-d", ts.csdl,
@@ -218,6 +253,7 @@ def main() -> int:
          e["from_state"], e["to_state"], e["note"], e["changes"]]
         for i, e in enumerate(su_kien)
     ]
+    dong_danh_gia = sinh_danh_gia(ts, su_kien)
 
     sql = (
         "CREATE TEMP TABLE nap_ho_so (ma int, tao timestamptz, trang_thai text, tieu_de text, mo_ta text, "
@@ -230,6 +266,8 @@ def main() -> int:
                                   "chay", "dung", "doan_lech"], dong_ho_so)
         + copy_khoi("nap_su_kien", ["ma", "thu_tu", "hoat_dong", "lech", "tac_nhan", "nhan_tac_nhan",
                                     "tu", "den", "ghi_chu", "thay_doi"], dong_su_kien)
+        + "CREATE TEMP TABLE nap_danh_gia (ma int, thu_tu int, diem smallint, nhan_xet text);\n"
+        + copy_khoi("nap_danh_gia", ["ma", "thu_tu", "diem", "nhan_xet"], dong_danh_gia)
         + """
         CREATE TEMP TABLE nap_ma (ma int, id bigint);
         WITH moi AS (
@@ -254,6 +292,16 @@ def main() -> int:
                s.nhan_tac_nhan, s.tu, s.den, nullif(s.ghi_chu, ''), nullif(s.thay_doi, '')::jsonb
         FROM nap_su_kien s JOIN nap_ma m USING (ma) JOIN nap_ho_so h USING (ma)
         ORDER BY s.ma, s.thu_tu;
+
+        -- Mức hài lòng (#433): gắn đúng dòng nhật ký của lần xác nhận — cùng hồ sơ, cùng mốc, cùng cạnh
+        INSERT INTO case_feedback (case_id, event_id, score, comment, created_at)
+        SELECT m.id, e.id, d.diem, nullif(d.nhan_xet, ''), e.timestamp
+        FROM nap_danh_gia d
+        JOIN nap_ma m USING (ma)
+        JOIN nap_ho_so h USING (ma)
+        JOIN nap_su_kien s ON s.ma = d.ma AND s.thu_tu = d.thu_tu
+        JOIN event_log e ON e.case_id = m.id AND e.activity = s.hoat_dong AND e.to_state = s.den
+                        AND e.timestamp = moc_sau_giay_lam_viec(h.tao, s.lech);
 
         -- Mốc sửa gần nhất và số lần mở lại theo nhật ký vừa ghi (ràng buộc reopen-limit đọc nó)
         UPDATE requests r SET updated_at = coalesce(e.luc, r.created_at),
