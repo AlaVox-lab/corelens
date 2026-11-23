@@ -12,24 +12,23 @@ Khoảng 20 phút, phần lớn là chờ tải ảnh chứa ở lần đầu.
 - **Docker Desktop** (Windows, macOS) hoặc Docker Engine 24 trở lên kèm Docker Compose v2 (Linux)
 - Khoảng **2 GB** bộ nhớ và **6 GB** ổ đĩa trống cho Docker
 - Các cổng 3000, 8080, 8088, 8333, 9080 đang trống
+- Git, để lấy mã nguồn (không có Git thì xem cuối bước 2)
 
 Chi tiết ở [Cài đặt](../../cai-dat/cai-dat/).
 
 ## 2. Dựng cụm
 
-Tải tệp **Source code (tar.gz)** của bản mới nhất ở trang
-[Releases](https://github.com/AlaVox-lab/corelens/releases), bật Docker, rồi chạy (thay `0.7.0`
-bằng phiên bản đã tải):
+Bật Docker, rồi chạy:
 
 ```bash
-tar -xzf corelens-0.7.0.tar.gz
-cd corelens-0.7.0/infra
+git clone https://github.com/AlaVox-lab/corelens.git
+cd corelens/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-Trên PowerShell thay `cp` bằng `Copy-Item` và dùng dấu `\` trong đường dẫn. Mọi giá trị trong
-`.env.example` chạy được ngay.
+Trên PowerShell thay `cp` bằng `Copy-Item`. Mọi giá trị trong `.env.example` chạy được ngay. Máy không có
+Git thì tải tệp nén của bản phát hành — bốn lệnh tương ứng ở [Cài đặt](../../cai-dat/cai-dat/), cách 1.
 
 Kiểm cụm đã lên: `docker compose --env-file .env ps` — `postgres`, `backend`, `cong-api`, `frontend`,
 `superset`, `khai-pha` báo `healthy`; `keycloak`, `seaweedfs` báo `Up`. Chờ thêm khoảng một phút cho
