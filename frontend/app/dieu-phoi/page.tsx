@@ -17,11 +17,15 @@
 //
 // Bấm một dòng mở ngăn xem nhanh bên phải (#233, `?xem=<mã>`) mà không rời danh sách; ngăn
 // dựng từ cùng các khối và cùng khối thao tác với trang chi tiết (`app/dieu-phoi/ho-so.tsx`).
+//
+// Chọn nhiều hồ sơ trên trang rồi đi một bước cho cả lô (#440): bước nào làm được hàng loạt, từ trạng
+// thái nào, cần ô nào — dịch vụ trả ở `/coordination/bulk-transitions`; trang chỉ chuyển danh mục xuống.
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { metaDieuPhoi, napHoSoDieuPhoi, ThaoTacDieuPhoi } from "@/app/dieu-phoi/ho-so";
+import { chuyenHangLoatDieuPhoi } from "@/app/dieu-phoi/thao-tac";
 import { BangHangDoi, type DongHangDoi } from "@/components/bang-hang-doi";
 import { ChanTrang, ChipLoc } from "@/components/chan-trang";
 import { DaiSoLoc } from "@/components/dai-so-loc";
@@ -29,7 +33,15 @@ import { ChonLoc } from "@/components/loc-url";
 import { NganHoSo, NganLoi } from "@/components/ngan-ho-so";
 import { goiDichVu } from "@/lib/api";
 import { thoiLuong } from "@/lib/dinh-dang";
-import type { HangDoi, LoaiYeuCau, MucHangDoi, MucUuTien, PhongBan } from "@/lib/kieu";
+import type {
+  DanhSachThaoTacHangLoat,
+  HangDoi,
+  LoaiYeuCau,
+  MucHangDoi,
+  MucUuTien,
+  NhanCoMa,
+  PhongBan,
+} from "@/lib/kieu";
 import { docTuDong } from "@/lib/sla";
 import {
   chipLoc,
@@ -49,6 +61,11 @@ import {
 export const dynamic = "force-dynamic";
 
 const GOC = "/dieu-phoi";
+
+/** Chỉ mã và nhãn đi xuống trình duyệt — hộp thoại hàng loạt không cần phần còn lại của danh mục. */
+function thanhNhanCoMa(ds: NhanCoMa[] | null): NhanCoMa[] {
+  return (ds ?? []).map(({ code, label }) => ({ code, label }));
+}
 
 function thanhDong(m: MucHangDoi, bayGio: Date, href: string, dangXem: boolean): DongHangDoi {
   const giay = Math.max(0, (bayGio.getTime() - new Date(m.state_entered_at).getTime()) / 1000);
@@ -81,7 +98,7 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
   const state = docThamSo(sp, "state");
   const trang = soTrang(sp);
   const xep = docXep(sp, "cho");
-  const [tatCa, cacLoai, cacMuc, cacPhong] = await Promise.all([
+  const [tatCa, cacLoai, cacMuc, cacPhong, hangLoat] = await Promise.all([
     goiDichVu<HangDoi>(
       `/coordination/queue?${truyVan(trang, {
         state,
@@ -95,6 +112,8 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
     goiDichVu<LoaiYeuCau[]>("/request-types"),
     goiDichVu<MucUuTien[]>("/priorities"),
     goiDichVu<PhongBan[]>("/departments"),
+    // Bước làm được hàng loạt (#440). Không nạp được thì hàng đợi vẫn như cũ, chỉ thiếu cột ô chọn
+    goiDichVu<DanhSachThaoTacHangLoat>("/coordination/bulk-transitions"),
   ]);
   const tieuDe = <h1 className="an-di">Hàng đợi điều phối</h1>;
 
@@ -155,6 +174,21 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
           },
         ]}
         ngan={ngan}
+        chonNhieu={
+          hangLoat && hangLoat.actions.length > 0
+            ? {
+                cacBuoc: hangLoat.actions,
+                toiDa: hangLoat.max_cases,
+                danhMuc: {
+                  "request-types": { ds: thanhNhanCoMa(cacLoai) },
+                  priorities: { ds: thanhNhanCoMa(cacMuc), macDinh: cacMuc?.find((m) => m.is_default)?.code },
+                  departments: { ds: thanhNhanCoMa(cacPhong) },
+                },
+                goc: GOC,
+                hanhDong: chuyenHangLoatDieuPhoi,
+              }
+            : undefined
+        }
         cot={{ loai: true, trangThai: true, tiepTheo: true, cuoi: "Đã chờ" }}
         goiYTim="Tìm mã, tiêu đề, người gửi"
         xepMacDinh="cho"

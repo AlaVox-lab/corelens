@@ -289,6 +289,23 @@ class Settings(BaseSettings):
     rate_limit_upload_window_seconds: int = 60
     rate_limit_message_max: int = 60
     rate_limit_message_window_seconds: int = 60
+    # Một lần gọi thao tác hàng loạt (#440) đi tới `bulk_max_cases` hồ sơ, nên giới hạn đếm theo lô
+    rate_limit_bulk_max: int = 10
+    rate_limit_bulk_window_seconds: int = 60
+
+    # --- Thao tác hàng loạt ở buồng lái điều phối, xem #440 ------------------
+    #
+    # Điều phối viên chọn nhiều hồ sơ rồi đi một bước cho cả lô. Mỗi hồ sơ vẫn qua cửa chuyển trạng
+    # thái duy nhất, một giao dịch riêng — xem app/workflow/coordination.py. Đây chỉ là tham số vận
+    # hành: lô lớn nhất, và những bước nào được làm hàng loạt. Mã bước là `transitions.activity_code`
+    # của bộ quy tắc; bước nào không có cạnh của vai điều phối thì không hiện ra.
+    bulk_max_cases: int = Field(default=50, ge=1)
+    bulk_activities: str = "classify,route-to-department"
+
+    @property
+    def bulk_activity_codes(self) -> list[str]:
+        """Các mã bước làm được hàng loạt, theo thứ tự khai — thứ tự nút trên thanh thao tác."""
+        return list(dict.fromkeys(ma.strip() for ma in self.bulk_activities.split(",") if ma.strip()))
 
     @property
     def sla_scan_stale_threshold_seconds(self) -> int:

@@ -549,6 +549,83 @@ class ChuyenTrangThaiCoTruongVao(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Thao tác hàng loạt ở buồng lái điều phối (#440)
+# ---------------------------------------------------------------------------
+
+
+class TruongHangLoatRa(BaseModel):
+    """Một ô của hộp thoại hàng loạt: trường gửi kèm, và có bắt buộc chọn không.
+
+    `required` False là được để trống — "giữ nguyên ở từng hồ sơ": ràng buộc quản trường đó lùi về
+    giá trị hồ sơ đang có (`truong_bat_buoc` ở app/rules/guards.py).
+    """
+
+    code: str
+    required: bool
+
+
+class ThaoTacHangLoatRa(BaseModel):
+    """Một bước làm được cho nhiều hồ sơ một lần — một mã hoạt động của bộ quy tắc."""
+
+    activity_code: str
+    activity_label: str
+    # Trạng thái có cạnh mang mã này mà vai điều phối đi được: hồ sơ ở trạng thái khác thì bỏ qua
+    from_states: list[NhanCoMa]
+    # Trường nhập liệu của cạnh (`truong_can_nhap`), theo thứ tự ô như `fields` của `allowed_transitions`
+    fields: list[TruongHangLoatRa] = Field(default_factory=list)
+    requires_note: bool = False
+    note_label: str | None = None
+
+
+class DanhSachThaoTacHangLoatRa(BaseModel):
+    max_cases: int
+    actions: list[ThaoTacHangLoatRa]
+
+
+class ChuyenHangLoatVao(BaseModel):
+    """Một bước cho cả lô hồ sơ. Giá trị trong `changes` áp chung cho mọi hồ sơ của lô.
+
+    Chỉ nhận giá trị người dùng chọn — không có lối "nhận gợi ý cho cả lô" (#440). Số hồ sơ tối đa là
+    cấu hình (`DXLAB_BULK_MAX_CASES`), kiểm ở điểm cuối vì đọc lúc chạy.
+    """
+
+    activity_code: str
+    case_ids: list[int] = Field(min_length=1)
+    note: str | None = Field(default=None, max_length=2000)
+    changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+class LoiHangLoatRa(BaseModel):
+    """Lỗi của một hồ sơ trong lô — mã và thông điệp của chính lỗi engine ném (app/workflow/errors.py).
+
+    `guard` là mã ràng buộc khi `code` là `guard-violation`, ví dụ `actor-not-requester`.
+    """
+
+    code: str
+    message: str
+    guard: str | None = None
+
+
+class MucHangLoatRa(BaseModel):
+    case_id: int
+    # Mã hiển thị, ví dụ `YC-2026-0184`; trống khi không có hồ sơ mang định danh này
+    code: str | None = None
+    ok: bool
+    to_state: str | None = None
+    to_state_label: str | None = None
+    error: LoiHangLoatRa | None = None
+
+
+class KetQuaHangLoatRa(BaseModel):
+    """Kết quả từng hồ sơ, đúng thứ tự gửi lên. Hồ sơ bị chặn đứng nguyên, không có dòng nhật ký."""
+
+    activity_code: str
+    total: int
+    succeeded: int
+    items: list[MucHangLoatRa]
+
+
+# ---------------------------------------------------------------------------
 # Giao việc (#84)
 # ---------------------------------------------------------------------------
 

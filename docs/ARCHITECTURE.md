@@ -219,7 +219,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 
 | Phần của ứng dụng | Đường |
 |---|---|
-| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, lời nhắn, liên hệ người gửi |
+| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, thao tác hàng loạt (#440), lời nhắn, liên hệ người gửi |
 | Buồng lái phòng ban | `/department/*` — cùng các phần như trên |
 | Lời nhắn và hộp thư | `POST /requests/{case_id}/messages`, `/inbox`, `/inbox/unread`, `/inbox/{case_id}/read` |
 | Ủy quyền khi vắng mặt | `/delegations`, `/delegations/members`, `/delegations/{ma}/revoke` |
@@ -1057,6 +1057,19 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
   định và, từ #127, hai trường nội dung; `current_state` và mọi trường `suggested_*` đều
   nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
+
+**Thao tác hàng loạt là vòng lặp trên cửa này, không phải đường vòng (#440).** Điều phối viên chọn
+nhiều hồ sơ trên hàng đợi rồi đi một bước cho cả lô (`POST /coordination/bulk-transitions`). Điểm cuối
+đi **từng hồ sơ một**, mỗi hồ sơ một giao dịch: khóa dòng, chọn cạnh mang mã bước người dùng chọn trong
+các cạnh rời trạng thái hiện tại, kiểm người được giao, gọi `perform_transition`, commit, hẹn tác vụ
+nền như điểm cuối một hồ sơ. Nên 20 hồ sơ là đúng 20 dòng nhật ký, mỗi dòng qua đủ năm bước; hồ sơ bị
+chặn thì hoàn tác riêng nó, đứng nguyên, vào kết quả kèm mã và thông điệp của chính lỗi engine, lô vẫn
+đi tiếp. Bước nào làm được hàng loạt là cấu hình (`DXLAB_BULK_ACTIVITIES`, mã hoạt động của bộ quy tắc);
+trạng thái nguồn, nhãn, ô cần nhập tra từ `transitions` và ràng buộc trên cạnh — ô bắt buộc theo cờ
+`required` của ràng buộc (`truong_bat_buoc`), ô còn lại để trống là giữ giá trị của từng hồ sơ. Chỉ khác
+một chỗ: lần chuyển hàng loạt không ghi dấu giữ hay ghi đè gợi ý (`record_suggestion=False`), vì không ai
+xem thẻ gợi ý của từng hồ sơ — đếm vào thì tỷ lệ ghi đè mất nghĩa. Không có lối "nhận gợi ý cho cả lô".
+Lô lớn nhất là `DXLAB_BULK_MAX_CASES`; API lõi `/core/v1` không có điểm cuối này.
 
 Bảo đảm này còn được kiểm bằng **kiểm thử dựa trên tính chất** (#441):
 `backend/tests/test_tinh_chat_may_trang_thai.py` để Hypothesis sinh chuỗi thao tác ngẫu nhiên trên mọi

@@ -351,6 +351,41 @@ export type HangDoi = Trang &
     items: MucHangDoi[];
   };
 
+/** Một bước làm được cho nhiều hồ sơ một lần (#440), tra từ bộ quy tắc ở dịch vụ. */
+export type ThaoTacHangLoat = {
+  activity_code: string;
+  activity_label: string;
+  /** Trạng thái đi được bước này; hồ sơ đang chọn ở trạng thái khác thì bỏ qua. */
+  from_states: NhanCoMa[];
+  /** `required` false: để trống được — mỗi hồ sơ giữ giá trị đang có. */
+  fields: { code: string; required: boolean }[];
+  requires_note: boolean;
+  note_label: string | null;
+};
+
+export type DanhSachThaoTacHangLoat = {
+  max_cases: number;
+  actions: ThaoTacHangLoat[];
+};
+
+export type MucHangLoat = {
+  case_id: number;
+  /** Mã hiển thị; `null` khi không có hồ sơ mang định danh này. */
+  code: string | null;
+  ok: boolean;
+  to_state: string | null;
+  to_state_label: string | null;
+  error: { code: string; message: string; guard: string | null } | null;
+};
+
+export type KetQuaHangLoat = {
+  activity_code: string;
+  total: number;
+  succeeded: number;
+  /** Đúng thứ tự gửi lên. */
+  items: MucHangLoat[];
+};
+
 /** Hồ sơ của người gửi, có phân trang (#232). */
 export type DanhSachHoSo = Trang &
   DemViec & {
