@@ -264,3 +264,63 @@ def test_sao_chep_bo_quy_tac_giu_co_cham(session, rule_set):
         select(Transition).where(Transition.rule_set_id == moi, Transition.collects_feedback))}
     assert cu, "bộ quy tắc mẫu phải có ít nhất một cạnh cho chấm"
     assert sau == cu
+
+
+# ---------------------------------------------------------------------------
+# Nhãn mốc dòng thời gian khi một cặp trạng thái có nhiều cạnh (#526)
+# ---------------------------------------------------------------------------
+
+
+def _moc_cuoi(client, duong: str) -> dict:
+    return client.get(duong).json()["history"][-1]
+
+
+def _canh_da_di(session, ho_so) -> Transition:
+    """Cạnh của dòng nhật ký cuối — tra từ bảng `transitions` bằng đúng mã hoạt động đã ghi."""
+    e = session.scalars(select(EventLog).where(EventLog.case_id == ho_so.id).order_by(EventLog.id.desc())).first()
+    return session.scalars(
+        select(Transition).where(
+            Transition.rule_set_id == ho_so.rule_set_id,
+            Transition.from_state == e.from_state,
+            Transition.to_state == e.to_state,
+            Transition.activity_code == e.activity,
+        )
+    ).one()
+
+
+def test_moc_xac_nhan_mang_nhan_canh_nguoi_gui_khong_phai_canh_he_thong(client, session, rule_set, phong_ban):
+    ho_so = _hoan_tat(session, phong_ban)
+    canh = _canh_cham(session, ho_so)
+    # Cặp trạng thái này có cả cạnh hệ thống mang nhãn khác — đúng điều kiện của lỗi #526
+    cung_cap = session.scalars(select(Transition).where(
+        Transition.rule_set_id == ho_so.rule_set_id,
+        Transition.from_state == canh.from_state,
+        Transition.to_state == canh.to_state,
+    )).all()
+    assert len({c.activity_label for c in cung_cap}) > 1
+    assert _xac_nhan(client, session, ho_so).status_code == 200
+
+    for nguoi, duong in ((NGUOI_GUI, f"/requests/{ho_so.id}"), (DIEU_PHOI, f"/coordination/requests/{ho_so.id}")):
+        client.dang_goi["actor"] = nguoi
+        moc = _moc_cuoi(client, duong)
+        assert (moc["activity"], moc["activity_label"], moc["note_label"]) == (
+            canh.activity_code, canh.activity_label, canh.note_label
+        )
+
+
+def test_moc_tu_dong_mang_nhan_canh_he_thong(client, session, rule_set, phong_ban):
+    ho_so = _hoan_tat(session, phong_ban)
+    he_thong = session.scalars(select(Transition).where(
+        Transition.rule_set_id == ho_so.rule_set_id,
+        Transition.from_state == ho_so.current_state,
+        Transition.is_system,
+    )).first()
+    perform_transition(session, case_id=ho_so.id, to_state=he_thong.to_state, actor=Actor.system(TAC_NHAN_HAN_CHO))
+    session.commit()
+    canh = _canh_da_di(session, ho_so)
+    assert canh.id == he_thong.id
+
+    moc = _moc_cuoi(client, f"/requests/{ho_so.id}")
+    assert (moc["activity"], moc["activity_label"], moc["note_label"]) == (
+        he_thong.activity_code, he_thong.activity_label, he_thong.note_label
+    )
