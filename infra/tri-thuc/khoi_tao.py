@@ -425,6 +425,37 @@ def _ngon_ngu_da_cai(w: Wiki) -> set[str]:
     return {x["code"] for x in ds if x.get("isInstalled")}
 
 
+def _co_ban_dich(w: Wiki, ma: str) -> bool:
+    """Gói `ma` có bản dịch thật. Gói tải hỏng có thể nằm trong bảng `locales` với chuỗi rỗng: giao diện khi đó
+    hiện mã chữ thô (`welcome.title`, `header.search`) và Wiki.js báo `Invalid locale or namespace` (#535).
+
+    Wiki.js chỉ nạp vào bộ nhớ bản dịch của ngôn ngữ ĐANG DÙNG (lúc khởi động, khi `updateLocale`, sau khi tải gói
+    của ngôn ngữ đang dùng) — nên chỉ hỏi được sau khi `ma` đã là ngôn ngữ đang dùng."""
+    try:
+        ds = w.graphql(
+            "query($l: String!, $n: String!) { localization { translations(locale: $l, namespace: $n) { key } } }",
+            {"l": ma, "n": "common"},
+        )["localization"]["translations"]
+        return bool(ds)
+    except (Exception, SystemExit):  # noqa: BLE001 — không đọc được bản dịch coi như gói không dùng được
+        return False
+
+
+def _dung_va_kiem(w: Wiki, ma: str, hien: str) -> bool:
+    """Đặt `ma` làm ngôn ngữ đang dùng nếu chưa, rồi kiểm nó có bản dịch thật."""
+    if hien != ma:
+        _dat_ngon_ngu(w, ma)
+    return _co_ban_dich(w, ma)
+
+
+def _tai_goi(w: Wiki, ma: str) -> None:
+    d = w.graphql(
+        "mutation($l: String!) { localization { downloadLocale(locale: $l) { responseResult { succeeded message } } } }",
+        {"l": ma},
+    )["localization"]["downloadLocale"]
+    _kiem_ngon_ngu(d, f"tải gói ngôn ngữ {ma}")
+
+
 def _dat_ngon_ngu(w: Wiki, ma: str) -> None:
     d = w.graphql(
         """mutation($l: String!) { localization { updateLocale(locale: $l, autoUpdate: false, namespacing: false,
@@ -445,6 +476,18 @@ def _ve_ngon_ngu_co_san(w: Wiki, vua_thu: str) -> None:
             ghi(f"cấu hình ngôn ngữ đang là {hien} mà không dùng được — đã đặt về {NGON_NGU_CO_SAN}")
     except (Exception, SystemExit) as loi:  # noqa: BLE001 — bước ngôn ngữ không được làm chết khởi tạo
         ghi(f"không đặt được ngôn ngữ giao diện về {NGON_NGU_CO_SAN} ({loi})")
+    # Chính gói có sẵn cũng có thể rỗng (gặp trên cụm trình diễn 23/11): giao diện ra mã chữ thô. Đang dùng nó mà
+    # rỗng thì tải lại một lần; hỏng thì nhật ký nói rõ cách chữa — Wiki.js chỉ đồng bộ danh sách gói lúc khởi động
+    try:
+        hien = w.graphql("{ localization { config { locale } } }")["localization"]["config"]["locale"]
+        if hien == NGON_NGU_CO_SAN and not _co_ban_dich(w, NGON_NGU_CO_SAN):
+            _tai_goi(w, NGON_NGU_CO_SAN)
+            ghi(f"gói {NGON_NGU_CO_SAN} rỗng — đã tải lại"
+                if _co_ban_dich(w, NGON_NGU_CO_SAN)
+                else f"gói {NGON_NGU_CO_SAN} vẫn rỗng sau khi tải lại")
+    except (Exception, SystemExit) as loi:  # noqa: BLE001
+        ghi(f"gói {NGON_NGU_CO_SAN} rỗng, chưa tải lại được ({loi}). Khi có mạng: khởi động lại kho-tri-thuc rồi "
+            "chạy lại tri-thuc-khoi-tao")
 
 
 def ngon_ngu(w: Wiki) -> str:
@@ -458,19 +501,17 @@ def ngon_ngu(w: Wiki) -> str:
         muon = bien("WIKI_LOCALE")
         hien = w.graphql("{ localization { config { locale } } }")["localization"]["config"]["locale"]
         if muon in _ngon_ngu_da_cai(w):
-            if hien != muon:
-                _dat_ngon_ngu(w, muon)
-            ghi(f"giao diện: {muon}")
-            return muon
-        d = w.graphql(
-            "mutation($l: String!) { localization { downloadLocale(locale: $l) { responseResult { succeeded message } } } }",
-            {"l": muon},
-        )["localization"]["downloadLocale"]
-        _kiem_ngon_ngu(d, f"tải gói ngôn ngữ {muon}")
-        # downloadLocale có thể báo thành công mà gói không trọn: chỉ đổi giao diện khi đã cài thật
+            if _dung_va_kiem(w, muon, hien):
+                ghi(f"giao diện: {muon}")
+                return muon
+            hien = muon  # đã cài mà rỗng: tải lại bên dưới
+        _tai_goi(w, muon)
+        # downloadLocale có thể báo thành công mà gói không vào bảng ngôn ngữ, hay vào mà rỗng: chỉ giữ giao diện
+        # khi dùng được thật
         if muon not in _ngon_ngu_da_cai(w):
             raise RuntimeError(f"tải xong nhưng {muon} chưa có trong danh sách ngôn ngữ đã cài")
-        _dat_ngon_ngu(w, muon)
+        if not _dung_va_kiem(w, muon, hien):
+            raise RuntimeError(f"gói {muon} đã cài mà chưa có bản dịch")
         ghi(f"giao diện: {muon}")
         return muon
     except (Exception, SystemExit) as loi:  # noqa: BLE001 — bước ngôn ngữ không được làm chết khởi tạo

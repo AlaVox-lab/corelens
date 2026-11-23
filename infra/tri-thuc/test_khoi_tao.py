@@ -29,9 +29,13 @@ LOI_KHOA_NGOAI = 'insert into "pages" violates foreign key constraint "pages_loc
 class WikiGia:
     """Wiki.js giả: đủ các câu GraphQL mà bước ngôn ngữ và bước bài mẫu gọi."""
 
-    def __init__(self, *, cau_hinh="en", da_cai=("en",), tai="duoc", doi="duoc"):
+    def __init__(self, *, cau_hinh="en", da_cai=("en",), tai="duoc", doi="duoc", rong=()):
         self.cau_hinh = cau_hinh
         self.da_cai = set(da_cai)
+        # rong: gói có trong bảng `locales` mà chuỗi rỗng — Wiki.js báo `Invalid locale or namespace` khi đọc bản dịch
+        self.rong = set(rong)
+        # Wiki.js chỉ nạp bản dịch của ngôn ngữ đang dùng: lúc khởi động, khi updateLocale, khi tải gói của chính nó
+        self.da_nap = {cau_hinh}
         # tai: "duoc" — cài trọn; "bao-loi" — responseResult hỏng; "khong-tron" — báo thành công mà không cài;
         #      "mang" — lỗi kết nối
         self.tai = tai
@@ -39,6 +43,8 @@ class WikiGia:
         self.doi = doi
         self.bai: dict[tuple[str, str], str] = {}
         self.lan_tai = 0
+        # Gói `en` tải lại được dù gói muốn dùng hỏng (máy chủ gói có `en`, chỉ gói kia lỗi)
+        self.tai_en_duoc = True
 
     @staticmethod
     def _kq(dung: bool, tin: str = "") -> dict:
@@ -50,8 +56,17 @@ class WikiGia:
             self.lan_tai += 1
             if self.tai == "mang":
                 raise OSError("Network is unreachable")
+            if self.tai != "mang" and b["l"] == "en" and self.tai_en_duoc:
+                self.da_cai.add("en")
+                self.rong.discard("en")
+                if self.cau_hinh == "en":
+                    self.da_nap.add("en")
+                return {"localization": {"downloadLocale": self._kq(True)}}
             if self.tai == "duoc":
                 self.da_cai.add(b["l"])
+                self.rong.discard(b["l"])
+                if self.cau_hinh == b["l"]:
+                    self.da_nap.add(b["l"])
             if self.tai == "bao-loi":
                 return {"localization": {"downloadLocale": self._kq(False, "Failed to download locale")}}
             return {"localization": {"downloadLocale": self._kq(True)}}
@@ -59,7 +74,12 @@ class WikiGia:
             self.cau_hinh = b["l"]
             if self.doi == "ghi-roi-hong" and b["l"] != "en":
                 return {"localization": {"updateLocale": self._kq(False, "Cannot read properties of undefined (reading 'isRTL')")}}
+            self.da_nap.add(b["l"])
             return {"localization": {"updateLocale": self._kq(True)}}
+        if "translations(" in truy_van:
+            if b["l"] not in self.da_cai or b["l"] in self.rong or b["l"] not in self.da_nap:
+                raise RuntimeError("GraphQL báo lỗi: Invalid locale or namespace")
+            return {"localization": {"translations": [{"key": "welcome.title"}]}}
         if "locales" in truy_van:
             return {"localization": {"locales": [{"code": c, "isInstalled": True} for c in sorted(self.da_cai)]}}
         if "config { locale }" in truy_van:
@@ -177,6 +197,39 @@ class BuocNgonNgu(unittest.TestCase):
         w = WikiGia()
         self.assertEqual(self.chay(w), "en")
         self.assertEqual(w.lan_tai, 0)
+
+
+    def test_goi_dang_dung_rong_thi_tai_lai(self):
+        """Gặp trên cụm trình diễn 23/11: `vi` nằm trong bảng ngôn ngữ mà chuỗi rỗng — giao diện ra mã chữ thô."""
+        w = WikiGia(cau_hinh="vi", da_cai=("en", "vi"), rong=("vi",))
+        self.assertEqual(self.chay(w), "vi")
+        self.assertEqual(w.lan_tai, 1)
+        self.assertNotIn("vi", w.rong)
+
+    def test_lui_ve_en_ma_en_rong_thi_tai_lai_en(self):
+        """Gói `vi` hỏng, và chính `en` cũng rỗng: lùi về `en` phải kèm tải lại `en`, không thì giao diện chữ thô."""
+        w = WikiGia(tai="bao-loi", rong=("en",))
+        self.assertEqual(self.chay(w), "en")
+        self.assertNotIn("en", w.rong)
+        self.assertEqual(len(w.bai), self.so_bai)
+
+    def test_lan_cai_dau_cau_hinh_en_tai_vi_thi_chuyen_sang_vi(self):
+        """Wiki.js chỉ nạp bản dịch của ngôn ngữ đang dùng: kiểm bản dịch của `vi` phải đặt `vi` làm ngôn ngữ đang dùng
+        trước, không thì lần cài đầu không bao giờ chuyển được sang tiếng Việt."""
+        w = WikiGia(cau_hinh="en", da_cai=("en",), tai="duoc")
+        self.assertEqual(self.chay(w), "vi")
+        self.assertEqual(w.cau_hinh, "vi")
+
+    def test_vi_da_cai_ma_dang_dung_en_thi_chuyen_khong_tai(self):
+        w = WikiGia(cau_hinh="en", da_cai=("en", "vi"))
+        self.assertEqual(self.chay(w), "vi")
+        self.assertEqual(w.lan_tai, 0)
+
+    def test_en_rong_khong_tai_lai_duoc_van_xong_buoc_khoi_tao(self):
+        w = WikiGia(tai="mang", rong=("en",))
+        self.assertEqual(self.chay(w), "en")
+        self.assertIn("en", w.rong)
+        self.assertEqual(len(w.bai), self.so_bai)
 
 
 if __name__ == "__main__":

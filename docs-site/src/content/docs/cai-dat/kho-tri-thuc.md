@@ -28,6 +28,9 @@ Ba dịch vụ lên theo thứ tự:
 | `kho-tri-thuc` | Wiki.js, cổng `WIKI_PORT` (mặc định 3100) |
 | `tri-thuc-khoi-tao` | Hoàn tất cài đặt lần đầu, bật đăng nhập một lần, tạo nhóm, cấp khóa API chỉ đọc cho dịch vụ ứng dụng, nạp bài mẫu từ `infra/tri-thuc/bai-mau/`. Chạy xong thì dừng |
 
+Bài mẫu gồm trang chủ của kho (đường dẫn `home`, mục lục các bài) và ba bài hướng dẫn trong mục `huong-dan/`.
+Trang chủ không vào chỉ mục gợi ý: nó là mục lục, gần với mọi câu hỏi.
+
 Hai bước khởi tạo chạy lại bao nhiêu lần cũng được: thứ đã có thì để yên, bài mẫu đã có (kể cả đã sửa) không
 bị ghi đè. Cụm cũ nâng lên bằng lệnh trên, không cần `down -v` — client OIDC tạo qua API quản trị của
 Keycloak, nên realm đã nạp từ trước vẫn nhận.
@@ -98,6 +101,17 @@ Bước khởi tạo không tải được gói ngôn ngữ — nhật ký `dock
 `không dùng được gói ngôn ngữ vi (…); giao diện en`. Khi máy có mạng ra ngoài, chạy lại bước khởi tạo (trong
 `infra/`): `docker compose --env-file .env --profile tri-thuc up -d tri-thuc-khoi-tao`. Gói tải được thì giao
 diện chuyển sang tiếng Việt; bài mẫu đã có giữ nguyên, bài mẫu bản tiếng Việt được tạo thêm cùng đường dẫn.
+
+Wiki.js chỉ lấy danh sách gói ngôn ngữ một lần, lúc khởi động. Nhật ký `docker logs dxlab-kho-tri-thuc` có dòng
+`Failed to fetch cached locales list` thì khởi động lại Wiki.js trước
+(`docker compose --env-file .env --profile tri-thuc restart kho-tri-thuc`), rồi mới chạy lại bước khởi tạo.
+Dịch vụ Wiki.js đặt sẵn `NODE_OPTIONS=--dns-result-order=ipv4first`: mạng của Docker thường không có IPv6, và
+Node chọn địa chỉ IPv6 của máy chủ gói ngôn ngữ thì tải hỏng.
+
+### Giao diện Wiki hiện mã chữ như `welcome.title`
+
+Gói ngôn ngữ đang dùng có trong Wiki.js mà rỗng — thường do lần cài đầu không tải được. Bước khởi tạo tự tải lại
+gói đó; nếu vẫn rỗng, làm như mục trên: khởi động lại Wiki.js rồi chạy lại bước khởi tạo.
 
 ## Tắt
 

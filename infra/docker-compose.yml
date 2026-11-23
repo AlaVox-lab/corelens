@@ -306,6 +306,9 @@ services:
       DB_USER: ${DXLAB_DB_USER}
       DB_PASS: ${DXLAB_DB_PASSWORD}
       DB_NAME: ${WIKI_DB_NAME:-wiki}
+      # Gói ngôn ngữ tải từ graph.requarks.io. Mạng của Docker thường không có IPv6: Node chọn địa chỉ IPv6 thì
+      # báo ENETUNREACH và gói tải hỏng, lúc được lúc không tùy thứ tự DNS trả về (#535). Ưu tiên IPv4
+      NODE_OPTIONS: --dns-result-order=ipv4first
     ports:
       - "${WIKI_PORT:-3100}:3000"
     # Chỉ kiểm cổng mở: lúc cài đặt lần đầu Wiki.js chưa có /healthz
