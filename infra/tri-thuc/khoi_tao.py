@@ -406,29 +406,77 @@ def dam_bao_khoa_api(w: Wiki, nhom: dict[str, int]) -> None:
     ghi("đã cấp khóa API chỉ đọc")
 
 
-def ngon_ngu(w: Wiki) -> str:
-    """Giao diện tiếng Việt nếu tải được gói ngôn ngữ (cần mạng ra ngoài); không được thì giữ tiếng Anh —
-    nội dung bài vẫn tiếng Việt có dấu. Trả về mã ngôn ngữ đang dùng cho trang."""
-    muon = bien("WIKI_LOCALE")
-    hien = w.graphql("{ localization { config { locale } } }")["localization"]["config"]["locale"]
-    if hien == muon:
-        return hien
+# Ngôn ngữ có sẵn trong mọi bản Wiki.js, không cần tải — từ vựng của chính Wiki.js, không phải cấu hình nghiệp vụ
+NGON_NGU_CO_SAN = "en"
+
+
+def _kiem_ngon_ngu(phan_hoi: dict, viec: str) -> None:
+    """Như `kiem_ket_qua` nhưng ném `RuntimeError` thay vì thoát: bước ngôn ngữ hỏng thì lùi về ngôn ngữ có
+    sẵn, không làm chết cả bước khởi tạo (#535)."""
+    kq = phan_hoi.get("responseResult") or {}
+    if not kq.get("succeeded"):
+        raise RuntimeError(f"{viec} thất bại: {kq.get('message')}")
+
+
+def _ngon_ngu_da_cai(w: Wiki) -> set[str]:
+    """Ngôn ngữ Wiki.js đã cài THẬT — có trong bảng `locales` của nó, chỗ khóa ngoại của bài trỏ tới. Không đọc
+    `config.locale`: `updateLocale` ghi cấu hình trước khi hỏng, nên cấu hình có thể trỏ tới gói chưa cài."""
+    ds = w.graphql("{ localization { locales { code isInstalled } } }")["localization"]["locales"]
+    return {x["code"] for x in ds if x.get("isInstalled")}
+
+
+def _dat_ngon_ngu(w: Wiki, ma: str) -> None:
+    d = w.graphql(
+        """mutation($l: String!) { localization { updateLocale(locale: $l, autoUpdate: false, namespacing: false,
+           namespaces: []) { responseResult { succeeded message } } } }""",
+        {"l": ma},
+    )["localization"]["updateLocale"]
+    _kiem_ngon_ngu(d, f"đặt ngôn ngữ giao diện {ma}")
+
+
+def _ve_ngon_ngu_co_san(w: Wiki, vua_thu: str) -> None:
+    """Cấu hình đang trỏ tới ngôn ngữ chưa cài, hay tới chính ngôn ngữ `vua_thu` vừa đặt hỏng (`updateLocale` ghi
+    cấu hình rồi mới báo lỗi), thì đặt về ngôn ngữ có sẵn. Ngôn ngữ khác đã cài mà quản trị viên tự chọn thì để
+    yên. Hỏng thì chỉ ghi nhật ký: bài mẫu vẫn tạo được bằng ngôn ngữ có sẵn, chỉ giao diện chưa đúng."""
     try:
-        d = w.graphql("mutation($l: String!) { localization { downloadLocale(locale: $l) { responseResult { succeeded message } } } }",
-                      {"l": muon})["localization"]["downloadLocale"]
-        if not d["responseResult"]["succeeded"]:
-            raise RuntimeError(d["responseResult"]["message"])
+        hien = w.graphql("{ localization { config { locale } } }")["localization"]["config"]["locale"]
+        if hien != NGON_NGU_CO_SAN and (hien == vua_thu or hien not in _ngon_ngu_da_cai(w)):
+            _dat_ngon_ngu(w, NGON_NGU_CO_SAN)
+            ghi(f"cấu hình ngôn ngữ đang là {hien} mà không dùng được — đã đặt về {NGON_NGU_CO_SAN}")
+    except (Exception, SystemExit) as loi:  # noqa: BLE001 — bước ngôn ngữ không được làm chết khởi tạo
+        ghi(f"không đặt được ngôn ngữ giao diện về {NGON_NGU_CO_SAN} ({loi})")
+
+
+def ngon_ngu(w: Wiki) -> str:
+    """Giao diện theo `WIKI_LOCALE` nếu gói ngôn ngữ đó đã cài thật hay tải được (cần mạng ra ngoài); không thì
+    tiếng Anh — nội dung bài vẫn tiếng Việt có dấu. Trả về mã ngôn ngữ đã cài thật để tạo bài.
+
+    Mọi lỗi của bước này — Wiki.js báo hỏng, lỗi mạng, gói tải về không trọn — đều lùi về ngôn ngữ có sẵn và
+    ghi nhật ký, không làm dừng bước khởi tạo. Chạy lại khi có mạng thì thử tải lại (#535)."""
+    muon = NGON_NGU_CO_SAN
+    try:
+        muon = bien("WIKI_LOCALE")
+        hien = w.graphql("{ localization { config { locale } } }")["localization"]["config"]["locale"]
+        if muon in _ngon_ngu_da_cai(w):
+            if hien != muon:
+                _dat_ngon_ngu(w, muon)
+            ghi(f"giao diện: {muon}")
+            return muon
         d = w.graphql(
-            """mutation($l: String!) { localization { updateLocale(locale: $l, autoUpdate: false, namespacing: false,
-               namespaces: []) { responseResult { succeeded message } } } }""",
+            "mutation($l: String!) { localization { downloadLocale(locale: $l) { responseResult { succeeded message } } } }",
             {"l": muon},
-        )["localization"]["updateLocale"]
-        kiem_ket_qua(d, "đổi ngôn ngữ giao diện")
+        )["localization"]["downloadLocale"]
+        _kiem_ngon_ngu(d, f"tải gói ngôn ngữ {muon}")
+        # downloadLocale có thể báo thành công mà gói không trọn: chỉ đổi giao diện khi đã cài thật
+        if muon not in _ngon_ngu_da_cai(w):
+            raise RuntimeError(f"tải xong nhưng {muon} chưa có trong danh sách ngôn ngữ đã cài")
+        _dat_ngon_ngu(w, muon)
         ghi(f"giao diện: {muon}")
         return muon
-    except RuntimeError as loi:
-        ghi(f"không tải được gói ngôn ngữ {muon} ({loi}); giữ {hien}")
-        return hien
+    except (Exception, SystemExit) as loi:  # noqa: BLE001 — bước ngôn ngữ không được làm chết khởi tạo
+        ghi(f"không dùng được gói ngôn ngữ {muon} ({loi}); giao diện {NGON_NGU_CO_SAN}")
+        _ve_ngon_ngu_co_san(w, muon)
+        return NGON_NGU_CO_SAN
 
 
 def doc_bai(tep: Path) -> tuple[dict, str]:

@@ -90,7 +90,14 @@ Wiki tắt giữa chừng: bộ lập chỉ mục bỏ lượt, gợi ý vẫn d
 | `WIKI_OIDC_CLIENT_ID`, `WIKI_OIDC_SECRET` | `dx-wiki`, giá trị mẫu | Client OIDC trong Keycloak — **đổi bí mật** trước khi dùng thật |
 | `WIKI_READ_ROLES`, `WIKI_WRITE_ROLES` | như bảng trên | Vai trò được đọc / được viết |
 | `WIKI_ADMIN_EMAIL`, `WIKI_ADMIN_PASSWORD` | giá trị mẫu | Quản trị Wiki.js — **đổi mật khẩu** trước khi dùng thật |
-| `WIKI_LOCALE` | `vi` | Ngôn ngữ giao diện. Tải gói ngôn ngữ cần mạng ra ngoài; không tải được thì giao diện tiếng Anh, nội dung vẫn tiếng Việt |
+| `WIKI_LOCALE` | `vi` | Ngôn ngữ giao diện. Tải gói ngôn ngữ cần mạng ra ngoài; gói chưa thật sự cài được (tải hỏng, tải không trọn, không có mạng) thì bước khởi tạo vẫn xong, giao diện và bài mẫu dùng tiếng Anh (`en`), nội dung bài vẫn tiếng Việt |
+
+### Giao diện Wiki tiếng Anh dù đặt `vi`
+
+Bước khởi tạo không tải được gói ngôn ngữ — nhật ký `docker logs dxlab-tri-thuc-khoi-tao` ghi
+`không dùng được gói ngôn ngữ vi (…); giao diện en`. Khi máy có mạng ra ngoài, chạy lại bước khởi tạo (trong
+`infra/`): `docker compose --env-file .env --profile tri-thuc up -d tri-thuc-khoi-tao`. Gói tải được thì giao
+diện chuyển sang tiếng Việt; bài mẫu đã có giữ nguyên, bài mẫu bản tiếng Việt được tạo thêm cùng đường dẫn.
 
 ## Tắt
 
