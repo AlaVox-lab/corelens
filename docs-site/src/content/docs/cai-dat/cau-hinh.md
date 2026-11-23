@@ -156,13 +156,14 @@ Hai gợi ý của tầng `I` cần mô hình (hồ sơ Compose `tri-tue`); các
 
 Mỗi người dùng chỉ được gọi một số lần nhất định trong một cửa sổ thời gian cố định; vượt thì thao tác
 báo "Bạn … quá nhanh. Thử lại sau N giây." thay vì thực hiện. Đặt số lần tối đa bằng `0` để tắt giới
-hạn đó. Cả tám biến có mặc định trong `docker-compose.yml`, nên tệp `.env` cũ không cần thêm.
+hạn đó. Cả mười biến có mặc định trong `docker-compose.yml`, nên tệp `.env` cũ không cần thêm.
 
 | Biến | Mặc định | Ghi chú |
 |---|---|---|
 | `RATE_LIMIT_CREATE_CASE_MAX` / `_WINDOW_SECONDS` | `30` / `60` | Gửi yêu cầu mới |
 | `RATE_LIMIT_UPLOAD_MAX` / `_WINDOW_SECONDS` | `20` / `60` | Tải tệp đính kèm lên |
 | `RATE_LIMIT_MESSAGE_MAX` / `_WINDOW_SECONDS` | `60` / `60` | Gửi lời nhắn, ở cả ba buồng lái |
+| `RATE_LIMIT_BULK_MAX` / `_WINDOW_SECONDS` | `10` / `60` | Thao tác hàng loạt ở buồng lái điều phối — đếm theo lô, mỗi lô tới `BULK_MAX_CASES` hồ sơ |
 | `RATE_LIMIT_LOGIN_MAX` / `_WINDOW_SECONDS` | `30` / `60` | Đăng nhập quay về, theo địa chỉ IP. Đếm trong bộ nhớ của từng bản cổng; địa chỉ IP lấy từ `X-Forwarded-For` nên cần reverse proxy đặt header đó |
 
 ## Bảng đầy đủ các biến còn lại
@@ -250,6 +251,17 @@ Cách bật ở [Mô hình ngôn ngữ](../mo-hinh-ngon-ngu/).
 | Biến | Mặc định | Ghi chú |
 |---|---|---|
 | `DELEGATION_MAX_DAYS` | `60` | Một lần ủy quyền dài tối đa chừng này ngày |
+
+### Thao tác hàng loạt
+
+Điều phối viên chọn nhiều hồ sơ trên hàng đợi rồi đi một bước cho cả lô; mỗi hồ sơ vẫn là một lần
+chuyển trạng thái riêng, một dòng nhật ký riêng, hồ sơ bị chặn báo riêng. Cách dùng ở trang
+[Điều phối viên](../../huong-dan/dieu-phoi-vien/).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `BULK_MAX_CASES` | `50` | Số hồ sơ tối đa mỗi lô; lô lớn hơn bị từ chối cả lô (`422`) |
+| `BULK_ACTIVITIES` | `classify,route-to-department` | Mã bước (`transitions.activity_code`) làm được hàng loạt, cách nhau dấu phẩy, theo thứ tự nút. Bước không có cạnh của vai điều phối thì không hiện |
 
 ### Kho tri thức
 

@@ -142,6 +142,20 @@ test.describe("điều phối viên", () => {
     await quet(page, "dieu-phoi-ho-so-bang-thao-tac");
   });
 
+  test("hàng đợi có hồ sơ được chọn: thanh thao tác và hộp thoại hàng loạt (#440)", async ({ page }) => {
+    // Hai lớp này chỉ hiện khi đã chọn hồ sơ, nên màn hàng đợi quét ở trên không chạm tới
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    await page.locator("input[data-chon-ho-so]").first().check();
+    const thanh = page.getByRole("region", { name: "Thao tác với hồ sơ đã chọn" });
+    await expect(thanh).toBeVisible();
+    await quet(page, "dieu-phoi-hang-loat-thanh");
+    await thanh.locator("button[data-buoc-hang-loat]").first().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await quet(page, "dieu-phoi-hang-loat-hop-thoai");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  });
+
   test("Báo cáo: bảng điều khiển và Quy trình thực tế", async ({ page }) => {
     // Khung Superset là tài liệu của bên thứ ba dựng trong iframe riêng — không phải mã của nhóm, nằm ngoài
     // phạm vi sửa (không sửa mã thư viện). Phần của cổng quanh khung vẫn được quét

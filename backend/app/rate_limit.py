@@ -36,6 +36,7 @@ DANH_MUC: dict[str, tuple[str, str]] = {
     "create-case": ("rate_limit_create_case", "gửi yêu cầu"),
     "upload-attachment": ("rate_limit_upload", "tải tệp lên"),
     "send-message": ("rate_limit_message", "gửi lời nhắn"),
+    "bulk-transition": ("rate_limit_bulk", "thao tác hàng loạt"),
 }
 
 # Dòng đếm cũ được giữ thêm chừng này lần cửa sổ dài nhất trước khi dọn

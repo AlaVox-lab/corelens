@@ -67,6 +67,11 @@ class Guard:
     trường đó. Trường trong `sets` KHÔNG nằm trong `governs`: người dùng không gửi được
     chúng, nên cạnh mang ràng buộc này không có ô nhập, và không biến người đi cạnh
     thành "vai trò giao việc" (#84 suy vai trò đó từ những cạnh cho đặt người xử lý).
+
+    `required` đánh dấu ràng buộc LUÔN từ chối khi không gửi kèm trường nó quản — mức ưu tiên lúc
+    phân loại, phòng lúc chuyển về phòng (#440). Ràng buộc chỉ đòi trường khi hồ sơ chưa có giá trị,
+    như `set-request-type`, thì để False: bỏ trống là giữ giá trị hồ sơ đang có. Thao tác hàng loạt
+    đọc cờ này để biết ô nào bắt buộc chọn, ô nào được để "giữ nguyên ở từng hồ sơ".
     """
 
     check: GuardFunc
@@ -74,6 +79,7 @@ class Guard:
     input_free: bool = False
     sets: frozenset[str] = frozenset()
     effect: EffectFunc | None = None
+    required: bool = False
 
 
 def requester_owns_case(ctx: TransitionContext) -> None:
@@ -503,8 +509,8 @@ GUARD_REGISTRY: dict[str, Guard] = {
     "requester-owns-case": Guard(requester_owns_case, input_free=True),
     "actor-in-case-department": Guard(actor_in_case_department, input_free=True),
     "actor-not-requester": Guard(actor_not_requester, input_free=True),
-    "set-priority": Guard(set_priority, frozenset({"priority_code"})),
-    "select-department": Guard(select_department, frozenset({"department_code"})),
+    "set-priority": Guard(set_priority, frozenset({"priority_code"}), required=True),
+    "select-department": Guard(select_department, frozenset({"department_code"}), required=True),
     "department-unchanged": Guard(department_unchanged, frozenset({"department_code"})),
     "set-request-type": Guard(set_request_type, frozenset({"request_type_code"})),
     "assign-handler": Guard(assign_handler, frozenset({"assignee_id"})),
@@ -523,6 +529,7 @@ GUARD_REGISTRY: dict[str, Guard] = {
     "extend-deadline": Guard(
         extend_deadline,
         frozenset({"sla_extension_hours"}),
+        required=True,
         sets=frozenset(
             {"sla_extension_hours", "sla_extension_total_hours", "sla_extension_count"}
         ),
@@ -654,4 +661,14 @@ def truong_can_nhap(guard_codes: Iterable[str]) -> frozenset[str]:
     """
     return frozenset().union(
         *(rb.governs for rb in map(_tra_rang_buoc, guard_codes) if not rb.input_free)
+    )
+
+
+def truong_bat_buoc(guard_codes: Iterable[str]) -> frozenset[str]:
+    """Phần của `truong_can_nhap` mà bỏ trống là chắc chắn bị từ chối, ở mọi hồ sơ (#440).
+
+    Trường còn lại bỏ trống được: ràng buộc quản nó lùi về giá trị hồ sơ đang có.
+    """
+    return frozenset().union(
+        *(rb.governs for rb in map(_tra_rang_buoc, guard_codes) if rb.required and not rb.input_free)
     )

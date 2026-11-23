@@ -511,6 +511,7 @@ def perform_transition(
     note: str | None = None,
     changes: dict | None = None,
     assignee_label: str | None = None,
+    record_suggestion: bool = True,
 ) -> Request:
     """Đổi trạng thái một hồ sơ. Đây là cánh cửa duy nhất.
 
@@ -532,6 +533,10 @@ def perform_transition(
     `assignee_id`. Engine không tự tra tên — nó không biết Keycloak tồn tại. Phía gọi
     tra danh bạ và kiểm người đó nhận được việc trước khi gọi vào đây (#83), cùng cách
     `create_case` nhận `requester_label`.
+
+    `record_suggestion=False` bỏ dấu giữ hay ghi đè gợi ý (#239) khỏi dòng nhật ký: thao tác hàng
+    loạt (#440) áp một giá trị người chọn cho cả lô mà không ai xem thẻ gợi ý của từng hồ sơ, nên
+    đếm nó là giữ hay đổi gợi ý sẽ làm sai tỷ lệ ghi đè. Mọi bước kiểm và ghi khác giữ nguyên.
     """
     # Khóa dòng hồ sơ tới cuối giao dịch. Không có bước này, hai yêu cầu đồng thời
     # cùng đọc trạng thái cũ rồi cùng ghi nhật ký — sinh ra hai bản ghi cho một lần
@@ -637,7 +642,7 @@ def perform_transition(
         session,
         ctx,
         assignee_label=assignee_label,
-        suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi, actor.id),
+        suggestion=ghi_nhan_goi_y(session, ho_so, thay_doi, actor.id) if record_suggestion else None,
         on_behalf_of=(lam_thay.nguoi_vang_id, lam_thay.nguoi_vang_label) if lam_thay else None,
     )
 
