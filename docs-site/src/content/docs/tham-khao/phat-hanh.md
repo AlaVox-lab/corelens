@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.6.0` | Trang hồ sơ của điều phối viên và phòng ban hiện các bước đi lệch quy trình thiết kế, chỉ để đọc; cổng đạt WCAG 2.1 AA trên màn chính của từng vai, có kịch bản quét axe và bài thao tác bằng bàn phím; API lõi trả mọi cạnh của hồ sơ kèm lý do không đi được và trường cần nhập; kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis |
 | `v1.5.1` | Bản vá sau khi đổi tên dự án thành Corelens: kho chuyển sang `AlaVox-lab/corelens`, hướng dẫn cài khớp tên tệp nén mới `corelens-<phiên bản>`, đường gốc trang tài liệu `/corelens` |
 | `v1.5.0` | Webhook không bỏ sót sự kiện: lần gửi sinh bằng trigger trong giao dịch ghi nhật ký, gửi ngoài giao dịch; xuất nhật ký sự kiện chuẩn XES; bảng điều khiển thêm vi phạm hạn theo loại, ghi đè gợi ý theo tuần, thời gian chờ theo trạng thái; từ điển dữ liệu sinh tự động; tìm cả trong mô tả; mở biểu mẫu với loại chọn sẵn; thẻ gợi ý của điều phối viên kèm hồ sơ đã giải quyết tương tự; kịch bản giao diện cho Kanban, webhook, thời gian thực; action lên bản chạy Node 24 |
 | `v1.4.0` | Đặc tả OpenAPI của nền tảng lõi `/core/v1` nằm trong kho, tích hợp liên tục báo khi lệch mã; quét giấy phép mọi gói phụ thuộc kể cả gián tiếp, báo cáo đính kèm bản phát hành; đối soát tài liệu phụ thuộc, kiểm liên kết hỏng, kiểm tệp Compose từng hồ sơ; pre-commit tùy chọn; kịch bản in tiếng Việt trên Windows, kiểm nâng cấp trên cụm thử; yêu cầu Python cho kịch bản tiện ích |
