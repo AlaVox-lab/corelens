@@ -9,13 +9,15 @@ sidebar:
      hay chú thích của cột rồi chạy python scripts/tu_dien_du_lieu.py. Tích hợp liên tục chạy --kiem
      và báo đỏ khi trang này lệch với mô hình. -->
 
-35 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
+37 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
 hình, nghĩa của cột từ chú thích ngay trên cột trong mã — cột chưa có chú thích để trống ô *Ý nghĩa*.
 Lược đồ do các bản sửa Alembic tạo (`backend/alembic/versions/`); các view báo cáo và nguồn gốc của
 chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
 
 | Bảng | Số cột | Mô hình |
 |---|---|---|
+| [`access_audit_log`](#access_audit_log) | 9 | `AccessAuditLog` · `backend/app/models/quan_tri.py` |
+| [`access_kinds`](#access_kinds) | 3 | `AccessKind` · `backend/app/models/quan_tri.py` |
 | [`attachment_file_types`](#attachment_file_types) | 8 | `AttachmentFileType` · `backend/app/models/case.py` |
 | [`case_attachments`](#case_attachments) | 11 | `CaseAttachment` · `backend/app/models/case.py` |
 | [`case_feedback`](#case_feedback) | 6 | `CaseFeedback` · `backend/app/models/case.py` |
@@ -63,6 +65,36 @@ này chưa liệt kê cột; định nghĩa đầy đủ ở tệp bản sửa t
 | `similar_case_views` | `backend/alembic/versions/0022_ho_so_tuong_tu.py` |
 | `work_calendars` | `backend/alembic/sql/0000_luoc_do_cau_hinh.sql` |
 | `work_hours` | `backend/alembic/sql/0000_luoc_do_cau_hinh.sql` |
+
+## access_audit_log
+
+Một lần truy cập dữ liệu cá nhân của người khác (#431) — ai, lúc nào, loại gì, hồ sơ và tệp nào.
+
+Mô hình `AccessAuditLog` trong `backend/app/models/quan_tri.py`.
+
+| Cột | Kiểu | Để trống | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `BigInteger` | không | khóa chính, `Identity` |  |
+| `at` | `DateTime` | không | mặc định `func.now()` | Lúc truy cập, đồng hồ của cơ sở dữ liệu, UTC |
+| `actor` | `Text` | không |  | Mã người trong token (`sub`) — người hay tài khoản dịch vụ |
+| `actor_label` | `Text` | có |  | Nhãn tên chụp lúc truy cập, như `event_log.actor_label` — ẩn danh hóa của ADR-0009 thay như nhau |
+| `access_kind` | `Text` | không | khóa ngoại → `access_kinds.code` | Loại truy cập — nhãn đọc từ `access_kinds` |
+| `case_id` | `BigInteger` | có | khóa ngoại → `requests.id` | Hồ sơ được xem; NULL khi truy cập không gắn hồ sơ (xuất nhật ký) hay khi hồ sơ đã bị xóa |
+| `attachment_id` | `BigInteger` | có |  | Tệp đính kèm được tải |
+| `channel` | `Text` | không |  | `ung-dung` — các màn của ứng dụng minh họa; `loi` — API `/core/v1` |
+| `details` | `JSONB` | có |  | Tham số của lần truy cập, ví dụ định dạng và khoảng thời gian của lần xuất |
+
+## access_kinds
+
+Một loại truy cập dữ liệu cá nhân được ghi kiểm toán (#431): xem chi tiết hồ sơ, xem liên hệ, tải tệp, xuất.
+
+Mô hình `AccessKind` trong `backend/app/models/quan_tri.py`.
+
+| Cột | Kiểu | Để trống | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `code` | `Text` | không | khóa chính | Mã loại, ví dụ `case-view`; dịch vụ ghi đúng các mã này (`app/kiem_toan.py`) |
+| `label` | `Text` | không |  | Nhãn tiếng Việt hiện trên màn Hệ thống |
+| `display_order` | `Integer` | không |  | Thứ tự trong ô chọn loại |
 
 ## attachment_file_types
 

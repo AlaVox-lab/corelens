@@ -27,6 +27,7 @@ from app.analytics.luu_tru_lanh import router as router_luu_tru
 from app.analytics.xuat_du_lieu import router as router_du_lieu_mo
 from app.auth.dependencies import VAI_TRO_QUAN_TRI, current_actor, current_claims, require_roles
 from app.cau_hinh.quan_tri import router as router_quan_tri
+from app.kiem_toan import router as router_kiem_toan
 from app.config import get_settings
 from app.db import SessionLocal, get_session
 from app.models.quan_tri import Delegation
@@ -401,6 +402,8 @@ app.include_router(router_khai_pha)
 app.include_router(router_tuong_tu)
 app.include_router(router_thong_bao, prefix="/me/notifications", tags=["Thông báo"])
 app.include_router(router_quan_tri)
+# Nhật ký truy cập dữ liệu cá nhân (#431): màn Hệ thống của ứng dụng, không thuộc lõi /core/v1
+app.include_router(router_kiem_toan)
 app.include_router(router_uy_quyen)
 app.include_router(router_thoi_gian_thuc)
 

@@ -24,10 +24,12 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import Request as YeuCauHttp
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
+from app.kiem_toan import XEM_HO_SO, XEM_LIEN_HE, ghi_truy_cap
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.config import get_settings
 from app.db import get_session
@@ -315,12 +317,14 @@ def hang_doi(
 
 
 @router.get("/requests/{case_id}", response_model=HoSoDieuPhoiRa)
-def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoDieuPhoiRa:
+def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> HoSoDieuPhoiRa:
     """Chi tiết một hồ sơ bất kỳ, kèm những thao tác người này làm được lúc này.
 
     Mở được cả hồ sơ đã rời hàng đợi — ngay sau khi điều phối viên chuyển hồ sơ về
     phòng ban, giao diện đưa họ về lại trang này để thấy kết quả, và lúc đó hồ sơ đã
     không còn ở trạng thái của hàng đợi nữa.
+
+    Mỗi lần mở ghi một dòng nhật ký truy cập (#431, app/kiem_toan.py), trừ hồ sơ do chính người gọi gửi.
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None:
@@ -328,7 +332,9 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoDieuPhoiRa:
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
         )
-    return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
+    ra = _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
+    ghi_truy_cap(yeu_cau, actor, XEM_HO_SO, ho_so=ho_so)
+    return ra
 
 
 @router.get(
@@ -342,13 +348,15 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoDieuPhoiRa:
 def lien_he(
     case_id: int,
     session: _Phien,
-    _: _Cua,
+    actor: _Cua,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    yeu_cau: YeuCauHttp,
 ) -> LienHeNguoiGuiRa:
     """Email và số điện thoại của người gửi, tra từ danh bạ lúc gọi (#131).
 
     Cùng cửa với trang chi tiết: điều phối viên mở được mọi hồ sơ nên tra được liên hệ
     của mọi người gửi. Lý do tách thành điểm cuối riêng ở `app/workflow/contact.py`.
+    Mỗi lần tra được ghi nhật ký truy cập (#431).
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None:
@@ -356,7 +364,9 @@ def lien_he(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
         )
-    return lien_he_nguoi_gui(danh_ba, ho_so)
+    ra = lien_he_nguoi_gui(danh_ba, ho_so)
+    ghi_truy_cap(yeu_cau, actor, XEM_LIEN_HE, ho_so=ho_so)
+    return ra
 
 
 @router.post("/requests/{case_id}/transitions", response_model=HoSoDieuPhoiRa)

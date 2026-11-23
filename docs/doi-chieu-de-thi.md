@@ -41,7 +41,7 @@ Hạn gửi bài: 17:00 ngày 06/12/2026. Chấm kho mã 07–09/12, trình di�
 
 | Nhóm | Đã có | Chưa có / ngoài phạm vi |
 |---|---|---|
-| Vận hành, giám sát, kiểm toán | Nhật ký sự kiện bất biến; nhật ký có cấu trúc kèm mã yêu cầu; điểm cuối sống, sẵn sàng, số đo; sao lưu tay và khôi phục có đối soát; **truyền phát sự kiện ra ngoài bằng webhook**: `/core/v1/webhooks`, ký HMAC, thử lại, con trỏ trên nhật ký chỉ ghi thêm (#390) | Trục truyền phát chuyên dụng (Kafka) — hướng mở rộng, cần ADR; sao lưu tự động theo lịch |
+| Vận hành, giám sát, kiểm toán | Nhật ký sự kiện bất biến; nhật ký có cấu trúc kèm mã yêu cầu; điểm cuối sống, sẵn sàng, số đo; sao lưu tay và khôi phục có đối soát; **truyền phát sự kiện ra ngoài bằng webhook**: `/core/v1/webhooks`, ký HMAC, thử lại, con trỏ trên nhật ký chỉ ghi thêm (#390); **nhật ký kiểm toán truy cập dữ liệu cá nhân** (#431): ai xem chi tiết hồ sơ, liên hệ người gửi, tải tệp của người khác, ai xuất nhật ký — chỉ ghi thêm, quản trị viên tra cứu trên màn Hệ thống và qua `GET /admin/access-audit` | Trục truyền phát chuyên dụng (Kafka) — hướng mở rộng, cần ADR; sao lưu tự động theo lịch |
 | Truyền thông, giao vận | Hàng đợi thông báo thư có thử lại (hộp thư đi trong cơ sở dữ liệu); **kết nối thời gian thực** bằng Server-Sent Events: PostgreSQL `NOTIFY` → `GET /me/stream` lọc theo quyền xem → cổng tự làm mới, hỏi định kỳ làm dự phòng (#387) | WebSocket hai chiều — chưa cần, cổng chỉ nhận |
 | Đa thuê ước, cá thể hóa | Ẩn danh hóa nhãn tên theo thời hạn lưu giữ (ADR-0009); lọc dữ liệu báo cáo theo phòng | Đa thuê ước; đa ngôn ngữ giao diện — ngoài phạm vi |
 | Két bí mật, chữ ký số | — | Ngoài phạm vi; bí mật nằm trong `infra/.env` |

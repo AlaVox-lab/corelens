@@ -18,10 +18,12 @@ from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import Request as YeuCauHttp
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
 from app.db import get_session
+from app.kiem_toan import TAI_TEP, ghi_truy_cap
 from app.models.case import CaseAttachment, Request
 from app.rate_limit import gioi_han_toc_do
 from app.storage import objects
@@ -129,8 +131,11 @@ def tai_len(
 
 
 @router.get("/{attachment_id}")
-def tai_ve(attachment_id: int, session: _Phien, actor: _Cua) -> Response:
-    """Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404."""
+def tai_ve(attachment_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> Response:
+    """Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.
+
+    Lần tải thành công ghi nhật ký truy cập kèm mã tệp (#431, app/kiem_toan.py), trừ người gửi tải tệp trên
+    hồ sơ của chính mình."""
     tep = session.get(CaseAttachment, attachment_id)
     ho_so = session.get(Request, tep.case_id) if tep is not None else None
     if tep is None or ho_so is None or not mo_duoc_ho_so(session, ho_so, actor):
@@ -146,6 +151,7 @@ def tai_ve(attachment_id: int, session: _Phien, actor: _Cua) -> Response:
             detail={"code": "storage-unavailable", "message": str(loi)},
         ) from loi
 
+    ghi_truy_cap(yeu_cau, actor, TAI_TEP, ho_so=ho_so, attachment_id=tep.id)
     return Response(
         content=noi_dung,
         media_type=tep.content_type,

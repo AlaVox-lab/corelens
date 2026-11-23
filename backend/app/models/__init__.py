@@ -13,7 +13,8 @@ Hai nhóm bảng, hai chủ sở hữu khác nhau:
   và nạp. Alembic được cấu hình bỏ qua chúng
 - `case` — hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ, do Alembic sở hữu
 - `van_hanh` — nhịp bộ quét nền, bộ đếm giới hạn tốc độ và khóa trùng lặp (#243, #253, #426), do Alembic sở hữu
-- `quan_tri` — nhật ký thay đổi cấu hình (#255) và ủy quyền khi vắng mặt (#252), do Alembic sở hữu
+- `quan_tri` — nhật ký thay đổi cấu hình (#255), ủy quyền khi vắng mặt (#252) và nhật ký truy cập dữ liệu cá
+  nhân (#431), do Alembic sở hữu
 - `luu_tru` — sổ các bản lưu trữ lạnh đã xuất ra kho đối tượng (#378), do Alembic sở hữu
 
 Nhập tệp này là đủ để `Base.metadata` biết toàn bộ bảng, nên `alembic/env.py` chỉ cần
@@ -22,7 +23,7 @@ một dòng import.
 
 from app.models.case import AttachmentFileType, CaseAttachment, CaseMessage, EventLog, Request
 from app.models.luu_tru import ColdArchive
-from app.models.quan_tri import ConfigChange, Delegation
+from app.models.quan_tri import AccessAuditLog, AccessKind, ConfigChange, Delegation
 from app.models.thong_bao import (
     NotificationDelivery,
     NotificationOutbox,
@@ -50,6 +51,8 @@ from app.models.workflow_config import (
 )
 
 __all__ = [
+    "AccessAuditLog",
+    "AccessKind",
     "AttachmentFileType",
     "CaseAttachment",
     "CaseMessage",

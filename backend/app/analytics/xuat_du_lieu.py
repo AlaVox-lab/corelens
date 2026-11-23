@@ -29,11 +29,13 @@ import xml.etree.ElementTree as ET
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import Request as YeuCauHttp
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
 from app.db import get_session
+from app.kiem_toan import XUAT_NHAT_KY, ghi_truy_cap
 from app.models.workflow_config import Process
 from app.workflow.context import Actor
 
@@ -117,7 +119,8 @@ def _gia_tri(v):
 @router.get("")
 def xuat_nhat_ky(
     session: Annotated[Session, Depends(get_session)],
-    _: Annotated[Actor, Depends(require_roles(VAI_TRO_XUAT))],
+    actor: Annotated[Actor, Depends(require_roles(VAI_TRO_XUAT))],
+    yeu_cau: YeuCauHttp,
     format: Annotated[
         Literal["csv", "json", "xes"], Query(description="csv, json, hoặc xes (IEEE 1849) cho công cụ khai phá quy trình")
     ] = "csv",
@@ -137,6 +140,8 @@ def xuat_nhat_ky(
 
     Mỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình
     thì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.
+
+    Mỗi lần xuất ghi một dòng nhật ký truy cập kèm định dạng, khoảng ngày, quy trình (#431, app/kiem_toan.py).
     """
     if tu and den and tu > den:
         raise HTTPException(
@@ -183,6 +188,11 @@ def xuat_nhat_ky(
         # Dấu BOM để bảng tính trên Windows nhận ra UTF-8 và hiện đúng chữ có dấu
         than = "\ufeff".encode("utf-8") + bo_dem.getvalue().encode("utf-8")
         kieu = "text/csv; charset=utf-8"
+    ghi_truy_cap(
+        yeu_cau, actor, XUAT_NHAT_KY,
+        details={"format": format, "from": tu.isoformat() if tu else None, "to": den.isoformat() if den else None,
+                 "process": process, "rows": len(dong)},
+    )
     return Response(
         content=than,
         media_type=kieu,

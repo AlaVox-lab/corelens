@@ -247,6 +247,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 | Khai phá quy trình | `/analytics/process-mining`, `/analytics/process-mining/recommendation` |
 | Hồ sơ tương tự | `/similar-cases/search`, `/similar-cases/abandon`, `/similar-cases/for-case/{case_id}` (#450) |
 | Quản trị cấu hình | `/admin/config`, `/admin/config/{loai}/{ma}` |
+| Nhật ký truy cập dữ liệu cá nhân | `/admin/access-audit`, `/admin/access-audit/kinds` (#431, mục 6.10) |
 | Vận hành | `/system/health`, `/sla/scan`, `/archive/scan` (#378), `/metrics`; công khai `/`, `/health`, `/health/live`, `/health/ready` |
 
 **Nhiều quy trình (Mức 2, #376).** Lõi phục vụ nhiều ứng dụng, mỗi ứng dụng một quy trình riêng, cùng một
@@ -1045,6 +1046,14 @@ dữ liệu cá nhân. Yêu cầu xóa được xử lý bằng ẩn danh hóa n
 dòng — tính chất chỉ ghi thêm và kết quả khai phá giữ nguyên. Thời hạn lưu giữ là cấu hình, mặc định giữ
 mãi. Bảng kiểm kê dữ liệu cá nhân và thiết kế cài đặt ở ADR-0009.
 
+*Ghi chú bổ sung bảng kiểm kê của ADR-0009* (bản ghi dặn thêm bảng có cột người thì cập nhật bằng ghi chú bổ sung,
+không sửa bản ghi):
+
+| Nơi | Dữ liệu | Ghi chú |
+|---|---|---|
+| `access_audit_log` (#431, bản sửa `0038`) | `actor`, `actor_label`; `case_id`, `attachment_id`, `details` | Ai đã xem dữ liệu cá nhân của người khác, lúc nào (mục 6.10). Chỉ ghi thêm. `actor_label` là nhãn tên như `event_log.actor_label`, nên thao tác ẩn danh hóa của ADR-0009 phải phủ cả bảng này |
+| `idempotency_keys` (#426, bản sửa `0037`) | `actor`; `response_body` | Mã người gọi lõi; thân phản hồi đã lưu là chi tiết hồ sơ (có nhãn tên), sống `IDEMPOTENCY_TTL_HOURS` giờ rồi bị dọn |
+
 ### 6.1. Cơ chế bảo đảm: một cửa duy nhất
 
 Nhật ký chỉ có giá trị nếu **không bao giờ thiếu bản ghi**. Một nhật ký thủng làm sai
@@ -1814,6 +1823,48 @@ biến (bỏ lọc riêng tư, bỏ xóa bài, bỏ so mốc sửa, bỏ công t
 `tri-thuc` và mô hình nhúng thật: viết một bài mới ("Laptop không kết nối được Wi-Fi văn phòng"), sau một lượt quét
 người gửi gõ "Laptop không vào được Wi-Fi" trên biểu mẫu thật thì khung gợi ý hiện đúng bài đó, bấm mở vào thẳng
 wiki; tắt wiki giữa chừng thì gợi ý vẫn hiện từ chỉ mục và gửi yêu cầu vẫn chạy.
+
+### 6.10. Nhật ký truy cập dữ liệu cá nhân (không gian `H`)
+
+**Đã cài đặt** — #431. Nhật ký sự kiện ghi mọi lần **đổi** hồ sơ; việc **xem** dữ liệu cá nhân của người khác
+trước đây không để lại vết. Bảng `access_audit_log` (bản sửa `0038`, mô hình `AccessAuditLog`) ghi bốn loại truy
+cập, mã nằm trong danh mục `access_kinds` nạp ngay ở bản sửa — nhãn tiếng Việt đọc từ bảng, không nằm trong mã:
+
+| Loại | Điểm cuối ghi |
+|---|---|
+| `case-view` — mở chi tiết hồ sơ | `GET /coordination/requests/{id}`, `GET /department/requests/{id}`, `GET /core/v1/workflow/requests/{id}` (kênh `loi`, gồm tài khoản dịch vụ). Ngăn xem nhanh của hàng đợi gọi chính điểm cuối chi tiết nên cũng được ghi |
+| `requester-contact` — xem liên hệ người gửi | Hai điểm cuối `…/requester-contact` (mọi chỗ gọi `lien_he_nguoi_gui`) |
+| `attachment-download` — tải tệp | `GET /attachments/{id}`, `GET /core/v1/files/{id}`; ghi cả `attachment_id` |
+| `event-log-export` — xuất nhật ký sự kiện | `GET /analytics/event-log`, `GET /core/v1/events` (CSV, JSON, XES); không gắn hồ sơ, `details` giữ định dạng, khoảng ngày, quy trình, số dòng |
+
+Mỗi dòng: `at` (đồng hồ cơ sở dữ liệu, UTC, như nhật ký sự kiện), `actor`, `actor_label` (nhãn chụp lúc truy cập
+như `event_log.actor_label`), `access_kind`, `case_id`, `attachment_id`, `channel` (`ung-dung` hay `loi`, xét trên
+đường thật của yêu cầu vì tệp và xuất nhật ký gắn ở cả hai nơi), `details`. Chỉ mục `(case_id, at)`, `(actor, at)`,
+`(at)`.
+
+- **Không ghi người gửi xem hồ sơ của chính mình** (hồ sơ có `requester_id` trùng người gọi), cả khi họ tải tệp
+  trên hồ sơ đó. Đó là dữ liệu của chính họ, không phải truy cập vào dữ liệu của người khác; ghi vào thì mỗi lần người
+  gửi mở trang theo dõi là một dòng, và dòng cần tìm chìm giữa chúng. Cũng không ghi danh sách, hàng đợi, tìm kiếm,
+  và **không ghi bước chuyển** — `POST …/transitions` trả chi tiết hồ sơ nhưng là một lần *làm*, đã có dòng nhật ký
+  sự kiện. Vì thế việc ghi gắn ở từng điểm cuối GET (biết kênh, biết tác nhân), không ở hàm dựng chi tiết dùng chung.
+- **Ghi sau khi đã kiểm quyền và đã có dữ liệu để trả**: lần bị 403/404 không có dòng.
+- **Phiên riêng, commit riêng** (`app/kiem_toan.py`, `ghi_truy_cap`): không lẫn vào giao dịch của yêu cầu — yêu cầu
+  hoàn tác không mất vết. Ghi hỏng thì chỉ ghi một dòng nhật ký lỗi có cấu trúc (`audit_kind`, `audit_actor`,
+  `audit_case_id`…, cùng định dạng JSON của `app/quan_sat.py`) và trang vẫn trả: kiểm toán không được thành điểm
+  hỏng của việc phục vụ người dùng. Bộ kiểm thử thay phiên ghi bằng phiên bỏ qua (`conftest.py`), trừ bài của #431
+  — không thì mọi bài đi qua các điểm cuối trên để lại dòng không xóa được trong cơ sở dữ liệu của cụm.
+- **Chỉ ghi thêm**: trigger chặn UPDATE và DELETE như `case_messages`, `case_feedback`. Ngoại lệ duy nhất là chính
+  hành động `ON DELETE SET NULL` của khóa ngoại `case_id`: trigger cho qua khi nó chạy bên trong trigger của khóa
+  ngoại (`pg_trigger_depth() > 1`) và chỉ gỡ `case_id`. Nhờ vậy xóa hồ sơ theo thời hạn lưu giữ (ADR-0009, việc
+  sau) không xóa vết kiểm toán; một câu `UPDATE … SET case_id = NULL` gõ tay vẫn bị chặn.
+- **Tra cứu**: `GET /admin/access-audit` (+ `/kinds` cho ô chọn loại), chỉ quản trị viên, chỉ ở ứng dụng — không
+  thuộc `/core/v1`. Lọc `case_id`, `actor` (mã đúng hệt hay một phần tên, không phân biệt dấu), `access_kind`,
+  `from`/`to` (mốc thời gian; không ghi múi là UTC; `to` không gồm chính mốc đó), phân trang `limit`/`offset`, mới
+  nhất trước; trả nhãn loại và mã hồ sơ hiển thị. Lần tra cứu không tự ghi dòng. Màn Hệ thống có khối "Nhật ký truy
+  cập dữ liệu cá nhân": bộ lọc trên địa chỉ trang như mọi danh sách (`frontend/app/he-thong/doc-truy-cap.ts`), ngày
+  người dùng chọn đổi sang mốc UTC của 00:00 giờ Việt Nam (`dauNgayUtc`).
+- **Lưu trữ lạnh không mang bảng này** (mục 6.3a): bản lưu bất biến, còn nhãn tên trong vết kiểm toán phải ẩn danh
+  hóa được theo ADR-0009. Thời hạn lưu giữ riêng cho bảng này chưa có — thuộc việc tiếp sau của ADR-0009.
 
 ---
 

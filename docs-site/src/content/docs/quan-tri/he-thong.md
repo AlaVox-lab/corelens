@@ -98,6 +98,39 @@ Khối gọi đúng API `/core/v1/webhooks` của lõi — làm trên cổng hay
 Đăng ký chỉ nhận sự kiện xảy ra **sau** lúc tạo. Khi có ít nhất một đăng ký đang bật, phần *Các dịch vụ* có
 thêm dòng nhịp **Bộ gửi webhook**. Cách viết bên nhận và kiểm chữ ký: `examples/goi-loi/nhan_webhook.py`.
 
+## Nhật ký truy cập dữ liệu cá nhân
+
+Nhật ký sự kiện ghi mọi lần **đổi** hồ sơ. Khối **Nhật ký truy cập dữ liệu cá nhân** cuối màn Hệ thống trả lời câu
+còn lại: **ai đã xem** dữ liệu cá nhân của người khác, lúc nào — phục vụ việc theo dõi xử lý dữ liệu cá nhân (Nghị
+định 13/2023/NĐ-CP). Bốn loại truy cập được ghi:
+
+| Loại | Khi nào |
+|---|---|
+| Xem chi tiết hồ sơ | Điều phối viên, phòng ban mở trang hồ sơ (kể cả ngăn xem nhanh của hàng đợi); ứng dụng khác đọc chi tiết hồ sơ qua API lõi |
+| Xem liên hệ người gửi | Thư điện tử và số điện thoại của người gửi hiện trên trang hồ sơ |
+| Tải tệp đính kèm | Ai đó tải một tệp — cột *Tệp* ghi tên tệp |
+| Xuất nhật ký sự kiện | Tải CSV, JSON, XES — cột *Hồ sơ* ghi định dạng và khoảng ngày đã xuất |
+
+**Không ghi** người gửi xem hồ sơ của chính mình (kể cả tải tệp mình đính kèm), xem danh sách, hàng đợi, tìm kiếm,
+và các thao tác trên hồ sơ — thao tác đã nằm trong nhật ký sự kiện. Lần bị từ chối (không có quyền, không thấy hồ
+sơ) cũng không ghi.
+
+- **Lọc**: mã hồ sơ (`YC-2026-0184` hay chỉ `184`), người (một phần tên, không cần gõ dấu, hay mã người), loại truy
+  cập, khoảng ngày theo giờ Việt Nam. Bấm **Lọc**; mỗi bộ lọc đang bật là một chip, bấm chip để bỏ. Địa chỉ trang
+  giữ bộ lọc — gửi đường dẫn cho người khác là họ thấy đúng kết quả đó
+- **Bảng**: mới nhất trước, mỗi trang 50 dòng. Cột *Kênh* là **Cổng** (các màn của cổng người dùng) hay **API lõi**
+  (ứng dụng khác gọi `/core/v1`, ví dụ tài khoản dịch vụ). Bấm mã hồ sơ: quản trị viên có cả vai điều phối thì mở
+  hồ sơ, còn không thì lọc nhật ký theo đúng hồ sơ đó. Màn hẹp hiện mỗi lượt thành một khối nhãn–giá trị
+- **Chỉ ghi thêm**: không ai sửa hay xóa được dòng nào, kể cả quản trị viên. Xóa hồ sơ thì dòng vẫn còn, chỉ mất
+  liên kết tới hồ sơ. Xem nhật ký này không tự sinh dòng mới
+- **Gọi bằng API**: `GET /admin/access-audit?case_id=…&actor=…&access_kind=…&from=…&to=…&limit=…&offset=…` bằng token
+  quản trị viên; `from`/`to` là mốc ISO 8601, không ghi múi giờ thì hiểu là UTC. Danh sách mã loại:
+  `GET /admin/access-audit/kinds`
+
+Ghi nhật ký hỏng (cơ sở dữ liệu chậm, mất kết nối) không chặn người dùng: trang vẫn mở, dịch vụ ghi một dòng lỗi
+có cấu trúc vào nhật ký vận hành (`Không ghi được nhật ký truy cập`, kèm loại, người, hồ sơ). Chưa có thời hạn
+lưu giữ riêng cho nhật ký này; nó không vào bản lưu trữ lạnh.
+
 ## Lưu trữ lạnh
 
 Dữ liệu lịch sử có thêm một bản ở **tầng lạnh** — kho đối tượng SeaweedFS. Bộ quét nền *Bộ lưu trữ lạnh*
