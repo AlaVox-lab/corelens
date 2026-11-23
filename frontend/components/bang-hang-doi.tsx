@@ -12,14 +12,25 @@
 // phím đều mở đúng hồ sơ, không cần mã.
 //
 // Tệp này không biết tên trạng thái hay vai trò nào: nhóm, nhãn, màu đều do trang truyền.
+//
+// Chọn nhiều (#440) chỉ bật khi trang truyền `chonNhieu` — hàng đợi điều phối. Không truyền thì bảng y
+// như trước: không cột ô chọn, không thanh thao tác. Chọn chỉ trong trang đang xem; đổi trang, tìm hay
+// lọc là bỏ chọn — mở ngăn xem nhanh (`?xem=`) thì không.
 
 import { AlarmClock, ChevronDown, CircleHelp, Clock, Inbox, MessageCircle, SearchX, Tag } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { MenuXepUrl, OTimUrl } from "@/components/loc-url";
 import { ManRong } from "@/components/man-rong";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
+import {
+  KetQuaHangLoatKhung,
+  ThanhHangLoat,
+  type ChonNhieu,
+  type KetQuaDaChay,
+} from "@/components/thanh-hang-loat";
 import { CACH_XEP_HANG, KHOA_XEP_HANG, type MaXepHang } from "@/lib/trang";
 
 export type DongHangDoi = {
@@ -70,14 +81,40 @@ export type CotHangDoi = {
   cuoi: string;
 };
 
-function Dong({ d, cot, thuTu }: { d: DongHangDoi; cot: CotHangDoi; thuTu: number }) {
+function Dong({
+  d,
+  cot,
+  thuTu,
+  chon,
+}: {
+  d: DongHangDoi;
+  cot: CotHangDoi;
+  thuTu: number;
+  /** Có mặt khi bảng bật chọn nhiều. */
+  chon?: { da: boolean; doi: () => void };
+}) {
   return (
     <tr
       className="dong vao"
       data-qua={d.cuoi.muc === "qua" ? "" : undefined}
       data-dang-xem={d.dangXem ? "" : undefined}
+      data-chon={chon?.da ? "" : undefined}
       style={{ ["--i" as string]: Math.min(thuTu, 6) }}
     >
+      {chon && (
+        // Ô chọn nằm trên liên kết phủ dòng: bấm ô (cả phần đệm quanh nó) chỉ chọn, không mở ngăn
+        <td className="w o-chon-dong">
+          <label>
+            <input
+              type="checkbox"
+              checked={chon.da}
+              onChange={chon.doi}
+              aria-label={`Chọn hồ sơ ${d.ma}`}
+              data-chon-ho-so={d.id}
+            />
+          </label>
+        </td>
+      )}
       <td>
         <div className="o-ho-so">
           {/* Bấm dòng mở ngăn xem nhanh ngay bên cạnh (#233); trang đầy đủ ở nút trong ngăn */}
@@ -179,6 +216,7 @@ export function BangHangDoi({
   xoaLoc,
   khiTrong,
   ngan,
+  chonNhieu,
 }: {
   /** Một trang của hàng đợi, dịch vụ đã lọc và xếp. */
   nhom: NhomHangDoi[];
@@ -198,12 +236,38 @@ export function BangHangDoi({
   khiTrong: { tieuDe: string; cau: string };
   /** Ngăn xem nhanh của hồ sơ đang mở (#233), cạnh bảng. */
   ngan?: React.ReactNode;
+  /** Bật cột ô chọn và thanh thao tác hàng loạt (#440). Không truyền: bảng như cũ. */
+  chonNhieu?: ChonNhieu;
 }) {
   const [thu, datThu] = useState<Set<string>>(new Set());
   const loc = nhom.filter((n) => n.dong.length > 0);
 
+  // Lựa chọn gắn với bộ lọc và trang lúc chọn: địa chỉ đổi (trừ `xem`) thì coi như chưa chọn gì
+  const sp = useSearchParams();
+  const khoaChon = [...sp.entries()].filter(([k]) => k !== "xem").map(([k, v]) => `${k}=${v}`).join("&");
+  const [chon, datChon] = useState<{ khoa: string; ids: ReadonlySet<number> }>({ khoa: khoaChon, ids: new Set() });
+  const [ketQua, datKetQua] = useState<KetQuaDaChay | null>(null);
+  const idsChon = chon.khoa === khoaChon ? chon.ids : new Set<number>();
+  const moiDong = loc.flatMap((n) => n.dong);
+  const dangChon = moiDong.filter((d) => idsChon.has(d.id));
+  const chonHet = moiDong.length > 0 && dangChon.length === moiDong.length;
+
+  function doiChon(ids: number[], bat: boolean) {
+    // Cập nhật theo giá trị mới nhất: kết quả hàng loạt về sau một lần gọi mạng, lúc đó bảng đã dựng lại
+    datChon((cu) => {
+      const moi = new Set(cu.khoa === khoaChon ? cu.ids : []);
+      for (const id of ids) {
+        if (bat) moi.add(id);
+        else moi.delete(id);
+      }
+      return { khoa: khoaChon, ids: moi };
+    });
+  }
+
   const soCot =
-    2 + [cot.nguoiGui, cot.nguoiXuLy, cot.loai, cot.trangThai, cot.tiepTheo].filter(Boolean).length;
+    2 +
+    (chonNhieu ? 1 : 0) +
+    [cot.nguoiGui, cot.nguoiXuLy, cot.loai, cot.trangThai, cot.tiepTheo].filter(Boolean).length;
 
   return (
     <>
@@ -216,6 +280,10 @@ export function BangHangDoi({
         </div>
       </div>
       {chip}
+
+      {chonNhieu && (
+        <KetQuaHangLoatKhung ketQua={ketQua} goc={chonNhieu.goc} khiDong={() => datKetQua(null)} />
+      )}
 
       <div className="the">
         {loc.length === 0 ? (
@@ -234,9 +302,26 @@ export function BangHangDoi({
             <ManRong icon={Inbox} tieuDe={khiTrong.tieuDe} cau={khiTrong.cau} />
           )
         ) : (
-          <table className="bang">
+          <table className="bang" data-chon-nhieu={chonNhieu ? "" : undefined}>
             <thead>
               <tr>
+                {chonNhieu && (
+                  <th className="w o-chon-dong">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={chonHet}
+                        // Chọn một phần: không có thuộc tính HTML nào cho trạng thái này, đặt bằng mã
+                        ref={(o) => {
+                          if (o) o.indeterminate = dangChon.length > 0 && !chonHet;
+                        }}
+                        onChange={() => doiChon(moiDong.map((d) => d.id), !chonHet)}
+                        aria-label="Chọn tất cả hồ sơ trên trang này"
+                      />
+                      <span className="chi-man-hep">Chọn tất cả trên trang này</span>
+                    </label>
+                  </th>
+                )}
                 <th>Hồ sơ</th>
                 {cot.nguoiGui && <th className="w an-hep">Người gửi</th>}
                 {cot.nguoiXuLy && <th className="w an-hep">Người xử lý</th>}
@@ -275,13 +360,34 @@ export function BangHangDoi({
                       </th>
                     </tr>
                   )}
-                  {!daThu && n.dong.map((d, i) => <Dong key={d.id} d={d} cot={cot} thuTu={i} />)}
+                  {!daThu &&
+                    n.dong.map((d, i) => (
+                      <Dong
+                        key={d.id}
+                        d={d}
+                        cot={cot}
+                        thuTu={i}
+                        chon={
+                          chonNhieu
+                            ? { da: idsChon.has(d.id), doi: () => doiChon([d.id], !idsChon.has(d.id)) }
+                            : undefined
+                        }
+                      />
+                    ))}
                 </tbody>
               );
             })}
           </table>
         )}
       </div>
+      {chonNhieu && (
+        <ThanhHangLoat
+          chonNhieu={chonNhieu}
+          dangChon={dangChon}
+          boChon={(ids) => (ids ? doiChon(ids, false) : datChon({ khoa: khoaChon, ids: new Set() }))}
+          khiXong={datKetQua}
+        />
+      )}
       {chan}
       {ngan}
     </>

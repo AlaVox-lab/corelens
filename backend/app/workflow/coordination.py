@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_roles
 from app.auth.directory import KeycloakDirectory, get_directory
+from app.config import get_settings
 from app.db import get_session
 from app.models.case import EventLog, Request
 from app.rate_limit import gioi_han_toc_do
@@ -38,13 +39,27 @@ from app.models.workflow_config import (
     Transition,
     TransitionRole,
 )
+from app.rules.guards import permitted_fields, truong_bat_buoc, truong_can_nhap
 from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
+from app.workflow.danh_gia import danh_gia_cua
 from app.workflow.context import Actor
-from app.workflow.engine import ma_quy_trinh_ung_dung, my_primary_steps, rule_sets_in_use
+from app.workflow.engine import (
+    _nhan_trang_thai,
+    ma_quy_trinh_ung_dung,
+    my_primary_steps,
+    rule_sets_in_use,
+    xet_cac_canh,
+)
 from app.workflow.engine import perform_transition as thuc_hien_chuyen
-from app.workflow.errors import TransitionError
+from app.workflow.errors import (
+    CaseNotFound,
+    FieldNotPermitted,
+    GuardViolation,
+    TransitionError,
+    TransitionNotAllowed,
+)
 from app.workflow.messages import MessageRejected, gui_loi_nhan
 from app.workflow.routes import (
     _buoc_cua_toi,
@@ -59,19 +74,27 @@ from app.workflow.routes import (
     _o_trang_thai,
     _tom_tat,
     goi_y_ra,
+    xep_o_nhap,
 )
 from app.intelligence.goi_y import goi_y_loai, goi_y_phong, goi_y_uu_tien
 from app.intelligence.nguoi_xu_ly import hen_goi_y_neu_ve_phong
 from app.workflow.phan_trang import ThamSoTrang, cat_trang, khop_tim, tham_so_trang
 from app.workflow.schemas import (
+    ChuyenHangLoatVao,
     ChuyenTrangThaiCoTruongVao,
+    DanhSachThaoTacHangLoatRa,
     GuiLoiNhanVao,
     HangDoiRa,
     HoSoDieuPhoiRa,
+    KetQuaHangLoatRa,
     LienHeNguoiGuiRa,
+    LoiHangLoatRa,
     MucHangDoiRa,
+    MucHangLoatRa,
     NhanCoMa,
     NhomHangDoiRa,
+    ThaoTacHangLoatRa,
+    TruongHangLoatRa,
 )
 
 # Mã vai trò mở cửa buồng lái. Đây là tên duy nhất của một vai trò nằm trong tệp này:
@@ -155,6 +178,8 @@ def _dung_chi_tiet_dieu_phoi(
         suggested_request_type=goi_y_ra(goi_y_loai(session, ho_so)),
         suggested_priority=goi_y_ra(goi_y_uu_tien(session, ho_so)),
         requested_by_me=ho_so.requester_id == actor.id,
+        # Đánh giá của người gửi (#433) — điểm kèm nhận xét, chỉ đọc
+        feedback=danh_gia_cua(session, ho_so.id),
     )
 
 
@@ -383,6 +408,243 @@ def chuyen_trang_thai(
     # Hồ sơ vừa về phòng: gợi ý người xử lý tính ở nền, sau khi phản hồi đã về (#318)
     hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
     return _dung_chi_tiet_dieu_phoi(session, ho_so, actor)
+
+
+# ---------------------------------------------------------------------------
+# Thao tác hàng loạt (#440)
+# ---------------------------------------------------------------------------
+#
+# Một VÒNG LẶP trên cửa chuyển trạng thái duy nhất, không phải đường vòng quanh nó: mỗi hồ sơ một
+# lần `perform_transition`, một giao dịch, một dòng nhật ký — đúng như điều phối viên bấm lần lượt
+# từng hồ sơ ở điểm cuối trên. Hồ sơ bị chặn thì hoàn tác riêng nó, đứng nguyên, vào kết quả kèm mã
+# và thông điệp của chính lỗi engine; lô vẫn đi tiếp.
+#
+# Bước nào làm được hàng loạt là cấu hình (`DXLAB_BULK_ACTIVITIES`, mã hoạt động của bộ quy tắc);
+# trạng thái nguồn, nhãn, trường cần nhập đều tra từ `transitions` và ràng buộc trên cạnh.
+
+
+def _cac_thao_tac_hang_loat(session: Session) -> dict[str, tuple[ThaoTacHangLoatRa, frozenset[str]]]:
+    """Bước làm được hàng loạt, kèm tập trường mà các cạnh của bước đó cho đặt — theo thứ tự khai.
+
+    Một bước là mọi cạnh người mang mã hoạt động đó mà vai điều phối đi được, ở mọi bộ quy tắc còn hồ
+    sơ đang mở — như hàng đợi (#299). Mã khai trong cấu hình mà không có cạnh nào như vậy thì bỏ.
+    """
+    ma_cau_hinh = get_settings().bulk_activity_codes
+    cac_bo = rule_sets_in_use(session, ma_quy_trinh_ung_dung(session))
+    theo_ma: dict[str, list[Transition]] = {}
+    for canh in session.scalars(
+        select(Transition)
+        .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+        .where(
+            Transition.rule_set_id.in_(cac_bo),
+            Transition.is_system.is_(False),
+            Transition.activity_code.in_(ma_cau_hinh),
+            TransitionRole.role_code == VAI_TRO_DIEU_PHOI,
+        )
+        .order_by(Transition.display_order, Transition.id)
+    ).unique():
+        theo_ma.setdefault(canh.activity_code, []).append(canh)
+
+    bang = _bang_trang_thai_nhieu(session, cac_bo)
+    ket_qua: dict[str, tuple[ThaoTacHangLoatRa, frozenset[str]]] = {}
+    for ma in ma_cau_hinh:
+        cac_canh = theo_ma.get(ma)
+        if not cac_canh:
+            continue
+        nguon: dict[str, NhanCoMa] = {}
+        for c in cac_canh:
+            trang_thai = bang[c.rule_set_id].get(c.from_state)
+            nguon.setdefault(c.from_state, NhanCoMa(code=c.from_state, label=trang_thai.label if trang_thai else c.from_state))
+        can_nhap = frozenset().union(*(truong_can_nhap(c.guard_codes) for c in cac_canh))
+        bat_buoc = frozenset().union(*(truong_bat_buoc(c.guard_codes) for c in cac_canh))
+        ket_qua[ma] = (
+            ThaoTacHangLoatRa(
+                activity_code=ma,
+                activity_label=cac_canh[0].activity_label,
+                from_states=list(nguon.values()),
+                fields=[TruongHangLoatRa(code=t, required=t in bat_buoc) for t in xep_o_nhap(can_nhap)],
+                requires_note=any(c.requires_note for c in cac_canh),
+                note_label=next((c.note_label for c in cac_canh if c.note_label), None),
+            ),
+            frozenset().union(*(permitted_fields(c.guard_codes) for c in cac_canh)),
+        )
+    return ket_qua
+
+
+@router.get("/bulk-transitions", response_model=DanhSachThaoTacHangLoatRa)
+def thao_tac_hang_loat(session: _Phien, _: _Cua) -> DanhSachThaoTacHangLoatRa:
+    """Những bước điều phối viên làm được cho nhiều hồ sơ một lần, và lô lớn nhất (#440).
+
+    Giao diện dựng nút trên thanh thao tác và ô trong hộp thoại từ đây — không biết mã bước nào.
+    """
+    return DanhSachThaoTacHangLoatRa(
+        max_cases=get_settings().bulk_max_cases,
+        actions=[ra for ra, _ in _cac_thao_tac_hang_loat(session).values()],
+    )
+
+
+def _canh_cua_buoc(session: Session, ho_so: Request, ma_buoc: str, actor: Actor) -> Transition | None:
+    """Cạnh mang mã bước người dùng chọn, trong các cạnh rời trạng thái hiện tại của hồ sơ.
+
+    Thường chỉ một cạnh. Một trạng thái có nhiều cạnh cùng mã (như ba cạnh "Bổ sung thông tin") thì
+    lấy cạnh đầu tiên tác nhân đi được, xét bằng cùng hàm xét cạnh của engine (#424); không cạnh nào
+    đi được thì vẫn trả cạnh đầu để engine báo đúng lý do của nó.
+    """
+    cac_canh = session.scalars(
+        select(Transition)
+        .where(
+            Transition.rule_set_id == ho_so.rule_set_id,
+            Transition.from_state == ho_so.current_state,
+            Transition.activity_code == ma_buoc,
+            Transition.is_system.is_(False),
+        )
+        .order_by(Transition.display_order, Transition.id)
+    ).all()
+    if len(cac_canh) <= 1:
+        return cac_canh[0] if cac_canh else None
+    di_duoc = {c.id for c, ly_do in xet_cac_canh(session, ho_so, actor, dung_som=True) if not ly_do}
+    return next((c for c in cac_canh if c.id in di_duoc), cac_canh[0])
+
+
+def _loi_hang_loat(loi: TransitionError) -> LoiHangLoatRa:
+    return LoiHangLoatRa(
+        code=loi.code,
+        message=loi.message,
+        guard=loi.guard_code if isinstance(loi, GuardViolation) else None,
+    )
+
+
+@router.post(
+    "/bulk-transitions",
+    response_model=KetQuaHangLoatRa,
+    dependencies=[Depends(gioi_han_toc_do("bulk-transition"))],
+    responses={422: {"description": "Lô quá lớn, trùng hồ sơ, bước không làm được hàng loạt, hay trường ngoài cạnh"}},
+)
+def chuyen_hang_loat(
+    du_lieu: ChuyenHangLoatVao,
+    session: _Phien,
+    actor: _Cua,
+    danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    tac_vu_nen: BackgroundTasks,
+) -> KetQuaHangLoatRa:
+    """Đi một bước cho cả lô hồ sơ; kết quả từng hồ sơ theo đúng thứ tự gửi lên (#440).
+
+    Lỗi của cả lô (422, không hồ sơ nào đổi): lô vượt `DXLAB_BULK_MAX_CASES`, trùng hồ sơ, bước không
+    nằm trong các bước hàng loạt, hay gửi trường mà không cạnh nào của bước cho đặt — cùng mã
+    `field-not-permitted` như điểm cuối một hồ sơ.
+
+    Còn lại là chuyện của từng hồ sơ, qua đúng đường của điểm cuối một hồ sơ: kiểm người được giao,
+    `perform_transition`, commit, hẹn tác vụ nền sau khi chuyển. Thông báo thư và luồng cập nhật thời
+    gian thực đi theo từng lần chuyển như cũ — hàng đợi thư cùng giao dịch, trigger của cơ sở dữ liệu.
+    Không dấu giữ hay ghi đè gợi ý: không ai xem thẻ gợi ý của từng hồ sơ (`record_suggestion`).
+    """
+    cau_hinh = get_settings()
+    if len(du_lieu.case_ids) > cau_hinh.bulk_max_cases:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "bulk-too-many-cases",
+                "message": (
+                    f"Mỗi lần làm hàng loạt tối đa {cau_hinh.bulk_max_cases} hồ sơ — lô này có "
+                    f"{len(du_lieu.case_ids)}. Chia thành nhiều lô."
+                ),
+            },
+        )
+    if len(set(du_lieu.case_ids)) != len(du_lieu.case_ids):
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "bulk-duplicate-cases", "message": "Danh sách hồ sơ có mục trùng nhau."},
+        )
+    buoc = _cac_thao_tac_hang_loat(session).get(du_lieu.activity_code)
+    if buoc is None:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "bulk-activity-not-supported",
+                "message": f"Bước '{du_lieu.activity_code}' không làm hàng loạt được.",
+            },
+        )
+    thao_tac, cho_dat = buoc
+    ngoai_canh = set(du_lieu.changes) - cho_dat
+    if ngoai_canh:
+        raise _bao_loi(
+            FieldNotPermitted(
+                ngoai_canh,
+                f"Thao tác '{thao_tac.activity_label}' không đặt được {', '.join(sorted(ngoai_canh))}.",
+            )
+        )
+
+    cac_muc: list[MucHangLoatRa] = []
+    for ma in du_lieu.case_ids:
+        ma_hien_thi: str | None = None
+        try:
+            # Nạp KÈM khóa dòng, như chính engine: trạng thái dùng để chọn cạnh không đổi được tới lúc
+            # engine khóa lại trong cùng giao dịch. `get` có `with_for_update` luôn phát câu lệnh, kể
+            # cả khi hồ sơ đã nằm trong phiên, nên lệnh khóa bên trong engine vẫn chạy
+            ho_so = session.get(Request, ma, with_for_update=True)
+            if ho_so is None:
+                raise CaseNotFound(f"Không tìm thấy hồ sơ mang định danh {ma}.")
+            ma_hien_thi = _ma_ho_so(ho_so)
+            bo, tu = ho_so.rule_set_id, ho_so.current_state
+            canh = _canh_cua_buoc(session, ho_so, du_lieu.activity_code, actor)
+            if canh is None:
+                raise TransitionNotAllowed(
+                    f"Hồ sơ đang ở “{_nhan_trang_thai(session, bo, tu)}” — "
+                    f"bước “{thao_tac.activity_label}” không đi từ trạng thái này."
+                )
+            den = canh.to_state
+            ten_nguoi_duoc_giao = kiem_nguoi_duoc_giao(
+                session, danh_ba, case_id=ma, to_state=den, actor=actor, changes=du_lieu.changes
+            )
+            ho_so = thuc_hien_chuyen(
+                session,
+                case_id=ma,
+                to_state=den,
+                actor=actor,
+                note=du_lieu.note,
+                changes=du_lieu.changes,
+                assignee_label=ten_nguoi_duoc_giao,
+                record_suggestion=False,
+            )
+        except TransitionError as loi:
+            session.rollback()
+            cac_muc.append(MucHangLoatRa(case_id=ma, code=ma_hien_thi, ok=False, error=_loi_hang_loat(loi)))
+            continue
+        except HTTPException as loi:
+            # Danh bạ không trả lời, người được giao không nhận được việc — chỉ hồ sơ này hỏng
+            session.rollback()
+            chi_tiet = loi.detail if isinstance(loi.detail, dict) else {}
+            cac_muc.append(
+                MucHangLoatRa(
+                    case_id=ma,
+                    code=ma_hien_thi,
+                    ok=False,
+                    error=LoiHangLoatRa(
+                        code=str(chi_tiet.get("code", "transition-error")),
+                        message=str(chi_tiet.get("message", loi.detail)),
+                    ),
+                )
+            )
+            continue
+
+        session.commit()
+        hen_goi_y_neu_ve_phong(tac_vu_nen, session, ho_so)
+        cac_muc.append(
+            MucHangLoatRa(
+                case_id=ma,
+                code=ma_hien_thi,
+                ok=True,
+                to_state=den,
+                to_state_label=_nhan_trang_thai(session, bo, den),
+            )
+        )
+
+    return KetQuaHangLoatRa(
+        activity_code=du_lieu.activity_code,
+        total=len(cac_muc),
+        succeeded=sum(m.ok for m in cac_muc),
+        items=cac_muc,
+    )
 
 
 @router.post(

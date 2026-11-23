@@ -1,6 +1,6 @@
 ---
 title: Điều phối viên
-description: Phân loại, đặt mức ưu tiên, chọn phòng ban cho từng hồ sơ, chuyển lại khi bị từ chối.
+description: Phân loại, đặt mức ưu tiên, chọn phòng ban cho từng hồ sơ hay cả lô, chuyển lại khi bị từ chối.
 sidebar:
   order: 3
 ---
@@ -35,6 +35,48 @@ sơ, Esc đóng ngăn; *Mở trang đầy đủ* để xem trao đổi và tệp
    được
 3. Thiếu thông tin thì **Yêu cầu bổ sung thông tin** trước khi phân loại — người gửi trả lời xong,
    hồ sơ quay về đúng chỗ bạn hỏi
+
+## Làm hàng loạt
+
+Nhiều hồ sơ cùng loại, cùng phòng thì không phải mở từng hồ sơ. Đầu mỗi dòng hàng đợi có một ô chọn;
+ô ở đầu bảng chọn cả trang đang xem. Bấm ô chọn không mở ngăn xem nhanh — bấm phần còn lại của dòng
+thì vẫn mở như cũ. Chọn chỉ trong trang đang xem: sang trang khác, tìm hay đổi bộ lọc là bỏ chọn.
+
+Chọn từ một hồ sơ trở lên thì dưới bảng hiện **thanh thao tác**: số hồ sơ đã chọn, nút **Phân loại yêu
+cầu**, nút **Chuyển về phòng ban**, nút **Bỏ chọn**. Bấm một nút mở hộp thoại:
+
+- **Phân loại yêu cầu** — chọn **một mức ưu tiên** cho cả lô (điền sẵn mức mặc định). Ô loại yêu cầu
+  mặc định *Giữ nguyên ở từng hồ sơ* — mỗi hồ sơ giữ loại người gửi chọn; chọn một loại thì áp chung
+- **Chuyển về phòng ban** — chọn **một phòng** cho cả lô, bắt buộc
+
+Hộp thoại liệt kê mã các hồ sơ sẽ áp, và nói trước nếu có hồ sơ sẽ **bỏ qua vì đang ở trạng thái
+khác** — ví dụ hồ sơ chưa phân loại khi bạn chuyển phòng; hồ sơ bỏ qua không được gửi đi. Nút xác nhận
+ghi rõ số hồ sơ. Đây chỉ là giá trị bạn chọn: không có lối nhận gợi ý của hệ thống cho cả lô, muốn theo
+gợi ý thì làm từng hồ sơ.
+
+Mỗi lần tối đa **50 hồ sơ** (quản trị viên đổi được, biến `BULK_MAX_CASES` ở trang
+[Cấu hình](../../cai-dat/cau-hinh/)). Lô lớn hơn thì hộp thoại khóa nút xác nhận và nói bỏ bớt bao
+nhiêu hồ sơ.
+
+### Đọc kết quả
+
+Mỗi hồ sơ vẫn đi như khi bạn làm từng hồ sơ: qua đủ các bước kiểm, một dòng trên dòng thời gian của
+chính nó. Xong thì trên bảng hiện **Đã chuyển 18/20 hồ sơ** và danh sách hồ sơ **bị chặn** kèm lý do —
+mã hồ sơ bấm được để mở. Hồ sơ bị chặn đứng nguyên, không có gì ghi lại, và **vẫn được chọn** để bạn
+sửa rồi làm lại; hồ sơ đã chuyển thì tự bỏ chọn. Lý do hay gặp:
+
+- *Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng* — bạn không tự điều
+  phối hồ sơ của mình
+- *Hồ sơ đang ở … — bước … không đi từ trạng thái này* — người khác vừa xử lý hồ sơ đó
+- *Người gửi chưa chọn loại yêu cầu, nên phải chọn khi phân loại* — chọn một loại trong hộp thoại, hay
+  mở hồ sơ làm riêng
+
+## Đánh giá của người gửi
+
+Khi xác nhận đạt, người gửi chấm 1–5 sao kèm nhận xét nếu muốn. Hồ sơ có điểm thì trang hồ sơ có khối
+*Đánh giá của người gửi* — chỉ để đọc, mới nhất trước nếu hồ sơ đã mở lại và xác nhận nhiều lần. Mục
+**Báo cáo** có hàng mức hài lòng theo phòng: điểm trung bình, tỷ lệ hồ sơ được chấm, phân bố điểm — chỉ
+số tổng hợp, không có chữ nhận xét.
 
 ## Khi phòng ban trả hồ sơ
 

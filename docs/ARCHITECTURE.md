@@ -219,7 +219,7 @@ cuối của ứng dụng không lọt vào lõi mà không ai hay.
 
 | Phần của ứng dụng | Đường |
 |---|---|
-| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, lời nhắn, liên hệ người gửi |
+| Buồng lái điều phối | `/coordination/*` — hàng đợi, chi tiết, bước chuyển, thao tác hàng loạt (#440), lời nhắn, liên hệ người gửi |
 | Buồng lái phòng ban | `/department/*` — cùng các phần như trên |
 | Lời nhắn và hộp thư | `POST /requests/{case_id}/messages`, `/inbox`, `/inbox/unread`, `/inbox/{case_id}/read` |
 | Ủy quyền khi vắng mặt | `/delegations`, `/delegations/members`, `/delegations/{ma}/revoke` |
@@ -1058,6 +1058,19 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
   nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
 
+**Thao tác hàng loạt là vòng lặp trên cửa này, không phải đường vòng (#440).** Điều phối viên chọn
+nhiều hồ sơ trên hàng đợi rồi đi một bước cho cả lô (`POST /coordination/bulk-transitions`). Điểm cuối
+đi **từng hồ sơ một**, mỗi hồ sơ một giao dịch: khóa dòng, chọn cạnh mang mã bước người dùng chọn trong
+các cạnh rời trạng thái hiện tại, kiểm người được giao, gọi `perform_transition`, commit, hẹn tác vụ
+nền như điểm cuối một hồ sơ. Nên 20 hồ sơ là đúng 20 dòng nhật ký, mỗi dòng qua đủ năm bước; hồ sơ bị
+chặn thì hoàn tác riêng nó, đứng nguyên, vào kết quả kèm mã và thông điệp của chính lỗi engine, lô vẫn
+đi tiếp. Bước nào làm được hàng loạt là cấu hình (`DXLAB_BULK_ACTIVITIES`, mã hoạt động của bộ quy tắc);
+trạng thái nguồn, nhãn, ô cần nhập tra từ `transitions` và ràng buộc trên cạnh — ô bắt buộc theo cờ
+`required` của ràng buộc (`truong_bat_buoc`), ô còn lại để trống là giữ giá trị của từng hồ sơ. Chỉ khác
+một chỗ: lần chuyển hàng loạt không ghi dấu giữ hay ghi đè gợi ý (`record_suggestion=False`), vì không ai
+xem thẻ gợi ý của từng hồ sơ — đếm vào thì tỷ lệ ghi đè mất nghĩa. Không có lối "nhận gợi ý cho cả lô".
+Lô lớn nhất là `DXLAB_BULK_MAX_CASES`; API lõi `/core/v1` không có điểm cuối này.
+
 Bảo đảm này còn được kiểm bằng **kiểm thử dựa trên tính chất** (#441):
 `backend/tests/test_tinh_chat_may_trang_thai.py` để Hypothesis sinh chuỗi thao tác ngẫu nhiên trên mọi
 quy trình — tác nhân bất kỳ, cạnh bất kỳ của bảng `transitions`, nhập liệu đúng lẫn sai — và sau mỗi
@@ -1106,6 +1119,24 @@ Quy tắc một câu: **thao tác đổi hồ sơ thì là cạnh; thao tác kh�
 | Nhận việc về mình, sửa nội dung ở *Đã gửi* | Người xử lý; tiêu đề, mô tả, loại | **Cạnh tự trỏ** — trạng thái giữ nguyên |
 | Lời nhắn hai chiều, hỏi tiến độ, nhắn nội bộ | Không đổi gì | Bảng lời nhắn `case_messages` (#128, #156) — không phải cạnh, không vào `event_log` |
 | Đánh dấu đã đọc lời nhắn | Không đổi gì | Bảng `case_message_reads` (#155) — mốc đã đọc của từng người, mỗi cuộc một mốc (#156), không vào `event_log` |
+| Chấm mức hài lòng khi xác nhận hoàn tất | Không đổi trường nào | Bảng `case_feedback` (#433) — đi **cùng giao dịch** với lần chuyển của cạnh mang cờ `transitions.collects_feedback`, nhưng không qua engine, không vào `changes` hay `event_log` |
+
+**Phần đánh giá mức hài lòng** (#433, `backend/app/workflow/danh_gia.py`). Người gửi chấm 1–5 kèm
+nhận xét, đều tùy chọn, ngay trong bước Xác nhận đạt. Cạnh nào cho chấm là dữ liệu — cột
+`transitions.collects_feedback`, bật cho cạnh `confirm` của quy trình mặc định (migration `0036` cho cụm
+cũ, `infra/seed/01-quy-tac-quy-trinh.sql` cho cụm mới); `sao_chep` chép cột này như mọi cột cấu hình. Điểm
+cuối chuyển trạng thái của người gửi nhận khối `feedback` tùy chọn: kiểm cờ của cạnh TRƯỚC khi chuyển
+(`feedback-not-accepted`, hồ sơ không đổi), gọi `perform_transition` như cũ, rồi ghi một dòng
+`case_feedback` gắn `event_id` của dòng nhật ký vừa sinh, rồi mới commit — hỏng ở đâu thì cả hai cùng
+hoàn tác (`di_buoc(..., truoc_commit=)`). Vì sao không vào engine: điểm không đổi trường quyết định nào
+của hồ sơ, nên theo ADR-0005 nó là thao tác không đổi hồ sơ như lời nhắn; đưa nó vào `changes` thì nhật
+ký — nguồn của khai phá quy trình — mang dữ liệu không phải sự kiện quy trình. Mỗi lần xác nhận có chấm
+một dòng (mở lại rồi xác nhận lần nữa có dòng thứ hai); bảng chỉ ghi thêm, trigger chặn sửa và xóa.
+Bảng **không lưu tên người** — người chấm là người gửi của hồ sơ, tra qua `case_id` — nên việc ẩn danh
+hóa nhãn tên của ADR-0009 không phải đụng tới bảng này; nhận xét là chữ tự do như mô tả hồ sơ. Chi tiết
+hồ sơ của người gửi, điều phối viên, phòng ban trả `feedback`; lõi `/core/v1` không đổi (cổng người gửi
+dùng lược đồ con `HoSoNguoiGuiRa`, thêm cờ `collects_feedback` trên cạnh). Bảng điều khiển chỉ có số
+tổng hợp, không có chữ nhận xét.
 
 Vì sao thao tác đổi hồ sơ mà không đổi trạng thái vẫn phải là cạnh: mọi thay đổi trên hồ
 sơ cần một dòng nhật ký giữ giá trị cũ (cột `changes`), cần qua kiểm quyền và ràng buộc
@@ -1235,6 +1266,7 @@ sau khai phá quy trình ở tầng `I`. Chỉ số không tính ở ba nơi —
 | `bao_cao_nhat_ky` | một sự kiện, kèm sự kiện mở đầu `create-case` dựng từ lúc tạo | dữ liệu xuất, tầng `I` |
 | `bao_cao_goi_y` | một gợi ý đã được giữ hay ghi đè: trường, nguồn, giá trị gợi ý và giá trị chọn (migration `0016`, #239) | Tỷ lệ ghi đè gợi ý |
 | `bao_cao_thoi_gian_trang_thai` | một lượt hồ sơ ở một trạng thái chưa kết thúc: lúc vào, lúc ra, giây và giờ làm việc — cùng định nghĩa lượt với dịch vụ khai phá (migration `0034`, #445) | Thời gian chờ trung vị theo trạng thái |
+| `bao_cao_hai_long` | một hồ sơ đã đóng qua cạnh có `collects_feedback`: lúc đóng, điểm của lần chấm mới nhất (NULL khi chưa chấm), `da_cham`, phòng, loại — không có nhận xét; hồ sơ tự đóng không có dòng nên không vào mẫu số (migration `0036`, #433) | Điểm hài lòng trung bình, tỷ lệ được chấm, phân bố điểm |
 
 Ba quy tắc giữ view đúng khi doanh nghiệp đổi quy trình:
 

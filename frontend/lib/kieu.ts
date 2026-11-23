@@ -101,6 +101,18 @@ export type CanhDiDuoc = {
    * có trường ở thao tác sửa nội dung (#127).
    */
   fields: string[];
+  /**
+   * Cạnh cho người gửi chấm mức hài lòng 1–5 kèm nhận xét, đều tùy chọn (#433) — cờ dữ liệu
+   * `transitions.collects_feedback`. Chỉ cổng người gửi trả trường này.
+   */
+  collects_feedback?: boolean;
+};
+
+/** Một lần người gửi chấm mức hài lòng khi xác nhận hoàn tất (#433). Chỉ đọc. */
+export type DanhGia = {
+  score: number;
+  comment: string | null;
+  created_at: string;
 };
 
 /**
@@ -289,6 +301,13 @@ export type HoSoChiTiet = HoSoTomTat & {
   message_kinds: LoaiLoiNhan[];
   /** Người đang xem đọc được cuộc nội bộ của hồ sơ này (#156). */
   sees_internal: boolean;
+  /**
+   * Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian. Chỉ chi tiết ở cổng
+   * người gửi, buồng lái điều phối và phòng ban trả.
+   */
+  feedback?: DanhGia[];
+  /** Trần độ dài nhận xét (#433) — chỉ cổng người gửi trả, ô nhận xét đếm theo số này. */
+  feedback_comment_max_chars?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -350,6 +369,41 @@ export type HangDoi = Trang &
     groups: NhomHangDoi[];
     items: MucHangDoi[];
   };
+
+/** Một bước làm được cho nhiều hồ sơ một lần (#440), tra từ bộ quy tắc ở dịch vụ. */
+export type ThaoTacHangLoat = {
+  activity_code: string;
+  activity_label: string;
+  /** Trạng thái đi được bước này; hồ sơ đang chọn ở trạng thái khác thì bỏ qua. */
+  from_states: NhanCoMa[];
+  /** `required` false: để trống được — mỗi hồ sơ giữ giá trị đang có. */
+  fields: { code: string; required: boolean }[];
+  requires_note: boolean;
+  note_label: string | null;
+};
+
+export type DanhSachThaoTacHangLoat = {
+  max_cases: number;
+  actions: ThaoTacHangLoat[];
+};
+
+export type MucHangLoat = {
+  case_id: number;
+  /** Mã hiển thị; `null` khi không có hồ sơ mang định danh này. */
+  code: string | null;
+  ok: boolean;
+  to_state: string | null;
+  to_state_label: string | null;
+  error: { code: string; message: string; guard: string | null } | null;
+};
+
+export type KetQuaHangLoat = {
+  activity_code: string;
+  total: number;
+  succeeded: number;
+  /** Đúng thứ tự gửi lên. */
+  items: MucHangLoat[];
+};
 
 /** Hồ sơ của người gửi, có phân trang (#232). */
 export type DanhSachHoSo = Trang &

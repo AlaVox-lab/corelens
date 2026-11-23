@@ -375,6 +375,24 @@ class HoSoChiTietRa(HoSoTomTatRa):
     sees_internal: bool = False
 
 
+class CanhNguoiGuiRa(CanhDiDuocRa):
+    """Cạnh đi được ở cổng người gửi — thêm cờ chấm điểm (#433). Chỉ ứng dụng; lõi `/core/v1` giữ
+    `CanhDiDuocRa` nguyên như cũ."""
+
+    # Cạnh mang cờ `transitions.collects_feedback`: hộp xác nhận hiện ô chấm 1–5 và nhận xét, đều tùy chọn
+    collects_feedback: bool = False
+
+
+class HoSoNguoiGuiRa(HoSoChiTietRa):
+    """Chi tiết hồ sơ ở cổng người gửi (#433): như lõi, thêm cờ chấm trên cạnh và các lần mình đã chấm."""
+
+    allowed_transitions: list[CanhNguoiGuiRa]
+    # Mỗi lần xác nhận có chấm một mục, theo thời gian
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
+    # Trần độ dài nhận xét (`DXLAB_FEEDBACK_COMMENT_MAX_CHARS`) — ô nhận xét đếm ký tự theo số này
+    feedback_comment_max_chars: int
+
+
 class TaoHoSoVao(BaseModel):
     """Biểu mẫu gửi yêu cầu.
 
@@ -413,6 +431,26 @@ class ChuyenTrangThaiVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+    # Mức hài lòng (#433), tùy chọn: chỉ nhận ở cạnh mang cờ `transitions.collects_feedback`
+    feedback: DanhGiaVao | None = None
+
+
+class DanhGiaVao(BaseModel):
+    """Điểm hài lòng 1–5 và nhận xét người gửi chấm khi xác nhận hoàn tất (#433).
+
+    Trần độ dài nhận xét là cấu hình (`DXLAB_FEEDBACK_COMMENT_MAX_CHARS`), đọc lúc chạy nên kiểm ở điểm cuối.
+    """
+
+    score: int = Field(ge=1, le=5)
+    comment: str | None = None
+
+
+class DanhGiaRa(BaseModel):
+    """Một lần chấm — chỉ đọc. Không có tên người: người chấm là người gửi của hồ sơ."""
+
+    score: int
+    comment: str | None = None
+    created_at: dt.datetime
 
 
 class BuocChuyenLoiVao(BaseModel):
@@ -534,6 +572,9 @@ class HoSoDieuPhoiRa(HoSoChiTietRa):
     # `actor-not-requester`, không phải vì hồ sơ đã rời hàng đợi.
     requested_by_me: bool = False
 
+    # Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian — chỉ đọc
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
+
 
 class ChuyenTrangThaiCoTruongVao(BaseModel):
     """Thao tác ở buồng lái — điều phối (#82) và phòng ban (#83). Khác cổng người gửi
@@ -546,6 +587,83 @@ class ChuyenTrangThaiCoTruongVao(BaseModel):
     to_state: str
     note: str | None = Field(default=None, max_length=2000)
     changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Thao tác hàng loạt ở buồng lái điều phối (#440)
+# ---------------------------------------------------------------------------
+
+
+class TruongHangLoatRa(BaseModel):
+    """Một ô của hộp thoại hàng loạt: trường gửi kèm, và có bắt buộc chọn không.
+
+    `required` False là được để trống — "giữ nguyên ở từng hồ sơ": ràng buộc quản trường đó lùi về
+    giá trị hồ sơ đang có (`truong_bat_buoc` ở app/rules/guards.py).
+    """
+
+    code: str
+    required: bool
+
+
+class ThaoTacHangLoatRa(BaseModel):
+    """Một bước làm được cho nhiều hồ sơ một lần — một mã hoạt động của bộ quy tắc."""
+
+    activity_code: str
+    activity_label: str
+    # Trạng thái có cạnh mang mã này mà vai điều phối đi được: hồ sơ ở trạng thái khác thì bỏ qua
+    from_states: list[NhanCoMa]
+    # Trường nhập liệu của cạnh (`truong_can_nhap`), theo thứ tự ô như `fields` của `allowed_transitions`
+    fields: list[TruongHangLoatRa] = Field(default_factory=list)
+    requires_note: bool = False
+    note_label: str | None = None
+
+
+class DanhSachThaoTacHangLoatRa(BaseModel):
+    max_cases: int
+    actions: list[ThaoTacHangLoatRa]
+
+
+class ChuyenHangLoatVao(BaseModel):
+    """Một bước cho cả lô hồ sơ. Giá trị trong `changes` áp chung cho mọi hồ sơ của lô.
+
+    Chỉ nhận giá trị người dùng chọn — không có lối "nhận gợi ý cho cả lô" (#440). Số hồ sơ tối đa là
+    cấu hình (`DXLAB_BULK_MAX_CASES`), kiểm ở điểm cuối vì đọc lúc chạy.
+    """
+
+    activity_code: str
+    case_ids: list[int] = Field(min_length=1)
+    note: str | None = Field(default=None, max_length=2000)
+    changes: dict[str, str | None] = Field(default_factory=dict)
+
+
+class LoiHangLoatRa(BaseModel):
+    """Lỗi của một hồ sơ trong lô — mã và thông điệp của chính lỗi engine ném (app/workflow/errors.py).
+
+    `guard` là mã ràng buộc khi `code` là `guard-violation`, ví dụ `actor-not-requester`.
+    """
+
+    code: str
+    message: str
+    guard: str | None = None
+
+
+class MucHangLoatRa(BaseModel):
+    case_id: int
+    # Mã hiển thị, ví dụ `YC-2026-0184`; trống khi không có hồ sơ mang định danh này
+    code: str | None = None
+    ok: bool
+    to_state: str | None = None
+    to_state_label: str | None = None
+    error: LoiHangLoatRa | None = None
+
+
+class KetQuaHangLoatRa(BaseModel):
+    """Kết quả từng hồ sơ, đúng thứ tự gửi lên. Hồ sơ bị chặn đứng nguyên, không có dòng nhật ký."""
+
+    activity_code: str
+    total: int
+    succeeded: int
+    items: list[MucHangLoatRa]
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +738,8 @@ class HoSoPhongBanRa(HoSoChiTietRa):
     # kèm gợi ý tính lại (`/departments/{code}/assignees?case_id=`); trường này để màn không trống
     # khi danh bạ chưa trả lời kịp — và chính là thứ cửa chuyển trạng thái đem so.
     suggested_assignee: GoiYRa | None = None
+    # Đánh giá của người gửi (#433), mỗi lần xác nhận có chấm một mục, theo thời gian — chỉ đọc
+    feedback: list[DanhGiaRa] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------

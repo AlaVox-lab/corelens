@@ -9,7 +9,7 @@ sidebar:
      hay chú thích của cột rồi chạy python scripts/tu_dien_du_lieu.py. Tích hợp liên tục chạy --kiem
      và báo đỏ khi trang này lệch với mô hình. -->
 
-33 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
+34 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
 hình, nghĩa của cột từ chú thích ngay trên cột trong mã — cột chưa có chú thích để trống ô *Ý nghĩa*.
 Lược đồ do các bản sửa Alembic tạo (`backend/alembic/versions/`); các view báo cáo và nguồn gốc của
 chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
@@ -18,6 +18,7 @@ chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
 |---|---|---|
 | [`attachment_file_types`](#attachment_file_types) | 8 | `AttachmentFileType` · `backend/app/models/case.py` |
 | [`case_attachments`](#case_attachments) | 11 | `CaseAttachment` · `backend/app/models/case.py` |
+| [`case_feedback`](#case_feedback) | 6 | `CaseFeedback` · `backend/app/models/case.py` |
 | [`case_message_reads`](#case_message_reads) | 5 | `CaseMessageRead` · `backend/app/models/case.py` |
 | [`case_messages`](#case_messages) | 7 | `CaseMessage` · `backend/app/models/case.py` |
 | [`cold_archives`](#cold_archives) | 9 | `ColdArchive` · `backend/app/models/luu_tru.py` |
@@ -46,7 +47,7 @@ chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
 | [`transition_conditions`](#transition_conditions) | 6 | `TransitionCondition` · `backend/app/models/workflow_config.py` |
 | [`transition_guards`](#transition_guards) | 2 | `TransitionGuard` · `backend/app/models/workflow_config.py` |
 | [`transition_roles`](#transition_roles) | 2 | `TransitionRole` · `backend/app/models/workflow_config.py` |
-| [`transitions`](#transitions) | 18 | `Transition` · `backend/app/models/workflow_config.py` |
+| [`transitions`](#transitions) | 19 | `Transition` · `backend/app/models/workflow_config.py` |
 | [`webhook_deliveries`](#webhook_deliveries) | 10 | `WebhookDelivery` · `backend/app/models/webhook.py` |
 | [`webhook_subscriptions`](#webhook_subscriptions) | 9 | `WebhookSubscription` · `backend/app/models/webhook.py` |
 
@@ -98,6 +99,21 @@ Mô hình `CaseAttachment` trong `backend/app/models/case.py`.
 | `created_at` | `DateTime` | không | mặc định `func.now()` |  |
 | `has_macro` | `Boolean` | không | mặc định `'false'` | Tệp mang macro (#248): nhận nhưng giao diện cảnh báo ở mọi nơi liệt kê tệp |
 | `scan_status` | `Text` | không | mặc định `'disabled'` | Kết quả quét mã độc lúc đính kèm (#248): `disabled` (quét tắt), `clean`, `unscanned` (quét bật mà dịch vụ quét không phản hồi, chính sách cho nhận) |
+
+## case_feedback
+
+Mức hài lòng người gửi chấm khi xác nhận hồ sơ hoàn tất (#433).
+
+Mô hình `CaseFeedback` trong `backend/app/models/case.py`.
+
+| Cột | Kiểu | Để trống | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `BigInteger` | không | khóa chính, `Identity` |  |
+| `case_id` | `BigInteger` | không | khóa ngoại → `requests.id` |  |
+| `event_id` | `BigInteger` | không | khóa ngoại → `event_log.id`, duy nhất | Dòng nhật ký của lần xác nhận mang điểm này — gắn điểm với đúng chu kỳ xử lý |
+| `score` | `SmallInteger` | không |  | Điểm 1–5, ràng buộc CHECK ở cơ sở dữ liệu |
+| `comment` | `Text` | có |  | Nhận xét chữ, tùy chọn; chỉ trang hồ sơ của điều phối viên, phòng ban và chính người gửi đọc |
+| `created_at` | `DateTime` | không | mặc định `func.now()` |  |
 
 ## case_message_reads
 
@@ -596,6 +612,7 @@ Mô hình `Transition` trong `backend/app/models/workflow_config.py`.
 | `reopen_window_hours` | `SmallInteger` | có |  | Cạnh mở lại sau khi hồ sơ kết thúc (#102): đi được khi hồ sơ vào trạng thái kết thúc chưa quá chừng này giờ làm việc. NULL là cạnh thường. |
 | `restarts_sla` | `Boolean` | không |  | Đi qua cạnh này là mở chu kỳ xử lý mới: đồng hồ SLA đếm lại từ 0 (#102) |
 | `accepts_attachments` | `Boolean` | không |  | Người đang đứng ở cạnh này đính kèm được tệp vào hồ sơ (#80) |
+| `collects_feedback` | `Boolean` | không |  | Người đi cạnh này chấm được mức hài lòng 1–5 kèm nhận xét, đều tùy chọn (#433) — cạnh Xác nhận đạt |
 | `primary_scope` | `Text` | có |  | Bước chính ở trạng thái nguồn (#227): NULL, 'role' hay 'assignee' — xem lược đồ khởi tạo |
 
 ## webhook_deliveries

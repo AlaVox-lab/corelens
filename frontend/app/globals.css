@@ -1739,6 +1739,323 @@ textarea.o-nhap {
   box-shadow: inset 3px 0 0 var(--f-r-solid);
 }
 
+/* --- Chọn nhiều hồ sơ trên hàng đợi (#440) ------------------------------------------
+ * Ô chọn là checkbox gốc, nằm TRÊN liên kết phủ dòng: nhãn phủ kín ô nên bấm cả phần đệm cũng
+ * chỉ chọn, không mở ngăn xem nhanh. Dòng đã chọn cùng nền với dòng đang rê; dòng đang mở trong
+ * ngăn giữ nền đậm hơn của nó. */
+.bang .o-chon-dong {
+  position: relative;
+  z-index: 2;
+  padding: 0;
+}
+
+.o-chon-dong label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px 12px 14px;
+  cursor: pointer;
+}
+
+.o-chon-dong input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.chi-man-hep {
+  display: none;
+}
+
+.bang tr.dong[data-chon]:not([data-dang-xem]) td {
+  background: var(--hover);
+}
+
+/* Thanh thao tác dính đáy vùng bảng khi có hồ sơ được chọn. Lớp nổi nên có bóng riêng. */
+.thanh-hang-loat {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding: 10px 12px 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+}
+
+.thanh-hang-loat p {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.thanh-hang-loat-nut {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Hộp thoại gốc `<dialog>` mở bằng showModal(): lớp trên cùng, khóa tiêu điểm sẵn */
+.hop-thoai {
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.2);
+}
+
+.hop-thoai::backdrop {
+  background: rgb(15 18 22 / 0.45);
+}
+
+.hop-thoai-than {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.hop-thoai-than h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.hop-thoai-than > p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.hop-thoai-chan {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hl-canh-bao {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--f-a-bg);
+  border: 1px solid var(--f-a-line);
+  color: var(--f-a-ink);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.hl-loi {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--f-r-bg);
+  border: 1px solid var(--f-r-line);
+  color: var(--f-r-ink);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.hl-ds-ma {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  max-height: 92px;
+  overflow: auto;
+  margin: 0;
+  padding: 8px 10px;
+  list-style: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 12.5px;
+}
+
+/* Kết quả lần chạy gần nhất: xanh khi mọi hồ sơ đã đi, hổ phách khi có hồ sơ bị chặn */
+.kq-hang-loat {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--f-g-bg);
+  border: 1px solid var(--f-g-line);
+  font-size: 13.5px;
+}
+
+.kq-hang-loat[data-co-chan] {
+  background: var(--f-a-bg);
+  border-color: var(--f-a-line);
+}
+
+.kq-hang-loat-dau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kq-hang-loat h2 {
+  margin: 0;
+  font-size: 14.5px;
+}
+
+.kq-hang-loat p {
+  margin: 6px 0 0;
+}
+
+.kq-hang-loat-ds {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+
+/* --- Đánh giá mức hài lòng (#433) ------------------------------------------------------
+ * Nhóm chấm là radio thật, ẩn ô tròn đi và vẽ thành hàng nút; nút đang chọn mang màu nhấn, viền
+ * tiêu điểm bàn phím vẽ trên nút bọc ngoài. Sao tô theo điểm đang chọn. */
+.cham-diem {
+  display: grid;
+  gap: 12px;
+}
+
+.cham-diem fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.cham-diem legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.cham-diem legend .nhat {
+  font-weight: 400;
+}
+
+.cham-diem-hang {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cham-diem-o {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  min-width: 44px;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.cham-diem-o:hover {
+  background: var(--hover);
+}
+
+.cham-diem-o input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cham-diem-o:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+
+.cham-diem-o:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cham-diem-o[data-bo-chon] {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.cham-diem-o svg,
+.the-danh-gia-sao svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ink-3);
+}
+
+.cham-diem-o svg[data-day],
+.the-danh-gia-sao svg[data-day] {
+  color: var(--f-a-solid);
+  fill: currentColor;
+}
+
+.cham-diem-dem {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.cham-diem-dem[data-qua] {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.the-danh-gia ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.the-danh-gia li + li {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.the-danh-gia-diem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.the-danh-gia-sao {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.the-danh-gia-nhan-xet {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .chu-han {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1944,6 +2261,61 @@ textarea.o-nhap {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+  }
+
+  /* Chọn nhiều (#440): ô chọn thành cột hẹp đầu dòng, dòng hạn xuống dưới tiêu đề; ô "chọn tất cả"
+   * còn lại một mình ở đầu bảng, kèm chữ vì tiêu đề cột đã ẩn */
+  .bang[data-chon-nhieu] thead {
+    display: block;
+  }
+
+  .bang[data-chon-nhieu] thead th:not(.o-chon-dong) {
+    display: none;
+  }
+
+  .bang[data-chon-nhieu] thead th.o-chon-dong {
+    display: block;
+    width: auto;
+    white-space: normal;
+  }
+
+  .bang[data-chon-nhieu] .chi-man-hep {
+    display: inline;
+    font-size: 13px;
+  }
+
+  .bang[data-chon-nhieu] tr.dong {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .bang[data-chon-nhieu] tr.dong td:last-child {
+    grid-column: 2 / -1;
+  }
+
+  .bang[data-chon-nhieu] tr.dong td.o-chon-dong {
+    align-self: start;
+  }
+
+  .bang[data-chon-nhieu] tr.dong td.o-chon-dong label {
+    padding: 2px 2px 0 0;
+  }
+
+  /* Dòng là lưới có khe: tô nền cả dòng, không tô từng ô */
+  .bang[data-chon-nhieu] tr.dong[data-chon]:not([data-dang-xem]) {
+    background: var(--hover);
+  }
+
+  .bang[data-chon-nhieu] tr.dong[data-chon]:not([data-dang-xem]) td {
+    background: none;
+  }
+
+  /* Màn hẹp: hai nút rộng hết, nút chính ở trên */
+  .hop-thoai-chan {
+    flex-direction: column-reverse;
+  }
+
+  .thanh-hang-loat-nut {
+    margin-left: 0;
   }
 
   .nhom-hang,

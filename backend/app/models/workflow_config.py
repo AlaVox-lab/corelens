@@ -135,6 +135,8 @@ class Transition(Base):
     restarts_sla: Mapped[bool] = mapped_column(Boolean, default=False)
     # Người đang đứng ở cạnh này đính kèm được tệp vào hồ sơ (#80)
     accepts_attachments: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Người đi cạnh này chấm được mức hài lòng 1–5 kèm nhận xét, đều tùy chọn (#433) — cạnh Xác nhận đạt
+    collects_feedback: Mapped[bool] = mapped_column(Boolean, default=False)
     # Bước chính ở trạng thái nguồn (#227): NULL, 'role' hay 'assignee' — xem lược đồ khởi tạo
     primary_scope: Mapped[str | None] = mapped_column(Text, default=None)
 

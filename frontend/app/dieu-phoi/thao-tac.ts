@@ -15,9 +15,9 @@
 import { revalidatePath } from "next/cache";
 
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
-import { guiDichVu } from "@/lib/api";
+import { guiDichVu, type KetQua } from "@/lib/api";
 import { chuoi, docLoiNhan, gomThayDoi } from "@/lib/bieu-mau";
-import type { HoSoDieuPhoi } from "@/lib/kieu";
+import type { HoSoDieuPhoi, KetQuaHangLoat } from "@/lib/kieu";
 
 export async function chuyenTrangThaiDieuPhoi(
   _truoc: KetQuaThaoTac,
@@ -46,6 +46,30 @@ export async function chuyenTrangThaiDieuPhoi(
   // Hồ sơ vừa được chuyển về phòng ban thì hàng đợi phòng ban cũng phải thấy ngay
   revalidatePath("/phong-ban");
   return CHUA_CO_LOI;
+}
+
+/**
+ * Một bước cho cả lô hồ sơ đã chọn trên hàng đợi (#440). Dịch vụ đi từng hồ sơ qua cửa chuyển trạng
+ * thái và trả kết quả từng hồ sơ; ở đây chỉ chuyển tiếp và làm mới các trang có hồ sơ vừa đổi.
+ */
+export async function chuyenHangLoatDieuPhoi(than: {
+  activity_code: string;
+  case_ids: number[];
+  changes: Record<string, string>;
+  note: string | null;
+}): Promise<KetQua<KetQuaHangLoat>> {
+  const ketQua = await guiDichVu<KetQuaHangLoat>("/coordination/bulk-transitions", than);
+  if (!ketQua.ok) return ketQua;
+
+  revalidatePath("/dieu-phoi");
+  revalidatePath("/yeu-cau");
+  revalidatePath("/phong-ban");
+  for (const muc of ketQua.duLieu.items) {
+    if (!muc.ok) continue;
+    revalidatePath(`/dieu-phoi/${muc.case_id}`);
+    revalidatePath(`/yeu-cau/${muc.case_id}`);
+  }
+  return ketQua;
 }
 
 /** Gửi một lời nhắn trên hồ sơ (#128). Điều phối viên nhắn được trên mọi hồ sơ. */
