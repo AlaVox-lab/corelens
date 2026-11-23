@@ -5,6 +5,21 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.7.0] - 2026-11-23
+
+### Sửa lỗi
+
+- **p-workflow:** Nhãn mốc dòng thời gian theo đúng cạnh đã đi ([#527](https://github.com/AlaVox-lab/corelens/issues/527)) ([7b7b038](https://github.com/AlaVox-lab/corelens/commit/7b7b038a2a39e9f66248b3e75063c098d5c07956))
+
+### Tài liệu
+
+- **state:** Ghi đợt bảy Giai đoạn 6 trước v1.7.0 ([#528](https://github.com/AlaVox-lab/corelens/issues/528)) ([e798379](https://github.com/AlaVox-lab/corelens/commit/e7983796404b428d42465a19c35f736a94199012))
+
+### Tính năng mới
+
+- **p-workflow:** Thao tác hàng loạt trên hàng đợi điều phối ([#524](https://github.com/AlaVox-lab/corelens/issues/524)) ([bf1dc5c](https://github.com/AlaVox-lab/corelens/commit/bf1dc5c2842997c3da9537f0c7d2a01a7e1f7bc9))
+- **h-portal:** Đánh giá mức hài lòng khi người gửi xác nhận đạt ([#525](https://github.com/AlaVox-lab/corelens/issues/525)) ([17ed8ce](https://github.com/AlaVox-lab/corelens/commit/17ed8ce47af6543b0a010c38c6b27ed0d2e2caae))
+
 ## [1.6.0] - 2026-11-23
 
 ### Công việc phụ trợ
