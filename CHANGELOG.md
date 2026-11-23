@@ -5,6 +5,29 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.6.0] - 2026-11-23
+
+### Công việc phụ trợ
+
+- **docs:** Cập nhật danh sách thành viên nhóm ([#513](https://github.com/AlaVox-lab/corelens/issues/513)) ([37076dd](https://github.com/AlaVox-lab/corelens/commit/37076dd5259d9c423fecc7cf299144a2c1a3ffae))
+
+### Kiểm thử
+
+- **p-workflow:** Kiểm thử dựa trên tính chất cho máy trạng thái ([#519](https://github.com/AlaVox-lab/corelens/issues/519)) ([bb69ab3](https://github.com/AlaVox-lab/corelens/commit/bb69ab3cc7a41c925c71d1b7642509cc253011b8))
+
+### Sửa lỗi
+
+- **h-portal:** Sửa lỗi tiếp cận WCAG 2.1 AA trên các màn chính ([#517](https://github.com/AlaVox-lab/corelens/issues/517)) ([cab8f35](https://github.com/AlaVox-lab/corelens/commit/cab8f352b541aca10ca6efa2a61c00f01cd31f61))
+
+### Tài liệu
+
+- **state:** Ghi đợt sáu Giai đoạn 6 trước v1.6.0 ([#520](https://github.com/AlaVox-lab/corelens/issues/520)) ([210f4e6](https://github.com/AlaVox-lab/corelens/commit/210f4e6e0c13f76fd1ea9191c86f0e803cb14158))
+
+### Tính năng mới
+
+- **i-mining:** Hiện bước lệch quy trình trên trang hồ sơ ([#515](https://github.com/AlaVox-lab/corelens/issues/515)) ([5ae5933](https://github.com/AlaVox-lab/corelens/commit/5ae59338dfc8296b2f466e0d971bf7e88ced1973))
+- **p-workflow:** API lõi trả lý do cạnh không đi được ([#518](https://github.com/AlaVox-lab/corelens/issues/518)) ([fd3806b](https://github.com/AlaVox-lab/corelens/commit/fd3806b8bec37840ba4dd4d698dc0a0f1f364137))
+
 ## [1.5.1] - 2026-11-19
 
 ### Công việc phụ trợ
