@@ -424,8 +424,12 @@ def _su_kien(
     states: dict[str, State],
     canh: dict[str, Transition],
     nhan: dict[str, dict[str, str]],
+    canh_theo_hoat_dong: dict[tuple[str, str, str], Transition] | None = None,
 ) -> SuKienRa:
-    di_qua = canh.get(f"{e.from_state}->{e.to_state}")
+    # Cạnh đã đi: đúng mã hoạt động trước (#526), không có thì lùi về cặp trạng thái
+    di_qua = (canh_theo_hoat_dong or {}).get((e.from_state, e.to_state, e.activity)) or canh.get(
+        f"{e.from_state}->{e.to_state}"
+    )
     return SuKienRa(
         timestamp=e.timestamp,
         activity=e.activity,
@@ -994,14 +998,16 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
     # Tra một lần cho cả dòng thời gian, không tra lại ở từng mốc
     nhan = _nhan_danh_muc(session)
 
-    # Nhãn hoạt động và tên ô ghi chú tra theo cặp trạng thái vì nhiều cạnh dùng chung
-    # `activity_code` — bốn cạnh hủy chẳng hạn.
-    canh = {
-        f"{t.from_state}->{t.to_state}": t
-        for t in session.scalars(
-            select(Transition).where(Transition.rule_set_id == ho_so.rule_set_id)
-        ).all()
-    }
+    # Nhãn hoạt động và tên ô ghi chú của mốc dòng thời gian: tra theo (từ, đến, mã hoạt động) —
+    # một cặp trạng thái có thể có cả cạnh người lẫn cạnh hệ thống (#142), như Hoàn tất → Đã đóng có
+    # Xác nhận đạt và Tự đóng hồ sơ (#526) — rồi mới lùi về cặp trạng thái, cho dòng nhật ký cũ mà mã
+    # hoạt động không còn cạnh nào khớp (bộ quy tắc đã đổi). Mã hoạt động một mình không đủ: nhiều
+    # cạnh dùng chung `activity_code` — bốn cạnh hủy chẳng hạn.
+    cac_canh = session.scalars(
+        select(Transition).where(Transition.rule_set_id == ho_so.rule_set_id)
+    ).all()
+    canh = {f"{t.from_state}->{t.to_state}": t for t in cac_canh}
+    canh_theo_hoat_dong = {(t.from_state, t.to_state, t.activity_code): t for t in cac_canh}
 
     # Trạng thái kết thúc nào còn cạnh mở lại, và cửa sổ bao nhiêu giờ làm việc (#102)
     cua_so_mo_lai = {
@@ -1088,7 +1094,9 @@ def _du_lieu_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> dict:
         **_lien_ket_ho_so(session, ho_so, states),
         "attachments": tep_dinh_kem,
         "can_attach": any(c.accepts_attachments for c in canh_di_duoc),
-        "history": [_su_kien(e, states, canh, nhan) for e in case_history(session, ho_so.id)],
+        "history": [
+            _su_kien(e, states, canh, nhan, canh_theo_hoat_dong) for e in case_history(session, ho_so.id)
+        ],
         "allowed_transitions": di_duoc,
         "messages": loi_nhan,
         "message_kinds": loai_nhan_duoc,
