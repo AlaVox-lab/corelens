@@ -42,6 +42,9 @@ __pycache__/
 venv/
 env/
 .pytest_cache/
+# Bộ đệm của Hypothesis (#441): cơ sở dữ liệu ví dụ đã tắt trong bài, nhưng Hypothesis vẫn ghi bộ đệm
+# hằng số của mã nguồn vào đây mỗi lần chạy
+.hypothesis/
 .mypy_cache/
 .ruff_cache/
 htmlcov/

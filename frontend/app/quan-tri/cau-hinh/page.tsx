@@ -30,8 +30,15 @@ function hienGiaTri(gt: unknown): string {
 }
 
 function Muc({ tieuDe, moTa, children }: Readonly<{ tieuDe: string; moTa?: string; children: React.ReactNode }>) {
+  // Bảng rộng cuộn ngang trong thẻ trên màn hẹp: thẻ nhận tiêu điểm bàn phím để cuộn bằng phím mũi tên,
+  // và mang tên của mục cho trình đọc màn hình (#435)
   return (
-    <section className="the" style={{ marginTop: "20px", padding: "16px 20px", overflowX: "auto" }}>
+    <section
+      className="the"
+      style={{ marginTop: "20px", padding: "16px 20px", overflowX: "auto" }}
+      aria-label={tieuDe}
+      tabIndex={0}
+    >
       <h2 style={{ fontSize: "16px", margin: "0 0 4px" }}>{tieuDe}</h2>
       {moTa ? (
         <p className="nhat" style={{ fontSize: "13px", margin: "0 0 12px" }}>

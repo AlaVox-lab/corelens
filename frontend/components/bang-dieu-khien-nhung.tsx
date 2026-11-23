@@ -179,11 +179,15 @@ export function BangDieuKhienNhung() {
       {phamVi ? <DongPhamVi phamVi={phamVi} /> : <p className="bao-cao-pham-vi">&nbsp;</p>}
       <p className="bao-cao-cuon-ngang">Vuốt ngang trong khung để xem đủ các biểu đồ.</p>
       {tinhTrang === "dang-tai" ? <KhungChoBangDieuKhien /> : null}
+      {/* Màn hẹp cuộn ngang trong khung: khung nhận tiêu điểm bàn phím để cuộn bằng phím mũi tên (#435) */}
       <div
         key={lanThu}
         ref={choGan}
         className="bao-cao-khung"
         data-an={tinhTrang === "dang-tai" ? "" : undefined}
+        role="region"
+        aria-label="Bảng điều khiển báo cáo"
+        tabIndex={0}
       />
     </>
   );

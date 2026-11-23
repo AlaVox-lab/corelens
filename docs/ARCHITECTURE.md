@@ -169,6 +169,7 @@ hệt.
 | | `GET /requests/{case_id}` ¹ | `GET /core/v1/workflow/requests/{case_id}` ¹ |
 | | `POST /requests/{case_id}/transitions` ¹ | `POST /core/v1/workflow/requests/{case_id}/transitions` ¹ |
 | | — | `GET /core/v1/workflow/processes/{code}/bpmn` ² — bộ quy tắc đang bật dạng BPMN 2.0 kèm bố cục (#405) |
+| | — | `GET /core/v1/workflow/requests/{case_id}/transition-options` ² — mọi cạnh rời trạng thái hiện tại kèm lý do không đi được (#424) |
 | Lõi — Tệp | `GET /attachments/policy` | `GET /core/v1/files/policy` |
 | | `POST /requests/{case_id}/attachments` | `POST /core/v1/files/requests/{case_id}/attachments` |
 | | `GET /attachments/{attachment_id}` | `GET /core/v1/files/{attachment_id}` |
@@ -187,10 +188,29 @@ Tham số `process` bỏ trống là quy trình mặc định của ứng dụng
 
 ² **Chỉ có ở lõi** (#378, mục 6.3a; webhook #390, mục 6.8): cổng người dùng không dùng nên không có đường cũ. Bài kiểm khai chúng
 trong `CHI_LOI` của `backend/tests/test_loi_api.py`, cạnh `ANH_XA`. Quyền như `GET /core/v1/events` — chỉ
-quản trị viên.
+quản trị viên; riêng `transition-options` (#424) theo cửa nhìn thấy của chi tiết hồ sơ.
 
 Bước chuyển được phép và lịch sử không có điểm cuối riêng: chúng là trường `allowed_transitions` và
-`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ. Thêm điểm cuối cho lõi: khai
+`history` của chi tiết hồ sơ (`GET …/requests/{case_id}`), như ở đường cũ.
+
+**Lý do cạnh không đi được (#424).** `GET …/requests/{case_id}/transition-options` (ở `router_loi_rieng`,
+cùng cửa nhìn thấy với chi tiết) trả **mọi** cạnh rời trạng thái hiện tại, mỗi cạnh `allowed`, `reasons`,
+`requires_input`. Không có logic xét cạnh thứ hai: engine có một hàm xét MỘT cạnh, `xet_canh`, theo đúng thứ
+tự của `perform_transition` — quyền (`_actor_can_traverse`; sai vai thì dừng, lỗi dựng bằng `_loi_quyen` mà
+bước 2 của cửa chuyển trạng thái cũng ném) → ràng buộc `input_free` → điều kiện trên cạnh
+(`vi_pham_khong_nhap_lieu` ở `rules/guards.py`, mỗi điều kiện sai một `DieuKienKhongDat`). `allowed_transitions`
+chỉ là phép lọc "không lý do" trên `xet_cac_canh` (chế độ `dung_som`, dừng ở lý do đầu như trước), và
+`input_free_guards_pass` là `not vi_pham_khong_nhap_lieu(dung_som=True)`. Mỗi lý do là chính ngoại lệ engine sẽ
+ném, nên `code` là `RoleNotPermitted.code`/`SystemTransitionOnly.code` hay mã ràng buộc trong bảng `guards`
+(`edge-condition` kèm dòng `transition_conditions`), `message` là câu của chính lỗi đó — không mã lý do hay câu
+chữ nào viết lại. `requires_input` là `governs` của ràng buộc KHÔNG `input_free` trên cạnh (`truong_can_nhap`).
+Chỉ đọc: không nhật ký, không tác động của ràng buộc (ADR-0005). Bài `backend/tests/test_ly_do_canh.py` kiểm
+từng loại lý do — mã và thông điệp so với lỗi `perform_transition` ném thật — và bất biến: trên hồ sơ ở mọi
+trạng thái của hai quy trình mẫu với nhiều vai, tập cạnh `allowed` trùng hệt `allowed_transitions`. Cố ý chưa
+xét: ủy quyền khi vắng mặt (`_lam_thay_cho`) và trường gửi kèm — `allowed_transitions` cũng chưa xét, lỗi của
+chúng chỉ có lúc đi thật.
+
+Thêm điểm cuối cho lõi: khai
 trong router đã gắn ở cả hai nơi, thêm một dòng vào bảng trên và vào `ANH_XA` của
 `backend/tests/test_loi_api.py` — bài kiểm so khít tập đường `/core/v1` trong OpenAPI với bảng đó, nên điểm
 cuối của ứng dụng không lọt vào lõi mà không ai hay.
@@ -523,7 +543,7 @@ trong bản ghi quyết định và `docs/dependencies.md`.
   Thêm một thư mục mang giấy phép riêng thì sửa cùng lúc bảng `GIAY_PHEP_THEO_THU_MUC` trong kịch bản đó
   và `LICENSES.md`
 - **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên màn Quy trình thực
-  tế có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
+  tế và khối bước lệch trên trang hồ sơ (#448) có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
   cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa
 - Chiều MIT sang AGPL tương thích, nên mã MIT của kho dùng lại được trong dịch vụ khai phá; chiều ngược
   lại thì không — **không chép mã từ `services/khai-pha/` sang thư mục MIT**
@@ -1038,6 +1058,12 @@ Hai chi tiết cài đặt giữ cho bảo đảm này không rò rỉ:
   nằm ngoài. Nhờ vậy không ai
   dùng lần chuyển trạng thái làm cửa sau để sửa trường bất kỳ
 
+Bảo đảm này còn được kiểm bằng **kiểm thử dựa trên tính chất** (#441):
+`backend/tests/test_tinh_chat_may_trang_thai.py` để Hypothesis sinh chuỗi thao tác ngẫu nhiên trên mọi
+quy trình — tác nhân bất kỳ, cạnh bất kỳ của bảng `transitions`, nhập liệu đúng lẫn sai — và sau mỗi
+bước kiểm rằng chuyển thành công ghi đúng một dòng nhật ký theo một cạnh có thật mà tác nhân có vai, còn
+bị từ chối thì không ghi gì và hồ sơ giữ nguyên.
+
 **Đổi quy trình giữa chừng: hồ sơ đi theo bộ quy tắc của chính nó** (#278, #299). `create_case`
 ghi vào hồ sơ `rule_set_id` của bộ đang bật, và cột đó giữ nguyên tới khi hồ sơ kết thúc. Mọi chỗ
 tra cấu hình đều tra theo bộ **của hồ sơ**, không theo bộ đang bật: cạnh đi được và nút trên giao
@@ -1414,6 +1440,40 @@ trình, giấy phép AGPL-3.0 — mã nguồn"* (#340, điều 13 — mục 3.3)
 chỉ nhận `http(s)`, truyền xuống thành phần; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site`
 — *Quy trình thực tế*.
 
+**Tuân thủ theo từng hồ sơ (#448).** Vòng tự soi tới tận một hồ sơ: trang hồ sơ phía nhân viên cho thấy hồ
+sơ đã đi lệch quy trình thiết kế ở bước nào. **Một định nghĩa lệch duy nhất**: hàm `buoc_lech` ở
+`app/phan_tich.py` của dịch vụ khai phá trả các cặp (sự kiện, mã nhánh lệch) — sự kiện đi cạnh `rework` /
+`escalation` / `wait_expiry` / `reopen` như bảng trên, và lần đặt `department_code` **thứ hai trở đi** của
+cùng hồ sơ (`multiple_routing`; lần đầu là định tuyến bình thường). Nhánh lệch của kết quả toàn bộ dựng
+từ chính hàm đó, nên hồ sơ có bước loại *k* khi và chỉ khi nó nằm trong `deviations[k].cases` — bài kiểm
+thử đòi đúng điều này trên bộ dữ liệu đáp án và dữ liệu thật, với cả hai bộ máy. Hàm chỉ đọc cờ, không
+bộ máy nào tham gia, không dùng alignment hay token replay. Đọc nhật ký bằng cùng thân câu SQL với lần
+khai phá theo khoảng (`_CHON_SU_KIEN` ở `app/du_lieu.py`), không lọc ngày, qua tài khoản chỉ đọc.
+
+```
+Cổng ──► /api/tuan-thu/{id} ──► dịch vụ ứng dụng ──HTTP──► dịch vụ khai phá
+         (Route Handler)         GET /analytics/process-mining/cases/{id}     GET /ho-so/{id}/tuan-thu
+```
+
+- **Dịch vụ khai phá** `GET /ho-so/{case_id}/tuan-thu` → `case`, `deviates`, `steps[]` (theo thứ tự thời
+  gian: `kind` — mã trong `NHANH_LECH`, `activity`, `from`, `to`, `from_label`, `to_label` — nhãn trạng
+  thái của bộ quy tắc hồ sơ đã đi, `at` — UTC, ISO 8601 hậu tố `Z`, `actor` — định danh như nhật ký ghi).
+  404 khi nhật ký không có hồ sơ, 503 khi không đọc được cơ sở dữ liệu. Không ghi gì
+- **Dịch vụ ứng dụng** `GET /analytics/process-mining/cases/{case_id}` (API của ứng dụng, không thuộc
+  `/core/v1`): người gọi phải xem được hồ sơ theo luật của hai trang hồ sơ phía nhân viên — điều phối viên
+  mọi hồ sơ (`vao_duoc_buong_lai`), nhân viên phòng ban hồ sơ của phòng mình (`vao_duoc_phong_ban`) — nhưng
+  **không** có luật người gửi xem hồ sơ của mình: người không vào được buồng lái nào nhận 403
+  `conformance-forbidden` (như căn cứ gợi ý ở #504), nhân viên ngoài phạm vi nhận 404 như trang hồ sơ. Trả
+  `status`, `case_id`, `deviates`, `steps[]` (thêm `actor_label` — tên lúc thao tác, đọc từ
+  `event_log.actor_label`). **Không bao giờ lỗi vì dịch vụ khai phá**: `DXLAB_MINING_URL` rỗng là
+  `disabled`; dịch vụ tắt, chậm, trả lỗi hay kết quả sai hình là `unavailable` — cả hai không có bước nào
+- **Cổng** (`components/buoc-lech-ho-so.tsx`, trên `phong-ban/[id]` và `dieu-phoi/[id]`; trang `yeu-cau/[id]`
+  của người gửi không có): khối hỏi sau khi trang hiện, có hạn chót, và **chỉ vẽ khi `status` là `ready` và
+  có bước** — hồ sơ chuẩn, khai phá tắt hay hỏng thì trang y như trước, không khung trống. Nhãn loại lệch là
+  bảng `NHAN_NHANH_LECH` của màn Quy trình thực tế; nhãn trạng thái từ kết quả. Không nút nào, không đổi gì
+  trên hồ sơ (ADR-0005: xem không phải thao tác). Khối mang dòng mã nguồn AGPL điều 13 như màn Quy trình
+  thực tế, cùng hàm `lib/nguon-ma-khai-pha.ts` đọc `MINING_SOURCE_URL`
+
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 
 ### 6.5. Gợi ý phân loại bằng mô hình ngôn ngữ (không gian `I`)
@@ -1765,7 +1825,9 @@ sơ của người khác, trưởng phòng không thấy nút trên hồ sơ c�
 `changes` thì chưa chạy được lúc chào nút, vì chưa ai biết người dùng sẽ chọn gì; chạy nó
 với `changes` rỗng sẽ giấu mất những cạnh hoàn toàn đi được. Lúc chào nút chỉ nuốt lỗi
 Poka-yoke: mã ràng buộc chưa cài đặt vẫn nổ, vì giấu nút đi thì cấu hình sai trông như
-"không có thao tác nào".
+"không có thao tác nào". Cùng hàm đó (`vi_pham_khong_nhap_lieu`) trả lại chính các lỗi
+Poka-yoke cho điểm cuối lõi `transition-options` (#424, mục 2.3): nút không hiện thì ứng dụng
+tầng trên vẫn biết ràng buộc nào chặn, và trường nào ràng buộc cần nhập liệu sẽ đòi.
 
 **Ràng buộc đầu tiên đọc lịch sử hồ sơ** — `return-to-previous-state`, cũng từ #79. Nó chỉ
 cho đi cạnh về đúng trạng thái hồ sơ đã ở ngay trước trạng thái hiện tại. Không có bảng ánh

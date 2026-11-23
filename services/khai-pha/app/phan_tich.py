@@ -14,17 +14,21 @@
 #   tách nhóm   — (#315) nhánh lệch và thời gian chờ tách theo loại yêu cầu và phòng hiện tại của hồ
 #                 sơ, cùng danh sách hồ sơ chờ lâu nhất ở từng trạng thái, để màn quy trình thực tế nói
 #                 được "nhiều nhất ở đâu" và mở được hồ sơ cụ thể
+#   một hồ sơ   — (#448) các bước lệch của đúng một hồ sơ, theo CÙNG định nghĩa với nhánh lệch
+#                 (`buoc_lech`), để trang hồ sơ và màn quy trình thực tế không bao giờ nói khác nhau
 #
 # Hợp đồng trả về (JSON, khóa tiếng Anh như mọi API của dự án) ghi ở docs/ARCHITECTURE.md mục 6.4.
 
 from __future__ import annotations
 
+import datetime as dt
 import statistics
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 
 from .bo_may import BoMay, LuotVao
 from .cau_hinh import CauHinh
-from .du_lieu import DuLieu
+from .du_lieu import DuLieu, DuLieuHoSo, SuKien
 
 # Thứ tự các nhánh lệch trong kết quả; giao diện tra nhãn theo mã
 NHANH_LECH = ("rework", "escalation", "wait_expiry", "reopen", "multiple_routing")
@@ -61,6 +65,51 @@ def _cho_theo_nhom(giay_theo_nhom: dict[str | None, list[int]]) -> list[dict]:
          for ma, ds in giay_theo_nhom.items()),
         key=lambda m: (-m["median_wait_seconds"], _khoa_ma(m["code"])),
     )
+
+
+def buoc_lech(su_kien: Iterable[SuKien]) -> list[tuple[SuKien, str]]:
+    """Định nghĩa "lệch" DUY NHẤT của dịch vụ — dùng cho nhánh lệch của kết quả toàn bộ và cho kết quả
+    tuân thủ của một hồ sơ (#448), để hai nơi không bao giờ nói khác nhau.
+
+    Mỗi cặp (sự kiện, mã loại lệch trong `NHANH_LECH`), theo thứ tự sự kiện đưa vào: sự kiện đi một cạnh
+    làm lại / leo thang / tự đi khi hết hạn chờ / mở lại; và lần đặt phòng ban phụ trách thứ hai trở đi
+    của cùng hồ sơ (lần đầu là định tuyến bình thường). Một sự kiện mang nhiều cờ thì ra nhiều cặp, theo
+    thứ tự của `NHANH_LECH`. Chỉ đọc cờ — không bộ máy nào tham gia, nên hai bộ máy ra cùng kết quả."""
+    ket_qua: list[tuple[SuKien, str]] = []
+    so_lan_dat_phong: Counter = Counter()
+    for s in su_kien:
+        for loai, co in (("rework", s.lam_lai), ("escalation", s.leo_thang),
+                         ("wait_expiry", s.het_han_cho), ("reopen", s.mo_lai)):
+            if co:
+                ket_qua.append((s, loai))
+        if s.doi_phong:
+            so_lan_dat_phong[s.ho_so] += 1
+            if so_lan_dat_phong[s.ho_so] >= 2:
+                ket_qua.append((s, "multiple_routing"))
+    return ket_qua
+
+
+def _luc_utc(luc: dt.datetime) -> str:
+    """Thời điểm theo UTC, ISO 8601 có hậu tố Z — như mọi mốc giờ của API dự án."""
+    return luc.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def tuan_thu_ho_so(ma: int, du_lieu: DuLieuHoSo) -> dict:
+    """Kết quả tuân thủ của một hồ sơ (#448): các bước lệch theo thứ tự thời gian. Chỉ đọc, chỉ để
+    thông tin — không gì ở đây đổi trạng thái hay ghi vào cơ sở dữ liệu. Hợp đồng ở ARCHITECTURE 6.4."""
+
+    def nhan(ma_tt: str | None) -> str | None:
+        if ma_tt is None:
+            return None
+        tt = du_lieu.trang_thai.get(ma_tt)
+        return tt.nhan if tt else ma_tt
+
+    buoc = [
+        {"kind": loai, "activity": s.hoat_dong, "from": s.tu, "to": s.den,
+         "from_label": nhan(s.tu), "to_label": nhan(s.den), "at": _luc_utc(s.luc), "actor": s.nguoi}
+        for s, loai in buoc_lech(du_lieu.su_kien)
+    ]
+    return {"case": ma, "deviates": bool(buoc), "steps": buoc}
 
 
 def phan_tich(du_lieu: DuLieu, bo_may: BoMay, cau_hinh: CauHinh) -> dict:
@@ -170,19 +219,8 @@ def phan_tich(du_lieu: DuLieu, bo_may: BoMay, cau_hinh: CauHinh) -> dict:
 
     # --- Nhánh lệch ----------------------------------------------------------------------------------
     co: dict[str, set[int]] = {k: set() for k in NHANH_LECH}
-    so_lan_dat_phong: Counter = Counter()
-    for s in su_kien:
-        if s.lam_lai:
-            co["rework"].add(s.ho_so)
-        if s.leo_thang:
-            co["escalation"].add(s.ho_so)
-        if s.het_han_cho:
-            co["wait_expiry"].add(s.ho_so)
-        if s.mo_lai:
-            co["reopen"].add(s.ho_so)
-        if s.doi_phong:
-            so_lan_dat_phong[s.ho_so] += 1
-    co["multiple_routing"] = {h for h, so in so_lan_dat_phong.items() if so >= 2}
+    for s, loai in buoc_lech(su_kien):
+        co[loai].add(s.ho_so)
 
     tong_loai = Counter(loai_cua[h] for h in cac_ho_so)
     tong_phong = Counter(phong_cua[h] for h in cac_ho_so)

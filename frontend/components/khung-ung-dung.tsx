@@ -141,6 +141,11 @@ export function KhungUngDung({
   return (
     <div className="app" data-menu-mo={moMenu ? "" : undefined} data-thu-gon={thuGon ? "" : undefined}>
       <NgheThayDoi />
+      {/* Lối tắt đầu tiên của Tab (#435, WCAG 2.4.1): người dùng bàn phím và trình đọc màn hình không phải đi
+          qua cả thanh bên ở mỗi trang. Chỉ hiện khi nhận tiêu điểm */}
+      <a className="bo-qua khong-in" href="#noi-dung-chinh">
+        Bỏ qua tới nội dung chính
+      </a>
       <aside className="sb khong-in" aria-label="Thanh bên">
         <div className="sb-dau">
           <span className="logo">YC</span>
@@ -217,7 +222,7 @@ export function KhungUngDung({
           <div className="phai" id={ID_THANH_DAU_PHAI} />
         </header>
 
-        <main className="vung vao">
+        <main className="vung vao" id="noi-dung-chinh" tabIndex={-1}>
           <DatTenCon.Provider value={datTenCon}>{children}</DatTenCon.Provider>
         </main>
       </div>

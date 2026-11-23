@@ -423,6 +423,45 @@
         "title": "DanhSachHoSoRa",
         "type": "object"
       },
+      "DieuKienCanhRa": {
+        "description": "Một dòng của bảng `transition_conditions` (#397) mà hồ sơ chưa thỏa (#424).",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "operator": {
+            "title": "Operator",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "field",
+          "operator",
+          "value"
+        ],
+        "title": "DieuKienCanhRa",
+        "type": "object"
+      },
       "DoiTuyChonVao": {
         "properties": {
           "enabled": {
@@ -1270,6 +1309,140 @@
           "created_at"
         ],
         "title": "LoiNhanRa",
+        "type": "object"
+      },
+      "LuaChonCanhCuaHoSoRa": {
+        "description": "Mọi cạnh rời trạng thái hiện tại của một hồ sơ, theo thứ tự hiển thị của bộ quy tắc (#424).",
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/TrangThaiRa"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/LuaChonCanhRa"
+            },
+            "title": "Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "state",
+          "transitions"
+        ],
+        "title": "LuaChonCanhCuaHoSoRa",
+        "type": "object"
+      },
+      "LuaChonCanhRa": {
+        "description": "Một cạnh rời trạng thái hiện tại của hồ sơ, kèm được đi hay không và vì sao (#424).",
+        "properties": {
+          "activity_code": {
+            "title": "Activity Code",
+            "type": "string"
+          },
+          "activity_label": {
+            "title": "Activity Label",
+            "type": "string"
+          },
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "is_system": {
+            "title": "Is System",
+            "type": "boolean"
+          },
+          "keeps_state": {
+            "title": "Keeps State",
+            "type": "boolean"
+          },
+          "note_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Label"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/LyDoChanRa"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "requires_input": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requires Input",
+            "type": "array"
+          },
+          "requires_note": {
+            "title": "Requires Note",
+            "type": "boolean"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          },
+          "to_state_label": {
+            "title": "To State Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_code",
+          "activity_label",
+          "to_state",
+          "to_state_label",
+          "keeps_state",
+          "is_system",
+          "allowed",
+          "requires_note"
+        ],
+        "title": "LuaChonCanhRa",
+        "type": "object"
+      },
+      "LyDoChanRa": {
+        "description": "Một lý do tác nhân chưa đi được cạnh (#424).\n\n`category` là mã lớp lỗi engine sẽ trả nếu cứ gọi bước chuyển: `role-not-permitted`,\n`system-transition-only` hay `guard-violation`. `code` là mã máy đọc được của chính lý do:\nvới ràng buộc là mã ràng buộc trong bảng `guards` (điều kiện trên cạnh: `edge-condition`),\nvới quyền thì trùng `category`. `message` là thông điệp tiếng Việt của chính lỗi đó.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DieuKienCanhRa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "category",
+          "message"
+        ],
+        "title": "LyDoChanRa",
         "type": "object"
       },
       "MucUuTienRa": {
@@ -3031,6 +3204,54 @@
           }
         ],
         "summary": "Chi Tiet Trong Pham Vi",
+        "tags": [
+          "Lõi — Luồng công việc"
+        ]
+      }
+    },
+    "/core/v1/workflow/requests/{case_id}/transition-options": {
+      "get": {
+        "description": "Mọi cạnh rời trạng thái hiện tại của hồ sơ, mỗi cạnh kèm người gọi đi được không và vì sao (#424).\n\nKhác `allowed_transitions` của chi tiết hồ sơ — chỉ những cạnh đi được — ở chỗ cạnh bị chặn vẫn có mặt,\nkèm `reasons`: sai vai (`role-not-permitted`), cạnh chỉ hệ thống đi (`system-transition-only`), ràng buộc\nkhông cần nhập liệu (mã ràng buộc, ví dụ `actor-in-case-department`), điều kiện trên cạnh\n(`edge-condition` kèm trường, phép so, giá trị cần). Tập cạnh `allowed` trùng hệt `allowed_transitions`:\nhai đường dùng chung một hàm xét cạnh. `requires_input` là trường nhập liệu gửi trong `changes` khi đi.\n\nChỉ đọc — không ghi nhật ký, không đổi hồ sơ. Phạm vi nhìn thấy như chi tiết hồ sơ: ngoài phạm vi 404.\nHồ sơ ở trạng thái không còn cạnh nào đi ra thì `transitions` rỗng.",
+        "operationId": "lua_chon_canh_trong_pham_vi_core_v1_workflow_requests__case_id__transition_options_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LuaChonCanhCuaHoSoRa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "Keycloak": []
+          }
+        ],
+        "summary": "Lua Chon Canh Trong Pham Vi",
         "tags": [
           "Lõi — Luồng công việc"
         ]

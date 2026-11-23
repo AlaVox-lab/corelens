@@ -35,5 +35,9 @@ pyjwt[crypto]==2.14.0
 # từng phần và kiểu TIMESTAMPTZ — SQLite không thay thế được.
 pytest==9.1.1
 
+# Kiểm thử dựa trên tính chất cho máy trạng thái (#441): sinh chuỗi thao tác ngẫu nhiên và
+# kiểm bất biến sau mỗi bước. Chỉ dùng khi kiểm thử. MPL-2.0, dùng nguyên gói, không sửa.
+hypothesis==6.170.15
+
 # TestClient của FastAPI chạy trên httpx. Chỉ dùng khi kiểm thử.
 httpx==0.28.1

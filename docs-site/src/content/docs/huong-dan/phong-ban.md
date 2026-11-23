@@ -67,6 +67,19 @@ Người cùng phòng hoàn thành được hồ sơ đã giao người khác; d
 
 ![Trang hồ sơ của phòng ban — hồ sơ đã leo thang](../../../assets/anh/ho-so-phong-ban.png)
 
+## Hồ sơ đi lệch quy trình
+
+Trang hồ sơ của phòng có thêm khối **Đi lệch quy trình thiết kế** khi hồ sơ đã rẽ khỏi luồng chính:
+mỗi dòng là một bước lệch — loại lệch (*Trả về làm lại*, *Leo thang do quá hạn*, *Tự chuyển khi hết hạn
+chờ*, *Mở lại sau khi kết thúc*, *Chuyển phòng nhiều lần*), trạng thái đi và đến, lúc xảy ra và người
+thực hiện. Cách tính đúng như năm nhánh lệch của màn [Quy trình thực tế](../quy-trinh-thuc-te/), nên một
+hồ sơ có bước lệch ở đây thì cũng nằm trong nhánh đó trên màn kia.
+
+Khối **chỉ để thông tin**: không có nút, không đổi gì trên hồ sơ, không cần bạn làm gì. Hồ sơ đi đúng
+luồng thì không có khối nào; dịch vụ khai phá quy trình tắt hay chưa trả lời thì trang y như bình thường.
+Người gửi không thấy khối này. Trưởng phòng, người xử lý và điều phối viên thấy trên mọi hồ sơ mình
+mở được.
+
 ## Hạn và leo thang
 
 Đồng hồ hạn bắt đầu chạy khi phòng **xác duyệt** hồ sơ. Quá hạn thì hệ thống **tự leo thang** lên

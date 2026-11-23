@@ -235,7 +235,7 @@ export default async function HangDoiPhongBan({ searchParams }: { searchParams: 
             <Link
               href={duongVoi(GOC, sp, { mine: cuaToi ? null : "1" })}
               className="chip"
-              aria-pressed={cuaToi}
+              aria-current={cuaToi ? "true" : undefined}
             >
               <User aria-hidden />
               Giao cho tôi

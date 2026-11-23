@@ -24,6 +24,10 @@
 # Nên một trưởng phòng đi được "Duyệt cấp một" trên đề xuất của phòng mình, không thấy đề xuất của phòng
 # khác, và một người gửi gọi nhầm cạnh của trưởng phòng nhận 403 của engine. `allowed_transitions` của chi
 # tiết hồ sơ tính theo người gọi, như ở mọi cửa khác.
+#
+# Đường thứ tư chỉ có ở lõi (#424): `GET …/transition-options` liệt kê MỌI cạnh rời trạng thái hiện tại kèm
+# lý do không đi được — cùng cửa nhìn thấy, cùng hàm xét cạnh của engine (`xet_cac_canh`) mà
+# `allowed_transitions` lọc lại, nên ứng dụng tầng trên hiển thị được vì sao một nút không có mà không đoán.
 
 from __future__ import annotations
 
@@ -37,17 +41,33 @@ from app.auth.dependencies import current_actor
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import Request
+from app.rules.dieu_kien import DieuKienKhongDat
+from app.rules.guards import truong_can_nhap
 from app.workflow.context import Actor
 from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
+from app.workflow.engine import xet_cac_canh
+from app.workflow.errors import GuardViolation, TransitionError
 from app.workflow.phan_trang import ThamSoTrang, tham_so_trang
 from app.workflow.routes import (
     ThamSoQuyTrinh,
+    _bang_trang_thai,
     _dung_chi_tiet,
+    _nhan,
     di_buoc,
     liet_ke_ho_so,
+    xep_o_nhap,
 )
-from app.workflow.schemas import BuocChuyenLoiVao, DanhSachHoSoRa, HoSoChiTietRa
+from app.workflow.schemas import (
+    BuocChuyenLoiVao,
+    DanhSachHoSoRa,
+    DieuKienCanhRa,
+    HoSoChiTietRa,
+    LuaChonCanhCuaHoSoRa,
+    LuaChonCanhRa,
+    LyDoChanRa,
+    TrangThaiRa,
+)
 
 router_loi_rieng = APIRouter()
 
@@ -110,6 +130,58 @@ def chi_tiet_trong_pham_vi(case_id: int, session: _Phien, actor: _TacNhan) -> Ho
     người gọi đi được lúc này, tính theo vai và ràng buộc của chính họ."""
     _kiem_nhin_thay(session, case_id, actor)
     return _dung_chi_tiet(session, session.get(Request, case_id), actor)
+
+
+def _ly_do_ra(loi: TransitionError) -> LyDoChanRa:
+    """Một lỗi engine sẽ ném thành một lý do: mã của ràng buộc nếu là ràng buộc, mã lớp lỗi nếu là quyền."""
+    dk = loi.dieu_kien if isinstance(loi, DieuKienKhongDat) else None
+    return LyDoChanRa(
+        code=loi.guard_code if isinstance(loi, GuardViolation) else loi.code,
+        category=loi.code,
+        message=loi.message,
+        condition=DieuKienCanhRa(
+            id=dk.id, field=dk.field_code, operator=dk.operator, value=dk.value, description=dk.description
+        ) if dk is not None else None,
+    )
+
+
+@router_loi_rieng.get("/requests/{case_id}/transition-options", response_model=LuaChonCanhCuaHoSoRa)
+def lua_chon_canh_trong_pham_vi(case_id: int, session: _Phien, actor: _TacNhan) -> LuaChonCanhCuaHoSoRa:
+    """Mọi cạnh rời trạng thái hiện tại của hồ sơ, mỗi cạnh kèm người gọi đi được không và vì sao (#424).
+
+    Khác `allowed_transitions` của chi tiết hồ sơ — chỉ những cạnh đi được — ở chỗ cạnh bị chặn vẫn có mặt,
+    kèm `reasons`: sai vai (`role-not-permitted`), cạnh chỉ hệ thống đi (`system-transition-only`), ràng buộc
+    không cần nhập liệu (mã ràng buộc, ví dụ `actor-in-case-department`), điều kiện trên cạnh
+    (`edge-condition` kèm trường, phép so, giá trị cần). Tập cạnh `allowed` trùng hệt `allowed_transitions`:
+    hai đường dùng chung một hàm xét cạnh. `requires_input` là trường nhập liệu gửi trong `changes` khi đi.
+
+    Chỉ đọc — không ghi nhật ký, không đổi hồ sơ. Phạm vi nhìn thấy như chi tiết hồ sơ: ngoài phạm vi 404.
+    Hồ sơ ở trạng thái không còn cạnh nào đi ra thì `transitions` rỗng.
+    """
+    _kiem_nhin_thay(session, case_id, actor)
+    ho_so = session.get(Request, case_id)
+    states = _bang_trang_thai(session, ho_so.rule_set_id)
+    hien_tai = states[ho_so.current_state]
+    return LuaChonCanhCuaHoSoRa(
+        case_id=ho_so.id,
+        state=TrangThaiRa(code=hien_tai.code, label=hien_tai.label, is_terminal=hien_tai.is_terminal),
+        transitions=[
+            LuaChonCanhRa(
+                activity_code=canh.activity_code,
+                activity_label=canh.activity_label,
+                to_state=canh.to_state,
+                to_state_label=_nhan(states.get(canh.to_state), canh.to_state),
+                keeps_state=canh.from_state == canh.to_state,
+                is_system=canh.is_system,
+                allowed=not ly_do,
+                reasons=[_ly_do_ra(loi) for loi in ly_do],
+                requires_input=xep_o_nhap(truong_can_nhap(canh.guard_codes)),
+                requires_note=canh.requires_note,
+                note_label=canh.note_label,
+            )
+            for canh, ly_do in xet_cac_canh(session, ho_so, actor)
+        ],
+    )
 
 
 @router_loi_rieng.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)

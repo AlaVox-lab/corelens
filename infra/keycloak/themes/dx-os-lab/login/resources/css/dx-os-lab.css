@@ -38,8 +38,18 @@
   box-shadow: none;
 }
 
-/* Chữ trên nút chính trên nền chàm sáng ở chế độ tối phải tối để đủ tương phản */
+/* Chữ trên nút chính trên nền chàm sáng ở chế độ tối phải tối để đủ tương phản. Biến màu toàn cục ở trên
+ * không tới nền của nút ở chế độ tối — nút giữ xanh mặc định #06c của PatternFly, chữ tối trên đó chỉ
+ * 3,25:1 (#435) — nên đặt thẳng biến của nút: chữ #12142b trên #8b93f8 khoảng 6,7:1, trên #a5abfa còn cao hơn */
 :root.pf-v5-theme-dark .pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: #8b93f8;
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: #a5abfa;
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: #a5abfa;
+  --pf-v5-c-button--m-primary--active--BackgroundColor: #a5abfa;
+  --pf-v5-c-button--m-primary--Color: #12142b;
+  --pf-v5-c-button--m-primary--hover--Color: #12142b;
+  --pf-v5-c-button--m-primary--focus--Color: #12142b;
+  --pf-v5-c-button--m-primary--active--Color: #12142b;
   color: #12142b;
 }
 

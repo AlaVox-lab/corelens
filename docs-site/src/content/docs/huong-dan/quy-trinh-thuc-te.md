@@ -131,6 +131,9 @@ Mọi con số đều bấm được để xem hồ sơ đứng sau nó, ở ng�
 
 Danh sách bị cắt khi quá dài; ngăn ghi rõ "Hiện 200 trên 315 hồ sơ". Esc đóng ngăn.
 
+Mở một hồ sơ trong nhánh lệch, trang hồ sơ có khối **Đi lệch quy trình thiết kế** chỉ ra đúng bước đã
+rẽ khỏi luồng chính, cùng cách tính với màn này — xem trang [Phòng ban](../phong-ban/), mục *Hồ sơ đi lệch quy trình*.
+
 ## Khi dịch vụ khai phá không chạy
 
 Màn nói **"Hệ thống không phản hồi"** và có nút **Thử lại**. Chỉ màn này bị ảnh hưởng: hồ sơ, bảng điều
@@ -144,7 +147,7 @@ khoảng dài hơn.
 Dịch vụ khai phá dùng thư viện PM4Py nên theo giấy phép **AGPL-3.0-or-later**, khác phần còn lại của
 Corelens (MIT). Điều 13 của AGPL đòi người dùng qua mạng lấy được mã nguồn, nên cuối màn luôn có dòng
 *"Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 — mã nguồn"*, kể cả khi khoảng ngày
-không có hồ sơ nào.
+không có hồ sơ nào. Khối bước lệch trên trang hồ sơ mang cùng dòng đó.
 
 Liên kết **mã nguồn** đọc từ biến môi trường `MINING_SOURCE_URL` của cổng (tệp `infra/.env`, mặc định
 thư mục `services/khai-pha` trên kho GitHub của dự án). Doanh nghiệp tự triển khai mà **sửa** dịch vụ

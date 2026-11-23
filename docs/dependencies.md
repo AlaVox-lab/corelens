@@ -206,6 +206,7 @@ của cụm hay trang tài liệu.
 | Gói | Phiên bản | Giấy phép | OSI công nhận | Tương thích MIT | Ghi chú |
 |---|---|---|---|---|---|
 | @playwright/test | `1.64.1` | Apache-2.0 | Có | Có | Điều khiển trình duyệt thật, đăng nhập qua trang Keycloak. Kéo theo `playwright` và `playwright-core`, cùng Apache-2.0 — cả cây chỉ ba gói. Trình duyệt Chromium tải riêng bằng `npm run cai-trinh-duyet`, hoặc dùng Chrome cài sẵn |
+| @axe-core/playwright | `4.14.0` | MPL-2.0 | Có | Có — copyleft theo tệp, dùng nguyên gói, không sửa | Quét khả năng tiếp cận WCAG 2.1 A + AA trên các màn chính (#435, `e2e/kiem/kha-nang-tiep-can.spec.ts`). Kéo theo `axe-core` (MPL-2.0, cùng cách lý giải như `axe-core` của cây linter ở trên). Lõi ghim `4.14.0` bằng `overrides` trong `e2e/package.json`: bản `4.14.1` mà cây linter của cổng đang dùng phát hành 16/11/2026, chưa đủ hai tuần. Cả cây thêm hai gói |
 
 ---
 
@@ -233,6 +234,7 @@ trong ảnh dựng lại có ràng buộc giống hệt ảnh trước đó, 47 
 | python-multipart | `0.0.32` | Apache-2.0 | Có | Có | FastAPI cần để đọc biểu mẫu tải tệp lên (#80) |
 | pytest | `9.1.1` | MIT | Có | Có | Chỉ khi phát triển và kiểm thử — xem đoạn dưới bảng |
 | httpx | `0.28.1` | BSD-3-Clause | Có | Có | Chỉ khi kiểm thử: `TestClient` của FastAPI |
+| hypothesis | `6.170.15` | MPL-2.0 | Có | Có — copyleft theo tệp, dùng nguyên gói, không sửa | Chỉ khi kiểm thử: kiểm thử dựa trên tính chất cho máy trạng thái (#441) — xem đoạn dưới bảng |
 
 Phụ thuộc gián tiếp đáng kể: `pydantic` (MIT), `starlette` (BSD-3-Clause). Do `boto3` kéo theo:
 `botocore` (Apache-2.0), `s3transfer` (Apache-2.0), `jmespath` (MIT), `urllib3` (MIT),
@@ -250,6 +252,13 @@ này được OSI công nhận và là copyleft ở mức từng tệp: ràng bu
 **sửa tệp nguồn của chính gói đó**, mà điều đó thì CLAUDE.md mục 2.3 đã cấm sẵn.
 `certifi` cũng chỉ là một bó chứng thư số CA đi kèm, không phải mã nguồn chạy trong
 sản phẩm.
+
+`hypothesis` `6.170.15` (#441, phát hành 06/11/2026) cũng mang **MPL-2.0** — siêu dữ liệu gói ghi
+`License-Expression: MPL-2.0` — với cùng cách lý giải như `certifi`: copyleft theo từng tệp, nhóm dùng
+nguyên gói qua trình quản lý gói, không sửa, không chép tệp nào của nó. Nó chỉ chạy trong bộ kiểm thử
+(`backend/tests/test_tinh_chat_may_trang_thai.py`), không mô-đun nào của `app/` nạp nó. Kéo theo đúng một
+gói: `sortedcontainers` `2.4.0` (Apache-2.0, siêu dữ liệu ghi "Apache 2.0"). `constraints.txt` sinh lại
+với chính nó làm ràng buộc, nên mọi gói khác giữ nguyên phiên bản — 49 gói.
 
 ## Phụ thuộc dịch vụ khai phá quy trình
 

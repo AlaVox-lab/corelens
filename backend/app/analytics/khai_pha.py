@@ -9,6 +9,9 @@
 # ty, người gửi không thấy. Danh sách phòng gửi đi đã đối chiếu với bảng `departments`, không chuỗi nào
 # từ token đi thẳng sang dịch vụ khai phá.
 #
+# Trang hồ sơ phía nhân viên hỏi thêm kết quả tuân thủ của MỘT hồ sơ (#448): cùng luật xem với trang hồ
+# sơ, trừ người gửi; dịch vụ khai phá tắt hay hỏng thì chỉ là "không có", không bao giờ là lỗi.
+#
 # Dịch vụ này không bao giờ nhập thư viện khai phá (ADR-0007): chỉ trao đổi JSON qua HTTP, nên giấy
 # phép AGPL của thư viện dừng ở ranh giới dịch vụ khai phá.
 
@@ -30,9 +33,11 @@ from app.auth.dependencies import current_actor
 from app.config import get_settings
 from app.db import get_session
 from app.intelligence import khuyen_nghi
-from app.models.case import Request
+from app.models.case import EventLog, Request
 from app.models.workflow_config import Department, RequestType
 from app.workflow.context import Actor
+from app.workflow.coordination import vao_duoc_buong_lai
+from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.routes import _ma_ho_so
 
 log = logging.getLogger(__name__)
@@ -59,8 +64,18 @@ class KhaiPhaClient:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
+        return self._doc(yeu_cau)
+
+    def tuan_thu(self, case_id: int) -> dict:
+        """Bước lệch của một hồ sơ (#448). Hồ sơ không có trong nhật ký thì dịch vụ trả 404 — cũng là
+        `KhaiPhaKhongPhanHoi`: với trang hồ sơ, hai trường hợp đều là "không có gì để nói"."""
+        dia_chi = get_settings().mining_url.rstrip("/") + f"/ho-so/{int(case_id)}/tuan-thu"
+        return self._doc(urllib.request.Request(dia_chi, method="GET"))
+
+    @staticmethod
+    def _doc(yeu_cau: urllib.request.Request) -> dict:
         try:
-            with urllib.request.urlopen(yeu_cau, timeout=cau_hinh.mining_timeout_seconds) as phan_hoi:
+            with urllib.request.urlopen(yeu_cau, timeout=get_settings().mining_timeout_seconds) as phan_hoi:
                 return json.loads(phan_hoi.read())
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as loi:
             raise KhaiPhaKhongPhanHoi(str(loi)) from loi
@@ -116,6 +131,65 @@ def khuyen_nghi_cai_tien(
         "generated_at": kn.generated_at.isoformat() if kn.generated_at else None,
         "cached": tu_dem,
     }
+
+
+def _xem_duoc_tuan_thu(session: Session, ho_so: Request | None, actor: Actor) -> bool:
+    """Đúng luật xem hồ sơ của hai trang hồ sơ phía nhân viên — điều phối viên xem mọi hồ sơ, nhân viên
+    phòng ban xem hồ sơ của phòng mình (như `mo_duoc_ho_so` của tệp đính kèm) — TRỪ luật người gửi xem
+    hồ sơ của mình: kết quả tuân thủ là thông tin vận hành nội bộ, như căn cứ gợi ý ở #504."""
+    if ho_so is None:
+        return False
+    if vao_duoc_buong_lai(actor):
+        return True
+    return vao_duoc_phong_ban(session, actor) and ho_so.department_code in actor.departments
+
+
+@router.get("/process-mining/cases/{case_id}")
+def tuan_thu_ho_so(
+    case_id: int,
+    session: Annotated[Session, Depends(get_session)],
+    actor: Annotated[Actor, Depends(current_actor)],
+    may_khach: Annotated[KhaiPhaClient, Depends(khai_pha_client)],
+) -> dict:
+    """Hồ sơ này có đi lệch quy trình thiết kế không, lệch ở bước nào (#448) — chỉ để thông tin.
+
+    Định nghĩa lệch là đúng định nghĩa nhánh lệch của màn quy trình thực tế (dịch vụ khai phá, hàm
+    `buoc_lech`). 403 cho người không vào được buồng lái nào (vai người gửi); 404 cho hồ sơ không có hay
+    ngoài phạm vi, như trang hồ sơ. KHÔNG BAO GIỜ báo lỗi vì dịch vụ khai phá: `status` là `ready` (kèm
+    bước lệch), `disabled` (không cấu hình địa chỉ dịch vụ khai phá) hay `unavailable` (không trả lời,
+    hay nhật ký chưa có hồ sơ) — trang hồ sơ khi đó y như trước. Không ghi gì, không đổi trạng thái."""
+    if not (vao_duoc_buong_lai(actor) or vao_duoc_phong_ban(session, actor)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "conformance-forbidden",
+                    "message": "Tài khoản này không xem được kết quả tuân thủ quy trình."},
+        )
+    ho_so = session.get(Request, case_id)
+    if not _xem_duoc_tuan_thu(session, ho_so, actor):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "case-not-found", "message": "Không tìm thấy hồ sơ."},
+        )
+    rong = {"case_id": case_id, "deviates": False, "steps": []}
+    if not get_settings().mining_url:
+        return {"status": "disabled", **rong}
+    try:
+        ket_qua = may_khach.tuan_thu(case_id)
+        buoc = [dict(b) for b in ket_qua["steps"]]
+    except (KhaiPhaKhongPhanHoi, KeyError, TypeError, ValueError) as loi:
+        log.info("Không có kết quả tuân thủ cho hồ sơ %s: %s", case_id, loi)
+        return {"status": "unavailable", **rong}
+    # Tên người thực hiện như nhật ký ghi lúc thao tác — dịch vụ khai phá chỉ có định danh
+    ten = {
+        a: nhan for a, nhan in session.execute(
+            select(EventLog.actor, EventLog.actor_label)
+            .where(EventLog.case_id == case_id, EventLog.actor_label.is_not(None))
+            .order_by(EventLog.id)
+        ).all()
+    }
+    for b in buoc:
+        b["actor_label"] = ten.get(b.get("actor"))
+    return {"status": "ready", "case_id": case_id, "deviates": bool(buoc), "steps": buoc}
 
 
 def _khai_pha_trong_pham_vi(
