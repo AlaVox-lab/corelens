@@ -289,6 +289,31 @@ class CaseMessage(Base):
         return f"<CaseMessage {self.case_id} {self.kind} by {self.author}>"
 
 
+class CaseFeedback(Base):
+    """Mức hài lòng người gửi chấm khi xác nhận hồ sơ hoàn tất (#433).
+
+    Chấm là tùy chọn và đi cùng lần chuyển của một cạnh mang cờ `transitions.collects_feedback`, nhưng
+    **không vào nhật ký sự kiện** và không qua engine: điểm không đổi trường quyết định nào (ADR-0005). Mỗi
+    lần xác nhận có chấm một dòng, gắn đúng dòng nhật ký của lần đó (`event_id`) — mở lại rồi xác nhận lần
+    nữa thì có dòng thứ hai. **Chỉ ghi thêm**: trigger chặn UPDATE và DELETE (bản sửa 0036). Không lưu tên
+    người: người chấm là người gửi của hồ sơ.
+    """
+
+    __tablename__ = "case_feedback"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    case_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("requests.id", ondelete="CASCADE"))
+    # Dòng nhật ký của lần xác nhận mang điểm này — gắn điểm với đúng chu kỳ xử lý
+    event_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("event_log.id"), unique=True)
+    # Điểm 1–5, ràng buộc CHECK ở cơ sở dữ liệu
+    score: Mapped[int] = mapped_column(SmallInteger)
+    # Nhận xét chữ, tùy chọn; chỉ trang hồ sơ của điều phối viên, phòng ban và chính người gửi đọc
+    comment: Mapped[str | None] = mapped_column(Text, default=None)
+    created_at: Mapped[dt.datetime] = mapped_column(server_default=func.now())
+
+    __table_args__ = (Index("case_feedback_tra_theo_ho_so", "case_id", "created_at"),)
+
+
 class CaseAttachment(Base):
     """Một tệp đính kèm trên hồ sơ (#80).
 

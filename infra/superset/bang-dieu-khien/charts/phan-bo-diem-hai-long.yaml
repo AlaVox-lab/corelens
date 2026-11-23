@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 AlaVox-lab
+#
+# Một phần bảng điều khiển phân tích (#304), Superset tự nạp lúc khởi động — xem
+# infra/superset/docker-entrypoint.sh. Sửa trên giao diện Superset rồi xuất lại, đừng sửa tay
+# mã uuid: các tệp nối nhau bằng uuid.
+slice_name: Phân bố điểm hài lòng (số hồ sơ theo điểm 1–5)
+description: Lần chấm mới nhất của mỗi hồ sơ đã chấm khi xác nhận hoàn tất (#433).
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 16__table
+  adhoc_filters:
+  - expressionType: SQL
+    clause: WHERE
+    sqlExpression: da_cham
+  row_limit: 10000
+  color_scheme: supersetColors
+  show_legend: true
+  rich_tooltip: true
+  orientation: vertical
+  x_axis_title_margin: 15
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  truncateXAxis: true
+  sort_series_type: sum
+  zoomable: false
+  x_axis: diem
+  xAxisForceCategorical: true
+  groupby: []
+  metrics:
+  - expressionType: SQL
+    sqlExpression: COUNT(*)
+    label: Số hồ sơ
+    hasCustomLabel: true
+    optionName: metric_hai_long_phan_bo
+  x_axis_title: ''
+  y_axis_title: ''
+  show_value: true
+query_context: null
+cache_timeout: null
+uuid: 82c592bd-7171-477f-8fa2-70c5a44fb0d2
+version: 1.0.0
+dataset_uuid: 0eaee8fa-f96a-451d-a315-a5402a53a80f

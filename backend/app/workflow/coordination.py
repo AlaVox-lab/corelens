@@ -43,6 +43,7 @@ from app.rules.guards import permitted_fields, truong_bat_buoc, truong_can_nhap
 from app.rules.han_cho import canh_tu_di_theo_trang_thai, da_toi_luc_bao, giay_da_o_trang_thai
 from app.workflow.assignment import kiem_nguoi_duoc_giao
 from app.workflow.contact import lien_he_nguoi_gui
+from app.workflow.danh_gia import danh_gia_cua
 from app.workflow.context import Actor
 from app.workflow.engine import (
     _nhan_trang_thai,
@@ -177,6 +178,8 @@ def _dung_chi_tiet_dieu_phoi(
         suggested_request_type=goi_y_ra(goi_y_loai(session, ho_so)),
         suggested_priority=goi_y_ra(goi_y_uu_tien(session, ho_so)),
         requested_by_me=ho_so.requester_id == actor.id,
+        # Đánh giá của người gửi (#433) — điểm kèm nhận xét, chỉ đọc
+        feedback=danh_gia_cua(session, ho_so.id),
     )
 
 

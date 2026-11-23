@@ -46,6 +46,7 @@ from app.workflow.assignment import (
 from app.workflow.contact import lien_he_nguoi_gui
 from app.workflow.context import Actor
 from app.workflow.coordination import _luc_vao_trang_thai, _nhan_co_ma
+from app.workflow.danh_gia import danh_gia_cua
 from app.workflow.engine import (
     get_active_rule_set,
     ma_quy_trinh_ung_dung,
@@ -183,6 +184,8 @@ def _dung_chi_tiet(session: Session, ho_so: Request, actor: Actor) -> HoSoPhongB
             if dang_cho_giao_viec(session, ho_so)
             else None
         ),
+        # Đánh giá của người gửi (#433) — điểm kèm nhận xét, chỉ đọc
+        feedback=danh_gia_cua(session, ho_so.id),
     )
 
 

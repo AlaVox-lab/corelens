@@ -88,11 +88,24 @@ export async function chuyenTrangThai(
     return { loi: "Thiếu thông tin thao tác. Tải lại trang rồi thử lại." };
   }
 
+  // Mức hài lòng (#433): ô chỉ có ở cạnh cho chấm. Không chấm thì không gửi gì — xác nhận đi như cũ.
+  // Cạnh nào nhận điểm, điểm hợp lệ hay không, nhận xét dài bao nhiêu: dịch vụ kiểm.
+  const diem = chuoiHoacRong(duLieu.get("feedback_score"));
+  const nhanXet = chuoiHoacRong(duLieu.get("feedback_comment"));
+  if (!diem && nhanXet) {
+    return { loi: "Chọn số sao từ 1 đến 5 để gửi kèm nhận xét, hoặc xóa nhận xét đi." };
+  }
+
   // Ô `truong:*` chỉ có ở thao tác sửa nội dung (#127); các thao tác khác gửi `changes`
   // rỗng. Trường nào cạnh không cho đặt thì engine từ chối — không lọc lại ở đây.
   const ketQua = await guiDichVu<HoSoChiTiet>(
     `/requests/${maHoSo}/transitions`,
-    { to_state: den, note: lyDo || null, changes: gomThayDoi(duLieu) },
+    {
+      to_state: den,
+      note: lyDo || null,
+      changes: gomThayDoi(duLieu),
+      ...(diem ? { feedback: { score: Number(diem), comment: nhanXet || null } } : {}),
+    },
   );
 
   if (!ketQua.ok) return { loi: ketQua.thongDiep };

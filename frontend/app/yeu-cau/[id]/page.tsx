@@ -34,6 +34,7 @@ import { guiLoiNhan } from "@/app/yeu-cau/thao-tac";
 import { DanhDauDaDoc } from "@/components/danh-dau-da-doc";
 import { GhiChuMoLai, KhoiHoSoLienQuan, MoiTaoHoSoMoi } from "@/components/ho-so-lien-quan";
 import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
+import { TheDanhGia } from "@/components/the-danh-gia";
 import { CuonTinMoi } from "@/components/cuon-tin-moi";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
@@ -341,6 +342,7 @@ export default async function ChiTietHoSo({
               request_type_code: ho_so.request_type?.code ?? "",
             }}
             danhMuc={danhMuc}
+            nhanXetToiDa={ho_so.feedback_comment_max_chars}
             truongRieng={
               cacLoaiDayDu
                 ? { giaTri: ho_so.details ?? {}, loaiDau: ho_so.request_type?.code ?? null, cacLoai: cacLoaiDayDu }
@@ -350,6 +352,12 @@ export default async function ChiTietHoSo({
           <GhiChuMoLai hoSo={ho_so} />
         </div>
       </div>
+      {/* Điểm hài lòng mình đã chấm (#433); chưa chấm lần nào thì không có khối */}
+      {(ho_so.feedback?.length ?? 0) > 0 && (
+        <div style={{ marginTop: "16px" }}>
+          <TheDanhGia danhGia={ho_so.feedback} cuaToi />
+        </div>
+      )}
       {/* Biểu mẫu gửi đã tạo hồ sơ nhưng tải tệp lên hỏng (#80): nói rõ hồ sơ ĐÃ gửi, để
           người gửi không bấm gửi lần nữa và sinh hồ sơ thứ hai */}
       {tepLoi === "loi" && (

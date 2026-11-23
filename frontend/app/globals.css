@@ -1917,6 +1917,145 @@ textarea.o-nhap {
   line-height: 1.6;
 }
 
+/* --- Đánh giá mức hài lòng (#433) ------------------------------------------------------
+ * Nhóm chấm là radio thật, ẩn ô tròn đi và vẽ thành hàng nút; nút đang chọn mang màu nhấn, viền
+ * tiêu điểm bàn phím vẽ trên nút bọc ngoài. Sao tô theo điểm đang chọn. */
+.cham-diem {
+  display: grid;
+  gap: 12px;
+}
+
+.cham-diem fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.cham-diem legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.cham-diem legend .nhat {
+  font-weight: 400;
+}
+
+.cham-diem-hang {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cham-diem-o {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  min-width: 44px;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.cham-diem-o:hover {
+  background: var(--hover);
+}
+
+.cham-diem-o input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cham-diem-o:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+
+.cham-diem-o:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cham-diem-o[data-bo-chon] {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.cham-diem-o svg,
+.the-danh-gia-sao svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ink-3);
+}
+
+.cham-diem-o svg[data-day],
+.the-danh-gia-sao svg[data-day] {
+  color: var(--f-a-solid);
+  fill: currentColor;
+}
+
+.cham-diem-dem {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.cham-diem-dem[data-qua] {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.the-danh-gia ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.the-danh-gia li + li {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.the-danh-gia-diem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.the-danh-gia-sao {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.the-danh-gia-nhan-xet {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .chu-han {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

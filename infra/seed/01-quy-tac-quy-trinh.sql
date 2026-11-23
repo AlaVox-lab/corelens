@@ -220,6 +220,14 @@ UPDATE transitions
    AND NOT is_system
    AND activity_code IN ('edit-content', 'provide-info');
 
+-- Đánh giá mức hài lòng (#433, navigator chốt 23/11): người gửi chấm 1–5 kèm nhận xét, đều tùy chọn, ngay
+-- trong bước Xác nhận đạt. Tự đóng thì không có điểm. Muốn chấm ở cạnh khác thì bật cờ ở đây, không sửa mã.
+UPDATE transitions
+   SET collects_feedback = TRUE
+ WHERE rule_set_id = 1
+   AND NOT is_system
+   AND activity_code = 'confirm';
+
 -- Bước chính của từng trạng thái (#227): hồ sơ đứng ở đó là đang chờ người đi được cạnh này,
 -- và cờ needs_my_action trên danh sách hồ sơ bật cho họ. Sửa, hủy, gia hạn, hỏi thêm, rút về,
 -- nhận việc không phải bước chính: bấm được nhưng hồ sơ không chờ họ. Hoàn thành xử lý chờ

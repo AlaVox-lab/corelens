@@ -263,6 +263,15 @@ chuyển trạng thái riêng, một dòng nhật ký riêng, hồ sơ bị ch�
 | `BULK_MAX_CASES` | `50` | Số hồ sơ tối đa mỗi lô; lô lớn hơn bị từ chối cả lô (`422`) |
 | `BULK_ACTIVITIES` | `classify,route-to-department` | Mã bước (`transitions.activity_code`) làm được hàng loạt, cách nhau dấu phẩy, theo thứ tự nút. Bước không có cạnh của vai điều phối thì không hiện |
 
+### Đánh giá mức hài lòng
+
+Người gửi chấm 1–5 kèm nhận xét khi xác nhận hồ sơ hoàn tất, đều không bắt buộc. Bước nào cho chấm nằm
+trong dữ liệu quy tắc (cột `transitions.collects_feedback`), không phải biến môi trường.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `FEEDBACK_COMMENT_MAX_CHARS` | `1000` | Nhận xét dài tối đa chừng này ký tự; dài hơn thì bị từ chối (`422`), ô nhận xét đếm ký tự theo số này |
+
 ### Kho tri thức
 
 Chỉ dùng khi bật hồ sơ Compose `tri-thuc`; cách bật ở [Kho tri thức](../kho-tri-thuc/).

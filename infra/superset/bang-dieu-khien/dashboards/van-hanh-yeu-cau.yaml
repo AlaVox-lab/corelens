@@ -28,6 +28,7 @@ position:
     - ROW-3
     - ROW-4
     - ROW-5
+    - ROW-6
     parents:
     - ROOT_ID
   HEADER_ID:
@@ -206,6 +207,57 @@ position:
       width: 12
       height: 60
       uuid: cac20aa2-5f50-4085-9c01-0b14339b7e48
+  ROW-6:
+    type: ROW
+    id: ROW-6
+    children:
+    - CHART-18
+    - CHART-19
+    - CHART-20
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-18:
+    type: CHART
+    id: CHART-18
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-6
+    meta:
+      chartId: 18
+      width: 4
+      height: 55
+      uuid: 9e55d75c-eff4-404e-9f96-0bff87b5d448
+  CHART-19:
+    type: CHART
+    id: CHART-19
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-6
+    meta:
+      chartId: 19
+      width: 4
+      height: 55
+      uuid: 468e6a6d-e687-4c54-94d5-4eedf5e404d8
+  CHART-20:
+    type: CHART
+    id: CHART-20
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-6
+    meta:
+      chartId: 20
+      width: 4
+      height: 55
+      uuid: 82c592bd-7171-477f-8fa2-70c5a44fb0d2
 metadata:
   color_scheme: supersetColors
   refresh_frequency: 0
