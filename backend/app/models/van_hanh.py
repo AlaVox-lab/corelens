@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 AlaVox-lab
 #
-# Hai bảng vận hành do ứng dụng sở hữu (#243, #253): nhịp của các bộ quét nền, và bộ đếm giới
-# hạn tốc độ.
+# Ba bảng vận hành do ứng dụng sở hữu (#243, #253, #426): nhịp của các bộ quét nền, bộ đếm giới
+# hạn tốc độ, và khóa trùng lặp của lệnh lõi.
 #
 # Không bảng nào là dữ liệu nghiệp vụ, không bảng nào vào nhật ký sự kiện. Chúng nằm trong cơ sở
 # dữ liệu chứ không trong bộ nhớ tiến trình vì dịch vụ ứng dụng có thể chạy nhiều bản: nhịp phải
@@ -13,7 +13,19 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import DateTime, Index, Integer, Text, text
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Identity,
+    Index,
+    Integer,
+    SmallInteger,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -64,3 +76,48 @@ class RateLimitHit(Base):
 
     def __repr__(self) -> str:
         return f"<RateLimitHit {self.key} {self.window_start:%H:%M:%S} x{self.hits}>"
+
+
+class IdempotencyKey(Base):
+    """Khóa trùng lặp `Idempotency-Key` của lệnh tạo hồ sơ và bước chuyển ở lõi `/core/v1` (#426).
+
+    Một dòng mỗi (người gọi, điểm cuối, khóa). Sinh ở `in_progress` trong giao dịch riêng, đổi sang `completed`
+    trong CÙNG giao dịch với lần tạo hay lần chuyển, nên gọi lặp sau khi máy chết giữa chừng vẫn không chạy
+    lệnh lần hai. Chỉ lần thành công được giữ. Dòng hết hạn được dọn trong vòng của bộ quét nền
+    (`app/workflow/khoa_trung_lap.py`).
+    """
+
+    __tablename__ = "idempotency_keys"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    # Mã người gọi trong token (`sub`) — tài khoản dịch vụ hay người. Không lưu tên
+    actor: Mapped[str] = mapped_column(Text)
+    # Phương thức và mẫu đường, ví dụ `POST /core/v1/workflow/requests/{case_id}/transitions`
+    endpoint: Mapped[str] = mapped_column(Text)
+    # Giá trị tiêu đề `Idempotency-Key` người gọi gửi: 1–255 ký tự ASCII in được
+    key: Mapped[str] = mapped_column(Text)
+    # sha256 của thân yêu cầu chuẩn hóa cộng tham số đường: cùng khóa mà khác lệnh thì bị từ chối
+    request_hash: Mapped[str] = mapped_column(Text)
+    # `in_progress` khi lần gọi đang chạy, `completed` khi lệnh đã commit
+    status: Mapped[str] = mapped_column(Text)
+    # Hồ sơ lệnh đã tạo hay đã chuyển, đặt cùng giao dịch với lệnh
+    case_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
+    # Mã HTTP của lần thành công, trả lại nguyên cho lần gọi lặp. Ghi sau commit, giao dịch riêng
+    response_status: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+    # Thân phản hồi JSON của lần thành công. Trống nếu ghi sau commit hỏng: lần lặp dựng lại chi tiết hồ sơ
+    # `case_id`
+    response_body: Mapped[dict | None] = mapped_column(JSONB, default=None)
+    # Lúc lần gọi đầu giữ khóa
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Lần đang chạy giữ khóa tới mốc này (`IDEMPOTENCY_LOCK_SECONDS`); quá mốc thì coi là bỏ dở, lần sau chiếm lại
+    locked_until: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    # Khóa sống tới mốc này (`IDEMPOTENCY_TTL_HOURS`); quá mốc thì gọi lại cùng khóa là lệnh mới
+    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        UniqueConstraint("actor", "endpoint", "key", name="idempotency_keys_mot_khoa_moi_nguoi_goi"),
+        Index("idempotency_keys_theo_han", "expires_at"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<IdempotencyKey {self.endpoint} {self.status} case={self.case_id}>"

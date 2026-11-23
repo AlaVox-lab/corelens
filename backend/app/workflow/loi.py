@@ -48,6 +48,7 @@ from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.engine import xet_cac_canh
 from app.workflow.errors import GuardViolation, TransitionError
+from app.workflow.khoa_trung_lap import KhoaGoi, chay_mot_lan, khoa_trung_lap
 from app.workflow.phan_trang import ThamSoTrang, tham_so_trang
 from app.workflow.routes import (
     ThamSoQuyTrinh,
@@ -192,16 +193,31 @@ def buoc_chuyen_trong_pham_vi(
     actor: _TacNhan,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
     tac_vu_nen: BackgroundTasks,
+    khoa: Annotated[KhoaGoi | None, Depends(khoa_trung_lap)],
 ) -> HoSoChiTietRa:
     """Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi
     được theo bảng `transitions`.
 
     Ngoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine
     (409, 403, 422) — cùng mã như ở mọi cửa khác.
+
+    Tiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng lệnh nhận lại phản hồi lần đầu, không
+    đi bước lần hai (app/workflow/khoa_trung_lap.py). Dấu xong của khóa ghi trong cùng giao dịch với lần chuyển
+    qua móc `truoc_commit` của `di_buoc`.
     """
-    _kiem_nhin_thay(session, case_id, actor)
-    ho_so = di_buoc(
-        session, danh_ba, tac_vu_nen, actor, case_id,
-        to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
+    def lam(danh_dau) -> HoSoChiTietRa:
+        _kiem_nhin_thay(session, case_id, actor)
+        ho_so = di_buoc(
+            session, danh_ba, tac_vu_nen, actor, case_id,
+            to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
+            truoc_commit=(lambda h: danh_dau(h.id)),
+        )
+        return _dung_chi_tiet(session, ho_so, actor)
+
+    def dung_lai(ma: int) -> HoSoChiTietRa:
+        _kiem_nhin_thay(session, ma, actor)
+        return _dung_chi_tiet(session, session.get(Request, ma), actor)
+
+    return chay_mot_lan(
+        session, khoa, than=du_lieu, tham_so_duong={"case_id": case_id}, lam=lam, dung_lai=dung_lai
     )
-    return _dung_chi_tiet(session, ho_so, actor)

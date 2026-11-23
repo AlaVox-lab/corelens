@@ -210,6 +210,25 @@ trạng thái của hai quy trình mẫu với nhiều vai, tập cạnh `allowe
 xét: ủy quyền khi vắng mặt (`_lam_thay_cho`) và trường gửi kèm — `allowed_transitions` cũng chưa xét, lỗi của
 chúng chỉ có lúc đi thật.
 
+**Khóa trùng lặp `Idempotency-Key` (#426).** Hai lệnh ghi của lõi — `POST …/workflow/requests` và `POST
+…/requests/{case_id}/transitions` — nhận tiêu đề tùy chọn này, để hệ thống tích hợp mất mạng gửi lại mà hồ sơ
+không bị tạo hay chuyển hai lần (`app/workflow/khoa_trung_lap.py`, bảng `idempotency_keys`, bản sửa `0037`).
+Một dòng mỗi (người gọi, điểm cuối, khóa): giữ khóa `in_progress` trong giao dịch riêng, commit ngay — lần gọi
+song song thấy và nhận `409 idempotency-request-in-progress` kèm `Retry-After`; cùng khóa khác thân hay khác hồ
+sơ nhận `422 idempotency-key-reused`; lần lặp sau khi xong nhận lại mã và thân đã lưu kèm `Idempotent-Replayed:
+true`, không qua engine nên không thêm sự kiện, không gửi webhook. Dấu **xong** (`completed` + `case_id`) ghi
+**trong cùng giao dịch với lần tạo hay lần chuyển** (móc `truoc_commit` của `di_buoc`; lệnh tạo gọi móc ngay
+trước commit): máy chết ngay sau commit thì khóa đã xong và lần lặp không chuyển lần hai, còn chết trước commit
+thì lệnh lẫn dấu cùng mất. Thân phản hồi ghi sau commit, giao dịch riêng; hỏng thì lần lặp dựng lại chi tiết hồ
+sơ từ `case_id`. **Chỉ lưu kết quả thành công**: lệnh bị từ chối ở đâu cũng xóa dòng của chính nó, nên người
+tích hợp sửa rồi gửi lại cùng khóa được — giữ lại lỗi thì một lỗi tạm thời (danh mục đổi, cổng 503) thành vĩnh
+viễn cho khóa đó. Mỗi lần giữ mang mốc `locked_until` riêng; quá mốc (`IDEMPOTENCY_LOCK_SECONDS`) lần sau chiếm
+lại bằng UPDATE có điều kiện, và lần cũ không còn đánh dấu xong được nên lệnh của nó hoàn tác. Khóa sống
+`IDEMPOTENCY_TTL_HOURS`, dòng hết hạn dọn trong vòng bộ quét cạnh bộ đếm giới hạn tốc độ. Lệnh tạo dùng chung
+tuyến với cổng người dùng (FastAPI không chép tuyến khi gắn router lần hai), nên phụ thuộc xét đường thật của
+yêu cầu — đường cũ bỏ qua tiêu đề — và tiêu đề khai vào đặc tả bằng cách thay `app.openapi`, chỉ trên hai thao
+tác dưới `/core/v1`.
+
 Thêm điểm cuối cho lõi: khai
 trong router đã gắn ở cả hai nơi, thêm một dòng vào bảng trên và vào `ANH_XA` của
 `backend/tests/test_loi_api.py` — bài kiểm so khít tập đường `/core/v1` trong OpenAPI với bảng đó, nên điểm

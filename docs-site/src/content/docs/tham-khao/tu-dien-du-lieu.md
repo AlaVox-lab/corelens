@@ -9,7 +9,7 @@ sidebar:
      hay chú thích của cột rồi chạy python scripts/tu_dien_du_lieu.py. Tích hợp liên tục chạy --kiem
      và báo đỏ khi trang này lệch với mô hình. -->
 
-34 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
+35 bảng mà dịch vụ ứng dụng ánh xạ, xếp theo tên. Nghĩa của bảng lấy từ docstring của lớp mô
 hình, nghĩa của cột từ chú thích ngay trên cột trong mã — cột chưa có chú thích để trống ô *Ý nghĩa*.
 Lược đồ do các bản sửa Alembic tạo (`backend/alembic/versions/`); các view báo cáo và nguồn gốc của
 chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
@@ -27,6 +27,7 @@ chúng ở trang [Phả hệ dữ liệu](../pha-he-du-lieu/).
 | [`departments`](#departments) | 5 | `Department` · `backend/app/models/workflow_config.py` |
 | [`event_log`](#event_log) | 13 | `EventLog` · `backend/app/models/case.py` |
 | [`guards`](#guards) | 3 | `Guard` · `backend/app/models/workflow_config.py` |
+| [`idempotency_keys`](#idempotency_keys) | 12 | `IdempotencyKey` · `backend/app/models/van_hanh.py` |
 | [`message_kind_roles`](#message_kind_roles) | 2 | `MessageKindRole` · `backend/app/models/workflow_config.py` |
 | [`message_kinds`](#message_kinds) | 9 | `MessageKind` · `backend/app/models/workflow_config.py` |
 | [`notification_deliveries`](#notification_deliveries) | 13 | `NotificationDelivery` · `backend/app/models/thong_bao.py` |
@@ -252,6 +253,27 @@ Mô hình `Guard` trong `backend/app/models/workflow_config.py`.
 | `code` | `Text` | không | khóa chính |  |
 | `label` | `Text` | không |  |  |
 | `description` | `Text` | không |  |  |
+
+## idempotency_keys
+
+Khóa trùng lặp `Idempotency-Key` của lệnh tạo hồ sơ và bước chuyển ở lõi `/core/v1` (#426).
+
+Mô hình `IdempotencyKey` trong `backend/app/models/van_hanh.py`.
+
+| Cột | Kiểu | Để trống | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `BigInteger` | không | khóa chính, `Identity` |  |
+| `actor` | `Text` | không |  | Mã người gọi trong token (`sub`) — tài khoản dịch vụ hay người. Không lưu tên |
+| `endpoint` | `Text` | không |  | Phương thức và mẫu đường, ví dụ `POST /core/v1/workflow/requests/{case_id}/transitions` |
+| `key` | `Text` | không |  | Giá trị tiêu đề `Idempotency-Key` người gọi gửi: 1–255 ký tự ASCII in được |
+| `request_hash` | `Text` | không |  | sha256 của thân yêu cầu chuẩn hóa cộng tham số đường: cùng khóa mà khác lệnh thì bị từ chối |
+| `status` | `Text` | không |  | `in_progress` khi lần gọi đang chạy, `completed` khi lệnh đã commit |
+| `case_id` | `BigInteger` | có |  | Hồ sơ lệnh đã tạo hay đã chuyển, đặt cùng giao dịch với lệnh |
+| `response_status` | `SmallInteger` | có |  | Mã HTTP của lần thành công, trả lại nguyên cho lần gọi lặp. Ghi sau commit, giao dịch riêng |
+| `response_body` | `JSONB` | có |  | Thân phản hồi JSON của lần thành công. Trống nếu ghi sau commit hỏng: lần lặp dựng lại chi tiết hồ sơ `case_id` |
+| `created_at` | `DateTime` | không | mặc định `func.now()` | Lúc lần gọi đầu giữ khóa |
+| `locked_until` | `DateTime` | không |  | Lần đang chạy giữ khóa tới mốc này (`IDEMPOTENCY_LOCK_SECONDS`); quá mốc thì coi là bỏ dở, lần sau chiếm lại |
+| `expires_at` | `DateTime` | không |  | Khóa sống tới mốc này (`IDEMPOTENCY_TTL_HOURS`); quá mốc thì gọi lại cùng khóa là lệnh mới |
 
 ## message_kind_roles
 

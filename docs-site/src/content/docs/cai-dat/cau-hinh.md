@@ -272,6 +272,17 @@ trong dữ liệu quy tắc (cột `transitions.collects_feedback`), không ph�
 |---|---|---|
 | `FEEDBACK_COMMENT_MAX_CHARS` | `1000` | Nhận xét dài tối đa chừng này ký tự; dài hơn thì bị từ chối (`422`), ô nhận xét đếm ký tự theo số này |
 
+### Khóa trùng lặp cho lệnh của lõi
+
+Ứng dụng tích hợp gửi tiêu đề `Idempotency-Key` ở lệnh tạo hồ sơ và lệnh đi một bước của `/core/v1`; gửi lại
+cùng khóa thì nhận lại kết quả lần đầu, lệnh không chạy hai lần. Cách dùng ở trang
+[API](../../tham-khao/api/).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `IDEMPOTENCY_TTL_HOURS` | `24` | Khóa sống chừng này giờ kể từ lần gửi đầu; quá hạn thì gửi lại cùng khóa là lệnh mới. Bộ quét nền dọn khóa hết hạn |
+| `IDEMPOTENCY_LOCK_SECONDS` | `60` | Một lần đang chạy giữ khóa chừng này giây; lần gửi lại trong khoảng đó nhận `409` kèm `Retry-After`, quá mốc thì coi lần trước là bỏ dở và lần gửi lại nhận việc |
+
 ### Kho tri thức
 
 Chỉ dùng khi bật hồ sơ Compose `tri-thuc`; cách bật ở [Kho tri thức](../kho-tri-thuc/).
