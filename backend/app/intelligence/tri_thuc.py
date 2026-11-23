@@ -160,8 +160,13 @@ def _thoi_diem(chu: str) -> dt.datetime:
     return dt.datetime.fromisoformat(chu.replace("Z", "+00:00"))
 
 
+# Đường dẫn trang chủ theo quy ước của Wiki.js — từ vựng của Wiki.js, không phải cấu hình nghiệp vụ. Trang chủ là
+# mục lục, không giải quyết vấn đề nào: đưa vào chỉ mục thì nó gần với mọi câu hỏi và chen vào gợi ý (#535)
+TRANG_CHU_WIKI = "home"
+
+
 def doc_danh_sach(hoi: HoiWiki) -> list[Bai]:
-    """Bài đã xuất bản, không riêng tư — đúng phần mọi nhân viên đọc được trên wiki."""
+    """Bài đã xuất bản, không riêng tư — đúng phần mọi nhân viên đọc được trên wiki — trừ trang chủ."""
     d = hoi(
         "{ pages { list(orderBy: ID) { id path locale title description isPublished isPrivate updatedAt } } }",
         None,
@@ -176,7 +181,7 @@ def doc_danh_sach(hoi: HoiWiki) -> list[Bai]:
             updated_at=_thoi_diem(p["updatedAt"]),
         )
         for p in d["pages"]["list"]
-        if p["isPublished"] and not p["isPrivate"]
+        if p["isPublished"] and not p["isPrivate"] and p["path"] != TRANG_CHU_WIKI
     ]
 
 
