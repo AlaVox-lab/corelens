@@ -3116,8 +3116,21 @@
         ]
       },
       "post": {
-        "description": "Gửi một yêu cầu mới.\n\nTrạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết\nđịnh quy trình (#376): hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.\n\nMức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì\nngười gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.\n\nMô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên\n(#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô\nhình hỏng không làm hỏng lần gửi.",
+        "description": "Gửi một yêu cầu mới.\n\nTrạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết\nđịnh quy trình (#376): hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.\n\nMức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì\nngười gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.\n\nMô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên\n(#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô\nhình hỏng không làm hỏng lần gửi.\n\nDưới `/core/v1` nhận tiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng thân nhận lại hồ sơ\nđã tạo, không tạo hồ sơ thứ hai (app/workflow/khoa_trung_lap.py). Ở đường của cổng người dùng tiêu đề bị\nbỏ qua.",
         "operationId": "tao_ho_so_core_v1_workflow_requests_post",
+        "parameters": [
+          {
+            "description": "Khóa trùng lặp, tùy chọn (#426): 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -3137,7 +3150,21 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "Có mặt (giá trị `true`) khi phản hồi là kết quả đã lưu của lần gọi trước cùng Idempotency-Key, không phải lần chạy mới.",
+                "schema": {
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Với Idempotency-Key: một lần gọi cùng khóa đang chạy (`idempotency-request-in-progress`, kèm `Retry-After`) — thử lại sau. Điểm cuối còn có thể trả 409 vì lý do riêng của nó (ở bước chuyển: cạnh không đi được từ trạng thái hiện tại); phân biệt bằng `detail.code`."
           },
           "422": {
             "content": {
@@ -3259,7 +3286,7 @@
     },
     "/core/v1/workflow/requests/{case_id}/transitions": {
       "post": {
-        "description": "Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi\nđược theo bảng `transitions`.\n\nNgoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine\n(409, 403, 422) — cùng mã như ở mọi cửa khác.",
+        "description": "Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi\nđược theo bảng `transitions`.\n\nNgoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine\n(409, 403, 422) — cùng mã như ở mọi cửa khác.\n\nTiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng lệnh nhận lại phản hồi lần đầu, không\nđi bước lần hai (app/workflow/khoa_trung_lap.py). Dấu xong của khóa ghi trong cùng giao dịch với lần chuyển\nqua móc `truoc_commit` của `di_buoc`.",
         "operationId": "buoc_chuyen_trong_pham_vi_core_v1_workflow_requests__case_id__transitions_post",
         "parameters": [
           {
@@ -3269,6 +3296,17 @@
             "schema": {
               "title": "Case Id",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Khóa trùng lặp, tùy chọn (#426): 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
             }
           }
         ],
@@ -3291,7 +3329,21 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "Có mặt (giá trị `true`) khi phản hồi là kết quả đã lưu của lần gọi trước cùng Idempotency-Key, không phải lần chạy mới.",
+                "schema": {
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Với Idempotency-Key: một lần gọi cùng khóa đang chạy (`idempotency-request-in-progress`, kèm `Retry-After`) — thử lại sau. Điểm cuối còn có thể trả 409 vì lý do riêng của nó (ở bước chuyển: cạnh không đi được từ trạng thái hiện tại); phân biệt bằng `detail.code`."
           },
           "422": {
             "content": {

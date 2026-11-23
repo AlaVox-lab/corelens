@@ -62,6 +62,8 @@ from app.workflow.routes import router as router_yeu_cau_ung_dung
 from app.workflow.routes import router_loi as router_yeu_cau
 from app.workflow.routes import router_nguoi_gui as router_yeu_cau_nguoi_gui
 from app.workflow.loi import router_loi_rieng as router_yeu_cau_loi
+from app.workflow.khoa_trung_lap import don_khoa_het_han
+from app.workflow.khoa_trung_lap import them_vao_dac_ta as them_khoa_trung_lap_vao_dac_ta
 from app.workflow.uy_quyen import ngay_cua_khoang
 from app.workflow.uy_quyen_routes import router as router_uy_quyen
 from app.thoi_gian_thuc import router as router_thoi_gian_thuc
@@ -124,6 +126,15 @@ def _don_dong_cu_gioi_han() -> None:
         logger.info("Đã dọn %d dòng đếm giới hạn tốc độ cũ", so_dong)
 
 
+def _don_khoa_trung_lap_het_han() -> None:
+    """Dọn các khóa trùng lặp `Idempotency-Key` đã quá hạn sống (#426)."""
+    with SessionLocal() as phien:
+        so_dong = don_khoa_het_han(phien)
+        phien.commit()
+    if so_dong:
+        logger.info("Đã dọn %d khóa trùng lặp hết hạn", so_dong)
+
+
 async def _vong_quet_sla() -> None:
     """Chạy bộ quét theo chu kỳ cho tới khi ứng dụng dừng.
 
@@ -142,6 +153,10 @@ async def _vong_quet_sla() -> None:
             await asyncio.to_thread(_don_dong_cu_gioi_han)
         except Exception:  # noqa: BLE001 — dọn dẹp hỏng không được cản lượt quét kế tiếp
             logger.exception("Dọn dòng đếm giới hạn tốc độ thất bại")
+        try:
+            await asyncio.to_thread(_don_khoa_trung_lap_het_han)
+        except Exception:  # noqa: BLE001 — dọn dẹp hỏng không được cản lượt quét kế tiếp
+            logger.exception("Dọn khóa trùng lặp hết hạn thất bại")
 
 
 def bo_quet_goi_y_bat() -> bool:
@@ -810,3 +825,23 @@ _gan_loi(router_luu_tru, "archive")
 _gan_loi(router_thong_bao, "notifications", "/preferences")
 _gan_loi(router_dinh_danh, "identity")
 _gan_loi(router_webhook, "webhooks")
+
+# Khóa trùng lặp `Idempotency-Key` (#426): chỉ hai lệnh của lõi. Lệnh tạo hồ sơ dùng chung một tuyến với cổng
+# người dùng (router gắn hai lần, FastAPI không chép tuyến), nên `openapi_extra` của tuyến sẽ hiện ở cả hai
+# đường. Tiêu đề khai vào đặc tả ở đây, sau khi FastAPI sinh, trên đúng hai thao tác dưới /core/v1 — cách mở
+# rộng OpenAPI FastAPI chỉ dẫn (thay `app.openapi`). Lúc chạy, phụ thuộc `khoa_trung_lap` cũng chỉ bật ở lõi.
+LENH_CO_KHOA_TRUNG_LAP = (
+    ("post", f"{TIEN_TO_LOI}/workflow/requests"),
+    ("post", f"{TIEN_TO_LOI}/workflow/requests/{{case_id}}/transitions"),
+)
+
+
+def _openapi_co_khoa_trung_lap() -> dict:
+    if app.openapi_schema is None:
+        dac_ta = FastAPI.openapi(app)
+        for phuong_thuc, duong in LENH_CO_KHOA_TRUNG_LAP:
+            them_khoa_trung_lap_vao_dac_ta(dac_ta["paths"][duong][phuong_thuc])
+    return app.openapi_schema
+
+
+app.openapi = _openapi_co_khoa_trung_lap

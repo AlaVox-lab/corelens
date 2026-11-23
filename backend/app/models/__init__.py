@@ -12,7 +12,7 @@ Hai nhóm bảng, hai chủ sở hữu khác nhau:
 - `workflow_config` — mười ba bảng cấu hình, do lược đồ khởi tạo trong `infra/` tạo
   và nạp. Alembic được cấu hình bỏ qua chúng
 - `case` — hồ sơ yêu cầu, nhật ký sự kiện và lời nhắn trên hồ sơ, do Alembic sở hữu
-- `van_hanh` — nhịp bộ quét nền và bộ đếm giới hạn tốc độ (#243, #253), do Alembic sở hữu
+- `van_hanh` — nhịp bộ quét nền, bộ đếm giới hạn tốc độ và khóa trùng lặp (#243, #253, #426), do Alembic sở hữu
 - `quan_tri` — nhật ký thay đổi cấu hình (#255) và ủy quyền khi vắng mặt (#252), do Alembic sở hữu
 - `luu_tru` — sổ các bản lưu trữ lạnh đã xuất ra kho đối tượng (#378), do Alembic sở hữu
 
@@ -29,7 +29,7 @@ from app.models.thong_bao import (
     NotificationPreference,
     NotificationType,
 )
-from app.models.van_hanh import RateLimitHit, ScannerHeartbeat
+from app.models.van_hanh import IdempotencyKey, RateLimitHit, ScannerHeartbeat
 from app.models.webhook import WebhookDelivery, WebhookSubscription
 from app.models.workflow_config import (
     Department,
@@ -59,6 +59,7 @@ __all__ = [
     "Department",
     "EventLog",
     "Guard",
+    "IdempotencyKey",
     "MessageKind",
     "MessageKindRole",
     "NotificationDelivery",

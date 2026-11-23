@@ -78,6 +78,7 @@ from app.workflow.errors import (
     TransitionError,
     TransitionNotAllowed,
 )
+from app.workflow.khoa_trung_lap import KhoaGoi, chay_mot_lan, khoa_trung_lap
 from app.workflow.phan_trang import ThamSoTrang, dieu_kien_tim, tham_so_trang
 from app.workflow.messages import (
     MessageRejected,
@@ -641,6 +642,7 @@ def tao_ho_so(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
     tac_vu_nen: BackgroundTasks,
+    khoa: Annotated[KhoaGoi | None, Depends(khoa_trung_lap)],
 ) -> HoSoChiTietRa:
     """Gửi một yêu cầu mới.
 
@@ -653,7 +655,26 @@ def tao_ho_so(
     Mô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên
     (#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô
     hình hỏng không làm hỏng lần gửi.
+
+    Dưới `/core/v1` nhận tiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng thân nhận lại hồ sơ
+    đã tạo, không tạo hồ sơ thứ hai (app/workflow/khoa_trung_lap.py). Ở đường của cổng người dùng tiêu đề bị
+    bỏ qua.
     """
+    return chay_mot_lan(
+        session, khoa, than=du_lieu, tham_so_duong={},
+        lam=lambda danh_dau: _tao_ho_so(session, actor, tac_vu_nen, du_lieu, danh_dau),
+        dung_lai=lambda ma: _dung_chi_tiet(session, session.get(Request, ma), actor),
+    )
+
+
+def _tao_ho_so(
+    session: Session,
+    actor: Actor,
+    tac_vu_nen: BackgroundTasks,
+    du_lieu: TaoHoSoVao,
+    danh_dau: Callable[[int], None],
+) -> HoSoChiTietRa:
+    """Thân của `tao_ho_so`. `danh_dau(mã hồ sơ)` chạy ngay trước commit, cùng giao dịch với hồ sơ mới."""
     try:
         goc = kiem_ho_so_goc(session, du_lieu.parent_request_id, actor.id)
     except ValueError as loi:
@@ -690,6 +711,8 @@ def tao_ho_so(
 
     # Phiên soạn đã thấy gợi ý hồ sơ tương tự mà vẫn gửi (#319) — cùng giao dịch với hồ sơ
     ghi_da_gui(session, du_lieu.similar_session_id, actor.id, ho_so.id)
+    # Dấu xong của khóa trùng lặp (#426) — cùng giao dịch với hồ sơ
+    danh_dau(ho_so.id)
     session.commit()
     session.refresh(ho_so)
     # Gợi ý loại, mức ưu tiên, phòng là của buồng lái điều phối — một màn của ứng dụng minh họa — nên chỉ
