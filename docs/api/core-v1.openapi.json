@@ -2199,7 +2199,7 @@
     },
     "/core/v1/events": {
       "get": {
-        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\n`format=xes` cho tệp XES (IEEE 1849) mở thẳng bằng ProM, Disco, PM4Py: mỗi hồ sơ một trace, hoạt động là\n`concept:name`, mốc UTC là `time:timestamp`, người thao tác là `org:resource`.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.",
+        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\n`format=xes` cho tệp XES (IEEE 1849) mở thẳng bằng ProM, Disco, PM4Py: mỗi hồ sơ một trace, hoạt động là\n`concept:name`, mốc UTC là `time:timestamp`, người thao tác là `org:resource`.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.\n\nMỗi lần xuất ghi một dòng nhật ký truy cập kèm định dạng, khoảng ngày, quy trình (#431, app/kiem_toan.py).",
         "operationId": "xuat_nhat_ky_core_v1_events_get",
         "parameters": [
           {
@@ -2398,7 +2398,7 @@
     },
     "/core/v1/files/{attachment_id}": {
       "get": {
-        "description": "Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.",
+        "description": "Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.\n\nLần tải thành công ghi nhật ký truy cập kèm mã tệp (#431, app/kiem_toan.py), trừ người gửi tải tệp trên\nhồ sơ của chính mình.",
         "operationId": "tai_ve_core_v1_files__attachment_id__get",
         "parameters": [
           {
@@ -3190,7 +3190,7 @@
     },
     "/core/v1/workflow/requests/{case_id}": {
       "get": {
-        "description": "Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước\nngười gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.",
+        "description": "Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước\nngười gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.\n\nMở hồ sơ của người khác ghi một dòng nhật ký truy cập, kênh `loi` (#431, app/kiem_toan.py).",
         "operationId": "chi_tiet_trong_pham_vi_core_v1_workflow_requests__case_id__get",
         "parameters": [
           {

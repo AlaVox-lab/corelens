@@ -171,6 +171,42 @@ export function thoiLuongLamViec(giay: number): string {
   return le > 0 ? `${gio} giờ ${le} phút làm việc` : `${gio} giờ làm việc`;
 }
 
+/** `23/11/2026 14:05` — mốc có năm, cho nhật ký kiểm toán (#431): dòng cũ phải đọc ra được năm nào. */
+export function ngayGioCoNam(iso: string): string {
+  const d = new Date(iso);
+  const ngay = phan(NGAY_DAY_DU, d, "day");
+  const thang = phan(NGAY_DAY_DU, d, "month");
+  const nam = phan(NGAY_DAY_DU, d, "year");
+  return `${ngay}/${thang}/${nam} ${CHI_GIO.format(d)}`;
+}
+
+const PHAN_GIO_DAY_DU = new Intl.DateTimeFormat("en-US", {
+  timeZone: MUI_GIO,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+/**
+ * Mốc UTC (ISO 8601) của 00:00 ngày `YYYY-MM-DD` theo giờ Việt Nam — để lọc theo ngày người dùng chọn mà
+ * dịch vụ so trên mốc UTC (#431). Chuỗi không đúng dạng ngày thì `null`. `cong` cộng thêm chừng ấy ngày:
+ * "đến hết ngày X" là "trước 00:00 ngày X + 1".
+ */
+export function dauNgayUtc(ngay: string, cong = 0): string | null {
+  const khop = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ngay);
+  if (!khop) return null;
+  const goc = Date.UTC(Number(khop[1]), Number(khop[2]) - 1, Number(khop[3]) + cong);
+  if (Number.isNaN(goc)) return null;
+  // Độ lệch của múi giờ ở mốc đó: giờ địa phương của `goc` đọc như thể UTC, trừ đi chính `goc`
+  const p = Object.fromEntries(PHAN_GIO_DAY_DU.formatToParts(new Date(goc)).map((x) => [x.type, x.value]));
+  const diaPhuong = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  return new Date(goc - (diaPhuong - goc)).toISOString();
+}
+
 /** Hạn chót: `15:00 Thứ Hai 19/10` (#199). */
 export function hanLuc(iso: string): string {
   const d = new Date(iso);

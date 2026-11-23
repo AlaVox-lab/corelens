@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Màn Hệ thống (#229): tình trạng các dịch vụ của cụm, chỉ cho quản trị viên. Dịch vụ quyết
+// Màn Hệ thống (#229): tình trạng các dịch vụ của cụm, chỉ cho quản trị viên; từ #431 thêm nhật ký truy cập dữ
+// liệu cá nhân (lọc và trang trên địa chỉ, `doc-truy-cap.ts`). Dịch vụ quyết
 // ai thấy màn này qua danh sách không gian của `/me` (`system`); người khác mở đường dẫn
 // này thì gặp lời báo không vào được của khung, không thấy chữ kỹ thuật nào.
 
@@ -9,7 +10,10 @@ import { KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
 import { goiDichVu } from "@/lib/api";
 import type { DangKyWebhook, LanGuiWebhook } from "@/lib/kieu";
+import type { ThamSo } from "@/lib/trang";
 
+import { docTruyCap } from "./doc-truy-cap";
+import { NhatKyTruyCap } from "./nhat-ky-truy-cap";
 import { QuanLyWebhook } from "./quan-ly-webhook";
 import { XuatNhatKy } from "./xuat-nhat-ky";
 
@@ -34,8 +38,9 @@ async function docWebhook(): Promise<{
   return { dangKy, lanGui };
 }
 
-export default async function ManHeThong() {
-  const [sucKhoe, webhook] = await Promise.all([docSucKhoe(), docWebhook()]);
+export default async function ManHeThong({ searchParams }: { searchParams: Promise<ThamSo> }) {
+  const sp = await searchParams;
+  const [sucKhoe, webhook, truyCap] = await Promise.all([docSucKhoe(), docWebhook(), docTruyCap(sp)]);
   return (
     <KhungLamViec canKhongGian="system">
       <h1 className="tieu-de-trang">Hệ thống</h1>
@@ -50,6 +55,10 @@ export default async function ManHeThong() {
       </div>
       <div style={{ marginTop: "20px", maxWidth: "720px" }}>
         <QuanLyWebhook dangKy={webhook.dangKy} lanGui={webhook.lanGui} />
+      </div>
+      {/* Bảng sáu cột cần rộng hơn các khối biểu mẫu phía trên */}
+      <div style={{ marginTop: "20px", maxWidth: "1040px" }}>
+        <NhatKyTruyCap duLieu={truyCap} />
       </div>
     </KhungLamViec>
   );

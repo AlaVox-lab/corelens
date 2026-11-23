@@ -3928,6 +3928,193 @@ html.doi-mau * {
   font-size: 12.5px;
 }
 
+/* Nhật ký truy cập dữ liệu cá nhân trên màn Hệ thống (#431) — cùng lề, cùng chữ phụ với hai khối trên. Bảng chỉ
+ * để đọc: dòng không bấm được nên không có nền rê. Dưới 768px mỗi dòng thành một khối nhãn–giá trị, như bảng
+ * hàng đợi thành thẻ, để trang không cuộn ngang. */
+.ktc-than {
+  padding: 14px 16px 2px;
+}
+
+/* Căn đầu: ô chọn cao hơn ô nhập một chút, căn đáy thì nhãn của nó tụt khỏi hàng nhãn bên cạnh */
+.ktc-loc {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.ktc-loc-nut {
+  display: flex;
+  gap: 8px;
+  align-self: end;
+}
+
+.ktc-phu {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.ktc-lien-ket {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-2);
+}
+
+.ktc-lien-ket:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Rỗng, lỗi: cùng chiều cao để đổi qua lại thì khung không co giãn */
+.ktc-trang-thai {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 24px 16px 28px;
+  text-align: center;
+  font-size: 13.5px;
+}
+
+.ktc-trang-thai p {
+  margin: 0;
+}
+
+.ktc-loi {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.ktc-khung {
+  position: relative;
+  border-top: 1px solid var(--line);
+}
+
+/* Tải lần hai: dữ liệu cũ đứng yên, thanh mảnh chạy ở mép trên bảng */
+.ktc-thanh-tai {
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 2px;
+  overflow: hidden;
+}
+
+.ktc-thanh-tai span {
+  display: block;
+  width: 33%;
+  height: 100%;
+  background: var(--accent);
+  animation: ktc-chay 1.2s ease-in-out infinite;
+}
+
+@keyframes ktc-chay {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 300% 0;
+  }
+}
+
+.ktc-bang {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.ktc-bang th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.ktc-bang td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.ktc-bang tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ktc-luc,
+.ktc-nguoi {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ktc-tep {
+  overflow-wrap: anywhere;
+}
+
+.ktc-chan {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  .ktc-loc {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .ktc-bang thead {
+    display: none;
+  }
+
+  .ktc-bang,
+  .ktc-bang tbody {
+    display: block;
+  }
+
+  .ktc-bang tr.ktc-dong {
+    display: grid;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ktc-bang tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .ktc-bang tr.ktc-dong td {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .ktc-bang tr.ktc-dong td::before {
+    content: attr(data-nhan);
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 560px) {
+  .ktc-loc {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ktc-thanh-tai span {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 560px) {
   .wh-bieu-mau {
     grid-template-columns: 1fr;
