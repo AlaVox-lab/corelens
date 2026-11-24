@@ -183,7 +183,12 @@ trình diễn, nạp vài trăm hồ sơ giả trải ba tháng, đi đúng bộ
 python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
 ```
 
-Chạy ở gốc kho mã khi cụm đang chạy, chỉ cần Python 3.10 trở lên. Hồ sơ mẫu mang tiền tố `[Mẫu]` và
+Chạy ở gốc kho mã khi cụm đang chạy, chỉ cần Python 3.10 trở lên. Hồ sơ mẫu đọc như của một doanh
+nghiệp thật: tiêu đề, mô tả, trường riêng theo loại yêu cầu và tên người lấy từ
+`scripts/du_lieu/noi_dung_trinh_dien.json`, kèm lượt giữ hay ghi đè gợi ý và lượt xem hồ sơ tương tự để
+hai biểu đồ đo gợi ý có số (tỷ lệ đặt trong cùng tệp). Nhận ra hồ sơ mẫu bằng mã người gửi, không bằng
+tiêu đề: người gửi là mã ảo dạng `requester-008` (vai người gửi và ba chữ số), còn tài khoản thật mang mã
+UUID của Keycloak — tra bằng `requester_id ~ '^requester-[0-9]{3}$'`. Hồ sơ mẫu
 **không gỡ ra được** — nhật ký sự kiện chỉ ghi thêm — nên muốn sạch lại thì `down -v`. Lệnh dừng khi
 cụm đã có hồ sơ thật; trên cụm thử có vài hồ sơ tạo tay thì thêm `--cho-tron`. Đổi số hồ sơ và số
 ngày bằng `--so-ho-so`, `--so-ngay`.

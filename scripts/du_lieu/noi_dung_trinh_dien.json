@@ -1,0 +1,307 @@
+{
+  "_ghi_chu": "Nội dung cho dữ liệu trình diễn (#541). SPDX-License-Identifier: MIT. Copyright (c) 2026 AlaVox-lab. scripts/nap_du_lieu_trinh_dien.py đọc tệp này để hồ sơ mẫu đọc như của một doanh nghiệp thật: tiêu đề, mô tả và trường riêng theo loại yêu cầu ('loai' — khóa là mã loại của seed; loại không có ở đây thì giữ trống), tên người cho các mã ảo của bộ sinh ('ten_nguoi' — mỗi mã một tên, không tên nào trùng tên gọi của tài khoản mẫu trong infra/keycloak/), ghi chú cho các bước bắt buộc ghi chú ('ghi_chu' — khóa là mã hoạt động, '_chung' dùng khi không có mục riêng), câu người gửi thêm khi sửa nội dung ('bo_sung_mo_ta'), và tỷ lệ cho hai biểu đồ đo gợi ý ('goi_y', 'ngan_chan'). Trường riêng: mỗi hồ sơ mẫu có thể khai giá trị ở 'truong' (null là cố ý bỏ trống), còn thiếu thì rút từ 'truong' của loại; trường kiểu ngày ghi số ngày sau lúc gửi. Kịch bản chỉ ghi trường có thật trong request_type_fields của cụm, đúng kiểu. 'truong_ho_so_da_giai_quyet' bổ sung trường riêng cho các mục của ho_so_da_giai_quyet.json theo 'ma'. Nội dung do nhóm soạn bằng công cụ, hư cấu, không lấy từ hồ sơ hay người thật nào.",
+
+  "goi_y": {
+    "_ghi_chu": "Lượt giữ hay ghi đè gợi ý ghi vào event_log.suggestion (#239). 'nguon' theo trường quyết định: 'routing' tính đúng như hệ thống — phòng mặc định của loại trong request_type_routing, nên ghi đè khi người chọn phòng khác; 'model' và 'workload' giữ gợi ý với xác suất 1 - ty_le_ghi_de, ghi đè thì gợi ý là một giá trị hợp lệ khác. Trường không có ở 'nguon' thì không ghi.",
+    "ty_le_ghi_de": 0.18,
+    "nguon": {
+      "request_type_code": "model",
+      "priority_code": "model",
+      "department_code": "routing",
+      "assignee_id": "workload"
+    }
+  },
+
+  "ngan_chan": {
+    "_ghi_chu": "Lượt xem hồ sơ tương tự ghi vào similar_case_views (#319). Một phần hồ sơ mẫu có phiên soạn đã thấy gợi ý rồi vẫn gửi; thêm các phiên xem rồi bỏ không gửi sao cho bỏ / (bỏ + gửi) quanh ty_le_ngan_chan. 'phut_het_gio' bằng mặc định của DXLAB_SIMILAR_ABANDON_AFTER_MINUTES.",
+    "ty_le_ngan_chan": 0.12,
+    "ty_le_ho_so_co_xem": 0.35,
+    "ty_le_bo_vi_het_gio": 0.3,
+    "phut_xem_truoc_khi_gui": [2, 25],
+    "phut_nguoi_gui_bo": [1, 8],
+    "phut_het_gio": 30,
+    "so_lan_xem": [1, 4],
+    "so_goi_y": 3
+  },
+
+  "ten_nguoi": [
+    "Nguyễn Thị Thu Trang", "Trần Văn Hậu", "Lê Thị Mỹ Duyên", "Phạm Quốc Bảo", "Hoàng Thị Ngọc Ánh",
+    "Vũ Đức Thắng", "Đặng Thị Hồng Nhung", "Bùi Văn Lực", "Đỗ Thị Thanh Tâm", "Hồ Gia Trí",
+    "Ngô Thị Kim Oanh", "Dương Văn Toàn", "Lý Thị Bích Ngọc", "Trịnh Văn Định", "Mai Thị Hương",
+    "Phan Thanh Tùng", "Tô Thị Diệu Linh", "Lâm Quốc Việt", "Châu Thị Mỹ Hạnh", "Huỳnh Tấn Lộc",
+    "Cao Thị Thùy Dương", "Lương Văn Khải", "Tạ Thị Ngọc Hân", "Đinh Công Thành", "Kiều Thị Yến",
+    "Thái Văn Nghĩa", "Quách Thị Hoài Thương", "Võ Thành Đạt", "Nguyễn Hữu Lợi", "Trần Thị Tuyết Mai",
+    "Lê Văn Hiếu", "Phạm Thị Ngân", "Hoàng Văn Kiên", "Vũ Thị Thảo", "Đặng Quốc Huy",
+    "Bùi Thị Lệ Quyên", "Đỗ Văn Thịnh", "Ngô Đức Long", "Dương Thị Kiều Trinh", "Lý Văn Phát",
+    "Mai Xuân Trường", "Phan Thị Cẩm Tú", "Tô Văn Hưng", "Lâm Thị Bảo Châu", "Huỳnh Thị Như Ý",
+    "Cao Văn Tiến", "Lương Thị Hải Yến", "Tạ Đình Vinh", "Đinh Thị Mai Anh", "Kiều Văn Sang",
+    "Thái Thị Hồng Gấm", "Quách Văn Tài", "Võ Thị Ngọc Diễm", "Nguyễn Văn Tâm", "Trần Quốc Hào",
+    "Lê Thị Thanh Hoa", "Phạm Văn Đông", "Hoàng Thị Thúy Vy", "Vũ Ngọc Sơn", "Đặng Văn Tú",
+    "Bùi Thị Hồng Loan", "Đỗ Hữu Nhân", "Ngô Thị Xuân Thảo", "Dương Đăng Khoa", "Lý Thị Hồng Vân",
+    "Mai Văn Tín", "Phan Thị Thu Hiền", "Tô Hoài Đức", "Lâm Văn Trọng", "Huỳnh Thị Kim Chi",
+    "Cao Đức Mạnh", "Lương Thị Thu Hằng", "Tạ Văn Quý", "Đinh Thị Vân Anh", "Kiều Văn Hòa",
+    "Thái Thị Kim Liên", "Quách Gia Bảo", "Võ Văn Thuận", "Nguyễn Thị Hồng Thắm", "Trần Văn Lâm",
+    "Lê Quốc Thái", "Phạm Thị Thùy Linh", "Hoàng Đức Duy", "Vũ Thị Kim Thoa", "Đặng Hữu Phước",
+    "Bùi Xuân Huy"
+  ],
+
+  "bo_sung_mo_ta": [
+    "Bổ sung: việc này cần xong trước cuối tuần vì liên quan báo cáo của phòng.",
+    "Cập nhật: sáng nay vẫn còn tình trạng như trên.",
+    "Bổ sung: tôi làm việc ở văn phòng cả ngày, cần hỏi thêm thì gọi số nội bộ của phòng.",
+    "Sửa lại: tôi ghi nhầm vị trí, đúng là ở phòng bên cạnh.",
+    "Bổ sung: trưởng phòng đã đồng ý với nội dung này.",
+    "Cập nhật: đã thử lại theo hướng dẫn trên trang nội bộ nhưng chưa được.",
+    "Bổ sung: hai đồng nghiệp cùng phòng cũng gặp việc tương tự."
+  ],
+
+  "ghi_chu": {
+    "request-info": {
+      "_chung": [
+        "Anh/chị mô tả rõ hơn giúp: việc này bắt đầu từ lúc nào và đã thử cách gì chưa?",
+        "Phòng cần thêm thông tin để xử lý, anh/chị bổ sung giúp ảnh chụp màn hình hoặc mô tả cụ thể hơn.",
+        "Anh/chị cho biết thêm thời hạn cần có kết quả để phòng sắp lịch."
+      ],
+      "device-incident": [
+        "Anh/chị kiểm tra giúp mã tài sản trên tem dán ở thân máy, mã đang ghi không có trong danh sách.",
+        "Lỗi xảy ra mọi lúc hay chỉ khi dùng một phần mềm nào đó? Anh/chị đã khởi động lại máy chưa?"
+      ],
+      "software-access": [
+        "Anh/chị cho biết cần quyền này đến khi nào, và trưởng phòng đã đồng ý chưa?",
+        "Tài khoản cần cấp là của anh/chị hay của người khác? Nếu cho người khác thì ghi rõ họ tên và phòng."
+      ],
+      "hr-certificate": [
+        "Nơi nhận giấy có yêu cầu mẫu riêng không? Nếu có anh/chị gửi giúp mẫu đó.",
+        "Anh/chị cần giấy ghi thu nhập theo tháng hay tổng cả năm?"
+      ],
+      "supply-purchase": [
+        "Anh/chị gửi giúp báo giá hoặc đường dẫn sản phẩm để phòng đối chiếu.",
+        "Số lượng này dùng trong bao lâu? Phòng cần để cân đối với ngân sách quý."
+      ]
+    },
+    "provide-info": {
+      "_chung": [
+        "Tôi đã bổ sung thông tin như phòng yêu cầu.",
+        "Đã gửi thêm ảnh chụp và mô tả chi tiết hơn ở trên.",
+        "Thông tin bổ sung: việc này bắt đầu từ đầu tuần, tôi đã thử khởi động lại nhưng không được.",
+        "Trưởng phòng đã đồng ý, cần trước cuối tháng."
+      ]
+    },
+    "reject": {
+      "_chung": [
+        "Việc này không thuộc phạm vi phòng, nhờ điều phối chuyển sang phòng phụ trách.",
+        "Phòng không xử lý loại việc này, đề nghị chuyển lại cho đúng phòng.",
+        "Nội dung liên quan nghiệp vụ của phòng khác, phòng trả lại để điều phối chọn lại."
+      ]
+    },
+    "decline-unrouted": {
+      "_chung": [
+        "Yêu cầu không thuộc phạm vi hỗ trợ nội bộ, anh/chị liên hệ trực tiếp nhà cung cấp dịch vụ.",
+        "Đã trao đổi với các phòng liên quan, không phòng nào phụ trách việc này."
+      ]
+    },
+    "reopen": {
+      "_chung": [
+        "Sau khi xử lý được một hôm thì lỗi xuất hiện lại.",
+        "Kết quả chưa đúng như yêu cầu, nhờ phòng xem lại.",
+        "Mới xong một phần, phần còn lại vẫn chưa được."
+      ]
+    },
+    "withdraw": {
+      "_chung": [
+        "Phòng chưa nhận sau nhiều giờ, điều phối rút về để chuyển phòng khác.",
+        "Rút hồ sơ về để phân loại lại cho đúng loại yêu cầu."
+      ]
+    },
+    "_mac_dinh": ["Đã ghi nhận."]
+  },
+
+  "loai": {
+    "device-incident": {
+      "truong": {
+        "ma-tai-san": ["TS-0107", "TS-0118", "TS-0142", "TS-0156", "TS-0203", "TS-0219", "TS-0231", "TS-0247",
+                       "TS-0258", "TS-0305", "TS-0312", "TS-0326", "TS-0341", "TS-0367", "TS-0389", "TS-0402",
+                       "TS-0415", "TS-0438", "TS-0451", "TS-0476"],
+        "vi-tri": ["Tầng 1, quầy lễ tân", "Tầng 2, phòng Kinh doanh", "Tầng 2, phòng Chăm sóc khách hàng",
+                   "Tầng 3, phòng Kế toán", "Tầng 3, phòng Nhân sự", "Tầng 4, phòng Thiết kế", "Tầng 4, phòng họp lớn",
+                   "Tầng 5, khu Ban giám đốc", "Kho hàng, khu B", "Chi nhánh Thủ Đức, tầng trệt"],
+        "muc-anh-huong": ["Một người", "Một người", "Một người", "Cả phòng"]
+      },
+      "ho_so": [
+        {"tieu_de": "Máy in phòng Kinh doanh báo hết mực dù vừa thay hộp mới", "mo_ta": "Sáng nay tôi thay hộp mực mới cho máy in ở phòng Kinh doanh nhưng máy vẫn báo hết mực và không in được trang nào. Đã tháo ra lắp lại hai lần.", "truong": {"vi-tri": "Tầng 2, phòng Kinh doanh", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Laptop không kết nối được wifi công ty sau khi cập nhật", "mo_ta": "Từ hôm qua sau khi máy tự cập nhật, laptop không thấy mạng wifi của công ty nữa, các mạng khác vẫn hiện. Tôi đang phải phát wifi từ điện thoại để làm việc.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Màn hình máy tính tắt đột ngột khi đang làm việc", "mo_ta": "Khoảng nửa tiếng một lần màn hình tự tắt vài giây rồi sáng lại, máy vẫn chạy. Đã thử đổi dây cáp nhưng không đỡ.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Ổ cắm điện ở bàn làm việc bị cháy đen", "mo_ta": "Ổ cắm kéo dài dưới bàn tôi có mùi khét và một lỗ cắm bị cháy đen. Tôi đã rút hết thiết bị ra, cần thay ổ mới sớm vì đang không sạc được máy.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Máy chấm công cửa chính không nhận vân tay", "mo_ta": "Từ sáng nay máy chấm công ở cửa chính không nhận vân tay của nhiều người, phải bấm ba bốn lần mới được hoặc không được. Mọi người đang ghi giờ vào giấy.", "truong": {"vi-tri": "Tầng 1, quầy lễ tân", "muc-anh-huong": "Cả công ty"}},
+        {"tieu_de": "Tivi phòng họp nhỏ không nhận tín hiệu HDMI", "mo_ta": "Cắm laptop vào tivi phòng họp nhỏ thì tivi báo không có tín hiệu. Đã thử hai laptop khác nhau và hai cổng HDMI đều như vậy. Chiều nay phòng có họp với khách.", "truong": {"vi-tri": "Tầng 4, phòng họp nhỏ", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Điện thoại bàn bị rè, người nghe không rõ", "mo_ta": "Gọi ra ngoài bằng điện thoại bàn thì có tiếng rè rất to, khách hàng phải hỏi lại nhiều lần. Gọi nội bộ thì bình thường.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Máy tính báo lỗi màn hình xanh khi mở phần mềm kế toán", "mo_ta": "Mỗi lần mở phần mềm kế toán được vài phút thì máy hiện màn hình xanh rồi khởi động lại. Các phần mềm khác vẫn dùng được.", "truong": {"vi-tri": "Tầng 3, phòng Kế toán", "muc-anh-huong": "Một người"}},
+        {"tieu_de": "Mạng chậm cả tầng 2 từ đầu giờ chiều", "mo_ta": "Từ khoảng 13 giờ, cả tầng 2 vào mạng rất chậm, mở email mất cả phút, gọi video bị đứng hình. Tầng khác có vẻ vẫn bình thường.", "truong": {"vi-tri": "Tầng 2, phòng Kinh doanh", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Bàn phím laptop bị đổ nước", "mo_ta": "Tôi lỡ làm đổ cốc trà lên bàn phím laptop. Đã tắt máy, lau khô ngay nhưng bật lên thì một số phím gõ ra ký tự sai. Máy có dữ liệu công việc quan trọng.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Máy hủy tài liệu không chạy", "mo_ta": "Máy hủy tài liệu ở phòng Hành chính cắm điện nhưng bấm nút không chạy, đèn cũng không sáng. Phòng đang cần hủy hồ sơ cũ theo kế hoạch.", "truong": {"vi-tri": "Tầng 3, phòng Hành chính", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Webcam phòng họp trực tuyến bị mờ", "mo_ta": "Hình từ webcam phòng họp trực tuyến bị mờ và nhòe, phía đối tác phản ánh không nhìn rõ người nói. Đã lau ống kính nhưng không khá hơn.", "truong": {"vi-tri": "Tầng 4, phòng họp lớn", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Máy tính không nhận ổ USB", "mo_ta": "Cắm ổ USB vào máy thì không thấy hiện ổ, đã thử ba ổ khác nhau và cả cổng phía sau thân máy. Tôi cần chép tài liệu để mang đi gặp khách.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Bộ phát wifi phòng Kế toán nháy đèn đỏ", "mo_ta": "Bộ phát wifi treo tường ở phòng Kế toán nháy đèn đỏ từ sáng, máy trong phòng không vào được mạng không dây. Máy cắm dây vẫn vào được.", "truong": {"vi-tri": "Tầng 3, phòng Kế toán", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Máy in nhãn ở kho in lệch dòng", "mo_ta": "Máy in nhãn ở kho in chữ bị lệch xuống dưới, nửa mã vạch nằm ngoài tem nên máy quét không đọc được. Kho đang chờ in tem để xuất hàng.", "truong": {"vi-tri": "Kho hàng, khu B", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Màn hình laptop bị nứt một góc", "mo_ta": "Laptop bị rơi khi đi công tác, góc dưới bên phải màn hình bị nứt và có vệt đen lan dần. Máy vẫn dùng được nhưng khó đọc chữ.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Máy tính phát tiếng kêu tít tít khi bật", "mo_ta": "Bật máy thì nghe ba tiếng tít dài và màn hình không lên. Hôm qua vẫn dùng bình thường.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Không in được từ laptop ra máy in chung", "mo_ta": "Laptop của tôi gửi lệnh in thì báo thành công nhưng máy in chung không ra giấy, lệnh in cứ nằm trong hàng đợi. Máy để bàn cùng phòng vẫn in được.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Tổng đài nội bộ không chuyển được cuộc gọi", "mo_ta": "Từ sáng lễ tân không chuyển được cuộc gọi vào các số nội bộ, bấm chuyển thì cuộc gọi bị ngắt. Khách gọi đến đang phải gọi lại nhiều lần.", "truong": {"vi-tri": "Tầng 1, quầy lễ tân", "muc-anh-huong": "Cả công ty"}},
+        {"tieu_de": "Máy tính để bàn không bật được nguồn", "mo_ta": "Bấm nút nguồn nhưng máy không có phản ứng gì, đèn và quạt đều không chạy. Ổ điện vẫn có điện vì màn hình vẫn sáng đèn chờ.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Tai nghe gọi điện bị mất tiếng một bên", "mo_ta": "Tai nghe dùng để gọi khách chỉ còn nghe được bên trái, micro vẫn bình thường. Tôi làm ca trực tổng đài nên cần cả hai bên.", "truong": {"vi-tri": "Tầng 2, phòng Chăm sóc khách hàng", "muc-anh-huong": "Một người"}},
+        {"tieu_de": "Camera an ninh cửa kho mất hình", "mo_ta": "Màn hình giám sát ở bàn bảo vệ không còn hình của camera cửa kho từ đêm qua, các camera khác vẫn có. Kho đang nhập hàng nên cần xem lại sớm.", "truong": {"vi-tri": "Kho hàng, khu B", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Máy tính treo khi mở nhiều tệp Excel lớn", "mo_ta": "Mở hai, ba tệp Excel báo cáo tháng cùng lúc là máy đứng hình vài phút, có lúc phải tắt nóng. Máy đã dùng khoảng năm năm.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Cổng mạng ở bàn mới không có tín hiệu", "mo_ta": "Tôi mới chuyển sang bàn mới, cắm dây mạng vào cổng trên tường thì máy báo không có kết nối. Đã thử dây khác vẫn vậy.", "truong": {"muc-anh-huong": "Một người"}},
+        {"tieu_de": "Máy chiếu tự tắt sau vài phút", "mo_ta": "Máy chiếu phòng họp lớn bật được khoảng mười phút thì tự tắt, đèn báo nhiệt độ nhấp nháy. Tuần sau có buổi đào tạo nhân viên mới ở phòng này.", "truong": {"vi-tri": "Tầng 4, phòng họp lớn", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Màn hình cảm ứng ở quầy lễ tân không nhận chạm", "mo_ta": "Màn hình cảm ứng để khách đăng ký vào cửa không nhận chạm ở nửa dưới, khách phải nhờ lễ tân nhập giúp.", "truong": {"vi-tri": "Tầng 1, quầy lễ tân", "muc-anh-huong": "Cả phòng"}},
+        {"tieu_de": "Laptop nóng ran và tự tắt khi họp trực tuyến", "mo_ta": "Họp trực tuyến khoảng 20 phút là laptop nóng ran ở phía bàn phím rồi tự tắt. Cuối tuần này tôi có buổi trình bày với đối tác.", "truong": {"muc-anh-huong": "Một người"}}
+      ]
+    },
+
+    "software-access": {
+      "truong": {
+        "muc-quyen": ["Chỉ xem", "Xem và sửa", null],
+        "can-truoc-ngay": [null, null, 2, 3, 5, 7]
+      },
+      "ho_so": [
+        {"tieu_de": "Xin tài khoản phần mềm bán hàng cho nhân viên mới", "mo_ta": "Phòng Kinh doanh có một bạn mới vào làm từ thứ Hai tuần sau, cần tài khoản phần mềm bán hàng để lên đơn. Bạn ấy làm cùng nhóm khách hàng doanh nghiệp.", "truong": {"he-thong": "Phần mềm bán hàng", "muc-quyen": "Xem và sửa", "can-truoc-ngay": 3}},
+        {"tieu_de": "Mở quyền xem ổ chung của phòng Marketing", "mo_ta": "Tôi đang phối hợp làm chiến dịch cuối năm với phòng Marketing, cần xem các tệp thiết kế trong ổ chung của phòng họ. Chỉ cần xem, không cần sửa.", "truong": {"he-thong": "Ổ chung Phòng Marketing", "muc-quyen": "Chỉ xem"}},
+        {"tieu_de": "Tài khoản email bị khóa sau khi nhập sai mật khẩu", "mo_ta": "Sáng nay tôi nhập sai mật khẩu email mấy lần và giờ tài khoản bị khóa, không đăng nhập được trên cả máy tính lẫn điện thoại.", "truong": {"he-thong": "Thư điện tử công ty", "muc-quyen": null, "can-truoc-ngay": null}},
+        {"tieu_de": "Xin quyền duyệt đơn nghỉ phép trên phần mềm nhân sự", "mo_ta": "Tôi vừa được giao làm trưởng nhóm, cần quyền duyệt đơn nghỉ phép của các bạn trong nhóm trên phần mềm nhân sự.", "truong": {"he-thong": "Phần mềm nhân sự", "muc-quyen": "Xem và sửa"}},
+        {"tieu_de": "Cài phần mềm chỉnh sửa ảnh cho nhóm truyền thông", "mo_ta": "Nhóm truyền thông cần cài phần mềm chỉnh sửa ảnh trên ba máy để làm ấn phẩm cho sự kiện tháng sau. Máy hiện chưa có quyền cài đặt.", "truong": {"he-thong": "Phần mềm chỉnh sửa ảnh", "muc-quyen": null, "can-truoc-ngay": 7}},
+        {"tieu_de": "Không truy cập được hệ thống quản lý khách hàng", "mo_ta": "Từ chiều qua tôi đăng nhập hệ thống quản lý khách hàng thì báo tài khoản không có quyền, trước đó vẫn dùng bình thường.", "truong": {"he-thong": "Hệ thống quản lý khách hàng (CRM)", "muc-quyen": "Xem và sửa"}},
+        {"tieu_de": "Xin quyền xuất hóa đơn điện tử", "mo_ta": "Kế toán phụ trách xuất hóa đơn sắp nghỉ thai sản, tôi được phân công làm thay từ đầu tháng tới nên cần quyền xuất hóa đơn trên phần mềm.", "truong": {"he-thong": "Phần mềm hóa đơn điện tử", "muc-quyen": "Xem và sửa", "can-truoc-ngay": 5}},
+        {"tieu_de": "Thêm tôi vào nhóm chat dự án mới", "mo_ta": "Tôi vừa được điều sang dự án mở chi nhánh mới, cần được thêm vào nhóm chat và lịch họp chung của dự án.", "truong": {"he-thong": "Ứng dụng nhắn tin nội bộ", "muc-quyen": null}},
+        {"tieu_de": "Xin quyền quản trị trang web để cập nhật tin tức", "mo_ta": "Phòng Truyền thông cần một tài khoản quản trị trang web công ty để tự đăng tin tức và tin tuyển dụng, không phải nhờ bên ngoài mỗi lần.", "truong": {"he-thong": "Trang quản trị website", "muc-quyen": "Quản trị"}},
+        {"tieu_de": "Gia hạn tài khoản phần mềm thiết kế đã hết hạn", "mo_ta": "Phần mềm thiết kế trên máy tôi báo tài khoản hết hạn từ hôm nay, không mở được tệp đang làm dở. Tuần này phải giao bản vẽ cho khách.", "truong": {"he-thong": "Phần mềm thiết kế", "muc-quyen": null, "can-truoc-ngay": 2}},
+        {"tieu_de": "Cấp quyền xem dữ liệu tồn kho cho phòng Kinh doanh", "mo_ta": "Nhân viên kinh doanh cần xem số tồn kho thực tế để báo khách thời gian giao hàng, hiện phải gọi hỏi kho từng lần.", "truong": {"he-thong": "Hệ thống quản lý kho", "muc-quyen": "Chỉ xem"}},
+        {"tieu_de": "Tạo tài khoản cho thực tập sinh dùng trong ba tháng", "mo_ta": "Phòng Kế toán nhận hai thực tập sinh từ ngày 1, cần tài khoản máy tính và email dùng trong ba tháng thực tập.", "truong": {"he-thong": "Tài khoản máy tính và email", "muc-quyen": "Chỉ xem", "can-truoc-ngay": 7}},
+        {"tieu_de": "Không ký được văn bản trên hệ thống văn phòng điện tử", "mo_ta": "Bấm ký văn bản trên hệ thống văn phòng điện tử thì báo lỗi chứng thư, tôi có ba công văn cần ký trong hôm nay.", "truong": {"he-thong": "Hệ thống văn phòng điện tử", "muc-quyen": null, "can-truoc-ngay": null}},
+        {"tieu_de": "Xin mở quyền xem bảng lương của nhân viên trong phòng", "mo_ta": "Tôi là trưởng phòng mới, cần xem bảng lương của nhân viên trong phòng để làm đánh giá cuối năm theo yêu cầu của Ban giám đốc.", "truong": {"he-thong": "Phần mềm tính lương", "muc-quyen": "Chỉ xem"}},
+        {"tieu_de": "Cài phần mềm điều khiển từ xa để hỗ trợ khách", "mo_ta": "Bộ phận hỗ trợ kỹ thuật cần phần mềm điều khiển máy từ xa để hướng dẫn khách xử lý lỗi, thay vì phải đến tận nơi.", "truong": {"he-thong": "Phần mềm điều khiển từ xa", "muc-quyen": null}},
+        {"tieu_de": "Đổi tên đăng nhập do sai chính tả họ tên", "mo_ta": "Tên đăng nhập và tên hiển thị trên email của tôi bị viết sai dấu, khách hàng đọc nhầm tên. Nhờ đổi lại cho đúng họ tên trong hợp đồng.", "truong": {"he-thong": "Thư điện tử công ty", "muc-quyen": null}},
+        {"tieu_de": "Xin quyền tải tài liệu lên kho hồ sơ số", "mo_ta": "Phòng Pháp chế cần quyền tải hợp đồng đã ký lên kho hồ sơ số, hiện chỉ xem được nên vẫn phải lưu bản giấy.", "truong": {"he-thong": "Kho hồ sơ số", "muc-quyen": "Xem và sửa"}},
+        {"tieu_de": "Mất quyền in màu sau khi đổi máy tính", "mo_ta": "Tôi vừa được cấp máy tính mới, in thì chỉ ra trắng đen dù trước đây vẫn in màu được tài liệu chào hàng.", "truong": {"he-thong": "Máy in màu tầng 3", "muc-quyen": null}},
+        {"tieu_de": "Xin tài khoản phần mềm quản lý dự án cho đối tác", "mo_ta": "Dự án với đối tác bên ngoài cần cho hai người của họ xem tiến độ công việc trên phần mềm quản lý dự án, chỉ trong dự án chung.", "truong": {"he-thong": "Phần mềm quản lý dự án", "muc-quyen": "Chỉ xem", "can-truoc-ngay": 5}},
+        {"tieu_de": "Ứng dụng xác thực trên điện thoại mới chưa được kích hoạt", "mo_ta": "Tôi vừa đổi điện thoại, ứng dụng xác thực hai lớp trên máy mới chưa liên kết với tài khoản nên không đăng nhập được hệ thống nội bộ.", "truong": {"he-thong": "Đăng nhập một lần (SSO)", "muc-quyen": null, "can-truoc-ngay": null}},
+        {"tieu_de": "Xin quyền sửa bảng giá trên phần mềm bán hàng", "mo_ta": "Từ tháng sau tôi phụ trách cập nhật bảng giá theo chương trình khuyến mãi, cần quyền sửa mục bảng giá.", "truong": {"he-thong": "Phần mềm bán hàng", "muc-quyen": "Xem và sửa", "can-truoc-ngay": 7}},
+        {"tieu_de": "Khóa tài khoản của cộng tác viên đã hết hợp đồng", "mo_ta": "Hai cộng tác viên của phòng đã hết hợp đồng từ cuối tháng trước, nhờ khóa tài khoản email và ổ chung của họ.", "truong": {"he-thong": "Thư điện tử và ổ chung", "muc-quyen": null}},
+        {"tieu_de": "Cài trình gõ tiếng Việt trên máy dùng chung", "mo_ta": "Máy tính dùng chung ở phòng họp chưa có trình gõ tiếng Việt, ai vào cũng phải tự cài. Máy không cho cài nếu không có quyền quản trị.", "truong": {"he-thong": "Máy tính phòng họp", "muc-quyen": null}},
+        {"tieu_de": "Mở quyền tạo báo cáo riêng trên hệ thống phân tích", "mo_ta": "Tôi cần tự tạo báo cáo theo khu vực trên hệ thống phân tích, hiện chỉ xem được các báo cáo có sẵn.", "truong": {"he-thong": "Hệ thống báo cáo phân tích", "muc-quyen": "Xem và sửa"}},
+        {"tieu_de": "Đồng bộ danh bạ khách hàng lên điện thoại công ty", "mo_ta": "Điện thoại công ty cấp cho tôi chưa đồng bộ danh bạ khách hàng từ hệ thống, tôi phải tra trên máy tính mỗi lần gọi.", "truong": {"he-thong": "Hệ thống quản lý khách hàng (CRM)", "muc-quyen": "Chỉ xem"}}
+      ]
+    },
+
+    "hr-certificate": {
+      "truong": {
+        "so-ban": [1, 1, 1, 2, 2, 3],
+        "ngon-ngu": ["Tiếng Việt", "Tiếng Việt", "Tiếng Việt", "Tiếng Anh", "Cả hai"]
+      },
+      "ho_so": [
+        {"tieu_de": "Giấy xác nhận công tác để bổ sung hồ sơ vay mua nhà", "mo_ta": "Ngân hàng yêu cầu bổ sung giấy xác nhận đang công tác tại công ty, ghi rõ chức vụ và thời gian làm việc, để hoàn tất hồ sơ vay mua nhà.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 2, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận thu nhập sáu tháng gần nhất", "mo_ta": "Tôi cần giấy xác nhận thu nhập sáu tháng gần nhất để nộp hồ sơ mở thẻ tín dụng.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Giấy xác nhận công tác bằng tiếng Anh để xin thị thực du lịch", "mo_ta": "Gia đình tôi đi du lịch Nhật Bản vào tháng tới, lãnh sự quán yêu cầu giấy xác nhận công tác bằng tiếng Anh có ghi thời gian nghỉ phép.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Anh"}},
+        {"tieu_de": "Xin giấy giới thiệu làm thủ tục tại cơ quan thuế", "mo_ta": "Tôi được cử đến chi cục thuế để làm thủ tục quyết toán, cần giấy giới thiệu có ghi tên tôi và nội dung công việc.", "truong": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận thu nhập để làm hồ sơ bảo lãnh du học cho người thân", "mo_ta": "Em gái tôi đi du học, hồ sơ cần giấy xác nhận thu nhập của người bảo lãnh, có cả bản tiếng Anh.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 2, "ngon-ngu": "Cả hai"}},
+        {"tieu_de": "Xin xác nhận thời gian công tác để hưởng phụ cấp thâm niên", "mo_ta": "Tôi đủ năm năm làm việc vào tháng này, nhờ phòng xác nhận thời gian công tác để làm thủ tục hưởng phụ cấp thâm niên.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Giấy xác nhận đang làm việc để đăng ký tạm trú", "mo_ta": "Khu phố yêu cầu giấy xác nhận đang làm việc tại công ty để tôi đăng ký tạm trú ở chỗ thuê mới.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận mức lương để làm hồ sơ vay tiêu dùng", "mo_ta": "Tôi cần giấy xác nhận mức lương hiện tại và hình thức trả lương qua tài khoản để nộp cho công ty tài chính.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xin bản xác nhận không vi phạm kỷ luật để dự tuyển cao học", "mo_ta": "Tôi nộp hồ sơ dự tuyển chương trình đào tạo thạc sĩ, trường yêu cầu xác nhận của cơ quan về việc không vi phạm kỷ luật.", "truong": {"loai-giay": "Khác", "so-ban": 2, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận chức danh để đăng ký chứng chỉ hành nghề", "mo_ta": "Hội nghề nghiệp yêu cầu xác nhận chức danh và số năm làm việc trong lĩnh vực kế toán để tôi đăng ký chứng chỉ hành nghề.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xin xác nhận thu nhập năm để quyết toán thuế cá nhân", "mo_ta": "Tôi có thêm thu nhập ngoài nên phải tự quyết toán thuế, cần chứng từ khấu trừ và xác nhận tổng thu nhập năm vừa rồi.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Thư xác nhận công tác bằng tiếng Anh cho hội thảo ở Singapore", "mo_ta": "Tôi được cử đi dự hội thảo ở Singapore, ban tổ chức cần thư xác nhận công tác bằng tiếng Anh có đóng dấu công ty.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Anh"}},
+        {"tieu_de": "Xin giấy giới thiệu nhận hàng tại cảng", "mo_ta": "Tôi được giao đi nhận lô hàng nhập khẩu tại cảng vào thứ Năm, bên cảng yêu cầu giấy giới thiệu của công ty.", "truong": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận thời gian nghỉ thai sản để làm hồ sơ bảo hiểm", "mo_ta": "Tôi sắp nghỉ thai sản, cơ quan bảo hiểm cần giấy xác nhận thời gian nghỉ và mức lương đóng bảo hiểm của công ty.", "truong": {"loai-giay": "Khác", "so-ban": 2, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận thu nhập để thuê căn hộ", "mo_ta": "Chủ nhà cho thuê căn hộ yêu cầu giấy xác nhận thu nhập hằng tháng trước khi ký hợp đồng thuê.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Giấy xác nhận vị trí công việc để gia hạn giấy phép lao động", "mo_ta": "Đồng nghiệp người nước ngoài ở phòng tôi cần giấy xác nhận vị trí công việc để gia hạn giấy phép lao động, bản song ngữ.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 2, "ngon-ngu": "Cả hai"}},
+        {"tieu_de": "Xin thư giới thiệu khi chuyển công tác sang chi nhánh", "mo_ta": "Tôi chuyển sang chi nhánh Đà Nẵng từ tháng sau, chi nhánh cần thư giới thiệu và xác nhận quá trình công tác ở trụ sở.", "truong": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xác nhận thu nhập bằng tiếng Anh để xin thị thực thăm thân", "mo_ta": "Tôi sang Úc thăm con vào dịp Tết, hồ sơ thị thực cần xác nhận thu nhập bằng tiếng Anh kèm thời gian được nghỉ.", "truong": {"loai-giay": "Xác nhận thu nhập", "so-ban": 1, "ngon-ngu": "Tiếng Anh"}},
+        {"tieu_de": "Xin xác nhận số ngày công tháng trước", "mo_ta": "Tôi cần xác nhận số ngày công thực tế tháng trước để đối chiếu với bảng lương, có hai ngày đi công tác chưa được tính.", "truong": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Giấy xác nhận công tác để vay vốn mua xe", "mo_ta": "Ngân hàng cho vay mua xe yêu cầu giấy xác nhận công tác và hợp đồng lao động còn hiệu lực trên một năm.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Xin bản xác nhận đã hoàn thành khóa đào tạo nội bộ", "mo_ta": "Tôi đã học xong khóa an toàn lao động do công ty tổ chức, cần giấy xác nhận để bổ sung hồ sơ năng lực.", "truong": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}},
+        {"tieu_de": "Giấy xác nhận nơi làm việc để đăng ký học buổi tối", "mo_ta": "Trường đại học yêu cầu giấy xác nhận của nơi làm việc để tôi đăng ký học văn bằng hai buổi tối.", "truong": {"loai-giay": "Xác nhận công tác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"}}
+      ]
+    },
+
+    "supply-purchase": {
+      "truong": {
+        "nha-cung-cap": [null, null, null, "Nhà cung cấp văn phòng phẩm hiện tại", "Đại lý gần văn phòng", "Theo báo giá đã gửi phòng Hành chính"]
+      },
+      "ho_so": [
+        {"tieu_de": "Mua thêm bút bi và sổ tay cho phòng Kinh doanh", "mo_ta": "Phòng Kinh doanh hết sổ tay và bút để phát cho nhân viên đi gặp khách, đề nghị mua bổ sung cho cả quý.", "truong": {"ten-vat-tu": "Bút bi và sổ tay", "so-luong": 40, "du-toan": 1200000}},
+        {"tieu_de": "Đề xuất mua máy pha cà phê cho phòng nghỉ", "mo_ta": "Máy pha cà phê ở phòng nghỉ tầng 4 đã hỏng, sửa không được. Đề xuất mua máy mới loại vừa cho khoảng 30 người dùng.", "truong": {"ten-vat-tu": "Máy pha cà phê", "so-luong": 1, "du-toan": 6500000}},
+        {"tieu_de": "Mua giấy in A3 cho phòng Thiết kế", "mo_ta": "Phòng Thiết kế cần giấy A3 để in bản vẽ trình khách, kho hiện chỉ còn giấy A4.", "truong": {"ten-vat-tu": "Giấy in A3", "so-luong": 10, "du-toan": 1500000}},
+        {"tieu_de": "Đề xuất mua thùng carton đóng gói hàng mẫu", "mo_ta": "Kho cần thùng carton cỡ vừa để đóng gói hàng mẫu gửi khách trong đợt khuyến mãi cuối năm.", "truong": {"ten-vat-tu": "Thùng carton cỡ vừa", "so-luong": 200, "du-toan": 3000000, "nha-cung-cap": "Xưởng bao bì đang cung cấp cho kho"}},
+        {"tieu_de": "Mua bảng trắng cho phòng họp nhỏ", "mo_ta": "Bảng trắng ở phòng họp nhỏ đã bị ố, viết lên không xóa sạch được. Đề nghị thay bảng mới cỡ 1,2 x 2 mét.", "truong": {"ten-vat-tu": "Bảng trắng 1,2 x 2 m", "so-luong": 1, "du-toan": 1800000}},
+        {"tieu_de": "Đề xuất mua đèn bàn cho nhân viên ca tối", "mo_ta": "Nhóm trực tổng đài ca tối phản ánh ánh sáng ở góc làm việc yếu, đề xuất mua đèn bàn cho từng chỗ ngồi.", "truong": {"ten-vat-tu": "Đèn bàn LED", "so-luong": 8, "du-toan": 2400000}},
+        {"tieu_de": "Mua ruy băng mực cho máy in nhãn ở kho", "mo_ta": "Máy in nhãn ở kho sắp hết ruy băng mực, dự kiến chỉ đủ dùng trong tuần này.", "truong": {"ten-vat-tu": "Ruy băng mực máy in nhãn", "so-luong": 12, "du-toan": 1440000, "nha-cung-cap": "Đơn vị bán máy in nhãn"}},
+        {"tieu_de": "Đề xuất trang bị bộ sơ cứu cho từng tầng", "mo_ta": "Đợt kiểm tra an toàn vừa rồi ghi nhận các tầng chưa có hộp sơ cứu đủ thuốc và băng gạc, đề xuất trang bị mỗi tầng một bộ.", "truong": {"ten-vat-tu": "Bộ dụng cụ sơ cứu", "so-luong": 5, "du-toan": 2500000}},
+        {"tieu_de": "Mua thêm ghế cho khu tiếp khách", "mo_ta": "Khu tiếp khách ở sảnh tầng 1 thiếu ghế khi có đoàn khách, đề nghị mua thêm ghế cùng mẫu đang dùng.", "truong": {"ten-vat-tu": "Ghế tiếp khách", "so-luong": 6, "du-toan": 7200000}},
+        {"tieu_de": "Đề xuất mua bìa hồ sơ và kẹp tài liệu", "mo_ta": "Phòng Nhân sự cần bìa hồ sơ và kẹp tài liệu để lưu hồ sơ nhân viên mới tuyển trong đợt này.", "truong": {"ten-vat-tu": "Bìa hồ sơ và kẹp tài liệu", "so-luong": 100, "du-toan": 800000}},
+        {"tieu_de": "Mua ổ cắm điện kéo dài cho phòng đào tạo", "mo_ta": "Phòng đào tạo chỉ có hai ổ điện trên tường, học viên mang laptop không đủ chỗ sạc.", "truong": {"ten-vat-tu": "Ổ cắm kéo dài 6 lỗ", "so-luong": 6, "du-toan": 900000}},
+        {"tieu_de": "Đề xuất mua máy lọc không khí cho phòng họp lớn", "mo_ta": "Phòng họp lớn kín, họp đông người lâu thì ngột ngạt. Đề xuất mua một máy lọc không khí đủ cho diện tích 40 mét vuông.", "truong": {"ten-vat-tu": "Máy lọc không khí", "so-luong": 1, "du-toan": 8500000}},
+        {"tieu_de": "Đặt may đồng phục cho nhân viên lễ tân mới", "mo_ta": "Hai nhân viên lễ tân mới vào làm chưa có đồng phục, đề nghị đặt may theo mẫu hiện có.", "truong": {"ten-vat-tu": "Đồng phục lễ tân", "so-luong": 4, "du-toan": 3200000, "nha-cung-cap": "Xưởng may đồng phục đang hợp tác"}},
+        {"tieu_de": "Đề xuất mua bút trình chiếu cho phòng Kinh doanh", "mo_ta": "Nhân viên kinh doanh thường thuyết trình tại văn phòng khách hàng, đề xuất mua bút trình chiếu không dây để dùng chung.", "truong": {"ten-vat-tu": "Bút trình chiếu không dây", "so-luong": 3, "du-toan": 1350000}},
+        {"tieu_de": "Mua giá để hàng cho kho phụ", "mo_ta": "Kho phụ mới thuê chưa có giá kệ, hàng đang để dưới sàn dễ ẩm. Đề xuất mua giá sắt nhiều tầng.", "truong": {"ten-vat-tu": "Giá sắt 4 tầng", "so-luong": 6, "du-toan": 9000000}},
+        {"tieu_de": "Đề xuất mua băng keo và màng co đóng hàng", "mo_ta": "Kho sắp hết băng keo và màng co, lượng hàng xuất tháng này tăng gần gấp đôi.", "truong": {"ten-vat-tu": "Băng keo và màng co", "so-luong": 60, "du-toan": 2100000}},
+        {"tieu_de": "Mua pin thay thế cho bộ đàm của tổ bảo vệ", "mo_ta": "Bộ đàm của tổ bảo vệ hết pin nhanh, ca đêm thường mất liên lạc khi đi tuần. Đề xuất mua pin thay thế.", "truong": {"ten-vat-tu": "Pin bộ đàm", "so-luong": 6, "du-toan": 1800000}},
+        {"tieu_de": "Đề xuất đặt in lịch và sổ tay làm quà Tết cho khách hàng", "mo_ta": "Phòng Hành chính đề xuất đặt in lịch để bàn và sổ tay có logo công ty làm quà Tết cho khách hàng thân thiết.", "truong": {"ten-vat-tu": "Lịch để bàn và sổ tay in logo", "so-luong": 300, "du-toan": 45000000}},
+        {"tieu_de": "Mua máy tính xách tay cho nhân viên kinh doanh mới", "mo_ta": "Phòng Kinh doanh tuyển thêm ba nhân viên đi thị trường, cần laptop cấu hình văn phòng để làm việc bên ngoài.", "truong": {"ten-vat-tu": "Máy tính xách tay văn phòng", "so-luong": 3, "du-toan": 54000000}},
+        {"tieu_de": "Đề xuất mua tủ lạnh nhỏ cho phòng nghỉ", "mo_ta": "Phòng nghỉ tầng 2 chưa có tủ lạnh, nhân viên mang cơm trưa không có chỗ bảo quản.", "truong": {"ten-vat-tu": "Tủ lạnh mini", "so-luong": 1, "du-toan": 4500000}},
+        {"tieu_de": "Mua nước rửa tay và giấy lau cho nhà vệ sinh", "mo_ta": "Lượng nước rửa tay và giấy lau dùng nhanh hơn dự kiến, kho chỉ còn đủ khoảng một tuần.", "truong": {"ten-vat-tu": "Nước rửa tay và giấy lau", "so-luong": 50, "du-toan": 2500000, "nha-cung-cap": "Nhà cung cấp vật tư vệ sinh hiện tại"}},
+        {"tieu_de": "Đề xuất mua màn chiếu cho chi nhánh mới", "mo_ta": "Chi nhánh mới chưa có màn chiếu cho phòng họp, đang chiếu lên tường nên hình không rõ.", "truong": {"ten-vat-tu": "Màn chiếu treo tường 100 inch", "so-luong": 1, "du-toan": 2800000}},
+        {"tieu_de": "Mua cân điện tử cho kho", "mo_ta": "Cân ở kho bị sai số khi cân hàng nặng, ảnh hưởng tính phí vận chuyển. Đề xuất mua cân điện tử mới.", "truong": {"ten-vat-tu": "Cân điện tử 150 kg", "so-luong": 1, "du-toan": 3500000}},
+        {"tieu_de": "Đề xuất mua sách chuyên môn kế toán và thuế", "mo_ta": "Phòng Kế toán đề xuất mua bộ sách cập nhật chuẩn mực kế toán và quy định thuế mới để nhân viên tham khảo.", "truong": {"ten-vat-tu": "Sách chuyên môn kế toán, thuế", "so-luong": 8, "du-toan": 2000000}}
+      ]
+    }
+  },
+
+  "truong_ho_so_da_giai_quyet": {
+    "tt01": {"vi-tri": "Tầng 3, khu máy in chung", "muc-anh-huong": "Cả phòng"},
+    "tt03": {"vi-tri": "Tầng 4, phòng họp lớn", "muc-anh-huong": "Cả phòng"},
+    "tt08": {"vi-tri": "Tầng 3, phòng Kế toán", "muc-anh-huong": "Cả phòng"},
+    "tt09": {"vi-tri": "Tầng 4, phòng đào tạo", "muc-anh-huong": "Cả phòng"},
+    "tt18": {"muc-anh-huong": "Cả phòng"},
+    "tt20": {"muc-anh-huong": "Cả phòng"},
+    "tt21": {"he-thong": "Phần mềm kế toán", "muc-quyen": "Xem và sửa"},
+    "tt22": {"he-thong": "Thư điện tử công ty", "muc-quyen": null},
+    "tt23": {"he-thong": "Ổ chung thư mục dự án", "muc-quyen": "Xem và sửa"},
+    "tt24": {"he-thong": "Phần mềm vẽ kỹ thuật", "muc-quyen": null},
+    "tt25": {"he-thong": "Mạng riêng ảo (VPN)", "muc-quyen": null},
+    "tt26": {"he-thong": "Hệ thống báo cáo doanh thu", "muc-quyen": "Chỉ xem"},
+    "tt27": {"he-thong": "Phần mềm nhân sự", "muc-quyen": null},
+    "tt28": {"he-thong": "Thư điện tử công ty", "muc-quyen": null},
+    "tt29": {"he-thong": "Bộ phần mềm văn phòng", "muc-quyen": null},
+    "tt30": {"he-thong": "Máy tính cá nhân", "muc-quyen": "Quản trị"},
+    "tt31": {"he-thong": "Lịch và thư điện tử trên điện thoại", "muc-quyen": null},
+    "tt32": {"he-thong": "Hệ thống quản lý kho", "muc-quyen": "Xem và sửa"},
+    "tt33": {"he-thong": "Phần mềm chữ ký số", "muc-quyen": null},
+    "tt34": {"he-thong": "Thư điện tử và ổ chung", "muc-quyen": null},
+    "tt35": {"he-thong": "Hệ thống họp trực tuyến", "muc-quyen": null},
+    "tt36": {"he-thong": "Đăng nhập một lần (SSO)", "muc-quyen": null},
+    "tt37": {"loai-giay": "Xác nhận công tác", "ngon-ngu": "Tiếng Anh"},
+    "tt38": {"loai-giay": "Xác nhận thu nhập", "ngon-ngu": "Tiếng Việt"},
+    "tt39": {"loai-giay": "Khác", "ngon-ngu": "Tiếng Việt"},
+    "tt40": {"loai-giay": "Khác", "ngon-ngu": "Tiếng Việt"},
+    "tt41": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"},
+    "tt42": {"loai-giay": "Xác nhận công tác", "ngon-ngu": "Tiếng Việt"},
+    "tt43": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"},
+    "tt44": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"},
+    "tt45": {"loai-giay": "Xác nhận công tác"},
+    "tt46": {"loai-giay": "Khác", "so-ban": 1, "ngon-ngu": "Tiếng Việt"},
+    "tt47": {"loai-giay": "Khác", "ngon-ngu": "Tiếng Việt"},
+    "tt48": {"loai-giay": "Xác nhận công tác", "ngon-ngu": "Tiếng Việt"},
+    "tt49": {"ten-vat-tu": "Giấy in A4", "so-luong": 50, "du-toan": 3500000},
+    "tt50": {"ten-vat-tu": "Màn hình rời 27 inch", "so-luong": 2, "du-toan": 12000000},
+    "tt51": {"ten-vat-tu": "Ghế làm việc", "so-luong": 1, "du-toan": 2200000},
+    "tt52": {"ten-vat-tu": "Hộp mực máy in", "so-luong": 6, "du-toan": 4800000},
+    "tt53": {"ten-vat-tu": "Tai nghe có micro", "so-luong": 10, "du-toan": 6000000},
+    "tt54": {"ten-vat-tu": "Bình nước và cây nước nóng lạnh", "so-luong": 2, "du-toan": 3000000},
+    "tt55": {"ten-vat-tu": "Ổ cứng di động 2 TB", "so-luong": 3, "du-toan": 6300000},
+    "tt56": {"ten-vat-tu": "Văn phòng phẩm quý mới", "so-luong": 1, "du-toan": 5000000},
+    "tt57": {"ten-vat-tu": "Bàn phím và chuột", "so-luong": 5, "du-toan": 2500000},
+    "tt58": {"ten-vat-tu": "Quạt đứng công nghiệp", "so-luong": 3, "du-toan": 3600000},
+    "tt59": {"ten-vat-tu": "Bộ chuyển đổi cổng USB-C", "so-luong": 4, "du-toan": 2000000},
+    "tt60": {"ten-vat-tu": "Tủ hồ sơ có khóa", "so-luong": 2, "du-toan": 7000000}
+  }
+}

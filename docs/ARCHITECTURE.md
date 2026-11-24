@@ -1364,8 +1364,19 @@ lịch sử trình diễn phải lùi về quá khứ. Lệnh chỉ chạy INSER
 nhật ký mang sẵn mốc cũ — nên nguyên tắc nhật ký chỉ ghi thêm vẫn giữ. Đồng hồ của bộ sinh được
 coi là giây làm việc và đổi sang giờ thật bằng `moc_sau_giay_lam_viec`: sự kiện rơi vào giờ hành
 chính, đồng hồ hạn đúng bằng cách hệ thống tự đo, không sự kiện nào ở tương lai. Lệnh từ chối
-chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không mang tiền tố `[Mẫu]` (trừ khi thêm
+chạy khi thiếu `--xac-nhan`, và khi cụm đã có hồ sơ không phải hồ sơ mẫu (trừ khi thêm
 `--cho-tron`). Hồ sơ mẫu không gỡ ra được — trigger chặn xóa nhật ký — nên muốn sạch thì `down -v`.
+
+**Nhận ra hồ sơ mẫu bằng mã người gửi** (#541), không bằng tiêu đề: người gửi là mã ảo của bộ sinh — vai
+người gửi của bộ quy tắc và ba chữ số (`mau_ma_nguoi_gui` trong `scripts/sinh_nhat_ky_ao.py`) — còn tài khoản
+thật mang mã UUID của Keycloak. Mã người xử lý, trưởng phòng, điều phối viên cũng giữ là mã ảo; chỉ nhãn
+(`requester_label`, `assignee_label`, `actor_label`, `from_label`/`to_label`) mang tên người. Nội dung theo loại
+yêu cầu, trường riêng (chỉ trường cụm khai, đúng kiểu), tên người và tỷ lệ của hai biểu đồ đo gợi ý nằm trong
+`scripts/du_lieu/noi_dung_trinh_dien.json`. Lượt giữ hay ghi đè gợi ý ghi vào `event_log.suggestion` đúng khuôn
+của `ghi_nhan_goi_y`, trên cạnh có ràng buộc quản trường có gợi ý; nguồn `routing` tính thật từ bảng ánh xạ.
+Lượt xem hồ sơ tương tự ghi vào `similar_case_views` đúng cột hệ thống ghi. Mã hồ sơ cấp trước từ dãy số của
+cột `id` (tiêu đề được phép trùng), và lệnh dừng cả giao dịch nếu một hồ sơ mẫu không đúng một mã. Mỗi phần
+thêm rút từ hạt giống riêng, nên hồ sơ và nhật ký của hạt giống cũ không đổi.
 
 ### 6.3a. Lưu trữ lạnh và phả hệ dữ liệu (không gian `D`)
 
