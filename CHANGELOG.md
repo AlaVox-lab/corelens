@@ -5,6 +5,32 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.8.0] - 2026-11-24
+
+### Công việc phụ trợ
+
+- **d-analytics:** Dữ liệu trình diễn đọc như doanh nghiệp thật ([#543](https://github.com/AlaVox-lab/corelens/issues/543)) ([fa8841f](https://github.com/AlaVox-lab/corelens/commit/fa8841f9f36281e44cfec348bed2056ff600687f))
+
+### Kiểm thử
+
+- **ci:** Bài Hồ sơ của tôi tìm hồ sơ thay vì dò trang đầu ([#548](https://github.com/AlaVox-lab/corelens/issues/548)) ([464650e](https://github.com/AlaVox-lab/corelens/commit/464650e4ea520596a47105f18edd97536844a977))
+
+### Sửa lỗi
+
+- **h-portal:** Khởi tạo kho tri thức chịu được gói ngôn ngữ hỏng ([#537](https://github.com/AlaVox-lab/corelens/issues/537)) ([e3da2cf](https://github.com/AlaVox-lab/corelens/commit/e3da2cf3bccc33032fbecdf5bcf20062af0d4f8c))
+- **h-portal:** Ngăn xem nhanh không che bảng, gom mã nguồn AGPL ([#542](https://github.com/AlaVox-lab/corelens/issues/542)) ([8c91c29](https://github.com/AlaVox-lab/corelens/commit/8c91c296b954ac5fcd88de5f37e4b81c85b390aa))
+- **infra:** Tên hiển thị Corelens ở thư, đăng nhập và tài liệu ([#544](https://github.com/AlaVox-lab/corelens/issues/544)) ([cd92d16](https://github.com/AlaVox-lab/corelens/commit/cd92d162a4fd02267ba8fe75a001ed812227d3b7))
+
+### Tài liệu
+
+- README gọn, chuyển hướng dẫn cài sang trang tài liệu ([#536](https://github.com/AlaVox-lab/corelens/issues/536)) ([8b89fb3](https://github.com/AlaVox-lab/corelens/commit/8b89fb39bf26aff007af9e21cf98aad37495b6cd))
+- **state:** Ghi đợt tám Giai đoạn 6 trước v1.8.0 ([#545](https://github.com/AlaVox-lab/corelens/issues/545)) ([a5112c1](https://github.com/AlaVox-lab/corelens/commit/a5112c19181471e018d9b1db4f4bff512c033b2c))
+
+### Tính năng mới
+
+- **p-workflow:** Khóa trùng lặp Idempotency-Key cho lệnh lõi ([#532](https://github.com/AlaVox-lab/corelens/issues/532)) ([53f7b46](https://github.com/AlaVox-lab/corelens/commit/53f7b4686116117b8483837f16fdd00977d91f7a))
+- **h-auth:** Nhật ký kiểm toán truy cập dữ liệu cá nhân ([#533](https://github.com/AlaVox-lab/corelens/issues/533)) ([6b1e869](https://github.com/AlaVox-lab/corelens/commit/6b1e8691ac97656cbe09f20404a2923c556c3663))
+
 ## [1.7.0] - 2026-11-23
 
 ### Sửa lỗi
