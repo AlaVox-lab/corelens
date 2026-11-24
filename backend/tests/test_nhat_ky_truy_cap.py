@@ -49,7 +49,7 @@ def _truong_phong(phong: str, ma: str = "kt-tp") -> Actor:
 
 class DanhBaGia:
     def contact(self, user_id: str) -> Contact | None:
-        return Contact(email="an.nguyen@dx-os-lab.test", phone="0900 000 001")
+        return Contact(email="an.nguyen@corelens.test", phone="0900 000 001")
 
     def department_members(self, department_code: str) -> list:
         return []

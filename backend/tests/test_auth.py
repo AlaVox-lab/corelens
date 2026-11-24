@@ -82,7 +82,7 @@ def _duc_token(pem_rieng, **ghi_de) -> str:
         "exp": bay_gio + dt.timedelta(minutes=5),
         "preferred_username": "cuong.le",
         "name": "Cường Lê",
-        "email": "cuong.le@dx-os-lab.test",
+        "email": "cuong.le@corelens.test",
         "realm_access": {"roles": ["handler", "offline_access"]},
         "groups": ["/phong-ban/it"],
     }

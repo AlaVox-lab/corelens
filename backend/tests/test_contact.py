@@ -33,7 +33,7 @@ NGUOI_GUI = Actor(id="kc-gui-131", name="An Nguyễn", roles=frozenset({"request
 NGUOI_GUI_KHAC = Actor(id="kc-gui-132", name="Người Gửi Khác", roles=frozenset({"requester"}))
 DIEU_PHOI = Actor(id="kc-dp-131", name="Bình Trần", roles=frozenset({VAI_TRO_DIEU_PHOI}))
 
-LIEN_HE = Contact(email="an.nguyen@dx-os-lab.test", phone="0900 000 001")
+LIEN_HE = Contact(email="an.nguyen@corelens.test", phone="0900 000 001")
 
 
 def _truong_phong(phong: str) -> Actor:
@@ -140,7 +140,7 @@ def test_dieu_phoi_thay_lien_he_nguoi_gui(client, session, phong_ban):
     assert r.status_code == 200
     assert r.json() == {
         "name": "An Nguyễn",
-        "email": "an.nguyen@dx-os-lab.test",
+        "email": "an.nguyen@corelens.test",
         "phone": "0900 000 001",
         "found": True,
     }
@@ -224,7 +224,7 @@ def test_danh_ba_hong_thi_503_ma_trang_chi_tiet_van_mo(client, session, phong_ba
 
 def test_chua_dien_so_dien_thoai_thi_tra_trong(client, session, phong_ban):
     ho_so = _cho_phong_nhan(session, phong_ban)
-    _goi_bang(client, DIEU_PHOI, DanhBaGia(Contact(email="an.nguyen@dx-os-lab.test", phone=None)))
+    _goi_bang(client, DIEU_PHOI, DanhBaGia(Contact(email="an.nguyen@corelens.test", phone=None)))
 
     r = client.get(_dieu_phoi(ho_so))
 
@@ -275,12 +275,12 @@ def _thay_goi(danh_ba: KeycloakDirectory, tra_ve) -> list[str]:
 def test_doc_email_va_so_dien_thoai():
     danh_ba = _danh_ba()
     da_goi = _thay_goi(danh_ba, {
-        "email": "an.nguyen@dx-os-lab.test",
+        "email": "an.nguyen@corelens.test",
         "attributes": {"phoneNumber": ["  ", " 0900 000 001 "]},
     })
 
     assert danh_ba.contact("kc-gui-131") == Contact(
-        email="an.nguyen@dx-os-lab.test", phone="0900 000 001"
+        email="an.nguyen@corelens.test", phone="0900 000 001"
     ), "bỏ giá trị trống, cắt khoảng trắng"
     assert da_goi == ["/users/kc-gui-131"]
 
@@ -332,5 +332,5 @@ def test_keycloak_that_tra_dung_lien_he_tai_khoan_mau(danh_ba_that):
 
     lien_he = danh_ba_that.contact(tim[0]["id"])
 
-    assert lien_he == Contact(email="an.nguyen@dx-os-lab.test", phone="0900 000 001")
+    assert lien_he == Contact(email="an.nguyen@corelens.test", phone="0900 000 001")
     assert danh_ba_that.contact("00000000-0000-0000-0000-000000000000") is None

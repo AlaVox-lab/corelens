@@ -28,7 +28,8 @@
 -- Biến viết sai thì để nguyên trong thư (không làm hỏng việc gửi).
 --
 -- `ON CONFLICT DO NOTHING`: cụm dựng trước #251 nhận các dòng này qua migration 0024; doanh nghiệp
--- đã sửa một dòng thì dòng đó được giữ.
+-- đã sửa một dòng thì dòng đó được giữ. Tên hiển thị Corelens trong tiêu đề và chân thư (#538) tới cụm cũ
+-- qua migration 0039, chỉ ở dòng còn nguyên chữ cũ.
 
 \set ON_ERROR_STOP on
 
@@ -41,32 +42,32 @@ VALUES
      'Có việc chờ tôi',
      'Khi một hồ sơ chuyển tới bước cần bạn thao tác.',
      'state-entered', 'primary-step',
-     '[DX-OS Lab] $ma_ho_so chờ bạn: $buoc',
+     '[Corelens] $ma_ho_so chờ bạn: $buoc',
      E'Chào $ten_nguoi_nhan,\n\n'
      'Hồ sơ $ma_ho_so "$tieu_de" đang ở trạng thái "$trang_thai" và chờ bạn: $buoc.\n\n'
      'Mở cổng để xử lý: $lien_ket\n\n'
-     '— Thư tự động từ DX-OS Lab. Tắt loại thư này ở trang Thông báo của cổng.',
+     '— Thư tự động từ Corelens. Tắt loại thư này ở trang Thông báo của cổng.',
      TRUE, TRUE, 10),
     ('sap-tu-dong',
      'Hồ sơ sắp tự chuyển',
      'Khi một hồ sơ đang chờ bạn sắp bị hệ thống tự đóng hoặc tự trả về vì không ai thao tác.',
      'auto-warning', 'primary-step',
-     '[DX-OS Lab] $ma_ho_so sẽ $canh_tu_dong lúc $han_tu_dong',
+     '[Corelens] $ma_ho_so sẽ $canh_tu_dong lúc $han_tu_dong',
      E'Chào $ten_nguoi_nhan,\n\n'
      'Hồ sơ $ma_ho_so "$tieu_de" đang chờ bạn ở trạng thái "$trang_thai" ($buoc). '
      'Nếu không ai thao tác, hệ thống sẽ $canh_tu_dong lúc $han_tu_dong.\n\n'
      'Mở cổng để xử lý: $lien_ket\n\n'
-     '— Thư tự động từ DX-OS Lab. Tắt loại thư này ở trang Thông báo của cổng.',
+     '— Thư tự động từ Corelens. Tắt loại thư này ở trang Thông báo của cổng.',
      TRUE, TRUE, 20),
     ('da-tu-dong',
      'Hồ sơ đã tự chuyển',
      'Khi hệ thống vừa tự đóng hoặc tự trả về hồ sơ của bạn vì hết hạn chờ.',
      'auto-done', 'requester',
-     '[DX-OS Lab] $ma_ho_so: $canh_tu_dong',
+     '[Corelens] $ma_ho_so: $canh_tu_dong',
      E'Chào $ten_nguoi_nhan,\n\n'
      'Hồ sơ $ma_ho_so "$tieu_de" của bạn vừa được hệ thống chuyển từ "$tu_trang_thai" sang '
      '"$trang_thai" ($canh_tu_dong) vì hết hạn chờ mà chưa ai thao tác.\n\n'
      'Xem hồ sơ: $lien_ket\n\n'
-     '— Thư tự động từ DX-OS Lab. Tắt loại thư này ở trang Thông báo của cổng.',
+     '— Thư tự động từ Corelens. Tắt loại thư này ở trang Thông báo của cổng.',
      TRUE, TRUE, 30)
 ON CONFLICT (code) DO NOTHING;

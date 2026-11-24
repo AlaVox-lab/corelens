@@ -108,3 +108,27 @@ python scripts/xac_thuc_hai_lop.py chong-do      # xem: python scripts/xac_thuc_
 
 Chạy lại bao nhiêu lần cũng được. Mật khẩu đặt trước đó vẫn dùng được; chính sách áp ở lần đặt hay đổi mật
 khẩu kế.
+
+## Từ bản 1.7 lên 1.8: tên hiển thị Corelens
+
+Bản 1.8 đổi mọi chữ người dùng thấy từ "DX-OS Lab" sang Corelens (#538); định danh kỹ thuật — realm
+`dx-os-lab`, tiền tố `dxlab`, tên dịch vụ ở `/health` — giữ nguyên. Sau khi dựng lại như mục đầu trang:
+
+- **Tự đổi, không phải làm gì:**
+  - Tiêu đề và chân thư của ba loại thông báo, do bản sửa lược đồ `0039`. Chỉ ô còn nguyên văn lời thư cũ;
+    lời thư quản trị viên đã sửa thì giữ.
+  - Tiêu đề kho tri thức (hồ sơ `tri-thuc`): bước khởi tạo đặt lại tiêu đề theo `WIKI_SITE_TITLE` mỗi lần
+    chạy.
+- **Chạy một lệnh** cho tên hiển thị trên trang đăng nhập Keycloak và email của các tài khoản mẫu (sang
+  `@corelens.test`), vì Keycloak chỉ nạp tệp realm lúc tạo realm:
+
+  ```bash
+  python scripts/ten_hien_thi.py               # xem sẽ đổi gì
+  python scripts/ten_hien_thi.py --xac-nhan    # ghi
+  ```
+
+  Lệnh chỉ đổi tên realm còn đúng tên cũ và email tài khoản mẫu còn đúng địa chỉ cũ; tài khoản khác không
+  đụng tới. Chạy lại bao nhiêu lần cũng được.
+- **Sửa tay `.env`** nếu tệp còn dòng `SMTP_FROM=DX-OS Lab <khong-tra-loi@dx-os-lab.test>` chép từ bản cũ:
+  đổi theo `infra/.env.example` rồi dựng lại dịch vụ ứng dụng. Giữ nguyên `WIKI_ADMIN_EMAIL` — đó là tài
+  khoản quản trị Wiki.js đã tạo, đổi thì bước khởi tạo không đăng nhập được.

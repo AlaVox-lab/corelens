@@ -281,7 +281,7 @@ services:
       WIKI_API_GROUP: ${WIKI_API_GROUP:-dx-os-lab-doc}
       WIKI_ADMIN_EMAIL: ${WIKI_ADMIN_EMAIL:-quan-tri-wiki@dx-os-lab.test}
       WIKI_ADMIN_PASSWORD: ${WIKI_ADMIN_PASSWORD:-doi_mat_khau_nay_truoc_khi_trien_khai}
-      WIKI_SITE_TITLE: ${WIKI_SITE_TITLE:-Kho tri thức DX-OS Lab}
+      WIKI_SITE_TITLE: ${WIKI_SITE_TITLE:-Kho tri thức Corelens}
       WIKI_LOCALE: ${WIKI_LOCALE:-vi}
       WIKI_SEED_DIR: /tri-thuc/bai-mau
       WIKI_API_KEY_FILE: /khoa/wiki-api-key
@@ -478,7 +478,7 @@ services:
       DXLAB_SMTP_USERNAME: ${SMTP_USERNAME:-}
       DXLAB_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       DXLAB_SMTP_SECURITY: ${SMTP_SECURITY:-none}
-      DXLAB_SMTP_FROM: ${SMTP_FROM:-DX-OS Lab <khong-tra-loi@dx-os-lab.test>}
+      DXLAB_SMTP_FROM: ${SMTP_FROM:-Corelens <khong-tra-loi@corelens.test>}
       DXLAB_NOTIFY_SCAN_INTERVAL_SECONDS: ${NOTIFY_SCAN_INTERVAL_SECONDS:-30}
       DXLAB_NOTIFY_MAX_ATTEMPTS: ${NOTIFY_MAX_ATTEMPTS:-5}
       DXLAB_NOTIFY_RETRY_AFTER_SECONDS: ${NOTIFY_RETRY_AFTER_SECONDS:-60}
