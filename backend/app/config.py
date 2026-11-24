@@ -399,7 +399,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     # `none` (Mailpit, máy chủ nội bộ), `starttls` (cổng 587), `ssl` (cổng 465)
     smtp_security: Literal["none", "starttls", "ssl"] = "none"
-    smtp_from: str = "DX-OS Lab <khong-tra-loi@dx-os-lab.test>"
+    smtp_from: str = "Corelens <khong-tra-loi@corelens.test>"
     smtp_timeout_seconds: float = 10.0
     # Nhịp bộ quét gửi: phát hiện mốc báo trước, tìm người nhận, gửi thư đến hạn
     notify_scan_interval_seconds: int = 30

@@ -459,7 +459,7 @@ def test_realm_chong_do_mat_khau_khoa_tam_va_tai_khoan_mau_van_dang_nhap(session
     # Tài khoản thử với mật khẩu hợp lệ: sai liên tiếp tới ngưỡng thì bị khóa tạm, mật khẩu đúng cũng không vào
     mat_khau = secrets.token_urlsafe(12)
     _goi_quan_tri(f"{goc}/users", token, than={
-        "username": ten, "enabled": True, "firstName": "Thử", "lastName": "Khóa", "email": f"{ten}@dx-os-lab.test",
+        "username": ten, "enabled": True, "firstName": "Thử", "lastName": "Khóa", "email": f"{ten}@corelens.test",
         "emailVerified": True, "credentials": [{"type": "password", "value": mat_khau, "temporary": False}],
     })
     _, than = _goi_quan_tri(f"{goc}/users?username={ten}&exact=true", token, phuong_thuc="GET")

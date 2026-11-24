@@ -3,6 +3,9 @@
 [Tiếng Việt](README.md) · **English**
 
 [![License: MIT and AGPL-3.0](https://img.shields.io/badge/License-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
+[![Latest release](https://img.shields.io/github/v/release/AlaVox-lab/corelens)](https://github.com/AlaVox-lab/corelens/releases)
+[![Continuous integration on pull requests](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml)
+[![Documentation site](https://github.com/AlaVox-lab/corelens/actions/workflows/trang-tai-lieu.yml/badge.svg?branch=main)](https://alavox-lab.github.io/corelens/)
 
 Corelens is an open source internal request portal for businesses. Broken equipment reports, software
 access requests, employment certificates and purchase proposals all go to one place and follow a process

@@ -3,6 +3,9 @@
 **Tiếng Việt** · [English](README.en.md)
 
 [![Giấy phép: MIT và AGPL-3.0](https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
+[![Bản phát hành mới nhất](https://img.shields.io/github/v/release/AlaVox-lab/corelens)](https://github.com/AlaVox-lab/corelens/releases)
+[![Tích hợp liên tục trên pull request](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml)
+[![Trang tài liệu](https://github.com/AlaVox-lab/corelens/actions/workflows/trang-tai-lieu.yml/badge.svg?branch=main)](https://alavox-lab.github.io/corelens/)
 
 Corelens là cổng vận hành yêu cầu nội bộ nguồn mở cho doanh nghiệp. Báo máy hỏng, xin cấp phần mềm, xin
 giấy xác nhận, đề xuất mua sắm đều gửi về một chỗ, đi theo một quy trình khai trong dữ liệu chứ không viết
