@@ -181,7 +181,7 @@ test.describe("người gửi", () => {
           enabled: true,
           items: [
             {
-              title: "[Mẫu] Máy in tầng 3 kẹt giấy liên tục",
+              title: "Máy in tầng 3 kẹt giấy liên tục",
               request_type: "Sự cố thiết bị",
               resolution: "Đã vệ sinh và thay con lăn kéo giấy.",
               closed_at: "2026-10-20T03:00:00Z",

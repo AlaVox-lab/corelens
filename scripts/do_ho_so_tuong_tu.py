@@ -8,7 +8,8 @@
 #     python scripts/do_ho_so_tuong_tu.py --json ket-qua.json      # ghi thêm kết quả thô
 #
 # Cần: cụm chạy hồ sơ `tri-tue` có mô hình nhúng (DXLAB_EMBEDDING_URL đã đặt), đã nạp dữ liệu trình
-# diễn (scripts/nap_du_lieu_trinh_dien.py — nó gắn 60 hồ sơ của scripts/du_lieu/ho_so_da_giai_quyet.json)
+# diễn (scripts/nap_du_lieu_trinh_dien.py — nó gắn 60 hồ sơ của scripts/du_lieu/ho_so_da_giai_quyet.json,
+# đúng tiêu đề của mục)
 # và bộ lập chỉ mục `similar-index` đã chạy xong (script chờ chỉ mục đủ trước khi đo).
 #
 # Mỗi câu chạy qua ĐÚNG đường gọi của biểu mẫu — `app.intelligence.tuong_tu.tim` bên trong container
@@ -33,7 +34,6 @@ from pathlib import Path
 GOC = Path(__file__).resolve().parent.parent
 BO_DO = GOC / "backend" / "tests" / "du_lieu" / "bo_do_tuong_tu.json"
 HO_SO = GOC / "scripts" / "du_lieu" / "ho_so_da_giai_quyet.json"
-TIEN_TO = "[Mẫu]"
 SO_XEP_HANG = 10
 
 # Chạy trong container dịch vụ ứng dụng: đọc {cau, tieu_de, cho_giay} từ stdin, in một dòng JSON mỗi câu
@@ -87,7 +87,8 @@ def main() -> None:
     doi = p.parse_args()
 
     bo_do = json.loads(doi.bo_do.read_text(encoding="utf-8"))["cau"]
-    ho_so = {h["ma"]: f"{TIEN_TO} {h['tieu_de']}" for h in json.loads(HO_SO.read_text(encoding="utf-8"))["ho_so"]}
+    # Kịch bản nạp giữ nguyên tiêu đề của mục (#541, không tiền tố), và tiêu đề hồ sơ mẫu khác không trùng chúng
+    ho_so = {h["ma"]: h["tieu_de"] for h in json.loads(HO_SO.read_text(encoding="utf-8"))["ho_so"]}
     vao = {"cau": bo_do, "tieu_de": sorted(ho_so.values()), "cho_giay": doi.cho_giay,
            "so_xep_hang": SO_XEP_HANG}
     try:
