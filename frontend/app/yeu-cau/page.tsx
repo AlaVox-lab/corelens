@@ -60,7 +60,7 @@ function Trong() {
       <ManRong
         icon={FolderOpen}
         tieuDe="Bạn chưa gửi yêu cầu nào"
-        cau="Mọi yêu cầu nội bộ — sự cố thiết bị, cấp quyền phần mềm, giấy xác nhận nhân sự, đề xuất mua vật tư — đều gửi từ một chỗ duy nhất."
+        cau="Yêu cầu bạn gửi sẽ hiện ở đây, kèm trạng thái và việc đang chờ ai."
       >
         <Link href="/yeu-cau/moi" className="nut" data-loai="chinh">
           Gửi yêu cầu đầu tiên

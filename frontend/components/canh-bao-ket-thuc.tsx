@@ -35,14 +35,13 @@ export function CanhBaoKetThuc({
     >
       {moLaiGio ? (
         <>
-          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> — trạng thái kết thúc. Chưa đạt thì
-          người gửi còn mở lại được trong {moLaiGio} giờ làm việc kể từ lúc đóng; quá đó
-          muốn làm tiếp phải gửi yêu cầu mới.
+          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> và kết thúc. Người gửi còn mở lại được
+          trong {moLaiGio} giờ làm việc sau khi đóng; quá hạn đó phải gửi yêu cầu mới.
         </>
       ) : (
         <>
-          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> — trạng thái kết thúc, không hoàn
-          tác được. Muốn làm tiếp sau đó phải gửi yêu cầu mới.
+          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> và kết thúc, không quay lại được. Muốn làm
+          tiếp thì gửi yêu cầu mới.
         </>
       )}
     </p>

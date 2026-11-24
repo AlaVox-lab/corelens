@@ -33,6 +33,7 @@ import { CanCuTuongTu } from "@/components/can-cu-tuong-tu";
 import { TheGoiY } from "@/components/the-goi-y";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import { useAnCham } from "@/lib/chuyen-dong";
+import { nhanNutXacNhan } from "@/lib/dinh-dang";
 import type { CanhDiDuoc, GoiY, LoaiYeuCau, NhanCoMa } from "@/lib/kieu";
 import { kieuTruong, type KieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
@@ -412,7 +413,7 @@ export function BangThaoTac({
                 rows={3}
                 maxLength={2000}
                 required={dangMo.requires_note}
-                placeholder="Dòng này đi vào dòng thời gian của hồ sơ, người gửi và các bên xử lý đều đọc được."
+                placeholder="Ghi vào dòng thời gian, người gửi và người xử lý đều đọc được."
               />
             </label>
           )}
@@ -426,7 +427,7 @@ export function BangThaoTac({
               data-loai="chinh"
               disabled={dangChay}
             >
-              {dangChay ? "Đang gửi…" : `Xác nhận · ${dangMo.activity_label}`}
+              {dangChay ? "Đang gửi…" : nhanNutXacNhan(dangMo.activity_label)}
             </button>
             <button type="button" className="nut" onClick={dongKhung}>
               Thôi

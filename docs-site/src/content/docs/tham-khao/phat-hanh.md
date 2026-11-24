@@ -57,7 +57,8 @@ Kho theo mô hình nhiều giấy phép, bảng đầy đủ ở
 
 Dịch vụ khai phá dùng thư viện PM4Py (AGPL-3.0-or-later) nên cả thư mục theo AGPL; phần còn lại chỉ
 trao đổi JSON với nó qua HTTP. Mọi tệp mã nguồn mang định danh giấy phép SPDX đúng thư mục ở đầu
-tệp. Màn Quy trình thực tế có dòng dẫn tới mã nguồn của dịch vụ khai phá (điều 13 của AGPL).
+tệp. Trang *Mã nguồn và giấy phép* ở chân thanh bên của cổng dẫn tới mã nguồn của dịch vụ khai phá (điều 13
+của AGPL).
 
 Mọi phụ thuộc đều có giấy phép thuộc danh sách OSI và tương thích với giấy phép của phần dùng nó, ghi
 trong [`docs/dependencies.md`](https://github.com/AlaVox-lab/corelens/blob/main/docs/dependencies.md);

@@ -599,12 +599,9 @@ test.describe("bước lệch quy trình trên trang hồ sơ (#448)", () => {
     // Nhãn loại lệch của màn Quy trình thực tế; nhãn trạng thái từ bộ quy tắc
     await expect(khoi).toContainText("Trả về làm lại");
     await expect(khoi).toContainText("Chờ phòng ban xác duyệt → Bị phòng ban từ chối");
-    // Chỉ thông tin: không nút nào. Dẫn tới mã nguồn của dịch vụ khai phá (AGPL điều 13)
+    // Chỉ thông tin: không nút nào. Liên kết mã nguồn AGPL ở trang Mã nguồn và giấy phép, không chen vào khối (#540)
     await expect(khoi.getByRole("button")).toHaveCount(0);
-    await expect(khoi.getByRole("link", { name: "mã nguồn" })).toHaveAttribute(
-      "href",
-      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha",
-    );
+    await expect(khoi).not.toContainText("AGPL");
     expect(await trang.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
     await khoi.scrollIntoViewIfNeeded();
     await chup(trang, test.info().project.name, "phong-ban-buoc-lech");

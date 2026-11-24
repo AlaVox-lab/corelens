@@ -35,7 +35,6 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
   const chuyenTrang = useRouter();
   const [cacHoSo, datCacHoSo] = useState<HoSoTuongTu[]>([]);
   const [cacBai, datCacBai] = useState<BaiTriThuc[]>([]);
-  const [nguonBai, datNguonBai] = useState<string | null>(null);
   const [dangBo, datDangBo] = useState(false);
   const tat = useRef(false);
 
@@ -60,7 +59,6 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
         if (!kq.enabled) tat.current = true;
         datCacHoSo(kq.items ?? []);
         datCacBai(kq.articles ?? []);
-        datNguonBai(kq.articles_source_url ?? null);
       } catch {
         // Hủy vì gõ tiếp, quá hạn, mất mạng: giữ nguyên, không báo gì
       }
@@ -139,22 +137,8 @@ export function GoiYTuongTu({ tieuDe, moTa, phien }: { tieuDe: string; moTa: str
         </ul>
       )}
       <p className="the-goi-y-nguon">
-        Gợi ý của hệ thống từ hồ sơ đã đóng, đã ẩn tên người và thông tin liên hệ
-        {cacBai.length > 0 && (
-          <>
-            , và từ kho tri thức (Wiki.js, giấy phép AGPL-3.0
-            {nguonBai ? (
-              <>
-                {" — "}
-                <a href={nguonBai} target="_blank" rel="noopener noreferrer">
-                  mã nguồn
-                </a>
-              </>
-            ) : null}
-            )
-          </>
-        )}
-        . Bạn vẫn gửi yêu cầu bình thường nếu chưa giải quyết được.
+        Gợi ý của hệ thống, lấy từ hồ sơ đã đóng{cacBai.length > 0 ? " và kho tri thức" : ""}, đã ẩn tên người
+        và thông tin liên hệ. Chưa giải quyết được thì cứ gửi yêu cầu.
       </p>
       <div>
         <button type="button" className="nut nut-nho" onClick={boKhongGui} disabled={dangBo}>

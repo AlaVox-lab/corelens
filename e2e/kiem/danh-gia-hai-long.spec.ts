@@ -72,7 +72,9 @@ test("xác nhận đạt kèm 4 sao và nhận xét; điều phối viên và tr
   await khongViPhamNang(page, "#thao-tac");
   await chup(page, test.info().project.name, "nguoi-gui-xac-nhan-cham-diem");
 
-  await thaoTac.getByRole("button", { name: /^Xác nhận · Xác nhận đạt/ }).click();
+  // Nhãn cạnh đã mở đầu bằng "Xác nhận": nút gửi không lặp chữ, cũng không trùng tên nút mở bước (#540)
+  await expect(thaoTac.getByRole("button", { name: /Xác nhận · Xác nhận/ })).toHaveCount(0);
+  await thaoTac.getByRole("button", { name: "Gửi xác nhận đạt", exact: true }).click();
   const khoi = page.locator(".the-danh-gia");
   await expect(khoi).toContainText("4/5");
   await expect(khoi).toContainText(nhanXet);
@@ -101,7 +103,7 @@ test("xác nhận đạt không chấm: hồ sơ vẫn đóng, không có khối
   await page.goto(`/yeu-cau/${ma}`, { waitUntil: "networkidle" });
   const thaoTac = page.locator("#thao-tac");
   await thaoTac.getByRole("button", { name: "Xác nhận đạt", exact: true }).click();
-  await thaoTac.getByRole("button", { name: /^Xác nhận · Xác nhận đạt/ }).click();
+  await thaoTac.getByRole("button", { name: "Gửi xác nhận đạt", exact: true }).click();
   await expect(thaoTac.getByRole("button", { name: "Xác nhận đạt", exact: true })).toHaveCount(0);
   await expect(page.locator(".the-danh-gia")).toHaveCount(0);
 

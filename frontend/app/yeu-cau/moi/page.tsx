@@ -54,8 +54,7 @@ export default async function GuiYeuCau({
           lineHeight: 1.6,
         }}
       >
-        Một biểu mẫu cho mọi loại yêu cầu nội bộ. Điền xong, hồ sơ tự chạy tới đúng
-        phòng ban và bạn theo dõi được từng bước nó đi.
+        Chọn loại, điền nội dung, xem lại rồi gửi. Gửi xong, bạn theo dõi hồ sơ ở mục Hồ sơ của tôi.
       </p>
 
       {cacLoai === null ? (

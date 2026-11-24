@@ -388,7 +388,8 @@ vụ độc lập, hoặc một thư viện AGPL được `import` **chỉ bên 
 PM4Py chỉ nằm trong `services/khai-pha/`). Dịch vụ ứng dụng và cổng không bao giờ `import` thư viện
 AGPL; CI chặn điều đó. Mã của nhóm trong dịch vụ tách riêng mang **AGPL-3.0-or-later** như thư viện,
 có tệp giấy phép toàn văn riêng trong thư mục đó; dịch vụ phục vụ người dùng qua mạng thì giao diện
-phải dẫn được tới mã nguồn của nó (điều 13 — màn Quy trình thực tế, biến `MINING_SOURCE_URL`).
+phải dẫn được tới mã nguồn của nó (điều 13 — trang *Mã nguồn và giấy phép* mở từ chân thanh bên của
+cổng, liên kết dịch vụ khai phá lấy từ biến `MINING_SOURCE_URL`).
 
 Khi đề xuất bất kỳ thư viện hay nền tảng nào, **luôn nêu giấy phép của nó**.
 

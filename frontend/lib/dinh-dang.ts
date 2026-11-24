@@ -215,3 +215,15 @@ export function hanLuc(iso: string): string {
   const thang = phan(NGAY_DAY_DU, d, "month");
   return `${CHI_GIO.format(d)} ${thu} ${ngay}/${thang}`;
 }
+
+/**
+ * Nhãn nút xác nhận một bước: "Xác nhận · Chuyển về phòng ban". Nhãn cạnh lấy từ dữ liệu; nhãn nào đã mở đầu
+ * bằng "Xác nhận" ("Xác nhận đạt") thì thành "Gửi xác nhận đạt" — nút không lặp chữ "Xác nhận · Xác nhận đạt"
+ * (#540), mà cũng không trùng tên với nút mở bước đó đang đứng ngay trên (#540).
+ */
+export function nhanNutXacNhan(nhanCanh: string): string {
+  const nhan = nhanCanh.normalize("NFC");
+  return nhan.toLocaleLowerCase(DIA_PHUONG).startsWith("xác nhận")
+    ? `Gửi ${nhan.charAt(0).toLocaleLowerCase(DIA_PHUONG)}${nhan.slice(1)}`
+    : `Xác nhận · ${nhanCanh}`;
+}

@@ -91,8 +91,7 @@ function KhongVaoDuoc() {
         Tài khoản này không mở được khu vực này
       </p>
       <p style={{ margin: "7px 0 0", fontSize: "13.5px", color: "var(--ink-2)", lineHeight: 1.6 }}>
-        Quyền vào từng khu vực do quản trị viên cấp theo vai trò. Nếu bạn cần làm việc ở
-        đây, hãy nhờ quản trị hệ thống thêm vai trò cho tài khoản của bạn.
+        Cần làm việc ở đây thì nhờ quản trị viên thêm vai trò cho tài khoản của bạn.
       </p>
     </div>
   );
@@ -187,7 +186,6 @@ export async function KhungLamViec({
             icon: "tri-thuc" as const,
             nhom: "chung" as const,
             ngoai: danhTinh.knowledge_base.url,
-            nguon: { ten: "Wiki.js", giayPhep: "AGPL-3.0", url: danhTinh.knowledge_base.source_url },
           },
         ]
       : []),
