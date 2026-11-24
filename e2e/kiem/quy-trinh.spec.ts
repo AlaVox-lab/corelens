@@ -250,27 +250,26 @@ test.describe("điều phối viên", () => {
     await expect(page.locator(".qt-ket-qua:not([data-dang-tai]), .rong").first()).toBeVisible({ timeout: 30_000 });
   });
 
-  test("chân màn có dòng mã nguồn AGPL dẫn đúng địa chỉ cấu hình, cả khi màn rỗng", async ({ page }) => {
-    // Điều 13 của AGPL (#340). Địa chỉ cấu hình ở MINING_SOURCE_URL của cổng; chạy bài với cụm đặt
-    // giá trị khác thì truyền cùng biến cho Playwright.
+  test("màn không chen dòng giấy phép; mã nguồn AGPL ở trang Mã nguồn và giấy phép (#540)", async ({ page }) => {
+    // Điều 13 của AGPL (#340): từ #540 cổng dẫn tới mã nguồn ở MỘT chỗ — chân thanh bên. Địa chỉ cấu hình ở
+    // MINING_SOURCE_URL của cổng; chạy bài với cụm đặt giá trị khác thì truyền cùng biến cho Playwright.
     const diaChi =
       process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha";
-    const kiemDong = async () => {
-      const dong = page.locator(".qt-nguon-ma");
-      await expect(dong).toHaveCount(1);
-      await expect(dong).toContainText("Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0");
-      const lienKet = dong.getByRole("link", { name: "mã nguồn" });
-      await expect(lienKet).toHaveAttribute("href", diaChi);
-      await expect(lienKet).toHaveAttribute("rel", /noopener/);
-      // Màn không nêu tên bộ máy khai phá
-      await expect(dong).not.toContainText(/pm4py|noi_bo/i);
-    };
     await moMan(page);
-    await kiemDong();
-    // Khoảng không có hồ sơ nào: màn rỗng vẫn giữ dòng này
+    await expect(page.locator("#noi-dung-chinh")).not.toContainText("AGPL");
+    // Màn rỗng cũng vậy
     await moMan(page, `${DUONG_DAN}?tu=2001-01-01&den=2001-01-31`);
     await expect(page.getByText("Không có hồ sơ nào gửi trong khoảng này")).toBeVisible();
-    await kiemDong();
+    await expect(page.locator("#noi-dung-chinh")).not.toContainText("AGPL");
+
+    const sb = await thanhBen(page);
+    await sb.getByRole("link", { name: "Mã nguồn và giấy phép" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Mã nguồn và giấy phép" })).toBeVisible();
+    const lienKet = page.locator('[data-ma-nguon="Dịch vụ khai phá quy trình"]');
+    await expect(lienKet).toHaveAttribute("href", diaChi);
+    await expect(lienKet).toHaveAttribute("rel", /noopener/);
+    // Trang không nêu tên bộ máy khai phá
+    await expect(page.locator("#noi-dung-chinh")).not.toContainText(/pm4py|noi_bo/i);
   });
 
   test("màn hẹp: nút Xem toàn màn hình mở lớp phủ, Esc đóng và trả tiêu điểm", async ({ page }) => {

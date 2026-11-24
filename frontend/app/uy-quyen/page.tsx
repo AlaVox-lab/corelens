@@ -54,9 +54,11 @@ export default async function ManUyQuyen() {
     <KhungLamViec canKhongGian="department">
       <h1 className="tieu-de-trang">Ủy quyền</h1>
       <p className="cau-chao">
-        Vắng mặt vài ngày thì nhờ một người cùng phòng làm thay. Người đó mang vai của bạn trong phòng, chỉ trong
-        những ngày đã khai, không phải xác nhận; mọi thao tác ghi &ldquo;thay mặt&rdquo; bạn. Không dùng ủy quyền
-        để xử lý hồ sơ do chính người làm thay gửi, và không ủy quyền tiếp được.
+        Sắp vắng mặt thì nhờ một người cùng phòng làm thay. Trong những ngày bạn chọn, người đó làm được việc của
+        bạn ở phòng, và mỗi thao tác đều ghi là làm thay bạn.
+      </p>
+      <p className="nhat" style={{ margin: "6px 0 0", fontSize: "13px" }}>
+        Người làm thay không xử lý hồ sơ do chính họ gửi, và không nhờ tiếp được người khác.
       </p>
 
       {danhSach === null || toi === null ? (
@@ -80,7 +82,7 @@ export default async function ManUyQuyen() {
               </p>
             )}
             <p className="nhat" style={{ fontSize: "12.5px", margin: "12px 0 0" }}>
-              Mỗi lần dài tối đa {danhSach.max_days} ngày, tính từ 00:00 ngày đầu tới hết ngày cuối.
+              Mỗi lần tối đa {danhSach.max_days} ngày, tính cả ngày đầu và ngày cuối.
             </p>
           </section>
 

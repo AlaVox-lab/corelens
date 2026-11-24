@@ -31,7 +31,6 @@ import { TheDanhGia } from "@/components/the-danh-gia";
 import { DauHoSo, TheHan, TheNoiDung, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
 import { BuocLechHoSo } from "@/components/buoc-lech-ho-so";
 import { laHetPhien } from "@/lib/api";
-import { nguonMaKhaiPha } from "@/lib/nguon-ma-khai-pha";
 import { cacBuoc } from "@/lib/buoc";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +77,7 @@ export default async function ChiTietPhongBan({
           {/* Đánh giá của người gửi khi xác nhận hoàn tất (#433) — chỉ đọc, không có thì không hiện */}
           <TheDanhGia danhGia={ho_so.feedback} />
           {/* Bước lệch quy trình (#448): chỉ thông tin, chỉ hiện khi hồ sơ có bước lệch */}
-          <BuocLechHoSo maHoSo={ho_so.id} nguonMa={nguonMaKhaiPha()} />
+          <BuocLechHoSo maHoSo={ho_so.id} />
 
           <TheLichSu
             maHoSo={ho_so.id}

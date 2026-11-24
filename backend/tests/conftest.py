@@ -25,6 +25,7 @@ from __future__ import annotations
 import os
 import urllib.error
 import urllib.request
+from contextlib import contextmanager
 
 import pytest
 from sqlalchemy import create_engine, select, text
@@ -87,6 +88,31 @@ def session(db_engine):
         phien.close()
         giao_dich.rollback()
         ket_noi.close()
+
+
+class _PhienBoQua:
+    """Phiên giả cho nhật ký truy cập: nhận dòng rồi bỏ."""
+
+    def add(self, _dong) -> None:
+        pass
+
+    def commit(self) -> None:
+        pass
+
+
+@contextmanager
+def _mo_phien_bo_qua():
+    yield _PhienBoQua()
+
+
+@pytest.fixture(autouse=True)
+def _nhat_ky_truy_cap_khong_ghi_that(monkeypatch):
+    """Nhật ký truy cập (#431) ghi bằng phiên RIÊNG, ngoài giao dịch của bài — và bảng chỉ ghi thêm. Để nguyên thì mọi
+    bài đi qua điểm cuối chi tiết, liên hệ, tải tệp, xuất nhật ký để lại dòng không xóa được trong cơ sở dữ liệu của
+    cụm. Mặc định bỏ qua; bài của #431 (test_nhat_ky_truy_cap.py) tự gắn phiên của bài."""
+    from app import kiem_toan
+
+    monkeypatch.setattr(kiem_toan, "mo_phien", _mo_phien_bo_qua)
 
 
 @pytest.fixture

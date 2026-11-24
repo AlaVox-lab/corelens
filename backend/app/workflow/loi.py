@@ -34,10 +34,12 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import Request as YeuCauHttp
 from sqlalchemy import or_, select, true
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
+from app.kiem_toan import XEM_HO_SO, ghi_truy_cap
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.models.case import Request
@@ -48,6 +50,7 @@ from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
 from app.workflow.engine import xet_cac_canh
 from app.workflow.errors import GuardViolation, TransitionError
+from app.workflow.khoa_trung_lap import KhoaGoi, chay_mot_lan, khoa_trung_lap
 from app.workflow.phan_trang import ThamSoTrang, tham_so_trang
 from app.workflow.routes import (
     ThamSoQuyTrinh,
@@ -125,11 +128,18 @@ def ho_so_trong_pham_vi(
 
 
 @router_loi_rieng.get("/requests/{case_id}", response_model=HoSoChiTietRa)
-def chi_tiet_trong_pham_vi(case_id: int, session: _Phien, actor: _TacNhan) -> HoSoChiTietRa:
+def chi_tiet_trong_pham_vi(
+    case_id: int, session: _Phien, actor: _TacNhan, yeu_cau: YeuCauHttp
+) -> HoSoChiTietRa:
     """Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước
-    người gọi đi được lúc này, tính theo vai và ràng buộc của chính họ."""
+    người gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.
+
+    Mở hồ sơ của người khác ghi một dòng nhật ký truy cập, kênh `loi` (#431, app/kiem_toan.py)."""
     _kiem_nhin_thay(session, case_id, actor)
-    return _dung_chi_tiet(session, session.get(Request, case_id), actor)
+    ho_so = session.get(Request, case_id)
+    ra = _dung_chi_tiet(session, ho_so, actor)
+    ghi_truy_cap(yeu_cau, actor, XEM_HO_SO, ho_so=ho_so)
+    return ra
 
 
 def _ly_do_ra(loi: TransitionError) -> LyDoChanRa:
@@ -192,16 +202,31 @@ def buoc_chuyen_trong_pham_vi(
     actor: _TacNhan,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
     tac_vu_nen: BackgroundTasks,
+    khoa: Annotated[KhoaGoi | None, Depends(khoa_trung_lap)],
 ) -> HoSoChiTietRa:
     """Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi
     được theo bảng `transitions`.
 
     Ngoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine
     (409, 403, 422) — cùng mã như ở mọi cửa khác.
+
+    Tiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng lệnh nhận lại phản hồi lần đầu, không
+    đi bước lần hai (app/workflow/khoa_trung_lap.py). Dấu xong của khóa ghi trong cùng giao dịch với lần chuyển
+    qua móc `truoc_commit` của `di_buoc`.
     """
-    _kiem_nhin_thay(session, case_id, actor)
-    ho_so = di_buoc(
-        session, danh_ba, tac_vu_nen, actor, case_id,
-        to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
+    def lam(danh_dau) -> HoSoChiTietRa:
+        _kiem_nhin_thay(session, case_id, actor)
+        ho_so = di_buoc(
+            session, danh_ba, tac_vu_nen, actor, case_id,
+            to_state=du_lieu.to_state, note=du_lieu.note, changes=du_lieu.changes,
+            truoc_commit=(lambda h: danh_dau(h.id)),
+        )
+        return _dung_chi_tiet(session, ho_so, actor)
+
+    def dung_lai(ma: int) -> HoSoChiTietRa:
+        _kiem_nhin_thay(session, ma, actor)
+        return _dung_chi_tiet(session, session.get(Request, ma), actor)
+
+    return chay_mot_lan(
+        session, khoa, than=du_lieu, tham_so_duong={"case_id": case_id}, lam=lam, dung_lai=dung_lai
     )
-    return _dung_chi_tiet(session, ho_so, actor)

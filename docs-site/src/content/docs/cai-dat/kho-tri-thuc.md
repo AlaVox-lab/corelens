@@ -28,6 +28,9 @@ Ba dịch vụ lên theo thứ tự:
 | `kho-tri-thuc` | Wiki.js, cổng `WIKI_PORT` (mặc định 3100) |
 | `tri-thuc-khoi-tao` | Hoàn tất cài đặt lần đầu, bật đăng nhập một lần, tạo nhóm, cấp khóa API chỉ đọc cho dịch vụ ứng dụng, nạp bài mẫu từ `infra/tri-thuc/bai-mau/`. Chạy xong thì dừng |
 
+Bài mẫu gồm trang chủ của kho (đường dẫn `home`, mục lục các bài) và ba bài hướng dẫn trong mục `huong-dan/`.
+Trang chủ không vào chỉ mục gợi ý: nó là mục lục, gần với mọi câu hỏi.
+
 Hai bước khởi tạo chạy lại bao nhiêu lần cũng được: thứ đã có thì để yên, bài mẫu đã có (kể cả đã sửa) không
 bị ghi đè. Cụm cũ nâng lên bằng lệnh trên, không cần `down -v` — client OIDC tạo qua API quản trị của
 Keycloak, nên realm đã nạp từ trước vẫn nhận.
@@ -71,7 +74,7 @@ WIKI_URL=http://localhost:3100
 
 | Có | Cần |
 |---|---|
-| Lối **Kho tri thức** trên thanh bên của mọi nhân viên — mở thẻ mới, vào thẳng qua Keycloak; dưới tên ghi *Wiki.js · AGPL-3.0 · mã nguồn* | `WIKI_URL` |
+| Lối **Kho tri thức** trên thanh bên của mọi nhân viên — mở thẻ mới, vào thẳng qua Keycloak; trang *Mã nguồn và giấy phép* ở chân thanh bên thêm dòng Wiki.js (AGPL-3.0) kèm liên kết mã nguồn | `WIKI_URL` |
 | Bài hướng dẫn trong khung *Có thể đã có cách giải quyết* khi người gửi đang soạn yêu cầu, cạnh hồ sơ đã giải quyết tương tự; bấm mở bài ở thẻ mới | `WIKI_URL` **và** mô hình nhúng (`EMBEDDING_URL`, hồ sơ `tri-tue` — trang *Mô hình ngôn ngữ*) |
 
 Bộ lập chỉ mục *Bộ lập chỉ mục kho tri thức* (màn Hệ thống) chạy mỗi `WIKI_INDEX_INTERVAL_SECONDS` giây (mặc
@@ -90,7 +93,25 @@ Wiki tắt giữa chừng: bộ lập chỉ mục bỏ lượt, gợi ý vẫn d
 | `WIKI_OIDC_CLIENT_ID`, `WIKI_OIDC_SECRET` | `dx-wiki`, giá trị mẫu | Client OIDC trong Keycloak — **đổi bí mật** trước khi dùng thật |
 | `WIKI_READ_ROLES`, `WIKI_WRITE_ROLES` | như bảng trên | Vai trò được đọc / được viết |
 | `WIKI_ADMIN_EMAIL`, `WIKI_ADMIN_PASSWORD` | giá trị mẫu | Quản trị Wiki.js — **đổi mật khẩu** trước khi dùng thật |
-| `WIKI_LOCALE` | `vi` | Ngôn ngữ giao diện. Tải gói ngôn ngữ cần mạng ra ngoài; không tải được thì giao diện tiếng Anh, nội dung vẫn tiếng Việt |
+| `WIKI_LOCALE` | `vi` | Ngôn ngữ giao diện. Tải gói ngôn ngữ cần mạng ra ngoài; gói chưa thật sự cài được (tải hỏng, tải không trọn, không có mạng) thì bước khởi tạo vẫn xong, giao diện và bài mẫu dùng tiếng Anh (`en`), nội dung bài vẫn tiếng Việt |
+
+### Giao diện Wiki tiếng Anh dù đặt `vi`
+
+Bước khởi tạo không tải được gói ngôn ngữ — nhật ký `docker logs dxlab-tri-thuc-khoi-tao` ghi
+`không dùng được gói ngôn ngữ vi (…); giao diện en`. Khi máy có mạng ra ngoài, chạy lại bước khởi tạo (trong
+`infra/`): `docker compose --env-file .env --profile tri-thuc up -d tri-thuc-khoi-tao`. Gói tải được thì giao
+diện chuyển sang tiếng Việt; bài mẫu đã có giữ nguyên, bài mẫu bản tiếng Việt được tạo thêm cùng đường dẫn.
+
+Wiki.js chỉ lấy danh sách gói ngôn ngữ một lần, lúc khởi động. Nhật ký `docker logs dxlab-kho-tri-thuc` có dòng
+`Failed to fetch cached locales list` thì khởi động lại Wiki.js trước
+(`docker compose --env-file .env --profile tri-thuc restart kho-tri-thuc`), rồi mới chạy lại bước khởi tạo.
+Dịch vụ Wiki.js đặt sẵn `NODE_OPTIONS=--dns-result-order=ipv4first`: mạng của Docker thường không có IPv6, và
+Node chọn địa chỉ IPv6 của máy chủ gói ngôn ngữ thì tải hỏng.
+
+### Giao diện Wiki hiện mã chữ như `welcome.title`
+
+Gói ngôn ngữ đang dùng có trong Wiki.js mà rỗng — thường do lần cài đầu không tải được. Bước khởi tạo tự tải lại
+gói đó; nếu vẫn rỗng, làm như mục trên: khởi động lại Wiki.js rồi chạy lại bước khởi tạo.
 
 ## Tắt
 

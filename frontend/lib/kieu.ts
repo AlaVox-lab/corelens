@@ -803,3 +803,29 @@ export type LanGuiWebhook = {
   last_error: string | null;
   delivered_at: string | null;
 };
+
+/** Một dòng nhật ký truy cập dữ liệu cá nhân (#431), như `GET /admin/access-audit` trả về. */
+export type DongTruyCap = {
+  id: number;
+  /** UTC, ISO 8601 — giao diện đổi sang giờ địa phương. */
+  at: string;
+  actor: string;
+  actor_label: string | null;
+  access_kind: string;
+  access_kind_label: string;
+  case_id: number | null;
+  /** Mã hiển thị, ví dụ `YC-2026-0184`; `null` khi lần truy cập không gắn hồ sơ hay hồ sơ đã bị xóa. */
+  case_code: string | null;
+  attachment_id: number | null;
+  attachment_filename: string | null;
+  /** `ung-dung` — các màn của cổng; `loi` — API `/core/v1`. */
+  channel: string;
+  details: Record<string, unknown> | null;
+};
+
+export type DanhSachTruyCap = {
+  items: DongTruyCap[];
+  total: number;
+  offset: number;
+  limit: number;
+};

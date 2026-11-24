@@ -6,7 +6,9 @@ sidebar:
 ---
 
 Quy ước đầy đủ ở
-[`CONTRIBUTING.md`](https://github.com/AlaVox-lab/corelens/blob/main/CONTRIBUTING.md). Tóm tắt:
+[`CONTRIBUTING.md`](https://github.com/AlaVox-lab/corelens/blob/main/CONTRIBUTING.md). Lỗ hổng bảo mật báo
+riêng theo [`SECURITY.md`](https://github.com/AlaVox-lab/corelens/blob/main/SECURITY.md); tham gia dự án là
+đồng ý với [`CODE_OF_CONDUCT.md`](https://github.com/AlaVox-lab/corelens/blob/main/CODE_OF_CONDUCT.md). Tóm tắt:
 
 ## Quy trình
 
@@ -86,7 +88,7 @@ dụ của Hypothesis tắt, nên lượt sau không tự phát lại phản ví
 ## Dựng trang tài liệu này
 
 Trang nằm ở thư mục `docs-site/`, dựng bằng [Starlight](https://starlight.astro.build) (MIT). Cần
-Node.js:
+Node.js 22.12 trở lên:
 
 ```bash
 cd docs-site
@@ -98,3 +100,13 @@ npm run build    # dựng ra docs-site/dist
 Mỗi trang là một tệp Markdown trong `docs-site/src/content/docs/`. Nút **Sửa trang này** ở cuối mỗi
 trang mở đúng tệp trên GitHub. Nội dung kỹ thuật sâu giữ ở `docs/` của kho — trang này dẫn sang,
 không chép lại.
+
+Trang đăng ở `https://alavox-lab.github.io/corelens/` bằng GitHub Pages; biến dựng và cách đăng ở
+[`CONTRIBUTING.md`](https://github.com/AlaVox-lab/corelens/blob/main/CONTRIBUTING.md) mục *Đăng trang tài liệu*.
+
+## Trợ lý AI lập trình
+
+Trợ lý AI lập trình (Claude Code, Codex…) đọc
+[`CLAUDE.md`](https://github.com/AlaVox-lab/corelens/blob/main/CLAUDE.md) qua
+[`AGENTS.md`](https://github.com/AlaVox-lab/corelens/blob/main/AGENTS.md): bối cảnh dự án, quy tắc giấy phép,
+cấu hình thay vì mã cứng.

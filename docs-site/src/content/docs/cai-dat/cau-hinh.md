@@ -206,7 +206,7 @@ Chi tiết ở [Thư điện tử và quét tệp](../thu-va-quet-tep/).
 | `SMTP_PORT` | `25` | Mailpit dùng `1025` |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | rỗng | Tài khoản máy chủ thư thật |
 | `SMTP_SECURITY` | `none` | `none`, `starttls` (587) hay `ssl` (465) |
-| `SMTP_FROM` | `DX-OS Lab <khong-tra-loi@dx-os-lab.test>` | Người gửi hiện trên thư |
+| `SMTP_FROM` | `Corelens <khong-tra-loi@corelens.test>` | Người gửi hiện trên thư |
 | `NOTIFY_SCAN_INTERVAL_SECONDS` | `30` | Nhịp bộ gửi thư |
 | `NOTIFY_MAX_ATTEMPTS` | `5` | Số lần thử tối đa một thư |
 | `NOTIFY_RETRY_AFTER_SECONDS` | `60` | Chờ trước lần thử lại đầu, nhân đôi mỗi lần |
@@ -228,7 +228,7 @@ Chi tiết ở [Thư điện tử và quét tệp](../thu-va-quet-tep/).
 | `MINING_READONLY_USER` | `khai_pha_readonly` | Tài khoản chỉ đọc riêng của dịch vụ khai phá, tạo bằng migration |
 | `MINING_ENGINE` | `pm4py` | `pm4py` hay `noi_bo` — bộ máy dự phòng không dùng thư viện AGPL, cùng kết quả |
 | `MINING_BOTTLENECK_FACTOR` | `2` | Trạng thái là điểm nghẽn khi thời gian chờ trung vị gấp chừng này lần trung vị chung |
-| `MINING_SOURCE_URL` | thư mục `services/khai-pha` trên GitHub | Màn Quy trình thực tế và khối bước lệch trên trang hồ sơ dẫn tới đây (AGPL điều 13). Bản đã sửa thì trỏ về kho chứa bản đó |
+| `MINING_SOURCE_URL` | thư mục `services/khai-pha` trên GitHub | Trang *Mã nguồn và giấy phép* ở chân thanh bên dẫn tới đây (AGPL điều 13), và suy ra kho Corelens từ địa chỉ này. Bản đã sửa thì trỏ về kho chứa bản đó |
 
 ### Mô hình ngôn ngữ và gợi ý
 
@@ -271,6 +271,17 @@ trong dữ liệu quy tắc (cột `transitions.collects_feedback`), không ph�
 | Biến | Mặc định | Ghi chú |
 |---|---|---|
 | `FEEDBACK_COMMENT_MAX_CHARS` | `1000` | Nhận xét dài tối đa chừng này ký tự; dài hơn thì bị từ chối (`422`), ô nhận xét đếm ký tự theo số này |
+
+### Khóa trùng lặp cho lệnh của lõi
+
+Ứng dụng tích hợp gửi tiêu đề `Idempotency-Key` ở lệnh tạo hồ sơ và lệnh đi một bước của `/core/v1`; gửi lại
+cùng khóa thì nhận lại kết quả lần đầu, lệnh không chạy hai lần. Cách dùng ở trang
+[API](../../tham-khao/api/).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `IDEMPOTENCY_TTL_HOURS` | `24` | Khóa sống chừng này giờ kể từ lần gửi đầu; quá hạn thì gửi lại cùng khóa là lệnh mới. Bộ quét nền dọn khóa hết hạn |
+| `IDEMPOTENCY_LOCK_SECONDS` | `60` | Một lần đang chạy giữ khóa chừng này giây; lần gửi lại trong khoảng đó nhận `409` kèm `Retry-After`, quá mốc thì coi lần trước là bỏ dở và lần gửi lại nhận việc |
 
 ### Kho tri thức
 

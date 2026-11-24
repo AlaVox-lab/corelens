@@ -46,7 +46,7 @@ chạy trên mỗi pull request và báo lỗi tệp thiếu header lẫn tệp 
 | Kèm toàn văn giấy phép (điều 4) | [`services/khai-pha/LICENSE`](services/khai-pha/LICENSE) — văn bản GNU AGPL v3 nguyên văn |
 | Giữ thông báo bản quyền và giấy phép (điều 4, 5) | Header SPDX và dòng bản quyền ở đầu mọi tệp mã của thư mục; thông báo bên thứ ba ở [`NOTICE`](NOTICE) |
 | Cung cấp mã nguồn tương ứng khi phân phối (điều 6) | Kho mã công khai; ảnh chứa dựng từ chính thư mục này, phụ thuộc ghim phiên bản trong `services/khai-pha/requirements.txt` |
-| **Người dùng tương tác qua mạng lấy được mã nguồn (điều 13)** | Màn *Báo cáo → Quy trình thực tế* của cổng và khối *Đi lệch quy trình thiết kế* trên trang hồ sơ phía nhân viên (#448) — nơi người dùng thấy kết quả của dịch vụ khai phá — luôn có dòng *"Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 — mã nguồn"* dẫn tới mã nguồn của dịch vụ. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`), mặc định thư mục `services/khai-pha` trên kho GitHub của dự án |
+| **Người dùng tương tác qua mạng lấy được mã nguồn (điều 13)** | Mọi trang của cổng khi đã đăng nhập có liên kết *Mã nguồn và giấy phép* ở chân thanh bên (#540). Liên kết mở trang `/ma-nguon` liệt kê từng thành phần cùng giấy phép và mã nguồn, trong đó có dịch vụ khai phá quy trình — thành phần tạo ra kết quả ở màn *Báo cáo → Quy trình thực tế* và khối *Đi lệch quy trình thiết kế* trên trang hồ sơ. Địa chỉ là biến `MINING_SOURCE_URL` của cổng (`infra/.env`), mặc định thư mục `services/khai-pha` trên kho GitHub của dự án |
 | Không sửa mã thư viện | Dự án cài PM4Py từ PyPI, không chép, không sửa mã của nó |
 
 **Bạn tự triển khai Corelens và sửa dịch vụ khai phá?** Phần sửa cũng theo AGPL-3.0-or-later: công khai
@@ -77,7 +77,7 @@ không phải thư viện được nhập vào mã của nhóm, nên **không th
   trình giao tiếp qua mạng là tác phẩm riêng biệt đi cùng nhau (*aggregate*, điều 5), AGPL không lan sang mã MIT
 - **Điều 13** áp cho bản *đã sửa*. Dự án chạy nguyên bản, nên mã nguồn tương ứng chính là bản thượng nguồn công
   khai ở `https://github.com/requarks/wiki` (thẻ `v2.5.315`). Cổng vẫn ghi tên, giấy phép và đường dẫn mã nguồn
-  ngay cạnh lối vào kho tri thức, cùng tinh thần dòng mã nguồn của màn Quy trình thực tế
+  của Wiki.js trên trang *Mã nguồn và giấy phép* ở chân thanh bên khi kho tri thức bật, cạnh dịch vụ khai phá
 - Ranh giới hỏng nếu dựng ảnh riêng từ mã Wiki.js hay vá mã của nó — cả hai đều không làm. Mọi thay đổi hành vi
   đi qua cấu hình và GraphQL. **Bạn tự sửa Wiki.js?** Phần sửa theo AGPL-3.0: công khai mã đã sửa và trỏ đường
   dẫn mã nguồn trên cổng về bản đó

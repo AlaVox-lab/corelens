@@ -43,6 +43,11 @@ jobs:
       # Mọi biến của infra/.env.example có dòng giải thích trên trang Cấu hình (#413)
       - name: Biến môi trường có tài liệu
         run: python3 scripts/kiem_bien_moi_truong.py
+      # Bước khởi tạo kho tri thức chịu được gói ngôn ngữ Wiki.js tải hỏng (#535). Kịch bản nằm ở infra/tri-thuc/,
+      # không có trong ảnh dịch vụ ứng dụng nên không chạy cùng pytest của dịch vụ; bài chỉ dùng thư viện chuẩn
+      # và Wiki.js giả, không cần cụm
+      - name: Khởi tạo kho tri thức — bước ngôn ngữ
+        run: python3 -m unittest discover -v -s infra/tri-thuc -p "test_*.py"
       # Mọi commit không phải merge tới đầu pull request phải được git-cliff nhận, không thì lặng lẽ rơi
       # khỏi CHANGELOG.md (#420). Tiêu đề pull request kiểm riêng ở tieu-de-pr.yml (#421)
       - name: Lịch sử commit đúng chuẩn changelog
@@ -114,6 +119,8 @@ jobs:
       # Liên kết nội bộ hỏng (#423): lychee (Apache-2.0 OR MIT) kiểm Markdown của kho và trang đã dựng,
       # chế độ --offline nên chỉ kiểm liên kết tới tệp trong kho — không gọi mạng, không đỏ vì trang
       # ngoài chập chờn. Nguồn Markdown của trang tài liệu dùng đường dẫn tuyến nên kiểm trên bản dựng.
+      # Bài mẫu của kho tri thức (infra/tri-thuc/bai-mau/) là nội dung Wiki.js: liên kết `/huong-dan/…` trỏ
+      # vào chính Wiki, không vào kho hay trang tài liệu, nên không kiểm ở đây (#535)
       - name: Kiểm liên kết nội bộ hỏng
         # Action bên thứ ba: ghim theo mã băm commit vì nhãn có thể bị dời sang mã khác (#494)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
@@ -123,6 +130,7 @@ jobs:
             --offline --no-progress --include-fragments=none
             --root-dir ${{ github.workspace }}/docs-site/dist
             --exclude-path docs-site/src --exclude-path docs-site/node_modules
+            --exclude-path infra/tri-thuc/bai-mau
             './**/*.md' 'docs-site/dist/**/*.html'
 
   cum:

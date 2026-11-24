@@ -273,8 +273,8 @@ export function BieuMauGuiYeuCau({
               Chưa rõ thuộc loại nào
             </strong>
             <br />
-            Gửi vậy cũng được — điều phối viên sẽ phân loại giúp bạn. Hồ sơ chỉ chưa có
-            thời hạn cam kết cho tới lúc đó.
+            Cứ gửi, điều phối viên sẽ phân loại giúp. Hồ sơ có thời hạn cam kết sau khi được
+            phân loại.
           </button>
         </div>
 
@@ -335,8 +335,7 @@ export function BieuMauGuiYeuCau({
                 placeholder="Máy in phòng kế toán kẹt giấy liên tục"
               />
               <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>
-                Một câu nói rõ hiện tượng. Đừng chỉ ghi “lỗi” hay “cần hỗ trợ” — điều
-                phối viên đọc dòng này trước tiên để xếp việc.
+                Một câu nói rõ chuyện gì xảy ra, đừng chỉ ghi “lỗi” hay “cần hỗ trợ”.
               </span>
             </label>
 
@@ -352,9 +351,8 @@ export function BieuMauGuiYeuCau({
                 placeholder="Máy in ở góc phòng Kế toán kẹt giấy khoảng 3 lần mỗi ngày, bắt đầu từ thứ Năm tuần trước. Đã thử rút khay giấy và thay giấy mới nhưng không đỡ."
               />
               <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>
-                Nêu rõ bốn điều: hiện tượng, thời điểm bắt đầu, vị trí hoặc thiết bị, và
-                bạn đã thử cách gì. Thiếu chúng thì phòng ban phải hỏi lại, và hồ sơ
-                đứng lại chờ bạn trả lời.
+                Ghi chuyện gì xảy ra, từ khi nào, ở đâu hoặc thiết bị nào, và bạn đã thử gì.
+                Đủ bốn điều này thì phòng ban không phải hỏi lại.
               </span>
             </label>
 
@@ -417,23 +415,6 @@ export function BieuMauGuiYeuCau({
               />
             )}
           </div>
-
-          <p
-            style={{
-              margin: 0,
-              padding: "13px 15px",
-              borderRadius: "11px",
-              background: "var(--accent-soft)",
-              border: "1px solid var(--accent-line)",
-              fontSize: "13px",
-              lineHeight: 1.65,
-              color: "var(--ink)",
-            }}
-          >
-            Gửi xong, hồ sơ vào hàng đợi điều phối và bạn theo dõi được toàn bộ đường đi
-            của nó ở mục <strong style={{ fontWeight: 600 }}>Hồ sơ của tôi</strong>. Mức
-            độ ưu tiên do điều phối viên đặt sau khi phân loại.
-          </p>
         </div>
 
         {/* --- Chân biểu mẫu ---------------------------------------------- */}

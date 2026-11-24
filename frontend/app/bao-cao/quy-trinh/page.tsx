@@ -14,7 +14,6 @@ import { QuyTrinhThucTe } from "@/components/quy-trinh-thuc-te";
 import { ThanhBaoCao } from "@/components/thanh-bao-cao";
 import { goiDichVu, type DanhTinh } from "@/lib/api";
 import { khoangTuDiaChi } from "@/lib/khoang-ngay";
-import { nguonMaKhaiPha } from "@/lib/nguon-ma-khai-pha";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +36,6 @@ export default async function ManQuyTrinhThucTe({
       <QuyTrinhThucTe
         khoangBanDau={khoangTuDiaChi(tu, den, new Date())}
         khongGian={danhTinh?.workspaces ?? []}
-        nguonMaKhaiPha={nguonMaKhaiPha()}
       />
     </KhungLamViec>
   );

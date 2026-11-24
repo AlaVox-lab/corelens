@@ -121,7 +121,9 @@ test.describe("người gửi", () => {
     await moMan(page, "/", "nguoi-gui-trang-chu");
     await moMan(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau");
     await moMan(page, "/yeu-cau", "nguoi-gui-ho-so-cua-toi");
-    await expect(page.getByText(h.tieuDe)).toBeVisible();
+    // Hồ sơ dựng lúc chuẩn bị trôi khỏi trang đầu khi các bài khác gửi thêm hồ sơ: tìm theo tiêu đề như người dùng
+    await page.goto(`/yeu-cau?q=${encodeURIComponent(h.tieuDe)}`, { waitUntil: "networkidle" });
+    await expect(page.getByText(h.tieuDe, { exact: true })).toBeVisible();
     await moMan(page, `/yeu-cau/${h.ma}`, "nguoi-gui-ho-so");
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
@@ -181,7 +183,7 @@ test.describe("người gửi", () => {
           enabled: true,
           items: [
             {
-              title: "[Mẫu] Máy in tầng 3 kẹt giấy liên tục",
+              title: "Máy in tầng 3 kẹt giấy liên tục",
               request_type: "Sự cố thiết bị",
               resolution: "Đã vệ sinh và thay con lăn kéo giấy.",
               closed_at: "2026-10-20T03:00:00Z",
@@ -599,12 +601,9 @@ test.describe("bước lệch quy trình trên trang hồ sơ (#448)", () => {
     // Nhãn loại lệch của màn Quy trình thực tế; nhãn trạng thái từ bộ quy tắc
     await expect(khoi).toContainText("Trả về làm lại");
     await expect(khoi).toContainText("Chờ phòng ban xác duyệt → Bị phòng ban từ chối");
-    // Chỉ thông tin: không nút nào. Dẫn tới mã nguồn của dịch vụ khai phá (AGPL điều 13)
+    // Chỉ thông tin: không nút nào. Liên kết mã nguồn AGPL ở trang Mã nguồn và giấy phép, không chen vào khối (#540)
     await expect(khoi.getByRole("button")).toHaveCount(0);
-    await expect(khoi.getByRole("link", { name: "mã nguồn" })).toHaveAttribute(
-      "href",
-      process.env.MINING_SOURCE_URL ?? "https://github.com/AlaVox-lab/corelens/tree/main/services/khai-pha",
-    );
+    await expect(khoi).not.toContainText("AGPL");
     expect(await trang.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
     await khoi.scrollIntoViewIfNeeded();
     await chup(trang, test.info().project.name, "phong-ban-buoc-lech");

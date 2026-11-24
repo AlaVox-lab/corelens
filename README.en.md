@@ -2,196 +2,81 @@
 
 [Tiếng Việt](README.md) · **English**
 
-> A DX-OS Open-Core model: a **headless core platform** (identity, API gateway, data, workflow engine) and
-> a **reference application** covering all four H-P-D-I spaces — an internal request operations portal
-> for businesses. Entry for the Open Source Software track of the Vietnam Student Informatics Olympiad
-> (OLP) 2026.
->
-> *Corelens* — an Open-Core platform that inspects its own processes from the event log. The former name
-> `dx-os-lab` remains in technical identifiers (Keycloak realm, Compose project name, `dxlab-*` containers,
-> `DXLAB_*` variables), kept so running clusters need no rebuild.
-
 [![License: MIT and AGPL-3.0](https://img.shields.io/badge/License-MIT%20%2B%20AGPL--3.0-blue.svg)](LICENSES.md)
+[![Latest release](https://img.shields.io/github/v/release/AlaVox-lab/corelens)](https://github.com/AlaVox-lab/corelens/releases)
+[![Continuous integration on pull requests](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml)
+[![Documentation site](https://github.com/AlaVox-lab/corelens/actions/workflows/trang-tai-lieu.yml/badge.svg?branch=main)](https://alavox-lab.github.io/corelens/)
 
-**Licence:** the code is under [MIT](LICENSE), except the process mining service `services/khai-pha/`,
-which is AGPL-3.0-or-later — per-directory table in [`LICENSES.md`](LICENSES.md), third-party notices in
-[`NOTICE`](NOTICE).
+Corelens is an open source internal request portal for businesses. Broken equipment reports, software
+access requests, employment certificates and purchase proposals all go to one place and follow a process
+declared in data, not hard-coded. Under the portal sits a headless core platform (`/core/v1`, API only)
+that other applications can reuse.
 
-The full documentation, the user interface and the sample data are in Vietnamese. This page is enough to
-build and run the stack; see [Documentation](#documentation) for the rest.
+Documentation: **https://alavox-lab.github.io/corelens/** (in Vietnamese, like the user interface and the
+sample data) · Entry for the Open Source Software track of the Vietnam Student Informatics Olympiad 2026.
 
----
+![Coordinator home page: work waiting now, sorted by urgency](docs-site/src/assets/anh/trang-chu-dieu-phoi.png)
 
-## About
+## What Corelens does
 
-In many companies, internal requests — a broken laptop, a software licence, an employment certificate, a
-purchase proposal — travel through chat apps, email or paper. Requesters cannot see where their request
-is, nobody is reminded when it is overdue, and managers have no numbers on which step is slow.
+- **Case-by-case routing.** A coordinator classifies each request, sets its priority and picks the
+  department; a department that gets the wrong case sends it back with a reason.
+- **The process is data.** States, steps, roles, mistake-proofing guards and every number live in tables;
+  changing the process means editing data, not code.
+- **Deadlines in working hours.** Deadlines follow the working calendar and public holidays, scaled by
+  priority; overdue cases escalate on their own.
+- **Event log and process mining.** Every state change writes one append-only row; from that log the system
+  rebuilds the process as it really runs and points at the bottlenecks.
+- **AI only suggests.** An optional local language model suggests the type, priority and department; a
+  person confirms before it becomes a decision.
+- **Core platform `/core/v1`.** Other applications call it through the API gateway with a service account;
+  working examples in [`examples/goi-loi/`](examples/goi-loi/).
 
-**The Corelens reference application is one portal for all of those requests.** A case moves between
-four roles — requester, dispatcher, department head, handler — and each person sees their own queue as
-soon as they log in. Underneath sits an API-only core platform that other applications can reuse. The
-workflow is data, not code: states, transitions, roles, error-proofing (Poka-yoke) rules and every
-threshold live in database tables. Every state change appends a row to an event log, from which the system
-mines the process that actually runs and points out bottlenecks.
+The core assembles Keycloak, Apache APISIX, PostgreSQL, SeaweedFS and Apache Superset around a workflow
+engine written by the team: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). How each requirement of the
+competition brief is met: [`docs/doi-chieu-de-thi.md`](docs/doi-chieu-de-thi.md).
 
-## Architecture: headless core and reference application
+## Try it
 
-The competition brief requires a two-tier DX-OS Open-Core model:
-
-```mermaid
-flowchart TB
-  subgraph T2["Tier 2 — Reference application: internal request portal"]
-    H["H · Role-based portal, inbox,<br/>knowledge base"]
-    P["P · 11-state workflow,<br/>dispatching, deadlines"]
-    D["D · Dashboards,<br/>data export"]
-    I["I · Process mining,<br/>human-confirmed suggestions"]
-  end
-  subgraph T1["Tier 1 — Headless core platform"]
-    GW["API gateway<br/>Apache APISIX"]
-    ID["Identity, SSO<br/>Keycloak"]
-    WF["Workflow engine<br/>in-house, API /core/v1"]
-    DB["Structured data<br/>PostgreSQL"]
-    FS["Unstructured data<br/>SeaweedFS"]
-  end
-  T2 -->|every API call| GW
-  GW -->|token check| ID
-  GW --> WF
-  WF --> DB
-  WF --> FS
-```
-
-**Tier 1 — core services** (API only, no screens):
-
-| Required core service | Provided by | License |
-|---|---|---|
-| Identity, single sign-on | Keycloak `26.7.3`; optional two-factor authentication | Apache-2.0 |
-| API gateway | Apache APISIX `3.20.0` — the single entry point, token check at the edge, rate limiting | Apache-2.0 |
-| Structured and unstructured data | PostgreSQL + pgvector; SeaweedFS `4.45` over the S3 API | PostgreSQL License · Apache-2.0 |
-| Workflow engine | **In-house state machine** running several processes side by side — each process is data, not code — exposed under `/core/v1`; every transition appends to the event log | MIT |
-
-**Tier 2 — reference application**: H (Next.js portal, optional Wiki.js `2.5.315` knowledge base),
-P (classification, routing, escalation, process configuration screen), D (Apache Superset `6.1.0`
-dashboards embedded in the portal, CSV/JSON export, monthly cold storage), I (process mining with PM4Py
-`2.7.23.8` in a separate AGPL service, optional local language model llama.cpp + Qwen2.5-1.5B). The
-intelligence layer only writes *suggested* fields; a human confirms before anything becomes a decision.
-
-## Quick start
-
-You need Docker Engine 24+ with Compose v2 (or Docker Desktop), about 2 GB of RAM, 6 GB of disk, and free
-ports 3000 · 8080 · 8088 · 8333 · 9080.
-
-Download **Source code (tar.gz)** of the latest release from the
-[Releases](https://github.com/AlaVox-lab/corelens/releases) page, then (replace `1.0.0` with the version
-you downloaded):
+Needs Git and Docker with Compose v2 (Docker Desktop, or Docker Engine 24 or later).
 
 ```bash
-tar -xzf corelens-1.0.0.tar.gz
-cd corelens-1.0.0/infra
+git clone https://github.com/AlaVox-lab/corelens.git
+cd corelens/infra
 cp .env.example .env
 docker compose --env-file .env up -d --build
 ```
 
-On PowerShell use `Copy-Item .env.example .env` and `cd corelens-1.0.0\infra`. From a clone, run the last
-three commands in `corelens/infra`. The first build takes about 10–20 minutes.
+On PowerShell use `Copy-Item` instead of `cp`. The first build takes about 10–20 minutes.
 
-Open `http://localhost:3000` and click **Đăng nhập bằng tài khoản công ty** (*Sign in with company
-account*). Sample accounts, shared password `matkhau123`:
+Open `http://localhost:3000`, click **Đăng nhập bằng tài khoản công ty** (sign in with your company
+account), and sign in as `binh.tran` / `matkhau123` (coordinator). Accounts for the other roles:
+[Sample accounts](https://alavox-lab.github.io/corelens/huong-dan/tai-khoan-mau/).
 
-| Account | Role |
-|---|---|
-| `an.nguyen` | Requester |
-| `binh.tran` | Dispatcher |
-| `dung.pham` | Head of IT department |
-| `cuong.le` | IT handler |
-| `khanh.vo` | Administrator — System and Process configuration screens |
-
-To get numbers on the dashboards, load a few hundred demo cases — from the repository root:
-
-```bash
-python scripts/nap_du_lieu_trinh_dien.py --xac-nhan
-```
-
-Ports exposed on the host: `3000` portal · `9080` **API gateway** (API docs at `http://localhost:9080/docs`;
-every route except health and docs needs a Keycloak access token) · `8080` Keycloak · `8088` Superset ·
-`8333` SeaweedFS S3. The application service (`8000`) and PostgreSQL (`5432`) stay inside the Compose
-network; developers who need them add a second file:
-
-```bash
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.phat-trien.yml up -d   # in infra/
-```
-
-The default stack is a **demo**: passwords, keys and sample accounts are public. Read *Trước khi dùng thật*
-(*Before real use*) in the Vietnamese README before putting real users on it. Report security issues as
-described in [`SECURITY.md`](SECURITY.md).
-
-## Core API
-
-Another application can use the core without the portal: get a token with a Keycloak service account
-(client credentials flow), then call `/core/v1` through the API gateway. Runnable examples using only the
-Python standard library are in [`examples/goi-loi/`](examples/goi-loi/), with the stack running:
-
-```bash
-python examples/goi-loi/goi_loi.py             # create a case and take one transition
-python examples/goi-loi/quy_trinh_mua_sam.py   # a second process: two-level purchase approval, API only
-python examples/goi-loi/nhan_webhook.py        # receive signed event webhooks (needs the administrator role)
-```
-
-The same thing by hand (bash; replace the secret if you changed `KEYCLOAK_INTEGRATION_SECRET` in
-`infra/.env`):
-
-```bash
-TOKEN=$(curl -s -d grant_type=client_credentials \
-  -d client_id=dx-integration -d client_secret=doi_bi_mat_nay_truoc_khi_trien_khai \
-  http://localhost:8080/realms/dx-os-lab/protocol/openid-connect/token \
-  | python3 -c "import json, sys; print(json.load(sys.stdin)['access_token'])")
-curl -H "Authorization: Bearer $TOKEN" http://localhost:9080/core/v1/workflow/request-types
-```
-
-The full endpoint list is in the OpenAPI page at `http://localhost:9080/docs`; the core/application
-boundary is described in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) section 2.3.
-
-## Optional profiles
-
-The default stack runs fully manually and downloads nothing beyond its pinned images. Each optional service
-is one Compose profile plus a variable in `infra/.env` (commands run in `infra/`):
-
-| Profile | Adds | Enable |
-|---|---|---|
-| `tri-tue` | Local language model (llama.cpp, MIT · Qwen2.5-1.5B-Instruct, Apache-2.0) for classification suggestions and similar cases; ~1.5 GB RAM, 2.4 GB disk | `python scripts/tai_mo_hinh.py` (repository root), set `LLM_URL=http://mo-hinh:8080` and `EMBEDDING_URL=http://mo-hinh-nhung:8080`, then `docker compose --env-file .env --profile tri-tue up -d` |
-| `thu-thu` | Email notifications with the Mailpit test inbox (MIT) at `http://localhost:8025` | set `SMTP_HOST=thu-thu`, `SMTP_PORT=1025`, then `--profile thu-thu up -d` |
-| `quet-tep` | Attachment malware scanning with ClamAV (GPL-2.0, separate service); ~1 GB RAM | set `CLAMAV_HOST=quet-tep`, then `--profile quet-tep up -d` |
-| `tri-thuc` | Wiki.js knowledge base (AGPL-3.0, unmodified, separate service) with SSO; ~300 MiB RAM | `--profile tri-thuc up -d`, set `WIKI_URL=http://localhost:3100` |
-
-Two-factor authentication (TOTP) is a Keycloak setting, toggled with `python scripts/xac_thuc_hai_lop.py bat`
-(`tat` to disable). If the model, mail server or scanner is down, no case operation is blocked. Upgrading
-an existing stack is `docker compose --env-file .env up -d --build`: migrations run on startup and no case,
-event or attachment is lost.
+This is a demo stack: its passwords and sample accounts are public. Installing from a release archive,
+hardware requirements, optional services and what to change before real use:
+[Installation](https://alavox-lab.github.io/corelens/cai-dat/cai-dat/).
 
 ## Documentation
 
-The documentation site in [`docs-site/`](docs-site/) is written in Vietnamese and organised by reader:
-getting started, installation and operations, user guides per role, administration, development and
-reference. To view it locally (Node.js 22.12+):
+| Page | Contents |
+|---|---|
+| [Quick start](https://alavox-lab.github.io/corelens/bat-dau/bat-dau-nhanh/) | Build the stack and take one case through all four roles |
+| [Installation and operations](https://alavox-lab.github.io/corelens/cai-dat/cai-dat/) | Requirements, configuration, language model, email, knowledge base, upgrades, backups |
+| [User guides](https://alavox-lab.github.io/corelens/huong-dan/nguoi-gui/) | Requester, coordinator, department head, handler |
+| [Core platform API](https://alavox-lab.github.io/corelens/tham-khao/api/) | `/core/v1`, service account tokens, processes as BPMN, safe retries |
+| [Architecture](https://alavox-lab.github.io/corelens/phat-trien/kien-truc/) | Services in the stack, workflow engine, event log |
 
-```bash
-cd docs-site
-npm ci
-npm run dev
-```
-
-Technical documents in the repository: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (how the system is
-organised and why), [`docs/doi-chieu-de-thi.md`](docs/doi-chieu-de-thi.md) (each requirement of the brief and
-how it is met), [`docs/adr/`](docs/adr/) (architecture decision records),
-[`docs/dependencies.md`](docs/dependencies.md) (dependencies and licenses),
-[`CHANGELOG.md`](CHANGELOG.md) (generated from the commit history).
+The documentation site's source is in [`docs-site/`](docs-site/). Technical documents that travel with the
+code are in [`docs/`](docs/): project state, architecture decisions ([`docs/adr/`](docs/adr/)), the business
+flow, dependencies and licenses. Changes per release: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Contributing
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) (Vietnamese): branch model (`dev` for integration, `main` for
-releases), Conventional Commits, SPDX license headers in every source file, H-P-D-I issue labels, linters
-and continuous integration. Issues and pull requests in English are welcome. Participation means agreeing
-to the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before sending changes: branch model, Conventional Commits, SPDX
+license headers. Report bugs and ideas in [Issues](https://github.com/AlaVox-lab/corelens/issues); report
+security vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md). Taking part means agreeing
+to [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Team
 
@@ -201,15 +86,11 @@ to the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 | Repository coordinator | Nguyễn Thanh Sơn | [`@AlaVox-lab`](https://github.com/AlaVox-lab) |
 | Member | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
 
+Work is split by [issue](https://github.com/AlaVox-lab/corelens/issues); nobody owns a fixed space.
+
 ## License
 
-The repository follows a **multi-license** model — full table in [`LICENSES.md`](LICENSES.md):
-
-| Part | License |
-|---|---|
-| Application service, portal, UI tests, scripts, infrastructure, documentation | [MIT](LICENSE) |
-| Process mining service [`services/khai-pha/`](services/khai-pha/) | [AGPL-3.0-or-later](services/khai-pha/LICENSE) |
-
-The process mining service uses the PM4Py library (AGPL), so that whole directory is AGPL; the rest of the
-system only exchanges JSON with it over HTTP. Every source file carries the SPDX identifier of its
-directory's license. Third-party notices are in [`NOTICE`](NOTICE).
+The repository follows a multi-license model: the code is under [MIT](LICENSE), except the process mining
+service [`services/khai-pha/`](services/khai-pha/), which is [AGPL-3.0-or-later](services/khai-pha/LICENSE)
+because it uses the PM4Py library; the rest of the system only talks to it over HTTP. Per-directory table in
+[`LICENSES.md`](LICENSES.md), third-party notices in [`NOTICE`](NOTICE).

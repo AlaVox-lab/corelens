@@ -14,8 +14,8 @@
 // xem, dịch vụ khai phá tắt, chậm hay hỏng — đều không vẽ gì, không khung trống, không lời báo lỗi. Hỏi sau
 // khi trang hiện, có hạn chót; thao tác trên hồ sơ không bao giờ chờ khối này.
 //
-// Khối hiện kết quả của dịch vụ AGPL qua mạng nên mang dòng dẫn tới mã nguồn của dịch vụ (điều 13, #340);
-// địa chỉ do trang máy chủ đọc từ `MINING_SOURCE_URL` và truyền xuống.
+// Khối hiện kết quả của dịch vụ AGPL qua mạng; liên kết mã nguồn của dịch vụ (điều 13, #340) nằm ở trang
+// Mã nguồn và giấy phép, chân thanh bên (#540), không lặp ở đây.
 import { GitBranch } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -26,7 +26,7 @@ import type { BuocLech, KetQuaTuanThu } from "@/lib/kieu";
 /** Hạn chót phía trình duyệt. Quá hạn thì không hiện gì — trang vẫn đủ như trước. */
 const HAN_CHOT_MS = 6000;
 
-export function BuocLechHoSo({ maHoSo, nguonMa }: { maHoSo: number; nguonMa: string }) {
+export function BuocLechHoSo({ maHoSo }: { maHoSo: number }) {
   const [cacBuoc, datCacBuoc] = useState<BuocLech[]>([]);
 
   useEffect(() => {
@@ -72,12 +72,6 @@ export function BuocLechHoSo({ maHoSo, nguonMa }: { maHoSo: number; nguonMa: str
           </li>
         ))}
       </ol>
-      <p className="qt-nguon-ma buoc-lech-nguon">
-        Phân tích bởi dịch vụ khai phá quy trình, giấy phép AGPL-3.0 —{" "}
-        <a href={nguonMa} target="_blank" rel="noopener noreferrer">
-          mã nguồn
-        </a>
-      </p>
     </section>
   );
 }

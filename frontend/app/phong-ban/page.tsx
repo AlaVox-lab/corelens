@@ -264,7 +264,7 @@ export default async function HangDoiPhongBan({ searchParams }: { searchParams: 
             ? { tieuDe: "Chưa có hồ sơ nào giao cho bạn", cau: "Hồ sơ trưởng phòng giao cho bạn sẽ hiện ở đây." }
             : {
                 tieuDe: "Phòng chưa có hồ sơ nào",
-                cau: "Hồ sơ điều phối viên chuyển về phòng sẽ hiện ở đây để nhận và giao người xử lý.",
+                cau: "Hồ sơ điều phối viên chuyển về phòng sẽ hiện ở đây.",
               }
         }
       />

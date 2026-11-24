@@ -27,10 +27,12 @@ from dataclasses import dataclass
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import Request as YeuCauHttp
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import current_actor
+from app.kiem_toan import XEM_HO_SO, XEM_LIEN_HE, ghi_truy_cap
 from app.auth.directory import KeycloakDirectory, get_directory
 from app.db import get_session
 from app.intelligence.goi_y import goi_y_nguoi_xu_ly
@@ -411,16 +413,20 @@ def hang_doi(
 
 
 @router.get("/requests/{case_id}", response_model=HoSoPhongBanRa)
-def chi_tiet(case_id: int, session: _Phien, actor: _Cua) -> HoSoPhongBanRa:
+def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> HoSoPhongBanRa:
     """Chi tiết một hồ sơ của phòng mình, kèm những thao tác người này làm được.
 
     Mở được cả hồ sơ đã rời hàng đợi mà vẫn thuộc phòng — vừa hoàn thành, hay vừa bị
     trả về điều phối — để người vừa bấm nút thấy được kết quả.
+
+    Mỗi lần mở ghi một dòng nhật ký truy cập (#431, app/kiem_toan.py), trừ hồ sơ do chính người gọi gửi.
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None or ho_so.department_code not in actor.departments:
         raise _khong_thay()
-    return _dung_chi_tiet(session, ho_so, actor)
+    ra = _dung_chi_tiet(session, ho_so, actor)
+    ghi_truy_cap(yeu_cau, actor, XEM_HO_SO, ho_so=ho_so)
+    return ra
 
 
 @router.get(
@@ -436,16 +442,19 @@ def lien_he(
     session: _Phien,
     actor: _Cua,
     danh_ba: Annotated[KeycloakDirectory, Depends(get_directory)],
+    yeu_cau: YeuCauHttp,
 ) -> LienHeNguoiGuiRa:
     """Email và số điện thoại của người gửi, tra từ danh bạ lúc gọi (#131).
 
     Cùng cửa với trang chi tiết: hồ sơ của phòng khác trả 404 — không lộ ra hồ sơ đó có
-    tồn tại, càng không lộ liên hệ của người gửi nó.
+    tồn tại, càng không lộ liên hệ của người gửi nó. Mỗi lần tra được ghi nhật ký truy cập (#431).
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None or ho_so.department_code not in actor.departments:
         raise _khong_thay()
-    return lien_he_nguoi_gui(danh_ba, ho_so)
+    ra = lien_he_nguoi_gui(danh_ba, ho_so)
+    ghi_truy_cap(yeu_cau, actor, XEM_LIEN_HE, ho_so=ho_so)
+    return ra
 
 
 @router.post("/requests/{case_id}/transitions", response_model=HoSoPhongBanRa)

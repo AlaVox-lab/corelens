@@ -160,6 +160,40 @@ dịch vụ — người đề xuất, trưởng phòng (`dx-integration-truong-
 (`dx-integration-duyet`) — toàn bộ qua `/core/v1`. Cụm dựng trước bản có `/core/v1` thì tạo client trước bằng
 `python scripts/tai_khoan_dich_vu.py` — xem [Nâng cấp](../../cai-dat/nang-cap/).
 
+### Gọi lặp an toàn: `Idempotency-Key`
+
+Mạng đứt sau khi gửi lệnh thì ứng dụng không biết lệnh đã chạy chưa. Gửi lại mà không có khóa thì hồ sơ có
+thể bị tạo hai lần, hay đi một bước hai lần. Hai lệnh ghi của lõi — `POST /core/v1/workflow/requests` (tạo hồ
+sơ) và `POST /core/v1/workflow/requests/{case_id}/transitions` (đi một bước) — nhận tiêu đề **tùy chọn**
+`Idempotency-Key`: mỗi lệnh một chuỗi riêng (một UUID là đủ), gửi lại thì dùng đúng chuỗi đó.
+
+```bash
+KHOA=$(uuidgen)   # sinh một lần cho lệnh này, giữ lại để gửi lại
+curl -s -i http://localhost:9080/core/v1/workflow/requests/42/transitions \
+  -H "Authorization: Bearer <token>" \
+  -H "Idempotency-Key: $KHOA" \
+  -H "Content-Type: application/json" \
+  -d '{"to_state": "cancelled", "note": "Gửi nhầm"}'
+# Mất kết nối? Gửi lại nguyên lệnh trên, cùng $KHOA: nhận lại đúng phản hồi lần đầu kèm
+# "Idempotent-Replayed: true", bước không đi lần hai, nhật ký sự kiện chỉ có một dòng
+```
+
+| Tình huống | Phản hồi |
+|---|---|
+| Lần đầu với khóa này | Lệnh chạy như thường (`201` khi tạo, `200` khi đi bước) |
+| Gửi lại cùng khóa, cùng lệnh | Đúng mã và thân của lần đầu, thêm tiêu đề `Idempotent-Replayed: true`; lệnh không chạy lại, không sinh sự kiện, không gửi webhook |
+| Gửi lại khi lần đầu còn đang chạy | `409` `idempotency-request-in-progress` kèm `Retry-After` (giây) — chờ rồi gửi lại |
+| Cùng khóa nhưng khác thân hay khác hồ sơ | `422` `idempotency-key-reused` — mỗi lệnh cần khóa riêng |
+| Khóa rỗng, dài quá 255 ký tự hay có ký tự ngoài ASCII in được | `422` `idempotency-key-invalid` |
+| Lần đầu bị từ chối (`4xx`, `5xx`) | Khóa không được giữ: sửa lệnh rồi gửi lại cùng khóa được |
+| Không gửi tiêu đề | Như trước khi có khóa — mỗi lần gửi là một lệnh |
+
+Khóa tính **theo người gọi**: hai tài khoản dùng trùng chuỗi không đụng nhau. Khóa sống
+`IDEMPOTENCY_TTL_HOURS` giờ (mặc định 24); quá hạn thì cùng chuỗi là lệnh mới. Lần đang chạy giữ khóa
+`IDEMPOTENCY_LOCK_SECONDS` giây (mặc định 60) — tiến trình chết giữa chừng thì quá mốc đó lần gửi lại tự nhận
+việc. Xem [Cấu hình](../../cai-dat/cau-hinh/). Đường của cổng người dùng (không có `/core/v1`) bỏ qua tiêu đề
+này.
+
 ## Quy tắc chung
 
 - Cổng API giới hạn tốc độ **chung** theo địa chỉ người gọi, cho mọi đường: vượt ngưỡng trả `429` với

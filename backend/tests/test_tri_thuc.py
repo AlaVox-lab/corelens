@@ -36,9 +36,9 @@ class WikiGia:
         self.so_lan_doc_noi_dung = 0
 
     def dat(self, ma: int, tieu_de: str, noi_dung: str, *, luc: str = "2026-11-14T01:00:00.000Z",
-            xuat_ban: bool = True, rieng_tu: bool = False, mo_ta: str = "") -> None:
+            xuat_ban: bool = True, rieng_tu: bool = False, mo_ta: str = "", duong: str | None = None) -> None:
         self.bai[ma] = {
-            "id": ma, "path": f"huong-dan/bai-{ma}", "locale": "vi", "title": tieu_de, "description": mo_ta,
+            "id": ma, "path": duong or f"huong-dan/bai-{ma}", "locale": "vi", "title": tieu_de, "description": mo_ta,
             "isPublished": xuat_ban, "isPrivate": rieng_tu, "updatedAt": luc, "content": noi_dung,
         }
 
@@ -116,6 +116,15 @@ def test_lap_chi_muc_bai_xuat_ban_bo_bai_rieng_tu(session, bat, chi_muc_trong):
     assert set(_bai_trong_chi_muc(session)) == {1}
     # Không đổi gì thì lượt sau không nhúng lại
     assert _quet(session, wiki) == 0
+
+
+def test_trang_chu_wiki_khong_vao_chi_muc(session, bat, chi_muc_trong):
+    """Trang chủ là mục lục, gần với mọi câu hỏi — đưa vào chỉ mục thì nó chen vào gợi ý (#535)."""
+    wiki = WikiGia()
+    wiki.dat(1, "Máy in không in được", "Hết giấy, kẹt giấy, lệnh in bị treo")
+    wiki.dat(2, "Kho tri thức", "Máy in, mật khẩu, cấp quyền phần mềm", duong=tri_thuc.TRANG_CHU_WIKI)
+    assert _quet(session, wiki) == 1
+    assert set(_bai_trong_chi_muc(session)) == {1}
 
 
 def test_bai_sua_thi_nhung_lai_bai_xoa_thi_bo(session, bat, chi_muc_trong):

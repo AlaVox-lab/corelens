@@ -308,6 +308,14 @@ class Settings(BaseSettings):
     # liệu (`transitions.collects_feedback`); ở đây chỉ trần độ dài nhận xét, tính bằng ký tự.
     feedback_comment_max_chars: int = Field(default=1000, ge=1)
 
+    # --- Khóa trùng lặp cho lệnh của lõi, xem #426 -------------------------------
+    #
+    # Hệ thống tích hợp gửi tiêu đề `Idempotency-Key` ở lệnh tạo hồ sơ và bước chuyển của `/core/v1`; gọi lặp
+    # cùng khóa trả lại kết quả đã lưu, không chạy lệnh lần hai — xem app/workflow/khoa_trung_lap.py. Khóa sống
+    # chừng này giờ; một lần đang chạy giữ khóa chừng này giây, quá thì coi là bỏ dở và lần sau chiếm lại.
+    idempotency_ttl_hours: int = Field(default=24, ge=1)
+    idempotency_lock_seconds: int = Field(default=60, ge=1)
+
     @property
     def bulk_activity_codes(self) -> list[str]:
         """Các mã bước làm được hàng loạt, theo thứ tự khai — thứ tự nút trên thanh thao tác."""
@@ -391,7 +399,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     # `none` (Mailpit, máy chủ nội bộ), `starttls` (cổng 587), `ssl` (cổng 465)
     smtp_security: Literal["none", "starttls", "ssl"] = "none"
-    smtp_from: str = "DX-OS Lab <khong-tra-loi@dx-os-lab.test>"
+    smtp_from: str = "Corelens <khong-tra-loi@corelens.test>"
     smtp_timeout_seconds: float = 10.0
     # Nhịp bộ quét gửi: phát hiện mốc báo trước, tìm người nhận, gửi thư đến hạn
     notify_scan_interval_seconds: int = 30

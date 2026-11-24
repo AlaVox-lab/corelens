@@ -34,6 +34,7 @@ import argparse
 import csv
 import json
 import random
+import re
 import subprocess
 import sys
 from collections import Counter, defaultdict
@@ -70,6 +71,16 @@ TRE_BO_QUET_GIAY = 60
 
 # Chặn vòng lặp vô tận khi kịch bản đặt trọng số quá cao cho các nhánh quay lui.
 SO_BUOC_TOI_DA = 60
+
+# Mã người gửi ảo: vai người gửi của bộ quy tắc và ba chữ số, ví dụ `requester-008`. Tài khoản thật mang mã
+# UUID của Keycloak nên không bao giờ khớp — dữ liệu trình diễn (#541) nhận ra hồ sơ mẫu bằng mã này.
+DANG_MA_NGUOI_GUI = "{vai}-{so:03d}"
+
+
+def mau_ma_nguoi_gui(vai: str) -> str:
+    """Biểu thức chính quy khớp đúng mã người gửi ảo của vai `vai` — dùng được cả ở Python lẫn toán tử `~`
+    của PostgreSQL."""
+    return f"^{re.escape(vai)}-[0-9]{{3}}$"
 
 KICH_BAN_MAC_DINH: dict = {
     # Trọng số tương đối khi một người đứng trước nhiều cạnh, tra theo mã hoạt động.
@@ -456,7 +467,7 @@ class BoSinh:
         chon_dung = not khac or self.rng.random() < self.kb["ty_le_nguoi_gui_chon_dung_loai"]
         loai = loai_that if chon_dung else self.rng.choice(khac)
         so = self.rng.randint(1, self.kb["so_nguoi_gui"])
-        hs = HoSo(ma, f"{self.vai_tro_nguoi_gui}-{so:03d}", loai_that, loai, tao_luc,
+        hs = HoSo(ma, DANG_MA_NGUOI_GUI.format(vai=self.vai_tro_nguoi_gui, so=so), loai_that, loai, tao_luc,
                   self.trang_thai_dau, mo_ta=f"Mô tả ảo của hồ sơ số {ma}.")
 
         su_kien: list[dict] = []

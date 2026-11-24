@@ -1,7 +1,7 @@
 {
   "realm": "dx-os-lab",
   "enabled": true,
-  "displayName": "DX-OS Lab — Cổng vận hành yêu cầu nội bộ",
+  "displayName": "Corelens — Cổng vận hành yêu cầu nội bộ",
   "loginTheme": "dx-os-lab",
   "internationalizationEnabled": true,
   "supportedLocales": ["vi", "en"],
@@ -205,7 +205,7 @@
       "emailVerified": true,
       "firstName": "An",
       "lastName": "Nguyễn",
-      "email": "an.nguyen@dx-os-lab.test",
+      "email": "an.nguyen@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 001"
@@ -230,7 +230,7 @@
       "emailVerified": true,
       "firstName": "Bình",
       "lastName": "Trần",
-      "email": "binh.tran@dx-os-lab.test",
+      "email": "binh.tran@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 002"
@@ -255,7 +255,7 @@
       "emailVerified": true,
       "firstName": "Cường",
       "lastName": "Lê",
-      "email": "cuong.le@dx-os-lab.test",
+      "email": "cuong.le@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 003"
@@ -282,7 +282,7 @@
       "emailVerified": true,
       "firstName": "Dung",
       "lastName": "Phạm",
-      "email": "dung.pham@dx-os-lab.test",
+      "email": "dung.pham@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 004"
@@ -309,7 +309,7 @@
       "emailVerified": true,
       "firstName": "Khánh",
       "lastName": "Võ",
-      "email": "khanh.vo@dx-os-lab.test",
+      "email": "khanh.vo@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 005"
@@ -334,7 +334,7 @@
       "emailVerified": true,
       "firstName": "Lan",
       "lastName": "Vũ",
-      "email": "lan.vu@dx-os-lab.test",
+      "email": "lan.vu@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 006"
@@ -361,7 +361,7 @@
       "emailVerified": true,
       "firstName": "Tuấn",
       "lastName": "Ngô",
-      "email": "tuan.ngo@dx-os-lab.test",
+      "email": "tuan.ngo@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 007"
@@ -388,7 +388,7 @@
       "emailVerified": true,
       "firstName": "Hà",
       "lastName": "Đỗ",
-      "email": "ha.do@dx-os-lab.test",
+      "email": "ha.do@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 008"
@@ -415,7 +415,7 @@
       "emailVerified": true,
       "firstName": "Giang",
       "lastName": "Hoàng",
-      "email": "giang.hoang@dx-os-lab.test",
+      "email": "giang.hoang@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 009"
@@ -442,7 +442,7 @@
       "emailVerified": true,
       "firstName": "Minh",
       "lastName": "Đặng",
-      "email": "minh.dang@dx-os-lab.test",
+      "email": "minh.dang@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 010"
@@ -469,7 +469,7 @@
       "emailVerified": true,
       "firstName": "Nam",
       "lastName": "Bùi",
-      "email": "nam.bui@dx-os-lab.test",
+      "email": "nam.bui@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 011"
@@ -496,7 +496,7 @@
       "emailVerified": true,
       "firstName": "Phương",
       "lastName": "Lý",
-      "email": "phuong.ly@dx-os-lab.test",
+      "email": "phuong.ly@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 012"
@@ -523,7 +523,7 @@
       "emailVerified": true,
       "firstName": "Quang",
       "lastName": "Trịnh",
-      "email": "quang.trinh@dx-os-lab.test",
+      "email": "quang.trinh@corelens.test",
       "attributes": {
         "phoneNumber": [
           "0900 000 013"

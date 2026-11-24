@@ -579,10 +579,6 @@ select.o-nhap {
   color: var(--ink-3);
 }
 
-.qt-nguon-ma.buoc-lech-nguon {
-  margin: 12px 0 0;
-}
-
 .the-goi-y-khac {
   font-size: 12.5px;
   color: var(--f-a-ink);
@@ -2881,6 +2877,9 @@ textarea.o-nhap {
   border-top: 1px solid var(--line);
   padding: 12px;
   display: grid;
+  /* Cột co theo khung, không giãn theo chữ đã mờ khi thanh bên thu gọn: không thì mỗi mục rộng bằng nhãn
+   * đầy đủ, phần thừa bị cắt dưới vùng nội dung và nền mục đang chọn chạm mép (#540) */
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   flex: none;
 }
@@ -3928,6 +3927,193 @@ html.doi-mau * {
   font-size: 12.5px;
 }
 
+/* Nhật ký truy cập dữ liệu cá nhân trên màn Hệ thống (#431) — cùng lề, cùng chữ phụ với hai khối trên. Bảng chỉ
+ * để đọc: dòng không bấm được nên không có nền rê. Dưới 768px mỗi dòng thành một khối nhãn–giá trị, như bảng
+ * hàng đợi thành thẻ, để trang không cuộn ngang. */
+.ktc-than {
+  padding: 14px 16px 2px;
+}
+
+/* Căn đầu: ô chọn cao hơn ô nhập một chút, căn đáy thì nhãn của nó tụt khỏi hàng nhãn bên cạnh */
+.ktc-loc {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.ktc-loc-nut {
+  display: flex;
+  gap: 8px;
+  align-self: end;
+}
+
+.ktc-phu {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.ktc-lien-ket {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-2);
+}
+
+.ktc-lien-ket:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Rỗng, lỗi: cùng chiều cao để đổi qua lại thì khung không co giãn */
+.ktc-trang-thai {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 24px 16px 28px;
+  text-align: center;
+  font-size: 13.5px;
+}
+
+.ktc-trang-thai p {
+  margin: 0;
+}
+
+.ktc-loi {
+  color: var(--f-r-ink);
+  font-weight: 600;
+}
+
+.ktc-khung {
+  position: relative;
+  border-top: 1px solid var(--line);
+}
+
+/* Tải lần hai: dữ liệu cũ đứng yên, thanh mảnh chạy ở mép trên bảng */
+.ktc-thanh-tai {
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 2px;
+  overflow: hidden;
+}
+
+.ktc-thanh-tai span {
+  display: block;
+  width: 33%;
+  height: 100%;
+  background: var(--accent);
+  animation: ktc-chay 1.2s ease-in-out infinite;
+}
+
+@keyframes ktc-chay {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 300% 0;
+  }
+}
+
+.ktc-bang {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.ktc-bang th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.ktc-bang td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.ktc-bang tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ktc-luc,
+.ktc-nguoi {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ktc-tep {
+  overflow-wrap: anywhere;
+}
+
+.ktc-chan {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  .ktc-loc {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .ktc-bang thead {
+    display: none;
+  }
+
+  .ktc-bang,
+  .ktc-bang tbody {
+    display: block;
+  }
+
+  .ktc-bang tr.ktc-dong {
+    display: grid;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ktc-bang tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .ktc-bang tr.ktc-dong td {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .ktc-bang tr.ktc-dong td::before {
+    content: attr(data-nhan);
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 560px) {
+  .ktc-loc {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ktc-thanh-tai span {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 560px) {
   .wh-bieu-mau {
     grid-template-columns: 1fr;
@@ -4272,14 +4458,33 @@ html.doi-mau * {
  * Ngăn bám mép phải, dưới thanh đầu trang, không lớp phủ: danh sách bên trái vẫn bấm được để
  * đổi hồ sơ. Đầu ngăn và khối thao tác ở đáy đứng yên, phần giữa cuộn. Màn hẹp: toàn màn hình,
  * phủ cả thanh đầu trang. Mở thì trượt vào từ mép phải; đổi hồ sơ trong ngăn không chạy lại
- * hiệu ứng (ngăn vẫn là một phần tử); đóng thì trượt ra rồi mới rời `?xem=` (#237). */
+ * hiệu ứng (ngăn vẫn là một phần tử); đóng thì trượt ra rồi mới rời `?xem=` (#237).
+ *
+ * Từ #539 ngăn không che bảng ở màn từ 1100px: vùng nội dung chừa bên phải đúng bề rộng ngăn
+ * (`--rong-ngan`), bảng co lại và ẩn bớt cột phụ (khối "Bảng hàng đợi co theo ngăn" bên dưới). Ngăn
+ * hẹp lại theo cửa sổ để bảng còn đủ chỗ cho cột hồ sơ và "Việc tiếp theo". Từ 768px tới 1099px chừa
+ * chỗ thì bảng còn quá hẹp, nên ngăn vẫn phủ như trước; dưới 768px ngăn phủ cả màn. */
+:root {
+  --rong-ngan: min(560px, 100%);
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --rong-ngan: clamp(400px, 34vw, 560px);
+  }
+
+  .vung:has(.khung-bang[data-co-ngan]) {
+    padding-right: calc(var(--rong-ngan) + 24px);
+  }
+}
+
 .ngan {
   position: fixed;
   top: 60px;
   right: 0;
   bottom: 0;
   z-index: 30;
-  width: min(560px, 100%);
+  width: var(--rong-ngan);
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -4442,6 +4647,63 @@ html.doi-mau * {
   background: var(--chon);
 }
 
+/* --- Bảng hàng đợi co theo ngăn (#539) ------------------------------------------
+ * Khung bảng là container: cột phụ ẩn theo bề rộng CÒN LẠI của khung, không theo cửa sổ — mở ngăn
+ * thì khung hẹp đi mà cửa sổ vẫn rộng. `data-phu="1"` (loại, người gửi) ẩn trước, `data-phu="2"`
+ * (trạng thái, người xử lý) ẩn sau, cột hạn ẩn cuối cùng; ngăn đang mở đã có đủ các thông tin đó. Cột
+ * hồ sơ và "Việc tiếp theo" luôn ở lại.
+ *
+ * Cột hồ sơ, "Việc tiếp theo" và cột hạn chia nhau phần còn lại: câu dài xuống dòng, mỗi cột giữ một bề
+ * rộng tối thiểu. Ngưỡng ẩn cột tính từ tổng bề rộng tối thiểu của các cột còn lại (đo 24/11 trên dữ
+ * liệu mẫu: ô chọn 36, hồ sơ 188, loại 123, trạng thái 225, người gửi 152, người xử lý 139, "Việc tiếp
+ * theo" 140, hạn 158 — điều phối đủ cột cần 870, bỏ loại 747, bỏ trạng thái 522), chừa một khoảng cho
+ * nhãn dài hơn. `overflow: clip` để cuộn dòng đang xem vào tầm nhìn không kéo bảng sang ngang. Dưới
+ * 768px bảng đã thành thẻ (khối màn hẹp ở trên), các luật này không áp. */
+.khung-bang {
+  container-type: inline-size;
+  overflow: clip;
+}
+
+@media (min-width: 768px) {
+  .khung-bang .o-ho-so {
+    min-width: 10rem;
+  }
+
+  .khung-bang .cot-tiep,
+  .khung-bang .cot-cuoi {
+    width: auto;
+    white-space: normal;
+  }
+
+  .khung-bang .viec-tiep,
+  .khung-bang .chu-han {
+    min-width: 7rem;
+    white-space: normal;
+  }
+
+  .khung-bang .viec-tiep {
+    display: inline-block;
+  }
+
+  @container (max-width: 919px) {
+    .bang [data-phu="1"] {
+      display: none;
+    }
+  }
+
+  @container (max-width: 799px) {
+    .bang [data-phu="2"] {
+      display: none;
+    }
+  }
+
+  @container (max-width: 519px) {
+    .bang .cot-cuoi {
+      display: none;
+    }
+  }
+}
+
 @media (max-width: 767px) {
   .ngan {
     top: 0;
@@ -4462,6 +4724,11 @@ html.doi-mau * {
   margin: 10px 4px 0;
   font-size: 13px;
   color: var(--ink-2);
+}
+
+/* Liên kết nằm giữa câu: gạch chân, không chỉ khác màu (WCAG 1.4.1 — axe `link-in-text-block`) */
+.ghi-con-lai a {
+  text-decoration: underline;
 }
 
 /* --- Báo cáo: bảng điều khiển phân tích nhúng (#305) ------------------------ */
@@ -4731,18 +4998,6 @@ html[data-qt-ngan] .ngan {
   margin: 0;
   font-size: 12.5px;
   color: var(--ink-3);
-}
-
-/* Dòng mã nguồn của dịch vụ khai phá (AGPL điều 13, #340): nhỏ, cuối màn, hiện cả khi màn rỗng */
-.qt-nguon-ma {
-  margin: 20px 0 0;
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.qt-nguon-ma a {
-  color: inherit;
-  text-decoration: underline;
 }
 
 /* Ba khối xếp hạng: 3 cột khi vùng đủ rộng, 2 cột ở vùng vừa (khối thứ ba trải hai cột), 1 cột ở vùng hẹp */
@@ -5464,23 +5719,60 @@ span.qt-ma {
   }
 }
 
-/* --- Lối vào kho tri thức trên thanh bên (#321) ------------------------------
- * Dòng nhỏ dưới tên mục: nền tảng, giấy phép, mã nguồn (AGPL-3.0, điều 13). Thu gọn thanh bên thì ẩn
- * như nhãn của mục. */
-.sb-nguon {
-  margin: -2px 0 4px 44px;
-  font-size: 11.5px;
+/* --- Trang Mã nguồn và giấy phép (#540) -------------------------------------
+ * Mỗi thành phần một hàng: tên và việc của nó bên trái, giấy phép và liên kết mã nguồn bên phải; màn hẹp
+ * xếp chồng. Địa chỉ dài thì xuống dòng ở bất kỳ đâu thay vì đẩy trang tràn ngang. */
+.ds-ma-nguon {
+  max-width: 880px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ds-ma-nguon li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 8px 24px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ds-ma-nguon li:last-child {
+  border-bottom: 0;
+}
+
+.ds-ma-nguon h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ds-ma-nguon p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.ds-ma-nguon dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.ds-ma-nguon dt {
   color: var(--ink-3);
-  white-space: nowrap;
 }
 
-.sb-nguon a {
-  color: inherit;
+.ds-ma-nguon dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
-@media (min-width: 768px) {
-  .app[data-thu-gon] .sb-nguon {
-    display: none;
+@media (max-width: 767px) {
+  .ds-ma-nguon li {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

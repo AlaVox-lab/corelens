@@ -58,7 +58,7 @@ export function TheGoiY({
       {canCu}
       {/* Luôn có mặt trong cây để trình đọc màn hình đọc được khi nội dung hiện ra */}
       <p className="the-goi-y-khac" role="status">
-        {chonKhac ? "Bạn đang chọn khác gợi ý. Lựa chọn của bạn được ghi lại trong nhật ký." : ""}
+        {chonKhac ? "Bạn đang chọn khác gợi ý. Hệ thống ghi lại lựa chọn này." : ""}
       </p>
     </div>
   );

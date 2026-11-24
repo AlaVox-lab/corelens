@@ -46,7 +46,7 @@ export function BieuMauUyQuyen({
     setLoi(null);
     setXong(null);
     if (!nguoiNhan) {
-      setLoi("Chọn người được ủy quyền.");
+      setLoi("Chọn người làm thay.");
       return;
     }
     batDauGui(async () => {
@@ -60,7 +60,7 @@ export function BieuMauUyQuyen({
         setLoi(kq.thongDiep ?? "Chưa khai được. Thử lại sau ít phút.");
         return;
       }
-      setXong("Đã khai ủy quyền. Người được ủy quyền có quyền ngay từ ngày bắt đầu, không phải xác nhận.");
+      setXong("Đã khai ủy quyền. Từ ngày đầu, người làm thay làm được ngay, không cần họ xác nhận.");
       setNguoiNhan("");
       router.refresh();
     });

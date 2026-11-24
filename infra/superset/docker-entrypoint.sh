@@ -22,7 +22,7 @@ superset fab create-admin \
     --password "${SUPERSET_ADMIN_PASSWORD}" \
     --firstname "Quan" \
     --lastname "Tri" \
-    --email "admin@dx-os-lab.test" || echo "    (tài khoản đã tồn tại, bỏ qua)"
+    --email "admin@corelens.test" || echo "    (tài khoản đã tồn tại, bỏ qua)"
 
 echo "==> Khởi tạo vai trò và quyền mặc định"
 superset init

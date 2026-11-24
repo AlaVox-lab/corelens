@@ -1,0 +1,30 @@
+---
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 AlaVox-lab
+//
+// Danh sách lối vào của trang chủ tài liệu (#534): mỗi mục một liên kết và một dòng nói trang đích có gì,
+// theo lối trang tài liệu của Keycloak, Superset — không thẻ trang trí, không biểu tượng. Màn rộng hai cột
+// (tên trang | nội dung), màn hẹp xếp chồng. Màu lấy từ biến của Starlight nên đúng cả nền sáng lẫn tối.
+
+interface Muc {
+  /** Tên trang, đúng tên trên thanh bên. */
+  nhan: string;
+  /** Đường dẫn tương đối từ trang chủ, ví dụ `bat-dau/bat-dau-nhanh/`. */
+  href: string;
+  /** Một dòng: trang đó có gì, bằng danh từ của nội dung trang. */
+  moTa: string;
+}
+
+const { muc } = Astro.props as { muc: Muc[] };
+---
+
+<ul class="loi-vao not-content">
+  {
+    muc.map((m) => (
+      <li>
+        <a href={m.href}>{m.nhan}</a>
+        <span>{m.moTa}</span>
+      </li>
+    ))
+  }
+</ul>
