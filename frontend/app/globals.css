@@ -579,10 +579,6 @@ select.o-nhap {
   color: var(--ink-3);
 }
 
-.qt-nguon-ma.buoc-lech-nguon {
-  margin: 12px 0 0;
-}
-
 .the-goi-y-khac {
   font-size: 12.5px;
   color: var(--f-a-ink);
@@ -2881,6 +2877,9 @@ textarea.o-nhap {
   border-top: 1px solid var(--line);
   padding: 12px;
   display: grid;
+  /* Cột co theo khung, không giãn theo chữ đã mờ khi thanh bên thu gọn: không thì mỗi mục rộng bằng nhãn
+   * đầy đủ, phần thừa bị cắt dưới vùng nội dung và nền mục đang chọn chạm mép (#540) */
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   flex: none;
 }
@@ -4459,14 +4458,33 @@ html.doi-mau * {
  * Ngăn bám mép phải, dưới thanh đầu trang, không lớp phủ: danh sách bên trái vẫn bấm được để
  * đổi hồ sơ. Đầu ngăn và khối thao tác ở đáy đứng yên, phần giữa cuộn. Màn hẹp: toàn màn hình,
  * phủ cả thanh đầu trang. Mở thì trượt vào từ mép phải; đổi hồ sơ trong ngăn không chạy lại
- * hiệu ứng (ngăn vẫn là một phần tử); đóng thì trượt ra rồi mới rời `?xem=` (#237). */
+ * hiệu ứng (ngăn vẫn là một phần tử); đóng thì trượt ra rồi mới rời `?xem=` (#237).
+ *
+ * Từ #539 ngăn không che bảng ở màn từ 1100px: vùng nội dung chừa bên phải đúng bề rộng ngăn
+ * (`--rong-ngan`), bảng co lại và ẩn bớt cột phụ (khối "Bảng hàng đợi co theo ngăn" bên dưới). Ngăn
+ * hẹp lại theo cửa sổ để bảng còn đủ chỗ cho cột hồ sơ và "Việc tiếp theo". Từ 768px tới 1099px chừa
+ * chỗ thì bảng còn quá hẹp, nên ngăn vẫn phủ như trước; dưới 768px ngăn phủ cả màn. */
+:root {
+  --rong-ngan: min(560px, 100%);
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --rong-ngan: clamp(400px, 34vw, 560px);
+  }
+
+  .vung:has(.khung-bang[data-co-ngan]) {
+    padding-right: calc(var(--rong-ngan) + 24px);
+  }
+}
+
 .ngan {
   position: fixed;
   top: 60px;
   right: 0;
   bottom: 0;
   z-index: 30;
-  width: min(560px, 100%);
+  width: var(--rong-ngan);
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -4629,6 +4647,63 @@ html.doi-mau * {
   background: var(--chon);
 }
 
+/* --- Bảng hàng đợi co theo ngăn (#539) ------------------------------------------
+ * Khung bảng là container: cột phụ ẩn theo bề rộng CÒN LẠI của khung, không theo cửa sổ — mở ngăn
+ * thì khung hẹp đi mà cửa sổ vẫn rộng. `data-phu="1"` (loại, người gửi) ẩn trước, `data-phu="2"`
+ * (trạng thái, người xử lý) ẩn sau, cột hạn ẩn cuối cùng; ngăn đang mở đã có đủ các thông tin đó. Cột
+ * hồ sơ và "Việc tiếp theo" luôn ở lại.
+ *
+ * Cột hồ sơ, "Việc tiếp theo" và cột hạn chia nhau phần còn lại: câu dài xuống dòng, mỗi cột giữ một bề
+ * rộng tối thiểu. Ngưỡng ẩn cột tính từ tổng bề rộng tối thiểu của các cột còn lại (đo 24/11 trên dữ
+ * liệu mẫu: ô chọn 36, hồ sơ 188, loại 123, trạng thái 225, người gửi 152, người xử lý 139, "Việc tiếp
+ * theo" 140, hạn 158 — điều phối đủ cột cần 870, bỏ loại 747, bỏ trạng thái 522), chừa một khoảng cho
+ * nhãn dài hơn. `overflow: clip` để cuộn dòng đang xem vào tầm nhìn không kéo bảng sang ngang. Dưới
+ * 768px bảng đã thành thẻ (khối màn hẹp ở trên), các luật này không áp. */
+.khung-bang {
+  container-type: inline-size;
+  overflow: clip;
+}
+
+@media (min-width: 768px) {
+  .khung-bang .o-ho-so {
+    min-width: 10rem;
+  }
+
+  .khung-bang .cot-tiep,
+  .khung-bang .cot-cuoi {
+    width: auto;
+    white-space: normal;
+  }
+
+  .khung-bang .viec-tiep,
+  .khung-bang .chu-han {
+    min-width: 7rem;
+    white-space: normal;
+  }
+
+  .khung-bang .viec-tiep {
+    display: inline-block;
+  }
+
+  @container (max-width: 919px) {
+    .bang [data-phu="1"] {
+      display: none;
+    }
+  }
+
+  @container (max-width: 799px) {
+    .bang [data-phu="2"] {
+      display: none;
+    }
+  }
+
+  @container (max-width: 519px) {
+    .bang .cot-cuoi {
+      display: none;
+    }
+  }
+}
+
 @media (max-width: 767px) {
   .ngan {
     top: 0;
@@ -4649,6 +4724,11 @@ html.doi-mau * {
   margin: 10px 4px 0;
   font-size: 13px;
   color: var(--ink-2);
+}
+
+/* Liên kết nằm giữa câu: gạch chân, không chỉ khác màu (WCAG 1.4.1 — axe `link-in-text-block`) */
+.ghi-con-lai a {
+  text-decoration: underline;
 }
 
 /* --- Báo cáo: bảng điều khiển phân tích nhúng (#305) ------------------------ */
@@ -4918,18 +4998,6 @@ html[data-qt-ngan] .ngan {
   margin: 0;
   font-size: 12.5px;
   color: var(--ink-3);
-}
-
-/* Dòng mã nguồn của dịch vụ khai phá (AGPL điều 13, #340): nhỏ, cuối màn, hiện cả khi màn rỗng */
-.qt-nguon-ma {
-  margin: 20px 0 0;
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.qt-nguon-ma a {
-  color: inherit;
-  text-decoration: underline;
 }
 
 /* Ba khối xếp hạng: 3 cột khi vùng đủ rộng, 2 cột ở vùng vừa (khối thứ ba trải hai cột), 1 cột ở vùng hẹp */
@@ -5651,23 +5719,60 @@ span.qt-ma {
   }
 }
 
-/* --- Lối vào kho tri thức trên thanh bên (#321) ------------------------------
- * Dòng nhỏ dưới tên mục: nền tảng, giấy phép, mã nguồn (AGPL-3.0, điều 13). Thu gọn thanh bên thì ẩn
- * như nhãn của mục. */
-.sb-nguon {
-  margin: -2px 0 4px 44px;
-  font-size: 11.5px;
+/* --- Trang Mã nguồn và giấy phép (#540) -------------------------------------
+ * Mỗi thành phần một hàng: tên và việc của nó bên trái, giấy phép và liên kết mã nguồn bên phải; màn hẹp
+ * xếp chồng. Địa chỉ dài thì xuống dòng ở bất kỳ đâu thay vì đẩy trang tràn ngang. */
+.ds-ma-nguon {
+  max-width: 880px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ds-ma-nguon li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 8px 24px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ds-ma-nguon li:last-child {
+  border-bottom: 0;
+}
+
+.ds-ma-nguon h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ds-ma-nguon p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.ds-ma-nguon dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.ds-ma-nguon dt {
   color: var(--ink-3);
-  white-space: nowrap;
 }
 
-.sb-nguon a {
-  color: inherit;
+.ds-ma-nguon dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
-@media (min-width: 768px) {
-  .app[data-thu-gon] .sb-nguon {
-    display: none;
+@media (max-width: 767px) {
+  .ds-ma-nguon li {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

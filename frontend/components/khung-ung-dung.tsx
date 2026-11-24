@@ -10,7 +10,7 @@
 // chủ rồi truyền xuống. Tệp này chỉ giữ thứ thuộc về trình duyệt: đường dẫn đang mở,
 // ngăn kéo đang mở hay đóng, và lựa chọn sáng/tối lưu trên máy người dùng.
 
-import { Bell, ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
+import { Bell, ChevronRight, LogOut, Menu, Moon, PanelLeftClose, Scale, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
@@ -168,6 +168,19 @@ export function KhungUngDung({
           >
             <PanelLeftClose aria-hidden />
           </button>
+          {/* Chỗ cố định duy nhất dẫn tới mã nguồn (#540, điều 13 của AGPL). Thu gọn thanh bên thì nhãn mờ đi
+              nhưng vẫn là tên của liên kết; `title` hiện nhãn khi rê chuột */}
+          <Link
+            className="sb-muc"
+            href="/ma-nguon"
+            aria-current={duongDan === "/ma-nguon" ? "page" : undefined}
+            title="Mã nguồn và giấy phép"
+          >
+            <span className="sb-icon">
+              <Scale aria-hidden />
+            </span>
+            <span className="sb-nhan">Mã nguồn và giấy phép</span>
+          </Link>
           <button className="sb-muc nut-mau" type="button" onClick={doiCheDo}>
             <span className="khi-sang">
               <Moon aria-hidden />

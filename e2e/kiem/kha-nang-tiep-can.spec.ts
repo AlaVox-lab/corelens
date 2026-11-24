@@ -115,9 +115,10 @@ test.describe("chưa đăng nhập", () => {
 test.describe("người gửi", () => {
   theoVai("nguoi-gui");
 
-  test("trang chủ, Gửi yêu cầu, hồ sơ của tôi, một hồ sơ", async ({ page }) => {
+  test("trang chủ, Gửi yêu cầu, hồ sơ của tôi, một hồ sơ, Mã nguồn và giấy phép", async ({ page }) => {
     const h = docHoSo();
     await moVaQuet(page, "/", "nguoi-gui-trang-chu");
+    await moVaQuet(page, "/ma-nguon", "nguoi-gui-ma-nguon");
     await moVaQuet(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau-buoc-1");
     // Bước 2 có ô nhập, trường riêng của loại và ô tải tệp
     await page.getByText("Sự cố thiết bị").first().click();
@@ -135,6 +136,8 @@ test.describe("điều phối viên", () => {
     const h = docHoSo();
     await moVaQuet(page, "/", "dieu-phoi-trang-chu");
     await moVaQuet(page, "/dieu-phoi", "dieu-phoi-hang-doi");
+    // Ngăn xem nhanh mở cạnh bảng đã co lại (#539)
+    await moVaQuet(page, `/dieu-phoi?xem=${h.ma}`, "dieu-phoi-hang-doi-xem-nhanh");
     await moVaQuet(page, `/dieu-phoi/${h.ma}`, "dieu-phoi-ho-so");
     // Bảng thao tác mở ra có ô chọn, ô ghi chú, thẻ gợi ý
     await page.locator("#thao-tac").getByRole("button", { name: "Phân loại yêu cầu", exact: true }).click();

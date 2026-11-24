@@ -16,6 +16,10 @@
 // Chọn nhiều (#440) chỉ bật khi trang truyền `chonNhieu` — hàng đợi điều phối. Không truyền thì bảng y
 // như trước: không cột ô chọn, không thanh thao tác. Chọn chỉ trong trang đang xem; đổi trang, tìm hay
 // lọc là bỏ chọn — mở ngăn xem nhanh (`?xem=`) thì không.
+//
+// Ngăn xem nhanh mở ở màn rộng thì bảng co lại nhường chỗ chứ không bị ngăn che (#539). Cột phụ mang
+// `data-phu` (1 ẩn trước, 2 ẩn sau) và CSS ẩn chúng theo bề rộng còn lại của khung bảng; cột hồ sơ và
+// "Việc tiếp theo" không bao giờ ẩn.
 
 import { AlarmClock, ChevronDown, CircleHelp, Clock, Inbox, MessageCircle, SearchX, Tag } from "lucide-react";
 import Link from "next/link";
@@ -147,9 +151,13 @@ function Dong({
           </span>
         </div>
       </td>
-      {cot.nguoiGui && <td className="w an-hep">{d.nguoiGui}</td>}
+      {cot.nguoiGui && (
+        <td className="w an-hep" data-phu="1">
+          {d.nguoiGui}
+        </td>
+      )}
       {cot.nguoiXuLy && (
-        <td className="w an-hep">
+        <td className="w an-hep" data-phu="2">
           {d.giao ? (
             <span style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
               <span className="av av-nho" data-c={d.giao.mau} aria-hidden>
@@ -163,7 +171,7 @@ function Dong({
         </td>
       )}
       {cot.loai && (
-        <td className="w an-hep">
+        <td className="w an-hep" data-phu="1">
           {d.loai ? (
             <span className="nhan-loai">
               <Tag aria-hidden />
@@ -178,12 +186,12 @@ function Dong({
         </td>
       )}
       {cot.trangThai && d.trangThai && (
-        <td className="w">
+        <td className="w" data-phu="2">
           <NhanTrangThai ma={d.trangThai.code} nhan={d.trangThai.label} />
         </td>
       )}
       {cot.tiepTheo && (
-        <td className="w an-hep">
+        <td className="w an-hep cot-tiep">
           {d.tiepTheo ? (
             <span className="viec-tiep" data-cua-toi={d.tiepTheo.cuaToi ? "" : undefined}>
               {d.tiepTheo.chu}
@@ -193,7 +201,7 @@ function Dong({
           )}
         </td>
       )}
-      <td className="w" style={{ textAlign: "right" }}>
+      <td className="w cot-cuoi" style={{ textAlign: "right" }}>
         <span className="chu-han" data-muc={d.cuoi.muc}>
           {/* Dấu hiệu bằng biểu tượng kèm chữ, không chỉ bằng màu (#231) */}
           {d.cuoi.muc === "qua" ? <AlarmClock aria-hidden /> : d.cuoi.muc === "sap" ? <Clock aria-hidden /> : null}
@@ -285,7 +293,9 @@ export function BangHangDoi({
         <KetQuaHangLoatKhung ketQua={ketQua} goc={chonNhieu.goc} khiDong={() => datKetQua(null)} />
       )}
 
-      <div className="the">
+      {/* `data-co-ngan`: ngăn xem nhanh đang mở — CSS chừa chỗ bên phải cho nó ở màn rộng (#539). Dấu có
+          ngay ở bản dựng máy chủ, nên mở thẳng đường dẫn `?xem=` không thấy bảng co lại sau khi tải */}
+      <div className="the khung-bang" data-co-ngan={ngan ? "" : undefined}>
         {loc.length === 0 ? (
           xoaLoc ? (
             // Trống vì bộ lọc (#234): nói rõ là do lọc, và cho xóa lọc ngay tại chỗ
@@ -323,12 +333,28 @@ export function BangHangDoi({
                   </th>
                 )}
                 <th>Hồ sơ</th>
-                {cot.nguoiGui && <th className="w an-hep">Người gửi</th>}
-                {cot.nguoiXuLy && <th className="w an-hep">Người xử lý</th>}
-                {cot.loai && <th className="w an-hep">Loại</th>}
-                {cot.trangThai && <th className="w">Trạng thái</th>}
-                {cot.tiepTheo && <th className="w an-hep">Việc tiếp theo</th>}
-                <th className="w" style={{ textAlign: "right" }}>
+                {cot.nguoiGui && (
+                  <th className="w an-hep" data-phu="1">
+                    Người gửi
+                  </th>
+                )}
+                {cot.nguoiXuLy && (
+                  <th className="w an-hep" data-phu="2">
+                    Người xử lý
+                  </th>
+                )}
+                {cot.loai && (
+                  <th className="w an-hep" data-phu="1">
+                    Loại
+                  </th>
+                )}
+                {cot.trangThai && (
+                  <th className="w" data-phu="2">
+                    Trạng thái
+                  </th>
+                )}
+                {cot.tiepTheo && <th className="w an-hep cot-tiep">Việc tiếp theo</th>}
+                <th className="w cot-cuoi" style={{ textAlign: "right" }}>
                   {cot.cuoi}
                 </th>
               </tr>

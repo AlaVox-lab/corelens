@@ -74,7 +74,7 @@ WIKI_URL=http://localhost:3100
 
 | Có | Cần |
 |---|---|
-| Lối **Kho tri thức** trên thanh bên của mọi nhân viên — mở thẻ mới, vào thẳng qua Keycloak; dưới tên ghi *Wiki.js · AGPL-3.0 · mã nguồn* | `WIKI_URL` |
+| Lối **Kho tri thức** trên thanh bên của mọi nhân viên — mở thẻ mới, vào thẳng qua Keycloak; trang *Mã nguồn và giấy phép* ở chân thanh bên thêm dòng Wiki.js (AGPL-3.0) kèm liên kết mã nguồn | `WIKI_URL` |
 | Bài hướng dẫn trong khung *Có thể đã có cách giải quyết* khi người gửi đang soạn yêu cầu, cạnh hồ sơ đã giải quyết tương tự; bấm mở bài ở thẻ mới | `WIKI_URL` **và** mô hình nhúng (`EMBEDDING_URL`, hồ sơ `tri-tue` — trang *Mô hình ngôn ngữ*) |
 
 Bộ lập chỉ mục *Bộ lập chỉ mục kho tri thức* (màn Hệ thống) chạy mỗi `WIKI_INDEX_INTERVAL_SECONDS` giây (mặc

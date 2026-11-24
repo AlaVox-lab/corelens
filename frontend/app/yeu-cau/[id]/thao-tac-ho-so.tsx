@@ -41,6 +41,7 @@ import { OChamDiem } from "@/components/o-cham-diem";
 import { OTruongRieng } from "@/components/o-truong-rieng";
 import { TIEN_TO_TRUONG } from "@/lib/bieu-mau";
 import { useAnCham } from "@/lib/chuyen-dong";
+import { nhanNutXacNhan } from "@/lib/dinh-dang";
 import type { CanhDiDuoc, LoaiYeuCau } from "@/lib/kieu";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
@@ -242,16 +243,16 @@ export function ThaoTacHoSo({
               required={dangMo.requires_note}
               placeholder={
                 !dangMo.requires_note
-                  ? "Có thể bỏ trống. Nếu ghi, dòng này đi vào dòng thời gian của hồ sơ."
+                  ? "Có thể bỏ trống. Nếu ghi, dòng này hiện trong dòng thời gian."
                   : dangMo.note_label
-                    ? "Dòng này đi vào dòng thời gian của hồ sơ, và người đã hỏi bạn sẽ đọc nó."
-                    : "Nói rõ vì sao. Dòng này đi vào dòng thời gian của hồ sơ và người xử lý sẽ đọc nó."
+                    ? "Người đã hỏi bạn sẽ đọc dòng này trong dòng thời gian."
+                    : "Nói rõ vì sao. Người xử lý sẽ đọc dòng này trong dòng thời gian."
               }
             />
           </label>
           {dangMo.requires_note && (
             <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>
-              Ô này bắt buộc: người nhận việc tiếp theo cần biết vì sao.
+              Bắt buộc, để người làm bước sau biết vì sao.
             </span>
           )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
@@ -263,7 +264,7 @@ export function ThaoTacHoSo({
               data-loai="chinh"
               disabled={dangChay}
             >
-              {dangChay ? "Đang gửi…" : `Xác nhận · ${dangMo.activity_label}`}
+              {dangChay ? "Đang gửi…" : nhanNutXacNhan(dangMo.activity_label)}
             </button>
             <button type="button" className="nut" onClick={dongBang}>
               Thôi

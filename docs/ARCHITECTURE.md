@@ -562,9 +562,11 @@ trong bản ghi quyết định và `docs/dependencies.md`.
 - Header SPDX theo thư mục; `scripts/kiem_header.py` (CI) báo lỗi tệp mang giấy phép của thư mục khác.
   Thêm một thư mục mang giấy phép riêng thì sửa cùng lúc bảng `GIAY_PHEP_THEO_THU_MUC` trong kịch bản đó
   và `LICENSES.md`
-- **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên màn Quy trình thực
-  tế và khối bước lệch trên trang hồ sơ (#448) có dòng dẫn tới mã nguồn của dịch vụ. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
-  cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa
+- **Điều 13**: dịch vụ khai phá phục vụ người dùng qua mạng (gián tiếp qua cổng), nên cổng dẫn tới mã
+  nguồn của dịch vụ ở một chỗ cố định: trang *Mã nguồn và giấy phép* (`/ma-nguon`, #540), mở từ chân thanh
+  bên của mọi trang khi đã đăng nhập. Địa chỉ là cấu hình (`MINING_SOURCE_URL` của cổng), không mã
+  cứng — bản tự triển khai có sửa dịch vụ thì trỏ về kho của bản sửa. Trang cũng liệt kê kho Corelens (suy
+  từ chính địa chỉ đó) và, khi kho tri thức bật, Wiki.js
 - Chiều MIT sang AGPL tương thích, nên mã MIT của kho dùng lại được trong dịch vụ khai phá; chiều ngược
   lại thì không — **không chép mã từ `services/khai-pha/` sang thư mục MIT**
 
@@ -1495,10 +1497,9 @@ trạng thái, loại yêu cầu, phòng đều đọc từ JSON (`states[].labe
 hợp đồng có bảng nhãn trong mã vì đó là loại phân tích do dịch vụ khai phá định nghĩa. Bấm một trạng
 thái, nhánh lệch hay đường đi mở ngăn danh sách hồ sơ (`longest_waits`, `deviations[].cases`,
 `variants[].cases`); mã hồ sơ dẫn tới buồng lái điều phối hoặc phòng ban tùy `workspaces` của `/me`
-(`duongDanHoSo` ở `lib/khong-gian.ts`). Chân màn luôn có dòng *"Phân tích bởi dịch vụ khai phá quy
-trình, giấy phép AGPL-3.0 — mã nguồn"* (#340, điều 13 — mục 3.3): trang máy chủ đọc `MINING_SOURCE_URL`,
-chỉ nhận `http(s)`, truyền xuống thành phần; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site`
-— *Quy trình thực tế*.
+(`duongDanHoSo` ở `lib/khong-gian.ts`). Liên kết mã nguồn của dịch vụ (#340, điều 13 — mục 3.3) không nằm
+trên màn mà ở trang *Mã nguồn và giấy phép* chân thanh bên (#540): trang máy chủ đọc `MINING_SOURCE_URL`,
+chỉ nhận `http(s)`; màn không nêu tên bộ máy. Hướng dẫn người dùng: `docs-site` — *Quy trình thực tế*.
 
 **Tuân thủ theo từng hồ sơ (#448).** Vòng tự soi tới tận một hồ sơ: trang hồ sơ phía nhân viên cho thấy hồ
 sơ đã đi lệch quy trình thiết kế ở bước nào. **Một định nghĩa lệch duy nhất**: hàm `buoc_lech` ở
@@ -1531,8 +1532,8 @@ Cổng ──► /api/tuan-thu/{id} ──► dịch vụ ứng dụng ──HTT
   của người gửi không có): khối hỏi sau khi trang hiện, có hạn chót, và **chỉ vẽ khi `status` là `ready` và
   có bước** — hồ sơ chuẩn, khai phá tắt hay hỏng thì trang y như trước, không khung trống. Nhãn loại lệch là
   bảng `NHAN_NHANH_LECH` của màn Quy trình thực tế; nhãn trạng thái từ kết quả. Không nút nào, không đổi gì
-  trên hồ sơ (ADR-0005: xem không phải thao tác). Khối mang dòng mã nguồn AGPL điều 13 như màn Quy trình
-  thực tế, cùng hàm `lib/nguon-ma-khai-pha.ts` đọc `MINING_SOURCE_URL`
+  trên hồ sơ (ADR-0005: xem không phải thao tác). Liên kết mã nguồn AGPL điều 13 ở trang *Mã nguồn và giấy
+  phép* chân thanh bên (#540), không lặp trong khối
 
 **Tầng `I` chỉ gợi ý** (`CLAUDE.md` mục 4.3): khai phá chỉ đọc và phân tích, không ghi trường nào của hồ sơ.
 
@@ -1798,7 +1799,8 @@ chạy, `scripts/kiem_nang_cap.py` đối soát đạt. Bộ nhớ Wiki.js kho�
 
 **Nối vào cổng — một công tắc `WIKI_URL`.** Rỗng (mặc định) là tắt: `/me` trả `knowledge_base: null`, thanh bên
 không có lối vào, gợi ý khi soạn chỉ có hồ sơ (#319). Đặt thì `/me` trả địa chỉ `/login/keycloak` và mã nguồn của
-Wiki.js; thanh bên có mục **Kho tri thức** mở thẻ mới, dưới tên ghi *Wiki.js · AGPL-3.0 · mã nguồn* (`LICENSES.md`).
+Wiki.js; thanh bên có mục **Kho tri thức** mở thẻ mới, và trang *Mã nguồn và giấy phép* ở chân thanh bên thêm dòng
+Wiki.js (AGPL-3.0) dẫn tới mã nguồn đó (#540, `LICENSES.md`).
 Bước khởi tạo bật `authAutoLogin` của Wiki.js: `/login` chuyển thẳng sang Keycloak, nên liên kết tới một bài
 mở được ngay; quản trị wiki vào `/login?all=1`.
 
@@ -2352,6 +2354,12 @@ ngăn gửi đường dẫn được; trang chi tiết đầy đủ vẫn mở t
   đúng dòng — trừ khi đang gõ trong ô nhập hay một menu đã nhận phím đó. Ngăn gắn thẳng vào
   `<body>`: khung nội dung mang `transform` của hiệu ứng hiện trang, `position: fixed` bên trong nó
   tính theo khung đó chứ không theo cửa sổ. Màn hẹp: ngăn chiếm toàn màn hình
+- **Ngăn không che bảng** (#539): từ 1100px, khung bảng mang `data-co-ngan` khi ngăn mở (có ngay ở bản dựng
+  máy chủ) và vùng nội dung chừa bên phải đúng bề rộng ngăn (`--rong-ngan`, co theo cửa sổ). Khung bảng là
+  container (`container-type: inline-size`): cột phụ mang `data-phu` ẩn theo bề rộng còn lại — loại, người
+  gửi trước; trạng thái, người xử lý sau; cột hạn sau cùng — còn cột hồ sơ và "Việc tiếp theo" luôn ở lại,
+  câu dài xuống dòng. Từ 768 tới 1099px ngăn vẫn phủ (chừa chỗ thì bảng quá hẹp). Màn Quy trình thực tế dùng
+  cùng cách chừa chỗ cho ngăn danh sách hồ sơ (`html[data-qt-ngan]`, #315)
 
 **Từ #155, hộp thư chung gom lời nhắn theo người** (`backend/app/workflow/inbox.py`,
 `frontend/app/hop-thu/`). Không có kho tin nhắn thứ hai: mỗi cuộc trò chuyện là lời nhắn
