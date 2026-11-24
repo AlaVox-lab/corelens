@@ -121,7 +121,9 @@ test.describe("người gửi", () => {
     await moMan(page, "/", "nguoi-gui-trang-chu");
     await moMan(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau");
     await moMan(page, "/yeu-cau", "nguoi-gui-ho-so-cua-toi");
-    await expect(page.getByText(h.tieuDe)).toBeVisible();
+    // Hồ sơ dựng lúc chuẩn bị trôi khỏi trang đầu khi các bài khác gửi thêm hồ sơ: tìm theo tiêu đề như người dùng
+    await page.goto(`/yeu-cau?q=${encodeURIComponent(h.tieuDe)}`, { waitUntil: "networkidle" });
+    await expect(page.getByText(h.tieuDe, { exact: true })).toBeVisible();
     await moMan(page, `/yeu-cau/${h.ma}`, "nguoi-gui-ho-so");
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
