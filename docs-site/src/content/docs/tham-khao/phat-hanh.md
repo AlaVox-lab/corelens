@@ -14,6 +14,7 @@ lịch sử commit.
 
 | Bản | Nội dung chính |
 |---|---|
+| `v1.8.0` | Lệnh tạo hồ sơ và chuyển trạng thái của lõi nhận khóa `Idempotency-Key`, gửi lại cùng khóa nhận đúng kết quả cũ; nhật ký kiểm toán chỉ ghi thêm cho mỗi lần xem hồ sơ, liên hệ, tệp của người khác và xuất nhật ký; ngăn xem nhanh không che bảng hồ sơ; trang *Mã nguồn và giấy phép* ở chân thanh bên thay các dòng AGPL chen giữa nội dung; dữ liệu trình diễn đọc như doanh nghiệp thật, có số cho hai biểu đồ đo gợi ý; mọi chữ người dùng thấy mang tên Corelens; README gọn, kho tri thức chịu được gói ngôn ngữ hỏng |
 | `v1.7.0` | Điều phối viên chọn nhiều hồ sơ để phân loại hay chuyển phòng cả lô, mỗi hồ sơ vẫn một lần chuyển và một dòng nhật ký riêng, hồ sơ bị chặn báo riêng; người gửi chấm mức hài lòng 1–5 kèm nhận xét khi xác nhận đạt, bảng điều khiển thêm điểm trung bình, tỷ lệ được chấm theo phòng và phân bố điểm; dòng thời gian ghi đúng nhãn bước khi một cặp trạng thái có cả bước người lẫn bước hệ thống |
 | `v1.6.0` | Trang hồ sơ của điều phối viên và phòng ban hiện các bước đi lệch quy trình thiết kế, chỉ để đọc; cổng đạt WCAG 2.1 AA trên màn chính của từng vai, có kịch bản quét axe và bài thao tác bằng bàn phím; API lõi trả mọi cạnh của hồ sơ kèm lý do không đi được và trường cần nhập; kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis |
 | `v1.5.1` | Bản vá sau khi đổi tên dự án thành Corelens: kho chuyển sang `AlaVox-lab/corelens`, hướng dẫn cài khớp tên tệp nén mới `corelens-<phiên bản>`, đường gốc trang tài liệu `/corelens` |
