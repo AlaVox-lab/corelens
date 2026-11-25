@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/nhan-dien/corelens-kem-chu-toi.png">
+  <img src="docs/nhan-dien/corelens-kem-chu-sang.png" alt="Corelens logo: a C made of three glass bands around a cut stone core" width="280">
+</picture>
+
 # Corelens
 
 [Tiếng Việt](README.md) · **English**
@@ -85,6 +90,7 @@ to [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 | Faculty advisor | MSc. Trần Phước Đức | [`@tranphuocduc1998`](https://github.com/tranphuocduc1998) |
 | Repository coordinator | Nguyễn Thanh Sơn | [`@AlaVox-lab`](https://github.com/AlaVox-lab) |
 | Member | Nguyễn Thanh Nguyên | [`@NguyentimAnh`](https://github.com/NguyentimAnh) |
+| Member | Hoàng Xuân Hùng | [`@Hunghoang88-code`](https://github.com/Hunghoang88-code) |
 
 Work is split by [issue](https://github.com/AlaVox-lab/corelens/issues); nobody owns a fixed space.
 

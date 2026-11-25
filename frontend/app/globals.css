@@ -2660,15 +2660,12 @@ textarea.o-nhap {
   flex: none;
 }
 
+/* Dấu Corelens (#551, components/dau-corelens.tsx) đứng tự do, không ô nền màu nhấn; giữ đúng cỡ 30px của ô chữ cũ
+ * để đầu thanh bên không xê dịch, cả khi thu gọn còn 64px */
 .logo {
+  display: block;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
-  background: var(--accent);
-  color: var(--accent-on);
-  display: grid;
-  place-items: center;
-  font: 500 11.5px var(--mono);
   flex: none;
 }
 
@@ -3312,14 +3309,9 @@ html.doi-mau * {
 }
 
 .logo-lon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: var(--accent);
-  color: var(--accent-on);
-  font-size: 14px;
+  display: block;
+  width: 48px;
+  height: 48px;
 }
 
 .logo-lon + .tieu-de-trang {

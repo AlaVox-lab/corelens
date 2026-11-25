@@ -22,6 +22,7 @@
 import { AlarmClock, CircleCheck, Clock, FolderOpen, Hand } from "lucide-react";
 import Link from "next/link";
 
+import { DauCorelens } from "@/components/dau-corelens";
 import { KhongPhanHoi, KhungLamViec } from "@/components/khung-lam-viec";
 import { SoCuon } from "@/components/so-cuon";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
@@ -41,7 +42,7 @@ function ChuaDangNhap() {
   // Căn giữa màn, ngắn, nút đăng nhập nổi bật (#236) — không còn bảng kỹ thuật (#229)
   return (
     <main className="chua-dang-nhap">
-      <span className="logo-lon mono">YC</span>
+      <DauCorelens co={48} className="logo-lon" />
       <h1 className="tieu-de-trang">Cổng yêu cầu nội bộ</h1>
       <p className="cdn-phu">Corelens · Hệ điều hành Doanh nghiệp số</p>
       <p className="cdn-mo-ta">

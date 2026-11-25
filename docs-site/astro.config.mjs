@@ -36,6 +36,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Corelens",
+      // Dấu Corelens cạnh tên ở đầu trang (#551); chữ "Corelens" vẫn hiện nên dấu là hình trang trí (alt rỗng)
+      logo: { src: "./src/assets/corelens-dau.svg" },
       description: "Cổng vận hành yêu cầu nội bộ — tài liệu cài đặt, sử dụng và phát triển",
       locales: { root: { label: "Tiếng Việt", lang: "vi" } },
       social: [{ icon: "github", label: "GitHub", href: "https://github.com/AlaVox-lab/corelens" }],
