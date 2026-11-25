@@ -10,7 +10,8 @@
 // Cả bộ giá trị gửi đi trong MỘT ô ẩn dạng JSON (`ten`), vì dịch vụ nhận nó là một trường
 // `details`. Ô bắt buộc mang `aria-required` chứ không `required`: biểu mẫu gửi ba bước giấu
 // bước 2 khi gửi ở bước 3, và ô `required` bị giấu làm trình duyệt chặn gửi mà không nói
-// gì. Dịch vụ kiểm và trả câu "Chưa điền …" bằng nhãn trường.
+// gì. Biểu mẫu gửi tự kiểm trước khi rời bước 2 và bật `baoThieu` để câu báo hiện ngay dưới ô
+// trống (#555); dịch vụ vẫn là lớp chặn cuối, trả câu "Chưa điền …" bằng nhãn trường.
 
 import { useEffect, useRef, useState } from "react";
 
@@ -28,6 +29,7 @@ export function OTruongRieng({
   giaTriDau = {},
   theoLoai,
   khiDoi,
+  baoThieu = false,
 }: {
   /** Tên ô ẩn mang JSON — "details" ở biểu mẫu gửi, "truong:details" ở sửa nội dung. */
   ten: string;
@@ -35,6 +37,11 @@ export function OTruongRieng({
   giaTriDau?: Record<string, unknown>;
   /** Báo bộ giá trị đang nhập mỗi lần đổi — bước Xem lại của biểu mẫu gửi liệt kê lại các trường đã điền (#552). */
   khiDoi?: (giaTri: Record<string, string>) => void;
+  /**
+   * Hiện câu "Chưa điền …" dưới mỗi ô bắt buộc đang trống (#555). Biểu mẫu gửi bật khi người gửi bấm
+   * Tiếp tục còn thiếu trường; câu dưới một ô tự mất ngay khi ô đó có giá trị.
+   */
+  baoThieu?: boolean;
   /**
    * Ở bảng sửa nội dung, người gửi đổi được cả loại yêu cầu: ô trường riêng nghe ô chọn loại
    * cùng biểu mẫu (tên `tenOChon`) và đổi bộ ô theo loại mới. Không nghe thì đổi loại xong vẫn
@@ -83,6 +90,9 @@ export function OTruongRieng({
       {cacTruong.map((t) => {
         const id = `truong-rieng-${t.code}`;
         const v = giaTri[t.code] ?? "";
+        const thieu = baoThieu && t.required && !v.trim();
+        // Câu báo gắn vào ô bằng `aria-describedby` để trình đọc màn hình đọc nó khi tiêu điểm tới ô
+        const moTaO = thieu ? `${id}-loi` : undefined;
         return (
           <label key={t.code} htmlFor={id} className="o-truong">
             <span className="o-truong-nhan">
@@ -96,7 +106,15 @@ export function OTruongRieng({
               )}
             </span>
             {t.kind === "choice" ? (
-              <select id={id} className="o-nhap" value={v} aria-required={t.required} onChange={(e) => dat(t.code, e.target.value)}>
+              <select
+                id={id}
+                className="o-nhap"
+                value={v}
+                aria-required={t.required}
+                aria-invalid={thieu || undefined}
+                aria-describedby={moTaO}
+                onChange={(e) => dat(t.code, e.target.value)}
+              >
                 <option value="">Chọn…</option>
                 {(t.options ?? []).map((o) => (
                   <option key={o} value={o}>
@@ -114,12 +132,19 @@ export function OTruongRieng({
                   min={t.kind === "number" ? 0 : undefined}
                   maxLength={t.kind === "text" ? 500 : undefined}
                   aria-required={t.required}
+                  aria-invalid={thieu || undefined}
+                  aria-describedby={moTaO}
                   value={v}
                   onChange={(e) => dat(t.code, e.target.value)}
                 />
                 {t.unit ? <span className="o-truong-don-vi">{t.unit}</span> : null}
               </span>
             )}
+            {thieu ? (
+              <span id={moTaO} className="o-truong-loi">
+                Chưa điền {t.label}.
+              </span>
+            ) : null}
             {t.help_text ? <span className="o-truong-goi-y">{t.help_text}</span> : null}
           </label>
         );

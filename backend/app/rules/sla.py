@@ -34,7 +34,7 @@ import datetime as dt
 from sqlalchemy import BigInteger, cast, func, select
 from sqlalchemy.orm import Session
 
-from app.models.case import Request
+from app.models.case import EventLog, Request
 from app.models.workflow_config import Priority, RequestType, State, Transition
 
 
@@ -87,13 +87,35 @@ def cap_nhat_dong_ho(session: Session, case: Request, transition: Transition) ->
     if transition.restarts_sla:
         case.sla_running_seconds = 0
 
-    da_khoi_dong = case.sla_segment_since is not None or den.sla_running
+    dang_dem = case.sla_segment_since is not None or den.sla_running
 
-    if den.is_terminal or not da_khoi_dong:
+    if den.is_terminal or not dang_dem:
         # Hồ sơ đóng thì đồng hồ dừng hẳn; chưa khởi động thì chưa tính gì
         case.sla_segment_since = None
     else:
         case.sla_segment_since = hien_tai
+
+
+def da_khoi_dong(session: Session, case: Request) -> bool:
+    """Đồng hồ đã từng khởi động — hồ sơ đã từng vào một trạng thái có `sla_running` (#97).
+
+    Hồ sơ chưa kết thúc: mốc đoạn đang mở trả lời ngay, vì đã khởi động thì mốc chỉ bị xóa khi vào trạng thái kết
+    thúc (`cap_nhat_dong_ho`). Hồ sơ đã kết thúc mất mốc đó, nên số giây đã chạy trả lời — trừ hồ sơ xử lý trọn
+    ngoài giờ làm việc: đồng hồ có chạy mà 0 giây làm việc (#557). Chỉ khi đó mới tra nhật ký, để danh sách dài
+    không tốn thêm truy vấn cho mỗi dòng."""
+    if case.sla_segment_since is not None or case.sla_running_seconds > 0:
+        return True
+    if not _trang_thai(session, case.rule_set_id, case.current_state).is_terminal:
+        return False
+    return (
+        session.scalar(
+            select(EventLog.id)
+            .join(State, (State.rule_set_id == case.rule_set_id) & (State.code == EventLog.to_state))
+            .where(EventLog.case_id == case.id, State.sla_running)
+            .limit(1)
+        )
+        is not None
+    )
 
 
 def he_so_uu_tien(session: Session, case: Request) -> int:

@@ -62,10 +62,17 @@ function laDuongXuoi(chiSo: number, tongSo: number): boolean {
   return tongSo > 1 && chiSo === 0;
 }
 
-/** Cạnh này cần mở bảng trước khi gửi, thay vì bấm là gửi. Cạnh cho chấm điểm (#433) cũng mở bảng. */
+/**
+ * Cạnh này cần mở bảng trước khi gửi, thay vì bấm là gửi. Cạnh cho chấm điểm (#433) cũng mở bảng, và cạnh đặt tên
+ * ô ghi chú dù không bắt buộc (#556) — dữ liệu đã đặt tên ô là muốn người đi cạnh thấy ô đó.
+ */
 function canHoiLai(canh: CanhDiDuoc): boolean {
   return (
-    canh.requires_note || canh.to_state_is_terminal || canh.fields.length > 0 || canh.collects_feedback === true
+    canh.requires_note ||
+    canh.to_state_is_terminal ||
+    canh.fields.length > 0 ||
+    canh.collects_feedback === true ||
+    Boolean(canh.note_label)
   );
 }
 
@@ -89,6 +96,8 @@ export function ThaoTacHoSo({
 }) {
   const [ketQua, thucHien, dangChay] = useActionState(chuyenTrangThai, CHUA_CO_LOI);
   const [dangMo, datDangMo] = useState<CanhDiDuoc | null>(null);
+  // Đếm ký tự ô ghi chú khi cạnh cho chấm: chữ đó cũng là nhận xét kèm điểm, có trần riêng (#557)
+  const [ghiChu, datGhiChu] = useState("");
   // Bảng xác nhận trượt ra rồi mới gỡ (#237)
   const [dangAn, an] = useAnCham();
   const dongBang = () => an(() => datDangMo(null));
@@ -144,7 +153,11 @@ export function ThaoTacHoSo({
               type="button"
               className="nut"
               data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
-              onClick={() => (dangMo?.to_state === canh.to_state ? dongBang() : datDangMo(canh))}
+              onClick={() => {
+                if (dangMo?.to_state === canh.to_state) return dongBang();
+                datGhiChu("");
+                datDangMo(canh);
+              }}
               aria-expanded={dangMo?.to_state === canh.to_state}
             >
               {canh.activity_label}
@@ -186,6 +199,7 @@ export function ThaoTacHoSo({
             <CanhBaoKetThuc
               nhanTrangThai={dangMo.to_state_label}
               moLaiGio={dangMo.to_state_reopen_hours}
+              choNguoiGui
             />
           )}
           {/* Ô nhập dựng từ `fields` của cạnh — chỉ thao tác sửa nội dung có (#127). Sửa
@@ -225,12 +239,13 @@ export function ThaoTacHoSo({
             </>
           )}
           {/* Chấm mức hài lòng (#433): chỉ ở cạnh mang cờ dữ liệu `collects_feedback` */}
-          {dangMo.collects_feedback && <OChamDiem toiDa={nhanXetToiDa} />}
+          {dangMo.collects_feedback && <OChamDiem />}
           {/* Tên ô từ `transitions.note_label` (#79): ở cạnh bổ sung thông tin, ô này là
-              câu trả lời của người gửi chứ không phải lý do. */}
+              câu trả lời của người gửi chứ không phải lý do. Cạnh cho chấm (#433) chỉ có MỘT ô
+              chữ (#557): ghi chú của bước, cũng là nhận xét kèm điểm. */}
           <label style={{ display: "grid", gap: "7px" }}>
             <span style={{ fontSize: "13.5px", fontWeight: 600 }}>
-              {dangMo.note_label ?? `Lý do cho “${dangMo.activity_label}”`}
+              {dangMo.note_label ?? (dangMo.collects_feedback ? "Nhận xét" : `Lý do cho “${dangMo.activity_label}”`)}
               {!dangMo.requires_note && (
                 <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> — không bắt buộc</span>
               )}
@@ -241,14 +256,30 @@ export function ThaoTacHoSo({
               rows={3}
               maxLength={2000}
               required={dangMo.requires_note}
+              value={ghiChu}
+              onChange={(e) => datGhiChu(e.target.value)}
+              aria-describedby={dangMo.collects_feedback ? "ghi-chu-dem" : undefined}
+              aria-invalid={dangMo.collects_feedback && ghiChu.trim().length > nhanXetToiDa ? true : undefined}
               placeholder={
-                !dangMo.requires_note
+                dangMo.collects_feedback
+                  ? "Điều gì làm tốt, điều gì nên làm khác. Hiện trong dòng thời gian, phòng ban đọc được."
+                  : !dangMo.requires_note
                   ? "Có thể bỏ trống. Nếu ghi, dòng này hiện trong dòng thời gian."
                   : dangMo.note_label
                     ? "Người đã hỏi bạn sẽ đọc dòng này trong dòng thời gian."
                     : "Nói rõ vì sao. Người xử lý sẽ đọc dòng này trong dòng thời gian."
               }
             />
+            {dangMo.collects_feedback && (
+              <span
+                id="ghi-chu-dem"
+                className="cham-diem-dem"
+                data-qua={ghiChu.trim().length > nhanXetToiDa ? "" : undefined}
+              >
+                {ghiChu.trim().length}/{nhanXetToiDa} ký tự
+                {ghiChu.trim().length > nhanXetToiDa ? ` — bớt ${ghiChu.trim().length - nhanXetToiDa} ký tự` : ""}
+              </span>
+            )}
           </label>
           {dangMo.requires_note && (
             <span style={{ fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.55 }}>

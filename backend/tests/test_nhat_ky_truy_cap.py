@@ -27,6 +27,7 @@ from sqlalchemy import select, text
 from app import kiem_toan
 from app.auth.dependencies import current_actor, current_claims
 from app.auth.directory import Contact, get_directory
+from app.config import Settings
 from app.db import get_session
 from app.main import app
 from app.models.case import CaseAttachment, Request
@@ -215,6 +216,25 @@ def test_xem_lien_he_ghi_mot_dong(client, session, rule_set, phong_ban):
     assert [(d.access_kind, d.actor) for d in _dong(session, case_id=ho_so.id)] == [
         ("requester-contact", DIEU_PHOI.id), ("requester-contact", truong_phong.id)
     ]
+
+
+def test_mo_lai_trong_khoang_gop_chi_ghi_mot_dong(client, session, rule_set, phong_ban, monkeypatch):
+    """Trang hồ sơ dựng lại sau mỗi thao tác gọi lại chi tiết và liên hệ (#557): trong khoảng gộp, cùng người, cùng
+    loại, cùng hồ sơ chỉ một dòng; người khác vẫn có dòng riêng. Khoảng 0 thì ghi mọi lần."""
+    ho_so = _ho_so(session, phong_ban)
+    truong_phong = _truong_phong(phong_ban)
+    for _ in range(3):
+        assert _goi(client, DIEU_PHOI).get(f"/coordination/requests/{ho_so.id}").status_code == 200
+        assert _goi(client, DIEU_PHOI).get(f"/coordination/requests/{ho_so.id}/requester-contact").status_code == 200
+    assert _goi(client, truong_phong).get(f"/department/requests/{ho_so.id}").status_code == 200
+    assert [(d.access_kind, d.actor) for d in _dong(session, case_id=ho_so.id)] == [
+        ("case-view", DIEU_PHOI.id), ("requester-contact", DIEU_PHOI.id), ("case-view", truong_phong.id)
+    ]
+
+    cau_hinh = Settings(access_audit_dedup_seconds=0)
+    monkeypatch.setattr(kiem_toan, "get_settings", lambda: cau_hinh)
+    assert _goi(client, DIEU_PHOI).get(f"/coordination/requests/{ho_so.id}").status_code == 200
+    assert len(_dong(session, case_id=ho_so.id, access_kind="case-view", actor=DIEU_PHOI.id)) == 2
 
 
 def test_tai_tep_ghi_ma_tep_va_kenh(client, session, rule_set, monkeypatch):

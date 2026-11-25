@@ -63,7 +63,7 @@ const PHUONG_AN_LUI: KieuTrinhBayTrangThai = {
 /**
  * Bảng tra dấu hiệu theo mã trạng thái.
  *
- * Mười dòng dưới đây khớp với bộ quy tắc mẫu trong `infra/seed/`. Doanh nghiệp khai
+ * Các dòng dưới đây khớp với bộ quy tắc mẫu trong `infra/seed/`. Doanh nghiệp khai
  * bộ quy tắc khác chỉ cần thêm dòng vào đây; thiếu dòng thì trạng thái vẫn hiện ra,
  * chỉ là mang dấu hiệu chung của phương án lùi.
  */
@@ -78,6 +78,7 @@ const BANG: Record<string, KieuTrinhBayTrangThai> = {
   escalated: { dau: "▲", ho: "o", nhom: "can-thiep" },
   closed: { dau: "■", ho: "x", nhom: "ket-thuc" },
   cancelled: { dau: "–", ho: "x", nhom: "ket-thuc" },
+  "rejected-unrouted": { dau: "⊘", ho: "x", nhom: "ket-thuc" },
 };
 
 export function trinhBayTrangThai(ma: string): KieuTrinhBayTrangThai {
@@ -121,7 +122,11 @@ export function viecCuaBan(ma: string): string {
   return "hồ sơ vẫn đang được xử lý, bạn chưa cần làm gì";
 }
 
-/** Chú giải bốn nhóm, giải thích trạng thái hiện tại trên trang hồ sơ của người gửi. */
+/**
+ * Chú giải ba nhóm còn đang chạy, giải thích trạng thái hiện tại trên trang hồ sơ của người gửi. Hồ sơ đã kết
+ * thúc không dùng bảng này: một câu chung cho Đã đóng, Đã hủy và Không tiếp nhận nói sai cả ba (#557) — trang
+ * lấy nhãn trạng thái từ dữ liệu và nói còn mở lại được hay không theo cạnh dịch vụ trả về (`chuGiaiKetThuc`).
+ */
 export const CHU_GIAI_NHOM: {
   nhom: NhomTrangThai;
   tieuDe: string;
@@ -131,7 +136,8 @@ export const CHU_GIAI_NHOM: {
     nhom: "dang-chay",
     tieuDe: "Đang chạy bình thường",
     // Hệ thống chưa có kênh thông báo nào (#143), nên không hứa "sẽ có thông báo" (#151)
-    moTa: "Hồ sơ đang đi trong quy trình. Bạn không cần làm gì; mở lại trang này để xem trạng thái mới nhất.",
+    // Trang tự cập nhật khi hồ sơ đổi (#388), nên không bảo người gửi mở lại trang (#557)
+    moTa: "Hồ sơ đang đi trong quy trình. Bạn chưa cần làm gì.",
   },
   {
     nhom: "cho-ban",
@@ -148,12 +154,18 @@ export const CHU_GIAI_NHOM: {
     // là chuyện của bộ quy tắc, không viết cứng ở đây (#151)
     moTa: "Phòng ban trả hồ sơ về để chọn lại phòng phụ trách, hoặc hồ sơ đã quá hạn nên được đẩy lên cấp trên. Hồ sơ vẫn đang được xử lý, bạn chưa cần làm gì.",
   },
-  {
-    nhom: "ket-thuc",
-    tieuDe: "Đã kết thúc",
-    // Một câu cho cả Đã đóng, Đã hủy và Không tiếp nhận (#102). Đã đóng còn mở lại được trong
-    // thời hạn mở lại nên không nói "không đi tiếp được": nút còn hay không do khung thao tác
-    // quyết, lấy từ dữ liệu
-    moTa: "Hồ sơ đã đóng, đã hủy hoặc không được tiếp nhận. Còn mở lại được hay không thì xem khung thao tác bên dưới; hết đường mở lại thì muốn làm tiếp phải gửi hồ sơ mới.",
-  },
 ];
+
+/**
+ * Chú giải cho hồ sơ đã kết thúc (#557). Tiêu đề là nhãn trạng thái trong dữ liệu ("Đã đóng", "Đã hủy", "Không
+ * tiếp nhận"), không phải một câu gộp cả ba. Còn đường đi tiếp hay không do danh sách cạnh dịch vụ trả về quyết:
+ * Đã đóng trong thời hạn mở lại có cạnh "Mở lại sau khi đóng", hết hạn hay đã hủy thì không còn cạnh nào.
+ */
+export function chuGiaiKetThuc(nhanTrangThai: string, conCanhDiTiep: boolean): { tieuDe: string; moTa: string } {
+  return {
+    tieuDe: nhanTrangThai,
+    moTa: conCanhDiTiep
+      ? "Hồ sơ đã kết thúc nhưng vẫn mở lại được trong thời hạn — nút ở khung thao tác bên dưới."
+      : "Hồ sơ đã kết thúc, không đi tiếp được nữa. Muốn làm tiếp việc này thì gửi một hồ sơ mới.",
+  };
+}

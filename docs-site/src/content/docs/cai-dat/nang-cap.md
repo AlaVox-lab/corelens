@@ -135,7 +135,13 @@ Bản 1.8 đổi mọi chữ người dùng thấy từ "DX-OS Lab" sang Corelen
 
 ## Từ bản 1.8.0 lên 1.8.1: số phiên bản và khóa kho tri thức
 
-Dựng lại như mục đầu trang là đủ; không có bản sửa lược đồ, không phải sửa `.env`.
+Dựng lại như mục đầu trang là đủ; không phải sửa `.env`.
+
+- **Ô Cách giải quyết** ở bước Hoàn thành xử lý (#556), không bắt buộc: bản sửa lược đồ `0040` đặt tên ô cho cạnh
+  đó ở mọi bộ quy tắc của quy trình mặc định. Chỉ cạnh còn trống tên ô; tên quản trị viên đã đặt ở màn cấu hình
+  thì giữ. Chữ người xử lý ghi vào ô này là cách giải quyết mà gợi ý hồ sơ tương tự hiện cho người gửi sau.
+- **Biến mới `ACCESS_AUDIT_DEDUP_SECONDS`** (#557) có mặc định 60 trong Compose: nhật ký truy cập gộp lượt xem
+  trùng trong chừng đó giây. `.env` cũ vẫn chạy; muốn đổi thì chép dòng từ `infra/.env.example`.
 
 - **Số phiên bản** mà `/docs` và màn Hệ thống hiện giờ đọc từ tệp `VERSION` ở gốc kho, Compose gắn vào dịch
   vụ ứng dụng và dịch vụ khai phá. Biến `DXLAB_VERSION` của `.env` chỉ còn là thẻ của các ảnh do nhóm dựng:

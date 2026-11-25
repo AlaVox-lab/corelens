@@ -311,6 +311,12 @@ class Settings(BaseSettings):
     # liệu (`transitions.collects_feedback`); ở đây chỉ trần độ dài nhận xét, tính bằng ký tự.
     feedback_comment_max_chars: int = Field(default=1000, ge=1)
 
+    # --- Nhật ký truy cập dữ liệu cá nhân, xem #431, #557 -------------------------
+    #
+    # Cùng người, cùng loại truy cập, cùng hồ sơ (và cùng tệp) trong chừng này giây thì chỉ giữ một dòng: mở
+    # trang hồ sơ rồi trang tải lại sau mỗi thao tác từng ghi lặp nhiều dòng cho một lần xem. 0 là ghi mọi lần.
+    access_audit_dedup_seconds: int = Field(default=60, ge=0)
+
     # --- Khóa trùng lặp cho lệnh của lõi, xem #426 -------------------------------
     #
     # Hệ thống tích hợp gửi tiêu đề `Idempotency-Key` ở lệnh tạo hồ sơ và bước chuyển của `/core/v1`; gọi lặp

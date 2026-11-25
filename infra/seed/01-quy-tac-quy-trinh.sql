@@ -156,7 +156,9 @@ VALUES
     (1, 'in-progress',         'in-progress',            'claim',               'Nhận việc về mình',                   FALSE, FALSE, NULL,                    14),
     (1, 'in-progress',         'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 15),
     (1, 'in-progress',         'escalated',              'escalate',            'Leo thang do quá hạn',                TRUE,  FALSE, NULL,                    16),
-    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, NULL,                    17),
+    -- Ô ghi chú không bắt buộc (#556, navigator chốt 25/11): chữ ghi ở đây là cách giải quyết mà gợi ý hồ sơ
+    -- tương tự hiện cho người gửi sau (#319). Cụm cũ nhận tên ô qua migration 0040.
+    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, 'Cách giải quyết',       17),
 
     (1, 'escalated',           'in-progress',            'reassign',            'Phân công lại trong cùng phòng',      FALSE, FALSE, NULL,                    18),
 

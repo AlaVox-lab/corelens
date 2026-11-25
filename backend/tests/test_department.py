@@ -550,6 +550,25 @@ def test_dong_ho_chi_khoi_dong_khi_phong_ban_nhan_viec(client, session, rule_set
         "hoàn tất thì đồng hồ đứng, nhưng vẫn là đồng hồ đã khởi động"
 
 
+def test_ho_so_dong_xu_ly_ngoai_gio_van_la_da_khoi_dong(session, rule_set, phong_ban):
+    """Hồ sơ đã đóng mất mốc đoạn đang mở; xử lý trọn ngoài giờ làm việc thì số giây đã chạy là 0 — cổng từng
+    ghi "Đồng hồ xử lý chưa từng chạy" (#557). Đã từng vào trạng thái đếm giờ thì vẫn là đã khởi động; hủy
+    trước khi phòng nhận thì không."""
+    from app.rules.sla import da_khoi_dong
+
+    ho_so = _dang_xu_ly(session, phong_ban, giao_cho=_xu_ly(phong_ban))
+    perform_transition(session, case_id=ho_so.id, to_state="completed", actor=_xu_ly(phong_ban))
+    perform_transition(session, case_id=ho_so.id, to_state="closed", actor=NGUOI_GUI)
+    ho_so.sla_running_seconds = 0  # như xử lý trọn ngoài giờ làm việc
+    session.flush()
+    assert ho_so.sla_segment_since is None
+    assert da_khoi_dong(session, ho_so) is True
+
+    huy = _tao(session, "Hủy trước khi phòng nhận")
+    perform_transition(session, case_id=huy.id, to_state="cancelled", actor=NGUOI_GUI)
+    assert da_khoi_dong(session, huy) is False
+
+
 # ---------------------------------------------------------------------------
 # Leo thang và phân công lại
 # ---------------------------------------------------------------------------

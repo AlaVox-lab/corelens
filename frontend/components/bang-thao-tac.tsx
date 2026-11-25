@@ -335,7 +335,10 @@ export function BangThaoTac({
         </div>
       ) : (
         <div style={{ display: "grid", gap: "8px" }}>
-          {cacCanh.map((canh) => nutCanh(canh, canh.fields.length > 0))}
+          {/* Nút tô màu chính là bước chính đang chờ người xem (`is_primary`, từ dữ liệu quy tắc),
+              như ở ngăn xem nhanh — không phải "thao tác có ô nhập": trước #557 điều phối viên ở
+              Chờ phòng ban xác duyệt thấy Gia hạn xử lý tô đậm chỉ vì nó có ô số giờ. */}
+          {cacCanh.map((canh) => nutCanh(canh, canh.is_primary === true))}
         </div>
       )}
 
@@ -396,10 +399,11 @@ export function BangThaoTac({
           )}
 
           {/* Lý do: bắt buộc khi cạnh đòi (`requires_note`); tùy chọn khi cạnh dẫn tới
-              trạng thái kết thúc — ai đóng một hồ sơ cũng nên được để lại một dòng (#98).
+              trạng thái kết thúc — ai đóng một hồ sơ cũng nên được để lại một dòng (#98) —
+              hay khi cạnh đặt tên ô (#556: "Cách giải quyết" ở Hoàn thành xử lý, không bắt buộc).
               Tên ô lấy từ cạnh khi có (#79): khi hỏi thêm, ô này là câu hỏi chứ không
               phải lý do. */}
-          {(dangMo.requires_note || dangMo.to_state_is_terminal) && (
+          {(dangMo.requires_note || dangMo.to_state_is_terminal || Boolean(dangMo.note_label)) && (
             <label style={{ display: "grid", gap: "6px" }}>
               <span style={KIEU_NHAN}>
                 {dangMo.note_label ?? "Lý do"}

@@ -41,6 +41,11 @@
 # xử lý" và "xác nhận đạt" tra từ bộ quy tắc (bước chính của người được giao, #227), không mã trạng
 # thái nào. Mọi thứ vẫn ghi trước khi INSERT — không sửa dòng nhật ký nào sau đó.
 #
+# Hồ sơ đóng đạt khác cũng có cách giải quyết (#556): lần hoàn thành cuối mang `cach_giai_quyet` của mục nội dung
+# hồ sơ đã rút, theo tỷ lệ trong tệp dữ liệu (ô không bắt buộc), rút từ hạt giống riêng. Nhiều hồ sơ rút trúng một
+# mục thì lần lượt nhận tiêu đề gốc và các `bien_the` của mục — bớt trùng tiêu đề mà không đổi mục, mô tả, trường
+# riêng của hồ sơ nào.
+#
 # Gợi ý của hệ thống (#541): lần chuyển mà ở hệ thống thật người quyết định gửi trường có gợi ý — trường do
 # ràng buộc của cạnh quản (phân loại, chuyển phòng, giao người xử lý, tự nhận việc), tra từ bộ quy tắc — mang
 # `event_log.suggestion` đúng khuôn `app/intelligence/goi_y.py`. Lượt xem hồ sơ tương tự (#319) ghi vào
@@ -117,6 +122,8 @@ NHAN_XET_MAU = {
 
 # Hạt giống riêng của từng phần thêm sau (#541), cộng vào --hat-giong như phần mức hài lòng
 HAT_NOI_DUNG, HAT_TEN, HAT_GHI_CHU, HAT_GOI_Y, HAT_XEM = 541, 5411, 5412, 5413, 5414
+# Cách giải quyết ở bước Hoàn thành xử lý của hồ sơ đóng đạt (#556)
+HAT_CACH_GIAI_QUYET = 556
 
 # Trường quyết định mà ràng buộc của cạnh cho đặt — cùng `governs`/`sets` của app/rules/guards.py, với mã
 # ràng buộc là hợp đồng giữa dữ liệu và mã nguồn (như ở bộ sinh). Cửa chuyển trạng thái ghi giữ hay ghi đè
@@ -288,6 +295,8 @@ class NoiDung:
         self.khai = khai
         self.rng = rng
         self.canh_bao: dict[str, int] = {}
+        # Số hồ sơ đã nhận tiêu đề của từng mục, theo tiêu đề gốc của mục (#556)
+        self.lan_dung: dict[str, int] = {}
 
     def _bao(self, cau: str) -> None:
         self.canh_bao[cau] = self.canh_bao.get(cau, 0) + 1
@@ -295,6 +304,15 @@ class NoiDung:
     def muc_ngau_nhien(self, loai: str | None) -> dict | None:
         ds = (self.dl["loai"].get(loai or "") or {}).get("ho_so") or []
         return self.rng.choice(ds) if ds else None
+
+    def tieu_de_cua(self, muc: dict) -> str:
+        """Tiêu đề cho một hồ sơ rút trúng `muc` (#556): lần lượt tiêu đề gốc rồi từng `bien_the`, để nhiều hồ sơ cùng
+        một vấn đề không trùng hệt tiêu đề. Lần lượt chứ không rút ngẫu nhiên: không ăn vào dãy số của hạt giống nội
+        dung, nên mục, mô tả và trường riêng của mọi hồ sơ giữ như trước; hồ sơ đầu tiên của mỗi mục giữ tiêu đề cũ."""
+        cac = [muc["tieu_de"], *(muc.get("bien_the") or [])]
+        lan = self.lan_dung.get(muc["tieu_de"], 0)
+        self.lan_dung[muc["tieu_de"]] = lan + 1
+        return cac[lan % len(cac)]
 
     def chi_tiet(self, loai: str | None, muc: dict | None, them: dict | None, ngay_gui: date) -> dict:
         """Bộ trường riêng của loại `loai`: giá trị khai ở `them`, rồi ở mục `muc`, rồi rút từ kho của loại.
@@ -340,14 +358,16 @@ def doi_ghi_chu(nd: NoiDung, ho_so: list, su_kien: list[dict]) -> None:
 def gan_noi_dung(
     nd: NoiDung, ho_so: list, su_kien: list[dict], da_gan: dict[int, dict], ngay_gui: dict[int, date],
     nhan_loai: dict[str, str],
-) -> tuple[dict[int, str], dict[int, dict]]:
+) -> tuple[dict[int, str], dict[int, dict], dict[int, dict]]:
     """Tiêu đề, mô tả, trường riêng cho mọi hồ sơ mẫu. Lần người gửi sửa nội dung trong nhật ký được viết lại
     theo nội dung mới — `changes` của mô tả, và của trường riêng khi lần sửa đổi luôn loại (ràng buộc
-    `edit-content` kiểm trường riêng theo loại mới). Trả tiêu đề và trường riêng theo mã hồ sơ mẫu."""
+    `edit-content` kiểm trường riêng theo loại mới). Trả tiêu đề, trường riêng và mục nội dung đã rút (#556 — cách
+    giải quyết đi theo mục) theo mã hồ sơ mẫu."""
     truong_da_giai = nd.dl.get("truong_ho_so_da_giai_quyet") or {}
     ds_theo_ho_so = theo_ho_so(su_kien)
     tieu_de: dict[int, str] = {}
     chi_tiet: dict[int, dict] = {}
+    muc_theo_ho_so: dict[int, dict] = {}
     for hs in ho_so:
         ds = ds_theo_ho_so.get(hs.ma, [])
         if hs.ma in da_gan:
@@ -358,8 +378,10 @@ def gan_noi_dung(
             muc = nd.muc_ngau_nhien(hs.loai_that)
             them = None
             # Loại không có nội dung trong tệp: nhãn loại làm tiêu đề, mô tả trống — không vỡ
-            tieu_de[hs.ma] = muc["tieu_de"] if muc else nhan_loai.get(hs.loai_that, hs.loai_that)
+            tieu_de[hs.ma] = nd.tieu_de_cua(muc) if muc else nhan_loai.get(hs.loai_that, hs.loai_that)
             mo_ta = muc["mo_ta"] if muc else ""
+            if muc:
+                muc_theo_ho_so[hs.ma] = muc
         muc_cua_loai = {hs.loai_that: (muc, them)}
 
         def bo_truong(loai: str | None, _ma: int = hs.ma, _muc: dict = muc_cua_loai) -> dict:
@@ -390,7 +412,32 @@ def gan_noi_dung(
             e["changes"] = json.dumps(thay, ensure_ascii=False)
         hs.mo_ta = mo_ta
         chi_tiet[hs.ma] = truong
-    return tieu_de, chi_tiet
+    return tieu_de, chi_tiet, muc_theo_ho_so
+
+
+def gan_cach_giai_quyet(
+    cau_hinh: dict, su_kien: list[dict], canh: dict, da_gan: dict[int, dict], muc_theo_ho_so: dict[int, dict],
+    rng: random.Random,
+) -> int:
+    """Cách giải quyết ở lần hoàn thành cuối của hồ sơ mẫu đóng đạt (#556): `cach_giai_quyet` của mục nội dung hồ
+    sơ đã rút, với xác suất `ty_le_co_ghi` — ô không bắt buộc. Hồ sơ đã gắn nội dung thật (`da_gan`) giữ cách giải
+    quyết của nó; lần hoàn thành đã có ghi chú thì không đè. Sửa ghi chú tại chỗ TRƯỚC khi INSERT. Trả số hồ sơ đã
+    ghi."""
+    ty_le = float(cau_hinh["ty_le_co_ghi"])
+    so = 0
+    for ma, ds in theo_ho_so(su_kien).items():
+        cach = (muc_theo_ho_so.get(ma) or {}).get("cach_giai_quyet")
+        if ma in da_gan or not cach:
+            continue
+        cuoi = ds[-1]
+        if (cuoi["from_state"], cuoi["to_state"], cuoi["activity"]) not in canh["dat"]:
+            continue
+        xong = [e for e in ds if (e["from_state"], e["to_state"], e["activity"]) in canh["xong"]]
+        if not xong or xong[-1]["note"] or rng.random() >= ty_le:
+            continue
+        xong[-1]["note"] = cach
+        so += 1
+    return so
 
 
 def dat_ten(du_lieu: dict, ho_so: list, su_kien: list[dict], rng: random.Random) -> dict[str, str]:
@@ -565,6 +612,9 @@ def main() -> int:
     da_giai_tieu_de = {m["tieu_de"] for m in json.loads(HO_SO_DA_GIAI_QUYET.read_text(encoding="utf-8"))["ho_so"]}
     for v in du_lieu["loai"].values():
         v["ho_so"] = [m for m in v.get("ho_so") or [] if m["tieu_de"] not in da_giai_tieu_de]
+        # Tiêu đề biến thể (#556) cũng không được trùng tiêu đề của hồ sơ đã giải quyết
+        for m in v["ho_so"]:
+            m["bien_the"] = [t for t in m.get("bien_the") or [] if t not in da_giai_tieu_de]
     nhan_loai = dict(
         l.split("\t") for l in psql(ts, "SELECT code || E'\\t' || label FROM request_types").splitlines()
     )
@@ -604,7 +654,9 @@ def main() -> int:
     canh_ket_thuc = doc_canh_ket_thuc(ts)
     da_gan = gan_ho_so_da_giai_quyet(ho_so, su_kien, canh_ket_thuc)
     ngay_gui = {hs.ma: date.fromisoformat(dong.split("\t")[0][:10]) for hs, dong in zip(ho_so, moc)}
-    tieu_de, chi_tiet = gan_noi_dung(nd, ho_so, su_kien, da_gan, ngay_gui, nhan_loai)
+    tieu_de, chi_tiet, muc_theo_ho_so = gan_noi_dung(nd, ho_so, su_kien, da_gan, ngay_gui, nhan_loai)
+    so_co_cach = gan_cach_giai_quyet(du_lieu["cach_giai_quyet"], su_kien, canh_ket_thuc, da_gan, muc_theo_ho_so,
+                                     random.Random(ts.hat_giong + HAT_CACH_GIAI_QUYET))
     sinh_goi_y(bo, du_lieu["goi_y"], ho_so, su_kien, random.Random(ts.hat_giong + HAT_GOI_Y))
     ten = dat_ten(du_lieu, ho_so, su_kien, random.Random(ts.hat_giong + HAT_TEN))
     dong_xem = sinh_luot_xem(du_lieu["ngan_chan"], ho_so, random.Random(ts.hat_giong + HAT_XEM))
@@ -751,7 +803,8 @@ def main() -> int:
         """
     )
     print(f"Đã nạp {psql(ts, '', vao=sql)} — gửi rải trong {ts.so_ngay} ngày tới nay, "
-          f"{len(da_gan)} hồ sơ đã giải quyết có nội dung thật, {len(ten)} tên người.")
+          f"{len(da_gan)} hồ sơ đã giải quyết có nội dung thật, {so_co_cach} hồ sơ đóng đạt khác ghi cách giải "
+          f"quyết, {len(ten)} tên người.")
     print(psql(ts, f"""
         SELECT 'Tỷ lệ vi phạm hạn ' || coalesce(round(100.0 * count(*) FILTER (WHERE vi_pham)
                / nullif(count(*), 0), 1)::text, '—') || ' % trên ' || count(*) || ' hồ sơ đã xong'

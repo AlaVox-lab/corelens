@@ -53,7 +53,8 @@ export function CanCuTuongTu({ maHoSo }: { maHoSo: number }) {
             </Link>{" "}
             {h.title}
             {h.request_type && <span className="can-cu-tuong-tu-phu"> · {h.request_type}</span>}
-            <span className="can-cu-tuong-tu-phu"> — {h.resolution}</span>
+            {/* Hồ sơ không ghi cách giải quyết thì không có gạch nối treo ở cuối dòng (#556) */}
+            {h.resolution ? <span className="can-cu-tuong-tu-phu"> — {h.resolution}</span> : null}
           </li>
         ))}
       </ul>
