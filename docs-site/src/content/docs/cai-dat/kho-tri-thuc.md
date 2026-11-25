@@ -82,7 +82,23 @@ Bộ lập chỉ mục *Bộ lập chỉ mục kho tri thức* (màn Hệ thốn
 hay chuyển riêng tư. Viết bài mới thì chờ một lượt là bài vào gợi ý. Bài chỉ là gợi ý — người gửi vẫn gửi
 yêu cầu bình thường.
 
-Wiki tắt giữa chừng: bộ lập chỉ mục bỏ lượt, gợi ý vẫn dùng chỉ mục đã có, gửi yêu cầu không bị ảnh hưởng.
+Wiki tắt giữa chừng hay từ chối khóa API: lượt lập chỉ mục hỏng, gợi ý vẫn dùng chỉ mục đã có, gửi yêu cầu
+không bị ảnh hưởng. Màn Hệ thống tô đỏ dòng *Bộ lập chỉ mục kho tri thức* ngay từ lượt hỏng đầu tiên, kèm lý do
+ngắn (mức báo đổi bằng `WIKI_INDEX_MAX_CONSECUTIVE_ERRORS`).
+
+### Màn Hệ thống báo Wiki.js từ chối khóa API
+
+Khóa API chỉ đọc nằm trong volume `tri-thuc-khoa`, còn Wiki.js giữ danh sách khóa trong database `wiki`. Dựng
+lại database mà giữ volume khóa (ví dụ xóa riêng volume PostgreSQL) thì khóa cũ không còn hợp lệ: Wiki.js coi
+lời gọi như của khách và trả 403. Chạy lại bước khởi tạo (trong `infra/`):
+
+```bash
+docker compose --env-file .env --profile tri-thuc up -d tri-thuc-khoi-tao
+```
+
+Bước khởi tạo thử khóa bằng đúng việc bộ lập chỉ mục làm — đọc mã nguồn một bài, việc khách không làm được —
+nên khóa hỏng thì nó cấp khóa mới và ghi đè tệp khóa; khóa còn tốt thì giữ. Dịch vụ ứng dụng đọc lại tệp khóa ở
+mỗi lượt, không cần khởi động lại; lượt kế tiếp màn Hệ thống xanh lại.
 
 ## Biến môi trường
 

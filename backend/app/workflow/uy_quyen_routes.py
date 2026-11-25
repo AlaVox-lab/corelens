@@ -127,7 +127,7 @@ def _thu_hoi_duoc(u: Delegation, actor: Actor, vai_giao: frozenset[str]) -> bool
     )
 
 
-@router.get("")
+@router.get("", summary="Xem ủy quyền")
 def xem_uy_quyen(session: Phien, actor: TacNhan) -> dict:
     """Ủy quyền người gọi cần thấy: của chính họ (cho hay nhận), và — với người giao việc — mọi ủy
     quyền trong phòng của họ. Ủy quyền đã hết hay thu hồi chỉ giữ trên màn thêm một tháng."""
@@ -153,7 +153,7 @@ def xem_uy_quyen(session: Phien, actor: TacNhan) -> dict:
     }
 
 
-@router.get("/members")
+@router.get("/members", summary="Người trong phòng để ủy quyền")
 def nguoi_trong_phong(session: Phien, actor: TacNhan, danh_ba: DanhBa, department_code: str | None = None) -> dict:
     """Người trong phòng, cho ô chọn người được ủy quyền và (với trưởng phòng) người vắng."""
     vai_phong, vai_giao = _cua(session, actor)
@@ -189,7 +189,7 @@ class KhaiVao(BaseModel):
     department_code: str | None = None
 
 
-@router.post("", status_code=201)
+@router.post("", summary="Khai một ủy quyền", status_code=201)
 def khai_uy_quyen(du_lieu: KhaiVao, session: Phien, actor: TacNhan, danh_ba: DanhBa) -> dict:
     """Khai một ủy quyền. Không cần người được ủy quyền xác nhận; có hiệu lực từ 00:00 ngày đầu."""
     vai_phong, vai_giao = _cua(session, actor)
@@ -253,7 +253,7 @@ def khai_uy_quyen(du_lieu: KhaiVao, session: Phien, actor: TacNhan, danh_ba: Dan
     return _ra(session, u, actor, vai_giao, _nhan_vai(session), nhan_phong, bay_gio)
 
 
-@router.post("/{ma}/revoke")
+@router.post("/{ma}/revoke", summary="Thu hồi ủy quyền")
 def thu_hoi_uy_quyen(ma: int, session: Phien, actor: TacNhan) -> dict:
     """Thu hồi sớm. Dòng giữ lại kèm người thu hồi và lúc thu hồi; quyền mất ngay ở lần bấm kế tiếp."""
     _, vai_giao = _cua(session, actor)

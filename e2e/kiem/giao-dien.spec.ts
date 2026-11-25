@@ -151,6 +151,36 @@ test.describe("người gửi", () => {
     await expect(page.getByText("Sự cố thiết bị").first()).toBeVisible();
   });
 
+  test("bảng Xem lại chỉ hiện ở bước 3 và liệt kê trường riêng đã điền (#552)", async ({ page }) => {
+    // Khối bước 3 từng mang `display` trong style, đè thuộc tính `hidden`: bảng Xem lại hiện cả ở bước 1 và 2
+    const xemLai = page.locator('[data-buoc="3"]');
+    await page.goto("/yeu-cau/moi", { waitUntil: "networkidle" });
+    await expect(page.locator('[data-buoc="1"]')).toBeVisible();
+    await expect(xemLai).toBeHidden();
+    await expect(page.getByText("Thời hạn cam kết", { exact: true })).toBeHidden();
+
+    await page.getByText("Sự cố thiết bị").first().click();
+    await expect(page.locator('input[name="title"]')).toBeVisible();
+    await expect(xemLai).toBeHidden();
+    await expect(page.getByText("Thời hạn cam kết", { exact: true })).toBeHidden();
+
+    // Trường riêng của loại "Sự cố thiết bị" trong dữ liệu khởi tạo: hai ô chữ bắt buộc, một ô chọn không bắt buộc
+    await page.locator('input[name="title"]').fill("Bảng Xem lại có trường riêng");
+    await page.locator("#truong-rieng-ma-tai-san").fill("KT-0552");
+    await page.locator("#truong-rieng-vi-tri").fill("Tầng 2, phòng họp nhỏ");
+    await page.getByRole("button", { name: /Tiếp tục/ }).click();
+
+    await expect(xemLai).toBeVisible();
+    await expect(page.locator('[data-buoc="2"]')).toBeHidden();
+    await expect(xemLai).toContainText("Mã tài sản");
+    await expect(xemLai).toContainText("KT-0552");
+    await expect(xemLai).toContainText("Vị trí");
+    await expect(xemLai).toContainText("Tầng 2, phòng họp nhỏ");
+    // Ô chọn bỏ trống thì không liệt kê
+    await expect(xemLai).not.toContainText("Mức ảnh hưởng");
+    await chup(page, test.info().project.name, "nguoi-gui-gui-yeu-cau-buoc-3");
+  });
+
   test("mô hình nhúng tắt: gõ nội dung không hiện hồ sơ tương tự, vẫn gửi bình thường (#319)", async ({ page }) => {
     // Cụm mặc định không bật hồ sơ `tri-tue`: dịch vụ báo tắt, biểu mẫu không hiện gì, không báo lỗi
     const tra = await page.request.post("/api/yeu-cau/tuong-tu", {

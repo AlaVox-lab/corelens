@@ -43,6 +43,9 @@ jobs:
       # Mọi biến của infra/.env.example có dòng giải thích trên trang Cấu hình (#413)
       - name: Biến môi trường có tài liệu
         run: python3 scripts/kiem_bien_moi_truong.py
+      # Tệp VERSION (#552) — nguồn duy nhất của số phiên bản hiển thị — không tụt sau bản mới nhất của CHANGELOG.md
+      - name: Số phiên bản không tụt sau nhật ký thay đổi
+        run: python3 scripts/kiem_phien_ban.py
       # Bước khởi tạo kho tri thức chịu được gói ngôn ngữ Wiki.js tải hỏng (#535). Kịch bản nằm ở infra/tri-thuc/,
       # không có trong ảnh dịch vụ ứng dụng nên không chạy cùng pytest của dịch vụ; bài chỉ dùng thư viện chuẩn
       # và Wiki.js giả, không cần cụm

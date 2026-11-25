@@ -28,6 +28,7 @@ import { useActionState, useRef, useState } from "react";
 import { OTruongRieng } from "@/components/o-truong-rieng";
 import { GoiYTuongTu } from "@/components/goi-y-tuong-tu";
 import { OChonTep } from "@/components/o-chon-tep";
+import { hienTruong } from "@/components/the-truong-rieng";
 import { dungLuong } from "@/lib/dinh-dang";
 import type { ChinhSachTep, LoaiYeuCau } from "@/lib/kieu";
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
@@ -122,6 +123,9 @@ export function BieuMauGuiYeuCau({
   const [loai, datLoai] = useState<string | null>(loaiCuaGoc ?? loaiTuDuongDan);
   const [tieuDe, datTieuDe] = useState(goc?.title ?? "");
   const [moTa, datMoTa] = useState(goc?.description ?? "");
+  // Giá trị trường riêng đang nhập ở bước 2 — chỉ để bước Xem lại liệt kê lại (#552); giá trị gửi đi vẫn nằm trong ô
+  // ẩn của OTruongRieng
+  const [chiTiet, datChiTiet] = useState<Record<string, string>>({});
   // Mã phiên soạn (#319): nối "đã xem gợi ý tương tự" với lần gửi này — không phải dữ liệu hồ sơ
   const [phienSoan] = useState(maPhienNgauNhien);
 
@@ -217,8 +221,11 @@ export function BieuMauGuiYeuCau({
       </div>
 
       <div className="the" style={{ marginTop: "14px" }}>
+        {/* Ba khối bước đều nằm sẵn trong biểu mẫu (ô của bước 2 phải gửi đi được từ bước 3) và ẩn bằng `hidden`.
+            Khối mang `hidden` KHÔNG được đặt `display` trong `style`: kiểu nội tuyến thắng kiểu ẩn mặc định của trình
+            duyệt, khối bị giấu vẫn hiện (#552 — bảng Xem lại từng hiện ở bước 1 và 2). Bố cục lưới đặt ở phần tử con. */}
         {/* --- Bước 1 · Loại yêu cầu ------------------------------------- */}
-        <div hidden={buoc !== 1} style={{ padding: "22px" }}>
+        <div hidden={buoc !== 1} data-buoc="1" style={{ padding: "22px" }}>
           <div style={{ fontSize: "15px", fontWeight: 600 }}>Loại yêu cầu</div>
           <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink-3)" }}>
             Chọn một. Loại yêu cầu quyết định phòng ban tiếp nhận và thời hạn cam kết.
@@ -279,7 +286,7 @@ export function BieuMauGuiYeuCau({
         </div>
 
         {/* --- Bước 2 · Nội dung ------------------------------------------ */}
-        <div hidden={buoc !== 2}>
+        <div hidden={buoc !== 2} data-buoc="2">
           <div
             style={{
               display: "flex",
@@ -362,7 +369,7 @@ export function BieuMauGuiYeuCau({
 
             {/* Trường riêng của loại đã chọn ở bước 1 (#250), dựng từ khai báo của dịch vụ.
                 `key` theo loại: đổi loại thì bộ ô dựng lại từ đầu, không mang giá trị loại cũ. */}
-            <OTruongRieng key={loai ?? ""} ten="details" cacTruong={loaiDaChon?.fields ?? []} />
+            <OTruongRieng key={loai ?? ""} ten="details" cacTruong={loaiDaChon?.fields ?? []} khiDoi={datChiTiet} />
 
             {/* Tệp đính kèm (#80): ảnh chụp màn hình gần như luôn có ích — không có thì người
                 xử lý phải hỏi lại và hồ sơ rơi vào chờ bổ sung. Giới hạn do dịch vụ trả. */}
@@ -379,7 +386,7 @@ export function BieuMauGuiYeuCau({
         </div>
 
         {/* --- Bước 3 · Xem lại ------------------------------------------- */}
-        <div hidden={buoc !== 3} style={{ padding: "22px", display: "grid", gap: "18px" }}>
+        <div hidden={buoc !== 3} data-buoc="3" style={{ padding: "22px" }}>
           <div
             style={{
               display: "grid",
@@ -404,6 +411,21 @@ export function BieuMauGuiYeuCau({
             />
             <MucXemLai khoa="Tiêu đề" gia_tri={tieuDe || "—"} />
             <MucXemLai khoa="Mô tả" gia_tri={moTa || "Bạn chưa điền mô tả"} />
+            {/* Trường riêng đã điền, nhãn và cách hiện giá trị theo khai báo của loại — cùng nguồn ô ở bước 2 và khối
+                thông tin riêng trên trang hồ sơ; ô bỏ trống thì không liệt kê */}
+            {(loaiDaChon?.fields ?? [])
+              .filter((t) => chiTiet[t.code]?.trim())
+              .map((t) => {
+                const v = chiTiet[t.code].trim();
+                const so = Number(v);
+                return (
+                  <MucXemLai
+                    key={t.code}
+                    khoa={t.label}
+                    gia_tri={hienTruong(t, t.kind === "number" && Number.isFinite(so) ? so : v)}
+                  />
+                );
+              })}
             {chinhSach && (
               <MucXemLai
                 khoa="Tệp đính kèm"

@@ -181,7 +181,7 @@ def superset_client() -> SupersetClient:
     return _may_khach
 
 
-@router.post("/dashboard/guest-token")
+@router.post("/dashboard/guest-token", summary="Cấp token khách cho bảng điều khiển nhúng")
 def cap_token_khach(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],

@@ -510,7 +510,7 @@ def chon_quy_trinh(session: Session, ma: str | None) -> str:
     return ma
 
 
-@router_loi.get("/processes", response_model=list[QuyTrinhRa])
+@router_loi.get("/processes", summary="Danh mục quy trình", response_model=list[QuyTrinhRa])
 def danh_muc_quy_trinh(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -526,7 +526,7 @@ def danh_muc_quy_trinh(
     ]
 
 
-@router_loi.get("/request-types", response_model=list[LoaiYeuCauRa])
+@router_loi.get("/request-types", summary="Danh mục loại yêu cầu", response_model=list[LoaiYeuCauRa])
 def danh_muc_loai_yeu_cau(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -573,7 +573,7 @@ def goi_y_ra(goi_y: GoiY | None) -> GoiYRa | None:
     )
 
 
-@router_loi.get("/states", response_model=list[TrangThaiRa])
+@router_loi.get("/states", summary="Danh mục trạng thái", response_model=list[TrangThaiRa])
 def danh_muc_trang_thai(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -598,7 +598,7 @@ def danh_muc_trang_thai(
     ]
 
 
-@router_loi.get("/priorities", response_model=list[MucUuTienRa])
+@router_loi.get("/priorities", summary="Danh mục mức ưu tiên", response_model=list[MucUuTienRa])
 def danh_muc_muc_uu_tien(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -610,7 +610,7 @@ def danh_muc_muc_uu_tien(
     ]
 
 
-@router_loi.get("/departments", response_model=list[PhongBanRa])
+@router_loi.get("/departments", summary="Danh mục phòng ban", response_model=list[PhongBanRa])
 def danh_muc_phong_ban(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(current_actor)],
@@ -632,7 +632,7 @@ def danh_muc_phong_ban(
 
 
 @router_loi.post(
-    "/requests",
+    "/requests", summary="Gửi yêu cầu mới",
     response_model=HoSoChiTietRa,
     status_code=201,
     dependencies=[Depends(gioi_han_toc_do("create-case"))],
@@ -724,7 +724,7 @@ def _tao_ho_so(
     return _dung_chi_tiet(session, ho_so, actor)
 
 
-@router_nguoi_gui.get("/requests", response_model=DanhSachHoSoRa)
+@router_nguoi_gui.get("/requests", summary="Hồ sơ của tôi", response_model=DanhSachHoSoRa)
 def ho_so_cua_toi(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -838,7 +838,7 @@ def liet_ke_ho_so(
     )
 
 
-@router_nguoi_gui.get("/requests/{case_id}", response_model=HoSoNguoiGuiRa)
+@router_nguoi_gui.get("/requests/{case_id}", summary="Chi tiết hồ sơ (người gửi)", response_model=HoSoNguoiGuiRa)
 def chi_tiet_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -898,7 +898,7 @@ def di_buoc(
     return ho_so
 
 
-@router_nguoi_gui.post("/requests/{case_id}/transitions", response_model=HoSoNguoiGuiRa)
+@router_nguoi_gui.post("/requests/{case_id}/transitions", summary="Đi một bước trên hồ sơ (người gửi)", response_model=HoSoNguoiGuiRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiVao,
@@ -913,7 +913,7 @@ def chuyen_trang_thai(
     phân quyền rồi; kiểm thêm một lớp ở đây sẽ tạo ra nguồn sự thật thứ hai, và hai
     nguồn sẽ lệch nhau. Việc duy nhất ở đây là dịch lỗi engine sang mã HTTP.
 
-    Từ #127 điểm cuối nhận `changes`, nên nó gọi phép kiểm người được giao như MỌI điểm
+    Điểm cuối nhận `changes` (#127), nên nó gọi phép kiểm người được giao như MỌI điểm
     cuối nhận `changes` (#83). Không cạnh nào của người gửi cho đặt người xử lý, nên
     phép kiểm dừng ngay mà không tra danh bạ — nhưng bỏ qua ở đây là để hở một đường
     vòng quanh danh bạ cho người mang cùng lúc vai trò người gửi và vai trò giao việc.
@@ -934,7 +934,7 @@ def chuyen_trang_thai(
 
 
 @router.post(
-    "/requests/{case_id}/messages",
+    "/requests/{case_id}/messages", summary="Nhắn tin trên hồ sơ (người gửi)",
     response_model=HoSoNguoiGuiRa,
     dependencies=[Depends(gioi_han_toc_do("send-message"))],
 )
@@ -946,8 +946,8 @@ def gui_loi_nhan(
 ) -> HoSoNguoiGuiRa:
     """Gửi một lời nhắn trên hồ sơ của mình (#128).
 
-    Không đổi hồ sơ: không trạng thái, không trường, không đồng hồ, không dòng nhật ký —
-    xem app/workflow/messages.py. Cửa nhìn thấy giống hệt trang chi tiết: hồ sơ của
+    Không đổi hồ sơ: không trạng thái, không trường, không đồng hồ, không dòng nhật ký
+    (app/workflow/messages.py). Cửa nhìn thấy giống hệt trang chi tiết: hồ sơ của
     người khác trả 404.
     """
     ho_so = _lay_ho_so_cua_toi(session, case_id, actor)

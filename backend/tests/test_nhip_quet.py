@@ -481,7 +481,8 @@ def test_system_health_quan_tri_thay_du_chi_tiet(session, bo_quet_thu):
     assert tra.status_code == 200
     than = tra.json()
     assert than["status"] == "ok" and than["database"] == "ok"
-    assert than["version"] == main_mod.settings.app_version
+    # Một nguồn phiên bản (#552): tệp VERSION, cùng số với /docs
+    assert than["version"] == main_mod.PHIEN_BAN == app.openapi()["info"]["version"]
     assert than["active_rule_set_states"] > 0
     assert {b["name"]: b["label"] for b in than["scanners"]} == {
         BO_THU[0].ten: "Bộ quét thử A",

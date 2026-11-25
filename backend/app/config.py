@@ -33,9 +33,9 @@ class Settings(BaseSettings):
     # Dùng psycopg 3: tiền tố là postgresql+psycopg, không phải postgresql+psycopg2.
     database_uri: str = "postgresql+psycopg://dxlab:dxlab@localhost:5432/dxlab"
 
-    # Nhãn hiển thị trong tài liệu API tự sinh
+    # Nhãn hiển thị trong tài liệu API tự sinh. Số phiên bản KHÔNG là biến môi trường: đọc từ tệp VERSION ở gốc
+    # kho (app/phien_ban.py, #552) để `.env` cũ không đè được số hiển thị
     app_name: str = "Corelens — Cổng vận hành yêu cầu nội bộ"
-    app_version: str = "0.3.0"
 
     # Bật chế độ gỡ lỗi của SQLAlchemy. Không bao giờ bật ở bản triển khai thật.
     database_echo: bool = False
@@ -147,6 +147,9 @@ class Settings(BaseSettings):
     wiki_source_url: str = "https://github.com/requarks/wiki/tree/v2.5.315"
     wiki_timeout_seconds: float = 10.0
     wiki_index_interval_seconds: int = 120
+    # Số lượt lập chỉ mục hỏng liên tiếp tới mức màn Hệ thống báo đỏ (#552). Mặc định 1: một lượt hỏng là kho tri
+    # thức đã không còn gợi ý bài được (khóa bị từ chối, wiki tắt), không có gì để chờ lượt sau
+    wiki_index_max_consecutive_errors: int = 1
     wiki_index_batch_size: int = 8
     # Số ký tự đầu của bài đem nhúng — đủ phần mô tả vấn đề, không cần cả bài
     wiki_embed_chars: int = 1500

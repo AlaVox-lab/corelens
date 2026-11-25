@@ -232,5 +232,152 @@ class BuocNgonNgu(unittest.TestCase):
         self.assertEqual(len(w.bai), self.so_bai)
 
 
+class WikiGiaKhoa(WikiGia):
+    """Wiki.js giả cho bước khóa API (#552), giữ đúng điều của bản thật làm nên lỗi: khóa không còn hợp lệ (CSDL
+    Wiki.js dựng lại mà volume khóa còn giữ) thì Wiki.js coi lời gọi như của KHÁCH — GraphQL `pages.list` khách vẫn
+    chạy được, còn trang mã nguồn `/s/…` (quyền `read:source`) thì khách bị 403."""
+
+    def __init__(self, *, khoa_hop_le=(), khoa_moi_doc_duoc=True, **kw):
+        super().__init__(**kw)
+        self.bai[("huong-dan/may-in", "vi")] = "Máy in không in được"
+        self.khoa_hop_le = set(khoa_hop_le)
+        self.khoa_moi_doc_duoc = khoa_moi_doc_duoc
+        self.lan_cap = 0
+        self.da_thu_hoi: list[int] = []
+
+    def doc_ma_nguon(self, locale: str, duong: str, khoa: str) -> bool:
+        return (duong, locale) in self.bai and khoa in self.khoa_hop_le
+
+    def graphql(self, truy_van: str, bien_so: dict | None = None, token: str | None = None) -> dict:
+        b = bien_so or {}
+        if "pages { list" in truy_van:
+            # Khách cũng được đọc danh sách bài: token nào cũng qua, kể cả khóa hỏng
+            return {"pages": {"list": [{"path": p, "locale": l, "isPublished": True, "isPrivate": False}
+                                       for p, l in self.bai]}}
+        if "setApiState" in truy_van:
+            return {"authentication": {"setApiState": self._kq(True)}}
+        if "apiKeys {" in truy_van:
+            return {"authentication": {"apiKeys": [{"id": 7, "name": "dx-os-lab", "isRevoked": False}]}}
+        if "revokeApiKey" in truy_van:
+            self.da_thu_hoi.append(b["id"])
+            return {"authentication": {"revokeApiKey": {"responseResult": {"succeeded": True}}}}
+        if "createApiKey" in truy_van:
+            self.lan_cap += 1
+            moi = f"khoa-moi-{self.lan_cap}"
+            if self.khoa_moi_doc_duoc:
+                self.khoa_hop_le.add(moi)
+            return {"authentication": {"createApiKey": {**self._kq(True), "key": moi}}}
+        return super().graphql(truy_van, bien_so, token)
+
+
+class BuocKhoaApi(unittest.TestCase):
+    def setUp(self) -> None:
+        import tempfile
+
+        self.thu_muc = tempfile.TemporaryDirectory()
+        self.tep = Path(self.thu_muc.name) / "khoa" / "wiki-api-key"
+        self.env_cu = {k: os.environ.get(k) for k in ("WIKI_API_KEY_FILE", "WIKI_API_GROUP")}
+        os.environ["WIKI_API_KEY_FILE"] = str(self.tep)
+        os.environ["WIKI_API_GROUP"] = "dx-os-lab-doc"
+        self.nhom = {"dx-os-lab-doc": 3}
+
+    def tearDown(self) -> None:
+        for k, v in self.env_cu.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        self.thu_muc.cleanup()
+
+    def ghi_khoa(self, khoa: str) -> None:
+        self.tep.parent.mkdir(parents=True, exist_ok=True)
+        self.tep.write_text(khoa, encoding="utf-8")
+
+    def test_khoa_cu_hop_le_thi_giu_nguyen(self):
+        w = WikiGiaKhoa(khoa_hop_le={"khoa-dang-dung"})
+        self.ghi_khoa("khoa-dang-dung")
+        khoi_tao.dam_bao_khoa_api(w, self.nhom)
+        self.assertEqual(w.lan_cap, 0, "khóa còn đọc được bài thì không cấp khóa mới")
+        self.assertEqual(self.tep.read_text(encoding="utf-8"), "khoa-dang-dung")
+
+    def test_khoa_hong_thi_cap_moi_va_ghi_de_tep(self):
+        """Đúng tình huống của cụm trình diễn 24/11: khóa trong volume không còn khớp CSDL Wiki.js. Phép kiểm cũ
+        (`pages.list` bằng khóa) qua được như khách nên báo "còn dùng được", bộ lập chỉ mục bị 403 mãi."""
+        w = WikiGiaKhoa(khoa_hop_le=set())
+        self.ghi_khoa("khoa-cua-csdl-cu")
+        khoi_tao.dam_bao_khoa_api(w, self.nhom)
+        self.assertEqual(w.lan_cap, 1)
+        self.assertEqual(w.da_thu_hoi, [7], "khóa cùng tên còn hiệu lực phải bị thu hồi trước khi cấp mới")
+        moi = self.tep.read_text(encoding="utf-8")
+        self.assertEqual(moi, "khoa-moi-1")
+        self.assertTrue(w.doc_ma_nguon("vi", "huong-dan/may-in", moi))
+
+    def test_chua_co_tep_thi_cap_khoa(self):
+        w = WikiGiaKhoa()
+        khoi_tao.dam_bao_khoa_api(w, self.nhom)
+        self.assertEqual(w.lan_cap, 1)
+        self.assertEqual(self.tep.read_text(encoding="utf-8"), "khoa-moi-1")
+
+    def test_khoa_vua_cap_van_khong_doc_duoc_thi_bao_loi_ro(self):
+        w = WikiGiaKhoa(khoa_moi_doc_duoc=False)
+        with self.assertRaises(SystemExit) as loi:
+            khoi_tao.dam_bao_khoa_api(w, self.nhom)
+        self.assertIn("read:source", str(loi.exception))
+
+
+class DocMaNguonQuaHttp(unittest.TestCase):
+    """`Wiki.doc_ma_nguon` gọi HTTP thật (#552): một máy chủ cục bộ đóng vai Wiki.js trả trang mã nguồn của bài
+    cho đúng khóa hợp lệ, còn khách hay khóa hỏng thì 403 — như Wiki.js với quyền `read:source`."""
+
+    KHOA = "khoa-hop-le"
+
+    def setUp(self) -> None:
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        khoa = self.KHOA
+
+        class XuLy(BaseHTTPRequestHandler):
+            def do_GET(self) -> None:  # noqa: N802 — tên do http.server đặt
+                if self.path != "/s/vi/huong-dan/may-in":
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                if self.headers.get("Authorization") != f"Bearer {khoa}":
+                    self.send_response(403)
+                    self.end_headers()
+                    return
+                than = b"<html><pre><code v-pre># May in</code></pre></html>"
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(than)))
+                self.end_headers()
+                self.wfile.write(than)
+
+            def log_message(self, *_a) -> None:
+                pass
+
+        self.may = ThreadingHTTPServer(("127.0.0.1", 0), XuLy)
+        threading.Thread(target=self.may.serve_forever, daemon=True).start()
+        self.env_cu = os.environ.get("WIKI_INTERNAL_URL")
+        os.environ["WIKI_INTERNAL_URL"] = f"http://127.0.0.1:{self.may.server_address[1]}"
+
+    def tearDown(self) -> None:
+        self.may.shutdown()
+        self.may.server_close()
+        if self.env_cu is None:
+            os.environ.pop("WIKI_INTERNAL_URL", None)
+        else:
+            os.environ["WIKI_INTERNAL_URL"] = self.env_cu
+
+    def test_khoa_hop_le_doc_duoc(self):
+        self.assertTrue(khoi_tao.Wiki().doc_ma_nguon("vi", "huong-dan/may-in", self.KHOA))
+
+    def test_khoa_hong_bi_coi_nhu_khach(self):
+        self.assertFalse(khoi_tao.Wiki().doc_ma_nguon("vi", "huong-dan/may-in", "khoa-cua-csdl-cu"))
+
+    def test_bai_khong_co_thi_khong_tinh_la_doc_duoc(self):
+        self.assertFalse(khoi_tao.Wiki().doc_ma_nguon("vi", "khong-co", self.KHOA))
+
+
 if __name__ == "__main__":
     unittest.main()

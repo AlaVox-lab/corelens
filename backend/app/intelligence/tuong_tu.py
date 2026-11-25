@@ -526,7 +526,7 @@ class BoKhongGuiVao(BaseModel):
 SO_KY_TU_TOI_THIEU = 12
 
 
-@router.post("/search", response_model=TimTuongTuRa)
+@router.post("/search", summary="Hồ sơ đã giải quyết tương tự khi đang soạn", response_model=TimTuongTuRa)
 def tim_cho_bieu_mau(
     du_lieu: TimTuongTuVao,
     session: Annotated[Session, Depends(get_session)],
@@ -538,7 +538,7 @@ def tim_cho_bieu_mau(
     KHÔNG BAO GIỜ báo lỗi cho biểu mẫu: mô hình tắt, chậm hơn hạn, trả rác — đều là danh sách rỗng, để
     người gửi không chờ và không thấy gì lạ. Bài kho tri thức đọc từ chỉ mục trong cơ sở dữ liệu, không gọi
     sang wiki, nên wiki tắt hay chậm không làm chậm biểu mẫu. Có hồ sơ gợi ý và có mã phiên thì ghi một lượt
-    xem (đo ngăn chặn theo hồ sơ như #319).
+    xem, để đo tỷ lệ ngăn chặn theo từng hồ sơ (#319).
     """
     cau_hinh = get_settings()
     if not cau_hinh.embedding_enabled:
@@ -604,7 +604,7 @@ class CanCuTuongTuRa(BaseModel):
 VAI_TRO_CAN_CU = "classifier"
 
 
-@router.get("/for-case/{case_id}", response_model=CanCuTuongTuRa)
+@router.get("/for-case/{case_id}", summary="Hồ sơ tương tự làm căn cứ cho điều phối viên", response_model=CanCuTuongTuRa)
 def can_cu_cho_dieu_phoi(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -653,7 +653,7 @@ def can_cu_cho_dieu_phoi(
     )
 
 
-@router.post("/abandon", status_code=204)
+@router.post("/abandon", summary="Ghi lượt người gửi thôi không gửi sau khi xem gợi ý", status_code=204)
 def bo_khong_gui(
     du_lieu: BoKhongGuiVao,
     session: Annotated[Session, Depends(get_session)],
