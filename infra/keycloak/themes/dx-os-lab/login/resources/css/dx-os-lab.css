@@ -67,3 +67,14 @@
 :root.pf-v5-theme-dark #kc-header-wrapper {
   color: #eef1f4 !important;
 }
+
+/* Dấu Corelens phía trên tên hệ thống (#551), cùng dấu với cổng. Vẽ bằng nền của phần tử giả trên khung tên có sẵn
+ * của chủ đề gốc — không đè khuôn trang. Bản màu đọc được trên cả nền sáng lẫn nền tối nên không cần bản thứ hai. */
+#kc-header-wrapper::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  background: url("../img/corelens-dau.svg") center / contain no-repeat;
+}

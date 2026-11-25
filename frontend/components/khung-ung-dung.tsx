@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { DauCorelens } from "@/components/dau-corelens";
 import { DieuHuong, mucDangDung, type MucDieuHuong } from "@/components/dieu-huong";
 import { NgheThayDoi } from "@/components/nghe-thay-doi";
 
@@ -148,7 +149,7 @@ export function KhungUngDung({
       </a>
       <aside className="sb khong-in" aria-label="Thanh bên">
         <div className="sb-dau">
-          <span className="logo">YC</span>
+          <DauCorelens className="logo" />
           <span className="sb-ten">
             <b>Cổng yêu cầu nội bộ</b>
             <span>Corelens</span>
