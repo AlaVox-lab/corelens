@@ -62,6 +62,17 @@ def test_thieu_truong_bat_buoc_bi_tu_choi(session, rule_set):
         _tao(session, chi_tiet={"ma-tai-san": "LT-0042"})
 
 
+def test_thieu_nhieu_truong_bao_du_trong_mot_lan(session, rule_set):
+    """Thiếu hai trường bắt buộc: một câu kể cả hai theo thứ tự khai báo, ô chỉ có dấu cách cũng là thiếu (#555)."""
+    with pytest.raises(InvalidFieldValue) as loi:
+        _tao(session, chi_tiet={"vi-tri": "   "})
+    assert str(loi.value) == "Chưa điền Mã tài sản, Vị trí."
+    assert loi.value.value == "ma-tai-san", "mã trường đầu tiên vẫn đi kèm lỗi"
+
+    with pytest.raises(InvalidFieldValue, match="Chưa điền Tên vật tư, Số lượng"):
+        _tao(session, VAT_TU, {"du-toan": "1500000"})
+
+
 @pytest.mark.parametrize(
     ("chi_tiet", "cau"),
     [
@@ -148,6 +159,12 @@ def test_gui_yeu_cau_thieu_truong_tra_422_tieng_viet(client, rule_set):
                                               "details": {"ma-tai-san": "LT-0042"}})
     assert phan_hoi.status_code == 422
     assert "Chưa điền Vị trí" in phan_hoi.json()["detail"]["message"]
+
+    # Thiếu cả hai trường bắt buộc: câu trả về kể đủ cả hai (#555)
+    phan_hoi = client.post("/requests", json={"title": "Máy in tầng ba kẹt giấy",
+                                              "request_type_code": THIET_BI, "details": {}})
+    assert phan_hoi.status_code == 422
+    assert phan_hoi.json()["detail"]["message"] == "Chưa điền Mã tài sản, Vị trí."
 
     phan_hoi = client.post("/requests", json={"title": "Máy in tầng ba kẹt giấy",
                                               "request_type_code": THIET_BI, "details": DU_THIET_BI})

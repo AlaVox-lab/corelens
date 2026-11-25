@@ -41,6 +41,8 @@ export type DongHangDoi = {
   id: number;
   /** Đường mở hồ sơ trong ngăn xem nhanh (`?xem=`), giữ bộ lọc và trang (#233). */
   href: string;
+  /** Trang đầy đủ của hồ sơ — Ctrl + bấm hay bấm chuột giữa trên dòng mở nó ở thẻ mới (#557). */
+  dayDu: string;
   /** Hồ sơ đang mở trong ngăn. */
   dangXem?: boolean;
   ma: string;
@@ -121,7 +123,9 @@ function Dong({
       )}
       <td>
         <div className="o-ho-so">
-          {/* Bấm dòng mở ngăn xem nhanh ngay bên cạnh (#233); trang đầy đủ ở nút trong ngăn */}
+          {/* Bấm dòng mở ngăn xem nhanh ngay bên cạnh (#233); trang đầy đủ ở nút trong ngăn. Ctrl/⌘ +
+              bấm hay bấm chuột giữa — cách quen để mở thẻ mới — thì mở trang đầy đủ, không phải bản
+              sao của hàng đợi kèm ngăn (#557). */}
           <Link
             href={d.href}
             className="lk-dong"
@@ -129,6 +133,16 @@ function Dong({
             aria-current={d.dangXem ? "true" : undefined}
             data-xem-dong={d.id}
             scroll={false}
+            onClick={(e) => {
+              if (!(e.ctrlKey || e.metaKey || e.shiftKey)) return;
+              e.preventDefault();
+              window.open(d.dayDu, "_blank", "noopener");
+            }}
+            onAuxClick={(e) => {
+              if (e.button !== 1) return;
+              e.preventDefault();
+              window.open(d.dayDu, "_blank", "noopener");
+            }}
           />
           <b title={d.tieuDe}>{d.tieuDe}</b>
           <span>

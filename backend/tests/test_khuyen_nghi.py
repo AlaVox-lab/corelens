@@ -143,6 +143,34 @@ def test_so_thu_tu_dau_muc_khong_thanh_cau_khong_thanh_so():
     ]
 
 
+def test_gan_trang_thai_thanh_phong_hay_nhac_sai_vai_bi_loai():
+    # Hai câu mô hình thật viết trên cụm trình diễn (#557): số đúng, đối tượng sai — trạng thái gọi là "phòng",
+    # và nhắc người gửi ở trạng thái không chờ người gửi. Vai đi bước tiếp đọc từ `turns` (bộ quy tắc)
+    kq_mau = _kq(turns={"tt-cho": ["approver"]}, role_labels={"approver": "Người xét duyệt yêu cầu"})
+    du_kien = khuyen_nghi.bang_du_kien(kq_mau)
+    tho = [
+        {"dong": 1, "viec": "Nên bổ sung người xử lý cho phòng 'Chờ bộ phận A'."},
+        {"dong": 1, "viec": "Nên nhắc người gửi bổ sung thông tin sớm."},
+        {"dong": 1, "viec": "Nên nhắc trưởng phòng xét duyệt hồ sơ ở 'Chờ bộ phận A' trong ngày."},
+    ]
+    kiem = khuyen_nghi.dung_cau(tho, du_kien, khuyen_nghi.ten_trong_ket_qua(kq_mau), kq_mau)
+    assert kiem.sai_so == [tho[0]["viec"], tho[1]["viec"]]
+    assert len(kiem.giu) == 1
+    # Ngoặc đơn thẳng thành ngoặc kép như dòng căn cứ
+    assert kiem.giu[0].startswith("Nên nhắc trưởng phòng xét duyệt hồ sơ ở “Chờ bộ phận A” trong ngày — căn cứ:")
+
+    # Không có thông tin lượt (trạng thái không có bước chính): không kiểm vai, vẫn bắt trạng thái gọi là phòng
+    kiem = khuyen_nghi.dung_cau(tho, du_kien, khuyen_nghi.ten_trong_ket_qua(_kq()), _kq())
+    assert kiem.sai_so == [tho[0]["viec"]]
+
+
+def test_loi_dan_ghi_ai_di_buoc_tiep():
+    kq_mau = _kq(turns={"tt-cho": ["approver"]}, role_labels={})
+    van_de = [d for d in khuyen_nghi.bang_du_kien(kq_mau) if d.startswith(khuyen_nghi.TIEN_TO_VAN_DE)]
+    assert khuyen_nghi.ai_di_tiep(van_de, kq_mau) == ["Trạng thái “Chờ bộ phận A”: trưởng phòng."]
+    assert khuyen_nghi.ai_di_tiep(van_de, _kq()) == []
+
+
 # ---------------------------------------------------------------------------
 # Điểm cuối, mô hình giả
 # ---------------------------------------------------------------------------

@@ -34,7 +34,7 @@ from app.config import get_settings
 from app.db import get_session
 from app.intelligence import khuyen_nghi
 from app.models.case import EventLog, Request
-from app.models.workflow_config import Department, RequestType
+from app.models.workflow_config import Department, RequestType, Role, Transition, TransitionRole
 from app.workflow.context import Actor
 from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
@@ -121,6 +121,9 @@ def khuyen_nghi_cai_tien(
     phép kiểm số), `pending` (đang sinh ở nền — hỏi lại sau), `disabled` (mô hình tắt), `unavailable`
     (mô hình không trả lời), `no-data`. Không bao giờ chờ mô hình."""
     ket_qua, phong = _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)
+    # Vai đi bước tiếp ở mỗi trạng thái (#557): lời dặn mô hình nói rõ, phép kiểm bỏ câu nhắc sai vai. Nằm
+    # trong khóa bộ nhớ đệm — đổi bộ quy tắc thì khuyến nghị sinh lại
+    ket_qua = {**ket_qua, "turns": luot_theo_trang_thai(session), "role_labels": nhan_vai(session)}
     kn, tu_dem = khuyen_nghi.lay(tu, den, phong, ket_qua)
     return {
         "status": kn.status,
@@ -131,6 +134,25 @@ def khuyen_nghi_cai_tien(
         "generated_at": kn.generated_at.isoformat() if kn.generated_at else None,
         "cached": tu_dem,
     }
+
+
+def luot_theo_trang_thai(session: Session) -> dict[str, list[str]]:
+    """Vai đi được BƯỚC CHÍNH rời mỗi trạng thái (cạnh có `primary_scope`, #227), theo mã trạng thái — gộp
+    mọi bộ quy tắc. Bước chính là chỗ "hồ sơ đứng đây là đang chờ người đi được cạnh này"; hủy, sửa, gia hạn
+    không tính, nên người gửi hủy được ở Chờ phòng ban xác duyệt vẫn không thành "đang chờ người gửi"."""
+    luot: dict[str, set[str]] = {}
+    for tu_trang_thai, vai in session.execute(
+        select(Transition.from_state, TransitionRole.role_code)
+        .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+        .where(Transition.is_system.is_(False), Transition.primary_scope.is_not(None))
+        .distinct()
+    ):
+        luot.setdefault(tu_trang_thai, set()).add(vai)
+    return {ma: sorted(v) for ma, v in luot.items()}
+
+
+def nhan_vai(session: Session) -> dict[str, str]:
+    return dict(session.execute(select(Role.code, Role.label)).all())
 
 
 def _xem_duoc_tuan_thu(session: Session, ho_so: Request | None, actor: Actor) -> bool:

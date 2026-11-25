@@ -33,7 +33,8 @@ Bạn **không đặt mức ưu tiên** — điều phối viên đặt sau khi 
 Khi cụm bật mô hình nhúng (hồ sơ `tri-tue`, xem *Cài đặt và vận hành → Mô hình ngôn ngữ*), ngừng gõ tiêu
 đề và mô tả một chút thì ngay dưới ô mô tả có thể hiện **tối đa ba hồ sơ đã được giải quyết** giống vấn
 đề của bạn, kèm cách đã giải quyết. Đây là gợi ý của hệ thống từ các hồ sơ người gửi đã xác nhận đạt;
-tên người, email và số điện thoại đã được ẩn, và không có đường dẫn tới hồ sơ của người khác.
+tên người, email và số điện thoại đã được ẩn, và không có đường dẫn tới hồ sơ của người khác. Nhiều hồ sơ
+cùng tiêu đề chỉ hiện một, và hồ sơ có ghi cách giải quyết đứng trước.
 
 - Cách cũ giải quyết được vấn đề của bạn thì bấm **Đã giải quyết được, không gửi nữa** — biểu mẫu đóng,
   không hồ sơ nào được tạo
@@ -70,7 +71,8 @@ giấy đen trắng — hay với người không phân biệt được màu —
 
 Bấm **Xác nhận đạt** thì bảng xác nhận có thêm câu *Bạn hài lòng với cách xử lý đến đâu?* — chọn từ 1 đến
 5 sao, và viết nhận xét nếu muốn (tối đa 1.000 ký tự, ô có đếm). Cả hai **không bắt buộc**: để *Không
-chấm* thì hồ sơ vẫn đóng như thường. Nhận xét chỉ gửi kèm khi đã chọn số sao. Điểm hiện lại trên hồ sơ
+chấm* thì hồ sơ vẫn đóng như thường. Bảng chỉ có một ô chữ: dòng bạn viết hiện trong dòng thời gian, và khi đã
+chọn số sao thì cũng là nhận xét kèm điểm. Điểm hiện lại trên hồ sơ
 của bạn ở khối *Đánh giá của bạn*; điều phối viên và phòng ban đọc được điểm kèm nhận xét, bảng điều
 khiển chỉ có số tổng hợp theo phòng. Mở lại rồi xác nhận lần nữa thì chấm được lần nữa — lần mới nhất
 được tính. Hồ sơ tự đóng vì không xác nhận thì không có điểm.

@@ -78,6 +78,7 @@ function thanhDong(m: MucHangDoiPhongBan, href: string, dangXem: boolean): DongH
   return {
     id: m.id,
     href,
+    dayDu: `${GOC}/${m.id}`,
     dangXem,
     ma: m.code,
     tieuDe: m.title,

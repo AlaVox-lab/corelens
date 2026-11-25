@@ -272,6 +272,15 @@ trong dữ liệu quy tắc (cột `transitions.collects_feedback`), không ph�
 |---|---|---|
 | `FEEDBACK_COMMENT_MAX_CHARS` | `1000` | Nhận xét dài tối đa chừng này ký tự; dài hơn thì bị từ chối (`422`), ô nhận xét đếm ký tự theo số này |
 
+### Nhật ký truy cập dữ liệu cá nhân
+
+Mỗi lần xem chi tiết hồ sơ, xem liên hệ người gửi, tải tệp hay xuất nhật ký của người khác ghi một dòng; quản
+trị viên tra ở màn Hệ thống.
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `ACCESS_AUDIT_DEDUP_SECONDS` | `60` | Cùng người, cùng loại, cùng hồ sơ, cùng tệp và cùng kênh (màn ứng dụng hay API lõi) trong chừng này giây chỉ ghi một dòng — trang tải lại sau thao tác không làm nhật ký lặp. `0` là ghi mọi lần |
+
 ### Khóa trùng lặp cho lệnh của lõi
 
 Ứng dụng tích hợp gửi tiêu đề `Idempotency-Key` ở lệnh tạo hồ sơ và lệnh đi một bước của `/core/v1`; gửi lại

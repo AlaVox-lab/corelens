@@ -30,7 +30,7 @@ export function NganHoSo({
 }) {
   return (
     <KhungNgan maHoSo={ho_so.id} idTieuDe={ID_TIEU_DE} dieuHuong={dieuHuong} chan={thaoTac}>
-      <DauHoSo ho_so={ho_so} meta={meta} trongNgan={{ idTieuDe: ID_TIEU_DE }} />
+      <DauHoSo ho_so={ho_so} meta={meta} trongNgan={{ idTieuDe: ID_TIEU_DE, dayDu: dieuHuong.dayDu }} />
       <TheHan ho_so={ho_so} />
       <TheNoiDung ho_so={ho_so} />
       <div className="the khoi">

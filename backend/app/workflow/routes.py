@@ -46,6 +46,7 @@ from app.rules.han_cho import tu_dong
 from app.rules.sla import (
     an_han_con_lai_giay,
     da_chay_giay,
+    da_khoi_dong,
     gioi_han_giay,
     han_chot,
     sap_het_han,
@@ -361,8 +362,9 @@ def _tom_tat(session: Session, ho_so: Request, states: dict[str, State]) -> dict
         "sla_extension_count": ho_so.sla_extension_count,
         # Đồng hồ đã từng khởi động chưa. Nó chỉ khởi động khi hồ sơ lần đầu vào một
         # trạng thái có `sla_running` — tức khi phòng ban nhận việc. Trước đó giao diện
-        # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97).
-        "sla_started": ho_so.sla_segment_since is not None or ho_so.sla_running_seconds > 0,
+        # phải nói "hạn tính từ lúc nhận việc", không được nói "còn …" (#97). Hồ sơ đã đóng
+        # mà xử lý trọn ngoài giờ làm việc vẫn tính là đã khởi động (#557).
+        "sla_started": da_khoi_dong(session, ho_so),
         # Hồ sơ quá hạn nhưng vừa vào lại trạng thái đếm giờ: còn chừng này giây trước
         # khi bộ quét được leo thang lại (#94). None khi không áp.
         "sla_grace_seconds": an_han_con_lai_giay(session, ho_so),

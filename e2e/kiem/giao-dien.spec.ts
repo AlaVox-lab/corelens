@@ -125,6 +125,10 @@ test.describe("người gửi", () => {
     await page.goto(`/yeu-cau?q=${encodeURIComponent(h.tieuDe)}`, { waitUntil: "networkidle" });
     await expect(page.getByText(h.tieuDe, { exact: true })).toBeVisible();
     await moMan(page, `/yeu-cau/${h.ma}`, "nguoi-gui-ho-so");
+    // Đường dẫn đầu trang ghi mã hồ sơ như buồng lái; không còn câu bảo mở lại trang, câu dài về các nút (#557)
+    await expect(page.locator("header.thanh-dau .cha .mono")).toHaveText(/^YC-\d{4}-\d+$/);
+    await expect(page.getByText("mở lại trang này", { exact: false })).toHaveCount(0);
+    await expect(page.locator("#thao-tac")).toContainText("Chỉ hiện những thao tác bạn làm được ở bước này.");
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
@@ -179,6 +183,58 @@ test.describe("người gửi", () => {
     // Ô chọn bỏ trống thì không liệt kê
     await expect(xemLai).not.toContainText("Mức ảnh hưởng");
     await chup(page, test.info().project.name, "nguoi-gui-gui-yeu-cau-buoc-3");
+  });
+
+  test("thiếu trường bắt buộc không qua được bước 2, câu báo dưới ô; khung lỗi cũ không bám (#555)", async ({ page }) => {
+    // Loại "Sự cố thiết bị" của dữ liệu khởi tạo có hai trường bắt buộc: Mã tài sản, Vị trí
+    const buoc2 = page.locator('[data-buoc="2"]');
+    const buoc3 = page.locator('[data-buoc="3"]');
+    const thieuMa = page.getByText("Chưa điền Mã tài sản.", { exact: true });
+    const thieuViTri = page.getByText("Chưa điền Vị trí.", { exact: true });
+    await page.goto("/yeu-cau/moi", { waitUntil: "networkidle" });
+    await page.getByText("Sự cố thiết bị").first().click();
+    await page.locator('input[name="title"]').fill(`Thiếu trường bắt buộc ${Date.now()}`);
+    await expect(thieuMa).toHaveCount(0);
+
+    // Bấm Tiếp tục khi cả hai còn trống: ở lại bước 2, báo dưới từng ô, tiêu điểm về ô trống đầu tiên
+    await page.getByRole("button", { name: /Tiếp tục/ }).click();
+    await expect(buoc2).toBeVisible();
+    await expect(buoc3).toBeHidden();
+    await expect(thieuMa).toBeVisible();
+    await expect(thieuViTri).toBeVisible();
+    await expect(page.locator("#truong-rieng-ma-tai-san")).toBeFocused();
+    await expect(page.locator("#truong-rieng-ma-tai-san")).toHaveAttribute("aria-invalid", "true");
+    await chup(page, test.info().project.name, "nguoi-gui-gui-yeu-cau-thieu-truong");
+    // Dải bước cũng không mở đường tắt tới bước 3
+    await page.getByRole("button", { name: /Xem lại và gửi/ }).click();
+    await expect(buoc3).toBeHidden();
+
+    // Điền một ô: câu báo của ô đó mất, ô kia còn; bấm tiếp thì tiêu điểm sang ô còn thiếu
+    await page.locator("#truong-rieng-ma-tai-san").fill("KT-0555");
+    await expect(thieuMa).toHaveCount(0);
+    await expect(thieuViTri).toBeVisible();
+    await page.getByRole("button", { name: /Tiếp tục/ }).click();
+    await expect(buoc3).toBeHidden();
+    await expect(page.locator("#truong-rieng-vi-tri")).toBeFocused();
+
+    // Đủ thì qua
+    await page.locator("#truong-rieng-vi-tri").fill("Tầng 2");
+    await expect(thieuViTri).toHaveCount(0);
+    await page.getByRole("button", { name: /Tiếp tục/ }).click();
+    await expect(buoc3).toBeVisible();
+
+    // Dịch vụ vẫn là lớp chặn cuối và báo đủ mọi trường thiếu một lần. Giả lập khai báo loại đổi giữa lúc nạp biểu
+    // mẫu và lúc gửi bằng cách xóa bộ giá trị trong ô ẩn ngay trước khi bấm gửi
+    await page.locator('input[name="details"]').evaluate((o: HTMLInputElement) => {
+      o.value = "{}";
+    });
+    await page.getByRole("button", { name: "Gửi yêu cầu" }).click();
+    const khungLoi = page.locator('form p[role="alert"]');
+    await expect(khungLoi).toHaveText("Chưa điền Mã tài sản, Vị trí.");
+    await expect(page).toHaveURL(/\/yeu-cau\/moi/);
+    // Người gửi quay lại sửa: khung lỗi của lần gửi trước biến mất, không bám theo
+    await page.getByRole("button", { name: /Quay lại/ }).click();
+    await expect(khungLoi).toHaveCount(0);
   });
 
   test("mô hình nhúng tắt: gõ nội dung không hiện hồ sơ tương tự, vẫn gửi bình thường (#319)", async ({ page }) => {
@@ -243,6 +299,40 @@ test.describe("người gửi", () => {
     await khoi.getByRole("button", { name: "Đã giải quyết được, không gửi nữa" }).click();
     await page.waitForURL(/\/yeu-cau$/);
     expect(phienBo).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  test("gõ thêm mô tả thì biểu mẫu hỏi lại theo mô tả mới, khối gợi ý đổi theo (#556)", async ({ page }) => {
+    // Lượt test tay 25/11: gõ thêm mô tả khác hẳn mà khung gợi ý không đổi. Bài này giữ phần của cổng: mỗi lần
+    // ngừng gõ mô tả, biểu mẫu gửi lại cả tiêu đề lẫn mô tả mới và vẽ đúng danh sách dịch vụ trả về
+    const hoi: { title: string; description: string }[] = [];
+    await page.route("**/api/yeu-cau/tuong-tu", (r) => {
+      const than = r.request().postDataJSON() as { title: string; description: string };
+      hoi.push(than);
+      const ketGiay = than.description.includes("nhét nhiều giấy");
+      return r.fulfill({
+        json: {
+          enabled: true,
+          items: [
+            ketGiay
+              ? { title: "Máy in tầng 3 kẹt giấy liên tục", request_type: "Sự cố thiết bị",
+                  resolution: "Vệ sinh con lăn kéo giấy.", closed_at: "2026-10-20T03:00:00Z", score: 0.8 }
+              : { title: "Máy in phòng Kinh doanh báo hết mực", request_type: "Sự cố thiết bị",
+                  resolution: "Lắp lại hộp mực cho khớp chip.", closed_at: "2026-10-21T03:00:00Z", score: 0.8 },
+          ],
+        },
+      });
+    });
+
+    await page.goto("/yeu-cau/moi");
+    await page.getByText("Sự cố thiết bị").first().click();
+    await page.locator('input[name="title"]').fill("Máy in bị lỗi không in được");
+    const khoi = page.getByTestId("goi-y-tuong-tu");
+    await expect(khoi).toContainText("báo hết mực");
+
+    await page.locator('textarea[name="description"]').fill("Máy in bị lỗi khi lỡ nhét nhiều giấy quá");
+    await expect(khoi).toContainText("kẹt giấy liên tục");
+    await expect(khoi).not.toContainText("báo hết mực");
+    expect(hoi.at(-1)).toMatchObject({ title: "Máy in bị lỗi không in được", description: "Máy in bị lỗi khi lỡ nhét nhiều giấy quá" });
   });
 
   test("không thấy mục Hệ thống, mở thẳng thì bị từ chối", async ({ page }) => {
@@ -345,6 +435,30 @@ test.describe("điều phối viên", () => {
     // Hồ sơ vừa gửi chờ điều phối viên phân loại — bước chính khai trong dữ liệu quy tắc
     await expect(ngan.locator(".ngan-chan .nut[data-loai='chinh']")).toContainText("Phân loại yêu cầu");
     await expect(ngan.getByRole("link", { name: "Mở trang đầy đủ" })).toHaveAttribute("href", `/dieu-phoi/${h.ma}`);
+    // Tiêu đề ở đầu ngăn là liên kết tới trang đầy đủ (#557)
+    await expect(ngan.getByRole("heading", { level: 2 }).getByRole("link")).toHaveAttribute("href", `/dieu-phoi/${h.ma}`);
+  });
+
+  test("Ctrl + bấm hay bấm chuột giữa trên dòng hàng đợi mở trang đầy đủ ở thẻ mới (#557)", async ({ page, context }) => {
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    const dong = page.locator("[data-xem-dong]").first();
+    const ma = await dong.getAttribute("data-xem-dong");
+    for (const cach of [{ modifiers: ["ControlOrMeta"] as const }, { button: "middle" as const }]) {
+      const [moi] = await Promise.all([context.waitForEvent("page"), dong.click(cach)]);
+      await moi.waitForLoadState();
+      expect(new URL(moi.url()).pathname, JSON.stringify(cach)).toBe(`/dieu-phoi/${ma}`);
+      await moi.close();
+      // Thẻ đang mở không mở ngăn xem nhanh
+      await expect(page).not.toHaveURL(/xem=/);
+    }
+  });
+
+  test("trang đầy đủ chỉ tô màu chính cho bước chính trong dữ liệu (#557)", async ({ page }) => {
+    const h = docHoSo();
+    await page.goto(`/dieu-phoi/${h.ma}`, { waitUntil: "networkidle" });
+    const chinh = page.locator("#thao-tac .nut[data-loai='chinh']");
+    await expect(chinh).toHaveCount(1);
+    await expect(chinh).toContainText("Phân loại yêu cầu");
   });
 
   test("chuyển động: không quá 300 ms, số trang chủ không đếm từ 0", async ({ page }) => {
@@ -531,6 +645,9 @@ test.describe("điều phối viên", () => {
               resolution: "Đổi cáp HDMI mới.", closed_at: "2026-10-01T03:00:00+00:00", score: 0.81 },
             { case_id: 9, code: "YC-2026-0009", title: "Màn hình phòng họp nhấp nháy", request_type: null,
               resolution: "Thay nguồn màn hình.", closed_at: "2026-10-03T03:00:00+00:00", score: 0.66 },
+            // Hồ sơ không ghi cách giải quyết (#556): dòng không được kết thúc bằng gạch nối treo
+            { case_id: 11, code: "YC-2026-0011", title: "Máy in tầng 2 kẹt giấy", request_type: "Sự cố thiết bị",
+              resolution: "", closed_at: "2026-10-05T03:00:00+00:00", score: 0.61 },
           ],
         },
       }),
@@ -539,9 +656,11 @@ test.describe("điều phối viên", () => {
     const { the } = await moBangChuyenPhong(page);
     const khoi = the.locator(".can-cu-tuong-tu");
     await expect(khoi).toContainText("Hồ sơ đã giải quyết tương tự");
-    await expect(khoi.locator("li")).toHaveCount(2);
+    await expect(khoi.locator("li")).toHaveCount(3);
     await expect(khoi.getByRole("link", { name: "YC-2026-0007" })).toHaveAttribute("href", "/dieu-phoi/7");
     await expect(khoi).toContainText("Đổi cáp HDMI mới.");
+    const khongCach = (await khoi.locator("li").nth(2).innerText()).trim();
+    expect(khongCach, "dòng không có cách giải quyết").toBe("YC-2026-0011 Máy in tầng 2 kẹt giấy · Sự cố thiết bị");
     // Không cuộn ngang dù thêm khối
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
     await the.scrollIntoViewIfNeeded();

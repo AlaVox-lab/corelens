@@ -19,7 +19,7 @@
 // `position: fixed` bên trong một phần tử có `transform` tính theo phần tử đó chứ không theo
 // khung trình duyệt — ngăn sẽ lệch xuống và khối thao tác ở đáy rơi khỏi màn hình.
 
-import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -128,8 +128,9 @@ export function KhungNgan({
           )}
         </nav>
         <Link className="nut nut-nho" href={dayDu}>
+          {/* Mở ngay thẻ này, nên không dùng biểu tượng "mở thẻ mới" (#557) */}
           Mở trang đầy đủ
-          <ExternalLink aria-hidden />
+          <Maximize2 aria-hidden />
         </Link>
       </div>
       <div className="ngan-than">{children}</div>

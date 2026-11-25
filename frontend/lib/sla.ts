@@ -47,11 +47,14 @@ export function docDongHo(ho_so: HoSoTomTat, nguoiXem: NguoiXem = "noi-bo"): Doc
   // Cờ `is_terminal` tra từ bảng `states`, không so mã trạng thái với một danh sách
   // viết cứng ở đây.
   if (ho_so.state.is_terminal) {
-    // Nói về đồng hồ, không suy diễn về phòng ban. Con số 0 xảy ra ở cả hai tình
-    // huống khác hẳn nhau — hồ sơ bị hủy trước khi ai bắt tay vào việc, và hồ sơ chạy
-    // hết trong vòng chưa tới một giây — nên một câu suy diễn sẽ sai ở tình huống kia.
+    // Nói về đồng hồ, không suy diễn về phòng ban. Con số 0 xảy ra ở hai tình huống khác
+    // hẳn nhau, phân biệt bằng `sla_started`: hồ sơ khép trước khi phòng ban nhận việc
+    // (đồng hồ chưa từng chạy), và hồ sơ được xử lý trọn ngoài giờ làm việc — đồng hồ có
+    // chạy nhưng không đếm được giờ làm việc nào (#557).
     if (ho_so.sla_running_seconds === 0) {
-      return { cau: "Đồng hồ xử lý chưa từng chạy", canhBao: false };
+      return ho_so.sla_started
+        ? { cau: "Khép lại, không tốn giờ làm việc nào", canhBao: false }
+        : { cau: "Đồng hồ xử lý chưa từng chạy", canhBao: false };
     }
     if (ho_so.sla_overdue) {
       return { cau: `Khép lại, đã vượt cam kết`, canhBao: true };

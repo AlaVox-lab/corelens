@@ -444,6 +444,8 @@ services:
       DXLAB_BULK_ACTIVITIES: ${BULK_ACTIVITIES:-classify,route-to-department}
       # Đánh giá mức hài lòng khi xác nhận hoàn tất (#433): nhận xét dài tối đa chừng này ký tự
       DXLAB_FEEDBACK_COMMENT_MAX_CHARS: ${FEEDBACK_COMMENT_MAX_CHARS:-1000}
+      # Nhật ký truy cập (#431, #557): lượt trùng cùng người, cùng loại, cùng hồ sơ trong chừng này giây gộp làm một
+      DXLAB_ACCESS_AUDIT_DEDUP_SECONDS: ${ACCESS_AUDIT_DEDUP_SECONDS:-60}
       # Khóa trùng lặp Idempotency-Key cho lệnh của lõi (#426): khóa sống mấy giờ, lần đang chạy giữ mấy giây
       DXLAB_IDEMPOTENCY_TTL_HOURS: ${IDEMPOTENCY_TTL_HOURS:-24}
       DXLAB_IDEMPOTENCY_LOCK_SECONDS: ${IDEMPOTENCY_LOCK_SECONDS:-60}
