@@ -161,7 +161,7 @@ def _lay(session: Session, ma: int) -> WebhookSubscription:
     return dk
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=DangKyMoiRa)
+@router.post("", summary="Tạo đăng ký webhook", status_code=status.HTTP_201_CREATED, response_model=DangKyMoiRa)
 def tao_dang_ky(vao: DangKyVao, session: _Phien, actor: _QuanTri) -> dict:
     """Đăng ký một địa chỉ nhận sự kiện. Chỉ nhận sự kiện xảy ra SAU lúc đăng ký.
 
@@ -187,18 +187,18 @@ def tao_dang_ky(vao: DangKyVao, session: _Phien, actor: _QuanTri) -> dict:
     return {**_ra(dk), "secret": dk.secret}
 
 
-@router.get("", response_model=list[DangKyRa])
+@router.get("", summary="Danh sách đăng ký webhook", response_model=list[DangKyRa])
 def danh_sach_dang_ky(session: _Phien, _: _QuanTri) -> list[dict]:
     """Mọi đăng ký webhook, mới nhất trước. Không trả bí mật."""
     return [_ra(dk) for dk in session.scalars(select(WebhookSubscription).order_by(WebhookSubscription.id.desc()))]
 
 
-@router.get("/{webhook_id}", response_model=DangKyRa)
+@router.get("/{webhook_id}", summary="Xem một đăng ký webhook", response_model=DangKyRa)
 def xem_dang_ky(webhook_id: int, session: _Phien, _: _QuanTri) -> dict:
     return _ra(_lay(session, webhook_id))
 
 
-@router.delete("/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{webhook_id}", summary="Hủy một đăng ký webhook", status_code=status.HTTP_204_NO_CONTENT)
 def huy_dang_ky(webhook_id: int, session: _Phien, _: _QuanTri) -> Response:
     """Hủy đăng ký; các lần gửi đang chờ bỏ theo."""
     session.delete(_lay(session, webhook_id))
@@ -206,7 +206,7 @@ def huy_dang_ky(webhook_id: int, session: _Phien, _: _QuanTri) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/{webhook_id}/deliveries", response_model=list[LanGuiRa])
+@router.get("/{webhook_id}/deliveries", summary="Các lần gửi gần đây của một webhook", response_model=list[LanGuiRa])
 def lan_gui_gan_day(webhook_id: int, session: _Phien, _: _QuanTri) -> list[WebhookDelivery]:
     """Năm mươi lần gửi gần nhất của một đăng ký, mới nhất trước."""
     _lay(session, webhook_id)

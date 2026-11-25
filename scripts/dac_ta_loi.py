@@ -7,8 +7,8 @@
 # docs/api/core-v1.openapi.json cho người đọc kho — giám khảo, ứng dụng tầng trên — thấy hợp đồng API của lõi
 # không cần dựng gì, và cho git ghi lại mỗi lần hợp đồng đổi. Ở gốc kho:
 #
-#     python scripts/dac_ta_loi.py --anh dxlab-backend:0.3.0          # ghi lại tệp
-#     python scripts/dac_ta_loi.py --anh dxlab-backend:0.3.0 --kiem   # chỉ so; lệch thì thoát 1 (CI)
+#     python scripts/dac_ta_loi.py --anh dxlab-backend:local          # ghi lại tệp
+#     python scripts/dac_ta_loi.py --anh dxlab-backend:local --kiem   # chỉ so; lệch thì thoát 1 (CI)
 #
 # Chạy trong ảnh dịch vụ ứng dụng với mã nguồn `backend/` của kho gắn chỉ đọc, nên dùng đúng mã đang sửa mà
 # không cần cơ sở dữ liệu hay cụm. FastAPI tự sinh đặc tả từ mã; kịch bản chỉ lọc đường dưới tiền tố lõi và
@@ -63,7 +63,7 @@ def main() -> int:
         if hasattr(luong, "reconfigure"):
             luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description="Sinh và kiểm đặc tả OpenAPI của nền tảng lõi /core/v1.")
-    p.add_argument("--anh", required=True, help="Ảnh dịch vụ ứng dụng đã dựng, vd dxlab-backend:0.3.0")
+    p.add_argument("--anh", required=True, help="Ảnh dịch vụ ứng dụng đã dựng, vd dxlab-backend:local")
     p.add_argument("--kiem", action="store_true", help="Chỉ so với tệp trong kho; lệch thì thoát 1")
     ts = p.parse_args()
 

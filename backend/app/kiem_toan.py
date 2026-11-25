@@ -169,7 +169,7 @@ def _utc(v: dt.datetime) -> dt.datetime:
     return v if v.tzinfo is not None else v.replace(tzinfo=dt.UTC)
 
 
-@router.get("/kinds", response_model=list[LoaiTruyCapRa])
+@router.get("/kinds", summary="Danh mục loại truy cập được ghi", response_model=list[LoaiTruyCapRa])
 def danh_muc_loai(session: _Phien, _: _QuanTriVien) -> list[LoaiTruyCapRa]:
     """Các loại truy cập được ghi, theo thứ tự hiển thị — cho ô lọc của màn Hệ thống."""
     return [
@@ -178,7 +178,7 @@ def danh_muc_loai(session: _Phien, _: _QuanTriVien) -> list[LoaiTruyCapRa]:
     ]
 
 
-@router.get("", response_model=DanhSachTruyCapRa)
+@router.get("", summary="Tra cứu nhật ký kiểm toán truy cập", response_model=DanhSachTruyCapRa)
 def tra_cuu(
     session: _Phien,
     _: _QuanTriVien,

@@ -198,7 +198,7 @@ def _phong_mac_dinh(session: Session) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-@router.get("")
+@router.get("", summary="Xem cấu hình quy trình đang chạy")
 def xem_cau_hinh(actor: QuanTriVien, session: Phien) -> dict:
     """Toàn bộ cấu hình đang chạy cho màn quản trị. Chỉ quản trị viên.
 
@@ -368,7 +368,7 @@ class SuaVao(BaseModel):
     dry_run: bool = False
 
 
-@router.post("/{loai}/{ma}")
+@router.post("/{loai}/{ma}", summary="Sửa một dòng cấu hình")
 def sua_cau_hinh(loai: str, ma: str, du_lieu: SuaVao, actor: QuanTriVien, session: Phien) -> dict:
     """Sửa một dòng cấu hình. Chỉ quản trị viên.
 

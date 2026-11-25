@@ -7,7 +7,8 @@
 
 import type { TruongRieng } from "@/lib/kieu";
 
-function hien(t: TruongRieng, v: unknown): string {
+/** Giá trị một trường riêng như người đọc thấy: số theo cách viết tiếng Việt kèm đơn vị, ngày dd/mm/yyyy. */
+export function hienTruong(t: TruongRieng, v: unknown): string {
   if (t.kind === "number" && typeof v === "number") {
     const so = v.toLocaleString("vi-VN");
     return t.unit ? `${so} ${t.unit}` : so;
@@ -29,7 +30,7 @@ export function TheTruongRieng({ cacTruong, giaTri }: { cacTruong: TruongRieng[]
         return (
           <div key={t.code}>
             <dt>{t.label}</dt>
-            <dd data-trong={co ? undefined : ""}>{co ? hien(t, v) : "chưa có"}</dd>
+            <dd data-trong={co ? undefined : ""}>{co ? hienTruong(t, v) : "chưa có"}</dd>
           </div>
         );
       })}

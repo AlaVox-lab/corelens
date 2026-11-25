@@ -225,7 +225,7 @@ def kiem_nguoi_duoc_giao(
 
 
 @router.get(
-    "/departments/{department_code}/assignees",
+    "/departments/{department_code}/assignees", summary="Người trong phòng nhận được việc",
     response_model=NguoiNhanViecTrongPhongRa,
     responses={
         403: {"description": "Không mang vai trò giao việc, hoặc không thuộc phòng này"},

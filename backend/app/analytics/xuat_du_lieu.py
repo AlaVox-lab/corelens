@@ -116,7 +116,7 @@ def _gia_tri(v):
     return v
 
 
-@router.get("")
+@router.get("", summary="Xuất nhật ký sự kiện")
 def xuat_nhat_ky(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_XUAT))],

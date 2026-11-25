@@ -378,7 +378,7 @@ def _tom_tat(ban_ghi: ColdArchive, yeu_cau: Request) -> dict:
     }
 
 
-@router.get("")
+@router.get("", summary="Danh sách bản lưu trữ lạnh")
 def liet_ke_ban_luu_tru(
     session: Annotated[Session, Depends(get_session)],
     _: Annotated[Actor, Depends(require_roles(VAI_TRO_XUAT))],
@@ -392,7 +392,7 @@ def liet_ke_ban_luu_tru(
     return [_tom_tat(b, request) for b in cac]
 
 
-@router.get("/{ky}")
+@router.get("/{ky}", summary="Bản kê một kỳ lưu trữ")
 def doc_ban_luu_tru(
     ky: KyDuong,
     session: Annotated[Session, Depends(get_session)],
@@ -417,7 +417,7 @@ def doc_ban_luu_tru(
     }
 
 
-@router.get("/{ky}/files/{ten_tep}")
+@router.get("/{ky}/files/{ten_tep}", summary="Tải một tệp của bản lưu trữ")
 def tai_tep_luu_tru(
     ky: KyDuong,
     ten_tep: str,

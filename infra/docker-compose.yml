@@ -166,6 +166,9 @@ services:
       # pm4py (mặc định) hay noi_bo — bộ máy dự phòng không dùng thư viện khai phá, xem README dịch vụ
       KHAI_PHA_BO_MAY: ${MINING_ENGINE:-pm4py}
       KHAI_PHA_BOI_SO_NGHEN: ${MINING_BOTTLENECK_FACTOR:-2}
+    volumes:
+      # Cùng tệp phiên bản với dịch vụ ứng dụng (#552) — app/phien_ban.py của dịch vụ khai phá
+      - ../VERSION:/app/VERSION:ro
     depends_on:
       # Tài khoản chỉ đọc và view báo cáo do migration của dịch vụ ứng dụng tạo
       backend:
@@ -402,7 +405,7 @@ services:
       # psycopg 3 dùng tiền tố postgresql+psycopg. Superset ở trên dùng psycopg2 —
       # hai trình điều khiển khác nhau, đừng chép nhầm chuỗi của nhau.
       DXLAB_DATABASE_URI: postgresql+psycopg://${DXLAB_DB_USER}:${DXLAB_DB_PASSWORD}@postgres:5432/${DXLAB_DB_NAME}
-      DXLAB_APP_VERSION: ${DXLAB_VERSION}
+      # Số phiên bản hiển thị KHÔNG đi qua biến môi trường (#552): dịch vụ đọc tệp VERSION gắn ở volumes dưới
       # Hai địa chỉ cho cùng một Keycloak, cố ý khác nhau — xem app/config.py.
       # Đối chiếu iss bằng địa chỉ công khai, đi lấy khóa bằng địa chỉ nội bộ.
       DXLAB_OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT}/realms/${KEYCLOAK_REALM}
@@ -491,6 +494,7 @@ services:
       # thì chỉ lối vào và gợi ý bài vắng mặt. Khóa API chỉ đọc đọc từ volume tri-thuc-khoa.
       DXLAB_WIKI_PUBLIC_URL: ${WIKI_URL:-}
       DXLAB_WIKI_INDEX_INTERVAL_SECONDS: ${WIKI_INDEX_INTERVAL_SECONDS:-120}
+      DXLAB_WIKI_INDEX_MAX_CONSECUTIVE_ERRORS: ${WIKI_INDEX_MAX_CONSECUTIVE_ERRORS:-1}
       # Bảng điều khiển nhúng trong cổng (#305): dịch vụ xin token khách qua địa chỉ nội bộ,
       # trình duyệt tải bảng điều khiển qua địa chỉ công khai. Cố ý KHÔNG depends_on superset
       # (chính Superset chờ dịch vụ này): Superset tắt thì chỉ mục Báo cáo báo không phản hồi.
@@ -537,6 +541,8 @@ services:
       - ./seed:/seed:ro
       # Khóa API chỉ đọc của kho tri thức (#321), do tri-thuc-khoi-tao ghi; rỗng khi chưa bật hồ sơ đó
       - tri-thuc-khoa:/run/tri-thuc:ro
+      # Số phiên bản hiển thị (#552): một tệp ở gốc kho cho /docs, màn Hệ thống và dịch vụ khai phá — app/phien_ban.py
+      - ../VERSION:/app/VERSION:ro
     # KHÔNG mở cổng ra máy (#364): mọi lời gọi API từ ngoài cụm đi qua cổng API (dịch vụ cong-api ngay
     # dưới). Mở lại cổng 8000 cho người phát triển: tệp docker-compose.phat-trien.yml
     depends_on:

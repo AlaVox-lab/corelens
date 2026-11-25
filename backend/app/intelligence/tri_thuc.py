@@ -15,8 +15,9 @@
 #    khoảng cách cosine của pgvector, tối đa `wiki_max_results` bài trên ngưỡng.
 #
 # Ranh giới AGPL (LICENSES.md): Wiki.js là chương trình khác, chỉ được gọi qua HTTP/GraphQL. Không mã nào
-# của Wiki.js ở đây. Kho tri thức tắt, khóa chưa có, wiki không phản hồi, mô hình nhúng tắt — bộ quét bỏ
-# lượt hay không có việc, biểu mẫu Gửi yêu cầu không có bài, không gì khác hỏng.
+# của Wiki.js ở đây. Kho tri thức hay mô hình nhúng tắt — bộ quét không có việc. Bật mà khóa chưa có, khóa bị
+# từ chối, wiki hay mô hình nhúng không phản hồi — lượt báo hỏng kèm lý do trên màn Hệ thống (#552). Cả hai trường
+# hợp biểu mẫu Gửi yêu cầu chỉ thiếu bài gợi ý, không gì khác hỏng.
 #
 # Chỉ ghi bảng riêng `knowledge_articles`, không chạm hồ sơ hay trường quyết định nào (CLAUDE.md mục 4.3).
 
@@ -116,6 +117,14 @@ def doc_noi_dung(bai: Bai) -> str:
     try:
         with urllib.request.urlopen(yeu_cau, timeout=cau_hinh.wiki_timeout_seconds) as tl:
             trang = tl.read().decode("utf-8")
+    except urllib.error.HTTPError as loi:
+        if loi.code in (401, 403):
+            # Khóa không còn hợp lệ thì Wiki.js coi lời gọi như của khách, mà khách không có quyền `read:source`
+            raise LoiKhoTriThuc(
+                f"Wiki.js từ chối khóa API (HTTP {loi.code}) khi đọc bài {bai.path} — chạy lại bước khởi tạo kho "
+                "tri thức để cấp khóa mới"
+            ) from loi
+        raise LoiKhoTriThuc(f"không đọc được bài {bai.path}: {loi}") from loi
     except (urllib.error.URLError, OSError, UnicodeDecodeError) as loi:
         raise LoiKhoTriThuc(f"không đọc được bài {bai.path}: {loi}") from loi
     return noi_dung_tu_trang(trang, bai.path)
@@ -189,16 +198,17 @@ def quet_kho_tri_thuc(
     phien: Session, hoi: HoiWiki = hoi_wiki, doc: DocNoiDung | None = None, mo_phien: MoPhien = _mo_phien_that
 ) -> int:
     """Một lượt của bộ lập chỉ mục. `phien` giữ khóa tư vấn của lượt (`nhip_quet.py`). Trả số bài đã
-    ghi hay xóa khỏi chỉ mục. Kho tri thức hay mô hình nhúng không dùng được: bỏ lượt, không ném lỗi —
-    nhịp vẫn ghi lượt thành công, vì bộ quét không hỏng, chỉ không có gì để làm."""
+    ghi hay xóa khỏi chỉ mục.
+
+    Kho tri thức hay mô hình nhúng TẮT theo cấu hình: không có việc, trả 0. BẬT mà không dùng được — chưa có khóa,
+    Wiki.js từ chối khóa, wiki hay mô hình nhúng không phản hồi — thì ném `LoiKhoTriThuc`: `chay_luot_quet` hoàn tác
+    lượt (chỉ mục giữ nguyên), ghi lần hỏng kèm lý do ngắn vào dòng nhịp, và màn Hệ thống tô đỏ ngay lượt đầu
+    (`wiki_index_max_consecutive_errors`). Trước #552 lượt hỏng bị nuốt: nhịp vẫn ghi "quét thành công" trong khi
+    mọi lượt bị 403 và người gửi không thấy bài hướng dẫn nào."""
     cau_hinh = get_settings()
     if not (cau_hinh.wiki_enabled and cau_hinh.embedding_enabled):
         return 0
-    try:
-        cac_bai = doc_danh_sach(hoi)
-    except LoiKhoTriThuc as loi:
-        log.warning("Bộ lập chỉ mục kho tri thức bỏ lượt: %s", loi)
-        return 0
+    cac_bai = doc_danh_sach(hoi)
 
     da_co = {
         r[0]: (r[1], r[2])
@@ -218,12 +228,11 @@ def quet_kho_tri_thuc(
     if not can:
         return len(bo)
 
+    noi_dung = [(doc or doc_noi_dung)(b) for b in can]
     try:
-        noi_dung = [(doc or doc_noi_dung)(b) for b in can]
         vec = mo_hinh.hoi_nhung([b.doan_nhung(c) for b, c in zip(can, noi_dung, strict=True)])
-    except (LoiKhoTriThuc, mo_hinh.LoiMoHinh) as loi:
-        log.warning("Bộ lập chỉ mục kho tri thức bỏ lượt: %s", loi)
-        return len(bo)
+    except mo_hinh.LoiMoHinh as loi:
+        raise LoiKhoTriThuc(f"mô hình nhúng không trả lời: {loi}") from loi
 
     with mo_phien() as ghi:
         for b, c, v in zip(can, noi_dung, vec, strict=True):

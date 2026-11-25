@@ -133,7 +133,7 @@ def _loc_kenh(cau, noi_bo: bool):
     return cau.where(CaseMessage.kind.in_(loai) if noi_bo else CaseMessage.kind.not_in(loai))
 
 
-@router.get("", response_model=HopThuRa)
+@router.get("", summary="Các cuộc trò chuyện trong hộp thư", response_model=HopThuRa)
 def hop_thu(
     session: _Phien,
     actor: _NguoiGoi,
@@ -255,7 +255,7 @@ def hop_thu(
     )
 
 
-@router.get("/unread", response_model=SoChuaDocRa)
+@router.get("/unread", summary="Số lời nhắn chưa đọc", response_model=SoChuaDocRa)
 def so_chua_doc(session: _Phien, actor: _NguoiGoi) -> SoChuaDocRa:
     """Chỉ con số chưa đọc — giao diện hỏi định kỳ cho thanh bên, nên phải nhẹ."""
     cua = _Cua(session, actor)
@@ -263,7 +263,7 @@ def so_chua_doc(session: _Phien, actor: _NguoiGoi) -> SoChuaDocRa:
     return SoChuaDocRa(unread=sum(_so_chua_doc(session, actor, trong_pham_vi).values()))
 
 
-@router.post("/{case_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/{case_id}/read", summary="Đánh dấu đã đọc một cuộc trò chuyện", status_code=status.HTTP_204_NO_CONTENT)
 def danh_dau_da_doc(
     case_id: int, session: _Phien, actor: _NguoiGoi, internal: bool = False
 ) -> Response:

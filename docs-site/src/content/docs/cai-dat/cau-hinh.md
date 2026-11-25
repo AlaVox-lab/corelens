@@ -182,7 +182,7 @@ chạy trong tích hợp liên tục và báo lỗi khi thêm biến vào `.env.
 | `SUPERSET_READONLY_USER` | `superset_readonly` | Tài khoản chỉ đọc Superset dùng trên database nghiệp vụ (ADR-0003) |
 | `SUPERSET_ADMIN_USER` | `admin` | Tài khoản quản trị Superset, đi cùng `SUPERSET_ADMIN_PASSWORD` |
 | `SUPERSET_VERSION` | `6.1.0` | Phiên bản ảnh Superset; đổi là đổi nền tảng, đọc ADR-0003 trước |
-| `DXLAB_VERSION` | `0.3.0` | Thẻ của các ảnh do nhóm tự dựng, chỉ để nhận diện ảnh trên máy |
+| `DXLAB_VERSION` | `local` | Thẻ của các ảnh do nhóm tự dựng, chỉ để nhận diện ảnh trên máy — không phải số phiên bản. Số phiên bản mà `/docs` và màn Hệ thống hiện nằm ở tệp `VERSION` ở gốc kho; `.env` cũ còn ghi `0.3.0` vẫn chạy (#552) |
 
 ### Kho tệp và quét mã độc
 
@@ -292,6 +292,7 @@ Chỉ dùng khi bật hồ sơ Compose `tri-thuc`; cách bật ở [Kho tri th�
 | `WIKI_PORT` | `3100` | Cổng web của Wiki.js trên máy |
 | `WIKI_URL` | rỗng | Địa chỉ trình duyệt mở wiki. **Rỗng là tắt** lối vào và gợi ý bài trên cổng |
 | `WIKI_INDEX_INTERVAL_SECONDS` | `120` | Nhịp bộ lập chỉ mục bài viết |
+| `WIKI_INDEX_MAX_CONSECUTIVE_ERRORS` | `1` | Số lượt lập chỉ mục hỏng liên tiếp thì màn Hệ thống báo đỏ kèm lý do — khóa API bị Wiki.js từ chối, wiki hay mô hình nhúng không phản hồi |
 | `WIKI_DB_NAME` | `wiki` | Database riêng của Wiki.js, bước khởi tạo tự tạo |
 | `WIKI_OIDC_CLIENT_ID` | `dx-wiki` | Client OIDC của wiki trong Keycloak, bước khởi tạo tự tạo |
 | `WIKI_READ_ROLES` | năm vai | Vai realm được đọc bài, cách nhau dấu phẩy |

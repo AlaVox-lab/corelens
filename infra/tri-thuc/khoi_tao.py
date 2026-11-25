@@ -5,7 +5,8 @@
 #
 #     python /tri-thuc/khoi_tao.py chuan-bi   # TRƯỚC Wiki.js: database riêng, client OIDC trong Keycloak
 #     python /tri-thuc/khoi_tao.py khoi-tao   # SAU Wiki.js: hoàn tất cài đặt, đăng nhập một lần, nhóm,
-#                                             #   khóa API chỉ đọc, bài mẫu
+#                                             #   bài mẫu, khóa API chỉ đọc (thử bằng chính đường bộ lập
+#                                             #   chỉ mục đọc bài; hỏng thì cấp lại — #552)
 #
 # Ranh giới AGPL (ADR-0006): tệp này KHÔNG chứa hay nạp mã Wiki.js. Nó nói chuyện với Wiki.js qua HTTP
 # (`/finalize` của trang cài đặt và GraphQL `/graphql`) như mọi chương trình khách khác, và với Keycloak
@@ -230,6 +231,20 @@ class Wiki:
             raise RuntimeError(f"GraphQL báo lỗi: {ket_qua['errors']}")
         return ket_qua["data"]
 
+    def doc_ma_nguon(self, locale: str, duong: str, khoa: str) -> bool:
+        """Khóa `khoa` đọc được trang mã nguồn của bài — đúng đường bộ lập chỉ mục của dịch vụ ứng dụng đi
+        (`doc_noi_dung` trong backend/app/intelligence/tri_thuc.py). Trang đòi quyền `read:source`: nhóm của khóa
+        có, khách vô danh không. Khóa không còn hợp lệ (CSDL Wiki.js dựng lại mà volume khóa còn giữ) thì Wiki.js
+        coi lời gọi như của khách và trả 403 — còn GraphQL `pages.list` thì khách vẫn chạy được, nên không dùng
+        nó để thử khóa (#552)."""
+        duong_dan = urllib.parse.quote(f"/s/{locale}/{duong}")
+        yeu_cau = urllib.request.Request(f"{self.goc}{duong_dan}", headers={"Authorization": f"Bearer {khoa}"})
+        try:
+            with urllib.request.urlopen(yeu_cau, timeout=30) as tl:
+                return tl.status == 200 and b"<code v-pre>" in tl.read()
+        except urllib.error.HTTPError:
+            return False
+
     def dang_cai_dat(self) -> bool:
         """Trang cài đặt lần đầu chỉ có GET và POST /finalize — /graphql chưa tồn tại."""
         ma, _ = goi(f"{self.goc}/graphql", phuong_thuc="POST", json_than={"query": "{ __typename }"})
@@ -376,17 +391,33 @@ def cau_hinh_dang_nhap(w: Wiki) -> None:
     ghi("đã cấu hình đăng nhập một lần qua Keycloak")
 
 
+def bai_de_thu(w: Wiki) -> tuple[str, str] | None:
+    """Một bài đã xuất bản, không riêng tư — (ngôn ngữ, đường dẫn) — để thử khóa API; None khi wiki chưa có bài."""
+    ds = w.graphql("{ pages { list(orderBy: ID) { path locale isPublished isPrivate } } }")["pages"]["list"]
+    for p in ds:
+        if p["isPublished"] and not p["isPrivate"]:
+            return p["locale"], p["path"]
+    return None
+
+
 def dam_bao_khoa_api(w: Wiki, nhom: dict[str, int]) -> None:
-    """Khóa API chỉ đọc cho dịch vụ ứng dụng, ghi vào volume chung. Khóa cũ còn dùng được thì giữ."""
+    """Khóa API chỉ đọc cho dịch vụ ứng dụng, ghi vào volume chung. Khóa cũ còn đọc được bài thì giữ; không đọc
+    được thì cấp khóa mới, ghi đè tệp khóa. Dịch vụ ứng dụng đọc tệp ở mỗi lượt nên nhận khóa mới không cần khởi
+    động lại. Chạy sau bước bài mẫu để luôn có một bài mà thử."""
     tep = Path(bien("WIKI_API_KEY_FILE"))
     ten_khoa = "dx-os-lab"
+    bai = bai_de_thu(w)
     if tep.exists():
-        try:
-            w.graphql("{ pages { list(limit: 1) { id } } }", token=tep.read_text(encoding="utf-8").strip())
-            ghi("khóa API cũ còn dùng được")
+        cu = tep.read_text(encoding="utf-8").strip()
+        if not cu:
+            ghi("tệp khóa API rỗng, cấp khóa mới")
+        elif bai is None:
+            ghi("wiki chưa có bài nào để thử khóa API cũ, cấp khóa mới cho chắc")
+        elif w.doc_ma_nguon(*bai, cu):
+            ghi(f"khóa API cũ đọc được bài {bai[1]}, giữ nguyên")
             return
-        except RuntimeError:
-            ghi("khóa API cũ không còn dùng được, cấp khóa mới")
+        else:
+            ghi(f"khóa API cũ KHÔNG đọc được bài {bai[1]} (Wiki.js coi như khách — khóa không còn hợp lệ), cấp khóa mới")
     d = w.graphql("mutation { authentication { setApiState(enabled: true) { responseResult { succeeded message } } } }")
     kiem_ket_qua(d["authentication"]["setApiState"], "bật truy cập API")
     for k in w.graphql("{ authentication { apiKeys { id name isRevoked } } }")["authentication"]["apiKeys"]:
@@ -403,7 +434,10 @@ def dam_bao_khoa_api(w: Wiki, nhom: dict[str, int]) -> None:
     tep.write_text(d["key"], encoding="utf-8")
     # Dịch vụ ứng dụng chạy bằng người dùng thường, chỉ cần đọc
     tep.chmod(0o644)
-    ghi("đã cấp khóa API chỉ đọc")
+    if bai is not None and not w.doc_ma_nguon(*bai, d["key"]):
+        sys.exit(f"khóa API vừa cấp vẫn không đọc được bài {bai[1]} — kiểm quyền read:source của nhóm "
+                 f"{bien('WIKI_API_GROUP')} trên Wiki.js")
+    ghi("đã cấp khóa API chỉ đọc mới, ghi đè tệp khóa" + (f", đọc thử bài {bai[1]} được" if bai else ""))
 
 
 # Ngôn ngữ có sẵn trong mọi bản Wiki.js, không cần tải — từ vựng của chính Wiki.js, không phải cấu hình nghiệp vụ
@@ -576,8 +610,9 @@ def khoi_tao() -> None:
     locale = ngon_ngu(w)
     nhom = dam_bao_nhom(w)
     cau_hinh_dang_nhap(w)
-    dam_bao_khoa_api(w, nhom)
+    # Bài mẫu trước khóa API: thử khóa cần một bài để đọc (#552)
     nap_bai_mau(w, locale)
+    dam_bao_khoa_api(w, nhom)
     ghi("xong")
 
 

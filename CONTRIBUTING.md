@@ -420,16 +420,21 @@ Mỗi issue phải có đúng một nhãn từ mỗi nhóm bắt buộc:
 
 ## 7. Phát hành
 
-1. Merge `dev` vào `main`
-2. Sinh nhật ký thay đổi từ lịch sử commit
-3. Đặt tag theo [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
-4. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
+1. Ghi số bản sắp phát hành vào tệp `VERSION` ở gốc kho (một dòng, dạng `MAJOR.MINOR.PATCH`, không chữ `v`)
+   trong pull request phát hành vào `dev`. Đây là nguồn duy nhất của số phiên bản mà `/docs`, màn Hệ thống và
+   dịch vụ khai phá hiện ra; `DXLAB_VERSION` trong `.env` chỉ là thẻ ảnh, không cần đổi. CI chạy
+   `python scripts/kiem_phien_ban.py`: số nhỏ hơn mục mới nhất của `CHANGELOG.md` thì đỏ
+2. Merge `dev` vào `main`
+3. Sinh nhật ký thay đổi từ lịch sử commit
+4. Đặt tag theo [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`, cùng số với `VERSION`
+5. Tạo bản phát hành trên nền tảng quản lý mã nguồn, đính kèm gói mã nguồn
    ở định dạng mở (`.tar.gz`). Không dùng các định dạng không mở như `.zip` hay `.rar`. Đính kèm thêm
    `bao-cao-giay-phep.md` — giấy phép của mọi gói phụ thuộc kể cả gián tiếp — tải từ artifact
    *bao-cao-giay-phep* của lần chạy CI trên pull request phát hành cuối cùng vào `main` (CI chỉ chạy trên
    pull request, không chạy trên thẻ), hoặc sinh ở máy bằng
-   `python scripts/quet_giay_phep.py --anh backend=dxlab-backend:<bản> --anh khai-pha=dxlab-khai-pha:<bản> --bao-cao bao-cao-giay-phep.md`
-5. Cập nhật `CHANGELOG.md` vào kho mã
+   `python scripts/quet_giay_phep.py --anh backend=dxlab-backend:<thẻ> --anh khai-pha=dxlab-khai-pha:<thẻ> --bao-cao bao-cao-giay-phep.md`
+   (`<thẻ>` là `DXLAB_VERSION` trong `infra/.env`)
+6. Cập nhật `CHANGELOG.md` vào kho mã
 
 ### 7.1. Đăng trang tài liệu
 

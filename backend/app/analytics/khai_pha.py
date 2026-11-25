@@ -92,7 +92,7 @@ def khai_pha_client() -> KhaiPhaClient:
     return _may_khach
 
 
-@router.get("/process-mining")
+@router.get("/process-mining", summary="Quy trình thực tế khai phá từ nhật ký")
 def quy_trinh_thuc_te(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -108,7 +108,7 @@ def quy_trinh_thuc_te(
     return _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)[0]
 
 
-@router.get("/process-mining/recommendation")
+@router.get("/process-mining/recommendation", summary="Khuyến nghị cải tiến quy trình")
 def khuyen_nghi_cai_tien(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -144,7 +144,7 @@ def _xem_duoc_tuan_thu(session: Session, ho_so: Request | None, actor: Actor) ->
     return vao_duoc_phong_ban(session, actor) and ho_so.department_code in actor.departments
 
 
-@router.get("/process-mining/cases/{case_id}")
+@router.get("/process-mining/cases/{case_id}", summary="Bước lệch quy trình của một hồ sơ")
 def tuan_thu_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],

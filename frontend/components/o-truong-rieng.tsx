@@ -27,11 +27,14 @@ export function OTruongRieng({
   cacTruong: truongCoDinh,
   giaTriDau = {},
   theoLoai,
+  khiDoi,
 }: {
   /** Tên ô ẩn mang JSON — "details" ở biểu mẫu gửi, "truong:details" ở sửa nội dung. */
   ten: string;
   cacTruong?: TruongRieng[];
   giaTriDau?: Record<string, unknown>;
+  /** Báo bộ giá trị đang nhập mỗi lần đổi — bước Xem lại của biểu mẫu gửi liệt kê lại các trường đã điền (#552). */
+  khiDoi?: (giaTri: Record<string, string>) => void;
   /**
    * Ở bảng sửa nội dung, người gửi đổi được cả loại yêu cầu: ô trường riêng nghe ô chọn loại
    * cùng biểu mẫu (tên `tenOChon`) và đổi bộ ô theo loại mới. Không nghe thì đổi loại xong vẫn
@@ -44,6 +47,10 @@ export function OTruongRieng({
   const [giaTri, datGiaTri] = useState<GiaTri>(() =>
     Object.fromEntries(Object.entries(giaTriDau).map(([k, v]) => [k, chuoi(v)])),
   );
+
+  useEffect(() => {
+    khiDoi?.(giaTri);
+  }, [giaTri, khiDoi]);
 
   useEffect(() => {
     if (!theoLoai) return;

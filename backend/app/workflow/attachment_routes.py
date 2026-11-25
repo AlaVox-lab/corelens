@@ -70,7 +70,7 @@ def mo_duoc_ho_so(session: Session, ho_so: Request, actor: Actor) -> bool:
     return vao_duoc_phong_ban(session, actor) and ho_so.department_code in actor.departments
 
 
-@router.get("/policy", response_model=ChinhSachTepRa)
+@router.get("/policy", summary="Giới hạn tệp đính kèm", response_model=ChinhSachTepRa)
 def chinh_sach_tep(_actor: _Cua) -> ChinhSachTepRa:
     """Giới hạn đang áp dụng. Giao diện chặn theo con số này ở lớp của nó, còn lớp ở đây vẫn
     kiểm lại — chặn ở giao diện thôi thì không đủ, ai cũng gọi thẳng API được."""
@@ -84,7 +84,7 @@ def chinh_sach_tep(_actor: _Cua) -> ChinhSachTepRa:
 
 
 @router_tai_len.post(
-    "/requests/{case_id}/attachments",
+    "/requests/{case_id}/attachments", summary="Đính kèm tệp vào hồ sơ",
     response_model=list[TepDinhKemRa],
     status_code=201,
     dependencies=[Depends(gioi_han_toc_do("upload-attachment"))],
@@ -130,7 +130,7 @@ def tai_len(
     ]
 
 
-@router.get("/{attachment_id}")
+@router.get("/{attachment_id}", summary="Tải một tệp đính kèm")
 def tai_ve(attachment_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> Response:
     """Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.
 
