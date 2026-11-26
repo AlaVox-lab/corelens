@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 AlaVox-lab
 //
-// Các khối của trang hồ sơ phía nhân viên (#169), dùng chung cho buồng lái điều phối và
-// buồng lái phòng ban: đầu hồ sơ, thanh các bước, thẻ hạn, thẻ thao tác.
+// Các khối của trang hồ sơ phía nhân viên (#169, bố cục #561), dùng chung cho buồng lái điều phối và
+// buồng lái phòng ban: đầu hồ sơ, thanh các bước, thẻ hạn, thẻ thông tin hồ sơ, thẻ thao tác.
+//
+// Khuôn trang (#561): đầu trang chỉ còn mã, tiêu đề, nhãn trạng thái và thanh bước; cột chính mở đầu bằng
+// thẻ "Bạn có thể làm gì lúc này" — nút xếp ngang, khung nhập mở ngay trong thẻ — rồi tới nội dung và dòng
+// thời gian; cột phải hẹp, dính khi cuộn, chỉ còn thông tin tĩnh: Hạn xử lý và Thông tin hồ sơ.
 //
 // Mỗi trang tự quyết khối nào chứa gì — người xử lý chỉ có nghĩa ở phòng ban, gợi ý phòng
 // chỉ có nghĩa ở điều phối — còn ở đây chỉ là hình. Không khối nào biết tên trạng thái hay
 // vai trò: bước suy từ thứ tự trạng thái (lib/buoc.ts), nút thao tác vẫn đến từ
 // `allowed_transitions`.
 
-import { Check, Info } from "lucide-react";
 import Link from "next/link";
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
-import { TheTruongRieng } from "@/components/the-truong-rieng";
+import { hienTruong, TheTruongRieng } from "@/components/the-truong-rieng";
 import type { Buoc } from "@/lib/buoc";
 import { thoiLuongLamViec } from "@/lib/dinh-dang";
 import type { HoSoChiTiet, HoSoTomTat } from "@/lib/kieu";
@@ -21,10 +24,14 @@ import { docDongHo, docTuDong, vachHan } from "@/lib/sla";
 
 export type MucMeta = { icon: React.ReactNode; chu: string };
 
+/** Một dòng của thẻ "Thông tin hồ sơ": nhãn, giá trị, và dòng phụ nhỏ khi có (gợi ý theo loại chẳng hạn). */
+export type DongThongTin = { nhan: string; giaTri: React.ReactNode; phu?: string };
+
 /**
- * Mã, tiêu đề, một hàng thông tin có icon, và nhãn trạng thái to bên phải. Trong ngăn xem nhanh
- * (#233) tiêu đề là cấp 2 — cấp 1 của trang vẫn là tên hàng đợi — và nhận tiêu điểm khi ngăn mở; mã và
- * tiêu đề là liên kết tới trang đầy đủ (#557), chỗ người dùng quen bấm để "mở hồ sơ ra".
+ * Mã, tiêu đề và nhãn trạng thái to bên phải; `meta` — một hàng thông tin có icon — chỉ ở ngăn xem nhanh,
+ * trang đầy đủ đặt các thông tin đó ở thẻ "Thông tin hồ sơ" (#561). Trong ngăn xem nhanh (#233) tiêu đề là
+ * cấp 2 — cấp 1 của trang vẫn là tên hàng đợi — và nhận tiêu điểm khi ngăn mở; mã và tiêu đề là liên kết tới
+ * trang đầy đủ (#557), chỗ người dùng quen bấm để "mở hồ sơ ra".
  */
 export function DauHoSo({
   ho_so,
@@ -32,7 +39,7 @@ export function DauHoSo({
   trongNgan,
 }: {
   ho_so: HoSoTomTat;
-  meta: MucMeta[];
+  meta?: MucMeta[];
   /** `id` của tiêu đề trong ngăn, để ngăn gọi tên mình và đặt tiêu điểm vào đó; `dayDu`: trang đầy đủ. */
   trongNgan?: { idTieuDe: string; dayDu: string };
 }) {
@@ -55,21 +62,26 @@ export function DauHoSo({
         ) : (
           <h1 className="h1-ho-so">{ho_so.title}</h1>
         )}
-        <div className="meta">
-          {meta.map((m) => (
-            <span key={m.chu}>
-              {m.icon}
-              {m.chu}
-            </span>
-          ))}
-        </div>
+        {meta && meta.length > 0 && (
+          <div className="meta">
+            {meta.map((m) => (
+              <span key={m.chu}>
+                {m.icon}
+                {m.chu}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <NhanTrangThai ma={ho_so.state.code} nhan={ho_so.state.label} to />
     </div>
   );
 }
 
-/** Thanh "hồ sơ đang ở đâu" trên đường chính. */
+/**
+ * Thanh "hồ sơ đang ở đâu" trên đường chính: mỗi bước một vạch, vạch tô màu nhấn tới bước hiện tại (#561),
+ * nhãn bước hiện tại màu nhấn. Bước đã qua và bước hiện tại nói bằng `aria-current` và chữ ẩn, không chỉ bằng màu.
+ */
 export function ThanhBuoc({ cacBuoc }: { cacBuoc: Buoc[] }) {
   if (cacBuoc.length === 0) return null;
   return (
@@ -81,8 +93,11 @@ export function ThanhBuoc({ cacBuoc }: { cacBuoc: Buoc[] }) {
           data-dang={b.dang ? "" : undefined}
           aria-current={b.dang ? "step" : undefined}
         >
-          <span className="vong">{b.xong && <Check aria-hidden />}</span>
-          <span className="chu">{b.label}</span>
+          <span className="vach-buoc" aria-hidden />
+          <span className="chu">
+            {b.label}
+            {b.xong && <span className="an-di"> (đã qua)</span>}
+          </span>
         </li>
       ))}
     </ol>
@@ -90,18 +105,18 @@ export function ThanhBuoc({ cacBuoc }: { cacBuoc: Buoc[] }) {
 }
 
 /**
- * Thẻ hạn xử lý. Đồng hồ đang chạy thì câu thành con số to kèm vạch đã dùng bao nhiêu
- * phần cam kết; chưa chạy hay đã khép thì chỉ còn câu — câu lấy nguyên từ `docDongHo`,
- * nên vẫn nói đúng sáu tình huống của lib/sla.ts.
- */
-/**
  * Dấu ngăn " · " của câu đồng hồ dính vào chữ đứng trước (khoảng trắng không ngắt), để câu chữ lớn xuống dòng
  * thì dòng sau không mở đầu bằng "·" (#557: "Còn 3 giờ 49 phút làm việc / · hạn 11:49 Thứ Năm 26/11").
  */
 function ngatSauDauNgan(cau: string): string {
-  return cau.replaceAll(" · ", "\u00a0· ");
+  return cau.replaceAll(" · ", " · ");
 }
 
+/**
+ * Thẻ hạn xử lý. Đồng hồ đang chạy thì câu thành con số to kèm vạch đã dùng bao nhiêu
+ * phần cam kết; chưa chạy hay đã khép thì chỉ còn câu — câu lấy nguyên từ `docDongHo`,
+ * nên vẫn nói đúng sáu tình huống của lib/sla.ts.
+ */
 export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
   const dongHo = docDongHo(ho_so);
   const vach = vachHan(ho_so);
@@ -124,13 +139,7 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
             </small>
           </>
         ) : (
-          <span
-            style={{
-              fontSize: "14.5px",
-              fontWeight: 600,
-              color: dongHo.canhBao ? "var(--f-r-ink)" : undefined,
-            }}
-          >
+          <span className="han-cau" data-canh-bao={dongHo.canhBao ? "" : undefined}>
             {ngatSauDauNgan(dongHo.cau)}
           </span>
         )}
@@ -152,6 +161,32 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
   );
 }
 
+/**
+ * Thẻ "Thông tin hồ sơ" ở cột phải (#561): loại, phòng, ưu tiên, người xử lý — trước là hàng icon dưới tiêu đề —
+ * rồi các dòng liên hệ người gửi (`lienHe`, gộp thẻ Liên hệ người gửi cũ). Trang truyền dòng nào có nghĩa với nó.
+ */
+export function TheThongTinHoSo({ cacDong, lienHe }: { cacDong: DongThongTin[]; lienHe?: React.ReactNode }) {
+  return (
+    <section className="the khoi the-thong-tin" aria-labelledby="tua-thong-tin">
+      <h2 className="tua-the" id="tua-thong-tin">
+        Thông tin hồ sơ
+      </h2>
+      <dl className="ds-mt ds-ngang">
+        {cacDong.map((d) => (
+          <div key={d.nhan}>
+            <dt>{d.nhan}</dt>
+            <dd>
+              <span className="dd-chinh">{d.giaTri}</span>
+              {d.phu && <span className="dd-phu">{d.phu}</span>}
+            </dd>
+          </div>
+        ))}
+        {lienHe}
+      </dl>
+    </section>
+  );
+}
+
 /** Nội dung người gửi viết: trường riêng theo loại (#250) đứng trước mô tả tự do. */
 export function TheNoiDung({ ho_so }: { ho_so: HoSoChiTiet }) {
   if (!ho_so.description && (ho_so.detail_fields?.length ?? 0) === 0) return null;
@@ -164,16 +199,23 @@ export function TheNoiDung({ ho_so }: { ho_so: HoSoChiTiet }) {
   );
 }
 
-/** Thẻ "Bạn có thể làm gì" bọc bảng thao tác. Không in ra giấy. */
+/**
+ * Thẻ "Bạn có thể làm gì lúc này" bọc bảng thao tác, ĐẦU cột chính (#561). Tiêu đề và hàng nút do bảng thao tác
+ * dựng, để nút nằm ngang cạnh tiêu đề. Không còn dòng ghi chú cuối thẻ: chỉ nút làm được mới hiện, nói thêm không
+ * giúp gì. Không in ra giấy.
+ */
 export function TheThaoTac({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="the khoi khong-in">
-      <div className="khoi-dau">Bạn có thể làm gì lúc này</div>
-      {children}
-      <p className="ghi-quy-tac">
-        <Info aria-hidden />
-        Chỉ hiện những thao tác bạn làm được ở bước này.
-      </p>
-    </div>
-  );
+  return <section className="the the-thao-tac khong-in" aria-labelledby="tua-thao-tac">{children}</section>;
+}
+
+/**
+ * Tóm tắt nội dung hồ sơ trong một đoạn — giá trị trường riêng nối bằng dấu phẩy, rồi mô tả — cho ngăn xem nhanh khi
+ * một thao tác đang mở (#561): người phân loại vẫn đọc được nội dung mà khung nhập không đẩy nó khuất.
+ */
+export function tomTatNoiDung(ho_so: HoSoChiTiet): string {
+  const truong = (ho_so.detail_fields ?? []).flatMap((t) => {
+    const v = ho_so.details?.[t.code];
+    return v === undefined || v === null || v === "" ? [] : [hienTruong(t, v)];
+  });
+  return [truong.join(", "), (ho_so.description ?? "").trim()].filter(Boolean).join(". ");
 }

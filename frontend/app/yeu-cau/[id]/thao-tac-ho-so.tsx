@@ -126,7 +126,7 @@ export function ThaoTacHoSo({
         >
           –
         </span>
-        Không có thao tác nào dành cho bạn ở trạng thái này.
+        Bạn không có thao tác nào ở bước này.
       </p>
     );
   }
@@ -295,7 +295,7 @@ export function ThaoTacHoSo({
               {dangChay ? "Đang gửi…" : nhanNutXacNhan(dangMo.activity_label)}
             </button>
             <button type="button" className="nut" onClick={dongBang}>
-              Thôi
+              Hủy thao tác
             </button>
           </div>
         </div>

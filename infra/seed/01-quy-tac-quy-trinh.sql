@@ -26,19 +26,21 @@ INSERT INTO rule_sets (id, process_code, version, label, effective_from, is_acti
 -- ---------------------------------------------------------------------------
 -- Năm vai trò
 -- ---------------------------------------------------------------------------
--- Mã phải trùng tên vai trò realm trong infra/keycloak/realm-dx-os-lab.json.
+-- Mã phải trùng tên vai trò realm trong infra/keycloak/realm-dx-os-lab.json. Nhãn là cách gọi chung của cả cổng
+-- (#561) — hiện ở màn Cấu hình quy trình, dải "Bạn đang làm thay" và câu lỗi "Bước này dành cho"; cụm cũ nhận
+-- nhãn mới qua migration 0042.
 
 INSERT INTO roles (code, label, description, display_order, report_scope) VALUES
-    ('requester',     'Người tạo yêu cầu',
+    ('requester',     'Người gửi',
      'Gửi yêu cầu, sửa nội dung trước khi tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại', 1, NULL),
 
-    ('classifier',    'Người phân loại yêu cầu',
+    ('classifier',    'Điều phối viên',
      'Phân loại, chọn phòng ban phụ trách, đặt mức ưu tiên, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối', 2, 'all'),
 
-    ('approver',      'Người xét duyệt yêu cầu',
+    ('approver',      'Trưởng phòng',
      'Quyết định phòng ban nhận hay không nhận, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang', 3, 'department'),
 
-    ('handler',       'Người xử lý yêu cầu',
+    ('handler',       'Người xử lý',
      'Nhận việc về mình khi hồ sơ chưa giao ai, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành', 4, NULL),
 
     ('administrator', 'Quản trị viên',

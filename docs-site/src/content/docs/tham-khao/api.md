@@ -110,7 +110,7 @@ sơ ở trạng thái không còn bước nào đi ra thì `transitions` rỗng.
     {"activity_code": "classify", "activity_label": "Phân loại yêu cầu", "to_state": "classified",
      "to_state_label": "Đã phân loại", "keeps_state": false, "is_system": false, "allowed": false,
      "reasons": [{"code": "role-not-permitted", "category": "role-not-permitted", "condition": null,
-                  "message": "Vai trò hiện tại không thực hiện được “Phân loại yêu cầu”. Bước này dành cho: Người phân loại yêu cầu."}],
+                  "message": "Vai trò hiện tại không thực hiện được “Phân loại yêu cầu”. Bước này dành cho: Điều phối viên."}],
      "requires_input": ["request_type_code", "priority_code"], "requires_note": false, "note_label": null},
     {"activity_code": "cancel", "activity_label": "Hủy yêu cầu", "to_state": "cancelled",
      "to_state_label": "Đã hủy", "keeps_state": false, "is_system": false, "allowed": true,

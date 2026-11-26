@@ -10,8 +10,10 @@ import { Building2, Flag, Tag } from "lucide-react";
 
 import { chuyenTrangThaiDieuPhoi } from "@/app/dieu-phoi/thao-tac";
 import { BangThaoTac } from "@/components/bang-thao-tac";
-import type { MucMeta } from "@/components/trang-ho-so";
+import { ChamLoai } from "@/components/cham-loai";
+import { tomTatNoiDung, type DongThongTin, type MucMeta } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, type KetQua } from "@/lib/api";
+import { ngayGio } from "@/lib/dinh-dang";
 import type {
   HoSoDieuPhoi,
   LienHeNguoiGui,
@@ -46,6 +48,33 @@ export async function napHoSoDieuPhoi(id: string): Promise<KetQua<DuLieuDieuPhoi
   return { ok: true, duLieu: { ho_so: ketQua.duLieu, cacLoai, cacMuc, cacPhong, lienHe, cacTrangThai } };
 }
 
+/** Dòng "Phòng ban" khi hồ sơ chưa chuyển phòng: gợi ý đang có, nói rõ nguồn. */
+function goiYPhongChu(ho_so: HoSoDieuPhoi): string | undefined {
+  const g = ho_so.suggested_department;
+  return g ? `${g.source === "model" ? "Mô hình gợi ý" : "Gợi ý theo loại"}: ${g.label}` : undefined;
+}
+
+/** Các dòng của thẻ "Thông tin hồ sơ" ở cột phải trang đầy đủ (#561) — trước là hàng icon dưới tiêu đề. */
+export function thongTinDieuPhoi(ho_so: HoSoDieuPhoi): DongThongTin[] {
+  return [
+    {
+      nhan: "Loại yêu cầu",
+      giaTri: (
+        <>
+          <ChamLoai ma={ho_so.request_type?.code} />
+          {ho_so.request_type?.label ?? "Chưa rõ loại"}
+        </>
+      ),
+    },
+    ho_so.department
+      ? { nhan: "Phòng ban", giaTri: ho_so.department.label }
+      : { nhan: "Phòng ban", giaTri: "Chưa chuyển phòng", phu: goiYPhongChu(ho_so) },
+    { nhan: "Mức ưu tiên", giaTri: ho_so.priority?.label ?? "Đặt khi phân loại" },
+    { nhan: "Gửi lúc", giaTri: ngayGio(ho_so.created_at) },
+  ];
+}
+
+/** Hàng icon dưới tiêu đề — chỉ còn ở ngăn xem nhanh; trang đầy đủ dùng `thongTinDieuPhoi`. */
 export function metaDieuPhoi(ho_so: HoSoDieuPhoi): MucMeta[] {
   const goiYPhong = ho_so.suggested_department;
   return [
@@ -92,44 +121,41 @@ export function ThaoTacDieuPhoi({ d, ngan }: { d: DuLieuDieuPhoi; ngan?: { sauKh
   };
 
   return (
-    <>
-      {/* Hồ sơ của chính mình: không có nút điều phối nào, chỉ còn nút của chủ hồ sơ
-          nếu có — nói rõ vì sao (#154) */}
-      {ho_so.requested_by_me && ho_so.allowed_transitions.length > 0 && (
-        <p style={{ margin: "0 0 10px", fontSize: "13px", color: "var(--f-p-ink)", lineHeight: 1.55 }}>
-          Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng.
-        </p>
-      )}
-      {/* Khóa có `updated_at`: gia hạn giữ nguyên trạng thái (#101), nên chỉ mã trạng
-          thái thì bảng không dựng lại, khung gia hạn vừa xong vẫn mở */}
-      <BangThaoTac
-        key={`${ho_so.id}-${ho_so.state.code}-${ho_so.updated_at}`}
-        maHoSo={ho_so.id}
-        cacCanh={ho_so.allowed_transitions}
-        giaTriDau={giaTriDau}
-        goiY={{
-          ...(goiYLoai ? { request_type_code: goiYLoai } : {}),
-          ...(goiYMuc ? { priority_code: goiYMuc } : {}),
-          ...(goiYPhong ? { department_code: goiYPhong } : {}),
-        }}
-        cacLoai={cacLoai ?? undefined}
-        // Hồ sơ đã giải quyết tương tự làm căn cứ (#450): thẻ loại ở bước phân loại, thẻ phòng ở bước chuyển phòng
-        canCuTuongTu={["request_type_code", "department_code"]}
-        danhMuc={{
-          "request-types": thanhNhanCoMa(cacLoai),
-          priorities: thanhNhanCoMa(cacMuc),
-          departments: thanhNhanCoMa(cacPhong),
-        }}
-        hanhDong={chuyenTrangThaiDieuPhoi}
-        khiHet={{
-          // Bảng trống vì hai lý do khác hẳn nhau — nói đúng lý do (#154)
-          cau: ho_so.requested_by_me
-            ? "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng."
-            : "Hồ sơ đã rời khỏi tay điều phối viên. Không còn thao tác nào dành cho bạn ở trạng thái này.",
-          veHangDoi: "/dieu-phoi",
-        }}
-        ngan={ngan}
-      />
-    </>
+    // Khóa có `updated_at`: gia hạn giữ nguyên trạng thái (#101), nên chỉ mã trạng
+    // thái thì bảng không dựng lại, khung gia hạn vừa xong vẫn mở
+    <BangThaoTac
+      key={`${ho_so.id}-${ho_so.state.code}-${ho_so.updated_at}`}
+      maHoSo={ho_so.id}
+      cacCanh={ho_so.allowed_transitions}
+      giaTriDau={giaTriDau}
+      goiY={{
+        ...(goiYLoai ? { request_type_code: goiYLoai } : {}),
+        ...(goiYMuc ? { priority_code: goiYMuc } : {}),
+        ...(goiYPhong ? { department_code: goiYPhong } : {}),
+      }}
+      cacLoai={cacLoai ?? undefined}
+      // Hồ sơ đã giải quyết tương tự làm căn cứ (#450): thẻ loại ở bước phân loại, thẻ phòng ở bước chuyển phòng
+      canCuTuongTu={["request_type_code", "department_code"]}
+      danhMuc={{
+        "request-types": thanhNhanCoMa(cacLoai),
+        priorities: thanhNhanCoMa(cacMuc),
+        departments: thanhNhanCoMa(cacPhong),
+      }}
+      hanhDong={chuyenTrangThaiDieuPhoi}
+      // Hồ sơ của chính mình: không có nút điều phối nào, chỉ còn nút của chủ hồ sơ nếu có — nói rõ vì sao (#154)
+      ghiChu={
+        ho_so.requested_by_me && ho_so.allowed_transitions.length > 0
+          ? "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng."
+          : undefined
+      }
+      khiHet={{
+        // Bảng trống vì hai lý do khác hẳn nhau — nói đúng lý do (#154)
+        cau: ho_so.requested_by_me
+          ? "Đây là hồ sơ bạn gửi — một điều phối viên khác sẽ phân loại và chuyển phòng."
+          : "Hồ sơ không còn ở bước điều phối. Bạn không có thao tác nào ở bước này.",
+        veHangDoi: "/dieu-phoi",
+      }}
+      ngan={ngan && { ...ngan, tomTat: tomTatNoiDung(ho_so) }}
+    />
   );
 }

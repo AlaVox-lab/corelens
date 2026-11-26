@@ -15,6 +15,7 @@
 import { List, User } from "lucide-react";
 import Link from "next/link";
 
+import { ChamLoai } from "@/components/cham-loai";
 import { TenCapCon } from "@/components/khung-ung-dung";
 import { goiDichVu } from "@/lib/api";
 import type { HangDoiPhongBan, MucHangDoiPhongBan, TrangThai } from "@/lib/kieu";
@@ -47,7 +48,10 @@ function TheHoSo({ m }: { m: MucHangDoiPhongBan }) {
       <Link href={`/phong-ban/${m.id}`} className="kb-the" data-muc={muc}>
         <span className="kb-ma mono">{m.code}</span>
         <span className="kb-tieu-de">{m.title}</span>
-        <span className="kb-phu">{m.request_type?.label ?? "Chưa rõ loại"}</span>
+        <span className="kb-phu">
+          <ChamLoai ma={m.request_type?.code} />
+          {m.request_type?.label ?? "Chưa rõ loại"}
+        </span>
         <span className="kb-chan">
           {m.assignee_id ? (
             <span

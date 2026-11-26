@@ -17,9 +17,15 @@
 // của đúng thao tác đang mở nằm trong biểu mẫu — không có chuyện ô của thao tác này lọt
 // vào lần gửi của thao tác kia.
 //
+// Trang hồ sơ đầy đủ (#561): bảng tự dựng tiêu đề "Bạn có thể làm gì lúc này" và một hàng nút ngang
+// cạnh nó; khung nhập mở ngay dưới, không in lại tên thao tác (nút xác nhận đã mang tên đó), ô có gợi ý
+// xếp lưới hai cột — một cột khi khung hẹp dưới 560 px.
+//
 // Ở đáy ngăn xem nhanh của hàng đợi (#233, `ngan`), bước chính đang chờ người xem
 // (`is_primary`, dịch vụ đánh dấu từ dữ liệu quy tắc) thành nút chính chiếm trọn hàng, các
-// thao tác còn lại vào menu "Thao tác khác". Gửi xong thì chuyển sang hồ sơ kế của danh sách.
+// thao tác còn lại vào menu "Thao tác khác". Mở một thao tác thì nội dung hồ sơ trong ngăn thu thành
+// đoạn tóm tắt, khung nhập ở dưới, hàng nút xác nhận / Hủy thao tác / Thao tác khác dính đáy ngăn (#561).
+// Gửi xong thì chuyển sang hồ sơ kế của danh sách.
 
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -57,8 +63,13 @@ type Props = {
   hanhDong: (truoc: KetQuaThaoTac, duLieu: FormData) => Promise<KetQuaThaoTac>;
   /** Khi không còn thao tác nào: câu giải thích và đường về hàng đợi. */
   khiHet: { cau: string; veHangDoi: string };
-  /** Bảng nằm ở đáy ngăn xem nhanh (#233): gửi xong thì sang `sauKhiXong`. */
-  ngan?: { sauKhiXong: string };
+  /**
+   * Bảng nằm ở đáy ngăn xem nhanh (#233): gửi xong thì sang `sauKhiXong`. `tomTat`: đoạn tóm tắt nội dung hồ sơ hiện
+   * thay thẻ Nội dung và Dòng thời gian khi một thao tác đang mở (#561).
+   */
+  ngan?: { sauKhiXong: string; tomTat?: string };
+  /** Một câu dưới hàng nút — ví dụ hồ sơ của chính điều phối viên (#154). */
+  ghiChu?: string;
   /**
    * Trường mà thẻ gợi ý kèm hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ màn điều phối truyền. Mỗi
    * bảng chỉ một khối, ở thẻ của trường đầu tiên có gợi ý (#559), để danh sách không lặp lại dưới mọi thẻ.
@@ -242,6 +253,7 @@ export function BangThaoTac({
   khiHet,
   ngan,
   canCuTuongTu,
+  ghiChu,
 }: Props) {
   const router = useRouter();
   // Trong ngăn: thao tác thành công thì sang hồ sơ kế. Server Action trả `CHUA_CO_LOI` cả khi
@@ -265,31 +277,61 @@ export function BangThaoTac({
   // gợi ý — khối gắn ở thẻ của trường đầu tiên có gợi ý, không lặp dưới thẻ sau
   const truongCanCu = dangMo?.fields.find((t) => canCuTuongTu?.includes(t) && goiY[t]);
 
+  // Ngăn (#561): mở thao tác thì nút vừa bấm rời hàng nút — tiêu điểm vào chính khung (nhóm mang tên thao tác: trình
+  // đọc màn hình nói đang mở gì, Tab đi tiếp vào ô đầu, Esc vẫn đóng ngăn — vào thẳng ô chọn thì ngăn coi là đang gõ
+  // và giữ phím Esc); đóng khung thì trả về nút ở đáy ngăn, để người dùng bàn phím không rơi về đầu trang
+  const bieuMau = useRef<HTMLFormElement>(null);
+  const daMoKhung = useRef(false);
+  // Cờ chứ không phải đối tượng `ngan` — trang dựng đối tượng mới mỗi lần, hiệu ứng sẽ chạy lại và giật tiêu điểm
+  const laNgan = Boolean(ngan);
+  useEffect(() => {
+    if (!laNgan) return;
+    const f = bieuMau.current;
+    if (dangMo) {
+      f?.querySelector<HTMLElement>(".khung-xac-nhan")?.focus();
+    } else if (daMoKhung.current) {
+      f?.querySelector<HTMLElement>(".hang-nut-ngan .nut, .hang-nut-ngan summary")?.focus();
+    }
+    daMoKhung.current = dangMo !== null;
+  }, [dangMo, laNgan]);
+
   if (cacCanh.length === 0) {
+    // Trong ngăn, danh sách đã ở ngay bên cạnh: chỉ còn câu
+    if (ngan) {
+      return (
+        <div id="thao-tac" className="thao-tac-het">
+          <p>{khiHet.cau}</p>
+        </div>
+      );
+    }
     return (
-      <div id="thao-tac" style={{ display: "grid", gap: "12px", scrollMarginTop: "72px" }}>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "var(--ink-2)", lineHeight: 1.6 }}>
-          {khiHet.cau}
-        </p>
-        {/* Trong ngăn, danh sách đã ở ngay bên cạnh */}
-        {!ngan && (
+      <div id="thao-tac" className="bang-thao-tac">
+        <div className="thao-tac-dau">
+          <h2 className="tua-thao-tac" id="tua-thao-tac">
+            Bạn có thể làm gì lúc này
+          </h2>
+        </div>
+        <div className="thao-tac-het">
+          <p>{khiHet.cau}</p>
           <Link href={khiHet.veHangDoi} className="nut" data-loai="chinh">
             ← Về hàng đợi
           </Link>
-        )}
+        </div>
       </div>
     );
   }
 
-  const nutCanh = (canh: CanhDiDuoc, chinh: boolean) => {
+  /** Nút mở một thao tác. Trong menu của ngăn kèm dấu +/− và trải hết hàng; ở trang đầy đủ là nút ngang gọn. */
+  const nutCanh = (canh: CanhDiDuoc, chinh: boolean, trongMenu = false) => {
     const mo = dangMo?.to_state === canh.to_state;
     return (
       <button
         key={canh.to_state}
         type="button"
         className="nut"
-        // Thao tác cần nhập liệu là việc chính; thao tác chỉ cần lý do là ngoại lệ.
-        // Suy từ dữ liệu của cạnh, không tra bảng. Trong ngăn: bước chính.
+        // Nút tô màu chính là bước chính đang chờ người xem (`is_primary`, từ dữ liệu quy tắc) — không phải
+        // "thao tác có ô nhập": trước #557 điều phối viên ở Chờ phòng ban xác duyệt thấy Gia hạn xử lý tô đậm
+        // chỉ vì nó có ô số giờ.
         data-loai={chinh ? "chinh" : undefined}
         aria-expanded={mo}
         onClick={() => {
@@ -297,51 +339,114 @@ export function BangThaoTac({
           else datDangMo(canh);
           if (menu.current) menu.current.open = false;
         }}
-        style={{ justifyContent: "space-between", width: "100%" }}
+        style={trongMenu ? { justifyContent: "space-between", width: "100%" } : undefined}
       >
         <span>{canh.activity_label}</span>
-        <span aria-hidden="true">{mo ? "−" : "+"}</span>
+        {trongMenu && <span aria-hidden="true">{mo ? "−" : "+"}</span>}
       </button>
     );
   };
 
+  /** Menu "Thao tác khác" của ngăn: mọi thao tác trừ `tru` — bước chính đã có nút riêng, hay thao tác đang mở. */
+  const menuThaoTac = (tru: CanhDiDuoc | undefined, nhan: string) => {
+    const ds = cacCanh.filter((c) => c.to_state !== tru?.to_state);
+    if (ds.length === 0) return null;
+    return (
+      <details
+        className="menu-thao-tac"
+        ref={menu}
+        // Thẻ gốc không tự đóng bằng Esc: đóng và trả tiêu điểm về nút mở menu. Ngăn
+        // xem nhanh thấy phím đã được dùng nên không đóng theo.
+        onKeyDown={(e) => {
+          if (e.key !== "Escape" || !menu.current?.open) return;
+          e.preventDefault();
+          menu.current.open = false;
+          menu.current.querySelector("summary")?.focus();
+        }}
+      >
+        <summary className="nut">
+          {nhan}
+          <ChevronDown aria-hidden />
+        </summary>
+        <div className="menu-thao-tac-ds">{ds.map((c) => nutCanh(c, false, true))}</div>
+      </details>
+    );
+  };
+
+  const nutXacNhan = dangMo && (
+    <>
+      <button
+        type="submit"
+        name="to_state"
+        value={dangMo.to_state}
+        className="nut"
+        data-loai="chinh"
+        disabled={dangChay}
+      >
+        {dangChay ? "Đang gửi…" : nhanNutXacNhan(dangMo.activity_label)}
+      </button>
+      <button type="button" className="nut" onClick={dongKhung}>
+        Hủy thao tác
+      </button>
+    </>
+  );
+
+  // Ô có gợi ý xếp lưới hai cột (#561) — thẻ gợi ý nằm ngay trên ô của nó, nên hai thẻ đứng cạnh nhau thay vì
+  // chồng thành một cột dài; ô không có gợi ý trải trọn hàng như trước
+  const cacO = (dangMo?.fields ?? []).map((truong) => {
+    const nguonMa = kieuTruong(truong).nguon;
+    return {
+      coGoiY: Boolean(goiY[truong]),
+      o: (
+        <OTruong
+          key={truong}
+          truong={truong}
+          giaTriDau={giaTriDau[truong] ?? ""}
+          goiY={goiY[truong]}
+          cacLoai={cacLoai}
+          nguon={nguonMa ? danhMuc[nguonMa] : undefined}
+          canCu={truong === truongCanCu ? <CanCuTuongTu maHoSo={maHoSo} /> : undefined}
+        />
+      ),
+    };
+  });
+  const oGoiY = cacO.filter((o) => o.coGoiY);
+
   const buocChinh = ngan ? cacCanh.find((c) => c.is_primary) : undefined;
-  const conLai = cacCanh.filter((c) => c !== buocChinh);
 
   return (
-    <form id="thao-tac" action={thucHien} style={{ display: "grid", gap: "12px", scrollMarginTop: "72px" }}>
+    <form id="thao-tac" ref={bieuMau} action={thucHien} className={ngan ? "bang-thao-tac-ngan" : "bang-thao-tac"}>
       <input type="hidden" name="case_id" value={maHoSo} />
 
       {ngan ? (
-        <div className="hang-nut-ngan">
-          {buocChinh && nutCanh(buocChinh, true)}
-          {conLai.length > 0 && (
-            <details
-              className="menu-thao-tac"
-              ref={menu}
-              // Thẻ gốc không tự đóng bằng Esc: đóng và trả tiêu điểm về nút mở menu. Ngăn
-              // xem nhanh thấy phím đã được dùng nên không đóng theo.
-              onKeyDown={(e) => {
-                if (e.key !== "Escape" || !menu.current?.open) return;
-                e.preventDefault();
-                menu.current.open = false;
-                menu.current.querySelector("summary")?.focus();
-              }}
-            >
-              <summary className="nut">
-                {buocChinh ? "Thao tác khác" : "Thao tác"}
-                <ChevronDown aria-hidden />
-              </summary>
-              <div className="menu-thao-tac-ds">{conLai.map((c) => nutCanh(c, false))}</div>
-            </details>
-          )}
-        </div>
+        // Ngăn xem nhanh (#233): chưa mở thao tác nào thì bước chính là nút chính chiếm trọn hàng, còn lại vào menu
+        !dangMo && (
+          <div className="hang-nut-ngan">
+            {buocChinh && nutCanh(buocChinh, true)}
+            {menuThaoTac(buocChinh, buocChinh ? "Thao tác khác" : "Thao tác")}
+          </div>
+        )
       ) : (
-        <div style={{ display: "grid", gap: "8px" }}>
-          {/* Nút tô màu chính là bước chính đang chờ người xem (`is_primary`, từ dữ liệu quy tắc),
-              như ở ngăn xem nhanh — không phải "thao tác có ô nhập": trước #557 điều phối viên ở
-              Chờ phòng ban xác duyệt thấy Gia hạn xử lý tô đậm chỉ vì nó có ô số giờ. */}
-          {cacCanh.map((canh) => nutCanh(canh, canh.is_primary === true))}
+        // Trang đầy đủ (#561): tiêu đề và các nút thao tác một hàng ở đầu thẻ, theo thứ tự dịch vụ trả về
+        <div className="thao-tac-dau">
+          <h2 className="tua-thao-tac" id="tua-thao-tac">
+            Bạn có thể làm gì lúc này
+          </h2>
+          <div className="hang-nut-trang">{cacCanh.map((canh) => nutCanh(canh, canh.is_primary === true))}</div>
+        </div>
+      )}
+
+      {ghiChu && <p className="thao-tac-ghi">{ghiChu}</p>}
+
+      {/* Ngăn, đang mở thao tác (#561): nội dung hồ sơ thu thành một đoạn ngay trên khung nhập — người phân loại
+          vẫn đọc được mô tả. Nút đóng khung để thẻ Nội dung và Dòng thời gian trở lại. */}
+      {ngan && dangMo && ngan.tomTat && (
+        <div className="ngan-tom-tat">
+          <p className="ngan-tom-tat-tua">Tóm tắt nội dung</p>
+          <p className="ngan-tom-tat-chu">{ngan.tomTat}</p>
+          <button type="button" className="nut-lien-ket" onClick={dongKhung}>
+            Xem đủ nội dung và dòng thời gian
+          </button>
         </div>
       )}
 
@@ -352,47 +457,20 @@ export function BangThaoTac({
           key={dangMo.to_state}
           className="khung-xac-nhan hien-ra"
           data-an={dangAn ? "" : undefined}
-          style={{
-            padding: "15px",
-            borderRadius: "11px",
-            background: "var(--surface-2)",
-            border: "1px solid var(--line)",
-            display: "grid",
-            gap: "13px",
-          }}
+          // Khung không in tên thao tác (#561): nhóm mang tên đó cho trình đọc màn hình; nhận tiêu điểm khi mở trong ngăn
+          role="group"
+          aria-label={dangMo.activity_label}
+          tabIndex={-1}
         >
-          <div style={{ display: "grid", gap: "7px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 600 }}>{dangMo.activity_label}</span>
-            <span
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "7px",
-                fontSize: "12.5px",
-                color: "var(--ink-3)",
-              }}
-            >
-              {/* Cạnh tự trỏ đổi hồ sơ mà không đổi trạng thái (ADR-0005) */}
-              {dangMo.keeps_state ? "Trạng thái giữ nguyên" : "Hồ sơ sẽ chuyển sang"}
-              <NhanTrangThai ma={dangMo.to_state} nhan={dangMo.to_state_label} />
-            </span>
-          </div>
+          {/* Không in lại tên thao tác (#561): nút vừa bấm và nút xác nhận đã mang tên đó */}
+          <p className="khung-dich">
+            {/* Cạnh tự trỏ đổi hồ sơ mà không đổi trạng thái (ADR-0005) */}
+            {dangMo.keeps_state ? "Trạng thái giữ nguyên" : "Hồ sơ sẽ chuyển sang"}
+            <NhanTrangThai ma={dangMo.to_state} nhan={dangMo.to_state_label} />
+          </p>
 
-          {dangMo.fields.map((truong) => {
-            const nguonMa = kieuTruong(truong).nguon;
-            return (
-              <OTruong
-                key={truong}
-                truong={truong}
-                giaTriDau={giaTriDau[truong] ?? ""}
-                goiY={goiY[truong]}
-                cacLoai={cacLoai}
-                nguon={nguonMa ? danhMuc[nguonMa] : undefined}
-                canCu={truong === truongCanCu ? <CanCuTuongTu maHoSo={maHoSo} /> : undefined}
-              />
-            );
-          })}
+          {oGoiY.length > 0 && <div className="luoi-goi-y">{oGoiY.map((o) => o.o)}</div>}
+          {cacO.filter((o) => !o.coGoiY).map((o) => o.o)}
 
           {dangMo.to_state_is_terminal && (
             <CanhBaoKetThuc
@@ -425,40 +503,22 @@ export function BangThaoTac({
             </label>
           )}
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            <button
-              type="submit"
-              name="to_state"
-              value={dangMo.to_state}
-              className="nut"
-              data-loai="chinh"
-              disabled={dangChay}
-            >
-              {dangChay ? "Đang gửi…" : nhanNutXacNhan(dangMo.activity_label)}
-            </button>
-            <button type="button" className="nut" onClick={dongKhung}>
-              Thôi
-            </button>
-          </div>
+          {!ngan && <div className="hang-xac-nhan">{nutXacNhan}</div>}
         </div>
       )}
 
       {ketQua.loi && (
-        <p
-          role="alert"
-          style={{
-            margin: 0,
-            padding: "12px 14px",
-            borderRadius: "11px",
-            background: "var(--f-r-bg)",
-            border: "1px solid var(--f-r-line)",
-            color: "var(--f-r-ink)",
-            fontSize: "13.5px",
-            lineHeight: 1.6,
-          }}
-        >
+        <p role="alert" className="thao-tac-loi">
           {ketQua.loi}
         </p>
+      )}
+
+      {/* Ngăn, đang mở thao tác (#561): xác nhận, hủy và các thao tác khác dính ở đáy ngăn */}
+      {ngan && dangMo && (
+        <div className="hang-nut-ngan hang-xac-nhan-ngan">
+          {nutXacNhan}
+          {menuThaoTac(dangMo, "Thao tác khác")}
+        </div>
       )}
     </form>
   );

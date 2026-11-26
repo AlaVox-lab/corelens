@@ -83,6 +83,7 @@ function thanhDong(m: MucHangDoiPhongBan, href: string, dangXem: boolean): DongH
     ma: m.code,
     tieuDe: m.title,
     phu: m.request_type?.label ?? "Chưa rõ loại",
+    maLoai: m.request_type?.code ?? null,
     choTraLoi: m.last_message_from_requester === true && !m.state.is_terminal,
     nguoiGui: m.requester_label ?? "Không rõ người gửi",
     giao: m.assignee_id

@@ -48,7 +48,9 @@ export function KhoiHoSoLienQuan({
   return (
     <div className="the khoi khong-in">
       <div className="khoi-dau">
-        <Link2 aria-hidden /> Hồ sơ liên quan
+        <span className="khoi-dau-tua">
+          <Link2 aria-hidden /> Hồ sơ liên quan
+        </span>
       </div>
       <ul style={{ margin: 0, padding: "0 20px 16px 38px", display: "grid", gap: "6px" }}>
         {hoSo.parent && (
