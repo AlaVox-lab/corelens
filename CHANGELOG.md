@@ -5,6 +5,18 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [1.8.1] - 2026-11-26
+
+### Sửa lỗi
+
+- **infra:** Bảng Xem lại, số phiên bản, khóa Wiki và tóm tắt API ([#554](https://github.com/AlaVox-lab/corelens/issues/554)) ([c261083](https://github.com/AlaVox-lab/corelens/commit/c2610835d2ae68131c3c8d0d040ce6ed467bcfd5))
+- **h-portal:** Biểu mẫu gửi, gợi ý tương tự và câu chữ hồ sơ ([#558](https://github.com/AlaVox-lab/corelens/issues/558)) ([bfbbf13](https://github.com/AlaVox-lab/corelens/commit/bfbbf13aef6a56ebc261afca97905accbb1039d4))
+- **h-portal:** Khuyến nghị dự phòng, gợi ý tương tự và nút chính ([#562](https://github.com/AlaVox-lab/corelens/issues/562)) ([af10260](https://github.com/AlaVox-lab/corelens/commit/af1026061be797616dec3a363e48469567030f0d))
+
+### Tính năng mới
+
+- **h-portal:** Logo Corelens cho cổng, tài liệu và đăng nhập ([#553](https://github.com/AlaVox-lab/corelens/issues/553)) ([9352048](https://github.com/AlaVox-lab/corelens/commit/9352048d11fb422047d8ee051ebf0d552818283c))
+
 ## [1.8.0] - 2026-11-24
 
 ### Công việc phụ trợ

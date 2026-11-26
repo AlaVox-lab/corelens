@@ -14,20 +14,20 @@
 
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lần cuối | 2026-11-25 |
-| Phiên bản hiện tại | **`v1.8.0`** (25/11) — Giai đoạn 6 đợt tám: khóa trùng lặp `Idempotency-Key` cho lệnh lõi, nhật ký kiểm toán truy cập dữ liệu cá nhân, README gọn, kho tri thức chịu được gói ngôn ngữ hỏng, ngăn xem nhanh không che bảng, trang *Mã nguồn và giấy phép*, dữ liệu trình diễn đọc như doanh nghiệp thật, tên hiển thị Corelens ở mọi chỗ người dùng thấy (PR #532, #533, #536, #537, #542, #543, #544). **`v1.7.0`** (23/11) — Giai đoạn 6 đợt bảy: thao tác hàng loạt trên hàng đợi điều phối, đánh giá mức hài lòng khi người gửi xác nhận đạt kèm ba biểu đồ theo phòng, nhãn dòng thời gian đúng cạnh đã đi (PR #524, #525, #527). **`v1.6.0`** (23/11) — Giai đoạn 6 đợt sáu: bước lệch quy trình trên trang hồ sơ, khả năng tiếp cận WCAG 2.1 AA, API lõi trả lý do cạnh không đi được, kiểm thử dựa trên tính chất cho máy trạng thái (PR #515, #517, #518, #519). **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
+| Cập nhật lần cuối | 2026-11-26 |
+| Phiên bản hiện tại | **`v1.8.1`** (26/11) — hoàn thiện sau hai lượt test tay: logo Corelens cho cổng, tài liệu và màn đăng nhập; số phiên bản một nguồn (tệp `VERSION`); biểu mẫu gửi không cho qua bước 2 khi thiếu trường bắt buộc; gợi ý hồ sơ tương tự gộp trùng, có ô *Cách giải quyết*; trang hồ sơ đã đóng nói đúng; khuyến nghị cải tiến nhắc đúng vai, luôn có câu cho điểm nghẽn lớn (PR #553, #554, #558, #562). **`v1.8.0`** (25/11) — Giai đoạn 6 đợt tám: khóa trùng lặp `Idempotency-Key` cho lệnh lõi, nhật ký kiểm toán truy cập dữ liệu cá nhân, README gọn, kho tri thức chịu được gói ngôn ngữ hỏng, ngăn xem nhanh không che bảng, trang *Mã nguồn và giấy phép*, dữ liệu trình diễn đọc như doanh nghiệp thật, tên hiển thị Corelens ở mọi chỗ người dùng thấy (PR #532, #533, #536, #537, #542, #543, #544). **`v1.7.0`** (23/11) — Giai đoạn 6 đợt bảy: thao tác hàng loạt trên hàng đợi điều phối, đánh giá mức hài lòng khi người gửi xác nhận đạt kèm ba biểu đồ theo phòng, nhãn dòng thời gian đúng cạnh đã đi (PR #524, #525, #527). **`v1.6.0`** (23/11) — Giai đoạn 6 đợt sáu: bước lệch quy trình trên trang hồ sơ, khả năng tiếp cận WCAG 2.1 AA, API lõi trả lý do cạnh không đi được, kiểm thử dựa trên tính chất cho máy trạng thái (PR #515, #517, #518, #519). **`v1.5.1`** (19/11) — bản vá sau khi đổi tên dự án: hướng dẫn cài trong README khớp tên tệp nén mới `corelens-<phiên bản>`. **`v1.5.0`** (19/11) — Giai đoạn 6 đợt năm: webhook không bỏ sót sự kiện, xuất XES, ba biểu đồ mới trên bảng điều khiển, từ điển dữ liệu sinh tự động, tìm trong mô tả, thẻ gợi ý kèm hồ sơ tương tự (PR #506, #508). `dev` trùng `main` về nội dung |
 | Giai đoạn | **Giai đoạn 6 — hoàn thiện dự thi** (16–29/11, issue gốc #383). Nền tảng lõi đã lên **Mức 2**: động cơ luồng công việc chạy nhiều quy trình, quy trình mẫu thứ hai thuần dữ liệu (#376). Thêm lưu trữ lạnh và phả hệ dữ liệu, cập nhật thời gian thực, webhook, siết realm mẫu; README tiếng Anh, linter và kịch bản giao diện trong tích hợp liên tục. Còn lại: công khai kho, đăng trang tài liệu, chuẩn bị trình diễn. Giai đoạn 2 tới 5 đã khép |
-| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`, bốn với `v1.6.0`, ba với `v1.7.0`, tám với `v1.8.0`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
+| Mốc công việc | **Giai đoạn 6 - Hoàn thiện dự thi** (số 18, hạn 29/11): chín issue đóng với `v1.1.0`, năm với `v1.2.0`, chín với `v1.3.0`, mười một với `v1.4.0`, mười hai với `v1.5.0`, bốn với `v1.6.0`, ba với `v1.7.0`, tám với `v1.8.0`, sáu với `v1.8.1`; #381 (đăng trang tài liệu) đóng 19/11 khi kho công khai; issue gốc #383 đóng khi mọi việc con xong |
 | Trạng thái kho mã | **Công khai** từ 19/11 tại https://github.com/AlaVox-lab/corelens (đổi tên từ `dx-os-lab`, link cũ tự chuyển hướng); trang tài liệu https://alavox-lab.github.io/corelens/ |
 | Có mã nguồn ứng dụng chưa | **Có.** `backend/` FastAPI và `frontend/` Next.js với trang chủ theo việc cần làm, cổng người gửi, buồng lái điều phối, buồng lái phòng ban, hộp thư chung, màn Ủy quyền, mục Báo cáo (bảng điều khiển và màn Quy trình thực tế), màn Hệ thống và màn Cấu hình quy trình cho quản trị viên; `services/khai-pha/` là dịch vụ khai phá tách riêng. Cụm mặc định gồm **tám dịch vụ** (thêm cổng API từ `v1.0.0`); bốn hồ sơ Compose tùy chọn: `tri-tue` (mô hình), `quet-tep` (ClamAV), `thu-thu` (Mailpit), `tri-thuc` (kho tri thức Wiki.js). Hai quy trình mẫu: *yêu cầu nội bộ* (**11 trạng thái, 32 cạnh**) và *đề xuất mua vật tư* rẽ nhánh theo số tiền — dưới ngưỡng một cấp duyệt, từ ngưỡng hai cấp (#376, #397) |
-| Issue đang mở | **6** (mốc 18) sau `v1.8.0` — 0 `P0`, 3 `P1`, 0 `P2`, 3 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
+| Issue đang mở | **7** (mốc 18) sau `v1.8.1` — 0 `P0`, 3 `P1`, 0 `P2`, 4 `P3`. Từ `v1.5.0` chỉ làm issue tăng độ hoàn thiện của thứ đã có (mục *Việc tiếp theo*) |
 | Đội | **Nguyễn Phạm Đại Phúc** (`@phuctiensinh`) tham gia từ 16/11 tới 20/11; các đợt hai tới năm bên dưới là phần việc của bạn. Từ 20/11 navigator nhận lại các issue đang mở |
 | Quyết định kiến trúc đã chốt | **10** — Keycloak `H` · SeaweedFS `core` · Superset `D` · tự viết engine `P` · ranh giới máy trạng thái (ADR-0005) · Wiki.js kho tri thức `H` tùy chọn (ADR-0006, chờ giảng viên xác nhận) · PM4Py trong dịch vụ khai phá tách riêng (ADR-0007) · llama.cpp, mô hình cục bộ và pgvector (ADR-0008) · lưu giữ và xóa dữ liệu cá nhân (ADR-0009) · **Apache APISIX làm cổng API `core` (ADR-0010, navigator chấp nhận 15/11)** |
 | Bản ghi chờ duyệt | **0** bản ghi *Đề xuất*. ADR-0006 navigator chấp nhận 14/11 theo cùng nguyên tắc giảng viên đã xác nhận cho ADR-0007, **chờ giảng viên xác nhận riêng** |
 | Còn chờ khảo sát | **0** — #47 khép mảng khảo sát cuối cùng ngày 10/10 |
-| Bộ kiểm thử tự động | **1052 bài** pytest ở dịch vụ ứng dụng và **209 bài** ở dịch vụ khai phá (tích hợp liên tục trên PR #544, 24/11), gồm một bài kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis (#441), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **216 bài đạt, 24 bỏ qua có chủ đích** ở lượt trọn bộ ngày 19/11 trên cụm thử dựng từ bản clone công khai; đợt sáu thêm kịch bản quét khả năng tiếp cận bằng axe trên màn chính của từng vai (#435) và kịch bản bước lệch trên trang hồ sơ (#448); từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
+| Bộ kiểm thử tự động | **1080 bài** pytest ở dịch vụ ứng dụng và **213 bài** ở dịch vụ khai phá (cụm thử dựng sạch, 26/11), gồm một bài kiểm thử dựa trên tính chất cho máy trạng thái bằng Hypothesis (#441), trên PostgreSQL, Keycloak và cổng API thật, tự chạy trên mỗi pull request cùng linter ruff và eslint (#382). Kịch bản Playwright `e2e/`: **335 bài đạt, 21 bỏ qua có chủ đích** ở lượt trọn bộ ngày 26/11 trên cụm thử (Edge, bốn cấu hình); đợt sáu thêm kịch bản quét khả năng tiếp cận bằng axe trên màn chính của từng vai (#435) và kịch bản bước lệch trên trang hồ sơ (#448); từ #382 chạy trọn trên tích hợp liên tục ở mỗi pull request vào `main`. Lần dựng lại gần nhất từ tệp phát hành: `dx-os-lab-1.4.0.tar.gz` ngoài thư mục mã, đường dẫn có dấu cách (19/11, #414). Công cụ kiểm chứng ở `scripts/kiem_chung/` (#249) |
 | Tổng bộ nhớ toàn cụm | **Cụm mặc định tám dịch vụ, khoảng 1,7 GiB** (số 12/11 là 1,66 GiB cho bảy dịch vụ; cổng API thêm **50 MiB**, đo 15/11 sau lượt e2e). Hồ sơ tùy chọn: `quet-tep` (ClamAV) **+1,03 GiB**, `thu-thu` (Mailpit) **+24 MiB**, `tri-thuc` (Wiki.js) **+276 MiB**. `tri-tue` (hai mô hình) **+1,88 GiB**, đo 19/11 trên cụm thử. Ảnh dịch vụ khai phá **982 MB**, ảnh cổng API **638 MB** |
-| Số ngày còn lại tới chấm kho mã | **12 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
+| Số ngày còn lại tới chấm kho mã | **11 ngày** (07/12/2026); hạn gửi bài **17:00 ngày 06/12** |
 | Số ngày còn lại tới khi công bố đề thi | Đã công bố trong tháng 11/2026 |
 
 **Một câu tóm tắt trạng thái**: nhân viên gửi yêu cầu → điều phối viên phân loại, đặt
@@ -1269,7 +1269,7 @@ biến giới hạn tốc độ, đều có mặc định trong Compose nên t�
 
 ### Tuần 21 (tiếp, 23–25/11) — đợt tám và `v1.8.0`
 
-Hai issue `P3` navigator duyệt sau `v1.7.0`, rồi một lượt rà giao diện và tài liệu trước khi chụp ảnh và quay trình diễn:
+Hai issue `P3` navigator duyệt sau `v1.7.0`, rồi một lượt rà giao diện và tài liệu:
 
 - **Khóa trùng lặp cho lệnh lõi** (#426, PR #532): lệnh tạo hồ sơ và chuyển trạng thái dưới `/core/v1` nhận tiêu đề
   tùy chọn `Idempotency-Key`. Lần lặp cùng khóa, cùng lệnh nhận lại đúng kết quả cũ kèm `Idempotent-Replayed`, không
@@ -1301,11 +1301,37 @@ Không phụ thuộc mới. Hai biến môi trường mới (`IDEMPOTENCY_TTL_HO
 Compose; giá trị mặc định của `SMTP_FROM` đổi. Nâng cấp bằng `up -d --build`, rồi chạy `scripts/ten_hien_thi.py` một
 lần (trang Nâng cấp).
 
+### Tuần 21 (tiếp, 25–26/11) — hai lượt test tay và `v1.8.1`
+
+Navigator rà giao diện `v1.8.0` rồi test tay trọn luồng hai lượt trên cụm trình diễn nạp lại dữ liệu; mọi chỗ chưa ổn
+thành issue và đóng trong một bản vá:
+
+- **Logo Corelens** (#551, PR #553): dấu chữ C cho thanh bên, màn vào cổng, trang tài liệu, màn đăng nhập Keycloak và
+  README
+- **Bốn lỗi khi rà giao diện** (#552, PR #554): bảng *Xem lại* chỉ hiện ở bước 3 và có đủ trường riêng của loại; số
+  phiên bản hiển thị đọc từ một nguồn — tệp `VERSION` ở gốc kho, tích hợp liên tục chặn khi tụt sau `CHANGELOG.md`;
+  bước khởi tạo kho tri thức tự nhận khóa API cũ hỏng và cấp lại; tóm tắt điểm cuối ở trang tài liệu API bằng tiếng Việt
+- **Biểu mẫu gửi** (#555, PR #558): không cho rời bước 2 khi còn trống trường bắt buộc khai ở loại yêu cầu, báo dưới
+  từng ô; dịch vụ báo đủ mọi trường thiếu trong một câu
+- **Gợi ý hồ sơ tương tự** (#556, PR #558 và #559, PR #562): gộp hồ sơ trùng tiêu đề hay trùng cách giải quyết, hồ sơ
+  có cách giải quyết lên trước; ô *Cách giải quyết* không bắt buộc ở bước Hoàn thành xử lý (migration `0040`); mỗi bảng
+  thao tác một khối hồ sơ tương tự
+- **Câu chữ trang hồ sơ** (#557, PR #558 và #559, PR #562): hồ sơ đã đóng nói đúng đồng hồ, phòng phụ trách và còn mở
+  lại được hay không; Xác nhận đạt một ô chữ, tên ô *Nhận xét* nằm trong dữ liệu (migration `0041`); nút tô màu chính là
+  bước chính trong dữ liệu ở cả trang người gửi; Ctrl + bấm dòng hàng đợi mở trang đầy đủ; nhật ký truy cập gộp lượt
+  xem trùng trong `ACCESS_AUDIT_DEDUP_SECONDS` giây
+- **Khuyến nghị cải tiến** (#557, #559): lời dặn mô hình có vai đi bước tiếp đọc từ bộ quy tắc; câu gọi trạng thái là
+  "phòng" hay "loại", hay nhắc sai vai bị bỏ; điểm nghẽn không còn câu nào của mô hình thì hệ thống dựng câu khuôn tất
+  định nhắc đúng vai. Thử ba lần với mô hình thật trên cụm trình diễn: mọi câu hiện ra đúng vai
+
+Không phụ thuộc mới. Một biến môi trường mới (`ACCESS_AUDIT_DEDUP_SECONDS`) có mặc định trong Compose. Nâng cấp bằng
+`up -d --build`; migration `0040`, `0041` chỉ đổi dữ liệu và có điều kiện.
+
 ---
 
 ## Đang làm
 
-Phát hành `v1.8.0`; sau đó chụp lại giao diện, dừng thêm tính năng và quay video trình diễn (mục *Việc tiếp theo*).
+Sau `v1.8.1`: đợt bố cục trang hồ sơ, ngăn xem nhanh và câu chữ (#561), rồi dạng bảng cho hàng đợi điều phối (#560), hướng tới `v2.0.0` (mục *Việc tiếp theo*).
 
 ---
 
@@ -1317,14 +1343,14 @@ Phát hành `v1.8.0`; sau đó chụp lại giao diện, dừng thêm tính năn
    cấm force push), chưa bắt buộc CI (`CONTRIBUTING.md` mục 2.6)
 2. **Đo lại sau đợt cuối**: dung lượng ổ đĩa của cụm (trang Cài đặt và Bắt đầu nhanh còn ghi 6 GB), cấu hình máy tối
    thiểu; cập nhật bộ nhớ hồ sơ `tri-tue` ở trang tài liệu theo số đo 19/11
-3. **Issue còn mở**: không làm #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt), #451, #481 (hoãn). Rà và
-   khép issue gốc #383 sau `v1.8.0`
+3. **Issue còn mở**: không làm #425 (sau kỳ thi), #430, #432 (ngược quyết định đã chốt), #451, #481 (hoãn). Issue gốc
+   #383 đã khép cùng `v1.8.0`. Trước `v2.0.0`: #561 (bố cục trang hồ sơ, ngăn xem nhanh, câu chữ, tên vai),
+   rồi #560 (dạng bảng cho hàng đợi điều phối)
 4. **Dọn dữ liệu cũ của cụm thử cách ly**: vài trăm hồ sơ còn lại, kể cả dữ liệu trình diễn đã nạp, làm khoảng mười bài
    đọc theo trang hay theo lô đỏ khi chạy trên cụm thử dùng lại (cụm sạch của tích hợp liên tục vẫn xanh)
 5. **Issue cho người mới** (nhãn `good first issue`) — kho đã công khai
 6. **Chuẩn bị trình diễn 15 phút** theo bốn phần đề nêu: giải pháp và lựa chọn công nghệ; tính năng nền tảng và
-   bài toán minh họa; kết quả và demo; định hướng. Video dự phòng cho phần demo, vì cụm Docker không đăng lên
-   Internet được
+   bài toán minh họa; kết quả và demo; định hướng
 7. **Đăng ký dự thi qua trường và gửi bài** theo mẫu thư ở mục 5 của đề; hỏi ban tổ chức năm trong hạn gửi bài
    (đề in 06/12/2025)
 8. **Gửi tệp `.tar.gz` cho nhóm kia** và ghi lại lỗi họ gặp khi cài theo README — việc giảng viên giao từ 15/10
@@ -1401,7 +1427,7 @@ Ghi vắn tắt để tránh bàn lại. Chi tiết và lý do xem `docs/adr/`.
 | Issue đã có một phần trong mã thì thu hẹp, không đóng | Navigator chốt 18/11: bình luận *Thu hẹp — Chỉ còn* nêu tệp đã có và phần còn thiếu; người làm chỉ làm phần còn thiếu |
 | Nền tảng lõi lên Mức 2: mỗi quy trình một bộ quy tắc đang bật, quy trình mẫu thứ hai thuần dữ liệu | Navigator chốt 16/11 theo ý giảng viên ngày 15/11, #376. Ban đầu không làm điều kiện trên cạnh; ngày 17/11 navigator nhận #397: điều kiện chỉ nối "và", chỉ so trường riêng với hằng số. Cổng người dùng chưa hiện hồ sơ quy trình 2 |
 | Lưu trữ lạnh là bản sao niêm phong theo tháng, không xóa tầng nóng | CSV nén và manifest SHA-256 trong SeaweedFS, không chứa tên người. Loại Parquet (thêm phụ thuộc) và dọn tầng nóng (phá nhật ký chỉ ghi thêm) — #378 |
-| Trang tài liệu đăng trên GitHub Pages | Navigator chốt 17/11: không thêm tài khoản bên thứ ba, mọi thứ nằm trong kho; Vercel ghi làm phương án khác. Cụm Docker không đăng lên Internet được — trình diễn trên máy nhóm, kèm video dự phòng |
+| Trang tài liệu đăng trên GitHub Pages | Navigator chốt 17/11: không thêm tài khoản bên thứ ba, mọi thứ nằm trong kho; Vercel ghi làm phương án khác. Cụm Docker không đăng lên Internet được — trình diễn trên máy nhóm |
 | Linter ở mọi pull request, kịch bản giao diện trọn bộ chỉ ở pull request vào `main` | Trọn bộ Playwright trên cụm sạch mất khoảng nửa giờ, quá lâu cho mỗi pull request vào `dev` — #382 |
 | `core` — SeaweedFS `4.45` làm kho lưu trữ đối tượng | Garage là bản lùi mặc định, MinIO là bản lùi có điều kiện — ADR-0002 |
 | `D` — Apache Superset `6.1.0` làm nền tảng BI | Metabase bị loại vì khóa tính năng nhúng sau giấy phép trả phí — ADR-0003 |
