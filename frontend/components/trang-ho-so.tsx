@@ -172,7 +172,7 @@ export function TheThaoTac({ children }: { children: React.ReactNode }) {
       {children}
       <p className="ghi-quy-tac">
         <Info aria-hidden />
-        Các nút phụ thuộc vào trạng thái hồ sơ và vai trò của bạn.
+        Chỉ hiện những thao tác bạn làm được ở bước này.
       </p>
     </div>
   );

@@ -130,6 +130,7 @@ def khuyen_nghi_cai_tien(
         "sentences": list(kn.sentences),
         "dropped_wrong_number": kn.dropped_wrong_number,
         "dropped_no_number": kn.dropped_no_number,
+        "template_sentences": kn.template_sentences,
         "model": kn.model,
         "generated_at": kn.generated_at.isoformat() if kn.generated_at else None,
         "cached": tu_dem,

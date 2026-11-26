@@ -19,7 +19,8 @@
 #
 # 2. TÌM cho biểu mẫu Gửi yêu cầu: nhúng câu đang gõ (kèm lời dặn tác vụ của Qwen3-Embedding), quét
 #    chính xác bằng khoảng cách cosine của pgvector, tối đa `similar_max_results` hồ sơ trên ngưỡng.
-#    Hồ sơ trùng tiêu đề gộp còn một, hồ sơ có cách giải quyết đứng trước (#556, `chon_goi_y`) — cùng
+#    Hồ sơ trùng tiêu đề hay trùng cách giải quyết gộp còn một (#556, #559), hồ sơ có cách giải quyết
+#    đứng trước (`chon_goi_y`) — cùng
 #    phép chọn cho thẻ gợi ý của điều phối viên. Hạn chót ngắn; mô hình tắt, chậm, hỏng — trả danh sách
 #    rỗng, không báo lỗi.
 #
@@ -387,7 +388,8 @@ HE_SO_UNG_VIEN = 5
 
 
 def khoa_tieu_de(tieu_de: str) -> str:
-    """Khóa gộp hồ sơ trùng tiêu đề: bỏ khác biệt chữ hoa/thường và khoảng trắng."""
+    """Khóa gộp hồ sơ trùng tiêu đề, hay trùng cách giải quyết (#559): bỏ khác biệt chữ hoa/thường và khoảng
+    trắng."""
     return " ".join(tieu_de.split()).casefold()
 
 
@@ -395,16 +397,24 @@ def chon_goi_y(ung_vien: list[KetQuaTuongTu], so_ket_qua: int) -> list[KetQuaTuo
     """Chọn gợi ý từ ứng viên đã xếp gần tới xa (#556).
 
     Hồ sơ trùng tiêu đề gộp thành một nhóm; mỗi nhóm giữ hồ sơ có cách giải quyết gần nhất, nhóm không hồ sơ nào có
-    thì giữ hồ sơ gần nhất. Lấy `so_ket_qua` nhóm gần nhất (nhóm xếp theo hồ sơ gần nhất của nó); trong số đó hồ sơ
-    có cách giải quyết đứng trước, giữ thứ tự gần xa trong từng phần. Trước #556 lấy thẳng ba hồ sơ gần nhất, nên
-    dữ liệu có ba hồ sơ cùng tiêu đề thì cả ba gợi ý trùng hệt nhau, đều không ghi cách giải quyết."""
+    thì giữ hồ sơ gần nhất. Hồ sơ có cách giải quyết trùng cách giải quyết một nhóm đã có (cùng phép chuẩn hóa)
+    gộp vào nhóm đó dù khác tiêu đề (#559) — hai gợi ý cùng một câu giải quyết không cho người đọc thêm gì. Lấy
+    `so_ket_qua` nhóm gần nhất (nhóm xếp theo hồ sơ gần nhất của nó); trong số đó hồ sơ có cách giải quyết đứng
+    trước, giữ thứ tự gần xa trong từng phần. Trước #556 lấy thẳng ba hồ sơ gần nhất, nên dữ liệu có ba hồ sơ cùng
+    tiêu đề thì cả ba gợi ý trùng hệt nhau, đều không ghi cách giải quyết."""
     nhom: dict[str, KetQuaTuongTu] = {}
+    cach_da_co: set[str] = set()
     for k in ung_vien:
+        cach = khoa_tieu_de(k.resolution)
+        if cach and cach in cach_da_co:
+            continue
         khoa = khoa_tieu_de(k.title)
         cu = nhom.get(khoa)
         if cu is None or (not cu.resolution and k.resolution):
             # Dict giữ thứ tự chèn đầu tiên của khóa: thay hồ sơ đại diện không đổi chỗ của nhóm
             nhom[khoa] = k
+            if cach:
+                cach_da_co.add(cach)
     chon = list(nhom.values())[:so_ket_qua]
     return sorted(chon, key=lambda k: not k.resolution)
 
@@ -417,7 +427,8 @@ def tim_theo_vec(
     nguong: float | None = None,
     bo_ho_so: int | None = None,
 ) -> list[KetQuaTuongTu]:
-    """Gợi ý gần `vec` nhất, đã gộp trùng tiêu đề và đưa hồ sơ có cách giải quyết lên trước (`chon_goi_y`).
+    """Gợi ý gần `vec` nhất, đã gộp trùng tiêu đề hay cách giải quyết và đưa hồ sơ có cách giải quyết lên trước
+    (`chon_goi_y`).
     `bo_ho_so`: hồ sơ không được gợi ý cho chính nó (thẻ của điều phối viên)."""
     cau_hinh = get_settings()
     k = so_ket_qua if so_ket_qua is not None else cau_hinh.similar_max_results

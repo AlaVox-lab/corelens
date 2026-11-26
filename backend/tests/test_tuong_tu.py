@@ -494,6 +494,27 @@ def test_chon_goi_y_gop_trung_va_dua_co_cach_len_truoc():
     assert [k.case_id for k in tuong_tu.chon_goi_y(ung_vien[:3], 3)] == [1, 3]
 
 
+def test_chon_goi_y_gop_trung_cach_giai_quyet():
+    """#559: hai hồ sơ khác tiêu đề cùng một câu cách giải quyết (khác hoa thường, khoảng trắng) là một gợi ý — giữ
+    hồ sơ gần hơn; chỗ trống nhường cho cách giải quyết khác. Hồ sơ không có cách giải quyết không gộp với nhau."""
+    ung_vien = [
+        _goi_y(1, "Máy in tầng 3 kẹt giấy", "Gỡ giấy kẹt, lau trục cuốn.", diem=0.95),
+        _goi_y(2, "Máy in phòng Kế toán kẹt giấy liên tục", "  gỡ giấy kẹt,  LAU trục cuốn. ", diem=0.93),
+        _goi_y(3, "Máy chiếu không lên hình", diem=0.90),
+        _goi_y(4, "Máy in in mờ", "Thay hộp mực.", diem=0.85),
+        _goi_y(5, "Máy scan không nhận lệnh", diem=0.80),
+    ]
+    chon = tuong_tu.chon_goi_y(ung_vien, 3)
+    assert [k.case_id for k in chon] == [1, 4, 3]
+    co_cach = [tuong_tu.khoa_tieu_de(k.resolution) for k in chon if k.resolution]
+    assert len(set(co_cach)) == len(co_cach)
+    # Hồ sơ cùng tiêu đề với một nhóm chưa có cách giải quyết, mà cách giải quyết đã hiện ở nhóm khác: gộp vào nhóm
+    # có cách giải quyết đó, không làm đại diện cho nhóm cùng tiêu đề
+    tre = [ung_vien[0], ung_vien[2], _goi_y(6, "Máy chiếu không lên hình", "Gỡ giấy kẹt, lau trục cuốn.", diem=0.88),
+           *ung_vien[3:]]
+    assert [k.case_id for k in tuong_tu.chon_goi_y(tre, 3)] == [1, 4, 3]
+
+
 def test_tim_khong_tra_ho_so_trung_tieu_de(session, canh, nhung_gia, client_dieu_phoi):
     """Qua đúng đường tìm: dữ liệu có ba hồ sơ trùng tiêu đề, chỉ một có cách giải quyết — biểu mẫu gửi và thẻ của
     điều phối viên đều nhận một gợi ý cho cả nhóm, là hồ sơ có cách giải quyết, đứng đầu."""

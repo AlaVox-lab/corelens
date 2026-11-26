@@ -78,6 +78,8 @@ test("xác nhận đạt kèm 4 sao và nhận xét; điều phối viên và tr
 
   await page.goto(`/yeu-cau/${ma}`, { waitUntil: "networkidle" });
   const thaoTac = page.locator("#thao-tac");
+  // Nút chính là bước chính trong dữ liệu (#559): Xác nhận đạt, không phải Chưa đạt
+  await expect(thaoTac.locator(".nut[data-loai='chinh']")).toHaveText(["Xác nhận đạt"]);
   await thaoTac.getByRole("button", { name: "Xác nhận đạt", exact: true }).click();
   const nhom = thaoTac.getByRole("group", { name: /Bạn hài lòng với cách xử lý đến đâu/ });
   await expect(nhom).toBeVisible();
@@ -102,11 +104,20 @@ test("xác nhận đạt kèm 4 sao và nhận xét; điều phối viên và tr
   await expect(khoi).toContainText("4/5");
   await expect(khoi).toContainText(nhanXet);
   await expect(thaoTac.getByRole("button", { name: "Xác nhận đạt", exact: true })).toHaveCount(0);
+  // Dòng thời gian ghi chú của bước Xác nhận đạt dưới tên ô trong dữ liệu — cùng chữ người gửi vừa gõ vào, không
+  // phải "Lý do" (#559). Chỉ chỗ đang hiện: dòng thời gian thu gọn giữ bản đầy đủ đã ẩn của mốc mới nhất
+  const oNhanXet = page.locator(".tua-muc", { hasText: /^\s*Nhận xét\s*$/ }).filter({ visible: true });
+  await expect(oNhanXet).toHaveCount(1);
+  await expect(oNhanXet.locator("..")).toContainText(nhanXet);
   // Hồ sơ đã đóng (#557): khung nói đúng trạng thái và đường mở lại, ô người giữ không nói như hồ sơ đang mở
   await expect(page.getByText("Hồ sơ đã kết thúc nhưng vẫn mở lại được trong thời hạn", { exact: false })).toBeVisible();
   await expect(page.getByText("Phòng ban phụ trách", { exact: true })).toBeVisible();
   await expect(page.getByText("Đã có người được phân công xử lý")).toHaveCount(0);
   await expect(page.getByText("Đồng hồ xử lý chưa từng chạy")).toHaveCount(0);
+  // Ô Đã trôi qua nói rõ giờ đồng hồ, câu đồng hồ hạn bên dưới nói giờ làm việc (#559)
+  const troiQua = page.locator(".tua-muc", { hasText: /^\s*Đã trôi qua\s*$/ }).locator("..");
+  await expect(troiQua).toContainText("theo đồng hồ");
+  await expect(troiQua).toContainText("làm việc");
 
   for (const [vai, duong] of [
     ["dieu-phoi", `/dieu-phoi/${ma}`],

@@ -132,6 +132,14 @@ test.describe("người gửi", () => {
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
+  test("trang hồ sơ chỉ tô màu chính cho bước chính trong dữ liệu (#559)", async ({ page }) => {
+    // Vừa gửi: hồ sơ chờ điều phối viên chứ không chờ người gửi — Sửa nội dung bấm được nhưng không nút nào tô
+    await guiYeuCauThu(page, `Nút chính ${test.info().project.name} ${new Date().toISOString().slice(0, 19)}`);
+    const thaoTac = page.locator("#thao-tac");
+    await expect(thaoTac.getByRole("button", { name: "Sửa nội dung", exact: true })).toBeVisible();
+    await expect(thaoTac.locator(".nut[data-loai='chinh']")).toHaveCount(0);
+  });
+
   test("bước 2 của biểu mẫu không cuộn ngang, có ô tải tệp (#436)", async ({ page }) => {
     // Bước 2 có trường riêng của loại và ô tải tệp — rộng nhất trong ba bước
     await moMan(page, "/yeu-cau/moi", "nguoi-gui-gui-yeu-cau-buoc-1");
@@ -459,6 +467,9 @@ test.describe("điều phối viên", () => {
     const chinh = page.locator("#thao-tac .nut[data-loai='chinh']");
     await expect(chinh).toHaveCount(1);
     await expect(chinh).toContainText("Phân loại yêu cầu");
+    // Câu dưới khung thao tác gọn như trang người gửi (#559)
+    await expect(page.getByText("Chỉ hiện những thao tác bạn làm được ở bước này.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Các nút phụ thuộc vào trạng thái hồ sơ", { exact: false })).toHaveCount(0);
   });
 
   test("chuyển động: không quá 300 ms, số trang chủ không đếm từ 0", async ({ page }) => {
@@ -653,9 +664,11 @@ test.describe("điều phối viên", () => {
       }),
     );
     await dungHoSoChoChuyenPhong(browser, page, "Căn cứ bật");
-    const { the } = await moBangChuyenPhong(page);
+    const { thaoTac, the } = await moBangChuyenPhong(page);
     const khoi = the.locator(".can-cu-tuong-tu");
     await expect(khoi).toContainText("Hồ sơ đã giải quyết tương tự");
+    // Một khối mỗi bảng (#559): bảng có ô loại lẫn ô phòng; có thẻ gợi ý cho cả hai thì danh sách vẫn hiện một lần
+    await expect(thaoTac.locator(".can-cu-tuong-tu")).toHaveCount(1);
     await expect(khoi.locator("li")).toHaveCount(3);
     await expect(khoi.getByRole("link", { name: "YC-2026-0007" })).toHaveAttribute("href", "/dieu-phoi/7");
     await expect(khoi).toContainText("Đổi cáp HDMI mới.");

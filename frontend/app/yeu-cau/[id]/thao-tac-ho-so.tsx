@@ -48,18 +48,15 @@ import { CHUA_CO_LOI } from "@/app/yeu-cau/ket-qua";
 import { chuyenTrangThai } from "@/app/yeu-cau/thao-tac";
 
 /**
- * Cạnh nào nên trông như hành động chính: cạnh đứng đầu, khi có từ hai nút trở lên.
+ * Cạnh nào trông như hành động chính: bước chính trong dữ liệu (`is_primary` — cạnh khai `primary_scope`, #227),
+ * cùng một nguồn với trang nhân viên (`bang-thao-tac.tsx`). Trạng thái không chờ người gửi thì không nút nào tô.
  *
- * Danh sách đã xếp theo `transitions.display_order`, và dữ liệu khởi tạo đặt đường
- * xuôi lên trước — nên đây vẫn là dữ liệu quyết, không phải bảng trong tệp này.
- *
- * Trước #79 tệp này đoán bằng cờ: cạnh không đòi lý do là đường xuôi. Đoán vậy hỏng
- * ngay khi cạnh “Bổ sung thông tin” bắt đầu đòi ghi chú — nút “Hủy yêu cầu” thành nút
- * chính. Cờ không phân biệt được hai trường hợp: ở *Chờ bổ sung thông tin* và ở *Hoàn
- * tất*, hai cạnh mang y hệt cờ nhưng đường xuôi nằm ở hai phía ngược nhau.
+ * Trước #559 tô nút đứng đầu danh sách: ở *Đã gửi* "Sửa nội dung" thành nút chính, trong khi hồ sơ đang chờ điều
+ * phối viên chứ không chờ người gửi. Trước #79 còn đoán bằng cờ — cạnh không đòi lý do là đường xuôi — và hỏng ngay
+ * khi cạnh “Bổ sung thông tin” bắt đầu đòi ghi chú.
  */
-function laDuongXuoi(chiSo: number, tongSo: number): boolean {
-  return tongSo > 1 && chiSo === 0;
+function laBuocChinh(canh: CanhDiDuoc): boolean {
+  return canh.is_primary === true;
 }
 
 /**
@@ -146,13 +143,13 @@ export function ThaoTacHoSo({
           alignItems: "center",
         }}
       >
-        {cacCanh.map((canh, chiSo) =>
+        {cacCanh.map((canh) =>
           canHoiLai(canh) ? (
             <button
               key={canh.to_state}
               type="button"
               className="nut"
-              data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
+              data-loai={laBuocChinh(canh) ? "chinh" : undefined}
               onClick={() => {
                 if (dangMo?.to_state === canh.to_state) return dongBang();
                 datGhiChu("");
@@ -169,7 +166,7 @@ export function ThaoTacHoSo({
               name="to_state"
               value={canh.to_state}
               className="nut"
-              data-loai={laDuongXuoi(chiSo, cacCanh.length) ? "chinh" : undefined}
+              data-loai={laBuocChinh(canh) ? "chinh" : undefined}
               disabled={dangChay}
             >
               {canh.activity_label}

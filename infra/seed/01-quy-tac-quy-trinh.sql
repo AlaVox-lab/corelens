@@ -182,7 +182,9 @@ VALUES
     (1, 'awaiting-acceptance', 'awaiting-acceptance',    'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        30),
     (1, 'escalated',           'escalated',              'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        31),
 
-    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
+    -- Ô ghi chú cũng là nhận xét kèm điểm (#557, cờ collects_feedback ở dưới): tên ô để dòng thời gian ghi đúng
+    -- chữ người gửi đã thấy, không phải "Lý do" (#559). Cụm cũ nhận tên ô qua migration 0041.
+    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, 'Nhận xét',              23),
     -- Mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận. Mỗi hồ sơ mở lại tối đa
     -- request_types.reopen_max_count lần, mở lại là mở chu kỳ xử lý mới (#102).
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24),
