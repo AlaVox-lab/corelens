@@ -60,8 +60,8 @@ type Props = {
   /** Bảng nằm ở đáy ngăn xem nhanh (#233): gửi xong thì sang `sauKhiXong`. */
   ngan?: { sauKhiXong: string };
   /**
-   * Trường mà thẻ gợi ý kèm hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ màn điều phối truyền. Một
-   * trường mỗi bước, để danh sách không lặp lại dưới mọi thẻ của cùng một bảng.
+   * Trường mà thẻ gợi ý kèm hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ màn điều phối truyền. Mỗi
+   * bảng chỉ một khối, ở thẻ của trường đầu tiên có gợi ý (#559), để danh sách không lặp lại dưới mọi thẻ.
    */
   canCuTuongTu?: readonly string[];
 };
@@ -261,6 +261,9 @@ export function BangThaoTac({
   const [dangAn, an] = useAnCham();
   const dongKhung = () => an(() => datDangMo(null));
   const menu = useRef<HTMLDetailsElement>(null);
+  // Một khối hồ sơ tương tự mỗi bảng (#559): bảng Chuyển về phòng ban có cả ô loại lẫn ô phòng, mỗi ô một thẻ
+  // gợi ý — khối gắn ở thẻ của trường đầu tiên có gợi ý, không lặp dưới thẻ sau
+  const truongCanCu = dangMo?.fields.find((t) => canCuTuongTu?.includes(t) && goiY[t]);
 
   if (cacCanh.length === 0) {
     return (
@@ -386,7 +389,7 @@ export function BangThaoTac({
                 goiY={goiY[truong]}
                 cacLoai={cacLoai}
                 nguon={nguonMa ? danhMuc[nguonMa] : undefined}
-                canCu={canCuTuongTu?.includes(truong) ? <CanCuTuongTu maHoSo={maHoSo} /> : undefined}
+                canCu={truong === truongCanCu ? <CanCuTuongTu maHoSo={maHoSo} /> : undefined}
               />
             );
           })}

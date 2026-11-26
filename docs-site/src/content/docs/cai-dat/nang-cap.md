@@ -140,6 +140,9 @@ Dựng lại như mục đầu trang là đủ; không phải sửa `.env`.
 - **Ô Cách giải quyết** ở bước Hoàn thành xử lý (#556), không bắt buộc: bản sửa lược đồ `0040` đặt tên ô cho cạnh
   đó ở mọi bộ quy tắc của quy trình mặc định. Chỉ cạnh còn trống tên ô; tên quản trị viên đã đặt ở màn cấu hình
   thì giữ. Chữ người xử lý ghi vào ô này là cách giải quyết mà gợi ý hồ sơ tương tự hiện cho người gửi sau.
+- **Ô Nhận xét** ở bước Xác nhận đạt (#559): bản sửa `0041` đặt tên ô `Nhận xét` cho cạnh cho chấm mức hài lòng
+  của quy trình mặc định, cùng điều kiện như `0040` — để dòng thời gian ghi nhận xét của người gửi dưới đúng chữ
+  đó thay vì "Lý do".
 - **Biến mới `ACCESS_AUDIT_DEDUP_SECONDS`** (#557) có mặc định 60 trong Compose: nhật ký truy cập gộp lượt xem
   trùng trong chừng đó giây. `.env` cũ vẫn chạy; muốn đổi thì chép dòng từ `infra/.env.example`.
 

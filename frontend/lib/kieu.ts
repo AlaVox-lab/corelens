@@ -679,6 +679,8 @@ export type KhuyenNghiQuyTrinh = {
   sentences: string[];
   dropped_wrong_number?: number;
   dropped_no_number?: number;
+  /** Câu khuôn dựng từ dữ liệu cho điểm nghẽn không còn câu nào của mô hình (#559), đã nằm trong `sentences`. */
+  template_sentences?: number;
   model?: string | null;
   generated_at?: string | null;
   cached?: boolean;

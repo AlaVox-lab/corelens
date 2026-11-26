@@ -148,8 +148,12 @@ export function vachHan(
   return { phan: Math.min(100, Math.max(0, phan)), muc };
 }
 
-/** Tổng thời gian hồ sơ đã nằm trong hệ thống, kể cả những đoạn đồng hồ dừng. */
+/**
+ * Tổng thời gian hồ sơ đã nằm trong hệ thống, kể cả những đoạn đồng hồ dừng — tính bằng GIỜ ĐỒNG HỒ, và nói ra
+ * như thế (#559): ô này đứng ngay trên câu của đồng hồ hạn, vốn đếm giờ làm việc, nên "8 phút" trên "Khép lại, không
+ * tốn giờ làm việc nào" đọc như mâu thuẫn. "8 phút theo đồng hồ" cạnh "… giờ làm việc" thì hai đơn vị tự phân biệt.
+ */
 export function daTroiQua(ho_so: HoSoTomTat, bayGio: Date): string {
   const giay = (bayGio.getTime() - new Date(ho_so.created_at).getTime()) / 1000;
-  return thoiLuong(Math.max(0, giay));
+  return `${thoiLuong(Math.max(0, giay))} theo đồng hồ`;
 }

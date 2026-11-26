@@ -58,10 +58,13 @@ trước, khuyến nghị tới sau vài giây tới vài chục giây.
 - **Con số luôn của hệ thống**: mỗi câu gồm việc nên làm do mô hình viết, rồi *căn cứ* chép nguyên dòng
   số liệu tương ứng từ kết quả khai phá. Phần mô hình viết mà có con số hay tên trạng thái, loại, phòng
   không thuộc đúng dòng căn cứ đó thì cả câu bị bỏ
+- **Điểm nghẽn không bị bỏ trống**: điểm nghẽn nào không còn câu nào của mô hình qua phép đối chiếu thì hệ
+  thống tự viết một câu theo khuôn, nhắc đúng vai đi bước tiếp ở trạng thái đó theo quy trình — ví dụ "Nên
+  nhắc người gửi làm sớm bước tiếp theo cho hồ sơ ở “Chờ bổ sung thông tin”", kèm căn cứ như mọi câu
 - **Chỉ để đọc**: đây là gợi ý của hệ thống, không tự đổi cấu hình hay hồ sơ nào. Quyết định cải tiến là
   của bạn
 - Mở lại màn với cùng số liệu thì khuyến nghị có ngay; có hồ sơ mới làm số đổi thì hệ thống viết lại
-- Mô hình tắt hay không câu nào qua phép đối chiếu thì khối không hiện — màn vẫn đủ câu kết luận
+- Mô hình tắt hay không còn câu nào để hiện thì khối không hiện — màn vẫn đủ câu kết luận
 
 Thời gian chờ luôn tính bằng **giờ làm việc** theo lịch trong dữ liệu — cùng phép đo với đồng hồ hạn xử
 lý — nên "9 giờ 5 phút làm việc" là chín tiếng năm phút trong giờ làm, không phải thời gian đồng hồ.
