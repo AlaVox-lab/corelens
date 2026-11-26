@@ -138,6 +138,11 @@ function cauTongQuan(d: QuyTrinhThucTe): CauKetLuan {
   return { id: "tong-quan", chu };
 }
 
+/** Nối danh sách tên kiểu câu tiếng Việt: "A", "A và B", "A, B và C". */
+function noiVa(ds: string[]): string {
+  return ds.length < 2 ? (ds[0] ?? "") : `${ds.slice(0, -1).join(", ")} và ${ds[ds.length - 1]}`;
+}
+
 function cauDiemNghen(d: QuyTrinhThucTe): CauKetLuan[] {
   const { overall_median_wait_seconds: chung, factor, ranking } = d.bottlenecks;
   if (chung === null) {
@@ -173,7 +178,7 @@ function cauDiemNghen(d: QuyTrinhThucTe): CauKetLuan[] {
     const con = nghen.slice(1).map((r) => `“${r.label}”`);
     cau.push({
       id: "diem-nghen-khac",
-      chu: `${nghen.length - 1 === 1 ? "Còn một trạng thái khác" : `Còn ${nghen.length - 1} trạng thái khác`} cũng nghẽn: ${con.join(", ")}.`,
+      chu: `${noiVa(con)} cũng là điểm nghẽn.`,
     });
   }
   return cau;

@@ -3,10 +3,11 @@
 //
 // Màn chi tiết hồ sơ của buồng lái phòng ban (#83).
 //
-// Cùng bố cục hai cột với buồng lái điều phối (#169, khối chung ở components/trang-ho-so):
-// bên trái để ĐỌC — đầu hồ sơ, nội dung, dòng thời gian và trao đổi — bên phải để LÀM —
-// hạn, thao tác, liên hệ. Trưởng phòng và người xử lý dùng chung trang này; nút của mỗi
-// người khác nhau vì chúng đến từ `allowed_transitions`, không từ một phép so vai trò nào.
+// Cùng khuôn với buồng lái điều phối (#169, sắp lại ở #561 — khối chung ở components/trang-ho-so): cột
+// chính mở đầu bằng thẻ "Bạn có thể làm gì lúc này", rồi tới nội dung, tệp, dòng thời gian và trao đổi;
+// cột phải hẹp, dính khi cuộn, chỉ còn Hạn xử lý và Thông tin hồ sơ. Trưởng phòng và người xử lý dùng
+// chung trang này; nút của mỗi người khác nhau vì chúng đến từ `allowed_transitions`, không từ một phép
+// so vai trò nào.
 //
 // Nạp dữ liệu — kể cả chỉ nạp những danh mục mà thao tác đang đi được cần (#84) — và khối
 // thao tác dùng chung với ngăn xem nhanh của hàng đợi (#233), ở `app/phong-ban/ho-so.tsx`.
@@ -15,20 +16,27 @@ import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { metaPhongBan, napHoSoPhongBan, ThaoTacPhongBan } from "@/app/phong-ban/ho-so";
+import { napHoSoPhongBan, thongTinPhongBan, ThaoTacPhongBan } from "@/app/phong-ban/ho-so";
 import { guiLoiNhanPhongBan } from "@/app/phong-ban/thao-tac";
 import { DongThoiGian } from "@/components/dong-thoi-gian";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
 import { KhongPhanHoi, MoiDangNhap } from "@/components/khung-lam-viec";
 import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
-import { TheLienHe } from "@/components/lien-he-nguoi-gui";
+import { CacDongLienHe } from "@/components/lien-he-nguoi-gui";
 import { TheLichSu } from "@/components/the-lich-su";
 import { duongHopThu } from "@/lib/hop-thu";
 import { GhiChuMoLai, KhoiHoSoLienQuan } from "@/components/ho-so-lien-quan";
 import { KhoiTepDinhKem } from "@/components/khoi-tep-dinh-kem";
 import { TheDanhGia } from "@/components/the-danh-gia";
-import { DauHoSo, TheHan, TheNoiDung, TheThaoTac, ThanhBuoc } from "@/components/trang-ho-so";
+import {
+  DauHoSo,
+  TheHan,
+  TheNoiDung,
+  TheThaoTac,
+  TheThongTinHoSo,
+  ThanhBuoc,
+} from "@/components/trang-ho-so";
 import { BuocLechHoSo } from "@/components/buoc-lech-ho-so";
 import { laHetPhien } from "@/lib/api";
 import { cacBuoc } from "@/lib/buoc";
@@ -67,13 +75,26 @@ export default async function ChiTietPhongBan({
           </Link>
         </NutThanhDau>
       )}
-      <DauHoSo ho_so={ho_so} meta={metaPhongBan(ho_so)} />
+      <DauHoSo ho_so={ho_so} />
       <ThanhBuoc cacBuoc={cacBuoc(cacTrangThai ?? [], ho_so.state.code, ho_so.history)} />
 
-      <div className="hai-cot">
-        {/* --- Cột trái: đọc. Màn hẹp thì xuống sau Hạn và thao tác (#189) ------- */}
-        <div className="cot-doc" style={{ display: "grid", gap: "16px", minWidth: 0 }}>
+      <div className="hai-cot trang-ho-so">
+        {/* --- Cột chính: việc của người xem trước, rồi tới hồ sơ để đọc ------------- */}
+        <div className="cot-doc">
+          <TheThaoTac>
+            <ThaoTacPhongBan d={d} />
+          </TheThaoTac>
           <TheNoiDung ho_so={ho_so} />
+          {/* Tệp đính kèm (#80): nhân viên chỉ xem và tải về, không thêm */}
+          <KhoiTepDinhKem
+            maHoSo={ho_so.id}
+            tep={ho_so.attachments}
+            choPhep={false}
+            chinhSach={null}
+          />
+          {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
+              đang ở phòng khác */}
+          <KhoiHoSoLienQuan hoSo={ho_so} />
           {/* Đánh giá của người gửi khi xác nhận hoàn tất (#433) — chỉ đọc, không có thì không hiện */}
           <TheDanhGia danhGia={ho_so.feedback} />
           {/* Bước lệch quy trình (#448): chỉ thông tin, chỉ hiện khi hồ sơ có bước lệch */}
@@ -132,24 +153,14 @@ export default async function ChiTietPhongBan({
           />
         </div>
 
-        {/* --- Cột phải: làm, dính khi cuộn --------------------------------- */}
+        {/* --- Cột phải: thông tin tĩnh, dính khi cuộn -------------------------------- */}
         <div className="cot-dinh">
           <TheHan ho_so={ho_so} />
           <GhiChuMoLai hoSo={ho_so} />
-          <TheThaoTac>
-            <ThaoTacPhongBan d={d} />
-          </TheThaoTac>
-          {/* Hồ sơ gốc và hồ sơ tạo lại (#102): chỉ chữ, không đường dẫn — hồ sơ kia có thể
-              đang ở phòng khác */}
-          <KhoiHoSoLienQuan hoSo={ho_so} />
-          {/* Tệp đính kèm (#80): nhân viên chỉ xem và tải về, không thêm */}
-          <KhoiTepDinhKem
-            maHoSo={ho_so.id}
-            tep={ho_so.attachments}
-            choPhep={false}
-            chinhSach={null}
+          <TheThongTinHoSo
+            cacDong={thongTinPhongBan(ho_so)}
+            lienHe={<CacDongLienHe ten={nguoiGui} dinhDanh={ho_so.requester_id} ketQua={lienHe} />}
           />
-          <TheLienHe ten={nguoiGui} dinhDanh={ho_so.requester_id} ketQua={lienHe} />
         </div>
       </div>
     </>

@@ -55,7 +55,8 @@ def test_loi_sai_vai_tro_noi_bang_nhan_vai_tro(session, rule_set):
     assert nhan in thong_diep
     assert "classifier" not in thong_diep
     assert "Cạnh" not in thong_diep and "cạnh" not in thong_diep
-    assert "Bước này dành cho" in thong_diep
+    # Nhãn vai là cách gọi chung của cổng (#561, seed 01 và migration 0042), không phải nhãn cũ của dữ liệu khởi tạo
+    assert thong_diep.endswith("Bước này dành cho: Điều phối viên.")
 
 
 def test_loi_buoc_cua_he_thong_khong_noi_canh(session, rule_set):

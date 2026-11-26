@@ -22,8 +22,15 @@ bộ lọc và trang đang xem, nên gửi đường dẫn cho đồng nghiệp 
 
 Bấm một dòng thì hồ sơ mở trong **ngăn xem nhanh** bên phải, danh sách vẫn ở nguyên chỗ. Ngăn có
 hạn, nội dung, dòng thời gian, liên hệ người gửi; nút ở đáy là bước bạn cần làm, các thao tác khác
-nằm trong *Thao tác khác*. Làm xong thì ngăn tự sang hồ sơ kế. Phím mũi tên lên/xuống chuyển hồ
-sơ, Esc đóng ngăn; *Mở trang đầy đủ* — hay bấm mã, tiêu đề ở đầu ngăn — để xem trao đổi và tệp đính kèm.
+nằm trong *Thao tác khác*. Bấm một thao tác thì nội dung hồ sơ thu thành một đoạn tóm tắt ngay trên
+các ô cần điền — vẫn đọc được mô tả khi phân loại — và nút **Xác nhận** cùng **Hủy thao tác** nằm ở
+đáy ngăn; *Xem đủ nội dung và dòng thời gian* đóng thao tác lại. Làm xong thì ngăn tự sang hồ sơ kế.
+Phím mũi tên lên/xuống chuyển hồ sơ, Esc đóng ngăn; *Mở trang đầy đủ* — hay bấm mã, tiêu đề ở đầu
+ngăn — để xem trao đổi và tệp đính kèm.
+
+Ở trang đầy đủ, khung **Bạn có thể làm gì lúc này** đứng đầu trang: các nút thao tác xếp một hàng,
+bấm một nút thì các ô mở ngay dưới, ô có gợi ý đứng cạnh nhau. Cột bên phải chỉ có hạn xử lý và
+thông tin hồ sơ (loại, phòng, mức ưu tiên, liên hệ người gửi).
 Muốn mở trang đầy đủ ở thẻ mới thì Ctrl + bấm (⌘ + bấm trên máy Mac) hay bấm chuột giữa vào dòng.
 
 ![Hàng đợi điều phối](../../../assets/anh/hang-doi-dieu-phoi.png)

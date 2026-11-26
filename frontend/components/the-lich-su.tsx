@@ -97,7 +97,8 @@ export function TheLichSu({
             onClick={() => datTab(t.ma)}
           >
             {t.nhan}
-            {t.dem !== undefined && <span className="dem">{t.dem}</span>}
+            {/* "Trao đổi (2)" (#561): số trong ngoặc đọc liền với tên thẻ, không lẫn thành một phần của tên */}
+            {t.dem !== undefined && <span className="dem">({t.dem})</span>}
           </button>
         ))}
       </div>

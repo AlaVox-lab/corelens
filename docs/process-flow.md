@@ -298,10 +298,10 @@ thì sửa dữ liệu khởi tạo.
 
 | Định danh | Nhãn hiển thị | Trách nhiệm |
 |---|---|---|
-| `requester` | Người tạo yêu cầu | Gửi yêu cầu, sửa nội dung trước khi hồ sơ tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
-| `classifier` | Người phân loại yêu cầu | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối |
-| `handler` | Người xử lý yêu cầu | Tự nhận hồ sơ chưa giao ai trong phòng, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
-| `approver` | Người xét duyệt yêu cầu | Quyết định phòng ban **nhận hay không nhận**, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang |
+| `requester` | Người gửi | Gửi yêu cầu, sửa nội dung trước khi hồ sơ tới phòng ban, bổ sung thông tin, hủy khi được phép, xác nhận hoặc mở lại |
+| `classifier` | Điều phối viên | Phân loại, chọn phòng ban phụ trách, **đặt mức ưu tiên**, hỏi thêm thông tin, chuyển lại phòng khác khi bị từ chối |
+| `handler` | Người xử lý | Tự nhận hồ sơ chưa giao ai trong phòng, thực hiện công việc, hỏi thêm thông tin khi cần, báo hoàn thành |
+| `approver` | Trưởng phòng | Quyết định phòng ban **nhận hay không nhận**, hỏi thêm thông tin trước khi nhận, phân công lại khi leo thang |
 | `administrator` | Quản trị viên | **Không đi cạnh nào.** Quản lý phòng ban, loại yêu cầu, ngưỡng SLA, bảng ánh xạ loại → phòng |
 
 Vai trò `classifier` về sau sẽ được tầng `I` hỗ trợ bằng phân loại tự động. Nhưng theo

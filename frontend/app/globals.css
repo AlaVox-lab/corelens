@@ -256,11 +256,11 @@ main:focus:not(:focus-visible) {
   color: var(--ink-3);
 }
 
+/* Nhãn nhỏ đứng trên một giá trị: chữ thường (#561) — chữ in hoa nhỏ khó đọc với tiếng Việt có dấu, và nhãn
+ * không cần gây chú ý hơn giá trị nó gọi tên */
 .tua-muc {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--ink-3);
 }
 
@@ -504,7 +504,8 @@ select.o-nhap {
   font-size: 12.5px;
 }
 
-/* Hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ có mặt khi mô hình nhúng bật và có hồ sơ đủ gần */
+/* Hồ sơ đã giải quyết tương tự làm căn cứ (#450) — chỉ có mặt khi mô hình nhúng bật và có hồ sơ đủ gần. Gập sẵn
+ * (#561): dòng tóm tắt ghi số hồ sơ, bấm để mở danh sách */
 .can-cu-tuong-tu {
   margin-top: 6px;
   padding-top: 6px;
@@ -516,8 +517,20 @@ select.o-nhap {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--ink);
+  min-height: 32px;
+  color: var(--accent-2);
   font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.can-cu-tuong-tu-dau::-webkit-details-marker {
+  display: none;
+}
+
+.can-cu-tuong-tu-dau:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .can-cu-tuong-tu-dau svg {
@@ -757,12 +770,20 @@ textarea.o-nhap {
   white-space: pre-wrap;
 }
 
+/* Khuôn #561: cột chính co giãn mở đầu bằng thẻ thao tác; cột phải hẹp chỉ còn thông tin tĩnh (Hạn xử lý, Thông
+ * tin hồ sơ), dính khi cuộn — đủ ngắn để không bao giờ cao hơn màn hình */
 .hai-cot {
   display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   align-items: start;
   margin-top: 20px;
+}
+
+.cot-doc {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .cot-dinh {
@@ -770,6 +791,437 @@ textarea.o-nhap {
   top: 84px;
   display: grid;
   gap: 16px;
+  min-width: 0;
+}
+
+/* Trang hồ sơ được rộng hơn màn khác (#561): hai cột cần chỗ, trần 1600 px cho màn rất rộng */
+.vung:has(.trang-ho-so) {
+  max-width: 1600px;
+}
+
+/* Thẻ "Bạn có thể làm gì lúc này" ở đầu cột chính (#561): tiêu đề và nút thao tác một hàng trên dải màu nhấn nhạt,
+ * khung nhập mở ngay trong thẻ */
+.the-thao-tac {
+  border-color: var(--accent-line);
+}
+
+.thao-tac-dau {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: color-mix(in oklab, var(--accent-soft) 55%, var(--surface));
+  border-bottom: 1px solid var(--line);
+}
+
+.thao-tac-dau:last-child {
+  border-bottom: 0;
+}
+
+.tua-thao-tac {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hang-nut-trang {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Nút của thao tác đang mở: viền và nền nhấn — trạng thái mở nói bằng `aria-expanded` lẫn bằng hình */
+.hang-nut-trang .nut[aria-expanded="true"]:not([data-loai]) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.hang-nut-trang .nut[aria-expanded="true"][data-loai="chinh"] {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.bang-thao-tac {
+  scroll-margin-top: 72px;
+}
+
+.bang-thao-tac > .khung-xac-nhan {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+.thao-tac-ghi {
+  margin: 14px 20px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--f-p-ink);
+}
+
+.bang-thao-tac > .thao-tac-het {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 16px 20px 20px;
+}
+
+.thao-tac-loi {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: var(--f-r-bg);
+  border: 1px solid var(--f-r-line);
+  color: var(--f-r-ink);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.bang-thao-tac > .thao-tac-loi {
+  margin: 0 20px 20px;
+}
+
+/* "Hồ sơ sẽ chuyển sang …" — dòng đầu khung nhập, thay cho tên thao tác lặp lại (#561) */
+.khung-dich {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+/* Ô có gợi ý xếp hai cột; khung hẹp dưới 560 px (ngăn xem nhanh, cửa sổ hẹp) về một cột — trang đầy đủ ở khổ 1440 có
+   khung ~600 px nên vẫn hai cột (#561) */
+.khung-xac-nhan {
+  container-type: inline-size;
+}
+
+.luoi-goi-y {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.luoi-goi-y > :only-child {
+  grid-column: 1 / -1;
+}
+
+@container (max-width: 559px) {
+  .luoi-goi-y {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hang-xac-nhan {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* Nút trông như liên kết — việc trong trang, không đổi địa chỉ */
+.nut-lien-ket {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Thẻ "Thông tin hồ sơ" ở cột phải (#561): nhãn bên trái, giá trị bên phải */
+.tua-the {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.ds-mt.ds-ngang div {
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.ds-ngang dd {
+  flex-wrap: wrap;
+}
+
+.dd-chinh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dd-phu {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* Đầu thẻ có biểu tượng: biểu tượng và tên một nhóm, đứng trái như mọi thẻ (#561) */
+.khoi-dau-tua {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.khoi-dau-tua svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Câu hạn khi đồng hồ không chạy */
+.han-cau {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.han-cau[data-canh-bao] {
+  color: var(--f-r-ink);
+}
+
+/* Chấm màu theo loại yêu cầu (#561): màu suy từ mã loại bằng phép băm, cùng năm họ với ảnh đại diện */
+.cham-loai {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.cham-loai[data-c="1"] { background: var(--f-b-solid); }
+.cham-loai[data-c="2"] { background: var(--f-g-solid); }
+.cham-loai[data-c="3"] { background: var(--f-o-solid); }
+.cham-loai[data-c="4"] { background: var(--f-p-solid); }
+.cham-loai[data-c="5"] { background: var(--f-t-solid); }
+
+.dd-chinh .cham-loai,
+.nhan-loai .cham-loai {
+  margin-right: 0;
+}
+
+.chip-loai {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+/* --- Trang hồ sơ của người gửi (#561) -----------------------------------------------------------------------
+ * Đầu trang gọn, một dải ba ô số, dải trạng thái trọn bề ngang, rồi hai cột: chính (nội dung, trao đổi, dòng thời
+ * gian) và phụ (thao tác, tệp, hồ sơ liên quan) bên phải. Cột phụ đứng TRƯỚC trong mã — điện thoại xếp nó lên đầu;
+ * màn rộng đặt nó sang phải bằng `grid-template-areas`. */
+.dau-ho-so-ng {
+  margin-top: 14px;
+}
+
+.dong-ma {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.dau-ho-so-ng .h1-ho-so {
+  margin: 8px 0 0;
+  font-size: clamp(20px, 3.2vw, 26px);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.dai-so-ho-so {
+  margin: 18px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.dai-so-ho-so > div {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: 12px 18px;
+  min-width: 0;
+}
+
+.dai-so-ho-so > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.dai-so-ho-so dd {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.dai-so-ho-so dd[data-canh-bao] {
+  color: var(--f-r-ink);
+}
+
+.dai-so-ho-so .dai-so-ho-so-phu {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.dai-chu-giai {
+  margin-top: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--ho-bg);
+  border: 1px solid var(--ho-line);
+}
+
+.dai-chu-giai-dau {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ho-solid);
+  color: var(--ho-on);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dai-chu-giai-chu {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.dai-chu-giai-chu strong {
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.dai-chu-giai-chu [data-sap] {
+  color: var(--f-a-ink);
+  font-weight: 600;
+}
+
+.hai-cot-ng {
+  margin-top: 18px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  grid-template-areas: "chinh phu";
+  align-items: start;
+}
+
+.hai-cot-ng > .cot-phu {
+  grid-area: phu;
+  position: sticky;
+  top: 84px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Khung nhập đang mở có thể cao hơn màn hình: thôi dính, để cuộn tới được mọi ô */
+.hai-cot-ng > .cot-phu:has(.hien-ra) {
+  position: static;
+}
+
+.hai-cot-ng > .cot-chinh {
+  grid-area: chinh;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.the-thao-tac-ng {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-color: var(--accent-line);
+  scroll-margin-top: 72px;
+}
+
+.tua-the-ng {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.khoi-ng {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.mo-ta-ng {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.bao-tep-loi {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--f-a-bg);
+  border: 1px solid var(--f-a-line);
+  color: var(--f-a-ink);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1099px) {
+  .hai-cot-ng {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+    gap: 16px;
+  }
+
+  .hai-cot-ng > .cot-phu,
+  .hai-cot-ng > .cot-chinh {
+    grid-area: auto;
+  }
+
+  .hai-cot-ng > .cot-phu {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .dai-so-ho-so {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dai-so-ho-so > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }
 
 /* Đồng hồ hạn: con số to, vạch đã dùng bao nhiêu phần cam kết */
@@ -829,10 +1281,11 @@ textarea.o-nhap {
   font-weight: 600;
 }
 
-/* Các bước của đường chính — suy từ thứ tự trạng thái trong dữ liệu */
+/* Các bước của đường chính — suy từ thứ tự trạng thái trong dữ liệu. Mỗi bước một vạch, nhãn ở dưới (#561): vạch
+ * tô màu nhấn tới bước hiện tại, nhãn bước hiện tại màu nhấn và đậm; bước sau chữ nhạt */
 .buoc {
   display: flex;
-  align-items: center;
+  gap: 6px;
   margin: 18px 0 0;
   padding: 0;
   overflow: hidden;
@@ -840,70 +1293,32 @@ textarea.o-nhap {
 
 .buoc li {
   list-style: none;
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 8px;
   flex: 1;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-3);
 }
 
-.buoc li::after {
-  content: "";
-  flex: 1;
-  height: 2px;
-  margin: 0 8px;
+.buoc .vach-buoc {
+  height: 4px;
+  border-radius: 4px;
   background: var(--line);
-  border-radius: 1px;
-}
-
-.buoc li:last-child {
-  flex: none;
-}
-
-.buoc li:last-child::after {
-  display: none;
-}
-
-.buoc .vong {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  flex: none;
-  border: 2px solid var(--line-2);
-  background: var(--surface);
-}
-
-.buoc .vong svg {
-  width: 12px;
-  height: 12px;
 }
 
 .buoc li[data-xong] {
   color: var(--ink-2);
 }
 
-.buoc li[data-xong] .vong {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-on);
-}
-
-.buoc li[data-xong]::after {
+.buoc li[data-xong] .vach-buoc,
+.buoc li[data-dang] .vach-buoc {
   background: var(--accent);
 }
 
 .buoc li[data-dang] {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.buoc li[data-dang] .vong {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  color: var(--accent-2);
+  font-weight: 700;
 }
 
 .buoc .chu {
@@ -914,28 +1329,12 @@ textarea.o-nhap {
 
 /* Bước hiện tại không co: nhãn đậm của nó hiện đủ, các bước khác nhường chỗ và rút gọn (#557 — trước đó
    "Chờ phòng ban xác duy…" ở khổ 1440) */
-.buoc li[data-dang]:not(:last-child) {
+.buoc li[data-dang] {
   flex: 1 0 auto;
 }
 
 .buoc li[data-dang] .chu {
   overflow: visible;
-}
-
-.ghi-quy-tac {
-  font-size: 12px;
-  color: var(--ink-3);
-  margin: 10px 0 0;
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-}
-
-.ghi-quy-tac svg {
-  width: 14px;
-  height: 14px;
-  flex: none;
-  margin-top: 2px;
 }
 
 /* Danh sách mô tả: liên hệ người gửi */
@@ -1283,30 +1682,26 @@ textarea.o-nhap {
   height: 13px;
 }
 
-/* Màn hẹp (#189): việc của người dùng lên trước nhật ký. Cột phải tan vào lưới cha
-   (`display: contents`), hai thẻ đầu của nó — Hạn xử lý và Bạn có thể làm gì — lên ngay dưới
-   tiêu đề, nằm ngang khi đủ chỗ; cột đọc (nội dung, dòng thời gian) theo sau; các thẻ còn
-   lại như Liên hệ người gửi xuống cuối. */
+/* Màn hẹp (#189, khuôn #561): một cột, việc của người dùng lên trước nhật ký. Hai cột tan vào lưới cha
+   (`display: contents`): thẻ thao tác đứng đầu, Hạn xử lý ngay sau, rồi nội dung và dòng thời gian; Thông tin
+   hồ sơ (gồm liên hệ người gửi) xuống cuối. */
 @media (max-width: 1099px) {
   .hai-cot {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
-  .cot-dinh {
+  .hai-cot > .cot-doc,
+  .hai-cot > .cot-dinh {
     display: contents;
   }
 
-  .cot-dinh > * {
+  .cot-doc > .the-thao-tac {
+    order: -2;
+  }
+
+  .cot-dinh > :first-child {
     order: -1;
-  }
-
-  .cot-dinh > :nth-child(n + 3) {
-    order: 1;
-    grid-column: 1 / -1;
-  }
-
-  .hai-cot > .cot-doc {
-    grid-column: 1 / -1;
   }
 }
 
@@ -3285,12 +3680,20 @@ html.doi-mau * {
     display: none !important;
   }
 
-  .hai-cot {
+  .hai-cot,
+  .hai-cot-ng {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
   }
 
-  .cot-dinh {
+  .cot-dinh,
+  .hai-cot-ng > .cot-phu {
     position: static;
+  }
+
+  .hai-cot-ng > .cot-phu,
+  .hai-cot-ng > .cot-chinh {
+    grid-area: auto;
   }
 }
 
@@ -4662,9 +5065,127 @@ html.doi-mau * {
   border-color: transparent;
 }
 
-.ngan-chan .khung-xac-nhan {
-  max-height: 45vh;
-  overflow: auto;
+/* --- Ngăn khi một thao tác đang mở (#561) ------------------------------------------------------------------
+ * Trước #561 khung nhập mở ở đáy ngăn, cao tới 45vh và đẩy nội dung hồ sơ khuất lên trên, trong khi người phân loại
+ * cần đọc mô tả. Nay cả ngăn thành một vùng cuộn: đầu ngăn dính trên, nội dung và dòng thời gian nhường chỗ cho đoạn
+ * tóm tắt mà bảng thao tác dựng ngay trên khung nhập, hàng nút xác nhận / Hủy thao tác / Thao tác khác dính đáy. */
+.ngan:has(.ngan-chan .khung-xac-nhan) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ngan:has(.ngan-chan .khung-xac-nhan) > .ngan-dau {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ngan:has(.ngan-chan .khung-xac-nhan) > .ngan-than {
+  flex: none;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.ngan:has(.ngan-chan .khung-xac-nhan) .ngan-cac-the {
+  display: none;
+}
+
+.ngan:has(.ngan-chan .khung-xac-nhan) > .ngan-chan {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 0;
+  border-top: 0;
+  background: none;
+}
+
+.ngan-cac-the {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bang-thao-tac-ngan {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ngan-chan .bang-thao-tac-ngan {
+  flex: 1 0 auto;
+}
+
+.bang-thao-tac-ngan .khung-xac-nhan {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--accent-line);
+}
+
+.ngan-tom-tat {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.ngan-tom-tat p {
+  margin: 0;
+}
+
+.ngan-tom-tat-tua {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+/* Cắt ~3 dòng: đủ để nhận ra hồ sơ nói gì, liên kết bên dưới mở đủ */
+.ngan-tom-tat-chu {
+  font-size: 14px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Hàng nút dính đáy ngăn: khung ngắn thì nằm sát đáy (`margin-top: auto`), khung dài thì dính khi cuộn */
+.hang-xac-nhan-ngan {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: auto -16px 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* Ngăn hẹp (400–560 px): ba nút không đủ một hàng thì xuống dòng; nhãn nút xác nhận dài ("Xác nhận · Đóng hồ sơ,
+   không phòng nào nhận") được ngắt dòng thay vì đẩy nút khác ra ngoài mép */
+.hang-nut-ngan.hang-xac-nhan-ngan {
+  flex-wrap: wrap;
+}
+
+.hang-xac-nhan-ngan > .nut[data-loai="chinh"] {
+  flex: 1 1 12rem;
+  min-width: 0;
+  white-space: normal;
+}
+
+.hang-xac-nhan-ngan > .nut:not([data-loai]) {
+  flex: none;
+}
+
+.thao-tac-het p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
 }
 
 /* Dòng đang mở trong ngăn */

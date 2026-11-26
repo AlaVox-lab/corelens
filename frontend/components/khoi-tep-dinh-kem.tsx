@@ -65,9 +65,13 @@ export function KhoiTepDinhKem({
 
   return (
     <div className="the khoi khong-in" id="khoi-tep-dinh-kem">
+      {/* Biểu tượng, tên và số tệp gói thành một nhóm (#561): đầu thẻ dàn hai đầu (`.the > .khoi-dau`), để rời thì
+          chữ "Tệp đính kèm" bị đẩy sang mép phải */}
       <div className="khoi-dau">
-        <Paperclip aria-hidden /> Tệp đính kèm
-        {tep.length > 0 && <span className="mono nhat"> · {tep.length}</span>}
+        <span className="khoi-dau-tua">
+          <Paperclip aria-hidden /> Tệp đính kèm
+          {tep.length > 0 && <span className="mono nhat"> · {tep.length}</span>}
+        </span>
       </div>
 
       {tep.length > 0 ? (

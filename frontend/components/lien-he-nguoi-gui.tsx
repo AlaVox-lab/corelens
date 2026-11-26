@@ -29,68 +29,79 @@ function DongLoi({ cau }: { cau: string }) {
   );
 }
 
-export function TheLienHe({
-  ten,
-  dinhDanh,
-  ketQua,
-}: {
+type ThamSoLienHe = {
   /** Tên người gửi ghi trên hồ sơ. */
   ten: string;
   /** Định danh người gửi, để ô chữ cái cùng màu ở mọi chỗ. */
   dinhDanh: string;
   ketQua: KetQua<LienHe>;
-}) {
+};
+
+/** Thẻ riêng — ngăn xem nhanh dùng (#233). */
+export function TheLienHe(thamSo: ThamSoLienHe) {
   return (
     <div className="the khoi">
       <div className="khoi-dau">Liên hệ người gửi</div>
       <dl className="ds-mt">
-        <div>
-          <dt>Người gửi</dt>
-          <dd>
-            <span className="av av-nho" data-c={mauTheo(dinhDanh)} aria-hidden>
-              {chuCaiDau(ten)}
-            </span>
-            <b style={{ fontWeight: 600 }}>{ten}</b>
-          </dd>
-        </div>
-
-        {!ketQua.ok ? (
-          <DongLoi
-            cau={
-              ketQua.ma === "directory-unavailable"
-                ? "Không tra được liên hệ: danh bạ không trả lời. Thử tải lại trang sau ít phút."
-                : "Không tra được liên hệ của người gửi."
-            }
-          />
-        ) : !ketQua.duLieu.found ? (
-          <DongLoi cau="Tài khoản không còn trong danh bạ. Nhắn qua thẻ Trao đổi trên hồ sơ." />
-        ) : (
-          <>
-            <div>
-              <dt>Email</dt>
-              <dd>
-                {ketQua.duLieu.email ? (
-                  <a href={`mailto:${ketQua.duLieu.email}`}>{ketQua.duLieu.email}</a>
-                ) : (
-                  "Chưa có email"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Điện thoại</dt>
-              <dd>
-                {ketQua.duLieu.phone ? (
-                  <a href={`tel:${soDeGoi(ketQua.duLieu.phone)}`} className="mono">
-                    {ketQua.duLieu.phone}
-                  </a>
-                ) : (
-                  "Chưa có số điện thoại"
-                )}
-              </dd>
-            </div>
-          </>
-        )}
+        <CacDongLienHe {...thamSo} />
       </dl>
     </div>
+  );
+}
+
+/**
+ * Các dòng người gửi, email, điện thoại (hay câu vì sao không có) — đặt trong một `<dl>` của nơi dùng. Trang hồ sơ
+ * nhân viên gộp chúng vào thẻ "Thông tin hồ sơ" ở cột phải (#561).
+ */
+export function CacDongLienHe({ ten, dinhDanh, ketQua }: ThamSoLienHe) {
+  return (
+    <>
+      <div>
+        <dt>Người gửi</dt>
+        <dd>
+          <span className="av av-nho" data-c={mauTheo(dinhDanh)} aria-hidden>
+            {chuCaiDau(ten)}
+          </span>
+          <b style={{ fontWeight: 600 }}>{ten}</b>
+        </dd>
+      </div>
+
+      {!ketQua.ok ? (
+        <DongLoi
+          cau={
+            ketQua.ma === "directory-unavailable"
+              ? "Không tra được liên hệ: danh bạ không trả lời. Thử tải lại trang sau ít phút."
+              : "Không tra được liên hệ của người gửi."
+          }
+        />
+      ) : !ketQua.duLieu.found ? (
+        <DongLoi cau="Tài khoản không còn trong danh bạ. Nhắn qua thẻ Trao đổi trên hồ sơ." />
+      ) : (
+        <>
+          <div>
+            <dt>Email</dt>
+            <dd>
+              {ketQua.duLieu.email ? (
+                <a href={`mailto:${ketQua.duLieu.email}`}>{ketQua.duLieu.email}</a>
+              ) : (
+                "Chưa có email"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Điện thoại</dt>
+            <dd>
+              {ketQua.duLieu.phone ? (
+                <a href={`tel:${soDeGoi(ketQua.duLieu.phone)}`} className="mono">
+                  {ketQua.duLieu.phone}
+                </a>
+              ) : (
+                "Chưa có số điện thoại"
+              )}
+            </dd>
+          </div>
+        </>
+      )}
+    </>
   );
 }

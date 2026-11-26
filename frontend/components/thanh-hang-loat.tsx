@@ -13,7 +13,7 @@
 //
 // Hộp thoại là phần tử `<dialog>` mở bằng `showModal()`: trình duyệt khóa tiêu điểm trong hộp, đưa
 // hộp lên lớp trên cùng, Esc đóng được, và tiêu điểm vào ô đầu tiên (hộp không còn gì để làm thì vào
-// nút Thôi). Hộp có ô chọn nên bấm ra ngoài không đóng.
+// nút Hủy thao tác). Hộp có ô chọn nên bấm ra ngoài không đóng.
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -105,7 +105,7 @@ function HopThoai({
       className="hop-thoai"
       aria-labelledby="hl-tieu-de"
       aria-describedby="hl-mo-ta"
-      // Esc: đóng như nút Thôi, trừ khi đang gửi — lô đã đi một nửa thì phải đợi kết quả
+      // Esc: đóng như nút Hủy thao tác, trừ khi đang gửi — lô đã đi một nửa thì phải đợi kết quả
       onCancel={(e) => {
         e.preventDefault();
         if (!dangChay) khiDong();
@@ -212,7 +212,7 @@ function HopThoai({
 
         <div className="hop-thoai-chan">
           <button type="button" className="nut" onClick={khiDong} disabled={dangChay}>
-            Thôi
+            Hủy thao tác
           </button>
           <button type="submit" className="nut" data-loai="chinh" disabled={khoa || dangChay} aria-busy={dangChay || undefined}>
             {dangChay ? "Đang thực hiện…" : nhanNut}

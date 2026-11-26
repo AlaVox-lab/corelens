@@ -51,7 +51,10 @@ xem hồ sơ đang ở bước nào trên đường đi. Hồ sơ đang chờ b�
 ![Hồ sơ của tôi](../../../assets/anh/ho-so-cua-toi.png)
 
 Mở một hồ sơ để thấy thao tác làm được lúc này, phần **Trao đổi** với nhân viên, tệp đính kèm, và
-**dòng thời gian** — mọi bước, ai bấm, lúc nào.
+**dòng thời gian** — mọi bước, ai bấm, lúc nào. Trên máy tính, khung **Bạn có thể làm gì lúc này**
+cùng tệp đính kèm nằm ở cột bên phải, nội dung, trao đổi và dòng thời gian ở cột chính; trên điện
+thoại khung thao tác đứng trước. Bấm một nút thì ô cần điền mở ngay trong khung; đổi ý thì bấm
+**Hủy thao tác**.
 
 Mỗi trạng thái có một dấu hiệu riêng trước nhãn (`○ ◐ ◌ ● ! ✓ ✕ ▲ ■ –`), nên in bằng **Ctrl+P** ra
 giấy đen trắng — hay với người không phân biệt được màu — vẫn đọc được hồ sơ đang ở đâu.

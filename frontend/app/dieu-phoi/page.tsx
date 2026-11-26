@@ -82,6 +82,7 @@ function thanhDong(m: MucHangDoi, bayGio: Date, href: string, dangXem: boolean):
     cuaMinh: m.requested_by_me === true,
     nguoiGui: m.requester_label ?? undefined,
     loai: m.request_type?.label ?? null,
+    maLoai: m.request_type?.code ?? null,
     trangThai: { code: m.state.code, label: m.state.label },
     // Hồ sơ sắp tự trả về vì phòng ban chưa xác duyệt (#142): báo thay cho thời gian chờ
     cuoi: tuDong?.canhBao ? { chu: tuDong.cau, muc: "sap" } : { chu: thoiLuong(giay) },
