@@ -190,7 +190,7 @@ def _dung_chi_tiet_dieu_phoi(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/queue", response_model=HangDoiRa)
+@router.get("/queue", summary="Hàng đợi điều phối", response_model=HangDoiRa)
 def hang_doi(
     session: _Phien,
     actor: _Cua,
@@ -316,7 +316,7 @@ def hang_doi(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/requests/{case_id}", response_model=HoSoDieuPhoiRa)
+@router.get("/requests/{case_id}", summary="Chi tiết hồ sơ (điều phối viên)", response_model=HoSoDieuPhoiRa)
 def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> HoSoDieuPhoiRa:
     """Chi tiết một hồ sơ bất kỳ, kèm những thao tác người này làm được lúc này.
 
@@ -338,7 +338,7 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) ->
 
 
 @router.get(
-    "/requests/{case_id}/requester-contact",
+    "/requests/{case_id}/requester-contact", summary="Liên hệ người gửi (điều phối viên)",
     response_model=LienHeNguoiGuiRa,
     responses={
         404: {"description": "Không có hồ sơ này"},
@@ -355,7 +355,7 @@ def lien_he(
     """Email và số điện thoại của người gửi, tra từ danh bạ lúc gọi (#131).
 
     Cùng cửa với trang chi tiết: điều phối viên mở được mọi hồ sơ nên tra được liên hệ
-    của mọi người gửi. Lý do tách thành điểm cuối riêng ở `app/workflow/contact.py`.
+    của mọi người gửi. Đây là điểm cuối riêng, tách khỏi trang chi tiết (`app/workflow/contact.py`).
     Mỗi lần tra được ghi nhật ký truy cập (#431).
     """
     ho_so = session.get(Request, case_id)
@@ -369,7 +369,7 @@ def lien_he(
     return ra
 
 
-@router.post("/requests/{case_id}/transitions", response_model=HoSoDieuPhoiRa)
+@router.post("/requests/{case_id}/transitions", summary="Đi một bước trên hồ sơ (điều phối viên)", response_model=HoSoDieuPhoiRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiCoTruongVao,
@@ -481,7 +481,7 @@ def _cac_thao_tac_hang_loat(session: Session) -> dict[str, tuple[ThaoTacHangLoat
     return ket_qua
 
 
-@router.get("/bulk-transitions", response_model=DanhSachThaoTacHangLoatRa)
+@router.get("/bulk-transitions", summary="Các bước làm được cho cả lô", response_model=DanhSachThaoTacHangLoatRa)
 def thao_tac_hang_loat(session: _Phien, _: _Cua) -> DanhSachThaoTacHangLoatRa:
     """Những bước điều phối viên làm được cho nhiều hồ sơ một lần, và lô lớn nhất (#440).
 
@@ -525,7 +525,7 @@ def _loi_hang_loat(loi: TransitionError) -> LoiHangLoatRa:
 
 
 @router.post(
-    "/bulk-transitions",
+    "/bulk-transitions", summary="Đi một bước cho cả lô hồ sơ",
     response_model=KetQuaHangLoatRa,
     dependencies=[Depends(gioi_han_toc_do("bulk-transition"))],
     responses={422: {"description": "Lô quá lớn, trùng hồ sơ, bước không làm được hàng loạt, hay trường ngoài cạnh"}},
@@ -658,7 +658,7 @@ def chuyen_hang_loat(
 
 
 @router.post(
-    "/requests/{case_id}/messages",
+    "/requests/{case_id}/messages", summary="Nhắn tin trên hồ sơ (điều phối viên)",
     response_model=HoSoDieuPhoiRa,
     dependencies=[Depends(gioi_han_toc_do("send-message"))],
 )
@@ -668,8 +668,8 @@ def nhan_tin(
     """Gửi một lời nhắn trên hồ sơ (#128).
 
     Cùng cửa nhìn thấy với trang chi tiết: điều phối viên mở được mọi hồ sơ, nên nhắn
-    được trên mọi hồ sơ — kể cả hồ sơ đã chuyển về phòng ban. Lời nhắn không đổi hồ sơ;
-    xem app/workflow/messages.py.
+    được trên mọi hồ sơ — kể cả hồ sơ đã chuyển về phòng ban. Lời nhắn không đổi hồ sơ
+    (app/workflow/messages.py).
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None:

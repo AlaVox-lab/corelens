@@ -20,7 +20,7 @@
         "type": "object"
       },
       "BuocChuyenLoiVao": {
-        "description": "Bước chuyển qua cửa trung lập với vai của nền tảng lõi (#376).\n\nNhư cổng người gửi, nhưng `changes` nhận mọi kiểu giá trị JSON — bộ trường riêng `details` là một đối\ntượng, gia hạn là một số. Không kiểm trường nào được phép ở đây: engine kiểm theo từng cạnh (#78), tra\ndanh mục, kiểm trường riêng theo khai báo của loại.",
+        "description": "Bước chuyển qua cửa trung lập với vai của nền tảng lõi.\n\nNhư cổng người gửi, nhưng `changes` nhận mọi kiểu giá trị JSON — bộ trường riêng `details` là một đối\ntượng, gia hạn là một số. Không kiểm trường nào được phép ở đây: engine kiểm theo từng cạnh, tra\ndanh mục, kiểm trường riêng theo khai báo của loại.",
         "properties": {
           "changes": {
             "additionalProperties": true,
@@ -129,7 +129,7 @@
         "type": "object"
       },
       "ChinhSachTepRa": {
-        "description": "Giới hạn tệp đính kèm — giao diện hỏi dịch vụ thay vì tự giữ bản sao (#80).",
+        "description": "Giới hạn tệp đính kèm — giao diện hỏi dịch vụ thay vì tự giữ bản sao.",
         "properties": {
           "allowed_extensions": {
             "items": {
@@ -369,7 +369,7 @@
         "type": "object"
       },
       "DanhSachHoSoRa": {
-        "description": "Hồ sơ của người gửi, có phân trang (#232).",
+        "description": "Hồ sơ của người gửi, có phân trang.",
         "properties": {
           "groups": {
             "items": {
@@ -424,7 +424,7 @@
         "type": "object"
       },
       "DieuKienCanhRa": {
-        "description": "Một dòng của bảng `transition_conditions` (#397) mà hồ sơ chưa thỏa (#424).",
+        "description": "Một dòng của bảng `transition_conditions` mà hồ sơ chưa thỏa.",
         "properties": {
           "description": {
             "anyOf": [
@@ -476,7 +476,7 @@
         "type": "object"
       },
       "GoiYRa": {
-        "description": "Một gợi ý của hệ thống cho trường quyết định (#239): giá trị, lý do, nguồn.\n\n`confidence` trống khi nguồn không có con số thật — giao diện chỉ hiện độ tin cậy khi có.",
+        "description": "Một gợi ý của hệ thống cho trường quyết định: giá trị, lý do, nguồn.\n\n`confidence` trống khi nguồn không có con số thật — giao diện chỉ hiện độ tin cậy khi có.",
         "properties": {
           "code": {
             "title": "Code",
@@ -833,7 +833,7 @@
         "type": "object"
       },
       "HoSoLienQuanRa": {
-        "description": "Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id` (#102): bản gốc hay bản tạo lại.",
+        "description": "Hồ sơ nối với hồ sơ đang xem bằng `parent_request_id`: bản gốc hay bản tạo lại.",
         "properties": {
           "code": {
             "title": "Code",
@@ -1103,7 +1103,7 @@
         "type": "object"
       },
       "LoaiLoiNhanRa": {
-        "description": "Một loại lời nhắn người đang xem gửi được trên hồ sơ lúc này (#128).\n\nDanh sách do bảng `message_kinds` và cửa nhìn thấy quyết, giống `allowed_transitions`\n— giao diện dựng nút từ đây. `retry_at` có giá trị thì loại đó đang chờ luật hỏi lại:\nhiện nút mờ kèm mốc, chưa gửi được trước mốc đó.",
+        "description": "Một loại lời nhắn người đang xem gửi được trên hồ sơ lúc này.\n\nDanh sách do bảng `message_kinds` và cửa nhìn thấy quyết, giống `allowed_transitions`\n— giao diện dựng nút từ đây. `retry_at` có giá trị thì loại đó đang chờ luật hỏi lại:\nhiện nút mờ kèm mốc, chưa gửi được trước mốc đó.",
         "properties": {
           "body_required": {
             "title": "Body Required",
@@ -1246,7 +1246,7 @@
         "type": "object"
       },
       "LoiNhanRa": {
-        "description": "Một lời nhắn trên hồ sơ (#128).\n\nKhông phải mốc chuyển trạng thái: dòng thời gian trộn lời nhắn với `history` theo\nthời gian, nhưng số lần đổi trạng thái chỉ đếm `history`.",
+        "description": "Một lời nhắn trên hồ sơ.\n\nKhông phải mốc chuyển trạng thái: dòng thời gian trộn lời nhắn với `history` theo\nthời gian, nhưng số lần đổi trạng thái chỉ đếm `history`.",
         "properties": {
           "author": {
             "title": "Author",
@@ -1312,7 +1312,7 @@
         "type": "object"
       },
       "LuaChonCanhCuaHoSoRa": {
-        "description": "Mọi cạnh rời trạng thái hiện tại của một hồ sơ, theo thứ tự hiển thị của bộ quy tắc (#424).",
+        "description": "Mọi cạnh rời trạng thái hiện tại của một hồ sơ, theo thứ tự hiển thị của bộ quy tắc.",
         "properties": {
           "case_id": {
             "title": "Case Id",
@@ -1338,7 +1338,7 @@
         "type": "object"
       },
       "LuaChonCanhRa": {
-        "description": "Một cạnh rời trạng thái hiện tại của hồ sơ, kèm được đi hay không và vì sao (#424).",
+        "description": "Một cạnh rời trạng thái hiện tại của hồ sơ, kèm được đi hay không và vì sao.",
         "properties": {
           "activity_code": {
             "title": "Activity Code",
@@ -1412,7 +1412,7 @@
         "type": "object"
       },
       "LyDoChanRa": {
-        "description": "Một lý do tác nhân chưa đi được cạnh (#424).\n\n`category` là mã lớp lỗi engine sẽ trả nếu cứ gọi bước chuyển: `role-not-permitted`,\n`system-transition-only` hay `guard-violation`. `code` là mã máy đọc được của chính lý do:\nvới ràng buộc là mã ràng buộc trong bảng `guards` (điều kiện trên cạnh: `edge-condition`),\nvới quyền thì trùng `category`. `message` là thông điệp tiếng Việt của chính lỗi đó.",
+        "description": "Một lý do tác nhân chưa đi được cạnh.\n\n`category` là mã lớp lỗi engine sẽ trả nếu cứ gọi bước chuyển: `role-not-permitted`,\n`system-transition-only` hay `guard-violation`. `code` là mã máy đọc được của chính lý do:\nvới ràng buộc là mã ràng buộc trong bảng `guards` (điều kiện trên cạnh: `edge-condition`),\nvới quyền thì trùng `category`. `message` là thông điệp tiếng Việt của chính lỗi đó.",
         "properties": {
           "category": {
             "title": "Category",
@@ -1561,7 +1561,7 @@
         "type": "object"
       },
       "QuyTrinhRa": {
-        "description": "Một quy trình của động cơ luồng công việc (#376).",
+        "description": "Một quy trình của động cơ luồng công việc.",
         "properties": {
           "code": {
             "title": "Code",
@@ -1707,7 +1707,7 @@
         "type": "object"
       },
       "TaoHoSoVao": {
-        "description": "Biểu mẫu gửi yêu cầu.\n\nCố ý **không** có `priority_code`: người gửi không tự đặt mức ưu tiên cho yêu cầu\ncủa mình. Gửi kèm trường đó thì Pydantic bỏ qua, không ghi vào hồ sơ — ràng buộc\nPoka-yoke bằng sự vắng mặt, không phải bằng một câu `if`.\n\n`request_type_code` thì có, vì người gửi là người biết rõ nhất họ đang cần gì, và\nngười phân loại vẫn nắn lại được ở cạnh kế tiếp. Xem `app/models/case.py`.",
+        "description": "Biểu mẫu gửi yêu cầu.\n\nCố ý **không** có `priority_code`: người gửi không tự đặt mức ưu tiên cho yêu cầu\ncủa mình. Gửi kèm trường đó thì Pydantic bỏ qua, không ghi vào hồ sơ — ràng buộc\nPoka-yoke bằng sự vắng mặt, không phải bằng một câu `if`.\n\n`request_type_code` thì có, vì người gửi là người biết rõ nhất họ đang cần gì, và\nngười phân loại vẫn nắn lại được ở cạnh kế tiếp.",
         "properties": {
           "description": {
             "anyOf": [
@@ -1776,7 +1776,7 @@
         "type": "object"
       },
       "TepDinhKemRa": {
-        "description": "Một tệp đính kèm trên hồ sơ (#80). Không có khóa kho: tải về đi qua `id`.",
+        "description": "Một tệp đính kèm trên hồ sơ. Không có khóa kho: tải về đi qua `id`.",
         "properties": {
           "content_type": {
             "title": "Content Type",
@@ -1826,7 +1826,7 @@
         "type": "object"
       },
       "ThayDoiTruongRa": {
-        "description": "Một trường quyết định, hay từ #127 một trường nội dung, mà lần chuyển đã đổi giá\ntrị (#100).\n\n`before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc\nđọc từ danh mục — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được. Riêng người\nxử lý thì nhãn là tên ghi lúc đổi. Tiêu đề và mô tả không có danh mục, nên nhãn là\nchính nội dung — nhờ vậy bản gốc người gửi viết vẫn đọc được sau khi họ sửa.",
+        "description": "Một trường quyết định, hay một trường nội dung, mà lần chuyển đã đổi giá\ntrị.\n\n`before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc\nđọc từ danh mục — kể cả mục đã ngừng dùng, để lịch sử cũ vẫn đọc được. Riêng người\nxử lý thì nhãn là tên ghi lúc đổi. Tiêu đề và mô tả không có danh mục, nên nhãn là\nchính nội dung — nhờ vậy bản gốc người gửi viết vẫn đọc được sau khi họ sửa.",
         "properties": {
           "after": {
             "anyOf": [
@@ -1883,7 +1883,7 @@
         "type": "object"
       },
       "TruongRiengRa": {
-        "description": "Một trường thông tin riêng khai cho loại yêu cầu (#250) — giao diện dựng ô nhập từ đây.",
+        "description": "Một trường thông tin riêng khai cho loại yêu cầu — giao diện dựng ô nhập từ đây.",
         "properties": {
           "code": {
             "title": "Code",
@@ -1948,7 +1948,7 @@
         "type": "object"
       },
       "TuDongRa": {
-        "description": "Cạnh hệ thống sẽ tự đi từ trạng thái hiện tại khi hết hạn chờ (#142).",
+        "description": "Cạnh hệ thống sẽ tự đi từ trạng thái hiện tại khi hết hạn chờ.",
         "properties": {
           "activity_label": {
             "title": "Activity Label",
@@ -2080,7 +2080,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Liet Ke Ban Luu Tru",
+        "summary": "Danh sách bản lưu trữ lạnh",
         "tags": [
           "Lõi — Lưu trữ lạnh"
         ]
@@ -2133,7 +2133,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Doc Ban Luu Tru",
+        "summary": "Bản kê một kỳ lưu trữ",
         "tags": [
           "Lõi — Lưu trữ lạnh"
         ]
@@ -2191,7 +2191,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Tai Tep Luu Tru",
+        "summary": "Tải một tệp của bản lưu trữ",
         "tags": [
           "Lõi — Lưu trữ lạnh"
         ]
@@ -2199,7 +2199,7 @@
     },
     "/core/v1/events": {
       "get": {
-        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\n`format=xes` cho tệp XES (IEEE 1849) mở thẳng bằng ProM, Disco, PM4Py: mỗi hồ sơ một trace, hoạt động là\n`concept:name`, mốc UTC là `time:timestamp`, người thao tác là `org:resource`.\n\nMỗi dòng mang `process_code` (#376). `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.\n\nMỗi lần xuất ghi một dòng nhật ký truy cập kèm định dạng, khoảng ngày, quy trình (#431, app/kiem_toan.py).",
+        "description": "Nhật ký sự kiện trong khoảng ngày, mỗi dòng một sự kiện, xếp theo hồ sơ rồi thời gian.\n\nKhoảng ngày tính theo UTC, như mốc trong nhật ký; `to` lấy trọn ngày đó. Bỏ trống hai đầu là\nlấy hết. Mỗi hồ sơ mở đầu bằng sự kiện `create-case` dựng từ lúc tạo, `from_state` rỗng.\n\n`format=xes` cho tệp XES (IEEE 1849) mở thẳng bằng ProM, Disco, PM4Py: mỗi hồ sơ một trace, hoạt động là\n`concept:name`, mốc UTC là `time:timestamp`, người thao tác là `org:resource`.\n\nMỗi dòng mang `process_code`. `process` lọc một quy trình — khai phá hay phân tích một quy trình\nthì đừng trộn nhật ký của hai quy trình vào một mô hình. Bỏ trống là mọi quy trình: dữ liệu mở.\n\nMỗi lần xuất ghi một dòng nhật ký truy cập kèm định dạng, khoảng ngày, quy trình.",
         "operationId": "xuat_nhat_ky_core_v1_events_get",
         "parameters": [
           {
@@ -2301,7 +2301,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Xuat Nhat Ky",
+        "summary": "Xuất nhật ký sự kiện",
         "tags": [
           "Lõi — Nhật ký sự kiện"
         ]
@@ -2328,7 +2328,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Chinh Sach Tep",
+        "summary": "Giới hạn tệp đính kèm",
         "tags": [
           "Lõi — Tệp"
         ]
@@ -2390,7 +2390,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Tai Len",
+        "summary": "Đính kèm tệp vào hồ sơ",
         "tags": [
           "Lõi — Tệp"
         ]
@@ -2398,7 +2398,7 @@
     },
     "/core/v1/files/{attachment_id}": {
       "get": {
-        "description": "Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.\n\nLần tải thành công ghi nhật ký truy cập kèm mã tệp (#431, app/kiem_toan.py), trừ người gửi tải tệp trên\nhồ sơ của chính mình.",
+        "description": "Trả nội dung một tệp cho người mở được hồ sơ của nó. Người khác nhận 404.\n\nLần tải thành công ghi nhật ký truy cập kèm mã tệp, trừ người gửi tải tệp trên\nhồ sơ của chính mình.",
         "operationId": "tai_ve_core_v1_files__attachment_id__get",
         "parameters": [
           {
@@ -2436,7 +2436,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Tai Ve",
+        "summary": "Tải một tệp đính kèm",
         "tags": [
           "Lõi — Tệp"
         ]
@@ -2465,7 +2465,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Me",
+        "summary": "Danh tính người đang gọi",
         "tags": [
           "Lõi — Định danh"
         ]
@@ -2473,6 +2473,7 @@
     },
     "/core/v1/notifications/preferences": {
       "get": {
+        "description": "Các loại thư thông báo đang dùng và người gọi đang bật hay tắt từng loại. Loại chưa chọn lần nào theo mặc\nđịnh của loại đó.",
         "operationId": "xem_tuy_chon_core_v1_notifications_preferences_get",
         "responses": {
           "200": {
@@ -2491,7 +2492,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Xem Tuy Chon",
+        "summary": "Xem tùy chọn nhận thư thông báo",
         "tags": [
           "Lõi — Thông báo"
         ]
@@ -2499,6 +2500,7 @@
     },
     "/core/v1/notifications/preferences/{code}": {
       "post": {
+        "description": "Bật hay tắt một loại thư thông báo cho riêng người gọi; trả lại toàn bộ tùy chọn sau khi đổi. Loại không có\nhoặc đã ngừng dùng thì 404.",
         "operationId": "doi_tuy_chon_core_v1_notifications_preferences__code__post",
         "parameters": [
           {
@@ -2548,7 +2550,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Doi Tuy Chon",
+        "summary": "Bật hay tắt một loại thư thông báo",
         "tags": [
           "Lõi — Thông báo"
         ]
@@ -2579,7 +2581,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Sach Dang Ky",
+        "summary": "Danh sách đăng ký webhook",
         "tags": [
           "Lõi — Webhook"
         ]
@@ -2624,7 +2626,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Tao Dang Ky",
+        "summary": "Tạo đăng ký webhook",
         "tags": [
           "Lõi — Webhook"
         ]
@@ -2665,7 +2667,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Huy Dang Ky",
+        "summary": "Hủy một đăng ký webhook",
         "tags": [
           "Lõi — Webhook"
         ]
@@ -2710,7 +2712,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Xem Dang Ky",
+        "summary": "Xem một đăng ký webhook",
         "tags": [
           "Lõi — Webhook"
         ]
@@ -2762,7 +2764,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Lan Gui Gan Day",
+        "summary": "Các lần gửi gần đây của một webhook",
         "tags": [
           "Lõi — Webhook"
         ]
@@ -2793,7 +2795,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Muc Phong Ban",
+        "summary": "Danh mục phòng ban",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -2824,7 +2826,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Muc Muc Uu Tien",
+        "summary": "Danh mục mức ưu tiên",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -2832,7 +2834,7 @@
     },
     "/core/v1/workflow/processes": {
       "get": {
-        "description": "Các quy trình mà động cơ luồng công việc đang chạy (#376).\n\nMỗi quy trình có bộ quy tắc đang bật riêng và loại yêu cầu riêng. Ứng dụng tầng trên chọn quy trình\ncủa mình bằng mã ở đây, rồi truyền `process` cho các điểm cuối đọc theo quy trình.",
+        "description": "Các quy trình mà động cơ luồng công việc đang chạy.\n\nMỗi quy trình có bộ quy tắc đang bật riêng và loại yêu cầu riêng. Ứng dụng tầng trên chọn quy trình\ncủa mình bằng mã ở đây, rồi truyền `process` cho các điểm cuối đọc theo quy trình.",
         "operationId": "danh_muc_quy_trinh_core_v1_workflow_processes_get",
         "responses": {
           "200": {
@@ -2855,7 +2857,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Muc Quy Trinh",
+        "summary": "Danh mục quy trình",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -2907,7 +2909,7 @@
     },
     "/core/v1/workflow/request-types": {
       "get": {
-        "description": "Các loại yêu cầu đang dùng của một quy trình, cho biểu mẫu gửi.\n\nGiao diện **phải** dựng danh sách từ đây chứ không viết cứng bốn lựa chọn, vì doanh\nnghiệp triển khai sẽ khai lại danh mục của họ — xem ARCHITECTURE.md mục 5.1.\n\nLoại yêu cầu quyết định quy trình của hồ sơ (#376): tạo hồ sơ bằng một loại ở đây là tạo hồ sơ của\nquy trình đó.",
+        "description": "Các loại yêu cầu đang dùng của một quy trình, cho biểu mẫu gửi.\n\nGiao diện **phải** dựng danh sách từ đây chứ không viết cứng bốn lựa chọn, vì doanh\nnghiệp triển khai sẽ khai lại danh mục của họ — xem ARCHITECTURE.md mục 5.1.\n\nLoại yêu cầu quyết định quy trình của hồ sơ: tạo hồ sơ bằng một loại ở đây là tạo hồ sơ của\nquy trình đó.",
         "operationId": "danh_muc_loai_yeu_cau_core_v1_workflow_request_types_get",
         "parameters": [
           {
@@ -2960,7 +2962,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Muc Loai Yeu Cau",
+        "summary": "Danh mục loại yêu cầu",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -3110,17 +3112,17 @@
             "Keycloak": []
           }
         ],
-        "summary": "Ho So Trong Pham Vi",
+        "summary": "Hồ sơ trong phạm vi người gọi",
         "tags": [
           "Lõi — Luồng công việc"
         ]
       },
       "post": {
-        "description": "Gửi một yêu cầu mới.\n\nTrạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết\nđịnh quy trình (#376): hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.\n\nMức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì\nngười gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.\n\nMô hình ngôn ngữ bật (#316) thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên\n(#317) ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô\nhình hỏng không làm hỏng lần gửi.\n\nDưới `/core/v1` nhận tiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng thân nhận lại hồ sơ\nđã tạo, không tạo hồ sơ thứ hai (app/workflow/khoa_trung_lap.py). Ở đường của cổng người dùng tiêu đề bị\nbỏ qua.",
+        "description": "Gửi một yêu cầu mới.\n\nTrạng thái đầu tiên do engine tra từ cờ `is_initial`, không do điểm cuối này chọn. Loại yêu cầu quyết\nđịnh quy trình: hồ sơ nhận bộ quy tắc đang bật của quy trình mà loại thuộc về.\n\nMức ưu tiên và phòng ban để trống — người phân loại đặt sau. Loại yêu cầu thì\nngười gửi chọn ngay trên biểu mẫu, và người phân loại sửa lại được nếu chọn sai.\n\nMô hình ngôn ngữ bật thì hệ thống sinh gợi ý loại, mức ưu tiên, phòng cho điều phối viên ở tác vụ nền — chạy SAU khi phản hồi đã gửi đi, nên người gửi không chờ mô hình, và mô\nhình hỏng không làm hỏng lần gửi.\n\nDưới `/core/v1` nhận tiêu đề `Idempotency-Key` tùy chọn: gọi lặp cùng khóa, cùng thân nhận lại hồ sơ\nđã tạo, không tạo hồ sơ thứ hai. Ở đường của cổng người dùng tiêu đề bị\nbỏ qua.",
         "operationId": "tao_ho_so_core_v1_workflow_requests_post",
         "parameters": [
           {
-            "description": "Khóa trùng lặp, tùy chọn (#426): 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
+            "description": "Khóa trùng lặp, tùy chọn: 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
             "in": "header",
             "name": "Idempotency-Key",
             "required": false,
@@ -3182,7 +3184,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Tao Ho So",
+        "summary": "Gửi yêu cầu mới",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -3190,7 +3192,7 @@
     },
     "/core/v1/workflow/requests/{case_id}": {
       "get": {
-        "description": "Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước\nngười gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.\n\nMở hồ sơ của người khác ghi một dòng nhật ký truy cập, kênh `loi` (#431, app/kiem_toan.py).",
+        "description": "Chi tiết một hồ sơ trong phạm vi của người gọi, kèm lịch sử và `allowed_transitions` — những bước\nngười gọi đi được lúc này, tính theo vai và ràng buộc của chính họ.\n\nMở hồ sơ của người khác ghi một dòng nhật ký truy cập, kênh `loi`.",
         "operationId": "chi_tiet_trong_pham_vi_core_v1_workflow_requests__case_id__get",
         "parameters": [
           {
@@ -3230,7 +3232,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Chi Tiet Trong Pham Vi",
+        "summary": "Chi tiết một hồ sơ",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -3238,7 +3240,7 @@
     },
     "/core/v1/workflow/requests/{case_id}/transition-options": {
       "get": {
-        "description": "Mọi cạnh rời trạng thái hiện tại của hồ sơ, mỗi cạnh kèm người gọi đi được không và vì sao (#424).\n\nKhác `allowed_transitions` của chi tiết hồ sơ — chỉ những cạnh đi được — ở chỗ cạnh bị chặn vẫn có mặt,\nkèm `reasons`: sai vai (`role-not-permitted`), cạnh chỉ hệ thống đi (`system-transition-only`), ràng buộc\nkhông cần nhập liệu (mã ràng buộc, ví dụ `actor-in-case-department`), điều kiện trên cạnh\n(`edge-condition` kèm trường, phép so, giá trị cần). Tập cạnh `allowed` trùng hệt `allowed_transitions`:\nhai đường dùng chung một hàm xét cạnh. `requires_input` là trường nhập liệu gửi trong `changes` khi đi.\n\nChỉ đọc — không ghi nhật ký, không đổi hồ sơ. Phạm vi nhìn thấy như chi tiết hồ sơ: ngoài phạm vi 404.\nHồ sơ ở trạng thái không còn cạnh nào đi ra thì `transitions` rỗng.",
+        "description": "Mọi cạnh rời trạng thái hiện tại của hồ sơ, mỗi cạnh kèm người gọi đi được không và vì sao.\n\nKhác `allowed_transitions` của chi tiết hồ sơ — chỉ những cạnh đi được — ở chỗ cạnh bị chặn vẫn có mặt,\nkèm `reasons`: sai vai (`role-not-permitted`), cạnh chỉ hệ thống đi (`system-transition-only`), ràng buộc\nkhông cần nhập liệu (mã ràng buộc, ví dụ `actor-in-case-department`), điều kiện trên cạnh\n(`edge-condition` kèm trường, phép so, giá trị cần). Tập cạnh `allowed` trùng hệt `allowed_transitions`:\nhai đường dùng chung một hàm xét cạnh. `requires_input` là trường nhập liệu gửi trong `changes` khi đi.\n\nChỉ đọc — không ghi nhật ký, không đổi hồ sơ. Phạm vi nhìn thấy như chi tiết hồ sơ: ngoài phạm vi 404.\nHồ sơ ở trạng thái không còn cạnh nào đi ra thì `transitions` rỗng.",
         "operationId": "lua_chon_canh_trong_pham_vi_core_v1_workflow_requests__case_id__transition_options_get",
         "parameters": [
           {
@@ -3278,7 +3280,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Lua Chon Canh Trong Pham Vi",
+        "summary": "Các bước đi được từ trạng thái hiện tại",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -3286,7 +3288,7 @@
     },
     "/core/v1/workflow/requests/{case_id}/transitions": {
       "post": {
-        "description": "Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi\nđược theo bảng `transitions`.\n\nNgoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine\n(409, 403, 422) — cùng mã như ở mọi cửa khác.\n\nTiêu đề `Idempotency-Key` tùy chọn (#426): gọi lặp cùng khóa, cùng lệnh nhận lại phản hồi lần đầu, không\nđi bước lần hai (app/workflow/khoa_trung_lap.py). Dấu xong của khóa ghi trong cùng giao dịch với lần chuyển\nqua móc `truoc_commit` của `di_buoc`.",
+        "description": "Đi một bước trên hồ sơ trong phạm vi của người gọi — mọi cạnh mà vai và phạm vi của người gọi đi\nđược theo bảng `transitions`.\n\nNgoài phạm vi: 404. Trong phạm vi mà cạnh không có, sai vai hay vướng ràng buộc: lỗi của engine\n(409, 403, 422) — cùng mã như ở mọi cửa khác.\n\nTiêu đề `Idempotency-Key` tùy chọn: gọi lặp cùng khóa, cùng lệnh nhận lại phản hồi lần đầu, không\nđi bước lần hai. Dấu xong của khóa ghi trong cùng giao dịch với lần chuyển\nqua móc `truoc_commit` của `di_buoc`.",
         "operationId": "buoc_chuyen_trong_pham_vi_core_v1_workflow_requests__case_id__transitions_post",
         "parameters": [
           {
@@ -3299,7 +3301,7 @@
             }
           },
           {
-            "description": "Khóa trùng lặp, tùy chọn (#426): 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
+            "description": "Khóa trùng lặp, tùy chọn: 1–255 ký tự ASCII in được, mỗi lệnh một khóa (ví dụ một UUID). Gọi lặp cùng khóa, cùng lệnh trong `IDEMPOTENCY_TTL_HOURS` giờ thì nhận lại đúng phản hồi lần đầu kèm `Idempotent-Replayed: true`, lệnh không chạy lần hai. Khóa tính theo người gọi. Chỉ lần thành công được giữ: lần bị từ chối thì sửa rồi gửi lại cùng khóa được. Khóa sai định dạng: 422 `idempotency-key-invalid`; cùng khóa mà khác thân hay khác hồ sơ: 422 `idempotency-key-reused`.",
             "in": "header",
             "name": "Idempotency-Key",
             "required": false,
@@ -3361,7 +3363,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Buoc Chuyen Trong Pham Vi",
+        "summary": "Đi một bước trên hồ sơ",
         "tags": [
           "Lõi — Luồng công việc"
         ]
@@ -3422,7 +3424,7 @@
             "Keycloak": []
           }
         ],
-        "summary": "Danh Muc Trang Thai",
+        "summary": "Danh mục trạng thái",
         "tags": [
           "Lõi — Luồng công việc"
         ]

@@ -9,6 +9,7 @@
 #      vẫn trả đủ. Mô hình không tới được: `unavailable`, không lỗi.
 #   3. Không chờ và không hỏi lại: lần đầu `pending`, sinh ở nền; cùng dữ liệu thì lấy bộ nhớ đệm, dữ
 #      liệu đổi thì sinh lại.
+#   4. Điểm nghẽn không còn câu nào của mô hình qua phép kiểm có câu khuôn dựng từ bộ quy tắc (#559).
 #
 # Mô hình được thay bằng máy chủ HTTP nhỏ kiểu OpenAI dựng ngay trong bài; dịch vụ khai phá bằng bản giả.
 
@@ -141,6 +142,36 @@ def test_so_thu_tu_dau_muc_khong_thanh_cau_khong_thanh_so():
         "Nên rà lại biểu mẫu, 40 hồ sơ bị trả về.",
         "Nên bổ sung người.",
     ]
+
+
+def test_gan_trang_thai_thanh_phong_hay_nhac_sai_vai_bi_loai():
+    # Câu mô hình thật viết trên cụm trình diễn (#557): số đúng, đối tượng sai — trạng thái gọi là "phòng",
+    # trạng thái gọi là loại yêu cầu, và nhắc người gửi ở trạng thái không chờ người gửi. Vai đi bước tiếp đọc từ
+    # `turns` (bộ quy tắc)
+    kq_mau = _kq(turns={"tt-cho": ["approver"]}, role_labels={"approver": "Người xét duyệt yêu cầu"})
+    du_kien = khuyen_nghi.bang_du_kien(kq_mau)
+    tho = [
+        {"dong": 1, "viec": "Nên bổ sung người xử lý cho phòng 'Chờ bộ phận A'."},
+        {"dong": 1, "viec": "Nên nhắc người gửi bổ sung thông tin sớm."},
+        {"dong": 1, "viec": "Nên rà lại biểu mẫu của loại yêu cầu 'Chờ bộ phận A'."},
+        {"dong": 1, "viec": "Nên nhắc trưởng phòng xét duyệt hồ sơ ở 'Chờ bộ phận A' trong ngày."},
+    ]
+    kiem = khuyen_nghi.dung_cau(tho, du_kien, khuyen_nghi.ten_trong_ket_qua(kq_mau), kq_mau)
+    assert kiem.sai_so == [tho[0]["viec"], tho[1]["viec"], tho[2]["viec"]]
+    assert len(kiem.giu) == 1
+    # Ngoặc đơn thẳng thành ngoặc kép như dòng căn cứ
+    assert kiem.giu[0].startswith("Nên nhắc trưởng phòng xét duyệt hồ sơ ở “Chờ bộ phận A” trong ngày — căn cứ:")
+
+    # Không có thông tin lượt (trạng thái không có bước chính): không kiểm vai, vẫn bắt trạng thái gọi là phòng
+    kiem = khuyen_nghi.dung_cau(tho, du_kien, khuyen_nghi.ten_trong_ket_qua(_kq()), _kq())
+    assert kiem.sai_so == [tho[0]["viec"]]
+
+
+def test_loi_dan_ghi_ai_di_buoc_tiep():
+    kq_mau = _kq(turns={"tt-cho": ["approver"]}, role_labels={})
+    van_de = [d for d in khuyen_nghi.bang_du_kien(kq_mau) if d.startswith(khuyen_nghi.TIEN_TO_VAN_DE)]
+    assert khuyen_nghi.ai_di_tiep(van_de, kq_mau) == ["Trạng thái “Chờ bộ phận A”: trưởng phòng."]
+    assert khuyen_nghi.ai_di_tiep(van_de, _kq()) == []
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +317,41 @@ def test_sinh_o_nen_loai_cau_sai_so_va_dung_bo_nho_dem(client, mo_hinh_gia):
     assert _hoi(client).json()["status"] == khuyen_nghi.DANG_SINH
     _cho_xong(client)
     assert mo_hinh_gia.so_lan == 2
+
+
+def test_diem_nghen_bi_bo_trong_thi_co_cau_khuon_tu_du_lieu(mo_hinh_gia):
+    # #559: mô hình trả toàn câu sai — điểm nghẽn [1] vẫn có một câu, dựng từ vai đi bước tiếp trong bộ quy tắc
+    # (`turns`) và nhãn trạng thái, căn cứ là dòng dữ kiện. Nhánh lệch [2] không phải điểm nghẽn: không lấp
+    kq_mau = _kq(turns={"tt-cho": ["approver", "handler"]}, role_labels={"approver": "Người xét duyệt"})
+    mo_hinh_gia.tra_loi = {"khuyen_nghi": [
+        {"dong": 1, "viec": "Nên bổ sung người xử lý cho phòng 'Chờ bộ phận A'."},  # trạng thái gọi là phòng
+        {"dong": 2, "viec": "Nên rà lại biểu mẫu vì 27 % hồ sơ bị trả về."},  # số bịa
+    ]}
+    kn = khuyen_nghi.sinh(kq_mau)
+    assert kn.status == khuyen_nghi.SAN_SANG
+    assert kn.dropped_wrong_number == 2 and kn.template_sentences == 1
+    assert kn.sentences == (
+        "Nên nhắc trưởng phòng hoặc người xử lý làm sớm bước tiếp theo cho hồ sơ ở “Chờ bộ phận A” — căn cứ: "
+        "trạng thái “Chờ bộ phận A”: chờ trung vị 9 giờ 5 phút làm việc, gấp 3,4 lần mức chung, là điểm nghẽn; "
+        "chậm nhất ở phòng Phòng B (trung vị 15 giờ làm việc).",
+    )
+    # Câu khuôn tự qua đúng phép kiểm áp cho câu mô hình
+    assert not khuyen_nghi.sai_doi_tuong(kn.sentences[0].split(" — ")[0], khuyen_nghi.bang_du_kien(kq_mau)[2],
+                                         kq_mau)
+
+    # Mô hình đã có câu giữ được cho điểm nghẽn: không thêm câu khuôn; câu xếp theo thứ tự vấn đề
+    mo_hinh_gia.tra_loi = {"khuyen_nghi": [
+        {"dong": 2, "viec": "Nên rà lại biểu mẫu của Loại A hay bị trả về."},
+        {"dong": 1, "viec": "Nên bổ sung người xử lý cho Phòng B."},
+    ]}
+    kn = khuyen_nghi.sinh(kq_mau)
+    assert kn.template_sentences == 0 and len(kn.sentences) == 2
+    assert kn.sentences[0].startswith("Nên bổ sung người xử lý cho Phòng B — căn cứ: trạng thái")
+    assert kn.sentences[1].startswith("Nên rà lại biểu mẫu của Loại A hay bị trả về — căn cứ: nhánh lệch")
+
+    # Điểm nghẽn không có bước chính (không có vai để nhắc): bỏ trống như trước, không bịa vai
+    mo_hinh_gia.tra_loi = {"khuyen_nghi": []}
+    assert khuyen_nghi.sinh(_kq()).sentences == ()
 
 
 def test_khong_co_ho_so_thi_khong_hoi_mo_hinh(client, mo_hinh_gia):

@@ -156,7 +156,9 @@ VALUES
     (1, 'in-progress',         'in-progress',            'claim',               'Nhận việc về mình',                   FALSE, FALSE, NULL,                    14),
     (1, 'in-progress',         'awaiting-info',          'request-info',        'Yêu cầu bổ sung thông tin',           FALSE, TRUE,  'Thông tin cần bổ sung', 15),
     (1, 'in-progress',         'escalated',              'escalate',            'Leo thang do quá hạn',                TRUE,  FALSE, NULL,                    16),
-    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, NULL,                    17),
+    -- Ô ghi chú không bắt buộc (#556, navigator chốt 25/11): chữ ghi ở đây là cách giải quyết mà gợi ý hồ sơ
+    -- tương tự hiện cho người gửi sau (#319). Cụm cũ nhận tên ô qua migration 0040.
+    (1, 'in-progress',         'completed',              'complete',            'Hoàn thành xử lý',                    FALSE, FALSE, 'Cách giải quyết',       17),
 
     (1, 'escalated',           'in-progress',            'reassign',            'Phân công lại trong cùng phòng',      FALSE, FALSE, NULL,                    18),
 
@@ -180,7 +182,9 @@ VALUES
     (1, 'awaiting-acceptance', 'awaiting-acceptance',    'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        30),
     (1, 'escalated',           'escalated',              'extend-deadline',     'Gia hạn xử lý',                       FALSE, TRUE,  'Lý do gia hạn',        31),
 
-    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, NULL,                    23),
+    -- Ô ghi chú cũng là nhận xét kèm điểm (#557, cờ collects_feedback ở dưới): tên ô để dòng thời gian ghi đúng
+    -- chữ người gửi đã thấy, không phải "Lý do" (#559). Cụm cũ nhận tên ô qua migration 0041.
+    (1, 'completed',           'closed',                 'confirm',             'Xác nhận đạt',                        FALSE, FALSE, 'Nhận xét',              23),
     -- Mở lại khi chưa đạt; hồ sơ ở lại đúng phòng ban đã nhận. Mỗi hồ sơ mở lại tối đa
     -- request_types.reopen_max_count lần, mở lại là mở chu kỳ xử lý mới (#102).
     (1, 'completed',           'in-progress',            'reopen',              'Mở lại, chưa đạt',                    FALSE, TRUE,  NULL,                    24),

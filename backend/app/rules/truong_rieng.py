@@ -84,8 +84,9 @@ def kiem_chi_tiet(
 ) -> dict:
     """Kiểm và chuẩn hóa bộ giá trị trường riêng theo khai báo của loại yêu cầu.
 
-    Từ chối khi: không phải một bộ khóa–giá trị; có khóa loại này không khai; sai kiểu; thiếu
-    trường bắt buộc. Thông báo dùng nhãn trường và nhãn loại yêu cầu, không dùng mã.
+    Từ chối khi: không phải một bộ khóa–giá trị; có khóa loại này không khai; thiếu trường bắt
+    buộc (kể hết mọi trường thiếu trong một câu); sai kiểu. Thông báo dùng nhãn trường và nhãn loại
+    yêu cầu, không dùng mã.
     """
     if chi_tiet is None:
         chi_tiet = {}
@@ -100,14 +101,19 @@ def kiem_chi_tiet(
         ten_loai = loai.label if loai else "hồ sơ chưa có loại"
         raise _loi(thua[0], f"Loại yêu cầu “{ten_loai}” không có trường “{thua[0]}”.")
 
+    def _trong(gia_tri: object) -> bool:
+        return gia_tri is None or (isinstance(gia_tri, str) and not gia_tri.strip())
+
+    # Mọi trường bắt buộc còn trống nói trong MỘT câu, theo thứ tự khai báo (#555): báo từng trường một thì người
+    # gửi sửa xong ô này mới biết ô kia cũng thiếu. Mã trường đầu tiên vẫn đi kèm lỗi như trước.
+    thieu = [t for t in cac_truong if t.required and _trong(chi_tiet.get(t.code))]
+    if thieu:
+        raise _loi(thieu[0].code, f"Chưa điền {', '.join(t.label for t in thieu)}.")
+
     ket_qua: dict = {}
     for truong in cac_truong:
         gia_tri = chi_tiet.get(truong.code)
-        if isinstance(gia_tri, str) and not gia_tri.strip():
-            gia_tri = None
-        if gia_tri is None:
-            if truong.required:
-                raise _loi(truong.code, f"Chưa điền {truong.label}.")
+        if _trong(gia_tri):
             continue
         ket_qua[truong.code] = _chuan_hoa(truong, gia_tri)
     return ket_qua

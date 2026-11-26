@@ -61,6 +61,16 @@ NHAN_NHANH_LECH = {
 # Số trạng thái xếp hạng chờ lâu nhất đưa vào bảng dữ kiện
 SO_TRANG_THAI = 5
 
+# Tên gọi vai trò trên giao diện (ARCHITECTURE.md mục 8.3), để nhận ra câu mô hình viết nhắc tới vai nào
+# (#557). Bảng trình bày như `NHAN_NHANH_LECH`, không phải danh mục vai: vai nào đi cạnh nào vẫn đọc từ bộ
+# quy tắc (`turns`); vai không có ở đây thì chỉ nhận theo nhãn trong dữ liệu.
+TEN_VAI = {
+    "requester": ("người gửi", "người tạo yêu cầu"),
+    "classifier": ("điều phối viên",),
+    "approver": ("trưởng phòng",),
+    "handler": ("người xử lý",),
+}
+
 # ---------------------------------------------------------------------------
 # Số kiểu Việt Nam — cùng quy tắc với `ket-luan-quy-trinh.ts` và `dinh-dang.ts`
 # ---------------------------------------------------------------------------
@@ -239,6 +249,8 @@ class KetQuaKiem:
     giu: list[str] = field(default_factory=list)
     sai_so: list[str] = field(default_factory=list)
     khong_so: list[str] = field(default_factory=list)
+    # Số thứ tự vấn đề của từng câu giữ, cùng thứ tự với `giu` (chỉ `dung_cau` ghi)
+    dong_giu: list[int] = field(default_factory=list)
 
 
 def ten_trong_ket_qua(kq: dict) -> list[str]:
@@ -290,8 +302,12 @@ LOI_DAN = (
     "Bạn là trợ lý phân tích quy trình nội bộ của một doanh nghiệp. Bên dưới là bối cảnh và danh sách VẤN "
     "ĐỀ đánh số [1], [2]… rút từ khai phá quy trình. Chọn tối đa vài vấn đề đáng xử lý nhất (điểm nghẽn, "
     "nhánh lệch tỷ lệ cao) và với mỗi vấn đề viết MỘT câu tiếng Việt ngắn nêu việc cụ thể người quản lý nên "
-    "làm để GIẢM thời gian chờ hay GIẢM số hồ sơ đi nhánh lệch — ví dụ bổ sung người xử lý cho phòng chậm, "
-    "rà lại biểu mẫu của loại hay bị trả về, nhắc người gửi bổ sung thông tin sớm, đặt nhắc việc trước hạn. "
+    "làm để GIẢM thời gian chờ hay GIẢM số hồ sơ đi nhánh lệch — ví dụ bổ sung người xử lý cho một phòng "
+    "chậm, rà lại biểu mẫu của một loại yêu cầu hay bị trả về, nhắc người xử lý hoàn thành sớm, đặt nhắc "
+    "việc trước hạn. TRẠNG THÁI (tên trong ngoặc sau chữ 'Trạng thái') là một chặng của hồ sơ, KHÔNG phải "
+    "phòng ban, cũng KHÔNG phải loại yêu cầu: phòng ban là tên ghi sau chữ 'phòng', loại yêu cầu là tên ghi "
+    "sau chữ 'loại'; không viết 'phòng' hay 'loại' trước tên một trạng thái. Mục 'Ai đi bước tiếp' ghi vai "
+    "nào đi bước tiếp ở mỗi trạng thái: muốn nhắc ai thì gọi đúng tên vai ghi ở đó, không nhắc vai khác. "
     "Ghi số thứ tự vấn đề vào 'dong'. Câu bắt đầu bằng 'Nên', KHÔNG chép lại con số (hệ thống tự gắn căn "
     "cứ), không nêu tên người, không xưng 'chúng tôi', không đề xuất tự động đổi hệ thống. Không vấn đề "
     "nào đáng xử lý thì trả danh sách rỗng."
@@ -333,6 +349,8 @@ class KhuyenNghi:
     dropped_wrong_number: int = 0
     # Câu bỏ vì không dùng được: rỗng, trùng vấn đề đã có, không trỏ tới vấn đề nào
     dropped_no_number: int = 0
+    # Câu khuôn dựng tất định cho điểm nghẽn không còn câu nào của mô hình (#559), đã nằm trong `sentences`
+    template_sentences: int = 0
     model: str | None = None
     elapsed_ms: int | None = None
     generated_at: dt.datetime | None = None
@@ -342,15 +360,73 @@ class KhuyenNghi:
 
 def ghep_cau(viec: str, dong: str) -> str:
     """Câu hiện cho người đọc: việc mô hình đề xuất, rồi căn cứ chép nguyên dòng dữ kiện — con số trong
-    câu luôn là con số của hệ thống."""
-    viec = viec.strip().rstrip(".;:")
+    câu luôn là con số của hệ thống. Ngoặc đơn thẳng quanh một tên đổi thành ngoặc kép như dòng dữ kiện
+    (#557: một câu từng lẫn '…' với “…”)."""
+    viec = re.sub(r"'([^']+)'", r"“\1”", viec.strip()).rstrip(".;:")
     return f"{viec[0].upper()}{viec[1:]} — căn cứ: {dong[0].lower()}{dong[1:].rstrip('.')}."
 
 
-def dung_cau(tho: Any, du_kien: list[str], cac_ten: list[str]) -> KetQuaKiem:
+def ten_vai(ma: str, nhan: dict[str, str]) -> tuple[str, ...]:
+    """Các cách gọi một vai: tên giao diện ở `TEN_VAI`, cộng nhãn trong dữ liệu."""
+    ten = TEN_VAI.get(ma, ())
+    return tuple(t.lower() for t in (*ten, nhan.get(ma, "")) if t)
+
+
+def trang_thai_cua_dong(dong: str, kq: dict) -> str | None:
+    """Mã trạng thái mà một dòng vấn đề "Trạng thái “X”: …" nói tới; dòng nhánh lệch thì `None`."""
+    m = re.match(r"Trạng thái “([^”]+)”", dong)
+    if not m:
+        return None
+    for r in kq.get("bottlenecks", {}).get("ranking", []):
+        if r.get("label") == m.group(1):
+            return r.get("code")
+    return None
+
+
+def sai_doi_tuong(viec: str, dong: str, kq: dict) -> bool:
+    """Câu gán trạng thái thành phòng ban hay loại yêu cầu, hoặc nhắc tới một vai không đi bước tiếp ở trạng
+    thái của dòng nó trỏ tới (#557). Ba lỗi mô hình từng viết trên cụm trình diễn: "bổ sung người xử lý cho phòng
+    ‘Chờ bổ sung thông tin’", "rà lại biểu mẫu của loại ‘Hoàn tất’" và "nhắc người gửi bổ sung thông tin cho hồ sơ
+    ‘Đang xử lý’" — số đúng nên lọt phép kiểm số.
+    Vai nào đi bước tiếp đọc từ bộ quy tắc (`turns`); không có thông tin đó thì không kiểm vai."""
+    chu = " ".join(viec.lower().split())
+    nhan_tt = {t.get("label") for t in kq.get("states", [])}
+    nhan_tt |= {r.get("label") for r in kq.get("bottlenecks", {}).get("ranking", [])}
+    for nhan in (n for n in nhan_tt if n):
+        if re.search(r"(?:phòng|loại)(?:\s+ban|\s+yêu\s+cầu)?\s*[“\"'‘]?\s*" + re.escape(nhan.lower()), chu):
+            return True
+    ma = trang_thai_cua_dong(dong, kq)
+    luot = kq.get("turns", {}).get(ma) if ma else None
+    if not luot:
+        return False
+    nhan_vai = kq.get("role_labels", {})
+    for vai in {*TEN_VAI, *nhan_vai}:
+        if vai not in luot and any(t in chu for t in ten_vai(vai, nhan_vai)):
+            return True
+    return False
+
+
+def ai_di_tiep(van_de: list[str], kq: dict) -> list[str]:
+    """Dòng "Ai đi bước tiếp" cho mỗi trạng thái trong danh sách vấn đề — cho mô hình đọc, không phải căn cứ."""
+    nhan_vai = kq.get("role_labels", {})
+    ra = []
+    for d in van_de:
+        ma = trang_thai_cua_dong(d, kq)
+        luot = kq.get("turns", {}).get(ma) if ma else None
+        if not luot:
+            continue
+        ten = ", ".join(ten_vai(v, nhan_vai)[0] for v in luot if ten_vai(v, nhan_vai))
+        nhan = re.match(r"Trạng thái “([^”]+)”", d).group(1)
+        ra.append(f"Trạng thái “{nhan}”: {ten}.")
+    return ra
+
+
+def dung_cau(tho: Any, du_kien: list[str], cac_ten: list[str], kq: dict | None = None) -> KetQuaKiem:
     """Đổi đầu ra của mô hình thành câu đã kiểm. Phần mô hình viết (`viec`) qua đúng phép kiểm số và tên
     với DÒNG nó trỏ tới: dẫn số không có trong dòng đó, hay nhắc trạng thái, loại, phòng của dòng khác, là
-    bỏ. Phần căn cứ là dòng dữ kiện dựng tất định."""
+    bỏ; gán trạng thái thành phòng hay nhắc sai vai (`sai_doi_tuong`, khi có kết quả khai phá) cũng bỏ. Phần
+    căn cứ là dòng dữ kiện dựng tất định."""
+    ket_qua = kq
     van_de = [d for d in du_kien if d.startswith(TIEN_TO_VAN_DE)]
     kq = KetQuaKiem()
     da_co: set[int] = set()
@@ -363,12 +439,38 @@ def dung_cau(tho: Any, du_kien: list[str], cac_ten: list[str]) -> KetQuaKiem:
             continue
         dong = van_de[so - 1]
         ten = [t.lower() for t in _ten_nhac_toi(viec, cac_ten)]
-        if not _khop_so(so_kem_don_vi(viec), so_kem_don_vi(dong)) or not all(t in dong.lower() for t in ten):
+        if (
+            not _khop_so(so_kem_don_vi(viec), so_kem_don_vi(dong))
+            or not all(t in dong.lower() for t in ten)
+            or (ket_qua is not None and sai_doi_tuong(viec, dong, ket_qua))
+        ):
             kq.sai_so.append(viec)
             continue
         da_co.add(so)
         kq.giu.append(ghep_cau(viec, dong))
+        kq.dong_giu.append(so)
     return kq
+
+
+def cau_khuon(van_de: list[str], da_co: set[int], kq: dict) -> list[tuple[int, str]]:
+    """Câu dự phòng cho điểm nghẽn không còn câu nào của mô hình qua phép kiểm (#559), để điểm nghẽn lớn
+    nhất không bị bỏ trống. Dựng tất định: vai đi bước tiếp đọc từ bộ quy tắc (`turns`), nhãn trạng thái từ
+    dòng vấn đề, động từ chung cho mọi vai; căn cứ là chính dòng đó (`ghep_cau`). Trạng thái không có bước
+    chính thì không có vai để nhắc — bỏ trống như cũ. Trả cặp (số thứ tự vấn đề, câu)."""
+    nghen = {r.get("code") for r in kq.get("bottlenecks", {}).get("ranking", []) if r.get("is_bottleneck")}
+    nhan_vai = kq.get("role_labels", {})
+    ra = []
+    for so, dong in enumerate(van_de, start=1):
+        ma = trang_thai_cua_dong(dong, kq)
+        if so in da_co or ma is None or ma not in nghen:
+            continue
+        vai = [ten_vai(v, nhan_vai)[0] for v in kq.get("turns", {}).get(ma, []) if ten_vai(v, nhan_vai)]
+        if not vai:
+            continue
+        nhan = re.match(r"Trạng thái “([^”]+)”", dong).group(1)
+        ra.append((so, ghep_cau(f"Nên nhắc {' hoặc '.join(vai)} làm sớm bước tiếp theo cho hồ sơ ở “{nhan}”",
+                                dong)))
+    return ra
 
 
 def sinh(kq: dict) -> KhuyenNghi:
@@ -380,10 +482,15 @@ def sinh(kq: dict) -> KhuyenNghi:
     if not van_de:
         return KhuyenNghi(status=SAN_SANG, model=cau_hinh.llm_model,
                           generated_at=dt.datetime.now(dt.UTC))
+    noi_dung = ("Bối cảnh:\n" + "\n".join(f"- {d}" for d in boi_canh)
+                + "\n\nVấn đề:\n" + "\n".join(f"[{i}] {d}" for i, d in enumerate(van_de, start=1)))
+    # Vai nào đi bước tiếp ở mỗi trạng thái — đọc từ bộ quy tắc (#557), để mô hình không nhắc sai vai
+    luot = ai_di_tiep(van_de, kq)
+    if luot:
+        noi_dung += "\n\nAi đi bước tiếp:\n" + "\n".join(f"- {d}" for d in luot)
     tin_nhan = [
         {"role": "system", "content": LOI_DAN},
-        {"role": "user", "content": "Bối cảnh:\n" + "\n".join(f"- {d}" for d in boi_canh)
-         + "\n\nVấn đề:\n" + "\n".join(f"[{i}] {d}" for i, d in enumerate(van_de, start=1))},
+        {"role": "user", "content": noi_dung},
     ]
     try:
         dap_an, ms = mo_hinh.hoi_json(
@@ -400,15 +507,19 @@ def sinh(kq: dict) -> KhuyenNghi:
             status=TAT if loi.ma == mo_hinh.LOI_TAT else KHONG_PHAN_HOI,
             het_han=time.monotonic() + cau_hinh.recommendation_retry_after_seconds,
         )
-    kiem = dung_cau(dap_an.get("khuyen_nghi"), du_kien, ten_trong_ket_qua(kq))
+    kiem = dung_cau(dap_an.get("khuyen_nghi"), du_kien, ten_trong_ket_qua(kq), kq)
     if kiem.sai_so or kiem.khong_so:
         log.info("Khuyến nghị: bỏ %d câu sai số hay sai đối tượng, %d mục không dùng được: %s",
                  len(kiem.sai_so), len(kiem.khong_so), kiem.sai_so + kiem.khong_so)
+    # Điểm nghẽn bị bỏ trống thì lấp bằng câu khuôn (#559); câu xếp theo thứ tự vấn đề — điểm nghẽn lớn trước
+    khuon = cau_khuon(van_de, set(kiem.dong_giu), kq)
+    cac_cau = sorted([*zip(kiem.dong_giu, kiem.giu, strict=True), *khuon], key=lambda c: c[0])
     return KhuyenNghi(
         status=SAN_SANG,
-        sentences=tuple(kiem.giu),
+        sentences=tuple(c for _, c in cac_cau),
         dropped_wrong_number=len(kiem.sai_so),
         dropped_no_number=len(kiem.khong_so),
+        template_sentences=len(khuon),
         model=cau_hinh.llm_model,
         elapsed_ms=ms,
         generated_at=dt.datetime.now(dt.UTC),

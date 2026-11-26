@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime as dt
 import hashlib
 import json
 import math
@@ -463,3 +464,81 @@ def test_can_cu_chi_cho_dieu_phoi(client_dieu_phoi, session):
 
 def test_can_cu_ho_so_khong_co_tra_404(client_dieu_phoi, chi_muc):
     assert client_dieu_phoi.get("/similar-cases/for-case/999999999").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Gộp gợi ý trùng tiêu đề, ưu tiên hồ sơ có cách giải quyết (#556)
+# ---------------------------------------------------------------------------
+
+
+def _goi_y(ma: int, tieu_de: str, cach: str = "", diem: float = 0.9) -> tuong_tu.KetQuaTuongTu:
+    return tuong_tu.KetQuaTuongTu(case_id=ma, title=tieu_de, request_type_label=None, resolution=cach,
+                                  closed_at=dt.datetime(2026, 11, 1, tzinfo=dt.UTC), score=diem)
+
+
+def test_chon_goi_y_gop_trung_va_dua_co_cach_len_truoc():
+    """Ba hồ sơ cùng tiêu đề (khác hoa thường, khoảng trắng) chỉ còn một — hồ sơ có cách giải quyết của nhóm, dù
+    xa hơn; trong các nhóm được chọn, hồ sơ có cách giải quyết đứng trước, giữ thứ tự gần xa."""
+    ung_vien = [
+        _goi_y(1, "Máy in phòng Kinh doanh báo hết mực", diem=0.95),
+        _goi_y(2, "máy in  phòng kinh doanh báo HẾT MỰC ", diem=0.94),
+        _goi_y(3, "Máy chiếu không lên hình", diem=0.90),
+        _goi_y(4, "Máy in phòng Kinh doanh báo hết mực", "Lắp lại hộp mực cho khớp chip.", diem=0.80),
+        _goi_y(5, "Chuột không dây mất kết nối", "Thay pin.", diem=0.70),
+        _goi_y(6, "Bàn phím liệt phím", "Đổi bàn phím.", diem=0.60),
+    ]
+    chon = tuong_tu.chon_goi_y(ung_vien, 3)
+    assert [k.case_id for k in chon] == [4, 5, 3]
+    assert len({tuong_tu.khoa_tieu_de(k.title) for k in chon}) == 3
+    # Nhóm không hồ sơ nào có cách giải quyết thì giữ hồ sơ gần nhất
+    assert [k.case_id for k in tuong_tu.chon_goi_y(ung_vien[:3], 3)] == [1, 3]
+
+
+def test_chon_goi_y_gop_trung_cach_giai_quyet():
+    """#559: hai hồ sơ khác tiêu đề cùng một câu cách giải quyết (khác hoa thường, khoảng trắng) là một gợi ý — giữ
+    hồ sơ gần hơn; chỗ trống nhường cho cách giải quyết khác. Hồ sơ không có cách giải quyết không gộp với nhau."""
+    ung_vien = [
+        _goi_y(1, "Máy in tầng 3 kẹt giấy", "Gỡ giấy kẹt, lau trục cuốn.", diem=0.95),
+        _goi_y(2, "Máy in phòng Kế toán kẹt giấy liên tục", "  gỡ giấy kẹt,  LAU trục cuốn. ", diem=0.93),
+        _goi_y(3, "Máy chiếu không lên hình", diem=0.90),
+        _goi_y(4, "Máy in in mờ", "Thay hộp mực.", diem=0.85),
+        _goi_y(5, "Máy scan không nhận lệnh", diem=0.80),
+    ]
+    chon = tuong_tu.chon_goi_y(ung_vien, 3)
+    assert [k.case_id for k in chon] == [1, 4, 3]
+    co_cach = [tuong_tu.khoa_tieu_de(k.resolution) for k in chon if k.resolution]
+    assert len(set(co_cach)) == len(co_cach)
+    # Hồ sơ cùng tiêu đề với một nhóm chưa có cách giải quyết, mà cách giải quyết đã hiện ở nhóm khác: gộp vào nhóm
+    # có cách giải quyết đó, không làm đại diện cho nhóm cùng tiêu đề
+    tre = [ung_vien[0], ung_vien[2], _goi_y(6, "Máy chiếu không lên hình", "Gỡ giấy kẹt, lau trục cuốn.", diem=0.88),
+           *ung_vien[3:]]
+    assert [k.case_id for k in tuong_tu.chon_goi_y(tre, 3)] == [1, 4, 3]
+
+
+def test_tim_khong_tra_ho_so_trung_tieu_de(session, canh, nhung_gia, client_dieu_phoi):
+    """Qua đúng đường tìm: dữ liệu có ba hồ sơ trùng tiêu đề, chỉ một có cách giải quyết — biểu mẫu gửi và thẻ của
+    điều phối viên đều nhận một gợi ý cho cả nhóm, là hồ sơ có cách giải quyết, đứng đầu."""
+    tieu_de = "Máy in phòng Kinh doanh báo hết mực dù vừa thay hộp mới"
+    mo_ta = "Máy in báo hết mực dù vừa thay hộp mực mới"
+    xong_dat = [canh["xong"], canh["dat"]]
+    trung = [_dung_ho_so(session, tieu_de, mo_ta, xong_dat) for _ in range(2)]
+    co_cach = _dung_ho_so(session, f"  {tieu_de.upper()} ", mo_ta, xong_dat, "Lắp lại hộp mực cho khớp chip.")
+    session.commit()
+    ma_moi = {h.id for h in [*trung, co_cach]}
+    tuong_tu.lap_chi_muc(
+        [(ma, luc) for ma, luc in tuong_tu.ho_so_can_lap(session, 100_000) if ma in ma_moi],
+        mo_phien=lambda: contextlib.nullcontext(session),
+    )
+
+    ket_qua = tuong_tu.tim(session, tieu_de, mo_ta)
+    cua_nhom = [k.case_id for k in ket_qua if k.case_id in ma_moi]
+    assert cua_nhom == [co_cach.id], "ba hồ sơ trùng tiêu đề chỉ còn hồ sơ có cách giải quyết"
+    assert ket_qua[0].case_id == co_cach.id
+    assert len({tuong_tu.khoa_tieu_de(k.title) for k in ket_qua}) == len(ket_qua)
+
+    dang_cho = create_case(session, title=tieu_de, description=mo_ta, requester_id=NGUOI_GUI.id,
+                           requester_label=NGUOI_GUI.label, request_type_code=_loai(session))
+    session.commit()
+    can_cu = client_dieu_phoi.get(f"/similar-cases/for-case/{dang_cho.id}").json()["items"]
+    assert [m["case_id"] for m in can_cu if m["case_id"] in ma_moi] == [co_cach.id]
+    assert can_cu[0]["resolution"] == "Lắp lại hộp mực cho khớp chip."

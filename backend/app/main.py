@@ -33,6 +33,8 @@ from app.db import SessionLocal, get_session
 from app.models.quan_tri import Delegation
 from app.models.van_hanh import ScannerHeartbeat
 from app.models.workflow_config import Department, Role
+from app.phien_ban import PHIEN_BAN
+from app.tai_lieu_api import lam_sach_dac_ta
 from app.quan_sat import LopQuanSat, bo_dem, cau_hinh_nhat_ky
 from app.rate_limit import don_dong_cu
 from app.storage import quet_ma_doc
@@ -56,7 +58,12 @@ from app.intelligence import mo_hinh
 from app.intelligence.phan_loai import NHAN_BO_QUET_GOI_Y, TEN_BO_QUET_GOI_Y, quet_goi_y
 from app.intelligence.tuong_tu import NHAN_BO_QUET_TUONG_TU, TEN_BO_QUET_TUONG_TU, quet_chi_muc
 from app.intelligence.tuong_tu import router as router_tuong_tu
-from app.intelligence.tri_thuc import NHAN_BO_QUET_TRI_THUC, TEN_BO_QUET_TRI_THUC, quet_kho_tri_thuc
+from app.intelligence.tri_thuc import (
+    NHAN_BO_QUET_TRI_THUC,
+    TEN_BO_QUET_TRI_THUC,
+    LoiKhoTriThuc,
+    quet_kho_tri_thuc,
+)
 from app.workflow.inbox import router as router_hop_thu
 from app.workflow.nhip_quet import chay_luot_quet, co_bo_quet_xau, danh_gia_bo_quet
 from app.workflow.routes import router as router_yeu_cau_ung_dung
@@ -220,6 +227,10 @@ async def _vong_quet_tri_thuc() -> None:
         await asyncio.sleep(settings.wiki_index_interval_seconds)
         try:
             await asyncio.to_thread(_quet_tri_thuc_mot_lan)
+        except LoiKhoTriThuc as loi:
+            # Hỏng đã biết (khóa bị từ chối, wiki tắt…): dòng nhịp đã ghi lý do cho màn Hệ thống (#552), nhật ký
+            # chỉ cần một dòng, không cần dấu vết ngăn xếp mỗi hai phút
+            logger.warning("Lượt lập chỉ mục kho tri thức thất bại: %s", loi)
         except Exception:  # noqa: BLE001 — vòng lặp nền phải sống sót qua mọi lỗi
             logger.exception("Lượt lập chỉ mục kho tri thức thất bại, sẽ thử lại ở lượt sau")
 
@@ -370,7 +381,7 @@ NHOM_LOI: dict[str, dict[str, str]] = {
 app = FastAPI(
     lifespan=lifespan,
     title=settings.app_name,
-    version=settings.app_version,
+    version=PHIEN_BAN,
     description=(
         "Dịch vụ ứng dụng của Corelens. Toàn bộ quy trình nghiệp vụ nằm trong bảng "
         "dữ liệu, không mã cứng trong mã nguồn.\n\n"
@@ -487,7 +498,8 @@ def _do_suc_khoe(session: Session) -> dict:
                 session,
                 {TEN_BO_QUET_TRI_THUC: NHAN_BO_QUET_TRI_THUC},
                 nguong_qua_lau_giay=settings.wiki_index_stale_threshold_seconds,
-                loi_lien_tiep_toi_da=settings.sla_scan_max_consecutive_errors,
+                # Một lượt hỏng là đã mất gợi ý bài (#552) — không chờ ba lượt như bộ quét hạn
+                loi_lien_tiep_toi_da=settings.wiki_index_max_consecutive_errors,
                 da_chay_giay=time.monotonic() - THOI_DIEM_KHOI_DONG,
             )
         # Bộ lưu trữ lạnh (#378): mặc định bật; như các bộ quét tùy chọn khác, tắt thì không có dòng
@@ -527,13 +539,13 @@ def _do_suc_khoe(session: Session) -> dict:
     return ket_qua
 
 
-@app.get("/health", tags=["Vận hành"])
+@app.get("/health", summary="Sức khỏe chung của dịch vụ", tags=["Vận hành"])
 def health(response: Response, session: Session = Depends(get_session)) -> dict:
     """Báo trạng thái chung của dịch vụ: `ok` hoặc `degraded`. Công khai, không cần đăng nhập.
 
     Trả về 503 khi cơ sở dữ liệu không dùng được. Điểm này quan trọng: một điểm cuối
     kiểm tra sức khỏe luôn trả 200 thì vô dụng. Nhóm đã vấp đúng bẫy đó với Apache
-    Superset ở #38 — container báo `healthy` trong khi không ai đăng nhập được.
+    Superset — container báo `healthy` trong khi không ai đăng nhập được (#38).
 
     Chỉ trả đúng trạng thái chung (#243): điểm cuối này mở cho cả người chưa đăng nhập, nên không
     có phiên bản, không tên cơ sở dữ liệu, không câu lỗi nào. Chi tiết ở `/system/health`.
@@ -544,14 +556,14 @@ def health(response: Response, session: Session = Depends(get_session)) -> dict:
     return {"service": "dx-os-lab-backend", "status": suc_khoe["status"]}
 
 
-@app.get("/health/live", tags=["Vận hành"])
+@app.get("/health/live", summary="Tiến trình còn sống", tags=["Vận hành"])
 def health_live() -> dict:
     """Tiến trình còn sống và vòng sự kiện còn trả lời (#247). Không chạm cơ sở dữ liệu hay dịch vụ
     nào khác: cơ sở dữ liệu chậm không được khiến bộ điều phối giết một tiến trình vẫn khỏe."""
     return {"service": "dx-os-lab-backend", "status": "ok"}
 
 
-@app.get("/health/ready", tags=["Vận hành"])
+@app.get("/health/ready", summary="Sẵn sàng nhận việc", tags=["Vận hành"])
 def health_ready(response: Response, session: Session = Depends(get_session)) -> dict:
     """Sẵn sàng nhận việc (#247): cơ sở dữ liệu dùng được và bộ quy tắc đã nạp — phụ thuộc BẮT BUỘC.
     503 khi chưa. Dịch vụ tùy chọn (mô hình, quét mã độc, máy chủ thư, Superset) không tính: thiếu
@@ -561,15 +573,15 @@ def health_ready(response: Response, session: Session = Depends(get_session)) ->
     return health(response, session)
 
 
-@app.get("/metrics", tags=["Vận hành"])
+@app.get("/metrics", summary="Số đo dạng Prometheus", tags=["Vận hành"])
 def metrics(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
     session: Annotated[Session, Depends(get_session)],
 ) -> Response:
     """Số đo cơ bản, dạng văn bản Prometheus (#247). CHỈ QUẢN TRỊ VIÊN.
 
-    Không mở công khai và không dựa vào "chỉ trong mạng Compose": từ #364 cổng dịch vụ không mở ra máy ở
-    cấu hình mặc định, nhưng tệp phát triển mở lại được, và ranh giới mạng không thay được kiểm quyền; mẫu
+    Không mở công khai và không dựa vào "chỉ trong mạng Compose": cổng dịch vụ không mở ra máy ở
+    cấu hình mặc định (#364), nhưng tệp phát triển mở lại được, và ranh giới mạng không thay được kiểm quyền; mẫu
     đường dẫn và độ dài hàng đợi là thông tin vận hành không cho người ngoài. Bộ thu số đo đi qua cổng API
     bằng token của một tài khoản quản trị.
 
@@ -611,7 +623,7 @@ def metrics(
     return Response("\n".join(dong) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
 
 
-@app.get("/system/health", tags=["Vận hành"])
+@app.get("/system/health", summary="Sức khỏe chi tiết cho màn Hệ thống", tags=["Vận hành"])
 def system_health(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
     session: Annotated[Session, Depends(get_session)],
@@ -627,7 +639,7 @@ def system_health(
     suc_khoe.pop("unavailable")
     return {
         "service": "dx-os-lab-backend",
-        "version": settings.app_version,
+        "version": PHIEN_BAN,
         **suc_khoe,
         # Mô hình ngôn ngữ (#316): tùy chọn, nên không bao giờ làm `status` xấu đi — chỉ báo riêng.
         # Hỏi ở đây chứ không ở `_do_suc_khoe`: `/health` công khai không được gọi ra dịch vụ khác.
@@ -667,12 +679,12 @@ def _hoan_tac_im_lang(session: Session) -> None:
         logger.debug("Không hoàn tác được phiên sau truy vấn hỏng", exc_info=True)
 
 
-@app.get("/", tags=["Vận hành"])
+@app.get("/", summary="Lối vào tài liệu API", tags=["Vận hành"])
 def root() -> dict:
     """Chỉ đường tới tài liệu API tự sinh."""
     return {
         "service": settings.app_name,
-        "version": settings.app_version,
+        "version": PHIEN_BAN,
         "docs": "/docs",
         "health": "/health",
     }
@@ -682,7 +694,7 @@ def root() -> dict:
 router_dinh_danh = APIRouter()
 
 
-@router_dinh_danh.get("/me")
+@router_dinh_danh.get("/me", summary="Danh tính người đang gọi")
 def me(
     actor: Annotated[Actor, Depends(current_actor)],
     claims: Annotated[dict, Depends(current_claims)],
@@ -756,7 +768,7 @@ def me(
 app.include_router(router_dinh_danh, tags=["Định danh"])
 
 
-@app.post("/sla/scan", tags=["Vận hành"])
+@app.post("/sla/scan", summary="Chạy ngay một lượt quét hạn", tags=["Vận hành"])
 def sla_scan(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
 ) -> dict:
@@ -781,7 +793,7 @@ def sla_scan(
     }
 
 
-@app.post("/archive/scan", tags=["Vận hành"])
+@app.post("/archive/scan", summary="Chạy ngay một lượt lưu trữ lạnh", tags=["Vận hành"])
 def archive_scan(
     actor: Annotated[Actor, Depends(require_roles(VAI_TRO_QUAN_TRI))],
 ) -> dict:
@@ -839,12 +851,17 @@ LENH_CO_KHOA_TRUNG_LAP = (
 )
 
 
-def _openapi_co_khoa_trung_lap() -> dict:
+def _dac_ta_openapi() -> dict:
+    """Đặc tả OpenAPI duy nhất của dịch vụ — `/docs`, `/openapi.json` và docs/api/core-v1.openapi.json cùng đọc từ
+    đây. Sinh một lần rồi giữ như FastAPI vẫn làm: khai tiêu đề khóa trùng lặp trên hai lệnh của lõi (#426), rồi bỏ
+    số issue và đường dẫn tệp mã khỏi mô tả để /docs viết cho người gọi API (#552, app/tai_lieu_api.py). Chỉ gán
+    `app.openapi` ở đúng chỗ này: gán lần thứ hai sẽ đè mất bước của lần trước."""
     if app.openapi_schema is None:
         dac_ta = FastAPI.openapi(app)
         for phuong_thuc, duong in LENH_CO_KHOA_TRUNG_LAP:
             them_khoa_trung_lap_vao_dac_ta(dac_ta["paths"][duong][phuong_thuc])
+        lam_sach_dac_ta(dac_ta)
     return app.openapi_schema
 
 
-app.openapi = _openapi_co_khoa_trung_lap
+app.openapi = _dac_ta_openapi

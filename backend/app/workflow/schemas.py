@@ -173,7 +173,7 @@ class LuaChonCanhCuaHoSoRa(BaseModel):
 
 
 class ThayDoiTruongRa(BaseModel):
-    """Một trường quyết định, hay từ #127 một trường nội dung, mà lần chuyển đã đổi giá
+    """Một trường quyết định, hay một trường nội dung (#127), mà lần chuyển đã đổi giá
     trị (#100).
 
     `before` rỗng khi trường chưa có giá trị, ví dụ lần đầu chọn phòng ban. Nhãn tra lúc
@@ -401,7 +401,7 @@ class TaoHoSoVao(BaseModel):
     Poka-yoke bằng sự vắng mặt, không phải bằng một câu `if`.
 
     `request_type_code` thì có, vì người gửi là người biết rõ nhất họ đang cần gì, và
-    người phân loại vẫn nắn lại được ở cạnh kế tiếp. Xem `app/models/case.py`.
+    người phân loại vẫn nắn lại được ở cạnh kế tiếp (`app/models/case.py`).
     """
 
     title: str = Field(min_length=TIEU_DE_TOI_THIEU, max_length=TIEU_DE_TOI_DA)
@@ -419,7 +419,7 @@ class TaoHoSoVao(BaseModel):
 class ChuyenTrangThaiVao(BaseModel):
     """Yêu cầu chuyển trạng thái từ cổng người dùng.
 
-    Có nhận `changes` từ #127: cạnh *Sửa nội dung* cho người gửi đặt tiêu đề, mô tả,
+    Có nhận `changes` (#127): cạnh *Sửa nội dung* cho người gửi đặt tiêu đề, mô tả,
     loại yêu cầu khi hồ sơ chưa tới phòng ban (ADR-0005). Trước đó cổng này cố ý không
     nhận, vì không cạnh nào của người gửi cho đặt trường nào.
 

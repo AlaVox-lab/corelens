@@ -68,7 +68,10 @@ xác nhận lần nữa thì liệt kê đủ, mới nhất trước. Khối ch�
 | **Yêu cầu bổ sung thông tin** | Hỏi người gửi; đồng hồ hạn của phòng dừng trong lúc chờ |
 | **Hoàn thành xử lý** | Hồ sơ sang *Hoàn tất*, chờ người gửi xác nhận |
 
-Người cùng phòng hoàn thành được hồ sơ đã giao người khác; dòng thời gian ghi đúng người bấm.
+Người cùng phòng hoàn thành được hồ sơ đã giao người khác; dòng thời gian ghi đúng người bấm. Bảng xác nhận
+của **Hoàn thành xử lý** có ô **Cách giải quyết**, không bắt buộc: ghi ngắn đã làm gì để xong việc. Dòng này
+nằm trong dòng thời gian, và khi người gửi xác nhận đạt, nó là cách giải quyết mà gợi ý hồ sơ tương tự hiện cho
+người gặp vấn đề giống vậy về sau.
 
 ![Trang hồ sơ của phòng ban — hồ sơ đã leo thang](../../../assets/anh/ho-so-phong-ban.png)
 

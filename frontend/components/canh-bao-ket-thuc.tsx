@@ -14,10 +14,13 @@
 export function CanhBaoKetThuc({
   nhanTrangThai,
   moLaiGio,
+  choNguoiGui = false,
 }: {
   nhanTrangThai: string;
   /** Giờ làm việc người gửi còn mở lại được sau khi hồ sơ vào trạng thái này (#102). */
   moLaiGio?: number | null;
+  /** Người đọc là chính người gửi — câu xưng "bạn" thay vì nói "người gửi" như với người ngoài (#557). */
+  choNguoiGui?: boolean;
 }) {
   return (
     <p
@@ -35,8 +38,9 @@ export function CanhBaoKetThuc({
     >
       {moLaiGio ? (
         <>
-          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> và kết thúc. Người gửi còn mở lại được
-          trong {moLaiGio} giờ làm việc sau khi đóng; quá hạn đó phải gửi yêu cầu mới.
+          Hồ sơ sẽ sang <strong>{nhanTrangThai}</strong> và kết thúc.{" "}
+          {choNguoiGui ? "Bạn" : "Người gửi"} còn mở lại được trong {moLaiGio} giờ làm việc sau
+          khi đóng; quá hạn đó phải gửi yêu cầu mới.
         </>
       ) : (
         <>

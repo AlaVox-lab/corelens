@@ -188,6 +188,11 @@ class CumThu:
             thoat(f"--tien-to {self.tien_to!r} trùng tên container của cụm đang dùng thật "
                   f"({TIEN_TO_CUM_CHINH}*). Chọn tiền tố khác.")
         cam_nhan = {mau.get("DXLAB_VERSION"), mau.get("SUPERSET_VERSION"), "latest"}
+        # Cụm đang dùng thật đọc thẻ ảnh ở infra/.env — có thể khác tệp mẫu (cụm dựng trước #552 ghi 0.3.0)
+        that = GOC_KHO / "infra" / ".env"
+        if that.is_file():
+            env_that = doc_env(that)
+            cam_nhan |= {env_that.get("DXLAB_VERSION"), env_that.get("SUPERSET_VERSION")}
         if self.nhan in cam_nhan:
             thoat(f"--nhan {self.nhan!r} trùng nhãn ảnh của cụm đang dùng thật: dựng lại sẽ ghi đè ảnh "
                   "của người dùng. Chọn nhãn khác.")

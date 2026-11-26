@@ -24,10 +24,11 @@ from .bo_may import chon_bo_may
 from .cau_hinh import cau_hinh
 from .du_lieu import doc_du_lieu, doc_ho_so, mo_ket_noi
 from .phan_tich import phan_tich, tuan_thu_ho_so
+from .phien_ban import PHIEN_BAN
 
 log = logging.getLogger("dxlab.khai_pha")
 
-app = FastAPI(title="Corelens — Dịch vụ khai phá quy trình", version="0.11.0")
+app = FastAPI(title="Corelens — Dịch vụ khai phá quy trình", version=PHIEN_BAN)
 
 # Chọn bộ máy một lần lúc khởi động: cấu hình sai thì dịch vụ không lên, thay vì hỏng ở lượt gọi đầu.
 # Nạp PM4Py mất vài giây — trả lúc khởi động, không trả ở yêu cầu của người dùng.

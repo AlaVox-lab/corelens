@@ -1158,7 +1158,10 @@ cũ, `infra/seed/01-quy-tac-quy-trinh.sql` cho cụm mới); `sao_chep` chép c�
 cuối chuyển trạng thái của người gửi nhận khối `feedback` tùy chọn: kiểm cờ của cạnh TRƯỚC khi chuyển
 (`feedback-not-accepted`, hồ sơ không đổi), gọi `perform_transition` như cũ, rồi ghi một dòng
 `case_feedback` gắn `event_id` của dòng nhật ký vừa sinh, rồi mới commit — hỏng ở đâu thì cả hai cùng
-hoàn tác (`di_buoc(..., truoc_commit=)`). Vì sao không vào engine: điểm không đổi trường quyết định nào
+hoàn tác (`di_buoc(..., truoc_commit=)`). Ô chữ duy nhất của cạnh cho chấm là ghi chú của bước, cũng là
+nhận xét kèm điểm (#557); tên ô `Nhận xét` nằm trong dữ liệu (`transitions.note_label`, migration `0041` cho
+cụm cũ nhận cạnh theo cờ `collects_feedback`) để dòng thời gian ghi đúng chữ đó thay vì "Lý do" (#559). Vì sao
+không vào engine: điểm không đổi trường quyết định nào
 của hồ sơ, nên theo ADR-0005 nó là thao tác không đổi hồ sơ như lời nhắn; đưa nó vào `changes` thì nhật
 ký — nguồn của khai phá quy trình — mang dữ liệu không phải sự kiện quy trình. Mỗi lần xác nhận có chấm
 một dòng (mở lại rồi xác nhận lần nữa có dòng thứ hai); bảng chỉ ghi thêm, trigger chặn sửa và xóa.
@@ -1640,6 +1643,15 @@ hạn chót trình duyệt 4 giây; Route Handler `app/api/yeu-cau/tuong-tu` chu
 `DXLAB_SIMILAR_MAX_RESULTS`). Mô hình tắt, chậm, hỏng — danh sách rỗng, không lỗi; dịch vụ báo tắt thì biểu
 mẫu thôi hỏi trong phiên. Nút Gửi không phụ thuộc khối này.
 
+**Chọn gợi ý: gộp trùng, cách giải quyết lên trước (#556).** Phép quét đọc dư ứng viên (`HE_SO_UNG_VIEN` lần số gợi
+ý), bỏ ứng viên dưới ngưỡng, rồi `chon_goi_y` gộp hồ sơ trùng tiêu đề (bỏ khác biệt hoa thường, khoảng trắng): mỗi
+nhóm giữ hồ sơ có cách giải quyết gần nhất, không có thì hồ sơ gần nhất. Hồ sơ có cách giải quyết trùng cách giải
+quyết của một nhóm đã có (cùng phép chuẩn hóa) gộp vào nhóm đó dù khác tiêu đề (#559) — hai gợi ý cùng một câu giải
+quyết không cho người đọc thêm gì. Lấy `DXLAB_SIMILAR_MAX_RESULTS` nhóm gần nhất và đưa hồ sơ có cách giải quyết
+lên trước. Biểu mẫu gửi và thẻ của điều phối viên dùng chung phép chọn này. Ô
+ghi cách giải quyết là ô ghi chú **không bắt buộc** của bước Hoàn thành xử lý — tên ô `Cách giải quyết` nằm trong
+dữ liệu (`transitions.note_label`, migration `0040` cho cụm cũ), và cổng hiện ô ghi chú cho mọi cạnh đặt tên ô.
+
 **Căn cứ cho thẻ gợi ý của điều phối viên (#450).** Cùng chỉ mục phục vụ người duyệt gợi ý: ở màn điều phối,
 thẻ gợi ý loại (bước phân loại) và thẻ gợi ý phòng (bước chuyển phòng) kèm vài hồ sơ đã giải quyết gần nội dung
 hồ sơ đang xét, có mã mở được hồ sơ cũ — người quyết định thấy "lần trước loại việc này giải quyết thế nào"
@@ -1680,6 +1692,19 @@ soạn bằng công cụ. Số đo ở trang *Mô hình ngôn ngữ* của `docs
   quả); mọi số phải có trong **chính dòng** nó trỏ tới, cùng đơn vị, mọi tên cũng thuộc dòng đó — sai là
   **bỏ cả câu**. Số thứ tự đầu mục ("1.") bị gỡ trước. `kiem_cau` (cả câu tự do) dùng cùng phép. Số viết
   bằng chữ không bắt được — giới hạn đã biết
+- **Kiểm vai và kiểm loại đối tượng** (#557): số đúng vẫn có thể gắn sai loại — mô hình từng viết "bổ sung người xử
+  lý cho phòng ‘Chờ bổ sung thông tin’" (gọi trạng thái là phòng) và "nhắc người gửi …" cho trạng thái *Đang xử
+  lý*. Điểm cuối gắn vào kết quả khai phá `turns` — vai đi được **bước chính** rời mỗi trạng thái (cạnh có
+  `primary_scope`, mục 7.3), đọc từ bộ quy tắc — và nhãn vai; lời dặn có mục "Ai đi bước tiếp" và nói rõ trạng
+  thái không phải phòng ban hay loại yêu cầu. `sai_doi_tuong` bỏ câu có chữ "phòng" hay "loại" đứng trước tên một
+  trạng thái (mô hình từng viết "rà lại biểu mẫu của loại ‘Hoàn tất’"), và câu nhắc tới
+  một vai không đi bước tiếp ở trạng thái của dòng nó trỏ tới. Tên gọi vai trên giao diện (mục 8.3) là bảng trình
+  bày `TEN_VAI`; vai nào đi cạnh nào vẫn là dữ liệu. Trạng thái không có bước chính thì không kiểm vai
+- **Câu khuôn cho điểm nghẽn bị bỏ trống** (#559): sau phép kiểm, điểm nghẽn (`is_bottleneck`) không còn câu
+  nào của mô hình mà có vai đi bước chính thì `cau_khuon` dựng một câu tất định "Nên nhắc <vai> làm sớm bước
+  tiếp theo cho hồ sơ ở “<trạng thái>”" — vai từ `turns`, nhãn từ dòng vấn đề, động từ chung cho mọi vai — rồi
+  gắn căn cứ như câu mô hình. Câu xếp theo thứ tự vấn đề (điểm nghẽn lớn trước); `template_sentences` đếm số
+  câu khuôn. Trạng thái không có bước chính thì không có vai để nhắc, bỏ trống như trước
 - **Không chờ, không hỏi lại**: lần hỏi đầu xếp việc sinh vào một luồng nền và trả `pending`; màn hỏi lại 3
   giây một lần. Bộ nhớ đệm trong tiến trình theo khoảng ngày, phạm vi và **mã băm của chính kết quả khai
   phá** — cùng dữ liệu thì có ngay, số đổi thì sinh lại; lần hỏng nhớ `DXLAB_RECOMMENDATION_RETRY_AFTER_SECONDS`
@@ -1861,6 +1886,10 @@ như `event_log.actor_label`), `access_kind`, `case_id`, `attachment_id`, `chann
   và **không ghi bước chuyển** — `POST …/transitions` trả chi tiết hồ sơ nhưng là một lần *làm*, đã có dòng nhật ký
   sự kiện. Vì thế việc ghi gắn ở từng điểm cuối GET (biết kênh, biết tác nhân), không ở hàm dựng chi tiết dùng chung.
 - **Ghi sau khi đã kiểm quyền và đã có dữ liệu để trả**: lần bị 403/404 không có dòng.
+- **Gộp lượt trùng** (#557): trang hồ sơ dựng lại sau mỗi thao tác gọi lại chi tiết và liên hệ, nên một lần mở trang
+  từng ghi nhiều cặp dòng. Cùng người, cùng loại, cùng hồ sơ, cùng tệp, cùng kênh trong
+  `DXLAB_ACCESS_AUDIT_DEDUP_SECONDS` giây (mặc định 60, `0` là ghi mọi lần) chỉ giữ dòng đầu — tra trong cùng phiên
+  ghi riêng trước khi thêm. Xuất nhật ký không gắn hồ sơ thì không gộp.
 - **Phiên riêng, commit riêng** (`app/kiem_toan.py`, `ghi_truy_cap`): không lẫn vào giao dịch của yêu cầu — yêu cầu
   hoàn tác không mất vết. Ghi hỏng thì chỉ ghi một dòng nhật ký lỗi có cấu trúc (`audit_kind`, `audit_actor`,
   `audit_case_id`…, cùng định dạng JSON của `app/quan_sat.py`) và trang vẫn trả: kiểm toán không được thành điểm
@@ -2139,9 +2168,11 @@ người đang đăng nhập đi được từ trạng thái hiện tại của 
 `allowed_transitions()` sinh ra từ bảng `transitions` và ma trận phân quyền. Giao diện
 dựng nút bấm thẳng từ danh sách đó, lấy cả nhãn chữ (`activity_label`), cờ bắt buộc
 ghi lý do (`requires_note`) và tên ô ghi chú (`note_label`, #79). Không có cạnh thì không
-có nút. Nút nào tô màu hành động chính cũng theo dữ liệu: cạnh đứng đầu theo
-`display_order`. Trước #79 cổng người gửi đoán bằng cờ `requires_note`, và đoán sai ngay
-khi cạnh bổ sung thông tin bắt đầu đòi ghi chú — nút *Hủy yêu cầu* thành nút chính.
+có nút. Nút nào tô màu hành động chính cũng theo dữ liệu: cạnh mang `is_primary` — bước
+chính của người đang xem (`my_primary_steps()`, mục 7.3), cùng nguồn với trang nhân viên. Trước
+#79 cổng người gửi đoán bằng cờ `requires_note`, và đoán sai ngay khi cạnh bổ sung thông tin
+bắt đầu đòi ghi chú — nút *Hủy yêu cầu* thành nút chính; tới #559 nó tô cạnh đứng đầu theo
+`display_order`, nên ở *Đã gửi* nút *Sửa nội dung* nổi bật dù hồ sơ không chờ người gửi.
 
 Đây không phải chuyện gọn mã. Bản thiết kế giao diện của #44 có một bảng như vậy, và
 nó **vẽ sai hai chỗ**: đặt nút *"Hủy yêu cầu"* ở `in-progress` và `escalated`, trong
@@ -2359,7 +2390,12 @@ ngăn gửi đường dẫn được; trang chi tiết đầy đủ vẫn mở t
   ngăn (`components/ngan-ho-so.tsx`) ghép đúng các khối của trang chi tiết
 - **Nút chính dựng từ dữ liệu**: mỗi cạnh trong `allowed_transitions` mang `is_primary` — dịch vụ
   đánh dấu bằng `my_primary_steps()`, cùng nguồn với cờ `needs_my_action` (mục 7.3). Ở đáy ngăn,
-  bước chính thành nút chính, các thao tác còn lại vào menu; gửi xong thì ngăn sang hồ sơ kế
+  bước chính thành nút chính, các thao tác còn lại vào menu; gửi xong thì ngăn sang hồ sơ kế. Trang
+  đầy đủ cũng chỉ tô màu chính cho cạnh `is_primary` (#557 — trước đó tô mọi cạnh có ô nhập, nên điều
+  phối viên thấy *Gia hạn xử lý* nổi bật ở trạng thái đang chờ phòng ban)
+- **Đường vào trang đầy đủ** (#557): mã và tiêu đề ở đầu ngăn là liên kết tới trang đầy đủ; Ctrl/⌘ +
+  bấm hay bấm chuột giữa trên dòng hàng đợi mở trang đầy đủ ở thẻ mới (`DongHangDoi.dayDu`), không mở
+  bản sao hàng đợi kèm ngăn
 - **Bàn phím và tiêu điểm** (`components/khung-ngan.tsx`): mở ngăn thì tiêu điểm vào tiêu đề hồ sơ,
   mũi tên sang hồ sơ trước/sau theo thứ tự danh sách ("2 trên 14"), Esc đóng và trả tiêu điểm về
   đúng dòng — trừ khi đang gõ trong ô nhập hay một menu đã nhận phím đó. Ngăn gắn thẳng vào

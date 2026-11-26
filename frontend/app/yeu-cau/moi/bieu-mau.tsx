@@ -24,10 +24,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { OTruongRieng } from "@/components/o-truong-rieng";
 import { GoiYTuongTu } from "@/components/goi-y-tuong-tu";
 import { OChonTep } from "@/components/o-chon-tep";
+import { hienTruong } from "@/components/the-truong-rieng";
 import { dungLuong } from "@/lib/dinh-dang";
 import type { ChinhSachTep, LoaiYeuCau } from "@/lib/kieu";
 import { CHUA_CO_LOI, type KetQuaThaoTac } from "@/app/yeu-cau/ket-qua";
@@ -122,17 +124,53 @@ export function BieuMauGuiYeuCau({
   const [loai, datLoai] = useState<string | null>(loaiCuaGoc ?? loaiTuDuongDan);
   const [tieuDe, datTieuDe] = useState(goc?.title ?? "");
   const [moTa, datMoTa] = useState(goc?.description ?? "");
+  // Giá trị trường riêng đang nhập ở bước 2 — chỉ để bước Xem lại liệt kê lại (#552); giá trị gửi đi vẫn nằm trong ô
+  // ẩn của OTruongRieng
+  const [chiTiet, datChiTiet] = useState<Record<string, string>>({});
   // Mã phiên soạn (#319): nối "đã xem gợi ý tương tự" với lần gửi này — không phải dữ liệu hồ sơ
   const [phienSoan] = useState(maPhienNgauNhien);
 
+  // Người gửi đã bấm Tiếp tục khi còn thiếu trường bắt buộc (#555): từ đó ô trống hiện câu báo ngay dưới nó
+  const [baoThieu, datBaoThieu] = useState(false);
+  // Kết quả gửi mà người gửi đã sửa tiếp sau đó (#555): khung lỗi của lần gửi trước thôi hiện khi người gửi đổi một
+  // ô hay chuyển bước, tới lần gửi sau. So theo đối tượng — mỗi lần gửi trả một kết quả mới
+  const [ketQuaDaQua, datKetQuaDaQua] = useState<KetQuaThaoTac | null>(null);
+
   const daChonLoai = loai !== null;
   const loaiDaChon = cacLoai.find((l) => l.code === loai);
-  const duDeSang3 = tieuDe.trim().length >= 3;
+  const duTieuDe = tieuDe.trim().length >= 3;
+  // Trường bắt buộc còn trống, theo khai báo của loại (#555) — cùng nguồn với ô ở bước 2 và phép kiểm của dịch vụ
+  const truongThieu = (loaiDaChon?.fields ?? []).filter((t) => t.required && !chiTiet[t.code]?.trim());
+  const duDeSang3 = duTieuDe && truongThieu.length === 0;
 
-  const theTiep = buoc === 1 ? daChonLoai : buoc === 2 ? duDeSang3 : true;
+  // Tiêu đề quá ngắn thì nút bị khóa như trước. Thiếu trường bắt buộc thì nút vẫn bấm được: bấm là để biết thiếu
+  // gì — `diToi` giữ người gửi ở bước 2 và chỉ ra ô trống
+  const coTheToi = (so: number) =>
+    so <= buoc || (so === 2 ? daChonLoai : daChonLoai && duTieuDe);
+
+  const boLoiCu = () => {
+    if (ketQua.loi && ketQua !== ketQuaDaQua) datKetQuaDaQua(ketQua);
+  };
+
+  /** Mọi đường sang bước khác — nút Tiếp tục, Quay lại, dải bước — đi qua đây, nên không đường nào tới bước 3 khi thiếu trường. */
+  const diToi = (so: number) => {
+    boLoiCu();
+    if (so === 3 && truongThieu.length > 0) {
+      // Dựng xong bước 2 ngay (khối đang ẩn thì không nhận tiêu điểm), rồi đưa tiêu điểm tới ô trống đầu tiên
+      flushSync(() => {
+        datBuoc(2);
+        datBaoThieu(true);
+      });
+      document.getElementById(`truong-rieng-${truongThieu[0].code}`)?.focus();
+      return;
+    }
+    datBuoc(so);
+  };
+
+  const theTiep = coTheToi(buoc + 1);
 
   return (
-    <form action={guiDi}>
+    <form action={guiDi} onChange={boLoiCu}>
       {goc && (
         <p
           role="note"
@@ -167,10 +205,10 @@ export function BieuMauGuiYeuCau({
             <button
               key={b.so}
               type="button"
-              onClick={() => datBuoc(b.so)}
+              onClick={() => diToi(b.so)}
               // Không cho nhảy tới bước chưa đủ điều kiện. Cho nhảy lùi thì thoải mái:
               // xem lại thứ mình vừa điền là chuyện bình thường.
-              disabled={b.so > buoc && !theTiep}
+              disabled={!coTheToi(b.so)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -217,8 +255,11 @@ export function BieuMauGuiYeuCau({
       </div>
 
       <div className="the" style={{ marginTop: "14px" }}>
+        {/* Ba khối bước đều nằm sẵn trong biểu mẫu (ô của bước 2 phải gửi đi được từ bước 3) và ẩn bằng `hidden`.
+            Khối mang `hidden` KHÔNG được đặt `display` trong `style`: kiểu nội tuyến thắng kiểu ẩn mặc định của trình
+            duyệt, khối bị giấu vẫn hiện (#552 — bảng Xem lại từng hiện ở bước 1 và 2). Bố cục lưới đặt ở phần tử con. */}
         {/* --- Bước 1 · Loại yêu cầu ------------------------------------- */}
-        <div hidden={buoc !== 1} style={{ padding: "22px" }}>
+        <div hidden={buoc !== 1} data-buoc="1" style={{ padding: "22px" }}>
           <div style={{ fontSize: "15px", fontWeight: 600 }}>Loại yêu cầu</div>
           <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink-3)" }}>
             Chọn một. Loại yêu cầu quyết định phòng ban tiếp nhận và thời hạn cam kết.
@@ -241,7 +282,9 @@ export function BieuMauGuiYeuCau({
                 chon={loai === l.code}
                 onChon={() => {
                   datLoai(l.code);
-                  datBuoc(2);
+                  // Loại khác thì bộ trường khác: chưa bấm Tiếp tục với bộ này thì chưa báo thiếu
+                  if (l.code !== loai) datBaoThieu(false);
+                  diToi(2);
                 }}
               />
             ))}
@@ -251,7 +294,8 @@ export function BieuMauGuiYeuCau({
             type="button"
             onClick={() => {
               datLoai(CHUA_RO);
-              datBuoc(2);
+              datBaoThieu(false);
+              diToi(2);
             }}
             style={{
               marginTop: "14px",
@@ -279,7 +323,7 @@ export function BieuMauGuiYeuCau({
         </div>
 
         {/* --- Bước 2 · Nội dung ------------------------------------------ */}
-        <div hidden={buoc !== 2}>
+        <div hidden={buoc !== 2} data-buoc="2">
           <div
             style={{
               display: "flex",
@@ -301,7 +345,7 @@ export function BieuMauGuiYeuCau({
             <button
               type="button"
               className="nut nut-nho"
-              onClick={() => datBuoc(1)}
+              onClick={() => diToi(1)}
             >
               Đổi loại
             </button>
@@ -362,7 +406,13 @@ export function BieuMauGuiYeuCau({
 
             {/* Trường riêng của loại đã chọn ở bước 1 (#250), dựng từ khai báo của dịch vụ.
                 `key` theo loại: đổi loại thì bộ ô dựng lại từ đầu, không mang giá trị loại cũ. */}
-            <OTruongRieng key={loai ?? ""} ten="details" cacTruong={loaiDaChon?.fields ?? []} />
+            <OTruongRieng
+              key={loai ?? ""}
+              ten="details"
+              cacTruong={loaiDaChon?.fields ?? []}
+              khiDoi={datChiTiet}
+              baoThieu={baoThieu}
+            />
 
             {/* Tệp đính kèm (#80): ảnh chụp màn hình gần như luôn có ích — không có thì người
                 xử lý phải hỏi lại và hồ sơ rơi vào chờ bổ sung. Giới hạn do dịch vụ trả. */}
@@ -379,7 +429,7 @@ export function BieuMauGuiYeuCau({
         </div>
 
         {/* --- Bước 3 · Xem lại ------------------------------------------- */}
-        <div hidden={buoc !== 3} style={{ padding: "22px", display: "grid", gap: "18px" }}>
+        <div hidden={buoc !== 3} data-buoc="3" style={{ padding: "22px" }}>
           <div
             style={{
               display: "grid",
@@ -404,6 +454,21 @@ export function BieuMauGuiYeuCau({
             />
             <MucXemLai khoa="Tiêu đề" gia_tri={tieuDe || "—"} />
             <MucXemLai khoa="Mô tả" gia_tri={moTa || "Bạn chưa điền mô tả"} />
+            {/* Trường riêng đã điền, nhãn và cách hiện giá trị theo khai báo của loại — cùng nguồn ô ở bước 2 và khối
+                thông tin riêng trên trang hồ sơ; ô bỏ trống thì không liệt kê */}
+            {(loaiDaChon?.fields ?? [])
+              .filter((t) => chiTiet[t.code]?.trim())
+              .map((t) => {
+                const v = chiTiet[t.code].trim();
+                const so = Number(v);
+                return (
+                  <MucXemLai
+                    key={t.code}
+                    khoa={t.label}
+                    gia_tri={hienTruong(t, t.kind === "number" && Number.isFinite(so) ? so : v)}
+                  />
+                );
+              })}
             {chinhSach && (
               <MucXemLai
                 khoa="Tệp đính kèm"
@@ -431,7 +496,7 @@ export function BieuMauGuiYeuCau({
           }}
         >
           {buoc > 1 ? (
-            <button type="button" className="nut" onClick={() => datBuoc(buoc - 1)}>
+            <button type="button" className="nut" onClick={() => diToi(buoc - 1)}>
               ← Quay lại
             </button>
           ) : (
@@ -452,7 +517,7 @@ export function BieuMauGuiYeuCau({
               disabled={!theTiep}
               onClick={(e) => {
                 e.preventDefault();
-                datBuoc(buoc + 1);
+                diToi(buoc + 1);
               }}
             >
               Tiếp tục →
@@ -477,7 +542,7 @@ export function BieuMauGuiYeuCau({
       {goc && <input type="hidden" name="parent_request_id" value={goc.id} />}
       <input type="hidden" name="similar_session_id" value={phienSoan} />
 
-      {ketQua.loi && (
+      {ketQua.loi && ketQua !== ketQuaDaQua && (
         <p
           role="alert"
           style={{

@@ -19,7 +19,10 @@
 #
 # 2. TÌM cho biểu mẫu Gửi yêu cầu: nhúng câu đang gõ (kèm lời dặn tác vụ của Qwen3-Embedding), quét
 #    chính xác bằng khoảng cách cosine của pgvector, tối đa `similar_max_results` hồ sơ trên ngưỡng.
-#    Hạn chót ngắn; mô hình tắt, chậm, hỏng — trả danh sách rỗng, không báo lỗi.
+#    Hồ sơ trùng tiêu đề hay trùng cách giải quyết gộp còn một (#556, #559), hồ sơ có cách giải quyết
+#    đứng trước (`chon_goi_y`) — cùng
+#    phép chọn cho thẻ gợi ý của điều phối viên. Hạn chót ngắn; mô hình tắt, chậm, hỏng — trả danh sách
+#    rỗng, không báo lỗi.
 #
 # 3. GHI NHẬN: phiên soạn đã thấy gợi ý (`similar_case_views`), phiên đó có gửi hồ sơ không, hay bỏ
 #    không gửi — người gửi bấm "không gửi nữa", hoặc quá `similar_abandon_after_minutes` mà không gửi.
@@ -379,10 +382,56 @@ def nhung_cau_hoi(tieu_de: str, mo_ta: str | None, han_giay: float | None = None
     return mo_hinh.hoi_nhung([cau_hoi(tieu_de, mo_ta)], han_giay=han)[0]
 
 
+# Đọc dư chừng này lần số gợi ý cần trả (#556): hồ sơ trùng tiêu đề gộp lại còn một, nên phải có đủ ứng viên khác
+# tiêu đề. Hệ số đọc của phép quét, không phải giá trị nghiệp vụ — số gợi ý trả về vẫn là `similar_max_results`.
+HE_SO_UNG_VIEN = 5
+
+
+def khoa_tieu_de(tieu_de: str) -> str:
+    """Khóa gộp hồ sơ trùng tiêu đề, hay trùng cách giải quyết (#559): bỏ khác biệt chữ hoa/thường và khoảng
+    trắng."""
+    return " ".join(tieu_de.split()).casefold()
+
+
+def chon_goi_y(ung_vien: list[KetQuaTuongTu], so_ket_qua: int) -> list[KetQuaTuongTu]:
+    """Chọn gợi ý từ ứng viên đã xếp gần tới xa (#556).
+
+    Hồ sơ trùng tiêu đề gộp thành một nhóm; mỗi nhóm giữ hồ sơ có cách giải quyết gần nhất, nhóm không hồ sơ nào có
+    thì giữ hồ sơ gần nhất. Hồ sơ có cách giải quyết trùng cách giải quyết một nhóm đã có (cùng phép chuẩn hóa)
+    gộp vào nhóm đó dù khác tiêu đề (#559) — hai gợi ý cùng một câu giải quyết không cho người đọc thêm gì. Lấy
+    `so_ket_qua` nhóm gần nhất (nhóm xếp theo hồ sơ gần nhất của nó); trong số đó hồ sơ có cách giải quyết đứng
+    trước, giữ thứ tự gần xa trong từng phần. Trước #556 lấy thẳng ba hồ sơ gần nhất, nên dữ liệu có ba hồ sơ cùng
+    tiêu đề thì cả ba gợi ý trùng hệt nhau, đều không ghi cách giải quyết."""
+    nhom: dict[str, KetQuaTuongTu] = {}
+    cach_da_co: set[str] = set()
+    for k in ung_vien:
+        cach = khoa_tieu_de(k.resolution)
+        if cach and cach in cach_da_co:
+            continue
+        khoa = khoa_tieu_de(k.title)
+        cu = nhom.get(khoa)
+        if cu is None or (not cu.resolution and k.resolution):
+            # Dict giữ thứ tự chèn đầu tiên của khóa: thay hồ sơ đại diện không đổi chỗ của nhóm
+            nhom[khoa] = k
+            if cach:
+                cach_da_co.add(cach)
+    chon = list(nhom.values())[:so_ket_qua]
+    return sorted(chon, key=lambda k: not k.resolution)
+
+
 def tim_theo_vec(
-    session: Session, vec: list[float], *, so_ket_qua: int | None = None, nguong: float | None = None
+    session: Session,
+    vec: list[float],
+    *,
+    so_ket_qua: int | None = None,
+    nguong: float | None = None,
+    bo_ho_so: int | None = None,
 ) -> list[KetQuaTuongTu]:
+    """Gợi ý gần `vec` nhất, đã gộp trùng tiêu đề hay cách giải quyết và đưa hồ sơ có cách giải quyết lên trước
+    (`chon_goi_y`).
+    `bo_ho_so`: hồ sơ không được gợi ý cho chính nó (thẻ của điều phối viên)."""
     cau_hinh = get_settings()
+    k = so_ket_qua if so_ket_qua is not None else cau_hinh.similar_max_results
     dong = session.execute(
         text(
             """
@@ -394,6 +443,7 @@ def tim_theo_vec(
                 AND s.is_terminal
             LEFT JOIN request_types t ON t.code = i.request_type_code
             WHERE i.model = :mo_hinh AND vector_dims(i.embedding) = :so_chieu
+                AND i.case_id IS DISTINCT FROM CAST(:bo AS bigint)
             ORDER BY i.embedding <=> CAST(:vec AS vector), i.case_id
             LIMIT :k
             """
@@ -402,22 +452,24 @@ def tim_theo_vec(
             "vec": _chu_vec(vec),
             "mo_hinh": cau_hinh.embedding_model,
             "so_chieu": len(vec),
-            "k": so_ket_qua if so_ket_qua is not None else cau_hinh.similar_max_results,
+            "bo": bo_ho_so,
+            "k": k * HE_SO_UNG_VIEN,
         },
     ).all()
     san = nguong if nguong is not None else cau_hinh.similar_min_score
-    return [
+    ung_vien = [
         KetQuaTuongTu(
             case_id=d[0],
             title=an_lien_he(d[1]),
             request_type_label=d[2],
-            resolution=an_lien_he(d[3] or ""),
+            resolution=an_lien_he(d[3] or "").strip(),
             closed_at=d[4],
             score=float(d[5]),
         )
         for d in dong
         if float(d[5]) >= san
     ]
+    return chon_goi_y(ung_vien, k)
 
 
 # ---------------------------------------------------------------------------
@@ -526,7 +578,7 @@ class BoKhongGuiVao(BaseModel):
 SO_KY_TU_TOI_THIEU = 12
 
 
-@router.post("/search", response_model=TimTuongTuRa)
+@router.post("/search", summary="Hồ sơ đã giải quyết tương tự khi đang soạn", response_model=TimTuongTuRa)
 def tim_cho_bieu_mau(
     du_lieu: TimTuongTuVao,
     session: Annotated[Session, Depends(get_session)],
@@ -538,7 +590,7 @@ def tim_cho_bieu_mau(
     KHÔNG BAO GIỜ báo lỗi cho biểu mẫu: mô hình tắt, chậm hơn hạn, trả rác — đều là danh sách rỗng, để
     người gửi không chờ và không thấy gì lạ. Bài kho tri thức đọc từ chỉ mục trong cơ sở dữ liệu, không gọi
     sang wiki, nên wiki tắt hay chậm không làm chậm biểu mẫu. Có hồ sơ gợi ý và có mã phiên thì ghi một lượt
-    xem (đo ngăn chặn theo hồ sơ như #319).
+    xem, để đo tỷ lệ ngăn chặn theo từng hồ sơ (#319).
     """
     cau_hinh = get_settings()
     if not cau_hinh.embedding_enabled:
@@ -604,7 +656,7 @@ class CanCuTuongTuRa(BaseModel):
 VAI_TRO_CAN_CU = "classifier"
 
 
-@router.get("/for-case/{case_id}", response_model=CanCuTuongTuRa)
+@router.get("/for-case/{case_id}", summary="Hồ sơ tương tự làm căn cứ cho điều phối viên", response_model=CanCuTuongTuRa)
 def can_cu_cho_dieu_phoi(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -632,10 +684,8 @@ def can_cu_cho_dieu_phoi(
     except mo_hinh.LoiMoHinh as loi:
         log.info("Không tìm được hồ sơ tương tự cho điều phối: %s", loi)
         return CanCuTuongTuRa(items=[], enabled=True)
-    # Lấy dư một kết quả: hồ sơ đã giải quyết rồi mở lại vẫn có thể nằm trong chỉ mục — bỏ chính nó
-    ket_qua = [
-        k for k in tim_theo_vec(session, vec, so_ket_qua=cau_hinh.similar_max_results + 1) if k.case_id != case_id
-    ][: cau_hinh.similar_max_results]
+    # Hồ sơ đã giải quyết rồi mở lại vẫn có thể nằm trong chỉ mục — bỏ chính nó ngay trong phép quét, trước khi gộp
+    ket_qua = tim_theo_vec(session, vec, bo_ho_so=case_id)
     return CanCuTuongTuRa(
         items=[
             HoSoCanCuRa(
@@ -653,7 +703,7 @@ def can_cu_cho_dieu_phoi(
     )
 
 
-@router.post("/abandon", status_code=204)
+@router.post("/abandon", summary="Ghi lượt người gửi thôi không gửi sau khi xem gợi ý", status_code=204)
 def bo_khong_gui(
     du_lieu: BoKhongGuiVao,
     session: Annotated[Session, Depends(get_session)],

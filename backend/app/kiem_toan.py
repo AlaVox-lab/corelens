@@ -14,6 +14,10 @@
 #   attachment-download  tải một tệp đính kèm — ghi cả mã tệp
 #   event-log-export     xuất nhật ký sự kiện CSV, JSON, XES — không gắn hồ sơ, ghi tham số xuất
 #
+# GỘP LƯỢT TRÙNG (#557): cùng người, cùng loại, cùng hồ sơ, cùng tệp và cùng kênh trong `access_audit_dedup_seconds` giây chỉ
+# giữ dòng đầu. Trang hồ sơ dựng lại sau mỗi thao tác (đi một bước, gửi lời nhắn) gọi lại chi tiết và liên hệ, nên
+# một lần mở trang từng ghi nhiều cặp dòng. Xuất nhật ký không gắn hồ sơ thì không gộp — mỗi lần xuất là một tệp.
+#
 # KHÔNG GHI người gửi xem hồ sơ của chính mình: đó là dữ liệu của chính họ, không phải truy cập vào dữ liệu của
 # người khác — ghi vào thì nhật ký ngập dòng vô nghĩa và che mất dòng cần tìm.
 #
@@ -39,6 +43,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import VAI_TRO_QUAN_TRI, require_roles
+from app.config import get_settings
 from app.db import get_session
 from app.models.case import CaseAttachment, Request
 from app.models.quan_tri import AccessAuditLog, AccessKind
@@ -99,6 +104,8 @@ def ghi_truy_cap(
     kenh = kenh_cua(yeu_cau)
     try:
         with mo_phien() as phien:
+            if ho_so is not None and _vua_ghi(phien, actor.id, loai, ho_so.id, attachment_id, kenh):
+                return
             phien.add(
                 AccessAuditLog(
                     actor=actor.id,
@@ -123,6 +130,37 @@ def ghi_truy_cap(
                 "error": f"{type(loi).__name__}: {loi}",
             }},
         )
+
+
+def _vua_ghi(
+    phien: Session, actor: str, loai: str, case_id: int, attachment_id: int | None, kenh: str
+) -> bool:
+    """Đã có dòng cùng người, cùng loại, cùng hồ sơ, cùng tệp, cùng kênh trong khoảng gộp chưa (#557). Khoảng 0 là
+    không gộp. Khác kênh (màn ứng dụng với API lõi) là hai đường truy cập khác nhau, vẫn ghi riêng. Mốc so là đồng
+    hồ của cơ sở dữ liệu, như cột `at`."""
+    khoang = get_settings().access_audit_dedup_seconds
+    if khoang <= 0:
+        return False
+    tep = (
+        AccessAuditLog.attachment_id.is_(None)
+        if attachment_id is None
+        else AccessAuditLog.attachment_id == attachment_id
+    )
+    return (
+        phien.scalar(
+            select(AccessAuditLog.id)
+            .where(
+                AccessAuditLog.actor == actor,
+                AccessAuditLog.access_kind == loai,
+                AccessAuditLog.case_id == case_id,
+                AccessAuditLog.channel == kenh,
+                tep,
+                AccessAuditLog.at > func.now() - dt.timedelta(seconds=khoang),
+            )
+            .limit(1)
+        )
+        is not None
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +207,7 @@ def _utc(v: dt.datetime) -> dt.datetime:
     return v if v.tzinfo is not None else v.replace(tzinfo=dt.UTC)
 
 
-@router.get("/kinds", response_model=list[LoaiTruyCapRa])
+@router.get("/kinds", summary="Danh mục loại truy cập được ghi", response_model=list[LoaiTruyCapRa])
 def danh_muc_loai(session: _Phien, _: _QuanTriVien) -> list[LoaiTruyCapRa]:
     """Các loại truy cập được ghi, theo thứ tự hiển thị — cho ô lọc của màn Hệ thống."""
     return [
@@ -178,7 +216,7 @@ def danh_muc_loai(session: _Phien, _: _QuanTriVien) -> list[LoaiTruyCapRa]:
     ]
 
 
-@router.get("", response_model=DanhSachTruyCapRa)
+@router.get("", summary="Tra cứu nhật ký kiểm toán truy cập", response_model=DanhSachTruyCapRa)
 def tra_cuu(
     session: _Phien,
     _: _QuanTriVien,

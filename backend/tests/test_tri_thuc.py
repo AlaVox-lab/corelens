@@ -10,6 +10,7 @@ from __future__ import annotations
 import contextlib
 import datetime as dt
 import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,7 +21,9 @@ from app.config import Settings
 from app.db import get_session
 from app.intelligence import mo_hinh, tri_thuc, tuong_tu
 from app.main import app
+from app.models.van_hanh import ScannerHeartbeat
 from app.workflow.context import Actor
+from app.workflow.nhip_quet import chay_luot_quet, danh_gia_bo_quet
 from tests.test_tuong_tu import HAN_CHOT, NhungGia, _cong_dong
 
 NGUOI_GUI = Actor(id="ng-321", roles=frozenset({"requester"}), name="Người gửi 321")
@@ -166,17 +169,78 @@ def test_mot_trong_hai_tat_thi_khong_lam_gi(session, monkeypatch, nhung_gia, chi
     assert wiki.so_lan_doc_noi_dung == 0
 
 
-def test_wiki_hong_hay_nhung_hong_thi_bo_luot_khong_mat_chi_muc(session, monkeypatch, bat, chi_muc_trong):
+def test_wiki_hong_hay_nhung_hong_thi_luot_hong_khong_mat_chi_muc(session, monkeypatch, bat, chi_muc_trong):
+    """Từ #552 lượt hỏng NÉM lỗi để dòng nhịp ghi lần hỏng (trước đó bị nuốt, nhịp báo "quét thành công");
+    chỉ mục đã có vẫn còn nguyên."""
     wiki = WikiGia()
     wiki.dat(1, "Máy in", "Kẹt giấy")
     _quet(session, wiki)
     wiki.hong = True
-    assert _quet(session, wiki) == 0
+    with pytest.raises(tri_thuc.LoiKhoTriThuc, match="không phản hồi"):
+        _quet(session, wiki)
     wiki.hong = False
     wiki.dat(2, "Bài mới", "Nội dung")
     dat_cau_hinh(monkeypatch, embedding_url=_cong_dong(), embedding_timeout_seconds=HAN_CHOT, wiki_public_url=WIKI)
-    assert _quet(session, wiki) == 0
+    with pytest.raises(tri_thuc.LoiKhoTriThuc, match="mô hình nhúng"):
+        _quet(session, wiki)
     assert set(_bai_trong_chi_muc(session)) == {1}
+
+
+@pytest.fixture
+def wiki_tu_choi():
+    """Wiki.js giả ở mức HTTP: trang mã nguồn `/s/…` trả 403 — điều Wiki.js làm khi khóa API không còn hợp lệ
+    (CSDL Wiki.js dựng lại mà volume khóa còn giữ): lời gọi bị coi như của khách, khách không có `read:source`."""
+
+    class XuLy(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802 — tên do http.server đặt
+            self.send_response(403)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b"<h1>Unauthorized</h1>")
+
+        def log_message(self, *_):
+            pass
+
+    may = ThreadingHTTPServer(("127.0.0.1", 0), XuLy)
+    threading.Thread(target=may.serve_forever, daemon=True).start()
+    try:
+        yield f"http://127.0.0.1:{may.server_address[1]}"
+    finally:
+        may.shutdown()
+        may.server_close()
+
+
+def test_khoa_bi_tu_choi_thi_nhip_ghi_hong_co_ly_do_va_man_he_thong_bao_do(
+    session, monkeypatch, nhung_gia, chi_muc_trong, wiki_tu_choi, tmp_path
+):
+    """Đúng tình huống của cụm trình diễn 24/11 (#552): mỗi lượt đọc bài bị 403 mà màn Hệ thống vẫn xanh."""
+    khoa = tmp_path / "wiki-api-key"
+    khoa.write_text("khoa-cua-csdl-cu", encoding="utf-8")
+    dat_cau_hinh(monkeypatch, embedding_url=nhung_gia.url, embedding_timeout_seconds=HAN_CHOT, wiki_public_url=WIKI,
+                 wiki_internal_url=wiki_tu_choi, wiki_api_key_file=str(khoa), wiki_timeout_seconds=HAN_CHOT)
+    wiki = WikiGia()
+    wiki.dat(1, "Đặt lại mật khẩu", "Vào trang tài khoản", duong="huong-dan/dat-lai-mat-khau")
+    # Tên riêng của bài kiểm: không tranh khóa tư vấn hay dòng nhịp với bộ lập chỉ mục thật của cụm thử
+    ten = "kiem-thu-552-tri-thuc"
+    session.commit()
+
+    with pytest.raises(tri_thuc.LoiKhoTriThuc, match="từ chối khóa API"):
+        chay_luot_quet(
+            session, ten,
+            lambda p: tri_thuc.quet_kho_tri_thuc(p, hoi=wiki, mo_phien=lambda: contextlib.nullcontext(p)),
+        )
+
+    nhip = session.get(ScannerHeartbeat, ten)
+    assert nhip.consecutive_errors == 1 and nhip.last_success_at is None
+    assert "HTTP 403" in nhip.last_error and "dat-lai-mat-khau" in nhip.last_error
+    # Ngưỡng mặc định của bộ lập chỉ mục là một lượt: lượt gần nhất hỏng là màn Hệ thống đỏ, kèm lý do
+    nguong = Settings().wiki_index_max_consecutive_errors
+    assert nguong == 1
+    [bo] = danh_gia_bo_quet(session, {ten: tri_thuc.NHAN_BO_QUET_TRI_THUC}, nguong_qua_lau_giay=3600,
+                            loi_lien_tiep_toi_da=nguong, da_chay_giay=0)
+    assert bo["status"] == "failing"
+    assert "từ chối khóa API" in bo["last_error"]
+    assert _bai_trong_chi_muc(session) == {}
 
 
 def test_khoa_api_thieu_hay_wiki_khong_toi_duoc(monkeypatch, tmp_path):

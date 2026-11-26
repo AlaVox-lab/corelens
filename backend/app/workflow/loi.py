@@ -104,7 +104,7 @@ def _kiem_nhin_thay(session: Session, case_id: int, actor: Actor) -> None:
         raise _khong_thay()
 
 
-@router_loi_rieng.get("/requests", response_model=DanhSachHoSoRa)
+@router_loi_rieng.get("/requests", summary="Hồ sơ trong phạm vi người gọi", response_model=DanhSachHoSoRa)
 def ho_so_trong_pham_vi(
     session: _Phien,
     actor: _TacNhan,
@@ -127,7 +127,7 @@ def ho_so_trong_pham_vi(
     )
 
 
-@router_loi_rieng.get("/requests/{case_id}", response_model=HoSoChiTietRa)
+@router_loi_rieng.get("/requests/{case_id}", summary="Chi tiết một hồ sơ", response_model=HoSoChiTietRa)
 def chi_tiet_trong_pham_vi(
     case_id: int, session: _Phien, actor: _TacNhan, yeu_cau: YeuCauHttp
 ) -> HoSoChiTietRa:
@@ -155,7 +155,7 @@ def _ly_do_ra(loi: TransitionError) -> LyDoChanRa:
     )
 
 
-@router_loi_rieng.get("/requests/{case_id}/transition-options", response_model=LuaChonCanhCuaHoSoRa)
+@router_loi_rieng.get("/requests/{case_id}/transition-options", summary="Các bước đi được từ trạng thái hiện tại", response_model=LuaChonCanhCuaHoSoRa)
 def lua_chon_canh_trong_pham_vi(case_id: int, session: _Phien, actor: _TacNhan) -> LuaChonCanhCuaHoSoRa:
     """Mọi cạnh rời trạng thái hiện tại của hồ sơ, mỗi cạnh kèm người gọi đi được không và vì sao (#424).
 
@@ -194,7 +194,7 @@ def lua_chon_canh_trong_pham_vi(case_id: int, session: _Phien, actor: _TacNhan) 
     )
 
 
-@router_loi_rieng.post("/requests/{case_id}/transitions", response_model=HoSoChiTietRa)
+@router_loi_rieng.post("/requests/{case_id}/transitions", summary="Đi một bước trên hồ sơ", response_model=HoSoChiTietRa)
 def buoc_chuyen_trong_pham_vi(
     case_id: int,
     du_lieu: BuocChuyenLoiVao,

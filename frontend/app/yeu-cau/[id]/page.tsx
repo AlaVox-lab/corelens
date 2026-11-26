@@ -38,13 +38,13 @@ import { TheDanhGia } from "@/components/the-danh-gia";
 import { CuonTinMoi } from "@/components/cuon-tin-moi";
 import { KhungChat } from "@/components/khung-chat";
 import { KhungLoiNhan } from "@/components/khung-loi-nhan";
-import { NutThanhDau } from "@/components/khung-ung-dung";
+import { NutThanhDau, TenCapCon } from "@/components/khung-ung-dung";
 import { KhongPhanHoi, MoiDangNhap } from "@/components/khung-lam-viec";
 import { docDichVu, goiDichVu, laHetPhien } from "@/lib/api";
 import { ngayGio } from "@/lib/dinh-dang";
 import type { ChinhSachTep, HoSoChiTiet, LoaiYeuCau, NhanCoMa } from "@/lib/kieu";
 import { daTroiQua, docDongHo, docTuDong } from "@/lib/sla";
-import { CHU_GIAI_NHOM, bienHoMau, trinhBayTrangThai } from "@/lib/trang-thai";
+import { CHU_GIAI_NHOM, bienHoMau, chuGiaiKetThuc, trinhBayTrangThai } from "@/lib/trang-thai";
 import { kieuTruong, type NguonDanhMuc } from "@/lib/truong";
 
 export const dynamic = "force-dynamic";
@@ -146,11 +146,16 @@ export default async function ChiTietHoSo({
   // Hồ sơ đang chờ người gửi mà có hạn chờ — Hoàn tất tự đóng sau 3 ngày làm việc (#144)
   const tuDong = docTuDong(ho_so);
   const kieu = trinhBayTrangThai(ho_so.state.code);
-  const nhomChuGiai = CHU_GIAI_NHOM.find((n) => n.nhom === kieu.nhom);
+  // Kết thúc hay chưa tra cờ `is_terminal` của dữ liệu, không tra bảng trình bày (#557)
+  const nhomChuGiai = ho_so.state.is_terminal
+    ? chuGiaiKetThuc(ho_so.state.label, ho_so.allowed_transitions.length > 0)
+    : CHU_GIAI_NHOM.find((n) => n.nhom === kieu.nhom);
   const quayLui = danhDauQuayLui(ho_so.history);
 
   return (
     <>
+      {/* Đường dẫn đầu trang ghi mã hồ sơ, như buồng lái: "Hồ sơ của tôi › YC-…" (#557) */}
+      <TenCapCon ten={ho_so.code} />
       {/* Trang người gửi chưa có thẻ Trao đổi: mở trang là đã đọc lời nhắn (#155) */}
       <DanhDauDaDoc maHoSo={ho_so.id} soTin={ho_so.messages.length} />
       {ho_so.messages.length > 0 && (
@@ -234,13 +239,16 @@ export default async function ChiTietHoSo({
                 một dãy ký tự vô nghĩa lên màn hình thì tệ hơn là không đưa gì. Tên
                 người xử lý sẽ có khi dịch vụ biết tra danh bạ; tới lúc đó thay dòng
                 dưới đây. */}
+            {/* Hồ sơ đã kết thúc thì không còn ai "đang giữ" — nói phòng đã phụ trách (#557) */}
             <O
-              tua="Đang giữ hồ sơ"
+              tua={ho_so.state.is_terminal ? "Phòng ban phụ trách" : "Đang giữ hồ sơ"}
               chinh={ho_so.department?.label ?? "Chưa chuyển về phòng nào"}
               phu={
-                ho_so.assignee_id
-                  ? "Đã có người được phân công xử lý"
-                  : "Chưa phân công người xử lý cụ thể"
+                ho_so.state.is_terminal
+                  ? "Hồ sơ đã kết thúc, không còn ai giữ"
+                  : ho_so.assignee_id
+                    ? "Đã có người được phân công xử lý"
+                    : "Chưa phân công người xử lý cụ thể"
               }
             />
             <O
@@ -313,8 +321,7 @@ export default async function ChiTietHoSo({
           </h2>
           {/* Lời giải thích nhường chỗ cho nút trên điện thoại (#189) */}
           <p className="an-tren-hep" style={{ margin: 0, fontSize: "13px", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "72ch" }}>
-            Các nút dưới đây phụ thuộc vào trạng thái hồ sơ và vai trò của bạn. Thao
-            tác nào không có ở đây thì ở bước này chưa làm được.
+            Chỉ hiện những thao tác bạn làm được ở bước này.
           </p>
           {tuDong && (
             <p

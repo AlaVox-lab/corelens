@@ -132,3 +132,24 @@ Bản 1.8 đổi mọi chữ người dùng thấy từ "DX-OS Lab" sang Corelen
 - **Sửa tay `.env`** nếu tệp còn dòng `SMTP_FROM=DX-OS Lab <khong-tra-loi@dx-os-lab.test>` chép từ bản cũ:
   đổi theo `infra/.env.example` rồi dựng lại dịch vụ ứng dụng. Giữ nguyên `WIKI_ADMIN_EMAIL` — đó là tài
   khoản quản trị Wiki.js đã tạo, đổi thì bước khởi tạo không đăng nhập được.
+
+## Từ bản 1.8.0 lên 1.8.1: số phiên bản và khóa kho tri thức
+
+Dựng lại như mục đầu trang là đủ; không phải sửa `.env`.
+
+- **Ô Cách giải quyết** ở bước Hoàn thành xử lý (#556), không bắt buộc: bản sửa lược đồ `0040` đặt tên ô cho cạnh
+  đó ở mọi bộ quy tắc của quy trình mặc định. Chỉ cạnh còn trống tên ô; tên quản trị viên đã đặt ở màn cấu hình
+  thì giữ. Chữ người xử lý ghi vào ô này là cách giải quyết mà gợi ý hồ sơ tương tự hiện cho người gửi sau.
+- **Ô Nhận xét** ở bước Xác nhận đạt (#559): bản sửa `0041` đặt tên ô `Nhận xét` cho cạnh cho chấm mức hài lòng
+  của quy trình mặc định, cùng điều kiện như `0040` — để dòng thời gian ghi nhận xét của người gửi dưới đúng chữ
+  đó thay vì "Lý do".
+- **Biến mới `ACCESS_AUDIT_DEDUP_SECONDS`** (#557) có mặc định 60 trong Compose: nhật ký truy cập gộp lượt xem
+  trùng trong chừng đó giây. `.env` cũ vẫn chạy; muốn đổi thì chép dòng từ `infra/.env.example`.
+
+- **Số phiên bản** mà `/docs` và màn Hệ thống hiện giờ đọc từ tệp `VERSION` ở gốc kho, Compose gắn vào dịch
+  vụ ứng dụng và dịch vụ khai phá. Biến `DXLAB_VERSION` của `.env` chỉ còn là thẻ của các ảnh do nhóm dựng:
+  tệp cũ còn ghi `0.3.0` vẫn chạy, ảnh dựng lại mang thẻ đó, còn số hiển thị là số trong `VERSION`. Muốn ảnh
+  mang thẻ mới thì đổi giá trị theo `infra/.env.example` (`local`) trước khi dựng.
+- **Kho tri thức** (hồ sơ `tri-thuc`): màn Hệ thống báo đỏ khi bộ lập chỉ mục bị Wiki.js từ chối khóa API.
+  Gặp thì chạy lại bước khởi tạo để cấp khóa mới — trang [Kho tri thức](../kho-tri-thuc/), mục *Màn Hệ thống
+  báo Wiki.js từ chối khóa API*.

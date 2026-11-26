@@ -10,6 +10,7 @@
 // `allowed_transitions`.
 
 import { Check, Info } from "lucide-react";
+import Link from "next/link";
 
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
 import { TheTruongRieng } from "@/components/the-truong-rieng";
@@ -22,7 +23,8 @@ export type MucMeta = { icon: React.ReactNode; chu: string };
 
 /**
  * Mã, tiêu đề, một hàng thông tin có icon, và nhãn trạng thái to bên phải. Trong ngăn xem nhanh
- * (#233) tiêu đề là cấp 2 — cấp 1 của trang vẫn là tên hàng đợi — và nhận tiêu điểm khi ngăn mở.
+ * (#233) tiêu đề là cấp 2 — cấp 1 của trang vẫn là tên hàng đợi — và nhận tiêu điểm khi ngăn mở; mã và
+ * tiêu đề là liên kết tới trang đầy đủ (#557), chỗ người dùng quen bấm để "mở hồ sơ ra".
  */
 export function DauHoSo({
   ho_so,
@@ -31,16 +33,24 @@ export function DauHoSo({
 }: {
   ho_so: HoSoTomTat;
   meta: MucMeta[];
-  /** `id` của tiêu đề trong ngăn, để ngăn gọi tên mình và đặt tiêu điểm vào đó. */
-  trongNgan?: { idTieuDe: string };
+  /** `id` của tiêu đề trong ngăn, để ngăn gọi tên mình và đặt tiêu điểm vào đó; `dayDu`: trang đầy đủ. */
+  trongNgan?: { idTieuDe: string; dayDu: string };
 }) {
   return (
     <div className="dau-ho-so">
       <div className="trai">
-        <span className="ma">{ho_so.code}</span>
+        {trongNgan ? (
+          <Link className="ma lk-dau-ngan" href={trongNgan.dayDu} tabIndex={-1} aria-hidden>
+            {ho_so.code}
+          </Link>
+        ) : (
+          <span className="ma">{ho_so.code}</span>
+        )}
         {trongNgan ? (
           <h2 className="h1-ho-so" id={trongNgan.idTieuDe} tabIndex={-1}>
-            {ho_so.title}
+            <Link className="lk-dau-ngan" href={trongNgan.dayDu}>
+              {ho_so.title}
+            </Link>
           </h2>
         ) : (
           <h1 className="h1-ho-so">{ho_so.title}</h1>
@@ -84,6 +94,14 @@ export function ThanhBuoc({ cacBuoc }: { cacBuoc: Buoc[] }) {
  * phần cam kết; chưa chạy hay đã khép thì chỉ còn câu — câu lấy nguyên từ `docDongHo`,
  * nên vẫn nói đúng sáu tình huống của lib/sla.ts.
  */
+/**
+ * Dấu ngăn " · " của câu đồng hồ dính vào chữ đứng trước (khoảng trắng không ngắt), để câu chữ lớn xuống dòng
+ * thì dòng sau không mở đầu bằng "·" (#557: "Còn 3 giờ 49 phút làm việc / · hạn 11:49 Thứ Năm 26/11").
+ */
+function ngatSauDauNgan(cau: string): string {
+  return cau.replaceAll(" · ", "\u00a0· ");
+}
+
 export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
   const dongHo = docDongHo(ho_so);
   const vach = vachHan(ho_so);
@@ -96,7 +114,7 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
         <span className="tua-muc">Hạn xử lý</span>
         {vach ? (
           <>
-            <span className="han-so">{dongHo.cau}</span>
+            <span className="han-so">{ngatSauDauNgan(dongHo.cau)}</span>
             <div className="vach">
               <i style={{ width: `${vach.phan}%` }} />
             </div>
@@ -113,7 +131,7 @@ export function TheHan({ ho_so }: { ho_so: HoSoTomTat }) {
               color: dongHo.canhBao ? "var(--f-r-ink)" : undefined,
             }}
           >
-            {dongHo.cau}
+            {ngatSauDauNgan(dongHo.cau)}
           </span>
         )}
         {/* Gia hạn (#101): hạn ở trên đã gồm phần này; nói ra để người đọc biết vì sao
@@ -154,7 +172,7 @@ export function TheThaoTac({ children }: { children: React.ReactNode }) {
       {children}
       <p className="ghi-quy-tac">
         <Info aria-hidden />
-        Các nút phụ thuộc vào trạng thái hồ sơ và vai trò của bạn.
+        Chỉ hiện những thao tác bạn làm được ở bước này.
       </p>
     </div>
   );

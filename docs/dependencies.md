@@ -297,6 +297,15 @@ GPL-3.0-or-later đều kết hợp được với AGPL-3.0.
 
 ---
 
+## Tài sản thiết kế
+
+Dấu Corelens (`docs/nhan-dien/`, #551) do nhóm vẽ, theo MIT như kho. Chữ "Corelens" trong hai ảnh dấu kèm chữ
+(`corelens-kem-chu-sang.png`, `corelens-kem-chu-toi.png`) dùng phông **Be Vietnam Pro** — giấy phép **SIL Open Font
+License 1.1** (OSI công nhận, cho phép dùng phông trong ảnh mà không ràng buộc giấy phép của ảnh). Phông chỉ nằm
+trong ảnh PNG đã xuất; thư mục nhận diện không chứa tệp phông.
+
+---
+
 ## Nền tảng Open-Core
 
 Các nền tảng lớn được tích hợp theo yêu cầu kiến trúc Open-Core của đề bài. Mỗi mục

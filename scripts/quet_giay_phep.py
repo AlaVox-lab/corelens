@@ -7,7 +7,7 @@
 # sẽ lọt qua mắt người đọc docs/dependencies.md. Danh sách cho phép ở scripts/giay_phep.toml. Chạy ở gốc kho:
 #
 #     python scripts/quet_giay_phep.py                                   # chỉ các gói npm
-#     python scripts/quet_giay_phep.py --anh backend=dxlab-backend:0.3.0 --anh khai-pha=dxlab-khai-pha:0.3.0
+#     python scripts/quet_giay_phep.py --anh backend=dxlab-backend:local --anh khai-pha=dxlab-khai-pha:local
 #     python scripts/quet_giay_phep.py ... --bao-cao bao-cao-giay-phep.md
 #
 # Nguồn giấy phép:
@@ -104,7 +104,7 @@ def main() -> int:
             luong.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--anh", action="append", default=[], metavar="THÀNH_PHẦN=ẢNH",
-                   help="Ảnh Python cần quét, vd backend=dxlab-backend:0.3.0 (nhiều lần)")
+                   help="Ảnh Python cần quét, vd backend=dxlab-backend:local (nhiều lần)")
     p.add_argument("--bao-cao", type=Path, help="Ghi báo cáo Markdown mọi gói và giấy phép vào tệp này")
     ts = p.parse_args()
 

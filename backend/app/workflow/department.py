@@ -216,7 +216,7 @@ _NHOM_HAN = {"qua-han": "Quá hạn", "sap-het-han": "Sắp hết hạn", "trong
 _NHOM_THEO_DOI = ("cho-nguoi-gui", "Chờ người gửi")
 
 
-@router.get("/queue", response_model=HangDoiPhongBanRa)
+@router.get("/queue", summary="Hàng đợi của phòng ban", response_model=HangDoiPhongBanRa)
 def hang_doi(
     session: _Phien,
     actor: _Cua,
@@ -237,8 +237,8 @@ def hang_doi(
 
     Khác hàng đợi điều phối — xếp theo thời gian chờ — vì ở đây đồng hồ SLA đang chạy:
     thời hạn còn lại mới là con số người trong phòng cần nhìn. Hồ sơ chưa có ngưỡng SLA
-    xếp sau cùng, theo thời gian chờ. Hồ sơ đang ở lượt người gửi (nhóm theo dõi, #99) xếp sau
-    mọi hồ sơ có việc phải làm.
+    xếp sau cùng, theo thời gian chờ. Hồ sơ đang ở lượt người gửi (nhóm theo dõi) xếp sau
+    mọi hồ sơ có việc phải làm (#99).
 
     Nhóm độ gấp — quá hạn, sắp hết hạn, trong hạn, từng trạng thái đồng hồ chưa chạy, chờ người
     gửi — chia ở đây trên cả hàng đợi đã lọc, để số trên dải lọc đúng dù chỉ trả một trang. Hàng
@@ -412,7 +412,7 @@ def hang_doi(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/requests/{case_id}", response_model=HoSoPhongBanRa)
+@router.get("/requests/{case_id}", summary="Chi tiết hồ sơ (phòng ban)", response_model=HoSoPhongBanRa)
 def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) -> HoSoPhongBanRa:
     """Chi tiết một hồ sơ của phòng mình, kèm những thao tác người này làm được.
 
@@ -430,7 +430,7 @@ def chi_tiet(case_id: int, session: _Phien, actor: _Cua, yeu_cau: YeuCauHttp) ->
 
 
 @router.get(
-    "/requests/{case_id}/requester-contact",
+    "/requests/{case_id}/requester-contact", summary="Liên hệ người gửi (phòng ban)",
     response_model=LienHeNguoiGuiRa,
     responses={
         404: {"description": "Không có hồ sơ này trong phòng của người gọi"},
@@ -457,7 +457,7 @@ def lien_he(
     return ra
 
 
-@router.post("/requests/{case_id}/transitions", response_model=HoSoPhongBanRa)
+@router.post("/requests/{case_id}/transitions", summary="Đi một bước trên hồ sơ (phòng ban)", response_model=HoSoPhongBanRa)
 def chuyen_trang_thai(
     case_id: int,
     du_lieu: ChuyenTrangThaiCoTruongVao,
@@ -508,7 +508,7 @@ def chuyen_trang_thai(
 
 
 @router.post(
-    "/requests/{case_id}/messages",
+    "/requests/{case_id}/messages", summary="Nhắn tin trên hồ sơ (phòng ban)",
     response_model=HoSoPhongBanRa,
     dependencies=[Depends(gioi_han_toc_do("send-message"))],
 )
@@ -518,7 +518,7 @@ def nhan_tin(
     """Gửi một lời nhắn trên hồ sơ của phòng mình (#128).
 
     Cùng cửa nhìn thấy với trang chi tiết: hồ sơ của phòng khác trả 404. Lời nhắn không
-    đổi hồ sơ — kể cả khi trả lời một câu "Hỏi tiến độ"; xem app/workflow/messages.py.
+    đổi hồ sơ — kể cả khi trả lời một câu "Hỏi tiến độ" (app/workflow/messages.py).
     """
     ho_so = session.get(Request, case_id)
     if ho_so is None or ho_so.department_code not in actor.departments:

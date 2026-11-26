@@ -34,7 +34,7 @@ from app.config import get_settings
 from app.db import get_session
 from app.intelligence import khuyen_nghi
 from app.models.case import EventLog, Request
-from app.models.workflow_config import Department, RequestType
+from app.models.workflow_config import Department, RequestType, Role, Transition, TransitionRole
 from app.workflow.context import Actor
 from app.workflow.coordination import vao_duoc_buong_lai
 from app.workflow.department import vao_duoc_phong_ban
@@ -92,7 +92,7 @@ def khai_pha_client() -> KhaiPhaClient:
     return _may_khach
 
 
-@router.get("/process-mining")
+@router.get("/process-mining", summary="Quy trình thực tế khai phá từ nhật ký")
 def quy_trinh_thuc_te(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -108,7 +108,7 @@ def quy_trinh_thuc_te(
     return _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)[0]
 
 
-@router.get("/process-mining/recommendation")
+@router.get("/process-mining/recommendation", summary="Khuyến nghị cải tiến quy trình")
 def khuyen_nghi_cai_tien(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(current_actor)],
@@ -121,16 +121,39 @@ def khuyen_nghi_cai_tien(
     phép kiểm số), `pending` (đang sinh ở nền — hỏi lại sau), `disabled` (mô hình tắt), `unavailable`
     (mô hình không trả lời), `no-data`. Không bao giờ chờ mô hình."""
     ket_qua, phong = _khai_pha_trong_pham_vi(session, actor, may_khach, tu, den)
+    # Vai đi bước tiếp ở mỗi trạng thái (#557): lời dặn mô hình nói rõ, phép kiểm bỏ câu nhắc sai vai. Nằm
+    # trong khóa bộ nhớ đệm — đổi bộ quy tắc thì khuyến nghị sinh lại
+    ket_qua = {**ket_qua, "turns": luot_theo_trang_thai(session), "role_labels": nhan_vai(session)}
     kn, tu_dem = khuyen_nghi.lay(tu, den, phong, ket_qua)
     return {
         "status": kn.status,
         "sentences": list(kn.sentences),
         "dropped_wrong_number": kn.dropped_wrong_number,
         "dropped_no_number": kn.dropped_no_number,
+        "template_sentences": kn.template_sentences,
         "model": kn.model,
         "generated_at": kn.generated_at.isoformat() if kn.generated_at else None,
         "cached": tu_dem,
     }
+
+
+def luot_theo_trang_thai(session: Session) -> dict[str, list[str]]:
+    """Vai đi được BƯỚC CHÍNH rời mỗi trạng thái (cạnh có `primary_scope`, #227), theo mã trạng thái — gộp
+    mọi bộ quy tắc. Bước chính là chỗ "hồ sơ đứng đây là đang chờ người đi được cạnh này"; hủy, sửa, gia hạn
+    không tính, nên người gửi hủy được ở Chờ phòng ban xác duyệt vẫn không thành "đang chờ người gửi"."""
+    luot: dict[str, set[str]] = {}
+    for tu_trang_thai, vai in session.execute(
+        select(Transition.from_state, TransitionRole.role_code)
+        .join(TransitionRole, TransitionRole.transition_id == Transition.id)
+        .where(Transition.is_system.is_(False), Transition.primary_scope.is_not(None))
+        .distinct()
+    ):
+        luot.setdefault(tu_trang_thai, set()).add(vai)
+    return {ma: sorted(v) for ma, v in luot.items()}
+
+
+def nhan_vai(session: Session) -> dict[str, str]:
+    return dict(session.execute(select(Role.code, Role.label)).all())
 
 
 def _xem_duoc_tuan_thu(session: Session, ho_so: Request | None, actor: Actor) -> bool:
@@ -144,7 +167,7 @@ def _xem_duoc_tuan_thu(session: Session, ho_so: Request | None, actor: Actor) ->
     return vao_duoc_phong_ban(session, actor) and ho_so.department_code in actor.departments
 
 
-@router.get("/process-mining/cases/{case_id}")
+@router.get("/process-mining/cases/{case_id}", summary="Bước lệch quy trình của một hồ sơ")
 def tuan_thu_ho_so(
     case_id: int,
     session: Annotated[Session, Depends(get_session)],

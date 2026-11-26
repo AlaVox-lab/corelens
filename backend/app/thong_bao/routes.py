@@ -72,21 +72,25 @@ def _doc(session: Session, actor: Actor) -> TuyChonThongBaoRa:
     )
 
 
-@router.get("", response_model=TuyChonThongBaoRa)
+@router.get("", summary="Xem tùy chọn nhận thư thông báo", response_model=TuyChonThongBaoRa)
 def xem_tuy_chon(
     actor: Annotated[Actor, Depends(current_actor)],
     session: Annotated[Session, Depends(get_session)],
 ) -> TuyChonThongBaoRa:
+    """Các loại thư thông báo đang dùng và người gọi đang bật hay tắt từng loại. Loại chưa chọn lần nào theo mặc
+    định của loại đó."""
     return _doc(session, actor)
 
 
-@router.post("/{code}", response_model=TuyChonThongBaoRa)
+@router.post("/{code}", summary="Bật hay tắt một loại thư thông báo", response_model=TuyChonThongBaoRa)
 def doi_tuy_chon(
     code: str,
     vao: DoiTuyChonVao,
     actor: Annotated[Actor, Depends(current_actor)],
     session: Annotated[Session, Depends(get_session)],
 ) -> TuyChonThongBaoRa:
+    """Bật hay tắt một loại thư thông báo cho riêng người gọi; trả lại toàn bộ tùy chọn sau khi đổi. Loại không có
+    hoặc đã ngừng dùng thì 404."""
     loai = session.get(NotificationType, code)
     if loai is None or not loai.is_active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không có loại thông báo này.")

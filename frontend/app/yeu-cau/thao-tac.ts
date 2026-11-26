@@ -90,11 +90,10 @@ export async function chuyenTrangThai(
 
   // Mức hài lòng (#433): ô chỉ có ở cạnh cho chấm. Không chấm thì không gửi gì — xác nhận đi như cũ.
   // Cạnh nào nhận điểm, điểm hợp lệ hay không, nhận xét dài bao nhiêu: dịch vụ kiểm.
+  // Bảng xác nhận chỉ còn một ô chữ (#557): có điểm thì chữ ở ô ghi chú cũng là nhận xét kèm điểm — ghi cả
+  // vào dòng thời gian lẫn bảng đánh giá, không mất phần nào so với hai ô cũ.
   const diem = chuoiHoacRong(duLieu.get("feedback_score"));
-  const nhanXet = chuoiHoacRong(duLieu.get("feedback_comment"));
-  if (!diem && nhanXet) {
-    return { loi: "Chọn số sao từ 1 đến 5 để gửi kèm nhận xét, hoặc xóa nhận xét đi." };
-  }
+  const nhanXet = diem ? lyDo : "";
 
   // Ô `truong:*` chỉ có ở thao tác sửa nội dung (#127); các thao tác khác gửi `changes`
   // rỗng. Trường nào cạnh không cho đặt thì engine từ chối — không lọc lại ở đây.
