@@ -13,6 +13,10 @@ cầu được gom về.
 | `corelens-16.png` … `corelens-512.png` | Biểu tượng tab (16, 32, 48), biểu tượng trên màn hình chính (180, 192, 512) |
 | `corelens-kem-chu-sang.png` | Dấu kèm chữ "Corelens" trên nền sáng |
 | `corelens-kem-chu-toi.png` | Dấu kèm chữ "Corelens" trên nền tối |
+| `kien-truc-vi-sang.svg` | Sơ đồ kiến trúc, nhãn tiếng Việt, nền sáng: ảnh mặc định trong `README.md` |
+| `kien-truc-vi-toi.svg` | Sơ đồ kiến trúc, nhãn tiếng Việt, nền tối: `README.md` khi người xem dùng chế độ tối |
+| `kien-truc-en-sang.svg` | Sơ đồ kiến trúc, nhãn tiếng Anh, nền sáng: ảnh mặc định trong `README.en.md` |
+| `kien-truc-en-toi.svg` | Sơ đồ kiến trúc, nhãn tiếng Anh, nền tối: `README.en.md` khi người xem dùng chế độ tối |
 
 Cổng dùng dấu qua `frontend/components/dau-corelens.tsx` và `frontend/app/icon.svg`; trang tài liệu qua
 `docs-site/public/favicon.svg` và `docs-site/src/assets/corelens-dau.svg`; màn đăng nhập qua chủ đề
