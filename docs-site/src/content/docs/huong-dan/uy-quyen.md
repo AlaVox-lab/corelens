@@ -20,7 +20,7 @@ tự vào được). Trưởng phòng không khai thay cho một trưởng phòn
 
 Người làm thay **không phải xác nhận**. Từ ngày bắt đầu, trang chủ của họ hiện:
 
-> Bạn đang làm thay **Dung Phạm** (Người xét duyệt yêu cầu · Công nghệ thông tin) đến hết ngày 16/11.
+> Bạn đang làm thay **Dung Phạm** (Trưởng phòng · Công nghệ thông tin) đến hết ngày 16/11.
 
 ## Trong những ngày làm thay
 

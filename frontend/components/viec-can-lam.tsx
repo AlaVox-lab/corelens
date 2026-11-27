@@ -184,7 +184,7 @@ export function ViecCanLam({ dong }: { dong: DongViec[] }) {
               </div>
             </div>
             <Link className="nut" href={`${d.href}#thao-tac`}>
-              {d.buoc} →
+              {d.buoc}
             </Link>
           </li>
         ))}

@@ -4,7 +4,8 @@
 // Ba màn của cổng chưa có bài nào (#493): bảng Kanban của phòng ban (#403), khối Webhook trên màn Hệ thống
 // (#401), và cập nhật thời gian thực (#387). Dịch vụ ứng dụng đã có kiểm thử cho các điểm cuối phía sau; ở
 // đây kiểm phần nằm ở cổng — cách gom cột của bảng, hành động máy chủ đăng ký và hủy webhook, tuyến chuyển
-// tiếp luồng sự kiện `/api/su-kien`.
+// tiếp luồng sự kiện `/api/su-kien`. Bảng Kanban của điều phối (#560) dùng chung cột và thẻ với bảng phòng
+// ban, nên bài của nó đứng ngay sau: cột khớp dải số của hàng đợi, bộ lọc đi theo khi chuyển dạng xem.
 //
 // Như các kịch bản khác: đăng nhập thật, không bài nào dựa vào số tuyệt đối — cụm thử có ít hay nhiều hồ
 // sơ tùy lúc chạy. Bài nào cần hồ sơ ở phòng thì tự dựng một hồ sơ qua giao diện.
@@ -89,6 +90,144 @@ test.describe("bảng Kanban của phòng ban (#403)", () => {
     } else {
       // Thẻ đã giao cho người xem mang ảnh đại diện có nhãn "Bạn"
       await expect(theKanban(page).locator('.av[title="Bạn"]')).toHaveCount(cuaToi);
+    }
+  });
+});
+
+/**
+ * Hai hồ sơ trong hàng đợi điều phối, tiêu đề chung một chuỗi để tìm: một vừa gửi, một điều phối viên đã phân
+ * loại — hai trạng thái khác nhau, nên bảng chắc có hai cột để so thứ tự.
+ */
+async function dungHaiHoSoDieuPhoi(browser: Browser, chung: string) {
+  const nguoiGui = await browser.newContext({ storageState: tepPhien("nguoi-gui") });
+  const trangGui = await nguoiGui.newPage();
+  const vuaGui = { tieuDe: `${chung} vừa gửi`, ma: 0 };
+  vuaGui.ma = await guiYeuCauThu(trangGui, vuaGui.tieuDe);
+  const daPhanLoai = { tieuDe: `${chung} đã phân loại`, ma: 0 };
+  daPhanLoai.ma = await guiYeuCauThu(trangGui, daPhanLoai.tieuDe);
+  await nguoiGui.close();
+
+  const dieuPhoi = await browser.newContext({ storageState: tepPhien("dieu-phoi") });
+  const trang = await dieuPhoi.newPage();
+  await trang.goto(`/dieu-phoi/${daPhanLoai.ma}`, { waitUntil: "networkidle" });
+  const thaoTac = trang.locator("#thao-tac");
+  await thaoTac.getByRole("button", { name: "Phân loại yêu cầu", exact: true }).click();
+  await thaoTac.getByRole("button", { name: /^Xác nhận · Phân loại yêu cầu/ }).click();
+  // Bước kế của hồ sơ đã phân loại: còn ở hàng đợi điều phối, chờ chuyển phòng
+  await expect(thaoTac.getByRole("button", { name: "Chuyển về phòng ban", exact: true })).toBeVisible();
+  await dieuPhoi.close();
+  return { vuaGui, daPhanLoai };
+}
+
+type CotDem = { ten: string; so: number };
+
+/** Ô trạng thái trên dải số của hàng đợi điều phối, bỏ ô "Cần làm" đầu dải; chỉ ô có hồ sơ, theo thứ tự trên dải. */
+async function daiSoTrangThai(page: Page): Promise<{ tong: number; cacO: CotDem[] }> {
+  const cacO: CotDem[] = [];
+  for (const o of await page.getByRole("navigation", { name: "Lọc theo trạng thái" }).locator(".o-loc").all()) {
+    cacO.push({
+      ten: ((await o.locator(".o-loc-nhan").textContent()) ?? "").trim(),
+      so: Number(await o.locator("strong").textContent()),
+    });
+  }
+  const [canLam, ...theoTrangThai] = cacO;
+  return { tong: canLam.so, cacO: theoTrangThai.filter((o) => o.so > 0) };
+}
+
+/** Cột của bảng Kanban theo thứ tự trên trang: nhãn trạng thái ở đầu cột và số thẻ đếm được (bằng số đầu cột). */
+async function cotKanban(page: Page): Promise<CotDem[]> {
+  // Bấm nút chuyển là điều hướng phía trình duyệt: địa chỉ đổi khi khung chờ (`loading.tsx`) còn hiện
+  await expect(page.locator(".kb-bang")).toBeVisible();
+  const ra: CotDem[] = [];
+  for (const cot of await page.locator(".kb-cot").all()) {
+    const so = await cot.locator(".kb-the").count();
+    await expect(cot.locator(".kb-so")).toHaveText(String(so));
+    ra.push({ ten: ((await cot.locator(".kb-dau-cot .nhan-tt").textContent()) ?? "").trim(), so });
+  }
+  return ra;
+}
+
+test.describe("bảng Kanban của điều phối (#560)", () => {
+  test.use({ storageState: tepPhien("dieu-phoi") });
+
+  test("mở bằng nút Dạng bảng; cột và số thẻ khớp dải số của hàng đợi, cùng thứ tự; bấm thẻ mở đúng hồ sơ", async ({
+    browser,
+    page,
+  }) => {
+    const chung = `Kanban điều phối ${test.info().project.name} ${Date.now()}`;
+    const h = await dungHaiHoSoDieuPhoi(browser, chung);
+
+    // Cả hàng đợi: mỗi cột là một ô có hồ sơ của dải số, đúng thứ tự dải, số thẻ bằng số trên ô
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    const ca = await daiSoTrangThai(page);
+    await page.getByRole("link", { name: "Dạng bảng" }).click();
+    await page.waitForURL((u) => u.pathname === "/dieu-phoi/bang");
+    const cot = await cotKanban(page);
+    if (ca.tong <= 200) {
+      expect(cot).toEqual(ca.cacO);
+    } else {
+      // Vượt trần một lần đọc: bảng nhắc xem đủ ở dạng danh sách; cột vẫn theo thứ tự dải, không cột rỗng
+      await expect(page.locator(".kb-ghi-chu")).toContainText(`trên ${ca.tong} hồ sơ`);
+      expect(cot.reduce((s, c) => s + c.so, 0)).toBe(200);
+      const viTri = cot.map((c) => ca.cacO.findIndex((o) => o.ten === c.ten));
+      expect(viTri.every((v) => v >= 0)).toBe(true);
+      expect(viTri).toEqual([...viTri].sort((a, b) => a - b));
+      for (const c of cot) expect(c.so).toBeGreaterThan(0);
+    }
+
+    // Chỉ hai hồ sơ vừa dựng (ô tìm): hai cột một thẻ, khớp đúng từng ô của dải số
+    await page.goto(`/dieu-phoi?q=${encodeURIComponent(chung)}`, { waitUntil: "networkidle" });
+    const loc = await daiSoTrangThai(page);
+    expect(loc.cacO.map((o) => o.so)).toEqual([1, 1]);
+    await page.getByRole("link", { name: "Dạng bảng" }).click();
+    await page.waitForURL((u) => u.pathname === "/dieu-phoi/bang" && u.searchParams.get("q") === chung);
+    expect(await cotKanban(page)).toEqual(loc.cacO);
+
+    const the = theKanban(page).filter({ hasText: h.daPhanLoai.tieuDe });
+    await expect(the).toHaveCount(1);
+    await the.click();
+    await page.waitForURL(new RegExp(`/dieu-phoi/${h.daPhanLoai.ma}$`));
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(h.daPhanLoai.tieuDe);
+  });
+
+  test("lọc một loại yêu cầu rồi chuyển qua lại: bộ lọc còn trên địa chỉ trang và trên ô lọc", async ({ page }) => {
+    await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
+    const oLoai = () => page.getByRole("combobox", { name: "Lọc theo loại yêu cầu" });
+    // Mọi kịch bản gửi loại "Sự cố thiết bị", nên hàng đợi có hồ sơ của loại này
+    const maLoai = await oLoai()
+      .locator("option")
+      .evaluateAll((os) => (os as HTMLOptionElement[]).find((o) => o.text === "Sự cố thiết bị")?.value);
+    expect(maLoai, "danh mục có loại Sự cố thiết bị").toBeTruthy();
+    await oLoai().selectOption(maLoai!);
+    await page.waitForURL((u) => u.searchParams.get("loai") === maLoai);
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("link", { name: "Dạng bảng" }).click();
+    await page.waitForURL((u) => u.pathname === "/dieu-phoi/bang" && u.searchParams.get("loai") === maLoai, {
+      timeout: 15_000,
+    });
+    // Bảng đọc theo bộ lọc: chip của bộ lọc hiện, mọi thẻ mang đúng loại đó
+    await expect(page.getByRole("link", { name: "Bỏ lọc Sự cố thiết bị" })).toBeVisible();
+    const loaiTrenThe = (await page.locator(".kb-the > .kb-phu").allTextContents()).map((s) => s.trim());
+    expect(loaiTrenThe.length).toBeGreaterThan(0);
+    expect(new Set(loaiTrenThe)).toEqual(new Set(["Sự cố thiết bị"]));
+
+    await page.getByRole("link", { name: "Dạng danh sách" }).click();
+    await page.waitForURL((u) => u.pathname === "/dieu-phoi" && u.searchParams.get("loai") === maLoai, {
+      timeout: 15_000,
+    });
+    await expect(oLoai()).toHaveValue(maLoai!);
+  });
+});
+
+test.describe("bảng Kanban của điều phối với tài khoản không phải điều phối viên (#560)", () => {
+  test.use({ storageState: tepPhien("truong-phong") });
+
+  test("mở thẳng /dieu-phoi/bang thì gặp đúng màn từ chối của hàng đợi điều phối", async ({ page }) => {
+    for (const duong of ["/dieu-phoi", "/dieu-phoi/bang"]) {
+      await page.goto(duong, { waitUntil: "networkidle" });
+      await expect(page.getByText("Tài khoản này không mở được khu vực này"), duong).toBeVisible();
+      await expect(page.locator(".kb-bang"), duong).toHaveCount(0);
     }
   });
 });

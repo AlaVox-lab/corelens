@@ -302,7 +302,9 @@ GPL-3.0-or-later đều kết hợp được với AGPL-3.0.
 Dấu Corelens (`docs/nhan-dien/`, #551) do nhóm vẽ, theo MIT như kho. Chữ "Corelens" trong hai ảnh dấu kèm chữ
 (`corelens-kem-chu-sang.png`, `corelens-kem-chu-toi.png`) dùng phông **Be Vietnam Pro** — giấy phép **SIL Open Font
 License 1.1** (OSI công nhận, cho phép dùng phông trong ảnh mà không ràng buộc giấy phép của ảnh). Phông chỉ nằm
-trong ảnh PNG đã xuất; thư mục nhận diện không chứa tệp phông.
+trong ảnh PNG đã xuất; thư mục nhận diện không chứa tệp phông. Sơ đồ kiến trúc trong README
+(`docs/nhan-dien/kien-truc-*.svg`, #566) dùng **Be Vietnam Pro** và **IBM Plex Mono**, cùng giấy phép **SIL Open
+Font License 1.1**; chữ đã đổi thành nét vẽ trong SVG, kho không chứa tệp phông.
 
 ---
 

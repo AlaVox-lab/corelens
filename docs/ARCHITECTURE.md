@@ -1659,7 +1659,9 @@ trước khi giữ hay đổi gợi ý. `GET /similar-cases/for-case/{case_id}` 
 được kèm mã), nhúng tiêu đề và mô tả của hồ sơ rồi tìm như biểu mẫu, bỏ chính hồ sơ đó; không ghi lượt xem.
 `components/can-cu-tuong-tu.tsx` hỏi qua `app/api/dieu-phoi/tuong-tu/[id]` sau khi thẻ hiện, hạn chót 4 giây,
 và không vẽ gì khi mô hình nhúng tắt, chậm, hỏng hay không có hồ sơ đủ gần — màn điều phối khi đó y như trước.
-Bảng thao tác chỉ gắn khối này vào trường mà trang truyền (`canCuTuongTu`), một trường mỗi bước.
+Bảng thao tác chỉ gắn khối này vào trường mà trang truyền (`canCuTuongTu`) — mỗi bảng một khối, ở thẻ của
+trường đầu tiên có gợi ý (#559) — và gập sẵn trong `<details>` ghi số hồ sơ (#561), để khung thao tác không
+dài gấp đôi; thẻ gợi ý (gợi ý, lý do, nguồn) vẫn luôn hiện.
 
 **Đo ngăn chặn.** Mỗi biểu mẫu sinh một mã phiên soạn. Có gợi ý thì `similar_case_views` ghi một dòng (hồ
 sơ gợi ý, số lần xem); gửi hồ sơ kèm mã phiên thì nối `submitted_case_id`; bấm "không gửi nữa"
@@ -2300,8 +2302,9 @@ nghiệp. Lời nhắn không lưu vai trò của người viết, nên chưa gh
 "trưởng phòng" trên từng tin.
 
 **Bề rộng nội dung (#275).** Vùng nội dung (`.vung`) rộng tối đa 1240 px và căn giữa phần còn
-lại sau thanh bên; màn có bảng hàng đợi nhiều cột được 1440 px; hộp thư giãn trọn chiều ngang.
-Màn hình rộng vì vậy không còn một khoảng trống lớn ở một phía.
+lại sau thanh bên; màn có bảng hàng đợi nhiều cột được 1440 px; trang hồ sơ (`.trang-ho-so`, #561)
+được 1600 px vì có hai cột; hộp thư giãn trọn chiều ngang. Màn hình rộng vì vậy không còn một
+khoảng trống lớn ở một phía.
 
 **Từ #189, trang hồ sơ đặt việc của người dùng trước nhật ký** (nhận xét của giảng viên
 11/10/2026). Ba điều, áp cho cả trang nhân viên lẫn trang người gửi:
@@ -2311,13 +2314,36 @@ Màn hình rộng vì vậy không còn một khoảng trống lớn ở một p
   `data-dong-thoi-gian` trên `<html>` (`components/nut-dong-thoi-gian.tsx`). Lựa chọn nhớ trong
   `localStorage` và được đoạn mã đầu trang (`app/layout.tsx`, cùng chỗ đọc chế độ sáng/tối) đặt
   trước khi trình duyệt vẽ, nên không nháy. Bản in luôn đủ mốc
-- **Màn hẹp dưới 1100 px**: cột phải tan vào lưới (`display: contents`), thẻ *Hạn xử lý* và
-  *Bạn có thể làm gì* lên ngay dưới tiêu đề, cột đọc (`.cot-doc`) theo sau — chỉ đổi thứ tự
-  bằng CSS
-- **Trang người gửi**: khối thao tác lên ngay dưới phần đầu hồ sơ; lời nhắn tách khỏi dòng thời
-  gian thành khung trò chuyện riêng như thẻ Trao đổi phía nhân viên, để thu gọn nhật ký không
-  giấu mất tin nhắn. Trên điện thoại, chữ giải thích phụ và số liệu nhật ký (`.an-tren-hep`)
-  nhường chỗ để nút thao tác nằm trong màn hình đầu
+- **Màn hẹp dưới 1100 px**: hai cột tan vào một lưới (`display: contents`), thẻ *Bạn có thể làm
+  gì* đứng đầu, *Hạn xử lý* ngay sau, rồi nội dung và dòng thời gian — chỉ đổi thứ tự bằng CSS
+- **Trang người gửi**: khối thao tác đứng trước nội dung; lời nhắn tách khỏi dòng thời gian thành
+  khung trò chuyện riêng như thẻ Trao đổi phía nhân viên, để thu gọn nhật ký không giấu mất tin
+  nhắn
+
+**Từ #561, khuôn trang hồ sơ đặt thao tác vào cột chính.** Trước đó mọi thao tác dồn vào cột phải
+340 px: mở một thao tác có gợi ý thì cột phải dài ~1500 px trong khi cột trái hết ở ~550 px, và tên
+thao tác lặp ba lần (nút mở, tiêu đề khung, nút xác nhận). Khuôn mới, một khuôn cho ba vai
+(`components/trang-ho-so.tsx` + `components/bang-thao-tac.tsx`, không rẽ nhánh theo vai):
+
+- **Trang nhân viên** (`/dieu-phoi/[id]`, `/phong-ban/[id]`): đầu trang chỉ còn mã, tiêu đề, nhãn trạng
+  thái và thanh bước — mỗi bước một vạch, tô màu nhấn tới bước hiện tại. Cột chính mở đầu bằng thẻ *Bạn có
+  thể làm gì lúc này*: tiêu đề và nút thao tác một hàng (bảng thao tác tự dựng, thứ tự theo dịch vụ trả về,
+  tô màu theo `is_primary`), khung nhập mở ngay trong thẻ, không in lại tên thao tác — chỉ "Hồ sơ sẽ chuyển
+  sang …" / "Trạng thái giữ nguyên"; ô có gợi ý xếp lưới hai cột, một cột khi khung hẹp dưới 560 px
+  (container query); hồ sơ đã giải quyết tương tự gập trong `<details>` ghi số lượng. Sau đó: nội dung, tệp
+  đính kèm, hồ sơ liên quan, đánh giá, bước lệch, ba thẻ Dòng thời gian / Trao đổi (n) / Nội bộ (n). Cột
+  phải 360 px, dính khi cuộn, chỉ còn thông tin tĩnh: *Hạn xử lý* và *Thông tin hồ sơ* — loại (chấm màu),
+  phòng hay "Chưa chuyển phòng" kèm gợi ý, ưu tiên, người xử lý, lúc gửi, rồi liên hệ người gửi
+  (`CacDongLienHe`, trước là thẻ riêng). Hết thao tác thì thẻ chỉ còn một câu và *← Về hàng đợi*
+- **Trang người gửi** (`/yeu-cau/[id]`): đầu trang gọn; một dải ba ô (đang giữ hồ sơ, *Đã trôi qua* theo
+  giờ đồng hồ, hạn xử lý theo giờ làm việc); dải trạng thái trọn bề ngang (câu nhóm của `lib/trang-thai.ts`
+  và lúc hệ thống tự đi); rồi hai cột — chính: nội dung, trao đổi, dòng thời gian; phụ: thao tác, tệp, hồ sơ
+  liên quan. Cột phụ đứng TRƯỚC trong mã (điện thoại và trình đọc màn hình gặp thao tác trước), màn rộng đặt
+  nó sang phải bằng `grid-template-areas`; khung nhập đang mở thì cột phụ thôi dính để cuộn tới mọi ô
+- **Câu chữ**: nút đóng khung là *Hủy thao tác* (khỏi lẫn với *Hủy yêu cầu*, #157); bỏ dòng ghi chú cuối
+  khung thao tác — chỉ nút làm được mới hiện; nhãn nhỏ (`.tua-muc`) chữ thường
+- **Chấm màu loại yêu cầu** (`components/cham-loai.tsx`): màu suy từ mã loại bằng cùng phép băm với ảnh đại
+  diện (`mauTheo`), không có bảng "loại nào màu gì"; dùng ở đầu trang, bảng hàng đợi, Kanban, Hồ sơ của tôi
 
 **Từ #192, "Hồ sơ của tôi" trả lời "hồ sơ đang ở đâu" ngay trên dòng của nó**, thay cho bảng
 giải thích mười trạng thái từng nằm cuối trang. Nhãn trạng thái của mỗi dòng là một nút
@@ -2344,6 +2370,15 @@ phòng ban chia nhóm theo mức gấp: Quá hạn, Sắp hết hạn (#175), Tr
 mỗi trạng thái đồng hồ chưa chạy một nhóm mang nhãn trong dữ liệu, cuối cùng nhóm chỉ để theo
 dõi (`watch_only`) — từ #232 dịch vụ chia (`urgency_groups`, `urgency` trên từng dòng). Hàng đợi
 điều phối lọc bằng hàng tab dựng từ `groups`. Không tệp nào liệt kê tên trạng thái.
+
+**Hai buồng lái cũng dùng chung một bảng Kanban** (`components/bang-kanban.tsx`; phòng ban #403, điều phối
+#560). Trang đọc chính hàng đợi của mình một lần tới trần 200 dòng, cùng cửa nhìn thấy và cùng tham số lọc
+trên địa chỉ trang với dạng danh sách; `chiaCot` chia hồ sơ theo thứ tự trạng thái dịch vụ trả về — phòng
+ban lấy danh mục `GET /states`, điều phối lấy `groups` của `/coordination/queue` — và chỉ giữ cột có hồ sơ.
+Thẻ (mã, tiêu đề, chấm và tên loại, câu hạn hay câu tự đi) giống nhau; phần khác đi qua thuộc tính — phòng
+ban truyền người xử lý — bảng không rẽ nhánh theo vai. Thẻ chỉ mở trang hồ sơ, không kéo thả đổi trạng thái.
+Ở điều phối, nút chuyển giữa hai dạng giữ nguyên chuỗi truy vấn (`duongVoi`), chỉ bỏ trang đang xem và ngăn
+xem nhanh; bộ lọc đang bật hiện thành chip trên bảng như trên danh sách.
 
 **Từ #232, mọi danh sách có phân trang, và tìm, lọc, xếp đều ở dịch vụ.** Bốn điểm cuối —
 `GET /requests`, `/coordination/queue`, `/department/queue`, `/inbox` — nhận `limit` (mặc định
@@ -2393,6 +2428,12 @@ ngăn gửi đường dẫn được; trang chi tiết đầy đủ vẫn mở t
   bước chính thành nút chính, các thao tác còn lại vào menu; gửi xong thì ngăn sang hồ sơ kế. Trang
   đầy đủ cũng chỉ tô màu chính cho cạnh `is_primary` (#557 — trước đó tô mọi cạnh có ô nhập, nên điều
   phối viên thấy *Gia hạn xử lý* nổi bật ở trạng thái đang chờ phòng ban)
+- **Mở thao tác trong ngăn** (#561): cả ngăn thành một vùng cuộn, đầu ngăn dính trên; thẻ Nội dung, Dòng
+  thời gian và liên hệ ẩn (`.ngan:has(.khung-xac-nhan)`), bảng thao tác dựng một đoạn tóm tắt — giá trị
+  trường riêng nối bằng dấu phẩy rồi mô tả, cắt ~3 dòng — ngay trên khung nhập, kèm nút *Xem đủ nội dung và
+  dòng thời gian* (đóng khung). Hàng *Xác nhận · …* / *Hủy thao tác* / *Thao tác khác* dính đáy ngăn. Nút vừa
+  bấm rời hàng nút nên tiêu điểm vào ô đầu của khung, đóng khung thì trả về nút ở đáy. Không tách hai thẻ:
+  người phân loại phải đọc được mô tả lúc chọn
 - **Đường vào trang đầy đủ** (#557): mã và tiêu đề ở đầu ngăn là liên kết tới trang đầy đủ; Ctrl/⌘ +
   bấm hay bấm chuột giữa trên dòng hàng đợi mở trang đầy đủ ở thẻ mới (`DongHangDoi.dayDu`), không mở
   bản sao hàng đợi kèm ngăn

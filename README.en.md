@@ -1,9 +1,9 @@
+<div align="center">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/nhan-dien/corelens-kem-chu-toi.png">
   <img src="docs/nhan-dien/corelens-kem-chu-sang.png" alt="Corelens logo: a C made of three glass bands around a cut stone core" width="280">
 </picture>
-
-# Corelens
 
 [Tiếng Việt](README.md) · **English**
 
@@ -11,6 +11,8 @@
 [![Latest release](https://img.shields.io/github/v/release/AlaVox-lab/corelens)](https://github.com/AlaVox-lab/corelens/releases)
 [![Continuous integration on pull requests](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml)
 [![Documentation site](https://github.com/AlaVox-lab/corelens/actions/workflows/trang-tai-lieu.yml/badge.svg?branch=main)](https://alavox-lab.github.io/corelens/)
+
+</div>
 
 Corelens is an open source internal request portal for businesses. Broken equipment reports, software
 access requests, employment certificates and purchase proposals all go to one place and follow a process
@@ -36,6 +38,11 @@ sample data) · Entry for the Open Source Software track of the Vietnam Student 
   person confirms before it becomes a decision.
 - **Core platform `/core/v1`.** Other applications call it through the API gateway with a service account;
   working examples in [`examples/goi-loi/`](examples/goi-loi/).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/nhan-dien/kien-truc-en-toi.svg">
+  <img src="docs/nhan-dien/kien-truc-en-sang.svg" alt="Corelens architecture: people come in through the user portal and other applications call /core/v1 through the API gateway; the application service written by the team runs the workflow on the assembled platforms Keycloak, PostgreSQL, SeaweedFS and Apache Superset; the process mining service reads the event log in PostgreSQL and returns its results to the application service." width="100%">
+</picture>
 
 The core assembles Keycloak, Apache APISIX, PostgreSQL, SeaweedFS and Apache Superset around a workflow
 engine written by the team: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). How each requirement of the

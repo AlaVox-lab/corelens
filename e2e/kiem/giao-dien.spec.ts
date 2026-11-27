@@ -125,10 +125,13 @@ test.describe("người gửi", () => {
     await page.goto(`/yeu-cau?q=${encodeURIComponent(h.tieuDe)}`, { waitUntil: "networkidle" });
     await expect(page.getByText(h.tieuDe, { exact: true })).toBeVisible();
     await moMan(page, `/yeu-cau/${h.ma}`, "nguoi-gui-ho-so");
-    // Đường dẫn đầu trang ghi mã hồ sơ như buồng lái; không còn câu bảo mở lại trang, câu dài về các nút (#557)
+    // Đường dẫn đầu trang ghi mã hồ sơ như buồng lái; không còn câu bảo mở lại trang (#557), không còn dòng ghi chú
+    // về các nút dưới khung thao tác — chỉ nút làm được mới hiện (#561)
     await expect(page.locator("header.thanh-dau .cha .mono")).toHaveText(/^YC-\d{4}-\d+$/);
     await expect(page.getByText("mở lại trang này", { exact: false })).toHaveCount(0);
-    await expect(page.locator("#thao-tac")).toContainText("Chỉ hiện những thao tác bạn làm được ở bước này.");
+    await expect(page.getByText("Chỉ hiện những thao tác", { exact: false })).toHaveCount(0);
+    // Dải ba ô số (#561): ô thời gian theo giờ đồng hồ, ô hạn theo giờ làm việc
+    await expect(page.locator(".dai-so-ho-so > div")).toHaveCount(3);
     await moMan(page, "/hop-thu", "nguoi-gui-hop-thu");
   });
 
@@ -138,6 +141,29 @@ test.describe("người gửi", () => {
     const thaoTac = page.locator("#thao-tac");
     await expect(thaoTac.getByRole("button", { name: "Sửa nội dung", exact: true })).toBeVisible();
     await expect(thaoTac.locator(".nut[data-loai='chinh']")).toHaveCount(0);
+  });
+
+  test("điện thoại 390 px: nút bước chính của người gửi nằm trên thẻ Nội dung yêu cầu (#561)", async ({ browser, page }) => {
+    // Hồ sơ chờ người gửi bổ sung thông tin: bước chính là "Bổ sung thông tin" — điều phối viên hỏi thêm qua giao diện
+    const ma = await guiYeuCauThu(page, `Thứ tự 390 ${test.info().project.name} ${new Date().toISOString().slice(0, 19)}`);
+    const dieuPhoi = await browser.newContext({ storageState: tepPhien("dieu-phoi") });
+    const trang = await dieuPhoi.newPage();
+    await trang.goto(`/dieu-phoi/${ma}`, { waitUntil: "networkidle" });
+    const thaoTacDp = trang.locator("#thao-tac");
+    await thaoTacDp.getByRole("button", { name: "Yêu cầu bổ sung thông tin", exact: true }).click();
+    await thaoTacDp.getByRole("textbox").fill("Nhờ bạn gửi thêm ảnh chụp thiết bị.");
+    await thaoTacDp.getByRole("button", { name: /^Xác nhận · Yêu cầu bổ sung thông tin/ }).click();
+    await expect(thaoTacDp.getByRole("button", { name: "Yêu cầu bổ sung thông tin", exact: true })).toHaveCount(0);
+    await dieuPhoi.close();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/yeu-cau/${ma}`, { waitUntil: "networkidle" });
+    const nutChinh = page.locator("#thao-tac .nut[data-loai='chinh']");
+    await expect(nutChinh).toHaveText("Bổ sung thông tin");
+    const noiDung = page.getByRole("heading", { level: 2, name: "Nội dung yêu cầu" });
+    const [hopNut, hopNoiDung] = [await nutChinh.boundingBox(), await noiDung.boundingBox()];
+    expect(hopNut && hopNoiDung && hopNut.y < hopNoiDung.y, "thao tác đứng trước nội dung trên điện thoại").toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
   });
 
   test("bước 2 của biểu mẫu không cuộn ngang, có ô tải tệp (#436)", async ({ page }) => {
@@ -447,6 +473,33 @@ test.describe("điều phối viên", () => {
     await expect(ngan.getByRole("heading", { level: 2 }).getByRole("link")).toHaveAttribute("href", `/dieu-phoi/${h.ma}`);
   });
 
+  test("xem nhanh: mở thao tác thì nội dung thu thành tóm tắt, nút xác nhận dính đáy ngăn (#561)", async ({ page }) => {
+    const h = docHoSo();
+    await page.goto(`/dieu-phoi?xem=${h.ma}`, { waitUntil: "networkidle" });
+    const ngan = page.locator("aside.ngan");
+    const noiDung = ngan.getByText("Nội dung yêu cầu", { exact: true });
+    await expect(noiDung).toBeVisible();
+    await ngan.locator(".ngan-chan .nut[data-loai='chinh']").click();
+
+    // Đoạn tóm tắt mang mô tả người gửi viết; thẻ Nội dung và Dòng thời gian nhường chỗ
+    const tomTat = ngan.locator(".ngan-tom-tat");
+    await expect(tomTat).toContainText("Hồ sơ do kịch bản kiểm tra giao diện tạo.");
+    await expect(noiDung).toBeHidden();
+    // Tiêu điểm vào khung — nhóm mang tên thao tác — không rơi về đầu trang khi nút vừa bấm rời hàng nút
+    await expect(ngan.getByRole("group", { name: "Phân loại yêu cầu" })).toBeFocused();
+    // Hàng nút ở đáy ngăn: xác nhận, hủy thao tác, các thao tác khác; nằm trong khung nhìn
+    const hang = ngan.locator(".hang-xac-nhan-ngan");
+    await expect(hang.getByRole("button", { name: /^Xác nhận · Phân loại yêu cầu/ })).toBeInViewport();
+    await expect(hang.getByRole("button", { name: "Hủy thao tác" })).toBeVisible();
+    await expect(hang.locator("details.menu-thao-tac > summary")).toHaveText("Thao tác khác");
+
+    // "Xem đủ nội dung và dòng thời gian" đóng khung, nội dung trở lại
+    await tomTat.getByRole("button", { name: "Xem đủ nội dung và dòng thời gian" }).click();
+    await expect(ngan.locator(".khung-xac-nhan")).toHaveCount(0);
+    await expect(noiDung).toBeVisible();
+    await expect(ngan.locator(".ngan-chan .nut[data-loai='chinh']")).toBeFocused();
+  });
+
   test("Ctrl + bấm hay bấm chuột giữa trên dòng hàng đợi mở trang đầy đủ ở thẻ mới (#557)", async ({ page, context }) => {
     await page.goto("/dieu-phoi", { waitUntil: "networkidle" });
     const dong = page.locator("[data-xem-dong]").first();
@@ -467,9 +520,17 @@ test.describe("điều phối viên", () => {
     const chinh = page.locator("#thao-tac .nut[data-loai='chinh']");
     await expect(chinh).toHaveCount(1);
     await expect(chinh).toContainText("Phân loại yêu cầu");
-    // Câu dưới khung thao tác gọn như trang người gửi (#559)
-    await expect(page.getByText("Chỉ hiện những thao tác bạn làm được ở bước này.", { exact: true })).toBeVisible();
+    // Không còn dòng ghi chú cuối khung thao tác (#561): chỉ nút làm được mới hiện, nói thêm không giúp gì
+    await expect(page.getByText("Chỉ hiện những thao tác", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Các nút phụ thuộc vào trạng thái hồ sơ", { exact: false })).toHaveCount(0);
+    // Khuôn #561: thẻ thao tác đứng đầu cột chính, trên Nội dung yêu cầu; cột phải có Hạn xử lý và Thông tin hồ sơ
+    const [hopThaoTac, hopNoiDung] = [
+      await page.locator(".the-thao-tac").boundingBox(),
+      await page.getByText("Nội dung yêu cầu", { exact: true }).boundingBox(),
+    ];
+    expect(hopThaoTac && hopNoiDung && hopThaoTac.y < hopNoiDung.y, "thao tác trên nội dung").toBe(true);
+    await expect(page.locator(".cot-dinh")).toContainText("Hạn xử lý");
+    await expect(page.locator(".cot-dinh .the-thong-tin")).toContainText("Loại yêu cầu");
   });
 
   test("chuyển động: không quá 300 ms, số trang chủ không đếm từ 0", async ({ page }) => {
@@ -512,7 +573,7 @@ test.describe("điều phối viên", () => {
     const chinh = ngan.locator(".ngan-chan .nut[data-loai='chinh']");
     if (await chinh.isVisible()) {
       await chinh.click();
-      await ngan.getByRole("button", { name: "Thôi" }).click();
+      await ngan.getByRole("button", { name: "Hủy thao tác" }).click();
       await expect(ngan.locator(".khung-xac-nhan")).toHaveCount(0);
     }
     await page.keyboard.press("Escape");
@@ -666,7 +727,12 @@ test.describe("điều phối viên", () => {
     await dungHoSoChoChuyenPhong(browser, page, "Căn cứ bật");
     const { thaoTac, the } = await moBangChuyenPhong(page);
     const khoi = the.locator(".can-cu-tuong-tu");
-    await expect(khoi).toContainText("Hồ sơ đã giải quyết tương tự");
+    // Gập sẵn (#561): nhãn ghi số hồ sơ, bấm mới mở danh sách; thẻ gợi ý (gợi ý, lý do, nguồn) vẫn hiện đủ
+    const tom = khoi.locator("summary");
+    await expect(tom).toHaveText("Xem 3 hồ sơ đã giải quyết tương tự");
+    await expect(khoi.getByRole("link", { name: "YC-2026-0007" })).toBeHidden();
+    await expect(the.locator(".the-goi-y-nguon").first()).toBeVisible();
+    await tom.click();
     // Một khối mỗi bảng (#559): bảng có ô loại lẫn ô phòng; có thẻ gợi ý cho cả hai thì danh sách vẫn hiện một lần
     await expect(thaoTac.locator(".can-cu-tuong-tu")).toHaveCount(1);
     await expect(khoi.locator("li")).toHaveCount(3);
@@ -811,6 +877,54 @@ test.describe("quản trị viên", () => {
     // Nhịp hai bộ quét nền (#253) đọc từ điểm cuối chi tiết của quản trị viên
     await expect(page.getByText("Bộ quét quá hạn SLA")).toBeVisible();
     await expect(page.getByText("Bộ quét hạn chờ")).toBeVisible();
+  });
+
+  /** Thẻ mang tiêu đề cấp 2 đúng chữ đó. */
+  const theCo = (page: Page, tieuDe: string) =>
+    page.locator("section.the", { has: page.getByRole("heading", { level: 2, name: tieuDe, exact: true }) });
+
+  test("trang chủ 1440 × 900: thẻ Tình trạng hệ thống gọn, không dài hơn thẻ cột trái, đủ dịch vụ (#561)", async ({ page }) => {
+    // Đặt khổ trong bài: cấu hình màn hẹp cũng kiểm đúng khổ hai cột
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/", { waitUntil: "networkidle" });
+    const theTinhTrang = theCo(page, "Tình trạng hệ thống");
+    const trai = await page.locator(".cot-viec > *").first().boundingBox();
+    const phai = await theTinhTrang.boundingBox();
+    expect(trai, "thẻ cột trái").not.toBeNull();
+    expect(phai, "thẻ tình trạng").not.toBeNull();
+    expect(phai!.y + phai!.height, "cạnh dưới thẻ tình trạng so với thẻ cột trái").toBeLessThanOrEqual(
+      trai!.y + trai!.height + 0.5,
+    );
+    // Dịch vụ ổn: một dòng (chấm, tên, chữ ngắn)
+    for (const dong of await theTinhTrang.locator(".dong-tinh-trang[data-gon]").all()) {
+      expect((await dong.boundingBox())!.height).toBeLessThanOrEqual(24);
+    }
+    // Không bỏ dịch vụ nào: đủ các hàng như dạng đầy đủ của màn Hệ thống
+    const soGon = await theTinhTrang.locator(".dong-tinh-trang").count();
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    await expect(theCo(page, "Các dịch vụ").locator(".dong-tinh-trang")).toHaveCount(soGon);
+  });
+
+  test("màn Hệ thống: lưới hai cột ở 1440, một cột không cuộn ngang ở 375, đúng thứ tự khối (#561)", async ({ page }) => {
+    const khoi = ["Các dịch vụ", "Xuất nhật ký sự kiện", "Webhook", "Nhật ký truy cập dữ liệu cá nhân"];
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    const [dv, xuat, wh, tc] = await Promise.all(khoi.map(async (t) => (await theCo(page, t).boundingBox())!));
+    // Cột trái: các dịch vụ; cột phải: xuất nhật ký rồi webhook; nhật ký truy cập trải hết hai cột bên dưới
+    expect(Math.abs(dv.y - xuat.y), "Các dịch vụ và Xuất nhật ký cùng top").toBeLessThanOrEqual(4);
+    expect(xuat.x).toBeGreaterThanOrEqual(dv.x + dv.width);
+    expect(Math.abs(wh.x - xuat.x)).toBeLessThanOrEqual(1);
+    expect(wh.y).toBeGreaterThan(xuat.y + xuat.height - 1);
+    expect(Math.abs(tc.x - dv.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(tc.x + tc.width - (xuat.x + xuat.width))).toBeLessThanOrEqual(1);
+    expect(tc.y).toBeGreaterThanOrEqual(Math.max(dv.y + dv.height, wh.y + wh.height) - 1);
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), "không cuộn ngang").toBeLessThanOrEqual(375);
+    const top = await Promise.all(khoi.map(async (t) => (await theCo(page, t).boundingBox())!.y));
+    // Một cột: dịch vụ → xuất nhật ký → webhook → nhật ký truy cập, khối sau nằm hẳn dưới khối trước
+    for (let i = 1; i < top.length; i++) expect(top[i], `${khoi[i]} dưới ${khoi[i - 1]}`).toBeGreaterThan(top[i - 1]);
   });
 
   test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {

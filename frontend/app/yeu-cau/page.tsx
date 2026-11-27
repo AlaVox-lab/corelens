@@ -28,6 +28,7 @@ import { FolderOpen, SearchX } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ChamLoai } from "@/components/cham-loai";
 import { ChanTrang, ChipLoc } from "@/components/chan-trang";
 import { DauLoiNhan } from "@/components/dau-loi-nhan";
 import { ChonLoc, OTimUrl } from "@/components/loc-url";
@@ -184,17 +185,8 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
         >
           {ho_so.code}
           {ho_so.request_type && (
-            <span
-              style={{
-                fontFamily: "var(--font)",
-                padding: "1px 7px",
-                borderRadius: "999px",
-                background: "var(--surface-3)",
-                border: "1px solid var(--line)",
-                fontSize: "12px",
-                color: "var(--ink-2)",
-              }}
-            >
+            <span className="chip-loai">
+              <ChamLoai ma={ho_so.request_type.code} />
               {ho_so.request_type.label}
             </span>
           )}
@@ -240,7 +232,7 @@ function Dong({ ho_so, bayGio, viTri }: { ho_so: HoSoTomTat; bayGio: Date; viTri
         />
         {choBan && (
           <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--f-a-ink)" }}>
-            Đang chờ bạn →
+            Đang chờ bạn
           </span>
         )}
       </span>

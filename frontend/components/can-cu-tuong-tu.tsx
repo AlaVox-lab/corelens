@@ -39,12 +39,14 @@ export function CanCuTuongTu({ maHoSo }: { maHoSo: number }) {
   }, [maHoSo]);
 
   if (cacHoSo.length === 0) return null;
+  // Gập sẵn (#561): mỗi dòng ở bề rộng một thẻ gợi ý dài 3–7 dòng chữ, mở hết ra thì khung thao tác dài gấp đôi.
+  // Nhãn ghi số hồ sơ để người duyệt biết có căn cứ mà không phải mở
   return (
-    <div className="can-cu-tuong-tu">
-      <p className="can-cu-tuong-tu-dau">
+    <details className="can-cu-tuong-tu">
+      <summary className="can-cu-tuong-tu-dau">
         <History aria-hidden />
-        <span>Hồ sơ đã giải quyết tương tự</span>
-      </p>
+        <span>Xem {cacHoSo.length} hồ sơ đã giải quyết tương tự</span>
+      </summary>
       <ul>
         {cacHoSo.map((h) => (
           <li key={h.case_id}>
@@ -58,6 +60,6 @@ export function CanCuTuongTu({ maHoSo }: { maHoSo: number }) {
           </li>
         ))}
       </ul>
-    </div>
+    </details>
   );
 }

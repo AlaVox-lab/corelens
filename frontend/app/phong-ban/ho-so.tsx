@@ -19,8 +19,10 @@ import { Building2, Flag, Tag, User } from "lucide-react";
 
 import { chuyenTrangThaiPhongBan } from "@/app/phong-ban/thao-tac";
 import { BangThaoTac, type NguonLuaChon } from "@/components/bang-thao-tac";
-import type { MucMeta } from "@/components/trang-ho-so";
+import { ChamLoai } from "@/components/cham-loai";
+import { tomTatNoiDung, type DongThongTin, type MucMeta } from "@/components/trang-ho-so";
 import { docDichVu, goiDichVu, type KetQua } from "@/lib/api";
+import { ngayGio } from "@/lib/dinh-dang";
 import type {
   GoiY,
   HoSoPhongBan,
@@ -110,12 +112,36 @@ export async function napHoSoPhongBan(id: string): Promise<KetQua<DuLieuPhongBan
   return { ok: true, duLieu: { ho_so, danhMuc, goiYNguoi, lienHe, cacTrangThai } };
 }
 
-export function metaPhongBan(ho_so: HoSoPhongBan): MucMeta[] {
-  const nguoiXuLy = ho_so.assigned_to_me
+function nguoiXuLy(ho_so: HoSoPhongBan): string {
+  return ho_so.assigned_to_me
     ? "Bạn"
     : ho_so.assignee_id
       ? (ho_so.assignee_label ?? "Một người trong phòng")
       : "chưa giao cho ai";
+}
+
+/** Các dòng của thẻ "Thông tin hồ sơ" ở cột phải trang đầy đủ (#561) — trước là hàng icon dưới tiêu đề. */
+export function thongTinPhongBan(ho_so: HoSoPhongBan): DongThongTin[] {
+  const nguoi = nguoiXuLy(ho_so);
+  return [
+    {
+      nhan: "Loại yêu cầu",
+      giaTri: (
+        <>
+          <ChamLoai ma={ho_so.request_type?.code} />
+          {ho_so.request_type?.label ?? "Chưa rõ loại"}
+        </>
+      ),
+    },
+    { nhan: "Phòng ban", giaTri: ho_so.department?.label ?? "Chưa thuộc phòng nào" },
+    { nhan: "Mức ưu tiên", giaTri: ho_so.priority?.label ?? "Chưa đặt mức ưu tiên" },
+    { nhan: "Người xử lý", giaTri: nguoi.charAt(0).toUpperCase() + nguoi.slice(1) },
+    { nhan: "Gửi lúc", giaTri: ngayGio(ho_so.created_at) },
+  ];
+}
+
+/** Hàng icon dưới tiêu đề — chỉ còn ở ngăn xem nhanh; trang đầy đủ dùng `thongTinPhongBan`. */
+export function metaPhongBan(ho_so: HoSoPhongBan): MucMeta[] {
   return [
     { icon: <Tag aria-hidden />, chu: ho_so.request_type?.label ?? "Chưa rõ loại" },
     { icon: <Building2 aria-hidden />, chu: ho_so.department?.label ?? "Chưa thuộc phòng nào" },
@@ -123,7 +149,7 @@ export function metaPhongBan(ho_so: HoSoPhongBan): MucMeta[] {
       icon: <Flag aria-hidden />,
       chu: ho_so.priority ? `Ưu tiên ${ho_so.priority.label}` : "Chưa đặt mức ưu tiên",
     },
-    { icon: <User aria-hidden />, chu: `Người xử lý: ${nguoiXuLy}` },
+    { icon: <User aria-hidden />, chu: `Người xử lý: ${nguoiXuLy(ho_so)}` },
   ];
 }
 
@@ -154,10 +180,10 @@ export function ThaoTacPhongBan({ d, ngan }: { d: DuLieuPhongBan; ngan?: { sauKh
       danhMuc={danhMuc}
       hanhDong={chuyenTrangThaiPhongBan}
       khiHet={{
-        cau: "Không có thao tác nào dành cho bạn ở trạng thái này.",
+        cau: "Bạn không có thao tác nào ở bước này.",
         veHangDoi: "/phong-ban",
       }}
-      ngan={ngan}
+      ngan={ngan && { ...ngan, tomTat: tomTatNoiDung(ho_so) }}
     />
   );
 }

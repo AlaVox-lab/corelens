@@ -396,7 +396,7 @@ export function BieuMauGuiYeuCau({
               />
               <span style={{ fontSize: "12px", color: "var(--ink-3)" }}>
                 Ghi chuyện gì xảy ra, từ khi nào, ở đâu hoặc thiết bị nào, và bạn đã thử gì.
-                Đủ bốn điều này thì phòng ban không phải hỏi lại.
+                Ghi đủ bốn điều này để phòng ban xử lý nhanh, không phải hỏi lại.
               </span>
             </label>
 

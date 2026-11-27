@@ -114,10 +114,10 @@ test("xác nhận đạt kèm 4 sao và nhận xét; điều phối viên và tr
   await expect(page.getByText("Phòng ban phụ trách", { exact: true })).toBeVisible();
   await expect(page.getByText("Đã có người được phân công xử lý")).toHaveCount(0);
   await expect(page.getByText("Đồng hồ xử lý chưa từng chạy")).toHaveCount(0);
-  // Ô Đã trôi qua nói rõ giờ đồng hồ, câu đồng hồ hạn bên dưới nói giờ làm việc (#559)
+  // Ô Đã trôi qua nói rõ giờ đồng hồ (#559); câu đồng hồ hạn — giờ làm việc — ở ô Hạn xử lý cạnh nó trong dải số (#561)
   const troiQua = page.locator(".tua-muc", { hasText: /^\s*Đã trôi qua\s*$/ }).locator("..");
   await expect(troiQua).toContainText("theo đồng hồ");
-  await expect(troiQua).toContainText("làm việc");
+  await expect(page.locator(".dai-so-ho-so")).toContainText("làm việc");
 
   for (const [vai, duong] of [
     ["dieu-phoi", `/dieu-phoi/${ma}`],

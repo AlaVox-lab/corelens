@@ -5,6 +5,8 @@
 // liệu cá nhân (lọc và trang trên địa chỉ, `doc-truy-cap.ts`). Dịch vụ quyết
 // ai thấy màn này qua danh sách không gian của `/me` (`system`); người khác mở đường dẫn
 // này thì gặp lời báo không vào được của khung, không thấy chữ kỹ thuật nào.
+//
+// Bố cục (#561): lưới `.luoi-he-thong` trong `globals.css` thay các bề rộng viết thẳng trước đây.
 
 import { KhungLamViec } from "@/components/khung-lam-viec";
 import { docSucKhoe, TheHeThong } from "@/components/the-he-thong";
@@ -47,18 +49,17 @@ export default async function ManHeThong({ searchParams }: { searchParams: Promi
       <p className="cau-chao">
         Tình trạng các dịch vụ của cụm, đọc từ điểm kiểm tra sức khỏe của dịch vụ ứng dụng.
       </p>
-      <div style={{ marginTop: "20px", maxWidth: "720px" }}>
+      {/* Lưới hai cột (#561): dịch vụ bên trái, xuất nhật ký và webhook bên phải; bảng nhật ký truy cập sáu cột
+          trải hết bề rộng bên dưới. Màn hẹp về một cột theo đúng thứ tự trong mã */}
+      <div className="luoi-he-thong">
         <TheHeThong sucKhoe={sucKhoe} tieuDe="Các dịch vụ" />
-      </div>
-      <div style={{ marginTop: "20px", maxWidth: "720px" }}>
-        <XuatNhatKy />
-      </div>
-      <div style={{ marginTop: "20px", maxWidth: "720px" }}>
-        <QuanLyWebhook dangKy={webhook.dangKy} lanGui={webhook.lanGui} />
-      </div>
-      {/* Bảng sáu cột cần rộng hơn các khối biểu mẫu phía trên */}
-      <div style={{ marginTop: "20px", maxWidth: "1040px" }}>
-        <NhatKyTruyCap duLieu={truyCap} />
+        <div className="cot-tong-quan">
+          <XuatNhatKy />
+          <QuanLyWebhook dangKy={webhook.dangKy} lanGui={webhook.lanGui} />
+        </div>
+        <div className="trai-het">
+          <NhatKyTruyCap duLieu={truyCap} />
+        </div>
       </div>
     </KhungLamViec>
   );

@@ -1,9 +1,9 @@
+<div align="center">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/nhan-dien/corelens-kem-chu-toi.png">
   <img src="docs/nhan-dien/corelens-kem-chu-sang.png" alt="Dấu Corelens: chữ C ba dải kính quanh lõi đá" width="280">
 </picture>
-
-# Corelens
 
 **Tiếng Việt** · [English](README.en.md)
 
@@ -11,6 +11,8 @@
 [![Bản phát hành mới nhất](https://img.shields.io/github/v/release/AlaVox-lab/corelens)](https://github.com/AlaVox-lab/corelens/releases)
 [![Tích hợp liên tục trên pull request](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/AlaVox-lab/corelens/actions/workflows/ci.yml)
 [![Trang tài liệu](https://github.com/AlaVox-lab/corelens/actions/workflows/trang-tai-lieu.yml/badge.svg?branch=main)](https://alavox-lab.github.io/corelens/)
+
+</div>
 
 Corelens là cổng vận hành yêu cầu nội bộ nguồn mở cho doanh nghiệp. Báo máy hỏng, xin cấp phần mềm, xin
 giấy xác nhận, đề xuất mua sắm đều gửi về một chỗ, đi theo một quy trình khai trong dữ liệu chứ không viết
@@ -35,6 +37,11 @@ Sinh viên Việt Nam 2026.
   mới thành quyết định.
 - **Nền tảng lõi `/core/v1`.** Ứng dụng khác gọi qua cổng API bằng tài khoản dịch vụ — ví dụ chạy được ở
   [`examples/goi-loi/`](examples/goi-loi/).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/nhan-dien/kien-truc-vi-toi.svg">
+  <img src="docs/nhan-dien/kien-truc-vi-sang.svg" alt="Sơ đồ kiến trúc Corelens: người dùng vào qua cổng người dùng, ứng dụng khác gọi /core/v1 qua cổng API; dịch vụ ứng dụng do nhóm tự viết chạy quy trình trên các nền tảng lắp ghép Keycloak, PostgreSQL, SeaweedFS và Apache Superset; dịch vụ khai phá đọc nhật ký sự kiện trong PostgreSQL rồi trả kết quả về dịch vụ ứng dụng." width="100%">
+</picture>
 
 Lõi lắp ghép Keycloak, Apache APISIX, PostgreSQL, SeaweedFS và Apache Superset quanh một engine quy trình
 nhóm tự viết: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Đáp ứng từng yêu cầu của đề thi:

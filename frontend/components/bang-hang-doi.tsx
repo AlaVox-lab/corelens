@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { ChamLoai } from "@/components/cham-loai";
 import { MenuXepUrl, OTimUrl } from "@/components/loc-url";
 import { ManRong } from "@/components/man-rong";
 import { NhanTrangThai } from "@/components/nhan-trang-thai";
@@ -58,6 +59,8 @@ export type DongHangDoi = {
   giao?: { ten: string; mau: number; chuCai: string } | null;
   /** Loại yêu cầu; `null` là chưa rõ loại. Không có khóa: bảng không có cột loại. */
   loai?: string | null;
+  /** Mã loại yêu cầu — chỉ để suy màu chấm cạnh tên loại (#561, `ChamLoai`). */
+  maLoai?: string | null;
   trangThai?: { code: string; label: string };
   cuoi: { chu: string; muc?: "qua" | "sap" | "dung" };
   /**
@@ -146,7 +149,9 @@ function Dong({
           />
           <b title={d.tieuDe}>{d.tieuDe}</b>
           <span>
-            <span className="mono">{d.ma}</span> · {d.phu}
+            {/* Bảng không có cột loại (phòng ban): dòng phụ là tên loại, chấm màu đứng trước nó */}
+            <span className="mono">{d.ma}</span> · {!cot.loai && <ChamLoai ma={d.maLoai} />}
+            {d.phu}
             {d.cuaMinh && (
               <>
                 {" · "}
@@ -188,7 +193,7 @@ function Dong({
         <td className="w an-hep" data-phu="1">
           {d.loai ? (
             <span className="nhan-loai">
-              <Tag aria-hidden />
+              {d.maLoai ? <ChamLoai ma={d.maLoai} /> : <Tag aria-hidden />}
               {d.loai}
             </span>
           ) : (
