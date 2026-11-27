@@ -879,6 +879,54 @@ test.describe("quản trị viên", () => {
     await expect(page.getByText("Bộ quét hạn chờ")).toBeVisible();
   });
 
+  /** Thẻ mang tiêu đề cấp 2 đúng chữ đó. */
+  const theCo = (page: Page, tieuDe: string) =>
+    page.locator("section.the", { has: page.getByRole("heading", { level: 2, name: tieuDe, exact: true }) });
+
+  test("trang chủ 1440 × 900: thẻ Tình trạng hệ thống gọn, không dài hơn thẻ cột trái, đủ dịch vụ (#561)", async ({ page }) => {
+    // Đặt khổ trong bài: cấu hình màn hẹp cũng kiểm đúng khổ hai cột
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/", { waitUntil: "networkidle" });
+    const theTinhTrang = theCo(page, "Tình trạng hệ thống");
+    const trai = await page.locator(".cot-viec > *").first().boundingBox();
+    const phai = await theTinhTrang.boundingBox();
+    expect(trai, "thẻ cột trái").not.toBeNull();
+    expect(phai, "thẻ tình trạng").not.toBeNull();
+    expect(phai!.y + phai!.height, "cạnh dưới thẻ tình trạng so với thẻ cột trái").toBeLessThanOrEqual(
+      trai!.y + trai!.height + 0.5,
+    );
+    // Dịch vụ ổn: một dòng (chấm, tên, chữ ngắn)
+    for (const dong of await theTinhTrang.locator(".dong-tinh-trang[data-gon]").all()) {
+      expect((await dong.boundingBox())!.height).toBeLessThanOrEqual(24);
+    }
+    // Không bỏ dịch vụ nào: đủ các hàng như dạng đầy đủ của màn Hệ thống
+    const soGon = await theTinhTrang.locator(".dong-tinh-trang").count();
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    await expect(theCo(page, "Các dịch vụ").locator(".dong-tinh-trang")).toHaveCount(soGon);
+  });
+
+  test("màn Hệ thống: lưới hai cột ở 1440, một cột không cuộn ngang ở 375, đúng thứ tự khối (#561)", async ({ page }) => {
+    const khoi = ["Các dịch vụ", "Xuất nhật ký sự kiện", "Webhook", "Nhật ký truy cập dữ liệu cá nhân"];
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    const [dv, xuat, wh, tc] = await Promise.all(khoi.map(async (t) => (await theCo(page, t).boundingBox())!));
+    // Cột trái: các dịch vụ; cột phải: xuất nhật ký rồi webhook; nhật ký truy cập trải hết hai cột bên dưới
+    expect(Math.abs(dv.y - xuat.y), "Các dịch vụ và Xuất nhật ký cùng top").toBeLessThanOrEqual(4);
+    expect(xuat.x).toBeGreaterThanOrEqual(dv.x + dv.width);
+    expect(Math.abs(wh.x - xuat.x)).toBeLessThanOrEqual(1);
+    expect(wh.y).toBeGreaterThan(xuat.y + xuat.height - 1);
+    expect(Math.abs(tc.x - dv.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(tc.x + tc.width - (xuat.x + xuat.width))).toBeLessThanOrEqual(1);
+    expect(tc.y).toBeGreaterThanOrEqual(Math.max(dv.y + dv.height, wh.y + wh.height) - 1);
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/he-thong", { waitUntil: "networkidle" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), "không cuộn ngang").toBeLessThanOrEqual(375);
+    const top = await Promise.all(khoi.map(async (t) => (await theCo(page, t).boundingBox())!.y));
+    // Một cột: dịch vụ → xuất nhật ký → webhook → nhật ký truy cập, khối sau nằm hẳn dưới khối trước
+    for (let i = 1; i < top.length; i++) expect(top[i], `${khoi[i]} dưới ${khoi[i - 1]}`).toBeGreaterThan(top[i - 1]);
+  });
+
   test("tải nhật ký sự kiện dạng CSV từ màn Hệ thống (#306)", async ({ page }) => {
     await page.goto("/he-thong", { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { name: "Xuất nhật ký sự kiện" })).toBeVisible();

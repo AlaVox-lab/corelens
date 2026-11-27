@@ -277,7 +277,8 @@ export default async function TrangChu() {
               href="/yeu-cau"
               dong={(cuaToi?.groups ?? []).filter((g) => !g.is_terminal).map((g) => ({ nhan: g.label, so: g.count }))}
             />
-            {kg.includes("system") ? <TheHeThong sucKhoe={sucKhoe} /> : null}
+            {/* Dạng gọn (#561): mỗi dịch vụ ổn một dòng, để thẻ không dài hơn thẻ cột trái */}
+            {kg.includes("system") ? <TheHeThong sucKhoe={sucKhoe} gon /> : null}
           </div>
         </div>
       </div>
