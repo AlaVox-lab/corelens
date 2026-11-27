@@ -45,6 +45,8 @@ trên bảng, bộ lọc hiện thành chip bấm để bỏ. Mỗi thẻ có m�
 tự làm; bấm thẻ mở trang hồ sơ. Như bảng phòng ban, thẻ không kéo thả sang cột khác và bảng đọc tối đa 200 hồ
 sơ — nhiều hơn thì một dòng nhắc xem đủ ở dạng danh sách.
 
+![Bảng Kanban của điều phối viên](../../../assets/anh/bang-dieu-phoi.png)
+
 ## Một hồ sơ qua tay điều phối
 
 1. **Phân loại yêu cầu** — xác nhận hay sửa loại người gửi chọn, và **đặt mức ưu tiên** (Khẩn,

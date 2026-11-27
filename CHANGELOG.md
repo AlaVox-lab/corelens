@@ -5,6 +5,18 @@ Toàn bộ thay đổi đáng chú ý của dự án được ghi trong tệp n�
 Định dạng dựa trên Keep a Changelog, số phiên bản tuân thủ Semantic Versioning.
 Nội dung được sinh tự động từ lịch sử commit theo chuẩn Conventional Commits.
 
+## [2.0.0] - 2026-11-27
+
+### Tài liệu
+
+- **docs:** Sơ đồ kiến trúc và phần đầu căn giữa trong README ([#570](https://github.com/AlaVox-lab/corelens/issues/570)) ([bcd7d04](https://github.com/AlaVox-lab/corelens/commit/bcd7d04a2036de3e482a14ee487cced209ab60e3))
+
+### Tính năng mới
+
+- **h-portal:** Bố cục trang hồ sơ, ngăn xem nhanh và tên vai ([#567](https://github.com/AlaVox-lab/corelens/issues/567)) ([8bb4b25](https://github.com/AlaVox-lab/corelens/commit/8bb4b25f7687cd0d7295a90d2f815a8ad68ecf46))
+- **h-portal:** Bảng Kanban cho hàng đợi điều phối ([#569](https://github.com/AlaVox-lab/corelens/issues/569)) ([c9e9ec2](https://github.com/AlaVox-lab/corelens/commit/c9e9ec2f6922aa0e2f3a7fcaad4f717646ca0bbe))
+- **h-portal:** Màn Hệ thống hai cột và tầng nền chế độ tối ([#571](https://github.com/AlaVox-lab/corelens/issues/571)) ([7a829bf](https://github.com/AlaVox-lab/corelens/commit/7a829bfe58b3dddf9c420a2913fb12fc3bb1f94b))
+
 ## [1.8.1] - 2026-11-26
 
 ### Sửa lỗi
