@@ -136,6 +136,7 @@ test.describe("điều phối viên", () => {
     const h = docHoSo();
     await moVaQuet(page, "/", "dieu-phoi-trang-chu");
     await moVaQuet(page, "/dieu-phoi", "dieu-phoi-hang-doi");
+    await moVaQuet(page, "/dieu-phoi/bang", "dieu-phoi-kanban");
     // Ngăn xem nhanh mở cạnh bảng đã co lại (#539)
     await moVaQuet(page, `/dieu-phoi?xem=${h.ma}`, "dieu-phoi-hang-doi-xem-nhanh");
     await moVaQuet(page, `/dieu-phoi/${h.ma}`, "dieu-phoi-ho-so");

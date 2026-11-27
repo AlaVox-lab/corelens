@@ -2371,6 +2371,15 @@ mỗi trạng thái đồng hồ chưa chạy một nhóm mang nhãn trong dữ 
 dõi (`watch_only`) — từ #232 dịch vụ chia (`urgency_groups`, `urgency` trên từng dòng). Hàng đợi
 điều phối lọc bằng hàng tab dựng từ `groups`. Không tệp nào liệt kê tên trạng thái.
 
+**Hai buồng lái cũng dùng chung một bảng Kanban** (`components/bang-kanban.tsx`; phòng ban #403, điều phối
+#560). Trang đọc chính hàng đợi của mình một lần tới trần 200 dòng, cùng cửa nhìn thấy và cùng tham số lọc
+trên địa chỉ trang với dạng danh sách; `chiaCot` chia hồ sơ theo thứ tự trạng thái dịch vụ trả về — phòng
+ban lấy danh mục `GET /states`, điều phối lấy `groups` của `/coordination/queue` — và chỉ giữ cột có hồ sơ.
+Thẻ (mã, tiêu đề, chấm và tên loại, câu hạn hay câu tự đi) giống nhau; phần khác đi qua thuộc tính — phòng
+ban truyền người xử lý — bảng không rẽ nhánh theo vai. Thẻ chỉ mở trang hồ sơ, không kéo thả đổi trạng thái.
+Ở điều phối, nút chuyển giữa hai dạng giữ nguyên chuỗi truy vấn (`duongVoi`), chỉ bỏ trang đang xem và ngăn
+xem nhanh; bộ lọc đang bật hiện thành chip trên bảng như trên danh sách.
+
 **Từ #232, mọi danh sách có phân trang, và tìm, lọc, xếp đều ở dịch vụ.** Bốn điểm cuối —
 `GET /requests`, `/coordination/queue`, `/department/queue`, `/inbox` — nhận `limit` (mặc định
 50, trần 200, `backend/app/workflow/phan_trang.py`), `offset`, `q` và bộ lọc riêng (loại yêu cầu,

@@ -20,7 +20,11 @@
 //
 // Chọn nhiều hồ sơ trên trang rồi đi một bước cho cả lô (#440): bước nào làm được hàng loạt, từ trạng
 // thái nào, cần ô nào — dịch vụ trả ở `/coordination/bulk-transitions`; trang chỉ chuyển danh mục xuống.
+//
+// Nút "Dạng bảng" (#560) mở cùng hàng đợi chia cột theo trạng thái (`bang/page.tsx`), mang theo ô tìm, bộ
+// lọc và cách xếp đang chọn — chỉ bỏ trang đang xem và ngăn xem nhanh, hai thứ bảng không có.
 
+import { Columns3 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -222,6 +226,11 @@ export default async function HangDoiDieuPhoi({ searchParams }: { searchParams: 
             <ChonLoc ten="loai" nhan="Lọc theo loại yêu cầu" tatCa="Mọi loại" tuyChon={cacLoai ?? []} />
             <ChonLoc ten="uu-tien" nhan="Lọc theo mức ưu tiên" tatCa="Mọi mức ưu tiên" tuyChon={cacMuc ?? []} />
             <ChonLoc ten="phong" nhan="Lọc theo phòng" tatCa="Mọi phòng" tuyChon={cacPhong ?? []} />
+            {/* Bảng Kanban (#560): cùng hàng đợi, cùng bộ lọc, chia cột theo trạng thái */}
+            <Link href={duongVoi(`${GOC}/bang`, sp, { xem: null })} className="chip">
+              <Columns3 aria-hidden />
+              Dạng bảng
+            </Link>
           </>
         }
         chip={<ChipLoc chip={chip} xoaHet={xoaHet ?? GOC} />}

@@ -6322,7 +6322,8 @@ span.qt-ma {
   }
 }
 
-/* Bảng Kanban của buồng lái phòng ban (#403): cột theo trạng thái, cuộn ngang khi nhiều cột */
+/* Bảng Kanban của hai buồng lái — phòng ban (#403), điều phối (#560), `components/bang-kanban.tsx`: cột theo
+   trạng thái, cuộn ngang khi nhiều cột */
 .kb-thanh {
   display: flex;
   flex-wrap: wrap;
