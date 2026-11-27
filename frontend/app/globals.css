@@ -79,11 +79,13 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --bg: #111418;
-    --surface: #181c21;
-    --surface-2: #1d2228;
-    --surface-3: #232930;
-    --line: #2a3038;
+    /* Ba tầng nền tách rõ hơn (#561): nền trang tối đi, thẻ sáng lên — thẻ nổi khỏi nền mà không cần bóng.
+     * --line nâng theo để vẫn ≥ 1,3:1 trên --surface (trước chỉ 1,29:1) */
+    --bg: #0e1114;
+    --surface: #1a1e24;
+    --surface-2: #20252c;
+    --surface-3: #282e36;
+    --line: #30363f;
     --line-2: #3a414b;
     --ink: #eef1f4;
     --ink-2: #b5bcc5;
@@ -115,11 +117,13 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #111418;
-  --surface: #181c21;
-  --surface-2: #1d2228;
-  --surface-3: #232930;
-  --line: #2a3038;
+  /* Ba tầng nền tách rõ hơn (#561): nền trang tối đi, thẻ sáng lên — thẻ nổi khỏi nền mà không cần bóng.
+   * --line nâng theo để vẫn ≥ 1,3:1 trên --surface (trước chỉ 1,29:1) */
+  --bg: #0e1114;
+  --surface: #1a1e24;
+  --surface-2: #20252c;
+  --surface-3: #282e36;
+  --line: #30363f;
   --line-2: #3a414b;
   --ink: #eef1f4;
   --ink-2: #b5bcc5;
@@ -3801,6 +3805,25 @@ html.doi-mau * {
   gap: 16px;
 }
 
+/* Màn Hệ thống (#561): các dịch vụ | xuất nhật ký + webhook; nhật ký truy cập trải hết bề rộng bên dưới */
+.luoi-he-thong {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.luoi-he-thong > .cot-tong-quan {
+  gap: 20px;
+  min-width: 0;
+}
+
+.luoi-he-thong > .trai-het {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .the > .khoi-dau {
   justify-content: space-between;
   flex-wrap: wrap;
@@ -4086,6 +4109,42 @@ html.doi-mau * {
   font-weight: 600;
 }
 
+/* Dạng gọn ở trang chủ quản trị (#561): dịch vụ ổn một dòng — chấm, tên, chữ ngắn; dòng không ổn giữ dạng đầy đủ */
+.ds-tinh-trang-gon {
+  padding: 4px 0;
+}
+
+.dong-tinh-trang[data-gon] {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0 16px;
+  border-top: 0;
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.dong-tinh-trang[data-gon]::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ho-solid);
+}
+
+.dong-tinh-trang[data-gon] > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dong-tinh-trang[data-gon] b {
+  flex: none;
+  white-space: nowrap;
+}
+
 .ghi-chu-tinh-trang {
   margin: 0;
   padding: 12px 16px;
@@ -4097,7 +4156,8 @@ html.doi-mau * {
 }
 
 @media (max-width: 1099px) {
-  .luoi-chu {
+  .luoi-chu,
+  .luoi-he-thong {
     grid-template-columns: minmax(0, 1fr);
   }
 }

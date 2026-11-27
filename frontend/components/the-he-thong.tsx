@@ -8,6 +8,10 @@
 // Dữ liệu đến từ `GET /system/health` của dịch vụ ứng dụng (#243): điểm cuối có kiểm vai trò quản
 // trị, mang đủ chi tiết — phiên bản, bộ quy tắc, nhịp từng bộ quét. `/health` công khai chỉ trả
 // trạng thái chung nên không còn là nguồn của màn này.
+//
+// Dạng gọn (`gon`, trang chủ quản trị — #561): vẫn đủ mọi dịch vụ, nhưng dịch vụ ổn chỉ một dòng — chấm, tên, chữ
+// tình trạng ngắn — để thẻ không dài hơn thẻ cột trái. Dịch vụ không ổn giữ dạng đầy đủ kèm thông điệp lỗi;
+// phiên bản, nhịp quét và các chi tiết khác xem ở màn Hệ thống.
 
 import { goiDichVu } from "@/lib/api";
 import { ngayGio, thoiLuong } from "@/lib/dinh-dang";
@@ -64,7 +68,23 @@ export async function docSucKhoe(): Promise<SucKhoe | null> {
   return goiDichVu<SucKhoe>("/system/health");
 }
 
-function DongTrangThai({ nhan, tot, giaTri }: { nhan: string; tot: boolean; giaTri: string }) {
+type Dong = {
+  nhan: string;
+  tot: boolean;
+  giaTri: string;
+  /** Chữ ở dạng gọn khi dịch vụ ổn; bỏ trống là phần của `giaTri` trước dấu " — " hay " · " đầu tiên. */
+  ngan?: string;
+};
+
+function DongTrangThai({ nhan, tot, giaTri, ngan, gon }: Dong & { gon: boolean }) {
+  if (gon && tot) {
+    return (
+      <div className="dong-tinh-trang" data-gon="" style={bienHoMau("g")}>
+        <span>{nhan}</span>
+        <b>{ngan ?? giaTri.split(/ — | · /)[0]}</b>
+      </div>
+    );
+  }
   return (
     <div className="dong-tinh-trang" style={bienHoMau(tot ? "g" : "r")}>
       <span>{nhan}</span>
@@ -111,82 +131,102 @@ function chuMoHinh(m: MoHinhNgonNgu, khiTat = "tắt — điều phối thủ c�
   }
 }
 
-export function TheHeThong({ sucKhoe, tieuDe = "Tình trạng hệ thống" }: { sucKhoe: SucKhoe | null; tieuDe?: string }) {
+/** Chữ ngắn của bộ quét ổn ở dạng gọn: câu đầy đủ mang thời điểm và bản dịch vụ, quá dài cho một dòng. */
+const NGAN_BO_QUET: Record<string, string> = { disabled: "đã tắt", starting: "đang khởi động" };
+
+export function TheHeThong({
+  sucKhoe,
+  tieuDe = "Tình trạng hệ thống",
+  gon = false,
+}: {
+  sucKhoe: SucKhoe | null;
+  tieuDe?: string;
+  /** Mỗi dịch vụ ổn một dòng ngắn (trang chủ quản trị); bỏ trống là dạng đầy đủ của màn Hệ thống. */
+  gon?: boolean;
+}) {
   const dungHet = sucKhoe?.status === "ok";
   const boQuetXau = (sucKhoe?.scanners ?? []).filter((b) => b.status === "stale" || b.status === "failing");
+  const cacDong: Dong[] = [
+    { nhan: "Cổng người dùng", tot: true, giaTri: "đang chạy" },
+    {
+      nhan: "Dịch vụ ứng dụng",
+      tot: Boolean(sucKhoe),
+      giaTri: sucKhoe ? `đang chạy · v${sucKhoe.version ?? "?"}` : "không tới được",
+    },
+    {
+      nhan: "Cơ sở dữ liệu",
+      tot: sucKhoe?.database === "ok",
+      giaTri: sucKhoe?.database === "ok" ? "đã kết nối" : "chưa kết nối",
+    },
+    {
+      nhan: "Bộ quy tắc quy trình",
+      tot: sucKhoe?.database === "ok" && Boolean(sucKhoe?.active_rule_set_states),
+      giaTri: sucKhoe?.active_rule_set_states ? `đã nạp · ${sucKhoe.active_rule_set_states} trạng thái` : "chưa nạp",
+    },
+    ...(sucKhoe?.scanners ?? []).map((b) => ({
+      nhan: b.label,
+      tot: b.status !== "stale" && b.status !== "failing",
+      giaTri: chuBoQuet(b),
+      ngan: NGAN_BO_QUET[b.status] ?? "đang chạy",
+    })),
+    ...(sucKhoe?.language_model
+      ? [
+          {
+            nhan: "Mô hình ngôn ngữ",
+            tot: sucKhoe.language_model.status !== "unreachable",
+            giaTri: chuMoHinh(sucKhoe.language_model),
+          },
+        ]
+      : []),
+    ...(sucKhoe?.embedding_model
+      ? [
+          {
+            nhan: "Mô hình nhúng",
+            tot: sucKhoe.embedding_model.status !== "unreachable",
+            giaTri: chuMoHinh(sucKhoe.embedding_model, "tắt — không gợi ý hồ sơ tương tự"),
+          },
+        ]
+      : []),
+    ...(sucKhoe?.email
+      ? [
+          {
+            nhan: "Thông báo thư",
+            tot: sucKhoe.email.status !== "unreachable",
+            giaTri:
+              sucKhoe.email.status === "disabled"
+                ? "tắt — chưa cấu hình máy chủ thư"
+                : `${sucKhoe.email.status === "ready" ? "sẵn sàng" : `máy chủ thư không phản hồi${sucKhoe.email.detail ? ` — ${sucKhoe.email.detail}` : ""}`}${
+                    sucKhoe.email.queue
+                      ? ` · ${sucKhoe.email.queue.deliveries_pending} thư chờ gửi, ${sucKhoe.email.queue.deliveries_failed} thư hỏng`
+                      : ""
+                  }`,
+          },
+        ]
+      : []),
+    ...(sucKhoe?.malware_scan
+      ? [
+          {
+            nhan: "Quét mã độc tệp đính kèm",
+            tot: sucKhoe.malware_scan.status !== "unreachable",
+            giaTri:
+              sucKhoe.malware_scan.status === "disabled"
+                ? "tắt — tệp chỉ được kiểm đuôi và chữ ký"
+                : sucKhoe.malware_scan.status === "ready"
+                  ? "sẵn sàng"
+                  : `không phản hồi${sucKhoe.malware_scan.detail ? ` — ${sucKhoe.malware_scan.detail}` : ""} · tệp mới ${
+                      sucKhoe.malware_scan.on_unavailable === "reject" ? "bị từ chối" : "được nhận, gắn cờ chưa quét"
+                    }`,
+          },
+        ]
+      : []),
+  ];
+  const hang = cacDong.map((d, i) => <DongTrangThai key={`${i}-${d.nhan}`} {...d} gon={gon} />);
   return (
     <section className="the">
       <div className="khoi-dau">
         <h2>{tieuDe}</h2>
       </div>
-      <DongTrangThai nhan="Cổng người dùng" tot giaTri="đang chạy" />
-      <DongTrangThai
-        nhan="Dịch vụ ứng dụng"
-        tot={Boolean(sucKhoe)}
-        giaTri={sucKhoe ? `đang chạy · v${sucKhoe.version ?? "?"}` : "không tới được"}
-      />
-      <DongTrangThai
-        nhan="Cơ sở dữ liệu"
-        tot={sucKhoe?.database === "ok"}
-        giaTri={sucKhoe?.database === "ok" ? "đã kết nối" : "chưa kết nối"}
-      />
-      <DongTrangThai
-        nhan="Bộ quy tắc quy trình"
-        tot={sucKhoe?.database === "ok" && Boolean(sucKhoe?.active_rule_set_states)}
-        giaTri={sucKhoe?.active_rule_set_states ? `đã nạp · ${sucKhoe.active_rule_set_states} trạng thái` : "chưa nạp"}
-      />
-      {(sucKhoe?.scanners ?? []).map((b) => (
-        <DongTrangThai
-          key={b.name}
-          nhan={b.label}
-          tot={b.status !== "stale" && b.status !== "failing"}
-          giaTri={chuBoQuet(b)}
-        />
-      ))}
-      {sucKhoe?.language_model && (
-        <DongTrangThai
-          nhan="Mô hình ngôn ngữ"
-          tot={sucKhoe.language_model.status !== "unreachable"}
-          giaTri={chuMoHinh(sucKhoe.language_model)}
-        />
-      )}
-      {sucKhoe?.embedding_model && (
-        <DongTrangThai
-          nhan="Mô hình nhúng"
-          tot={sucKhoe.embedding_model.status !== "unreachable"}
-          giaTri={chuMoHinh(sucKhoe.embedding_model, "tắt — không gợi ý hồ sơ tương tự")}
-        />
-      )}
-      {sucKhoe?.email && (
-        <DongTrangThai
-          nhan="Thông báo thư"
-          tot={sucKhoe.email.status !== "unreachable"}
-          giaTri={
-            sucKhoe.email.status === "disabled"
-              ? "tắt — chưa cấu hình máy chủ thư"
-              : `${sucKhoe.email.status === "ready" ? "sẵn sàng" : `máy chủ thư không phản hồi${sucKhoe.email.detail ? ` — ${sucKhoe.email.detail}` : ""}`}${
-                  sucKhoe.email.queue
-                    ? ` · ${sucKhoe.email.queue.deliveries_pending} thư chờ gửi, ${sucKhoe.email.queue.deliveries_failed} thư hỏng`
-                    : ""
-                }`
-          }
-        />
-      )}
-      {sucKhoe?.malware_scan && (
-        <DongTrangThai
-          nhan="Quét mã độc tệp đính kèm"
-          tot={sucKhoe.malware_scan.status !== "unreachable"}
-          giaTri={
-            sucKhoe.malware_scan.status === "disabled"
-              ? "tắt — tệp chỉ được kiểm đuôi và chữ ký"
-              : sucKhoe.malware_scan.status === "ready"
-                ? "sẵn sàng"
-                : `không phản hồi${sucKhoe.malware_scan.detail ? ` — ${sucKhoe.malware_scan.detail}` : ""} · tệp mới ${
-                    sucKhoe.malware_scan.on_unavailable === "reject" ? "bị từ chối" : "được nhận, gắn cờ chưa quét"
-                  }`
-          }
-        />
-      )}
+      {gon ? <div className="ds-tinh-trang-gon">{hang}</div> : hang}
       {!dungHet && (
         <p className="ghi-chu-tinh-trang">
           {sucKhoe?.detail ?? "Kiểm tra dịch vụ ứng dụng bằng docker compose logs backend."}
