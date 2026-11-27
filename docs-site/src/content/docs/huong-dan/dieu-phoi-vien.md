@@ -35,6 +35,16 @@ Muốn mở trang đầy đủ ở thẻ mới thì Ctrl + bấm (⌘ + bấm tr
 
 ![Hàng đợi điều phối](../../../assets/anh/hang-doi-dieu-phoi.png)
 
+### Dạng bảng Kanban
+
+Nút **Dạng bảng** trên hàng lọc mở `/dieu-phoi/bang`: cùng hàng đợi đó, chia **cột theo trạng thái** —
+*Đã gửi*, *Đã phân loại*, *Bị phòng ban từ chối*… — để nhìn một lần thấy việc điều phối đang dồn ở bước nào.
+Cột theo thứ tự của quy trình đang chạy, chỉ hiện cột có hồ sơ; số đầu cột bằng số trên dải số của hàng đợi.
+Ô tìm, bộ lọc và cách xếp đang chọn đi theo khi chuyển sang bảng và khi bấm **Dạng danh sách** quay lại;
+trên bảng, bộ lọc hiện thành chip bấm để bỏ. Mỗi thẻ có mã, tiêu đề, loại và câu hạn — hay việc hệ thống sắp
+tự làm; bấm thẻ mở trang hồ sơ. Như bảng phòng ban, thẻ không kéo thả sang cột khác và bảng đọc tối đa 200 hồ
+sơ — nhiều hơn thì một dòng nhắc xem đủ ở dạng danh sách.
+
 ## Một hồ sơ qua tay điều phối
 
 1. **Phân loại yêu cầu** — xác nhận hay sửa loại người gửi chọn, và **đặt mức ưu tiên** (Khẩn,
